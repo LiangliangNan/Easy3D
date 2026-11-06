@@ -26,17 +26,17 @@
 
 #version 150
 
-// Ground-truth ambient occlusion from the view-space position and normal
-// buffers. Each pixel marches a set of azimuthal slices along the projected
-// sample radius to find the horizon of the surrounding depth; the cosine-
-// weighted visibility of the two half-planes around that horizon gives the AO
-// term. The same algorithm runs on the Vulkan backend (ao_gtao.comp).
+// Ground-truth ambient occlusion from the scene depth of the projection
+// buffer. View-space positions and normals are reconstructed from depth, then
+// each pixel marches a set of azimuthal slices along the projected sample
+// radius to find the horizon of the surrounding depth. The cosine-weighted
+// visibility of the two half-planes around that horizon gives the AO term.
+// The same algorithm runs on the Vulkan backend (ao_gtao.comp).
 
 in vec2 TexCoords;
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-
+uniform sampler2D scene_depth;
+uniform mat4 invPROJ;
 uniform mat4 PROJ;
 
 uniform float radius;
@@ -53,10 +53,43 @@ float hash12(vec2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-// View-space position to texture coordinates of this framebuffer.
+// View-space position from a depth sample.
+vec3 view_position(vec2 coord, float depth) {
+    vec4 p = invPROJ * vec4(coord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    return p.xyz / p.w;
+}
+
+// Position of a depth neighbor. Background neighbors are reported invalid so
+// the normal reconstruction never mixes separate surfaces across a silhouette.
+vec3 neighbor_position(vec2 coord, vec3 center, out bool valid) {
+    float depth = texture(scene_depth, coord).r;
+    valid = depth < 1.0;
+    return valid ? view_position(coord, depth) : center;
+}
+
+// View-space normal from the closest surviving neighbor on each axis.
+vec3 surface_normal(vec2 coord, vec3 center, vec2 texel) {
+    bool valid_left, valid_right, valid_up, valid_down;
+    vec3 left = neighbor_position(coord - vec2(texel.x, 0.0), center, valid_left);
+    vec3 right = neighbor_position(coord + vec2(texel.x, 0.0), center, valid_right);
+    vec3 up = neighbor_position(coord - vec2(0.0, texel.y), center, valid_up);
+    vec3 down = neighbor_position(coord + vec2(0.0, texel.y), center, valid_down);
+    const float far_away = 1e30;
+    float left_distance = valid_left ? abs(left.z - center.z) : far_away;
+    float right_distance = valid_right ? abs(right.z - center.z) : far_away;
+    float up_distance = valid_up ? abs(up.z - center.z) : far_away;
+    float down_distance = valid_down ? abs(down.z - center.z) : far_away;
+    vec3 dx = left_distance < right_distance ? center - left : right - center;
+    vec3 dy = up_distance < down_distance ? up - center : center - down;
+    vec3 normal = cross(dx, dy);
+    normal = dot(normal, normal) < 1e-20 ? -normalize(center) : normalize(normal);
+    return dot(normal, center) > 0.0 ? -normal : normal; // face the camera
+}
+
+// Texture coordinates of a view-space position in this framebuffer.
 vec2 project(vec3 position) {
-    vec4 clip = PROJ * vec4(position, 1.0);
-    return clip.xy / clip.w * 0.5 + 0.5;
+    vec4 p = PROJ * vec4(position, 1.0);
+    return p.xy / p.w * 0.5 + 0.5;
 }
 
 // Sine of the elevation of an occluder above the tangent plane, or zero when
@@ -64,38 +97,43 @@ vec2 project(vec3 position) {
 float horizon_sine(vec2 coord, vec3 center, vec3 normal) {
     if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0)
         return 0.0;
-    vec3 neighbor = texture(gNormal, coord).rgb;
-    if (dot(neighbor, neighbor) < 1e-8)
-        return 0.0; // background
-    vec3 delta = texture(gPosition, coord).xyz - center;
-    float distance = length(delta);
+    float depth = texture(scene_depth, coord).r;
+    if (depth >= 1.0) // background
+        return 0.0;
+    vec3 delta = view_position(coord, depth) - center;
+    float distance_squared = dot(delta, delta);
+    // The kernel is a sphere: geometry beyond the radius belongs to a different
+    // surface across a depth jump and must not occlude.
+    if (distance_squared >= radius * radius)
+        return 0.0;
+    float distance = sqrt(distance_squared);
     if (distance < 1e-5)
         return 0.0;
     float elevation = dot(delta, normal);
     if (elevation <= bias) // behind (or on) the tangent plane
         return 0.0;
-    return clamp(elevation / distance, 0.0, 1.0) * clamp(radius / distance, 0.0, 1.0);
+    return clamp(elevation / distance, 0.0, 1.0);
 }
 
 void main() {
-    vec3 normal = texture(gNormal, TexCoords).rgb;
-    if (dot(normal, normal) < 1e-8) { // the background is never darkened
+    float depth = texture(scene_depth, TexCoords).r;
+    if (depth >= 1.0) { // the background is never darkened
         FragColor = 1.0;
         return;
     }
-    normal = normalize(normal);
-    vec3 center = texture(gPosition, TexCoords).xyz;
-
-    vec2 size = vec2(textureSize(gPosition, 0));
-    float jitter = hash12(gl_FragCoord.xy);
+    vec3 center = view_position(TexCoords, depth);
+    vec2 size = vec2(textureSize(scene_depth, 0));
+    vec2 texel = 1.0 / size;
+    vec3 normal = surface_normal(TexCoords, center, texel);
 
     vec3 tangent = cross(normal, abs(normal.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0));
     if (dot(tangent, tangent) < 1e-12)
         tangent = cross(normal, vec3(0.0, 0.0, 1.0));
     tangent = normalize(tangent);
     vec3 bitangent = cross(normal, tangent);
-    vec2 center_uv = project(center);
 
+    float jitter = hash12(gl_FragCoord.xy);
+    vec2 center_uv = project(center);
     float visibility = 0.0;
     for (int slice = 0; slice < SLICE_COUNT; ++slice) {
         float phi = (float(slice) + jitter) * (6.28318530718 / float(SLICE_COUNT));

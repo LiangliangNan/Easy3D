@@ -67,14 +67,18 @@ float horizon_sine(vec2 coord, vec3 center, vec3 normal, float radius, float bia
     if (depth >= 1.0) // background
         return 0.0;
     vec3 delta = view_position(coord, depth) - center;
-    float distance = length(delta);
+    float distance_squared = dot(delta, delta);
+    // The kernel is a sphere: geometry beyond the radius belongs to a different
+    // surface across a depth jump and must not occlude.
+    if (distance_squared >= radius * radius)
+        return 0.0;
+    float distance = sqrt(distance_squared);
     if (distance < 1e-5)
         return 0.0;
     float elevation = dot(delta, normal);
     if (elevation <= bias) // behind (or on) the tangent plane
         return 0.0;
-    float falloff = clamp(radius / distance, 0.0, 1.0);
-    return clamp(elevation / distance, 0.0, 1.0) * falloff;
+    return clamp(elevation / distance, 0.0, 1.0);
 }
 
 void main() {

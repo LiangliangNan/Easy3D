@@ -124,8 +124,7 @@ namespace easy3d {
     /**
      * \brief Ground-truth ambient occlusion (GTAO), a horizon-based screen-space technique.
      * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
-     * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
-     *      geometry pass.
+     * \details The effect reads the scene depth of the projection buffer, so no geometry pass is needed.
      *
      *      Example usage:
      *          \code
@@ -183,6 +182,8 @@ namespace easy3d {
 
         /**
          * \brief Generates the ambient occlusion texture
+         * \details The models are drawn into an offscreen projection buffer (only its depth is
+         *      used), and the ambient occlusion term is returned without compositing.
          * \param models The models to be rendered
          * \return The ambient occlusion texture ID
          */
@@ -200,11 +201,6 @@ namespace easy3d {
          * \param h The height
          */
         void init(int w, int h);
-        /**
-         * \brief Performs the geometry pass
-         * \param models The models to be rendered
-         */
-        void geometry_pass(const std::vector< std::shared_ptr<Model> >& models);
         /**
          * \brief Performs the SSAO pass
          */
@@ -225,7 +221,6 @@ namespace easy3d {
         float	bias_;
 
         FramebufferObject*	projection_fbo_; ///< The framebuffer object for the projected scene
-        FramebufferObject*	geom_fbo_;  ///< The framebuffer object for geometry pass
         FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
 
         int width_;     ///< The projection buffer width

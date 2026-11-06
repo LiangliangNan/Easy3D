@@ -64,9 +64,11 @@ int main(int argc,char**) {
             for (unsigned width:{64u,81u}) {
                 const unsigned height=width;
 
-                // A near left half hides part of a farther right half.
+                // A near left half hides part of a farther right half. The depth
+                // jump stays inside the ambient-occlusion radius, since geometry
+                // beyond the spherical kernel must not occlude.
                 auto near=quad(-1,-1,0,1,-.5f,vec4(.8f,.8f,.8f,1));near.object_id=3;
-                auto far=quad(0,-1,1,1,-.2f,vec4(.8f,.8f,.8f,1));far.object_id=4;
+                auto far=quad(0,-1,1,1,-.35f,vec4(.8f,.8f,.8f,1));far.object_id=4;
                 const std::vector<DrawCommand> scene{near,far};
                 const auto base=device->render(width,height,scene,vec4(0),samples);
                 const auto occluded=device->render(width,height,shaded(scene,width,height),vec4(0),samples);

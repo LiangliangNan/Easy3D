@@ -3902,7 +3902,7 @@ aliases, backend-specific host filenames or new selection macros.
 
 | Existing classes/files | OpenGL | Vulkan |
 | --- | --- | --- |
-| `AmbientOcclusion` | Geometry pass, horizon-based GTAO fragment pass and normal-aware blur (batch 24) | Single-sample depth+ID prepass, GTAO and denoise compute dispatches, AO-texture composite overlay; `begin()/end()` publishes camera-keyed radius/bias/projection (batches 15, 24) |
+| `AmbientOcclusion` | Depth-only horizon-based GTAO fragment pass and normal-aware blur; a standalone `generate()` still draws the models into the projection buffer (batch 24) | Single-sample depth+ID prepass, GTAO and denoise compute dispatches, AO-texture composite overlay; `begin()/end()` publishes camera-keyed radius/bias/projection (batches 15, 24) |
 | `EyeDomeLighting` | Original implementation | Depth-based multiplicative overlay; camera-keyed near/far/scene size (batch 14) |
 | `Shadow`, `SoftShadow` | Original implementations | Depth-only light-space shadow map plus a PCSS full-screen overlay; `begin()/end()` publishes camera-keyed surfaces and frame parameters (batch 16) |
 | `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw straight-alpha triangles sorted far-to-near per drawable and per triangle (batch 18); true accumulation/peeling pending |
@@ -5596,8 +5596,14 @@ the sine of the highest elevation above the tangent plane on each side of the
 pixel. A slice contributes `1 - 0.5 * (h_left^2 + h_right^2)` of cosine-weighted
 visibility, and occluders behind the tangent plane are rejected by the bias.
 The horizon term is independent of the slice angle, so the two half-slices need
-no sign correction. The raw term is denoised by a 5x5 bilateral filter whose
-plane weight falls off with the distance from the center tangent plane.
+no sign correction. Samples are confined to a spherical kernel: a depth sample
+whose view-space distance from the center is at least the radius is rejected.
+The earlier `clamp(radius/distance)` range weight never reached zero, so
+geometry across a depth jump beyond the radius still contributed and showed up
+as dark strips along silhouettes at small radii (e.g. 0.1). Inside the sphere
+that weight was already one, so the hard cutoff loses nothing. The raw term is
+denoised by a 5x5 bilateral filter whose plane weight falls off with the
+distance from the center tangent plane.
 
 On Vulkan the effect needs a center-sample depth image, so a single-sample
 depth+ID prepass now runs whenever AO is active, even without multisampling;
@@ -5614,19 +5620,30 @@ using straight-alpha blending. The blurred image returns to
 back to `GENERAL` before the compute dispatches; validation is clean with the
 AO test.
 
-On OpenGL `ssao/ssao.frag` performs the same slices from the geometry pass
-position and normal buffers and `ssao/blur.frag` applies the same bilateral
-filter using those buffers, so the two backends agree without kernel or noise
-textures. The kernel and noise generation (`generate_noise`, the random
-includes and the associated members) are gone; the `AmbientOcclusion` API,
-`begin()/end()` contract and the `edl/edl_compose` composite are unchanged.
+On OpenGL `ssao/ssao.frag` performs the same slices from the depth texture of
+the projection buffer and `ssao/blur.frag` applies the same bilateral filter to
+the same reconstructed positions and normals, so the two backends agree without
+kernel or noise textures. The extra geometry pass and the two RGB32F
+position/normal targets are gone: one depth fetch replaces the ~24 bytes of
+G-buffer traffic per horizon step, which removes the second scene traversal that
+made the OpenGL path about six times slower than Vulkan. In bounded render-loop
+timing on this Mac, Tutorial 501 at 1600x1200 now completes 240 frames in about
+1.1 s on OpenGL and 4.7 s on Vulkan. `AmbientOcclusion::generate()` still
+renders the models into the projection buffer itself for callers that need a
+standalone AO texture (e.g. Mapple), now drawing them with their regular
+shaders since only the depth is consumed. The kernel and noise generation
+(`generate_noise`, the random includes and the associated members) are gone;
+the `AmbientOcclusion` API, `begin()/end()` contract and the
+`edl/edl_compose` composite are unchanged.
 Background pixels are returned as one and the OpenGL snapshot comparison shows
 pixel-identical background around the model.
 
 `vulkan.ambientocclusion` still checks untouched background and flat surfaces,
 darkened near silhouettes with untouched far sides, preserved alpha, one and
 four samples, AO with EDL and a depth preview, preserved IDs/depth, and
-rejection of invalid flags and parameters. Tutorial 501 renders on both
-backends. All 127 MoltenVK tests and all 91 OpenGL tests pass on this Mac at
-`-j2` (2026-11-06); the focused Vulkan AO test passes with validation and
-synchronization validation. `git diff --check` is clean.
+rejection of invalid flags and parameters. Its near/far quads now sit 0.15
+apart so the occluder stays inside the default 0.2 spherical kernel while the
+front-surface and flat-surface assertions keep their meaning. Tutorial 501
+renders on both backends. All 127 MoltenVK tests and all 91 OpenGL tests pass
+on this Mac at `-j2` (2026-11-06); the focused Vulkan AO test passes with
+validation and synchronization validation. `git diff --check` is clean.

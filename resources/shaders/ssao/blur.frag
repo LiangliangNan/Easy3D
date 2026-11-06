@@ -26,16 +26,17 @@
 
 #version 150
 
-// Edge-aware denoising of the ground-truth AO term. Taps that lie on a
-// different plane than the center pixel (measured against the view-space
-// position and normal) contribute almost nothing, so silhouettes and depth
-// discontinuities keep their contrast.
+// Edge-aware denoising of the ground-truth AO term. Positions and normals are
+// reconstructed from the scene depth, exactly as in the GTAO pass. Taps that
+// lie on a different plane than the center pixel contribute almost nothing, so
+// silhouettes and depth discontinuities keep their contrast.
+// The same filter runs on the Vulkan backend (ao_blur.comp).
 
 in vec2 TexCoords;
 
+uniform sampler2D scene_depth;
 uniform sampler2D ssaoInput;
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
+uniform mat4 invPROJ;
 
 uniform float radius;
 
@@ -43,27 +44,59 @@ out float FragColor;
 
 const int RADIUS = 2;
 
+vec3 view_position(vec2 coord, float depth) {
+    vec4 p = invPROJ * vec4(coord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    return p.xyz / p.w;
+}
+
+vec3 neighbor_position(vec2 coord, vec3 center, out bool valid) {
+    float depth = texture(scene_depth, coord).r;
+    valid = depth < 1.0;
+    return valid ? view_position(coord, depth) : center;
+}
+
+vec3 surface_normal(vec2 coord, vec3 center, vec2 texel) {
+    bool valid_left, valid_right, valid_up, valid_down;
+    vec3 left = neighbor_position(coord - vec2(texel.x, 0.0), center, valid_left);
+    vec3 right = neighbor_position(coord + vec2(texel.x, 0.0), center, valid_right);
+    vec3 up = neighbor_position(coord - vec2(0.0, texel.y), center, valid_up);
+    vec3 down = neighbor_position(coord + vec2(0.0, texel.y), center, valid_down);
+    const float far_away = 1e30;
+    float left_distance = valid_left ? abs(left.z - center.z) : far_away;
+    float right_distance = valid_right ? abs(right.z - center.z) : far_away;
+    float up_distance = valid_up ? abs(up.z - center.z) : far_away;
+    float down_distance = valid_down ? abs(down.z - center.z) : far_away;
+    vec3 dx = left_distance < right_distance ? center - left : right - center;
+    vec3 dy = up_distance < down_distance ? up - center : center - down;
+    vec3 normal = cross(dx, dy);
+    normal = dot(normal, normal) < 1e-20 ? -normalize(center) : normalize(normal);
+    return dot(normal, center) > 0.0 ? -normal : normal; // face the camera
+}
+
 void main() {
-    vec3 normal = texture(gNormal, TexCoords).rgb;
-    if (dot(normal, normal) < 1e-8) {
+    float depth = texture(scene_depth, TexCoords).r;
+    if (depth >= 1.0) { // the background is never darkened
         FragColor = 1.0;
         return;
     }
-    normal = normalize(normal);
-    vec3 center = texture(gPosition, TexCoords).xyz;
-    vec2 texel = 1.0 / vec2(textureSize(ssaoInput, 0));
+    vec3 center = view_position(TexCoords, depth);
+    vec2 size = vec2(textureSize(scene_depth, 0));
+    vec2 texel = 1.0 / size;
+    vec3 normal = surface_normal(TexCoords, center, texel);
 
+    float plane_tolerance = 0.05 * radius;
     float sum = 0.0, weight = 0.0;
     for (int y = -RADIUS; y <= RADIUS; ++y) {
         for (int x = -RADIUS; x <= RADIUS; ++x) {
             vec2 coord = TexCoords + vec2(x, y) * texel;
             if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0)
                 continue;
-            vec3 neighbor = texture(gNormal, coord).rgb;
-            if (dot(neighbor, neighbor) < 1e-8)
+            float neighbor_depth = texture(scene_depth, coord).r;
+            if (neighbor_depth >= 1.0)
                 continue; // background
-            float plane = abs(dot(texture(gPosition, coord).xyz - center, normal));
-            float w = exp(-float(x * x + y * y) / 8.0) * exp(-plane / (0.05 * radius));
+            vec3 neighbor = view_position(coord, neighbor_depth);
+            float plane = exp(-abs(dot(neighbor - center, normal)) / plane_tolerance);
+            float w = exp(-float(x * x + y * y) / 8.0) * plane;
             sum += texture(ssaoInput, coord).r * w;
             weight += w;
         }

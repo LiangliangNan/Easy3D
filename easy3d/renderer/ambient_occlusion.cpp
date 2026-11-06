@@ -100,14 +100,11 @@ namespace easy3d {
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/renderer/manipulator.h>
 
 
 //#define SNAPSHOT_BUFFER
@@ -120,7 +117,6 @@ namespace easy3d {
         , radius_(0.5f)
         , bias_(0.005f)
         , projection_fbo_(nullptr)
-        , geom_fbo_(nullptr)
         , ssao_fbo_(nullptr)
     {
     }
@@ -128,7 +124,6 @@ namespace easy3d {
 
     AmbientOcclusion::~AmbientOcclusion() {
         delete projection_fbo_;
-        delete geom_fbo_;
         delete ssao_fbo_;
 
 		easy3d_debug_log_gl_error
@@ -143,23 +138,16 @@ namespace easy3d {
         if (projection_fbo_ == nullptr) {
             projection_fbo_ = new FramebufferObject(w, h, 0);
             projection_fbo_->add_color_texture();
-            projection_fbo_->add_depth_texture();
+            // Positions and normals are reconstructed from this depth buffer, so
+            // no additional geometry pass is needed.
+            projection_fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F);
         }
         projection_fbo_->ensure_size(w, h);
 
         // Liangliang: using multsamples (i.e., 4) causes black screen in my macbook laptop.
         //             the bad call is at glReadPixels() with GL_UNSIGNED_BYTE.
-        static int samples = 0;
-        if (geom_fbo_ == nullptr) {
-            geom_fbo_ = new FramebufferObject(w, h, samples);
-            geom_fbo_->add_depth_buffer(GL_DEPTH32F_STENCIL8);
-            geom_fbo_->add_color_texture(GL_RGB32F, GL_RGB, GL_FLOAT, GL_LINEAR); // position
-            geom_fbo_->add_color_texture(GL_RGB32F, GL_RGB, GL_FLOAT, GL_LINEAR); // normal
-        }
-        geom_fbo_->ensure_size(w, h);
-
         if (ssao_fbo_ == nullptr) {
-            ssao_fbo_ = new FramebufferObject(w, h, samples);
+            ssao_fbo_ = new FramebufferObject(w, h, 0);
             ssao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for ssao result
             ssao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for blur result
         }
@@ -167,12 +155,10 @@ namespace easy3d {
     }
 
 
-    void AmbientOcclusion::begin(const std::vector< std::shared_ptr<Model> >& models) {
+    void AmbientOcclusion::begin(const std::vector< std::shared_ptr<Model> >&) {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         init(viewport[2], viewport[3]);
-
-        geometry_pass(models);
 
         projection_fbo_->bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -196,7 +182,21 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         init(viewport[2], viewport[3]);
 
-        geometry_pass(models);
+        // Only the depth of this buffer is used, so the models are drawn with
+        // their regular shaders.
+        projection_fbo_->bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (auto model : models) {
+            if (!model->renderer()->is_visible())
+                continue;
+            for (auto d : model->renderer()->triangles_drawables())
+                if (d->is_visible()) d->draw(camera_);
+            for (auto d : model->renderer()->lines_drawables())
+                if (d->is_visible()) d->draw(camera_);
+            for (auto d : model->renderer()->points_drawables())
+                if (d->is_visible()) d->draw(camera_);
+        }
+        projection_fbo_->release();
 
         ssao_pass();
 
@@ -209,84 +209,6 @@ namespace easy3d {
     unsigned int AmbientOcclusion::ssao_texture() const {
          return ssao_fbo_->color_texture(1);
     }
-
-
-    void AmbientOcclusion::geometry_pass(const std::vector< std::shared_ptr<Model> >& models) {
-        static const std::string name = "ssao/geometry_pass";
-        ShaderProgram* program = ShaderManager::get_program(name);
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
-            };
-            std::vector<std::string> outputs;
-            outputs.emplace_back("gPosition");
-            outputs.emplace_back("gNormal");
-            program = ShaderManager::create_program_from_files(name, attributes, outputs);
-        }
-        if (!program)
-            return;
-
-        geom_fbo_->bind(); easy3d_debug_log_gl_error
-        geom_fbo_->activate_draw_buffers(0, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        const mat4& MV = camera_->modelViewMatrix();
-        const mat4& PROJ = camera_->projectionMatrix();
-
-        program->bind();
-        program->set_uniform("MV", MV);
-        program->set_uniform("invMV", transform::normal_matrix(MV));
-        program->set_uniform("PROJ", PROJ);
-
-        for (auto model : models) {
-            if (model->renderer()->is_visible()) {
-                // transformation introduced by manipulation
-                const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-                // needs be padded when using uniform blocks
-                const mat3 NORMAL = transform::normal_matrix(MANIP);
-
-                program->set_uniform("MANIP", MANIP)
-                        ->set_uniform("NORMAL", NORMAL);
-
-#if 0
-                // Liangliang: SSAO is disabled for points drawables because the shader "ssao/geometry_pass" requires normal information, 
-                //             while normal informaiton is not always available for points drawables (e.g., points without normals, and 
-                //             the "locks" drawable for non-manifold vertices.
-                for (auto d : model->renderer()->points_drawables()) {
-                    if (d->is_visible()) {
-                        ClippingPlane::instance()->set_program(program);
-                        d->gl_draw(); easy3d_debug_log_gl_error
-                    }
-                }
-#endif
-                for (auto d : model->renderer()->triangles_drawables()) {
-                    if (d->is_visible()) {
-                        ClippingPlane::instance()->set_program(program);
-                        ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                        program->set_uniform("smooth_shading", d->smooth_shading());
-                        d->gl_draw(); easy3d_debug_log_gl_error
-                    }
-                }
-                for (auto d : model->renderer()->lines_drawables()) {
-                    if (d->is_visible()) {
-                        ClippingPlane::instance()->set_program(program);
-                        ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                        d->gl_draw(); easy3d_debug_log_gl_error
-                    }
-                }
-            }
-        }
-
-        program->release();
-        geom_fbo_->release(); easy3d_debug_log_gl_error
-
-#ifdef SNAPSHOT_BUFFER
-        geom_fbo_->snapshot_color_ppm(0, "ssao_gPosition.ppm");
-        geom_fbo_->snapshot_color_ppm(1, "ssao_gNormal.ppm");
-#endif
-
-	}
 
 
     void AmbientOcclusion::ssao_pass() {
@@ -308,12 +230,11 @@ namespace easy3d {
 
         program->bind(); easy3d_debug_log_gl_error
 
-        const mat4& PROJ = camera_->projectionMatrix();
-        program->set_uniform("PROJ", PROJ);
+        program->set_uniform("invPROJ", inverse(camera_->projectionMatrix()));
+        program->set_uniform("PROJ", camera_->projectionMatrix());
         program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
         program->set_uniform("bias", bias_);
-        program->bind_texture("gPosition", geom_fbo_->color_texture(0), 0);	// position
-        program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);	// normal
+        program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
 
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         easy3d_debug_log_gl_error
@@ -323,7 +244,7 @@ namespace easy3d {
         ssao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFER
-        ssao_fbo_->snapshot_color_ppm(0, "ssao_ssao.ppm");
+        ssao_fbo_->snapshot_color(0, "/tmp/ssao_raw.png");
 #endif
      }
 
@@ -346,17 +267,17 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_log_gl_error
 
         program->bind(); easy3d_debug_log_gl_error
+        program->set_uniform("invPROJ", inverse(camera_->projectionMatrix()));
         program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
-        program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 0);
-        program->bind_texture("gPosition", geom_fbo_->color_texture(0), 1);
-        program->bind_texture("gNormal", geom_fbo_->color_texture(1), 2);
+        program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
+        program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 1);
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFER
-        ssao_fbo_->snapshot_color_ppm(1, "ssao_blur.ppm");
+        ssao_fbo_->snapshot_color(1, "/tmp/ssao_blur.png");
 #endif
     }
 

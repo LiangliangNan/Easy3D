@@ -194,8 +194,6 @@ set(${module}_resources
         # ssao
         ../../resources/shaders/ssao/blur.vert
         ../../resources/shaders/ssao/blur.frag
-        ../../resources/shaders/ssao/geometry_pass.vert
-        ../../resources/shaders/ssao/geometry_pass.frag
         ../../resources/shaders/ssao/ssao.vert
         ../../resources/shaders/ssao/ssao.frag
         # transparency
@@ -224,7 +222,15 @@ endif()
 list(APPEND renderer_headers ${backend_headers})
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
-if(NOT Easy3D_ENABLE_VULKAN)
+
+if(Easy3D_ENABLE_VULKAN)
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN)
+    target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan" ${Vulkan_INCLUDE_DIRS})
+    if(UNIX)
+        # Optional last-resort lookup hint, never a load-time dependency or rpath.
+        target_compile_definitions(easy3d_renderer PRIVATE EASY3D_VULKAN_LOADER_HINT="$<TARGET_FILE:Vulkan::Vulkan>")
+    endif()
+else ()
     target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
     target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
 
@@ -243,20 +249,14 @@ if(NOT Easy3D_ENABLE_VULKAN)
     target_link_libraries(easy3d_${module} PUBLIC ${FOUND_GL_LIBRARIES})
 endif()
 
-if(Easy3D_ENABLE_VULKAN)
-    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN)
-    target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan" ${Vulkan_INCLUDE_DIRS})
-    if(UNIX)
-        # Optional last-resort lookup hint, never a load-time dependency or rpath.
-        target_compile_definitions(easy3d_renderer PRIVATE EASY3D_VULKAN_LOADER_HINT="$<TARGET_FILE:Vulkan::Vulkan>")
-    endif()
-    install(FILES backends/vulkan/surface.h
-        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/vulkan")
-endif()
-install_module(${module})
-if(NOT Easy3D_ENABLE_VULKAN)
-# Install glew.h to the installation directory
-install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
-        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")
 
+install_module(${module})
+if(Easy3D_ENABLE_VULKAN)
+    # Install surface.h to the installation directory
+    install(FILES backends/vulkan/surface.h
+            DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/vulkan")
+else ()
+    # Install glew.h to the installation directory
+    install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
+            DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")
 endif()
