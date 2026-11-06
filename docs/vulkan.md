@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias and one shared snapshot implementation in `snapshot.cpp` (batch 23); remaining mesh raster parity and native GUI integration remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), and Python coverage of mesh drawable state (batch 25, including unlit highlight parity); remaining mesh raster parity and native GUI integration remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). Remaining mesh raster parity, Mapple, Qt/wx and Python coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25). Remaining mesh raster parity, Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -961,7 +961,7 @@ cause.
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
-| Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. |
+| Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. As in the OpenGL `surface.frag`, selection tints unlit draws but primitive ranges require lighting. |
 | Resource scheduling | Synchronous capture/uploads and one submitted frame at a time; presentation stays on the GPU with no CPU pixel readback. Per-image presentation semaphores; queue/device idle only at swapchain recreation and destruction. Multiple frames in flight and asynchronous capture are pending. |
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
@@ -1587,12 +1587,15 @@ Renderer/drawable selection and `State::highlight_range()` are now supported by
 the native scene adapter. It marks each primitive's corners with the shared
 `setting::highlight_color` RGB and mixes after texture sampling and basic native
 lighting. Selected models/drawables use strength 0.6; inclusive highlighted
-primitive ranges use 0.8; overlapping selection/range yields 0.92. Invalid/empty
-ranges select nothing. These are RGB tints: alpha, depth, silhouette coverage and
-object/primitive IDs remain unchanged. Triangle, native/large point, sphere,
-surfel, native/wide line, cylinder and cone paths all support them. Geometry
-snapshots are rebuilt only when relevant geometry/coloring/highlight state
-changes. Low-level clients can set `graphics::Vertex::highlight` consistently on
+primitive ranges use 0.8; overlapping selection/range yields 0.92. Range
+highlighting is applied only while lighting is enabled, matching the OpenGL
+`surface.frag` early return for unlit draws; selection still tints unlit draws.
+Invalid/empty ranges select nothing. These are RGB tints: alpha, depth,
+silhouette coverage and object/primitive IDs remain unchanged. Triangle,
+native/large point, sphere, surfel, native/wide line, cylinder and cone paths
+all support them. Geometry snapshots are rebuilt only when relevant
+geometry/coloring/highlight state or (for selected/highlighted drawables) the
+lighting flag changes. Low-level clients can set `graphics::Vertex::highlight` consistently on
 all corners of a primitive; its default strength is zero and overlays ignore it.
 No new optional device feature or push-constant space is required.
 
@@ -5647,3 +5650,42 @@ front-surface and flat-surface assertions keep their meaning. Tutorial 501
 renders on both backends. All 127 MoltenVK tests and all 91 OpenGL tests pass
 on this Mac at `-j2` (2026-11-06); the focused Vulkan AO test passes with
 validation and synchronization validation. `git diff --check` is clean.
+
+### 2026-11-06 — W10 batch 25: Python mesh drawable-state coverage
+
+`tests/python/rendering.py` now exercises mesh rendering state through the
+packaged module on both backends. A two-triangle OFF fixture places one
+front-facing and one back-facing triangle side by side in the plane the default
+camera faces; each triangle has its own vertices so normals and primitive
+indices stay independent. Two interior probe points are projected with
+`Viewer.project_point()`, verified with `point_under_pixel()` and then looked up
+in the snapshot through the logical-to-framebuffer scale (2x on this Mac), so
+the test does not assume that the two backends frame the model identically.
+The probe points sit in the upper half of the viewport, clear of the lower-left
+orientation-axes HUD that Vulkan file snapshots include by design (batch 23).
+
+The sequence checks uniform unlit color; selection tinting without lighting;
+that primitive-range highlighting is ignored without lighting; that two-sided
+lighting with a distinct back color reaches exactly the back-facing side;
+that inclusive ranges tint the rasterized primitive order (range 0 and range 1
+each change one triangle); that clearing the highlight restores the exact
+baseline image; that whole-drawable selection changes both probes; and that a
+hidden drawable leaves the background and reports no pick. The exception is
+the range-highlight rule: Vulkan previously baked the combined
+selection/range strength into the face vertices regardless of lighting, so an
+unlit drawable with an active range was tinted, while the OpenGL reference
+applies ranges only in the lit branch of `surface.frag`. The Vulkan per-vertex
+marking now includes the range strength only when lighting is enabled, and the
+geometry cache keys on the lighting flag for selected/highlighted drawables.
+
+The Python test passes against the OpenGL and Vulkan packaged modules on this
+Mac; all 91 OpenGL tests and all 127 MoltenVK tests pass at `-j2`.
+`git diff --check` is clean.
+
+One cross-backend difference surfaced while choosing the probes and is left
+for a follow-up decision: Vulkan file snapshots include the viewer 3D/2D HUD
+(`viewer_3d_overlays`, `viewer_overlays`) when `snapshot_hud_` is true, while
+the OpenGL file snapshot renders the scene, guides and camera-path annotations
+without the `post_draw()` HUD. `Viewer::capture()` includes the HUD on both
+backends. The Python test avoids the HUD region instead of encoding either
+policy.

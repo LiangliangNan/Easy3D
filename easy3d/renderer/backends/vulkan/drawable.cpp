@@ -22,7 +22,7 @@ struct DrawableRenderer::Impl {
         bool use_colors = false;
         bool flat_shading = false;
         bool textured = false;
-        bool selected = false, highlighted = false;
+        bool selected = false, highlighted = false, lighting = false;
         std::pair<int,int> highlight_range = {-1,-1};
         vec4 highlight_color = vec4(0);
         float repeat = 1;
@@ -139,6 +139,7 @@ struct DrawableRenderer::Impl {
             entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
             entry.textured != textured || (textured && entry.repeat != repeat) ||
             entry.selected != selected || entry.highlighted != highlighted ||
+            ((selected || highlighted) && entry.lighting != d.lighting()) ||
             entry.highlight_range != d.highlight_range() || entry.highlight_color != setting::highlight_color) {
             const auto n = buffers.vertices.size();
             if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
@@ -201,13 +202,15 @@ struct DrawableRenderer::Impl {
                 for (size_t i=0;i<count;++i) {
                     marked[i]=source[indices.empty() ? i : indices[i]];
                     float strength=selected ? 0.6f : 0;
-                    if (highlighted && range.first>=0 && i/stride>=size_t(range.first) &&
+                    // The OpenGL reference applies primitive-range highlighting only
+                    // in the lit branch of surface.frag; unlit draws keep selection.
+                    if (d.lighting() && highlighted && range.first>=0 && i/stride>=size_t(range.first) &&
                         range.second>=range.first && i/stride<=size_t(range.second)) strength=0.8f+0.2f*strength;
                     marked[i].highlight=vec4(setting::highlight_color.x,setting::highlight_color.y,setting::highlight_color.z,strength);
                 }
                 geometry=std::make_shared<graphics::Geometry>(std::move(marked),std::vector<uint32_t>{},topology,std::vector<uint32_t>{},entry.points);
             }
-            entry.selected=selected; entry.highlighted=highlighted;
+            entry.selected=selected; entry.highlighted=highlighted; entry.lighting=d.lighting();
             entry.highlight_range=d.highlight_range(); entry.highlight_color=setting::highlight_color;
             entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry;
             entry.use_colors = use_colors; entry.flat_shading = flat_shading;

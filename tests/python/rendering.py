@@ -37,6 +37,106 @@ def add_triangle(host, path):
     return model
 
 
+def check_mesh_states(directory):
+    # One front-facing and one back-facing triangle side by side in the plane
+    # the default camera looks at. Both use their own vertices so normals and
+    # primitive indices stay independent.
+    path = directory / "two_faces.off"
+    path.write_text("OFF\n6 2 0\n"
+                    "0 -0.9 -0.6\n0 -0.9 0.6\n0 -0.3 0\n"
+                    "0 0.3 -0.6\n0 0.3 0.6\n0 0.9 0\n"
+                    "3 0 1 2\n3 3 5 4\n")
+    viewer = easy3d.Viewer("Python mesh state", width=181, height=151, samples=1, visible=False)
+    viewer.set_usage("")
+    viewer.set_background_color(easy3d.vec4(0, 0, 0, 1))
+    model = viewer.add_model(str(path))
+    faces = model.renderer().get_triangles_drawable("faces")
+    assert faces is not None
+    faces.set_uniform_coloring(easy3d.vec4(0, 0, 1, 1))
+    faces.set_material(easy3d.State.Material(easy3d.vec4(0, 0, 0, 0), easy3d.vec4(0, 0, 0, 0), 1))
+    faces.set_smooth_shading(True)
+    assert viewer.run_frames(1) == 0
+
+    def probes(name, visible=True):
+        image = directory / name
+        assert viewer.snapshot(str(image), 1, 1, 0, True)
+        w, h, pixel = bitmap(image)
+        scale_x, scale_y = w / viewer.width(), h / viewer.height()
+
+        def probe(model_y, model_z):
+            screen = viewer.project_point(easy3d.vec3(0, model_y, model_z))
+            x, y = int(round(screen.x)), int(round(screen.y))
+            point, found = viewer.point_under_pixel(x, y)
+            assert found == visible and (not found or abs(point.x) < 1e-4)
+            return pixel(int(round(x * scale_x)), int(round(y * scale_y)))
+
+        # Symmetric interior points of the two triangles. The upper half of the
+        # viewport keeps them clear of the lower-left orientation-axes HUD, which
+        # Vulkan file snapshots include by design.
+        return probe(-0.8, 0.3), probe(0.4, 0.3)
+
+    def blue(p):
+        return p[2] > 60 and p[2] > 2 * p[0] and p[2] > 2 * p[1]
+
+    def green(p):
+        return p[1] > 60 and p[1] > 2 * p[0] and p[1] > 2 * p[2]
+
+    # Unlit rendering is the exact uniform color: back-face color is ignored.
+    faces.set_lighting(False)
+    faces.set_distinct_back_color(True)
+    faces.set_back_color(easy3d.vec4(0, 1, 0, 1))
+    unlit = probes("state_unlit.bmp")
+    assert unlit == ((0, 0, 255), (0, 0, 255))
+
+    # Selection applies without lighting, but primitive-range highlighting needs
+    # lighting (the OpenGL reference applies it after lighting).
+    faces.set_selected(True)
+    unlit_selected = probes("state_unlit_selected.bmp")
+    assert unlit_selected[0] != unlit[0] and unlit_selected[1] != unlit[1]
+    faces.set_selected(False)
+    faces.set_highlight(True)
+    faces.set_highlight_range((0, 1))
+    assert probes("state_unlit_range.bmp") == unlit
+    faces.set_highlight(False)
+    faces.set_highlight_range((-1, -1))
+
+    # Lighting: the distinct back color must reach exactly the back-facing side.
+    faces.set_lighting(True)
+    faces.set_lighting_two_sides(True)
+    back = probes("state_back.bmp")
+    assert (blue(back[0]) and green(back[1])) or (green(back[0]) and blue(back[1]))
+    faces.set_distinct_back_color(False)
+    assert all(blue(p) for p in probes("state_front.bmp"))
+    faces.set_distinct_back_color(True)
+
+    # Range highlighting follows rasterized primitive order: each range tints one
+    # triangle and leaves the other untouched.
+    faces.set_highlight(True)
+    faces.set_highlight_range((0, 0))
+    first = probes("state_range0.bmp")
+    assert (first[0] != back[0]) != (first[1] != back[1])
+    faces.set_highlight_range((1, 1))
+    second = probes("state_range1.bmp")
+    assert (second[0] != back[0]) != (second[1] != back[1])
+    assert (first[0] == back[0]) != (second[0] == back[0])
+    faces.set_highlight_range((-1, -1))
+    faces.set_highlight(False)
+    assert probes("state_clear.bmp") == back
+
+    # Whole-drawable selection and visibility keep depth/IDs unchanged.
+    faces.set_selected(True)
+    selected = probes("state_selected.bmp")
+    assert selected[0] != back[0] and selected[1] != back[1]
+    faces.set_selected(False)
+    assert probes("state_unselected.bmp") == back
+    faces.set_visible(False)
+    assert probes("state_hidden.bmp", False) == ((0, 0, 0), (0, 0, 0))
+    faces.set_visible(True)
+    assert probes("state_visible.bmp") == back
+    viewer.clear_scene()
+    del viewer
+
+
 class Window(easy3d.Viewer):
     def __init__(self):
         super().__init__("Python Viewer", width=181, height=151, samples=4, visible=False)
@@ -148,6 +248,9 @@ with tempfile.TemporaryDirectory(prefix="easy3d-python-") as directory:
     assert (w, h) == (101, 77) and pixel(w // 2, h // 2) == (255, 0, 0)
     assert offscreen.delete_model(model) and not offscreen.models()
     assert model.n_vertices() == 3
+
+    check_mesh_states(root)
+
     override = DrawOverride()
     override.set_usage("")
     assert override.run_frames(2) == 0 and override.draws == 2
