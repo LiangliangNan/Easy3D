@@ -32,6 +32,8 @@ namespace easy3d { namespace graphics { namespace {
 #include "depth_texture_frag.inc"
 #include "edl_frag.inc"
 #include "ssao_frag.inc"
+#include "ao_gtao_comp.inc"
+#include "ao_blur_comp.inc"
 #include "shadow_vert.inc"
 #include "shadow_frag.inc"
 #include "shadow_depth_frag.inc"
@@ -723,6 +725,10 @@ struct Target {
         if (samples == 1) {
             VkImageView views[] = {color.view, ids.view, depth.view, hud_depth.view};
             create_framebuffer(color_pass.handle, views, color_pass.independent_depth ? 4 : 3, framebuffer);
+            if (id_pass) { // ambient occlusion resolves the center-sample depth first
+                VkImageView picking_views[] = {ids.view, depth.view};
+                create_framebuffer(id_pass->handle, picking_views, 2, id_framebuffer);
+            }
         } else {
             multisample_color.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, color_pass.samples);
@@ -736,6 +742,18 @@ struct Target {
     }
 };
 
+struct AoParameters { float projection[16], inverse_projection[16], shape[4]; };
+// Screen-space ambient occlusion computed from a depth prepass: two compute
+// dispatches produce the horizon-based term and its bilateral denoise.
+struct Ao {
+    Context& c;
+    std::unique_ptr<GpuImage> raw, blurred;
+    Buffer parameters;
+    VkDescriptorSet set = VK_NULL_HANDLE;
+    uint32_t width = 0, height = 0;
+    bool initialized = false;
+    explicit Ao(Context& context) : c(context), parameters(context) {}
+};
 struct GpuVertex {
     float position[3], normal[3], color[4], texcoord[2], highlight[4];
     uint32_t primitive;
@@ -989,6 +1007,13 @@ class VulkanDevice final : public RenderDevice {
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     VkSampler samplers_[4] = {};
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout ao_descriptors_ = VK_NULL_HANDLE;
+    VkPipelineLayout ao_layout_ = VK_NULL_HANDLE;
+    VkPipeline ao_horizons_ = VK_NULL_HANDLE, ao_denoise_ = VK_NULL_HANDLE;
+    std::unique_ptr<Ao> ao_;
+    bool ao_active_ = false;
+    mat4 ao_projection_ = mat4::identity();
+    float ao_radius_ = 0.5f, ao_bias_ = 0.005f;
     std::unique_ptr<Target> target_, pixel_target_;
     std::unique_ptr<ShadowMap> shadow_map_;
     uint32_t shadow_bound_size_ = 0;
@@ -1036,6 +1061,11 @@ public:
         if (c_.device) c_.vkDeviceWaitIdle(c_.device);
         swapchain_.reset(); target_.reset(); pixel_target_.reset(); shadow_map_.reset(); geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
+        ao_.reset();
+        if (ao_horizons_) c_.vkDestroyPipeline(c_.device, ao_horizons_, nullptr);
+        if (ao_denoise_) c_.vkDestroyPipeline(c_.device, ao_denoise_, nullptr);
+        if (ao_layout_) c_.vkDestroyPipelineLayout(c_.device, ao_layout_, nullptr);
+        if (ao_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, ao_descriptors_, nullptr);
         if (layout_) c_.vkDestroyPipelineLayout(c_.device, layout_, nullptr);
         for (auto sampler : samplers_) if (sampler) c_.vkDestroySampler(c_.device, sampler, nullptr);
         if (descriptor_pool_) c_.vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
@@ -1123,7 +1153,7 @@ public:
                   VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties), "query MSAA target support");
             sample_counts_ &= properties.sampleCounts;
         }
-        create_descriptors(); create_layout(); color_pass(1);
+        create_descriptors(); create_layout(); create_ao_pipelines(); color_pass(1);
     }
     void require_samples(unsigned samples) const {
         if (!samples || samples > 64 || (samples & (samples - 1)))
@@ -1149,26 +1179,91 @@ public:
         }
         return *id_pass_;
     }
+    void create_ao_pipelines() {
+        VkDescriptorSetLayoutBinding binding[5] = {};
+        const VkDescriptorType types[5] = {
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER};
+        for (unsigned i = 0; i < 5; ++i) {
+            binding[i].binding = i; binding[i].descriptorType = types[i];
+            binding[i].descriptorCount = 1; binding[i].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+        }
+        VkDescriptorSetLayoutCreateInfo li{};
+        li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        li.bindingCount = 5; li.pBindings = binding;
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &ao_descriptors_), "create ambient-occlusion descriptor layout");
+        VkPipelineLayoutCreateInfo pi{};
+        pi.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pi.setLayoutCount = 1; pi.pSetLayouts = &ao_descriptors_;
+        check(c_.vkCreatePipelineLayout(c_.device, &pi, nullptr, &ao_layout_), "create ambient-occlusion pipeline layout");
+        VkShaderModule modules[2] = {};
+        try {
+            VkShaderModuleCreateInfo mi{};
+            mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            mi.codeSize = sizeof(ao_gtao_comp); mi.pCode = ao_gtao_comp;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create ambient-occlusion horizon shader");
+            mi.codeSize = sizeof(ao_blur_comp); mi.pCode = ao_blur_comp;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create ambient-occlusion blur shader");
+            VkComputePipelineCreateInfo ci{};
+            ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+            ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT; ci.stage.pName = "main";
+            ci.layout = ao_layout_;
+            ci.stage.module = modules[0];
+            check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &ao_horizons_), "create ambient-occlusion horizon pipeline");
+            ci.stage.module = modules[1];
+            check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &ao_denoise_), "create ambient-occlusion blur pipeline");
+        } catch (...) {
+            for (auto module : modules) if (module) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+            throw;
+        }
+        for (auto module : modules) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+    }
+    void ensure_ao(uint32_t width, uint32_t height) {
+        if (!ao_) {
+            ao_.reset(new Ao(c_));
+            VkDescriptorSetAllocateInfo ai{};
+            ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &ao_descriptors_;
+            check(c_.vkAllocateDescriptorSets(c_.device, &ai, &ao_->set), "allocate ambient-occlusion descriptors");
+            ao_->parameters.init(sizeof(AoParameters), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+        }
+        if (ao_->width == width && ao_->height == height) return;
+        VkFormatProperties properties;
+        c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R32_SFLOAT, &properties);
+        if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
+            throw std::runtime_error("ambient occlusion requires R32F storage images");
+        ao_->raw.reset(new GpuImage(c_));
+        ao_->raw->init(width, height, VK_FORMAT_R32_SFLOAT,
+                       VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+        ao_->blurred.reset(new GpuImage(c_));
+        ao_->blurred->init(width, height, VK_FORMAT_R32_SFLOAT,
+                           VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+        ao_->width = width; ao_->height = height; ao_->initialized = false;
+    }
     void create_descriptors() {
-        VkDescriptorSetLayoutBinding binding[2] = {};
-        for (unsigned i = 0; i < 2; ++i) {
+        VkDescriptorSetLayoutBinding binding[3] = {};
+        for (unsigned i = 0; i < 3; ++i) {
             binding[i].binding = i; binding[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             binding[i].descriptorCount = 1; binding[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         }
         VkDescriptorSetLayoutCreateInfo li{};
         li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        li.bindingCount = 2; li.pBindings = binding;
+        li.bindingCount = 3; li.pBindings = binding;
         check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &descriptors_), "create descriptor layout");
         binding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
         binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         li.bindingCount = 1; li.pBindings = &binding[0];
         check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_), "create impostor descriptor layout");
-        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2052},
-                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1}};
+        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2056},
+                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1},
+                                        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4},
+                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pi.maxSets = 1032; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
+        pi.maxSets = 1033; pi.poolSizeCount = 4; pi.pPoolSizes = sizes;
         check(c_.vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1704,6 +1799,15 @@ public:
             if (it->second->source.expired()) it = textures_.erase(it); else ++it;
         }
         if (!pixel_query) {
+            ao_active_ = false;
+            for (const auto& command : commands) {
+                if (!command.ambient_occlusion) continue;
+                ao_active_ = true;
+                ao_projection_ = command.projection;
+                ao_radius_ = command.color.x; ao_bias_ = command.color.y;
+                break;
+            }
+            if (ao_active_) ensure_ao(width, height);
             unsigned shadow_size = 0;
             for (const auto& command : commands)
                 if ((command.shadow || command.shadow_caster || command.shadow_background) &&
@@ -1724,15 +1828,19 @@ public:
                 [](const DrawCommand& d) {return d.overlay_independent_depth;});
             const bool depth_preview = std::any_of(commands.begin(),commands.end(),
                 [](const DrawCommand& d) {return d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow;});
+            // Ambient occlusion resolves depth in a pre-pass, so it needs the
+            // single-sample picking target even without multisampling.
+            const bool needs_ids = samples > 1 || ao_active_;
             if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
-                target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
+                target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview ||
+                (target_->id_pass != nullptr) != needs_ids) {
                 if (depth_preview) {
                     VkFormatProperties properties;c_.vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
                     if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
                         throw std::runtime_error("scene depth preview requires sampleable D32 depth");
                 }
                 auto& pass = color_pass(samples,independent_depth,depth_preview);
-                auto* picking = samples == 1 ? nullptr : &picking_pass();
+                auto* picking = needs_ids ? &picking_pass() : nullptr;
                 std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
                 target->init(); target_ = std::move(target);
             }
@@ -1741,17 +1849,18 @@ public:
                 VkDescriptorSetAllocateInfo ai{};ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
                 ai.descriptorPool=descriptor_pool_;ai.descriptorSetCount=1;ai.pSetLayouts=&descriptors_;
                 check(c_.vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
-                VkDescriptorImageInfo images[2] = {
+                VkDescriptorImageInfo images[3] = {
                     {samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
                     {samplers_[1],shadow_map_?shadow_map_->image.view:target_->depth.view,
-                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
-                VkWriteDescriptorSet write[2] = {};
-                for (unsigned i=0;i<2;++i) {
+                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
+                    {samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
+                VkWriteDescriptorSet write[3] = {};
+                for (unsigned i=0;i<3;++i) {
                     write[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                     write[i].dstSet=target_->depth_set;write[i].dstBinding=i;write[i].descriptorCount=1;
                     write[i].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write[i].pImageInfo=&images[i];
                 }
-                c_.vkUpdateDescriptorSets(c_.device,2,write,0,nullptr);
+                c_.vkUpdateDescriptorSets(c_.device,3,write,0,nullptr);
                 shadow_bound_size_ = shadow_map_ ? shadow_map_->size : 0;
             } else if (depth_preview && shadow_map_ && shadow_bound_size_ != shadow_map_->size) {
                 VkDescriptorImageInfo image={samplers_[1],shadow_map_->image.view,
@@ -1761,6 +1870,42 @@ public:
                 write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&image;
                 c_.vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
                 shadow_bound_size_ = shadow_map_->size;
+            }
+            if (ao_active_) {
+                AoParameters parameters{};
+                const mat4 inverse_projection = inverse(ao_projection_);
+                for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row) {
+                    parameters.projection[col*4+row] = ao_projection_(row,col);
+                    parameters.inverse_projection[col*4+row] = inverse_projection(row,col);
+                }
+                parameters.shape[0] = ao_radius_; parameters.shape[1] = ao_bias_;
+                parameters.shape[2] = float(width); parameters.shape[3] = float(height);
+                ao_->parameters.transfer(&parameters, sizeof(parameters), true);
+
+                // The composite samples the denoised term from the depth set.
+                VkDescriptorImageInfo composite{samplers_[0], ao_->blurred->view,
+                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+                VkWriteDescriptorSet write{};write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write.dstSet=target_->depth_set;write.dstBinding=2;write.descriptorCount=1;
+                write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&composite;
+                c_.vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
+
+                VkDescriptorImageInfo depth{samplers_[0], target_->depth.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+                VkDescriptorImageInfo raw_sampled{samplers_[0], ao_->raw->view, VK_IMAGE_LAYOUT_GENERAL};
+                VkDescriptorImageInfo raw_storage{VK_NULL_HANDLE, ao_->raw->view, VK_IMAGE_LAYOUT_GENERAL};
+                VkDescriptorImageInfo blurred_storage{VK_NULL_HANDLE, ao_->blurred->view, VK_IMAGE_LAYOUT_GENERAL};
+                VkDescriptorBufferInfo buffer{ao_->parameters.handle, 0, sizeof(AoParameters)};
+                VkWriteDescriptorSet writes[5] = {};
+                for (unsigned i=0;i<5;++i) {
+                    writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    writes[i].dstSet=ao_->set;writes[i].dstBinding=i;writes[i].descriptorCount=1;
+                }
+                writes[0].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;writes[0].pImageInfo=&depth;
+                writes[1].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;writes[1].pImageInfo=&raw_storage;
+                writes[2].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;writes[2].pImageInfo=&raw_sampled;
+                writes[3].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;writes[3].pImageInfo=&blurred_storage;
+                writes[4].descriptorType=VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;writes[4].pBufferInfo=&buffer;
+                c_.vkUpdateDescriptorSets(c_.device,5,writes,0,nullptr);
             }
         }
         const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));
@@ -2063,28 +2208,75 @@ public:
         }
         c_.vkCmdEndRenderPass(cmd);
     }
+    void dispatch_ao(VkCommandBuffer cmd) {
+        const auto color = VK_IMAGE_ASPECT_COLOR_BIT;
+        const auto general = VK_IMAGE_LAYOUT_GENERAL;
+        if (!ao_->initialized) {
+            image_barrier(c_, cmd, ao_->raw->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
+                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, VK_ACCESS_SHADER_WRITE_BIT);
+            image_barrier(c_, cmd, ao_->blurred->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
+                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, VK_ACCESS_SHADER_WRITE_BIT);
+            ao_->initialized = true;
+        } else {
+            image_barrier(c_, cmd, ao_->raw->handle, color, general, general,
+                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                          VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT);
+            // The previous frame left the denoised image readable by the composite.
+            image_barrier(c_, cmd, ao_->blurred->handle, color, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, general,
+                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                          VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT);
+        }
+        const uint32_t groups_x = (ao_->width + 7) / 8, groups_y = (ao_->height + 7) / 8;
+        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_layout_, 0, 1, &ao_->set, 0, nullptr);
+        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_horizons_);
+        c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
+        image_barrier(c_, cmd, ao_->raw->handle, color, general, general,
+                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                      VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_denoise_);
+        c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
+        image_barrier(c_, cmd, ao_->blurred->handle, color, general, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                      VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+        if (target_->samples == 1) {
+            // The color pass rewrites the depth attachment; order it after the
+            // compute reads instead of discarding pending work.
+            image_barrier(c_, cmd, target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                          VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+        }
+    }
     void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background, bool capture = true) {
         encode_shadow(cmd, draws);
-        const bool preview_msaa=target_->color_pass.depth_preview && target_->id_pass;
-        if (preview_msaa) {
-            // Existing center-sample picking depth is also the preview source.
-            // Generate it before color composition; MSAA color still resolves last.
+        // Ambient occlusion and multisampled previews both read the center-sample
+        // depth, which only the single-sample picking pass produces.
+        const bool prepass = target_->id_pass &&
+            (ao_active_ || (target_->color_pass.depth_preview && target_->samples > 1));
+        if (prepass) {
             encode_pass(cmd,draws,background,*target_,*target_->id_pass,target_->id_framebuffer);
             image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT|VK_ACCESS_TRANSFER_READ_BIT,
+                    ao_active_ ? (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+                               : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT|VK_ACCESS_TRANSFER_READ_BIT,
                     VK_ACCESS_SHADER_READ_BIT);
         }
+        if (ao_active_) dispatch_ao(cmd);
         encode_pass(cmd, draws, background, *target_, target_->color_pass, target_->framebuffer);
         // Picking uses center-sample IDs/depth independently of antialiased color.
         // This works even when an integer format supports no multisampling, and
         // requires neither depth-resolve extensions nor averaging integer IDs.
-        if (capture && target_->id_pass && !preview_msaa) encode_pass(cmd, draws, background, *target_, *target_->id_pass, target_->id_framebuffer);
-        if (preview_msaa)
+        if (capture && target_->id_pass && !prepass) encode_pass(cmd, draws, background, *target_, *target_->id_pass, target_->id_framebuffer);
+        if (prepass && target_->samples > 1)
             image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
-                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT|VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_ACCESS_SHADER_READ_BIT,VK_ACCESS_TRANSFER_READ_BIT);
     }
     FrameImage render(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,

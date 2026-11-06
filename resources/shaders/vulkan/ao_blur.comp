@@ -1,0 +1,83 @@
+#version 450
+// Normal-aware bilateral blur of the raw ambient occlusion buffer. Neighbors
+// that belong to a different surface are rejected by their distance from the
+// center tangent plane, so silhouettes stay sharp while the sparse slices are
+// smoothed into a continuous AO term.
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(set = 0, binding = 0) uniform sampler2D scene_depth;
+layout(set = 0, binding = 2) uniform sampler2D ao_raw;
+layout(set = 0, binding = 3, r32f) uniform image2D ao_result;
+layout(set = 0, binding = 4, std140) uniform AoParameters {
+    mat4 projection;
+    mat4 inverse_projection;
+    vec4 shape; // view-space radius, bias, width, height
+} ao;
+
+const int RADIUS = 2;
+
+vec3 view_position(vec2 uv, float depth) {
+    vec4 p = ao.inverse_projection * vec4(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, depth * 2.0 - 1.0, 1.0);
+    return p.xyz / p.w;
+}
+
+vec3 neighbor_position(vec2 coord, vec3 center, out bool valid) {
+    float depth = texture(scene_depth, coord).r;
+    valid = depth < 1.0;
+    return valid ? view_position(coord, depth) : center;
+}
+
+vec3 surface_normal(vec2 uv, vec3 center, vec2 texel) {
+    bool valid_left, valid_right, valid_up, valid_down;
+    vec3 left = neighbor_position(uv - vec2(texel.x, 0.0), center, valid_left);
+    vec3 right = neighbor_position(uv + vec2(texel.x, 0.0), center, valid_right);
+    vec3 up = neighbor_position(uv - vec2(0.0, texel.y), center, valid_up);
+    vec3 down = neighbor_position(uv + vec2(0.0, texel.y), center, valid_down);
+    const float far_away = 1e30;
+    float left_distance = valid_left ? abs(left.z - center.z) : far_away;
+    float right_distance = valid_right ? abs(right.z - center.z) : far_away;
+    float up_distance = valid_up ? abs(up.z - center.z) : far_away;
+    float down_distance = valid_down ? abs(down.z - center.z) : far_away;
+    vec3 dx = left_distance < right_distance ? center - left : right - center;
+    vec3 dy = up_distance < down_distance ? up - center : center - down;
+    vec3 normal = cross(dx, dy);
+    normal = dot(normal, normal) < 1e-20 ? -normalize(center) : normalize(normal);
+    return dot(normal, center) > 0.0 ? -normal : normal;
+}
+
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 extent = imageSize(ao_result);
+    if (any(greaterThanEqual(pixel, extent)))
+        return;
+
+    vec2 size = vec2(extent);
+    vec2 uv = (vec2(pixel) + 0.5) / size;
+    float depth = texture(scene_depth, uv).r;
+    if (depth >= 1.0) {
+        imageStore(ao_result, pixel, vec4(1.0));
+        return;
+    }
+
+    vec3 center = view_position(uv, depth);
+    vec2 texel = 1.0 / size;
+    vec3 normal = surface_normal(uv, center, texel);
+
+    float plane_tolerance = 0.05 * ao.shape.x;
+    float sum = 0.0, weight_sum = 0.0;
+    for (int y = -RADIUS; y <= RADIUS; ++y) {
+        for (int x = -RADIUS; x <= RADIUS; ++x) {
+            vec2 coord = uv + vec2(float(x), float(y)) * texel;
+            float neighbor_depth = texture(scene_depth, coord).r;
+            if (neighbor_depth >= 1.0)
+                continue;
+            vec3 neighbor = view_position(coord, neighbor_depth);
+            float spatial = exp(-float(x * x + y * y) / 8.0);
+            float plane = exp(-abs(dot(neighbor - center, normal)) / plane_tolerance);
+            float weight = spatial * plane;
+            sum += texture(ao_raw, coord).r * weight;
+            weight_sum += weight;
+        }
+    }
+    imageStore(ao_result, pixel, vec4(weight_sum > 0.0 ? sum / weight_sum : 1.0));
+}

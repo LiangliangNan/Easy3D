@@ -41,7 +41,7 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
 
     /**
-     * \brief Traditional Screen Space Ambient Occlusion (SSAO) technique.
+     * \brief Ground-truth ambient occlusion (GTAO), a horizon-based screen-space technique.
      * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      * \details In Vulkan, rendering and presentation belong to the viewer, so begin() only
      *      publishes the radius, bias and projection of this frame. The viewer, which owns
@@ -90,13 +90,13 @@ namespace easy3d {
         float bias() const { return bias_; }
 
         /**
-         * \brief Begins the SSAO rendering process. In Vulkan the models are not
+         * \brief Begins the ambient occlusion rendering process. In Vulkan the models are not
          *      re-rendered: the depth buffer of the frame supplies all geometry.
          * \param models The models to be rendered
          */
         void begin(const std::vector< std::shared_ptr<Model> >& models);
         /**
-         * \brief Ends the SSAO rendering process.
+         * \brief Ends the ambient occlusion rendering process.
          */
         void end();
 
@@ -122,7 +122,7 @@ namespace easy3d {
     class FramebufferObject;
 
     /**
-     * \brief Traditional Screen Space Ambient Occlusion (SSAO) technique.
+     * \brief Ground-truth ambient occlusion (GTAO), a horizon-based screen-space technique.
      * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
      *      geometry pass.
@@ -148,7 +148,7 @@ namespace easy3d {
         virtual ~AmbientOcclusion();
 
         /**
-         * \brief Sets the sample radius (in pixels). Typical value is in range [0, 4].
+         * \brief Sets the sample radius (in view-space units, scaled by the scene radius). Typical value is in range [0, 4].
          * \param r The sample radius
          */
         void  set_radius(float r) { radius_ = r; }
@@ -170,7 +170,7 @@ namespace easy3d {
         float bias() const { return bias_; }
 
         /**
-         * \brief Begins the SSAO rendering process. Subsequent drawing targets an
+         * \brief Begins the ambient occlusion rendering process. Subsequent drawing targets an
          *      offscreen projection buffer that end() shades and composites.
          * \param models The models to be rendered
          */
@@ -182,20 +182,20 @@ namespace easy3d {
         void end();
 
         /**
-         * \brief Generates the SSAO texture
+         * \brief Generates the ambient occlusion texture
          * \param models The models to be rendered
-         * \return The SSAO texture ID
+         * \return The ambient occlusion texture ID
          */
         virtual unsigned int generate(const std::vector< std::shared_ptr<Model> >& models);
         /**
-         * \brief Returns the generated SSAO texture ID
-         * \return The SSAO texture ID
+         * \brief Returns the generated ambient occlusion texture ID
+         * \return The ambient occlusion texture ID
          */
         unsigned int ssao_texture() const;
 
     protected:
         /**
-         * \brief Initializes the SSAO with the given width and height
+         * \brief Initializes the ambient occlusion with the given width and height
          * \param w The width
          * \param h The height
          */
@@ -217,12 +217,6 @@ namespace easy3d {
          * \brief Composites the shaded projection buffer into the framebuffer.
          */
         void compose();
-        /**
-         * \brief Generates noise texture
-         * \param width The width of the noise texture
-         * \param height The height of the noise texture
-         */
-        void generate_noise(int width, int height);
 
     protected:
         Camera* camera_;
@@ -233,9 +227,6 @@ namespace easy3d {
         FramebufferObject*	projection_fbo_; ///< The framebuffer object for the projected scene
         FramebufferObject*	geom_fbo_;  ///< The framebuffer object for geometry pass
         FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
-
-        std::vector<vec3> ssao_kernel_;     ///< The SSAO kernel
-        unsigned int	  noise_texture_;   ///< The noise texture
 
         int width_;     ///< The projection buffer width
         int height_;    ///< The projection buffer height

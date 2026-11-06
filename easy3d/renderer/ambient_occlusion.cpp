@@ -91,7 +91,7 @@ namespace easy3d {
 
 #else
 
-#include <random>
+#include <algorithm>
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
@@ -110,9 +110,6 @@ namespace easy3d {
 #include <easy3d/renderer/manipulator.h>
 
 
-const int  KERNEL_SIZE = 64;
-const int  NOISE_RES = 4;
-
 //#define SNAPSHOT_BUFFER
 
 namespace easy3d {
@@ -125,7 +122,6 @@ namespace easy3d {
         , projection_fbo_(nullptr)
         , geom_fbo_(nullptr)
         , ssao_fbo_(nullptr)
-        , noise_texture_(0)
     {
     }
 
@@ -135,11 +131,6 @@ namespace easy3d {
         delete geom_fbo_;
         delete ssao_fbo_;
 
-        if (glIsTexture(noise_texture_)) {
-            glDeleteTextures(1, &noise_texture_);
-            noise_texture_ = 0;
-        }
-		
 		easy3d_debug_log_gl_error
     }
 
@@ -173,48 +164,6 @@ namespace easy3d {
             ssao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for blur result
         }
         ssao_fbo_->ensure_size(w, h);
-    }
-
-
-    void AmbientOcclusion::generate_noise(int width, int height) {
-        ssao_kernel_.clear();
-
-        // generates random floats between 0.0 and 1.0
-        std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
-        std::default_random_engine generator;
-
-        auto lerp = [](float a, float b, float f) -> float {
-            return a + f * (b - a);
-        };
-
-        // generate sample kernel
-        for (unsigned int i = 0; i < KERNEL_SIZE; ++i) {
-            vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));
-            sample = normalize(sample);
-            sample *= randomFloats(generator);
-            float scale = float(i) / KERNEL_SIZE;
-
-            // scale samples s.t. they're more aligned to center of kernel
-            scale = lerp(0.1f, 1.0f, scale * scale);
-            sample *= scale;
-            ssao_kernel_.push_back(sample);
-        }
-
-        // generate noise texture
-        std::vector<vec3> ssaoNoise;
-        for (int i = 0; i < width * height; i++) {
-            //vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);//ssao
-            vec3 noise(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator)); // rotate around z-axis (in tangent space)
-            ssaoNoise.push_back(noise);
-        }
-        glGenTextures(1, &noise_texture_);
-        glBindTexture(GL_TEXTURE_2D, noise_texture_);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
 
@@ -359,18 +308,12 @@ namespace easy3d {
 
         program->bind(); easy3d_debug_log_gl_error
 
-        // Send kernel + rotation
-        if (ssao_kernel_.empty())
-            generate_noise(NOISE_RES, NOISE_RES);
-
-        program->set_uniform("samples[0]", ssao_kernel_.data()); easy3d_debug_log_gl_error
         const mat4& PROJ = camera_->projectionMatrix();
         program->set_uniform("PROJ", PROJ);
-        program->set_uniform("radius", camera_->sceneRadius() * radius_);
+        program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
         program->set_uniform("bias", bias_);
         program->bind_texture("gPosition", geom_fbo_->color_texture(0), 0);	// position
         program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);	// normal
-        program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_log_gl_error
 
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         easy3d_debug_log_gl_error
@@ -403,7 +346,10 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_log_gl_error
 
         program->bind(); easy3d_debug_log_gl_error
+        program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
         program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 0);
+        program->bind_texture("gPosition", geom_fbo_->color_texture(0), 1);
+        program->bind_texture("gNormal", geom_fbo_->color_texture(1), 2);
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error

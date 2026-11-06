@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, depth-based SSAO, hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias and one shared snapshot implementation in `snapshot.cpp` (batch 23); remaining mesh raster parity and native GUI integration remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias and one shared snapshot implementation in `snapshot.cpp` (batch 23); remaining mesh raster parity and native GUI integration remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). Remaining mesh raster parity, Mapple, Qt/wx and Python coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). Remaining mesh raster parity, Mapple, Qt/wx and Python coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -955,7 +955,7 @@ cause.
 | Coplanar mesh edges | Filled triangles are pushed away with the OpenGL polygon offset (`glPolygonOffset(0.5, -0.0001)`) whenever the same model draws visible lines, including MSAA color passes. Picking keeps unbiased surfaces, matching the OpenGL picker. |
 | `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable, then per triangle within each drawable. Order-independent accumulation remains pending. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle (both classes currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting, depth-based ambient occlusion and hard/soft shadows are full-screen overlays; EDL and SSAO sample this frame's scene depth, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable SSAO flag; SSAO is a viewer/effect overlay. |
+| Transparency, ambient occlusion, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle (both classes currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting, horizon-based ambient occlusion (GTAO) and hard/soft shadows are full-screen effects; EDL and the AO composite sample this frame's scene depth, GTAO marches horizon slices in a depth prepass, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable AO flag; ambient occlusion is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -3902,7 +3902,7 @@ aliases, backend-specific host filenames or new selection macros.
 
 | Existing classes/files | OpenGL | Vulkan |
 | --- | --- | --- |
-| `AmbientOcclusion` | Original implementation | Depth-only SSAO overlay from this frame's scene depth; `begin()/end()` publishes camera-keyed radius/bias/projection (batch 15) |
+| `AmbientOcclusion` | Geometry pass, horizon-based GTAO fragment pass and normal-aware blur (batch 24) | Single-sample depth+ID prepass, GTAO and denoise compute dispatches, AO-texture composite overlay; `begin()/end()` publishes camera-keyed radius/bias/projection (batches 15, 24) |
 | `EyeDomeLighting` | Original implementation | Depth-based multiplicative overlay; camera-keyed near/far/scene size (batch 14) |
 | `Shadow`, `SoftShadow` | Original implementations | Depth-only light-space shadow map plus a PCSS full-screen overlay; `begin()/end()` publishes camera-keyed surfaces and frame parameters (batch 16) |
 | `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw straight-alpha triangles sorted far-to-near per drawable and per triangle (batch 18); true accumulation/peeling pending |
@@ -5586,3 +5586,47 @@ depth-ordered submission across every model.
 
 All 127 MoltenVK tests and all 91 OpenGL tests pass on this Mac at `-j2`
 (2026-11-05). `git diff --check` is clean.
+
+### 2026-11-06 — W10 batch 24: horizon-based ambient occlusion (GTAO) on both backends
+
+Both backends now use ground-truth ambient occlusion instead of the sparse
+hemisphere kernel and box blur. For each pixel, eight azimuthal slices march
+eight steps along the screen-space projection of the sample radius and record
+the sine of the highest elevation above the tangent plane on each side of the
+pixel. A slice contributes `1 - 0.5 * (h_left^2 + h_right^2)` of cosine-weighted
+visibility, and occluders behind the tangent plane are rejected by the bias.
+The horizon term is independent of the slice angle, so the two half-slices need
+no sign correction. The raw term is denoised by a 5x5 bilateral filter whose
+plane weight falls off with the distance from the center tangent plane.
+
+On Vulkan the effect needs a center-sample depth image, so a single-sample
+depth+ID prepass now runs whenever AO is active, even without multisampling;
+the existing MSAA prepass is reused when samples are greater than one. Two new
+compute shaders (`ao_gtao.comp`, `ao_blur.comp`) read the scene depth through a
+common `AoParameters` uniform (projection, inverse projection, radius, bias,
+size) and write R32F storage images; the view-space normal is reconstructed
+from the closest surviving depth neighbor on each axis, which avoids the tilted
+normals and AO bleeding across silhouettes that a plain `right - left` gradient
+produces. The existing composite pass samples the denoised texture from
+binding 2 of the depth descriptor set and writes black with alpha `1 - ao`
+using straight-alpha blending. The blurred image returns to
+`SHADER_READ_ONLY_OPTIMAL` for the composite, and the next frame transitions it
+back to `GENERAL` before the compute dispatches; validation is clean with the
+AO test.
+
+On OpenGL `ssao/ssao.frag` performs the same slices from the geometry pass
+position and normal buffers and `ssao/blur.frag` applies the same bilateral
+filter using those buffers, so the two backends agree without kernel or noise
+textures. The kernel and noise generation (`generate_noise`, the random
+includes and the associated members) are gone; the `AmbientOcclusion` API,
+`begin()/end()` contract and the `edl/edl_compose` composite are unchanged.
+Background pixels are returned as one and the OpenGL snapshot comparison shows
+pixel-identical background around the model.
+
+`vulkan.ambientocclusion` still checks untouched background and flat surfaces,
+darkened near silhouettes with untouched far sides, preserved alpha, one and
+four samples, AO with EDL and a depth preview, preserved IDs/depth, and
+rejection of invalid flags and parameters. Tutorial 501 renders on both
+backends. All 127 MoltenVK tests and all 91 OpenGL tests pass on this Mac at
+`-j2` (2026-11-06); the focused Vulkan AO test passes with validation and
+synchronization validation. `git diff --check` is clean.
