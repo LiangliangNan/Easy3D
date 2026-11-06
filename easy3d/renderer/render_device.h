@@ -215,6 +215,20 @@ struct ScenePixel {
     float depth = 1.0f;
 };
 
+// How the frame composites commands marked DrawCommand::transparent over the
+// opaque scene. All methods leave screen overlays and picking IDs unchanged.
+enum class TransparencyMethod {
+    // Straight alpha, ordered far to near per drawable and per triangle. Writes
+    // scene depth and IDs, so the nearest transparent surface is pickable.
+    sorted,
+    // Order-independent average color accumulation, matching the depth-free
+    // legacy AverageColorBlending composite. Ignores opaque scene depth.
+    average,
+    // Order-independent front-to-back depth peeling, the depth-free legacy
+    // DualDepthPeeling effect without its min-max (front and back) pairing.
+    peeling
+};
+
 // GPU through-selection of projected point centers in a top-left framebuffer
 // polygon. Polygon crossings use the even-odd rule (boundary included). It is
 // independent of rasterization/occlusion, point style, MSAA and scene readback.
@@ -245,9 +259,13 @@ public:
     virtual std::uint32_t supported_sample_counts(LineStyle style) const = 0;
     // Synchronous offscreen capture. No window, GL context, surface or swapchain.
     // Instances are externally synchronized; separate instances are independent.
+    // peel_layers bounds the front-to-back layers of TransparencyMethod::peeling;
+    // zero asks for all layers, capped by the backend.
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,
                               const std::vector<DrawCommand>& commands,
-                              const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
+                              const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1,
+                              TransparencyMethod transparency = TransparencyMethod::sorted,
+                              unsigned peel_layers = 4) = 0;
     // Render scene IDs and depth at one top-left framebuffer pixel center.
     // The full viewport and draw order are preserved. Overlays are excluded.
     virtual ScenePixel sample_pixel(std::uint32_t width, std::uint32_t height,
@@ -258,7 +276,9 @@ public:
     // Headless devices report an unsupported operation explicitly.
     virtual bool present(std::uint32_t width, std::uint32_t height,
                          const std::vector<DrawCommand>& commands,
-                         const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
+                         const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1,
+                         TransparencyMethod transparency = TransparencyMethod::sorted,
+                         unsigned peel_layers = 4) = 0;
     virtual unsigned validation_errors() const = 0;
     // Synchronous GPU polygon upload, compute dispatch and selection readback.
     // Externally synchronized like render(); no render targets are modified.

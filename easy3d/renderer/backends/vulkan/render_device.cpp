@@ -38,6 +38,11 @@ namespace easy3d { namespace graphics { namespace {
 #include "shadow_frag.inc"
 #include "shadow_depth_frag.inc"
 #include "point_selection_comp.inc"
+#include "oit_quad_vert.inc"
+#include "oit_average_frag.inc"
+#include "oit_peel_frag.inc"
+#include "oit_average_composite_frag.inc"
+#include "oit_peel_composite_frag.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -533,6 +538,11 @@ struct RenderPass {
     VkPipeline ssao_pipeline = VK_NULL_HANDLE;
     VkPipeline shadow_pipeline = VK_NULL_HANDLE;
     VkPipeline transparent_pipeline = VK_NULL_HANDLE;
+    // Depth-tested picking pass for order-independent transparent surfaces.
+    VkPipeline oit_id_pipeline = VK_NULL_HANDLE;
+    // Full-screen order-independent transparency composites (scene subpass).
+    VkPipeline oit_average_pipeline = VK_NULL_HANDLE;
+    VkPipeline oit_peel_pipeline = VK_NULL_HANDLE;
     bool independent_depth = false;
     bool depth_preview = false;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
@@ -546,6 +556,9 @@ struct RenderPass {
         if (ssao_pipeline) c.vkDestroyPipeline(c.device, ssao_pipeline, nullptr);
         if (shadow_pipeline) c.vkDestroyPipeline(c.device, shadow_pipeline, nullptr);
         if (transparent_pipeline) c.vkDestroyPipeline(c.device, transparent_pipeline, nullptr);
+        if (oit_id_pipeline) c.vkDestroyPipeline(c.device, oit_id_pipeline, nullptr);
+        if (oit_average_pipeline) c.vkDestroyPipeline(c.device, oit_average_pipeline, nullptr);
+        if (oit_peel_pipeline) c.vkDestroyPipeline(c.device, oit_peel_pipeline, nullptr);
         if (handle) c.vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
@@ -898,6 +911,59 @@ static_assert(sizeof(ImpostorUniform) == 512, "impostor uniform layout changed")
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
+// Order-independent transparency targets. Both effects are single sampled and
+// ignore opaque depth, matching the legacy OpenGL transparency classes.
+// Average accumulation uses two additive attachments (premultiplied color and
+// fragment count). Peeling resolves one front layer per pass into its own
+// target, because a depth-tested pass with blending would keep every fragment
+// that passes; a fullscreen pass then blends that layer over the accumulation.
+struct Oit {
+    Context& c;
+    uint32_t width = 0, height = 0;
+    VkFormat color_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+    VkFormat count_format = VK_FORMAT_R16_SFLOAT;
+    GpuImage color, count, layer, start_depth;
+    // Two peel layers alternate between these single-sampled depth targets.
+    GpuImage depth_a, depth_b;
+    GpuImage& depth(unsigned index) { return index ? depth_b : depth_a; }
+    VkRenderPass average_pass = VK_NULL_HANDLE, layer_pass = VK_NULL_HANDLE, start_pass = VK_NULL_HANDLE;
+    VkRenderPass reset_pass = VK_NULL_HANDLE, accumulate_pass = VK_NULL_HANDLE;
+    VkFramebuffer average_framebuffer = VK_NULL_HANDLE, layer_framebuffers[2] = {}, start_framebuffer = VK_NULL_HANDLE;
+    VkFramebuffer reset_framebuffer = VK_NULL_HANDLE, accumulate_framebuffer = VK_NULL_HANDLE;
+    VkPipeline average_pipeline = VK_NULL_HANDLE, layer_pipeline = VK_NULL_HANDLE;
+    VkPipeline accumulate_pipeline = VK_NULL_HANDLE;
+    VkDescriptorSet composite_set = VK_NULL_HANDLE, layer_set = VK_NULL_HANDLE;
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    bool start_ready = false;
+    VkImageLayout color_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout count_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout layer_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout depth_layout[2] = {VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_UNDEFINED};
+    std::map<std::pair<const GpuTexture*, unsigned>, VkDescriptorSet> peel_sets;
+    explicit Oit(Context& context)
+        : c(context), color(context), count(context), layer(context), start_depth(context),
+          depth_a(context), depth_b(context) {}
+    ~Oit() {
+        if (average_pipeline) c.vkDestroyPipeline(c.device, average_pipeline, nullptr);
+        if (layer_pipeline) c.vkDestroyPipeline(c.device, layer_pipeline, nullptr);
+        if (accumulate_pipeline) c.vkDestroyPipeline(c.device, accumulate_pipeline, nullptr);
+        if (average_framebuffer) c.vkDestroyFramebuffer(c.device, average_framebuffer, nullptr);
+        for (auto framebuffer : layer_framebuffers)
+            if (framebuffer) c.vkDestroyFramebuffer(c.device, framebuffer, nullptr);
+        if (start_framebuffer) c.vkDestroyFramebuffer(c.device, start_framebuffer, nullptr);
+        if (reset_framebuffer) c.vkDestroyFramebuffer(c.device, reset_framebuffer, nullptr);
+        if (accumulate_framebuffer) c.vkDestroyFramebuffer(c.device, accumulate_framebuffer, nullptr);
+        if (average_pass) c.vkDestroyRenderPass(c.device, average_pass, nullptr);
+        if (layer_pass) c.vkDestroyRenderPass(c.device, layer_pass, nullptr);
+        if (start_pass) c.vkDestroyRenderPass(c.device, start_pass, nullptr);
+        if (reset_pass) c.vkDestroyRenderPass(c.device, reset_pass, nullptr);
+        if (accumulate_pass) c.vkDestroyRenderPass(c.device, accumulate_pass, nullptr);
+        if (composite_set) c.vkFreeDescriptorSets(c.device, pool, 1, &composite_set);
+        if (layer_set) c.vkFreeDescriptorSets(c.device, pool, 1, &layer_set);
+        for (auto& entry : peel_sets) c.vkFreeDescriptorSets(c.device, pool, 1, &entry.second);
+    }
+};
+
 // Presentation semaphores belong to swapchain images, not CPU frame slots. An
 // image is reacquired only after its previous presentation wait has completed.
 struct Swapchain {
@@ -1014,6 +1080,13 @@ class VulkanDevice final : public RenderDevice {
     bool ao_active_ = false;
     mat4 ao_projection_ = mat4::identity();
     float ao_radius_ = 0.5f, ao_bias_ = 0.005f;
+    VkDescriptorSetLayout oit_scene_descriptors_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout oit_composite_descriptors_ = VK_NULL_HANDLE;
+    VkPipelineLayout oit_peel_layout_ = VK_NULL_HANDLE, oit_composite_layout_ = VK_NULL_HANDLE;
+    std::unique_ptr<Oit> oit_;
+    TransparencyMethod oit_method_ = TransparencyMethod::sorted;
+    unsigned oit_layers_ = 4;
+    bool oit_active_ = false;
     std::unique_ptr<Target> target_, pixel_target_;
     std::unique_ptr<ShadowMap> shadow_map_;
     uint32_t shadow_bound_size_ = 0;
@@ -1059,13 +1132,20 @@ public:
         // Presentation may still be using image-owned semaphores after the draw
         // fence completes. Drain at shutdown/recreation only, never per frame.
         if (c_.device) c_.vkDeviceWaitIdle(c_.device);
-        swapchain_.reset(); target_.reset(); pixel_target_.reset(); shadow_map_.reset(); geometry_.clear(); textures_.clear();
+        swapchain_.reset(); target_.reset(); pixel_target_.reset(); shadow_map_.reset();
+        // Free transparency descriptor sets before the textures they reference.
+        oit_.reset();
+        geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
         ao_.reset();
         if (ao_horizons_) c_.vkDestroyPipeline(c_.device, ao_horizons_, nullptr);
         if (ao_denoise_) c_.vkDestroyPipeline(c_.device, ao_denoise_, nullptr);
         if (ao_layout_) c_.vkDestroyPipelineLayout(c_.device, ao_layout_, nullptr);
         if (ao_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, ao_descriptors_, nullptr);
+        if (oit_peel_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_peel_layout_, nullptr);
+        if (oit_composite_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_composite_layout_, nullptr);
+        if (oit_scene_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, oit_scene_descriptors_, nullptr);
+        if (oit_composite_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, oit_composite_descriptors_, nullptr);
         if (layout_) c_.vkDestroyPipelineLayout(c_.device, layout_, nullptr);
         for (auto sampler : samplers_) if (sampler) c_.vkDestroySampler(c_.device, sampler, nullptr);
         if (descriptor_pool_) c_.vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
@@ -1256,14 +1336,28 @@ public:
         binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         li.bindingCount = 1; li.pBindings = &binding[0];
         check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_), "create impostor descriptor layout");
-        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2056},
+        // Peel geometry samples the frame texture and the previous layer depth.
+        VkDescriptorSetLayoutBinding peel_bindings[2] = {};
+        peel_bindings[0].binding = 0; peel_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        peel_bindings[0].descriptorCount = 1; peel_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        peel_bindings[1] = peel_bindings[0]; peel_bindings[1].binding = 3;
+        li.bindingCount = 2; li.pBindings = peel_bindings;
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_scene_descriptors_), "create transparency peel descriptor layout");
+        // The scene composite samples the accumulation and the fragment count.
+        VkDescriptorSetLayoutBinding composite_bindings[2] = {};
+        composite_bindings[0].binding = 0; composite_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        composite_bindings[0].descriptorCount = 1; composite_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        composite_bindings[1] = composite_bindings[0]; composite_bindings[1].binding = 1;
+        li.bindingCount = 2; li.pBindings = composite_bindings;
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_composite_descriptors_), "create transparency composite descriptor layout");
+        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8200},
                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1},
                                         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4},
                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pi.maxSets = 1033; pi.poolSizeCount = 4; pi.pPoolSizes = sizes;
+        pi.maxSets = 4096; pi.poolSizeCount = 4; pi.pPoolSizes = sizes;
         check(c_.vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1287,9 +1381,15 @@ public:
         li.setLayoutCount = 2; li.pSetLayouts = sets;
         li.pushConstantRangeCount = 1; li.pPushConstantRanges = &push;
         check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
+        const VkDescriptorSetLayout peel_sets[] = {oit_scene_descriptors_, impostor_descriptors_};
+        li.pSetLayouts = peel_sets;
+        check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &oit_peel_layout_), "create transparency peel pipeline layout");
+        li.setLayoutCount = 1; li.pSetLayouts = &oit_composite_descriptors_;
+        li.pushConstantRangeCount = 0; li.pPushConstantRanges = nullptr;
+        check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &oit_composite_layout_), "create transparency composite pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[15] = {};
+        VkShaderModule modules[18] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1326,6 +1426,14 @@ public:
             if (pass.independent_depth) {
                 mi.codeSize = sizeof(hud_frag); mi.pCode = hud_frag;
                 check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[11]), "create independent HUD fragment shader");
+            }
+            if (pass.kind != PassKind::ids) {
+                mi.codeSize = sizeof(oit_quad_vert); mi.pCode = oit_quad_vert;
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[15]), "create transparency composite vertex shader");
+                mi.codeSize = sizeof(oit_average_composite_frag); mi.pCode = oit_average_composite_frag;
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[16]), "create average transparency composite shader");
+                mi.codeSize = sizeof(oit_peel_composite_frag); mi.pCode = oit_peel_composite_frag;
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[17]), "create peeling transparency composite shader");
             }
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
@@ -1464,6 +1572,18 @@ public:
                 pi.subpass = 0;
                 check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
                                                    &pass.transparent_pipeline), "create transparent scene pipeline");
+                if (pass.kind == PassKind::color_ids) {
+                    // Order-independent methods blend the transparent surfaces in
+                    // their own targets, so the scene color stays masked here while
+                    // the depth test still records their IDs and depth for picking.
+                    VkPipelineColorBlendAttachmentState id_only[2] = {};
+                    id_only[0].colorWriteMask = 0;
+                    id_only[1].colorWriteMask = 0xf;
+                    blending.pAttachments = id_only;
+                    check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                       &pass.oit_id_pipeline), "create transparency picking pipeline");
+                    blending.pAttachments = blend;
+                }
             }
             if (pass.kind != PassKind::ids) {
                 stages[0].module = modules[8]; stages[1].module = modules[9];
@@ -1522,6 +1642,29 @@ public:
                     blending.attachmentCount = 1; blending.pAttachments = &alpha;
                     check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.shadow_pipeline), "create shadow overlay pipeline");
                 }
+                // Order-independent transparency composites cover the scene and
+                // leave the integer picking attachment untouched.
+                stages[0].module = modules[15]; stages[1].module = modules[16];
+                stages[0].pSpecializationInfo = nullptr;
+                vertex.vertexBindingDescriptionCount = 0; vertex.pVertexBindingDescriptions = nullptr;
+                vertex.vertexAttributeDescriptionCount = 0; vertex.pVertexAttributeDescriptions = nullptr;
+                assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                ms.sampleShadingEnable = VK_FALSE; ms.minSampleShading = 0;
+                depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
+                VkPipelineColorBlendAttachmentState oit[2] = {};
+                oit[0].blendEnable = VK_TRUE;
+                oit[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                oit[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                oit[0].colorBlendOp = VK_BLEND_OP_ADD;
+                oit[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                oit[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                oit[0].alphaBlendOp = VK_BLEND_OP_ADD; oit[0].colorWriteMask = 0xf;
+                oit[1].colorWriteMask = 0;
+                blending.attachmentCount = 2; blending.pAttachments = oit;
+                pi.subpass = 0; pi.layout = oit_composite_layout_;
+                check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.oit_average_pipeline), "create average transparency composite pipeline");
+                stages[1].module = modules[17];
+                check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.oit_peel_pipeline), "create peeling transparency composite pipeline");
             }
         } catch (...) {
             for (auto m : modules) if (m) c_.vkDestroyShaderModule(c_.device, m, nullptr);
@@ -2127,14 +2270,17 @@ public:
             if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
             draw_scene(draw, pass.pipelines[pipeline], expanded);
         }
-        if (pass.transparent_pipeline) {
+        // Order-independent methods already resolved the transparent surfaces into
+        // their own targets; the scene pass then only records their IDs and depth.
+        const VkPipeline transparent_pass = oit_active_ ? pass.oit_id_pipeline : pass.transparent_pipeline;
+        if (transparent_pass) {
             std::vector<const Prepared*> transparent;
             for (const auto& draw : draws) if (draw.command.transparent) transparent.push_back(&draw);
             // Far to near, so straight-alpha compositing matches the visible surface order.
             std::stable_sort(transparent.begin(), transparent.end(),
                              [](const Prepared* a, const Prepared* b) { return a->sort_depth > b->sort_depth; });
             for (const Prepared* draw : transparent) {
-                if (!bind_scene(*draw, pass.transparent_pipeline)) continue;
+                if (!bind_scene(*draw, transparent_pass)) continue;
                 if (draw->index_count) {
                     c_.vkCmdBindIndexBuffer(cmd, transparent_indices_->handle,
                                             VkDeviceSize(draw->index_offset) * sizeof(uint32_t),
@@ -2142,6 +2288,19 @@ public:
                     c_.vkCmdDrawIndexed(cmd, draw->index_count, 1, 0, 0, 0);
                 } else c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
             }
+        }
+        // Composite the accumulated transparency over the opaque scene. Both
+        // methods store premultiplied color and over-blend it here, so the
+        // picking attachment keeps the nearest surface.
+        if (oit_active_ && pass.kind != PassKind::ids && pass.oit_average_pipeline) {
+            VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+            const VkRect2D scissor = {{0, 0}, {width, height}};
+            c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                 oit_method_ == TransparencyMethod::average ? pass.oit_average_pipeline : pass.oit_peel_pipeline);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0, 1, &oit_->composite_set, 0, nullptr);
+            c_.vkCmdDraw(cmd, 3, 1, 0, 0);
         }
         if (pass.kind != PassKind::ids) {
             const unsigned phases = pass.independent_depth ? 3 : 2;
@@ -2179,6 +2338,561 @@ public:
             }
         }
         c_.vkCmdEndRenderPass(cmd);
+    }
+    // Order-independent transparency targets are created on first use and
+    // recreated with the scene target. Both methods stay single sampled.
+    void ensure_oit(uint32_t width, uint32_t height) {
+        if (oit_ && oit_->width == width && oit_->height == height) return;
+        const auto supports = [&](VkFormat format, VkFormatFeatureFlags flags) {
+            VkFormatProperties properties;
+            c_.vkGetPhysicalDeviceFormatProperties(c_.physical, format, &properties);
+            return (properties.optimalTilingFeatures & flags) == flags;
+        };
+        const VkFormatFeatureFlags color_features = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
+            VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+        VkFormat color_format = VK_FORMAT_UNDEFINED, count_format = VK_FORMAT_UNDEFINED;
+        for (auto format : {VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R32G32B32A32_SFLOAT})
+            if (supports(format, color_features)) { color_format = format; break; }
+        for (auto format : {VK_FORMAT_R16_SFLOAT, VK_FORMAT_R32_SFLOAT})
+            if (supports(format, color_features)) { count_format = format; break; }
+        if (color_format == VK_FORMAT_UNDEFINED || count_format == VK_FORMAT_UNDEFINED)
+            throw std::runtime_error("order-independent transparency requires blended floating-point color attachments");
+        if (!supports(VK_FORMAT_D32_SFLOAT, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT |
+                                             VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+            throw std::runtime_error("depth peeling requires sampleable D32 depth");
+
+        oit_.reset(new Oit(c_));
+        oit_->width = width; oit_->height = height;
+        oit_->color_format = color_format; oit_->count_format = count_format;
+        oit_->pool = descriptor_pool_;
+        oit_->color.init(width, height, color_format,
+                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                         VK_IMAGE_ASPECT_COLOR_BIT);
+        oit_->count.init(width, height, count_format,
+                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                         VK_IMAGE_ASPECT_COLOR_BIT);
+        oit_->layer.init(width, height, color_format,
+                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                         VK_IMAGE_ASPECT_COLOR_BIT);
+        for (unsigned i = 0; i < 2; ++i)
+            oit_->depth(i).init(width, height, VK_FORMAT_D32_SFLOAT,
+                                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                VK_IMAGE_ASPECT_DEPTH_BIT);
+        oit_->start_depth.init(1, 1, VK_FORMAT_D32_SFLOAT,
+                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                             VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        const auto make_pass = [&](VkRenderPass& result, const VkAttachmentDescription* attachments,
+                                   unsigned count, const VkSubpassDescription& subpass,
+                                   const VkSubpassDependency* dependencies, unsigned dependency_count) {
+            VkRenderPassCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            info.attachmentCount = count; info.pAttachments = attachments;
+            info.subpassCount = 1; info.pSubpasses = &subpass;
+            info.dependencyCount = dependency_count; info.pDependencies = dependencies;
+            check(c_.vkCreateRenderPass(c_.device, &info, nullptr, &result), "create transparency render pass");
+        };
+        const auto make_framebuffer = [&](VkRenderPass pass, const VkImageView* views, unsigned count,
+                                          uint32_t w, uint32_t h, VkFramebuffer& framebuffer) {
+            VkFramebufferCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            info.renderPass = pass; info.attachmentCount = count; info.pAttachments = views;
+            info.width = w; info.height = h; info.layers = 1;
+            check(c_.vkCreateFramebuffer(c_.device, &info, nullptr, &framebuffer), "create transparency framebuffer");
+        };
+        {
+            // Additive premultiplied color plus fragment count.
+            VkAttachmentDescription attachments[2] = {};
+            for (unsigned i = 0; i < 2; ++i) {
+                auto& a = attachments[i];
+                a.format = i == 0 ? color_format : count_format;
+                a.samples = VK_SAMPLE_COUNT_1_BIT;
+                a.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; a.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                a.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                a.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                a.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                a.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            }
+            VkAttachmentReference colors[2] = {{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
+                                               {1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
+            VkSubpassDescription subpass{};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpass.colorAttachmentCount = 2; subpass.pColorAttachments = colors;
+            VkSubpassDependency dependencies[2] = {};
+            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
+            dependencies[0].srcStageMask = dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[1].srcSubpass = 0; dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            make_pass(oit_->average_pass, attachments, 2, subpass, dependencies, 2);
+            VkImageView views[] = {oit_->color.view, oit_->count.view};
+            make_framebuffer(oit_->average_pass, views, 2, width, height, oit_->average_framebuffer);
+        }
+        {
+            // A resolved front layer: premultiplied color plus the layer depth.
+            VkAttachmentDescription layer_attachments[2] = {};
+            auto& layer_color = layer_attachments[0];
+            layer_color.format = color_format; layer_color.samples = VK_SAMPLE_COUNT_1_BIT;
+            layer_color.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; layer_color.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            layer_color.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            layer_color.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            layer_color.initialLayout = layer_color.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            auto& layer_depth = layer_attachments[1];
+            layer_depth.format = VK_FORMAT_D32_SFLOAT; layer_depth.samples = VK_SAMPLE_COUNT_1_BIT;
+            layer_depth.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; layer_depth.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            layer_depth.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            layer_depth.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            layer_depth.initialLayout = layer_depth.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            VkAttachmentReference color_reference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+            VkAttachmentReference depth_reference = {1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+            VkSubpassDescription subpass{};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpass.colorAttachmentCount = 1; subpass.pColorAttachments = &color_reference;
+            subpass.pDepthStencilAttachment = &depth_reference;
+            VkSubpassDependency layer_dependencies[2] = {};
+            layer_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; layer_dependencies[0].dstSubpass = 0;
+            layer_dependencies[0].srcStageMask = layer_dependencies[0].dstStageMask =
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            layer_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            layer_dependencies[1].srcSubpass = 0; layer_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            layer_dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+                                                 VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                                 VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            layer_dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            layer_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                                  VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            layer_dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            make_pass(oit_->layer_pass, layer_attachments, 2, subpass, layer_dependencies, 2);
+            for (unsigned i = 0; i < 2; ++i) {
+                VkImageView views[] = {oit_->layer.view, oit_->depth(i).view};
+                make_framebuffer(oit_->layer_pass, views, 2, width, height, oit_->layer_framebuffers[i]);
+            }
+        }
+        {
+            // The premultiplied accumulation: cleared once per frame, then loaded
+            // by every layer blend and finally sampled by the scene composite.
+            VkAttachmentDescription attachment{};
+            attachment.format = color_format; attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+            attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            attachment.initialLayout = attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            VkAttachmentReference color_reference = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+            VkSubpassDescription subpass{};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpass.colorAttachmentCount = 1; subpass.pColorAttachments = &color_reference;
+            VkSubpassDependency dependencies[2] = {};
+            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
+            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[1].srcSubpass = 0; dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+            dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            make_pass(oit_->reset_pass, &attachment, 1, subpass, dependencies, 2);
+            attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            make_pass(oit_->accumulate_pass, &attachment, 1, subpass, dependencies, 2);
+            VkImageView views[] = {oit_->color.view};
+            make_framebuffer(oit_->reset_pass, views, 1, width, height, oit_->reset_framebuffer);
+            make_framebuffer(oit_->accumulate_pass, views, 1, width, height, oit_->accumulate_framebuffer);
+        }
+        {
+            // One-shot 1x1 image holding the peeled depth before the first layer. It is
+            // cleared to zero, so the first layer keeps every fragment.
+            VkAttachmentDescription attachment{};
+            attachment.format = VK_FORMAT_D32_SFLOAT; attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+            attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+            // The image starts uninitialized; the clear defines its contents.
+            attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            VkAttachmentReference depth_reference = {0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+            VkSubpassDescription subpass{};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            subpass.pDepthStencilAttachment = &depth_reference;
+            VkSubpassDependency dependencies[2] = {};
+            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
+            dependencies[0].srcStageMask = dependencies[0].dstStageMask =
+                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            dependencies[1].srcSubpass = 0; dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                           VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            make_pass(oit_->start_pass, &attachment, 1, subpass, dependencies, 2);
+            VkImageView views[] = {oit_->start_depth.view};
+            make_framebuffer(oit_->start_pass, views, 1, 1, 1, oit_->start_framebuffer);
+        }
+
+        VkShaderModule modules[5] = {};
+        try {
+            VkShaderModuleCreateInfo mi{};
+            mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            mi.codeSize = sizeof(scene_vert); mi.pCode = scene_vert;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create transparency vertex shader");
+            mi.codeSize = sizeof(oit_average_frag); mi.pCode = oit_average_frag;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create average transparency shader");
+            mi.codeSize = sizeof(oit_peel_frag); mi.pCode = oit_peel_frag;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]), "create peeling transparency shader");
+            mi.codeSize = sizeof(oit_quad_vert); mi.pCode = oit_quad_vert;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]), "create transparency quad shader");
+            mi.codeSize = sizeof(oit_peel_composite_frag); mi.pCode = oit_peel_composite_frag;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]), "create transparency layer blend shader");
+            VkPipelineShaderStageCreateInfo stages[2] = {};
+            for (unsigned i = 0; i < 2; ++i) {
+                stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+                stages[i].pName = "main";
+            }
+            VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+            VkVertexInputAttributeDescription attributes[] = {
+                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
+                {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
+                {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
+                {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
+                {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
+                {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
+            VkPipelineVertexInputStateCreateInfo vertex{};
+            vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+            vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
+            vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attributes;
+            VkPipelineInputAssemblyStateCreateInfo assembly{};
+            assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            VkPipelineViewportStateCreateInfo viewport{};
+            viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+            viewport.viewportCount = 1; viewport.scissorCount = 1;
+            VkPipelineRasterizationStateCreateInfo raster{};
+            raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+            raster.polygonMode = VK_POLYGON_MODE_FILL; raster.cullMode = VK_CULL_MODE_NONE;
+            raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; raster.lineWidth = 1;
+            raster.depthBiasEnable = VK_TRUE;
+            VkPipelineMultisampleStateCreateInfo multisample{};
+            multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+            VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                               VK_DYNAMIC_STATE_DEPTH_BIAS};
+            VkPipelineDynamicStateCreateInfo dynamic{};
+            dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            dynamic.dynamicStateCount = 3; dynamic.pDynamicStates = dynamic_states;
+            VkPipelineDepthStencilStateCreateInfo depth_state{};
+            depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            VkPipelineColorBlendStateCreateInfo blending{};
+            blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+            VkGraphicsPipelineCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            info.stageCount = 2; info.pStages = stages; info.pVertexInputState = &vertex;
+            info.pInputAssemblyState = &assembly; info.pViewportState = &viewport;
+            info.pRasterizationState = &raster; info.pMultisampleState = &multisample;
+            info.pDepthStencilState = &depth_state; info.pColorBlendState = &blending;
+            info.pDynamicState = &dynamic;
+
+            stages[0].module = modules[0]; stages[1].module = modules[1];
+            VkPipelineColorBlendAttachmentState additive[2] = {};
+            for (auto& blend : additive) {
+                blend.blendEnable = VK_TRUE;
+                blend.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                blend.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                blend.colorBlendOp = VK_BLEND_OP_ADD;
+                blend.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                blend.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                blend.alphaBlendOp = VK_BLEND_OP_ADD;
+                blend.colorWriteMask = 0xf;
+            }
+            blending.attachmentCount = 2; blending.pAttachments = additive;
+            info.renderPass = oit_->average_pass; info.layout = layout_;
+            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                               &oit_->average_pipeline), "create average transparency pipeline");
+
+            // One front layer: depth tested, replacing the layer target so only the
+            // nearest surviving fragment of each pixel is kept.
+            stages[1].module = modules[2];
+            depth_state.depthTestEnable = depth_state.depthWriteEnable = VK_TRUE;
+            depth_state.depthCompareOp = VK_COMPARE_OP_LESS;
+            VkPipelineColorBlendAttachmentState replace{};
+            replace.colorWriteMask = 0xf;
+            blending.attachmentCount = 1; blending.pAttachments = &replace;
+            info.renderPass = oit_->layer_pass; info.layout = oit_peel_layout_;
+            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                               &oit_->layer_pipeline), "create depth-peel pipeline");
+
+            // Blend the resolved layer over the premultiplied accumulation.
+            stages[0].module = modules[3]; stages[1].module = modules[4];
+            vertex.vertexBindingDescriptionCount = 0; vertex.pVertexBindingDescriptions = nullptr;
+            vertex.vertexAttributeDescriptionCount = 0; vertex.pVertexAttributeDescriptions = nullptr;
+            depth_state.depthTestEnable = depth_state.depthWriteEnable = VK_FALSE;
+            VkPipelineColorBlendAttachmentState over{};
+            over.blendEnable = VK_TRUE;
+            over.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            over.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            over.colorBlendOp = VK_BLEND_OP_ADD;
+            over.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            over.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            over.alphaBlendOp = VK_BLEND_OP_ADD; over.colorWriteMask = 0xf;
+            blending.attachmentCount = 1; blending.pAttachments = &over;
+            info.renderPass = oit_->accumulate_pass; info.layout = oit_composite_layout_;
+            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                               &oit_->accumulate_pipeline), "create transparency layer blend pipeline");
+        } catch (...) {
+            for (auto module : modules) if (module) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+            throw;
+        }
+        for (auto module : modules) if (module) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+
+        VkDescriptorSetAllocateInfo allocation{};
+        allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocation.descriptorPool = descriptor_pool_; allocation.descriptorSetCount = 2;
+        const VkDescriptorSetLayout composite_layouts[2] = {oit_composite_descriptors_, oit_composite_descriptors_};
+        allocation.pSetLayouts = composite_layouts;
+        VkDescriptorSet composite_sets[2] = {};
+        check(c_.vkAllocateDescriptorSets(c_.device, &allocation, composite_sets),
+              "allocate transparency composite descriptors");
+        oit_->composite_set = composite_sets[0];
+        oit_->layer_set = composite_sets[1];
+        // The layer blend only reads the resolved front layer.
+        const VkDescriptorImageInfo layer_image{samplers_[0], oit_->layer.view,
+                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+        VkWriteDescriptorSet layer_writes[2] = {};
+        for (unsigned i = 0; i < 2; ++i) {
+            layer_writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            layer_writes[i].dstSet = oit_->layer_set; layer_writes[i].dstBinding = i;
+            layer_writes[i].descriptorCount = 1;
+            layer_writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            layer_writes[i].pImageInfo = &layer_image;
+        }
+        c_.vkUpdateDescriptorSets(c_.device, 2, layer_writes, 0, nullptr);
+    }
+    void update_oit_composite(TransparencyMethod method) {
+        VkDescriptorImageInfo images[2] = {
+            {samplers_[0], oit_->color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+            {samplers_[0], method == TransparencyMethod::average ? oit_->count.view : oit_->color.view,
+             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}};
+        VkWriteDescriptorSet writes[2] = {};
+        for (unsigned i = 0; i < 2; ++i) {
+            writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[i].dstSet = oit_->composite_set; writes[i].dstBinding = i; writes[i].descriptorCount = 1;
+            writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[i].pImageInfo = &images[i];
+        }
+        c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
+    }
+    VkDescriptorSet oit_peel_set(const Prepared& draw, unsigned previous) {
+        const auto key = std::make_pair(draw.texture, previous);
+        const auto found = oit_->peel_sets.find(key);
+        if (found != oit_->peel_sets.end()) return found->second;
+        VkDescriptorSet set = VK_NULL_HANDLE;
+        VkDescriptorSetAllocateInfo allocation{};
+        allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocation.descriptorPool = descriptor_pool_; allocation.descriptorSetCount = 1;
+        allocation.pSetLayouts = &oit_scene_descriptors_;
+        check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &set), "allocate transparency peel descriptors");
+        unsigned sampler_index = 0;
+        if (auto source = draw.texture->source.lock())
+            sampler_index = (source->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
+                            (source->sampler().filter == TextureFilter::linear ? 1 : 0);
+        const VkImageView previous_view = previous == 2 ? oit_->start_depth.view : oit_->depth(previous).view;
+        VkDescriptorImageInfo images[2] = {
+            {samplers_[sampler_index], draw.texture->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+            {samplers_[0], previous_view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
+        VkWriteDescriptorSet writes[2] = {};
+        for (unsigned i = 0; i < 2; ++i) {
+            writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[i].dstSet = set; writes[i].dstBinding = i == 0 ? 0 : 3; writes[i].descriptorCount = 1;
+            writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            writes[i].pImageInfo = &images[i];
+        }
+        c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
+        oit_->peel_sets.emplace(key, set);
+        return set;
+    }
+    void encode_oit(VkCommandBuffer cmd, const std::vector<Prepared>& draws) {
+        std::vector<const Prepared*> transparent;
+        for (const auto& draw : draws) if (draw.command.transparent) transparent.push_back(&draw);
+        if (transparent.empty()) return;
+        ensure_oit(target_->width, target_->height);
+        const uint32_t width = target_->width, height = target_->height;
+        const auto full_view = [&] {
+            VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+            const VkRect2D scissor = {{0, 0}, {width, height}};
+            c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+        };
+        const auto set_view = [&](const DrawCommand& d) {
+            const auto& r = d.viewport;
+            VkViewport viewport = {float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+            VkRect2D scissor = {{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
+            c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+        };
+        const auto bind_draw = [&](const Prepared& draw, VkPipeline pipeline, VkPipelineLayout pipeline_layout,
+                                   VkDescriptorSet texture_set) {
+            set_view(draw.command);
+            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &texture_set, 0, nullptr);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &impostor_set_, 1,
+                                       &draw.uniform_offset);
+            VkDeviceSize offset = 0;
+            c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+            Push push{};
+            for (unsigned col = 0; col < 4; ++col)
+                for (unsigned row = 0; row < 4; ++row) push.mvp[col * 4 + row] = draw.command.model_view_projection(row, col);
+            for (unsigned i = 0; i < 4; ++i) push.color[i] = draw.command.color[i];
+            push.object = draw.command.object_id; push.lighting = draw.command.lighting ? 1 : 0;
+            for (unsigned col = 0; col < 3; ++col)
+                for (unsigned row = 0; row < 3; ++row) push.normal[col * 3 + row] = draw.command.normal_matrix(row, col);
+            c_.vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+        };
+        if (oit_method_ == TransparencyMethod::average) {
+            for (auto* image : {&oit_->color, &oit_->count}) {
+                auto& layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
+                const bool fresh = layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                image_barrier(c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT, layout,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                              fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              fresh ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            }
+            VkClearValue clears[2] = {};
+            VkRenderPassBeginInfo begin{};
+            begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            begin.renderPass = oit_->average_pass; begin.framebuffer = oit_->average_framebuffer;
+            begin.renderArea = {{0, 0}, {width, height}};
+            begin.clearValueCount = 2; begin.pClearValues = clears;
+            c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+            full_view();
+            for (const Prepared* draw : transparent) {
+                bind_draw(*draw, oit_->average_pipeline, layout_, draw->texture->set);
+                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+            }
+            c_.vkCmdEndRenderPass(cmd);
+            for (auto* image : {&oit_->color, &oit_->count}) {
+                auto& layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
+                image_barrier(c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            }
+        } else {
+            {
+                const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->color_layout,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                              fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              fresh ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                oit_->color_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                // Zero the accumulation; every layer pass loads it back.
+                VkClearValue clear{};
+                VkRenderPassBeginInfo begin{};
+                begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                begin.renderPass = oit_->reset_pass; begin.framebuffer = oit_->reset_framebuffer;
+                begin.renderArea = {{0, 0}, {width, height}};
+                begin.clearValueCount = 1; begin.pClearValues = &clear;
+                c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                c_.vkCmdEndRenderPass(cmd);
+            }
+            if (!oit_->start_ready) {
+                // Zero is the sentinel "nothing peeled yet" depth.
+                VkClearValue clear{};
+                VkRenderPassBeginInfo begin{};
+                begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                begin.renderPass = oit_->start_pass; begin.framebuffer = oit_->start_framebuffer;
+                begin.renderArea = {{0, 0}, {1, 1}};
+                begin.clearValueCount = 1; begin.pClearValues = &clear;
+                c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                c_.vkCmdEndRenderPass(cmd);
+                image_barrier(c_, cmd, oit_->start_depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                oit_->start_ready = true;
+            }
+            for (unsigned layer = 0; layer < oit_layers_; ++layer) {
+                const unsigned target = layer & 1u;
+                const unsigned previous = layer == 0 ? 2u : 1u - target;
+                auto& depth_image = oit_->depth(target);
+                auto& depth_layout = oit_->depth_layout[target];
+                const bool fresh_depth = depth_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                image_barrier(c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT, depth_layout,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                              fresh_depth ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                              fresh_depth ? 0 : VK_ACCESS_SHADER_READ_BIT,
+                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+                depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                // The layer target is replaced every pass, so its previous
+                // contents (last read by the layer blend) are discarded.
+                const bool fresh_layer = oit_->layer_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                image_barrier(c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->layer_layout,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                              fresh_layer ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                              fresh_layer ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                oit_->layer_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                VkClearValue clears[2] = {}; clears[1].depthStencil.depth = 1;
+                VkRenderPassBeginInfo begin{};
+                begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                begin.renderPass = oit_->layer_pass; begin.framebuffer = oit_->layer_framebuffers[target];
+                begin.renderArea = {{0, 0}, {width, height}};
+                begin.clearValueCount = 2; begin.pClearValues = clears;
+                c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                full_view();
+                for (const Prepared* draw : transparent) {
+                    bind_draw(*draw, oit_->layer_pipeline, oit_peel_layout_, oit_peel_set(*draw, previous));
+                    c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                }
+                c_.vkCmdEndRenderPass(cmd);
+                image_barrier(c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                              VK_ACCESS_SHADER_READ_BIT);
+                depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+                image_barrier(c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                oit_->layer_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                // Blend the resolved layer over the running accumulation.
+                VkRenderPassBeginInfo blend{};
+                blend.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                blend.renderPass = oit_->accumulate_pass; blend.framebuffer = oit_->accumulate_framebuffer;
+                blend.renderArea = {{0, 0}, {width, height}};
+                c_.vkCmdBeginRenderPass(cmd, &blend, VK_SUBPASS_CONTENTS_INLINE);
+                full_view();
+                c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_->accumulate_pipeline);
+                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0, 1,
+                                           &oit_->layer_set, 0, nullptr);
+                c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+                c_.vkCmdEndRenderPass(cmd);
+            }
+            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+            oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        }
+        update_oit_composite(oit_method_);
     }
     void encode_shadow(VkCommandBuffer cmd, const std::vector<Prepared>& draws) {
         if (!shadow_map_) return;
@@ -2250,6 +2964,11 @@ public:
     }
     void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background, bool capture = true) {
         encode_shadow(cmd, draws);
+        // Accumulate or peel the transparent surfaces first; the scene pass then
+        // composites the result over its opaque geometry.
+        oit_active_ = oit_method_ != TransparencyMethod::sorted &&
+            std::any_of(draws.begin(), draws.end(), [](const Prepared& d) { return d.command.transparent; });
+        if (oit_active_) encode_oit(cmd, draws);
         // Ambient occlusion and multisampled previews both read the center-sample
         // depth, which only the single-sample picking pass produces.
         const bool prepass = target_->id_pass &&
@@ -2280,7 +2999,10 @@ public:
                     VK_ACCESS_SHADER_READ_BIT,VK_ACCESS_TRANSFER_READ_BIT);
     }
     FrameImage render(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
-                      const vec4& background, unsigned samples) override {
+                      const vec4& background, unsigned samples,
+                      TransparencyMethod transparency, unsigned peel_layers) override {
+        oit_method_ = transparency;
+        oit_layers_ = peel_layers ? peel_layers : 16u;
         const auto draws = prepare(width, height, commands, background, samples);
         FrameImage result;
         result.width = width; result.height = height;
@@ -2358,7 +3080,10 @@ public:
         return result;
     }
     bool present(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
-                 const vec4& background, unsigned samples) override {
+                 const vec4& background, unsigned samples,
+                 TransparencyMethod transparency, unsigned peel_layers) override {
+        oit_method_ = transparency;
+        oit_layers_ = peel_layers ? peel_layers : 16u;
         if (!c_.surface) throw std::logic_error("headless Vulkan device has no presentation surface");
         if (!width || !height) return false;
         if (!swapchain_ || swapchain_->dirty || swapchain_->requested_width != width || swapchain_->requested_height != height) {

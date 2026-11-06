@@ -62,19 +62,21 @@ namespace easy3d {
         // The OpenGL effects know only the camera and draw into the current
         // context. Vulkan presentation belongs to the viewer, so the viewer
         // registers a frame renderer for its camera. Method 1 is average color
-        // blending and method 2 is dual depth peeling.
-        using FrameRenderer = std::function<void(const std::vector<TrianglesDrawable*>&, int)>;
+        // blending and method 2 is depth peeling; the last argument bounds the
+        // peel layers (zero means no explicit bound).
+        using FrameRenderer = std::function<void(const std::vector<TrianglesDrawable*>&, int, int)>;
         static void set_frame_renderer(const Camera* camera, FrameRenderer renderer) {
             if (renderer) renderers()[camera] = std::move(renderer);
             else renderers().erase(camera);
         }
 
     protected:
-        static void render_frame(const Camera* camera, const std::vector<TrianglesDrawable*>& surfaces, int method) {
+        static void render_frame(const Camera* camera, const std::vector<TrianglesDrawable*>& surfaces,
+                                 int method, int peels) {
             auto it = renderers().find(camera);
             if (it == renderers().end())
                 throw std::logic_error("transparency requires a Viewer or OffScreen frame");
-            it->second(surfaces, method);
+            it->second(surfaces, method, peels);
         }
 
     private:

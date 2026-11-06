@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/render_device.h>
 #include <cmath>
+#include <sstream>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;
@@ -12,9 +13,15 @@ DrawCommand rectangle(float x0,float y0,float x1,float y1,float z,const vec4& co
     DrawCommand d; d.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{0,1,2,0,2,3}); d.color=color;
     d.transparent=transparent; return d;
 }
-void probe(const FrameImage& f,unsigned x,unsigned y,const int* rgb) {
+void probe(const FrameImage& f,unsigned x,unsigned y,const int* rgb,const char* label="") {
     const auto i=(size_t(y)*f.width+x)*4;
-    for (unsigned c=0;c<3;++c) require(std::abs(int(f.rgba[i+c])-rgb[c])<=2,"transparent blend probe mismatch");
+    for (unsigned c=0;c<3;++c) if (std::abs(int(f.rgba[i+c])-rgb[c])>2) {
+        std::ostringstream message;
+        message << "transparent blend probe mismatch (" << label << ") at " << x << ',' << y << ": got ("
+                << int(f.rgba[i]) << ',' << int(f.rgba[i+1]) << ',' << int(f.rgba[i+2])
+                << ") expected (" << rgb[0] << ',' << rgb[1] << ',' << rgb[2] << ')';
+        throw std::runtime_error(message.str());
+    }
 }
 void same_ids(const FrameImage& a,const FrameImage& b,const char* message) {
     require(a.ids.size()==b.ids.size(),message);
@@ -85,6 +92,59 @@ int main(int argc,char**) {
             require(std::abs(layered_image.depth[32*65+32]-.25f)<1e-5f,
                     "per-triangle sorting lost the nearest transparent depth");
         }
+        // Order-independent transparency: the average-color and depth-peeling
+        // methods accumulate instead of sorting, so they differ from each other
+        // and from the depth-sorted pass while staying order independent.
+        auto opaque_yellow=yellow; opaque_yellow.transparent=true;
+        for (unsigned count:{1u,4u}) {
+            if (!(device->supported_sample_counts()&count)) continue;
+            const auto sorted=device->render(65,65,{green,blue},vec4(0),count);
+            probe(sorted,32,32,expected,"oit sorted");
+
+            const auto averaged=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::average,4);
+            // Mean color (0,.5,.5), mean alpha .5, n=2: T=.25, so (0,.375,.375).
+            const int average_expected[]={0,96,96};
+            probe(averaged,32,32,average_expected,"average two");
+            require(averaged.rgba!=sorted.rgba,"average transparency matched the sorted pass");
+            const auto averaged_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::average,4);
+            require(averaged.rgba==averaged_reversed.rgba,"average transparency was not order independent");
+
+            // One layer keeps only the nearest surface; two layers blend it over.
+            const auto peeled_near=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::peeling,1);
+            const int near_expected[]={0,0,128};
+            probe(peeled_near,32,32,near_expected,"peel one");
+            const auto peeled=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::peeling,2);
+            const int peeled_expected[]={0,128,64};
+            probe(peeled,32,32,peeled_expected,"peel two");
+            require(peeled.rgba!=averaged.rgba,"depth peeling matched average transparency");
+            const auto peeled_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::peeling,2);
+            require(peeled.rgba==peeled_reversed.rgba,"depth peeling was not order independent");
+
+            // The farthest opaque layer truncates the accumulation; asking for
+            // every layer (0) reproduces the sorted result.
+            const auto peeled_capped=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
+                                                    TransparencyMethod::peeling,2);
+            probe(peeled_capped,32,32,peeled_expected,"peel capped");
+            const auto peeled_all=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
+                                                 TransparencyMethod::peeling,0);
+            const int opaque_expected[]={255,255,0};
+            probe(peeled_all,32,32,opaque_expected,"peel all");
+            require(peeled_capped.rgba!=peeled_all.rgba,"peel layer limit was ignored");
+
+            const auto averaged_three=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
+                                                     TransparencyMethod::average,0);
+            // Mean color (.5,.75,.25), mean alpha 2/3, n=3.
+            const int average_three_expected[]={123,184,61};
+            probe(averaged_three,32,32,average_three_expected,"average three");
+
+            // Picking keeps the nearest transparent surface for both methods.
+            for (const FrameImage* image:{&averaged,&peeled}) {
+                require(image->ids[32*65+32].object==31 && image->ids[32*65+32].primitive==0,
+                        "order-independent transparency changed picking IDs");
+                require(std::abs(image->depth[32*65+32]-.25f)<1e-5f,
+                        "order-independent transparency changed picking depth");
+            }
+        }
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);
         line.geometry=std::make_shared<Geometry>(std::vector<Vertex>(2),std::vector<uint32_t>{0,1},Topology::lines);
@@ -97,6 +157,6 @@ int main(int argc,char**) {
         try { device->render(65,65,{bad_alpha}); } catch (const std::invalid_argument&) { rejected=true; }
         require(rejected,"out-of-range transparent alpha was accepted");
         require(device->validation_errors()==0,"transparency validation errors");
-        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA\n";
+        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color and depth-peel OIT\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

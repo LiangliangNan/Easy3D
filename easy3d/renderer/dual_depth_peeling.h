@@ -40,9 +40,10 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using dual depth peeling.
-     * \details Vulkan composites the given surfaces through the viewer's shared
-     *      transparent scene pass, sorted far to near. The OpenGL peel stages
-     *      (min-max depth, front/back accumulation) are not used.
+     * \details Vulkan peels the requested number of front layers order
+     *      independently and composites their premultiplied color over the
+     *      opaque scene. The OpenGL min-max (front and back) pairing is not used;
+     *      each layer is peeled front to back.
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
      * \sa AverageColorBlending
      */
@@ -56,7 +57,7 @@ namespace easy3d {
         int max_peels() const { return max_peels_; }
 
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
-            render_frame(camera_, surfaces, 2);
+            render_frame(camera_, surfaces, 2, max_peels_);
         }
 
     private:

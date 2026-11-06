@@ -175,8 +175,8 @@ Viewer::Viewer(int width, int height, const VulkanOptions& options)
     camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0)); camera()->showEntireScene();
     // Transparency effects only know the camera. Rendering and presentation stay
     // in the viewer, as in Viewer::draw().
-    Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method) {
-        draw_transparency(surfaces, method);
+    Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method, int peels) {
+        draw_transparency(surfaces, method, peels);
     });
 }
 void Viewer::release_device() { impl_->device.reset(); }
@@ -449,7 +449,7 @@ bool Viewer::draw() {
     return impl_->device->present(uint32_t(width), uint32_t(height), commands,
                                   background_color(), unsigned(samples()));
 }
-void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int) {
+void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels) {
     const int width = framebuffer_width(), height = framebuffer_height();
     std::vector<DrawSource> sources;
     auto commands = frame_commands(*camera(), width, height, &sources);
@@ -461,7 +461,11 @@ void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, 
             commands[i].color.w = triangles->opacity();
         }
     }
-    impl_->device->present(uint32_t(width), uint32_t(height), commands, background_color(), unsigned(samples()));
+    const auto transparency = method == 1 ? graphics::TransparencyMethod::average :
+                              method == 2 ? graphics::TransparencyMethod::peeling :
+                              graphics::TransparencyMethod::sorted;
+    impl_->device->present(uint32_t(width), uint32_t(height), commands, background_color(),
+                           unsigned(samples()), transparency, peels > 0 ? unsigned(peels) : 0u);
 }
 bool Viewer::mouse_free_move_event(int, int, int, int, int) { return false; }
 bool Viewer::char_input_event(unsigned int) { return false; }
@@ -685,8 +689,8 @@ Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions& options)
         camera()->showEntireScene();
         // Transparency effects only know the camera, so route their frames back to
         // this viewer for rendering and presentation.
-        Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method) {
-            draw_transparency(surfaces, method);
+        Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method, int peels) {
+            draw_transparency(surfaces, method, peels);
         });
         VLOG(1) << "Vulkan device: " << impl_->device->name() <<  ", Samples: " << window_host_->samples;
     } catch (...) {

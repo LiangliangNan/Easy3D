@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -5754,3 +5754,64 @@ only caller is now `ShaderProgram::bind()`. The packaged Python run on OpenGL
 prints no sampler warning, and all 91 OpenGL tests, the 90 tests of the
 Qt-enabled OpenGL tree (with the `Mapple` target built), and all 127 MoltenVK
 tests pass at `-j2` (2026-11-06). `git diff --check` is clean.
+
+### 2026-11-06 — W10 batch 27: order-independent transparency on Vulkan
+
+On OpenGL `AverageColorBlending` and `DualDepthPeeling` produce visibly
+different images, but on Vulkan both legacy classes ended up in the same
+depth-sorted straight-alpha pass of batch 18, so they rendered identically. This
+batch gives the Vulkan device real accumulation and peeling.
+
+The choice is made per frame rather than per drawable, because both methods need
+their own targets for the whole scene. `RenderDevice::render()` and `present()`
+take `graphics::TransparencyMethod { sorted, average, peeling }` plus a
+`peel_layers` bound; both parameters are defaulted, so every existing caller is
+unchanged. `Viewer::draw_transparency(surfaces, method, peels)` maps `method` 1
+to `average` and 2 to `peeling`, and the legacy classes now call
+`render_frame(camera_, surfaces, 1, 0)` and
+`render_frame(camera_, surfaces, 2, max_peels_)`, so `DualDepthPeeling`'s layer
+limit is honored instead of ignored.
+
+Both methods render before the scene pass into single-sampled offscreen targets
+(`R16G16B16A16_SFLOAT`, falling back to `R32G32B32A32_SFLOAT`), and the scene
+pass then draws a full-screen composite over its opaque geometry in subpass 0
+with premultiplied `ONE, ONE_MINUS_SRC_ALPHA`. Compositing inside the scene pass
+avoids a framebuffer feedback loop and leaves the integer picking attachment
+untouched.
+
+- `average` runs one additive pass that sums premultiplied color and a fragment
+  count (`R16_SFLOAT`). The composite evaluates `AvgColor = sum.rgb / sum.a`,
+  `AvgAlpha = sum.a / n` and `T = pow(1 - AvgAlpha, n)`, which is the classic
+  average-color formulation and needs no sorting.
+- `peeling` iterates front to back with two passes per layer. The layer pass
+  renders the transparent surfaces with depth test `LESS`, depth writes and
+  *blending disabled* into a layer target, so only the nearest surviving
+  fragment of each pixel is kept; a full-screen pass then over-blends that layer
+  into the premultiplied accumulation. A depth-tested blended pass cannot do
+  this in one step, because every fragment that passes the test would be
+  blended. Two `D32_SFLOAT` targets alternate between layers, and a 1x1 image
+  cleared to 0 is the "nothing peeled yet" sentinel; `oit_peel.frag` samples it
+  with normalized coordinates so the first layer clamps to that texel instead of
+  reading out of bounds. `peel_layers` bounds the iterations (0 means all, capped
+  at 16). Unlike OpenGL's dual min-max peeling this peels one layer per
+  iteration rather than two, so N layers cost N passes instead of N/2 + 1.
+
+Order-independent methods do not write IDs or depth, so picking needed its own
+path. Multisample frames already run the separate single-sample ID pass, which
+draws transparent surfaces normally. Single-sample frames take their IDs from
+the color pass, where the sorted path used the blended transparent pipeline;
+that pass now uses a new `oit_id_pipeline` with the scene color write-masked off,
+so the same depth test still records the nearest transparent ID and depth while
+the composite supplies the visible color.
+
+New shaders: `oit_quad.vert`, `oit_average.frag`, `oit_peel.frag`,
+`oit_average_composite.frag` and `oit_peel_composite.frag`.
+`tests/renderer/transparency_test.cpp` now pins exact pixel values for both
+methods at 1x and 4x MSAA — two layers average to `(0, 96, 96)` and peel to
+`(0, 128, 64)`, one peeled layer keeps only the near surface `(0, 0, 128)`,
+three layers average to `(123, 184, 61)` — and requires the two methods to
+differ from each other and from the sorted pass, both to be independent of draw
+order, a two-layer peel to ignore a third opaque-alpha surface while an
+unlimited peel reproduces it, and picking to keep object 31 at depth 0.25. All
+127 MoltenVK tests, all 91 OpenGL tests and the 90 tests of the Qt-enabled
+OpenGL tree pass at `-j4` (2026-11-06).

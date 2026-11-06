@@ -40,8 +40,9 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using average color blending.
-     * \details Vulkan composites the given surfaces through the viewer's shared
-     *      transparent scene pass. The OpenGL accumulation shaders are not used.
+     * \details Vulkan accumulates straight-alpha fragments order independently,
+     *      exactly like the OpenGL average-color shaders, and composites the
+     *      average over the opaque scene.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
      * \sa DualDepthPeeling
      */
@@ -52,7 +53,7 @@ namespace easy3d {
         ~AverageColorBlending() override = default;
 
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
-            render_frame(camera_, surfaces, 1);
+            render_frame(camera_, surfaces, 1, 0);
         }
 
     private:
