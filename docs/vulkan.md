@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers, and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -5786,9 +5786,14 @@ untouched.
 - `peeling` iterates front to back with two passes per layer. The layer pass
   renders the transparent surfaces with depth test `LESS`, depth writes and
   *blending disabled* into a layer target, so only the nearest surviving
-  fragment of each pixel is kept; a full-screen pass then over-blends that layer
-  into the premultiplied accumulation. A depth-tested blended pass cannot do
-  this in one step, because every fragment that passes the test would be
+  fragment of each pixel is kept; a full-screen pass then **under**-blends that
+  layer into the premultiplied accumulation (`dst = src * (1 - dst.a) + dst`,
+  i.e. `ONE_MINUS_DST_ALPHA, ONE`). Layers are peeled front to back, so each new
+  one lies *behind* everything already accumulated and has to go under it — the
+  same under-blending the OpenGL `dual_depth_peeling_peel_rendering.frag` shader
+  does. Over-blending here would invert the depth order. A depth-tested blended
+  pass cannot do this in one step, because every fragment that passes the test
+  would be
   blended. Two `D32_SFLOAT` targets alternate between layers, and a 1x1 image
   cleared to 0 is the "nothing peeled yet" sentinel; `oit_peel.frag` samples it
   with normalized coordinates so the first layer clamps to that texel instead of
@@ -5808,11 +5813,12 @@ New shaders: `oit_quad.vert`, `oit_average.frag`, `oit_peel.frag`,
 `oit_average_composite.frag` and `oit_peel_composite.frag`.
 `tests/renderer/transparency_test.cpp` now pins exact pixel values for both
 methods at 1x and 4x MSAA — two layers average to `(0, 96, 96)` and peel to
-`(0, 128, 64)`, one peeled layer keeps only the near surface `(0, 0, 128)`,
+`(0, 64, 128)`, one peeled layer keeps only the near surface `(0, 0, 128)`,
 three layers average to `(123, 184, 61)` — and requires the two methods to
 differ from each other and from the sorted pass, both to be independent of draw
-order, a two-layer peel to ignore a third opaque-alpha surface while an
-unlimited peel reproduces it, and picking to keep object 31 at depth 0.25. All
+order, a two-layer peel to stop after the two nearest surfaces while an
+unlimited peel reproduces the sorted blend of a third opaque-alpha surface, and
+picking to keep object 31 at depth 0.25. All
 127 MoltenVK tests, all 91 OpenGL tests and the 90 tests of the Qt-enabled
 OpenGL tree pass at `-j4` (2026-11-06).
 
@@ -5838,5 +5844,48 @@ two legacy effect implementations and validated on both backends.
 - **Build.** The Vulkan tree (`cmake-build-debug`) was reconfigured back to
   `Easy3D_ENABLE_VULKAN=ON` and rebuilt; the OpenGL tree (`build-opengl`) is green.
 
-No further work is pending for `AverageColorBlending` and `DualDepthPeeling` on either
+No further work was pending for `AverageColorBlending` and `DualDepthPeeling` on either
 backend; the remaining W10 items are Mapple, Qt/wx, Python coverage and GUI integration.
+The Vulkan peel accumulation order reported afterwards is fixed in the next entry.
+
+### 2026-11-06 — W10 batch 27 fix: depth-peel accumulation order
+
+`DualDepthPeeling` on Vulkan now looks different from `AverageColorBlending`, but its
+Vulkan image was wrong: rotating the model produced clear artifacts, while OpenGL was
+stable. The peel loop itself was correct — layers were resolved front to back — but the
+full-screen pass blended each newly peeled layer *over* the running accumulation instead
+of *under* it. Because later iterations are farther away, the farthest resolved layer
+ended up in front, and the visible result depended on which layers happened to be peeled
+last; at an edge, where the layer count changes from pixel to pixel, that inversion reads
+as flickering slivers.
+
+`ensure_oit()` now uses `ONE_MINUS_DST_ALPHA, ONE` for color and alpha in
+`accumulate_pipeline` (`dst = src * (1 - dst.a) + dst`), matching the under-blending of
+the OpenGL `dual_depth_peeling_peel_rendering.frag` shader. The composite remains a
+premultiplied over-blend onto the scene, so nothing else changed. Comments in
+`oit_peel.frag` and `oit_peel_composite.frag` describe the two-pass front-to-back
+structure instead of the old over-blend wording.
+
+The previous test values had encoded the bug: a two-layer peel expected `(0, 128, 64)`
+(blue in front of green) and a third opaque-alpha surface was expected to be ignored.
+With the fix, peeling both layers gives `(0, 64, 128)` — identical to the sorted blend —
+and an unlimited peel reproduces the sorted blend of the third surface, `(64, 128, 128)`.
+`tests/renderer/transparency_test.cpp` now compares peel against sorted with a
+`close_rgba()` helper (±2 per channel, because the methods accumulate at different
+precisions) and adds an eight-layer stack: peeling all layers reproduces the sorted
+blend, a peel truncated at four layers reproduces the sorted blend of only the four
+nearest surfaces, the limit still changes the image, and reversing the draw order changes
+nothing. Any re-inversion of the accumulation now fails immediately.
+
+Visual check on the Tutorial 504 model (torus knot, 512 triangles, 480x480, lit, alpha
+0.6): unlimited peeling and a 16-layer peel now match the sorted image at the center
+pixel, `(128, 96, 33)`, with zero validation errors. The whole-image difference against
+sorted has mean 0.09 with 680 pixels outside ±2, all of them thin silhouette slivers and
+one small region where the per-triangle centroid ordering of the sorted pass is ambiguous
+for interpenetrating shells. Cropping that region shows a pale sliver along the silhouette
+in the sorted frame that the peeled frame does not have, i.e. peeling resolves the overlap
+in depth order while centroid sorting occasionally does not; the residual differences
+therefore belong to the sorted path, not to peeling.
+
+Full suites after the fix: 127/127 MoltenVK tests, 91/91 OpenGL tests and 90/90 tests of
+the Qt-enabled OpenGL tree at `-j4` (2026-11-06).
