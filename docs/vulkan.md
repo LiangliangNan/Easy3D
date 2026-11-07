@@ -6423,4 +6423,45 @@ Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL (one load-sensitive timeout 
 behavior documented in W6). Documentation-only changes; no behavioral differences.
 No changes were committed.
 
+### 2026-11-07 — W10 batch 36: Coordinate system style guide
+
+**Motivation.** The codebase uses three distinct coordinate systems (logical window,
+framebuffer, mouse/event) but the documentation was scattered and incomplete. Camera,
+viewer, and picker classes mentioned coordinates in various places without a unified
+explanation. Users needed clear guidance on which coordinate system to use in which
+context and how the different size methods relate to each other.
+
+**Design.** Added comprehensive coordinate system documentation to:
+
+- **camera.h**: Added a "Coordinate Systems" section to the class documentation explaining
+  the three systems and when to use camera methods. Updated `screenWidth()`, `screenHeight()`,
+  and `setScreenWidthAndHeight()` documentation to clarify they return/accept logical window
+  coordinates (points), not physical pixels.
+
+- **viewer_base.h**: Added a "Coordinate Systems" section explaining the three systems and
+  their relationships. Updated `width()`, `height()`, `viewer_size()`, `framebuffer_width()`,
+  `framebuffer_height()`, and `framebuffer_size()` documentation to clarify which coordinate
+  system each uses and when to use them.
+
+- **viewer.h**: Added class documentation referencing the coordinate system conventions from
+  ViewerBase.
+
+- **docs/vulkan.md**: Added a comprehensive "Coordinate System Conventions" style guide section
+  explaining the three coordinate systems, when to use each, implementation rules, examples,
+  and common pitfalls.
+
+All documentation emphasizes:
+- **Logical window coordinates** (points, DPI-independent): `width()`, `height()`,
+  `camera()->screenWidth()/Height()` — for UI, events, camera operations
+- **Framebuffer coordinates** (physical pixels, DPI-dependent): `framebuffer_width()`,
+  `framebuffer_height()` — for GPU operations, textures, viewports
+- **Mouse/event coordinates**: always logical with top-left origin
+- Key relationship: `Camera::screenWidth()/Height()` == `Viewer::width()/height()` (both logical)
+
+Files changed: `easy3d/renderer/camera.h`, `easy3d/viewer/viewer_base.h`,
+`easy3d/viewer/viewer.h`, `docs/vulkan.md`.
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. Documentation-only
+changes; no behavioral differences. No changes were committed.
+
 
