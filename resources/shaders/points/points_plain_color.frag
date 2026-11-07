@@ -59,53 +59,44 @@ in Data{
 out vec4 outputF;
 
 void main(void) {
-    if (!lighting) {
-        outputF = DataIn.color;
-        if (selected)
-            outputF = mix(outputF, highlight_color, 0.6);
-        if (highlight) {
-            if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                outputF = mix(outputF, highlight_color, 0.8);
+    vec3 color = DataIn.color.xyz;
+    if (lighting) {
+        if ((gl_FrontFacing == false) && distinct_back_color)
+            color = backside_color;
+
+        vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it
+        vec3 normal = DataIn.normal;
+        vec3 light_dir = normalize(wLightPos);
+        if (distinct_back_color) {
+            if (dot(normal, view_dir) < 0)
+                color = backside_color;
         }
-        return;
+
+        float df = 0.0;	// diffuse factor
+        if (two_sides_lighting)
+            df = abs(dot(light_dir, normal));
+        else
+            df = max(dot(light_dir, normal), 0);
+
+        float sf = 0.0;// specular factor
+        if (df > 0.0) { // if the vertex is lit compute the specular color
+            vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
+            if (two_sides_lighting)
+                sf = abs(dot(half_vector, normal));
+            else
+                sf = max(dot(half_vector, normal), 0.0);
+            sf = pow(sf, shininess);
+        }
+
+        color = color * df + specular * sf + ambient;
     }
 
-    vec3 color = DataIn.color.xyz;
-    if ((gl_FrontFacing == false) && distinct_back_color)
-        color = backside_color;
-
+    outputF = vec4(color, DataIn.color.a);
+    // Selection and primitive-range highlighting tint the final color, lit or not.
     if (highlight) {
         if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, highlight_color.xyz, 0.8);
+            outputF = mix(outputF, highlight_color, 0.8);
     }
-
-    vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it
-    vec3 normal = DataIn.normal;
-    vec3 light_dir = normalize(wLightPos);
-    if (distinct_back_color) {
-        if (dot(normal, view_dir) < 0)
-            color = backside_color;
-    }
-
     if (selected)
-        color = mix(color, highlight_color.xyz, 0.6);
-
-    float df = 0.0;	// diffuse factor
-    if (two_sides_lighting)
-        df = abs(dot(light_dir, normal));
-    else
-        df = max(dot(light_dir, normal), 0);
-
-    float sf = 0.0;// specular factor
-    if (df > 0.0) { // if the vertex is lit compute the specular color
-        vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
-        if (two_sides_lighting)
-            sf = abs(dot(half_vector, normal));
-        else
-            sf = max(dot(half_vector, normal), 0.0);
-        sf = pow(sf, shininess);
-    }
-
-    color = color * df + specular * sf + ambient;
-    outputF = vec4(color, DataIn.color.a);
+        outputF = mix(outputF, highlight_color, 0.6);
 }

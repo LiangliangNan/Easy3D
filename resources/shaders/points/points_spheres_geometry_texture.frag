@@ -54,6 +54,7 @@ in Data{
 	flat	vec2	texcoord;
 	smooth	vec2	tex;
 	flat	vec4	position;
+	flat	int		point_id;
 } DataIn;
 
 out vec4 outputF;
@@ -105,33 +106,10 @@ void main()
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
 		if (!lighting) {
 			outputF = vec4(color, 1.0);
-			if (highlight) {
-				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, highlight_color, 0.8);
-			}
-			if (selected)
-				outputF = mix(outputF, highlight_color, 0.6);
-			return;
 		}
-
-		if (highlight) {
-			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-			color = mix(color, highlight_color.xyz, 0.8);
+		else {
+			outputF = vec4(color * df + specular * sf + ambient, 1.0);
 		}
-
-//		//uint addr = gl_PrimitiveID / 32;
-//		//uint offs = gl_PrimitiveID % 32;
-//		uint addr = gl_PrimitiveID >> 5;
-//		uint offs = gl_PrimitiveID & 31;
-//		if ((selection.data[addr] & (1 << offs)) != 0)
-//			color = mix(color, highlight_color.xyz, 0.8);
-//		else if (gl_PrimitiveID == hightlight_id)
-//			color = highlight_color.xyz;
-//
-//		if (selected)
-//			color = highlight_color.xyz;
-
-		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
 
 	// without perspective correction
@@ -167,35 +145,17 @@ void main()
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
 		if (!lighting) {
 			outputF = vec4(color, 1.0);
-			if (highlight) {
-				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, highlight_color, 0.8);
-			}
-			if (selected)
-				outputF = mix(outputF, highlight_color, 0.6);
-			return;
 		}
-
-		if (highlight) {
-			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-				color = mix(color, highlight_color.xyz, 0.8);
+		else {
+			outputF = vec4(color * df + specular * sf + ambient, 1.0);
 		}
-
-//		//uint addr = gl_PrimitiveID / 32;
-//		//uint offs = gl_PrimitiveID % 32;
-//		uint addr = gl_PrimitiveID >> 5;
-//		uint offs = gl_PrimitiveID & 31;
-//		if ((selection.data[addr] & (1 << offs)) != 0)
-//			color = mix(color, highlight_color.xyz, 0.8);
-//		else if (gl_PrimitiveID == hightlight_id)
-//			color = highlight_color.xyz;
-//
-//		if (selected)
-//			color = highlight_color.xyz;
-
-		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
 
+	// Selection and primitive-range highlighting tint the final color, lit or not.
+	if (highlight) {
+		if (DataIn.point_id >= highlight_id_min && DataIn.point_id <= highlight_id_max)
+			outputF = mix(outputF, highlight_color, 0.8);
+	}
 	if (selected)
 		outputF = mix(outputF, highlight_color, 0.6);
 }

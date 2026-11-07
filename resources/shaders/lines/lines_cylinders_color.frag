@@ -43,6 +43,10 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
+uniform bool highlight;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
+
 uniform bool selected = false;
 uniform vec4 	highlight_color;
 
@@ -57,6 +61,7 @@ in Data{
 
 in vec4  gOutColor;
 in float gOutClipped;
+flat in int line_id;
 
 out vec4 outputF;
 
@@ -72,8 +77,6 @@ vec3 shade(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color){
 	}
 
     color = color * df + spec * sf + amb;
-	if (selected)
-		color = mix(color, highlight_color.xyz, 0.6);
 	return color;
 }
 
@@ -172,4 +175,12 @@ void main()
 	else {
 		outputF = gOutColor;
 	}
+
+	// Selection and primitive-range highlighting tint the final color, lit or not.
+	if (highlight) {
+		if (line_id >= highlight_id_min && line_id <= highlight_id_max)
+			outputF = mix(outputF, highlight_color, 0.8);
+	}
+	if (selected)
+		outputF = mix(outputF, highlight_color, 0.6);
 }

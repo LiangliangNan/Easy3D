@@ -22,7 +22,7 @@ struct DrawableRenderer::Impl {
         bool use_colors = false;
         bool flat_shading = false;
         bool textured = false;
-        bool selected = false, highlighted = false, lighting = false;
+        bool selection_marked = false, range_marked = false;
         std::pair<int,int> highlight_range = {-1,-1};
         vec4 highlight_color = vec4(0);
         float repeat = 1;
@@ -135,11 +135,17 @@ struct DrawableRenderer::Impl {
         const bool flat_shading = triangles && !triangles->smooth_shading();
         const bool selected = model_selected || d.is_selected();
         const bool highlighted = d.highlight();
+        const auto* lines = dynamic_cast<const LinesDrawable*>(&d);
+        const bool line_impostor = lines && lines->impostor_type() != LinesDrawable::PLAIN;
+        const auto range = d.highlight_range();
+        // Selection and primitive ranges tint the final shaded color in every
+        // style, lit or not; the OpenGL shaders follow the same contract.
+        const bool range_marked = highlighted && range.first >= 0 && range.second >= range.first;
+        const bool selection_marked = selected;
         if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
             entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
             entry.textured != textured || (textured && entry.repeat != repeat) ||
-            entry.selected != selected || entry.highlighted != highlighted ||
-            ((selected || highlighted) && entry.lighting != d.lighting()) ||
+            entry.selection_marked != selection_marked || entry.range_marked != range_marked ||
             entry.highlight_range != d.highlight_range() || entry.highlight_color != setting::highlight_color) {
             const auto n = buffers.vertices.size();
             if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
@@ -193,24 +199,21 @@ struct DrawableRenderer::Impl {
                 }
                 geometry = std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
             }
-            if (selected || highlighted) {
+            if (selection_marked || range_marked) {
                 const auto& source=geometry->vertices(); const auto& indices=geometry->indices();
                 const auto count=indices.empty() ? source.size() : indices.size();
                 const unsigned stride=topology==graphics::Topology::triangles ? 3 : topology==graphics::Topology::lines ? 2 : 1;
                 std::vector<graphics::Vertex> marked(count);
-                const auto range=d.highlight_range();
                 for (size_t i=0;i<count;++i) {
                     marked[i]=source[indices.empty() ? i : indices[i]];
-                    float strength=selected ? 0.6f : 0;
-                    // The OpenGL reference applies primitive-range highlighting only
-                    // in the lit branch of surface.frag; unlit draws keep selection.
-                    if (d.lighting() && highlighted && range.first>=0 && i/stride>=size_t(range.first) &&
-                        range.second>=range.first && i/stride<=size_t(range.second)) strength=0.8f+0.2f*strength;
+                    float strength=selection_marked ? 0.6f : 0;
+                    if (range_marked && i/stride>=size_t(range.first) && i/stride<=size_t(range.second))
+                        strength=0.8f+0.2f*strength;
                     marked[i].highlight=vec4(setting::highlight_color.x,setting::highlight_color.y,setting::highlight_color.z,strength);
                 }
                 geometry=std::make_shared<graphics::Geometry>(std::move(marked),std::vector<uint32_t>{},topology,std::vector<uint32_t>{},entry.points);
             }
-            entry.selected=selected; entry.highlighted=highlighted; entry.lighting=d.lighting();
+            entry.selection_marked=selection_marked; entry.range_marked=range_marked;
             entry.highlight_range=d.highlight_range(); entry.highlight_color=setting::highlight_color;
             entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry;
             entry.use_colors = use_colors; entry.flat_shading = flat_shading;
@@ -249,6 +252,9 @@ struct DrawableRenderer::Impl {
         result.color = d.coloring_method() == State::UNIFORM_COLOR ? d.color() : vec4(1, 1, 1, 1);
         result.object_id = id;
         result.lighting = d.lighting();
+        // OpenGL plain-line shaders have no lit branch; only cylinder/cone
+        // impostors are lit.
+        if (lines && !line_impostor) result.lighting = false;
         if (dynamic_cast<PointsDrawable*>(&d) || dynamic_cast<TrianglesDrawable*>(&d)) {
             result.material_lighting = true;
             result.lighting_two_sides = d.lighting_two_sides();

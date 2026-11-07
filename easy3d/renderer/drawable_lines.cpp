@@ -143,8 +143,11 @@ namespace easy3d {
                     ->set_uniform("default_color", color())
                     ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
 
-            program->set_uniform("selected", is_selected());
-            program->set_uniform("highlight_color", setting::highlight_color);
+            program->set_uniform("highlight", highlight())
+                    ->set_uniform("highlight_id_min", highlight_range().first)
+                    ->set_uniform("highlight_id_max", highlight_range().second)
+                    ->set_uniform("selected", is_selected())
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             ClippingPlane::instance()->set_program(program);
             ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
@@ -185,8 +188,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("selected", is_selected());
-        program->set_uniform("highlight_color", setting::highlight_color);
+        program->set_uniform("highlight", highlight())
+                ->set_uniform("highlight_id_min", highlight_range().first)
+                ->set_uniform("highlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected())
+                ->set_uniform("highlight_color", setting::highlight_color);
 
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
@@ -225,8 +231,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("selected", is_selected());
-        program->set_uniform("highlight_color", setting::highlight_color);
+        program->set_uniform("highlight", highlight())
+                ->set_uniform("highlight_id_min", highlight_range().first)
+                ->set_uniform("highlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected())
+                ->set_uniform("highlight_color", setting::highlight_color);
 
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
@@ -292,8 +301,11 @@ namespace easy3d {
             float ratio = camera->pixelGLRatio(camera->pivotPoint());
             program->set_uniform("radius", line_width() * ratio * 0.5f);  // 0.5f from width -> radius
 
-            program->set_uniform("selected", is_selected());
-            program->set_uniform("highlight_color", setting::highlight_color);
+            program->set_uniform("highlight", highlight())
+                    ->set_uniform("highlight_id_min", highlight_range().first)
+                    ->set_uniform("highlight_id_max", highlight_range().second)
+                    ->set_uniform("selected", is_selected())
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             ClippingPlane::instance()->set_program(program);
             ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
@@ -335,8 +347,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("selected", is_selected());
-        program->set_uniform("highlight_color", setting::highlight_color);
+        program->set_uniform("highlight", highlight())
+                ->set_uniform("highlight_id_min", highlight_range().first)
+                ->set_uniform("highlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected())
+                ->set_uniform("highlight_color", setting::highlight_color);
 
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
@@ -377,8 +392,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("selected", is_selected());
-        program->set_uniform("highlight_color", setting::highlight_color);
+        program->set_uniform("highlight", highlight())
+                ->set_uniform("highlight_id_min", highlight_range().first)
+                ->set_uniform("highlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected())
+                ->set_uniform("highlight_color", setting::highlight_color);
 
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());

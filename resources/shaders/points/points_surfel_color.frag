@@ -33,6 +33,7 @@ in FragmentData
     vec4 color;
     vec3 point;
     vec3 normal;
+    flat int point_id;
 } FragmentIn;
 
 
@@ -72,48 +73,42 @@ void main()
 
     if (!lighting) {
         fragmentColor = FragmentIn.color;
-        if (highlight) {
-            if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                fragmentColor = mix(fragmentColor, highlight_color, 0.8);
+    }
+    else {
+        vec3 color = FragmentIn.color.xyz;
+        vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
+        vec3 normal = FragmentIn.normal;
+
+        if (distinct_back_color) {
+            if (dot(normal, view_dir) < 0)
+                color = backside_color;
         }
-        if (selected)
-            fragmentColor = mix(fragmentColor, highlight_color, 0.6);
-        return;
+
+        vec3 light_dir = normalize(wLightPos);
+
+        float df = 0.0;// diffuse factor
+        if (two_sides_lighting)
+            df = abs(dot(light_dir, normal));
+        else
+            df = max(dot(light_dir, normal), 0);
+
+        float sf = 0.0;// specular factor
+        if (df > 0.0) { // if the vertex is lit compute the specular color
+            vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
+            sf = max(dot(half_vector, normal), 0.0);
+            sf = pow(sf, shininess);
+        }
+
+        color = color * df + specular * sf + ambient;
+
+        fragmentColor = vec4(color, 1.0);
     }
 
-    vec3 color = FragmentIn.color.xyz;
+    // Selection and primitive-range highlighting tint the final color, lit or not.
     if (highlight) {
-        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, highlight_color.xyz, 0.8);
+        if (FragmentIn.point_id >= highlight_id_min && FragmentIn.point_id <= highlight_id_max)
+            fragmentColor = mix(fragmentColor, highlight_color, 0.8);
     }
-
     if (selected)
-        color = mix(color, highlight_color.xyz, 0.6);
-
-    vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
-    vec3 normal = FragmentIn.normal;
-
-    if (distinct_back_color) {
-        if (dot(normal, view_dir) < 0)
-            color = backside_color;
-    }
-
-    vec3 light_dir = normalize(wLightPos);
-
-    float df = 0.0;// diffuse factor
-    if (two_sides_lighting)
-        df = abs(dot(light_dir, normal));
-    else
-        df = max(dot(light_dir, normal), 0);
-
-    float sf = 0.0;// specular factor
-    if (df > 0.0) { // if the vertex is lit compute the specular color
-        vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
-        sf = max(dot(half_vector, normal), 0.0);
-        sf = pow(sf, shininess);
-    }
-
-    color = color * df + specular * sf + ambient;
-
-    fragmentColor = vec4(color, 1.0);
+        fragmentColor = mix(fragmentColor, highlight_color, 0.6);
 }

@@ -92,67 +92,65 @@ void main(void) {
         color = DataIn.color;
     }
 
-    if (!lighting) {
-        outputF = color;
-        if (selected)
-            outputF = mix(outputF, highlight_color, 0.6);
-        return;
-    }
+    if (lighting) {
+        if ((gl_FrontFacing == false) && distinct_back_color)
+            color = vec4(backside_color, color.a);
 
-    if ((gl_FrontFacing == false) && distinct_back_color)
-        color = vec4(backside_color, color.a);
-
-    if (highlight) {
-        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, highlight_color, 0.8);
-    }
-
-    if (selected)
-        color = mix(color, highlight_color, 0.6);
-
-    vec3 normal;
-    if (smooth_shading)
-        normal = normalize(DataIn.normal);
-    else {
+        vec3 normal;
+        if (smooth_shading)
+            normal = normalize(DataIn.normal);
+        else {
 #if 0	// Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
-        vec3 fdx = vec3( dFdx( DataIn.position.x ), dFdx( DataIn.position.y ), dFdx( DataIn.position.z ) );
-        vec3 fdy = vec3( dFdy( DataIn.position.x ), dFdy( DataIn.position.y ), dFdy( DataIn.position.z ) );
-        normal = normalize(cross(fdx, fdy));
+            vec3 fdx = vec3( dFdx( DataIn.position.x ), dFdx( DataIn.position.y ), dFdx( DataIn.position.z ) );
+            vec3 fdy = vec3( dFdy( DataIn.position.x ), dFdy( DataIn.position.y ), dFdy( DataIn.position.z ) );
+            normal = normalize(cross(fdx, fdy));
 #else
-        normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+            normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
 #endif
 //      // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
 //      if (dot(normal, DataIn.normal) < 0)
-        if ((gl_FrontFacing == false) && (two_sides_lighting == false))
-            normal = -normal;
-    }
+            if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                normal = -normal;
+        }
 
-    vec3 view_dir = normalize(wCamPos - DataIn.position);
-    vec3 light_dir = normalize(wLightPos);
+        vec3 view_dir = normalize(wCamPos - DataIn.position);
+        vec3 light_dir = normalize(wLightPos);
 
-    float df = 0.0;	// diffuse factor
-    if (two_sides_lighting)
-        df = abs(dot(light_dir, normal));
-    else
-        df = max(dot(light_dir, normal), 0);
+        float df = 0.0;	// diffuse factor
+        if (two_sides_lighting)
+            df = abs(dot(light_dir, normal));
+        else
+            df = max(dot(light_dir, normal), 0);
 
-    float sf = 0.0;	// specular factor
-    if (df > 0.0) {	// if the vertex is lit compute the specular color
+        float sf = 0.0;	// specular factor
+        if (df > 0.0) {	// if the vertex is lit compute the specular color
             vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
 
             if (two_sides_lighting)
-                    sf = abs(dot(half_vector, normal));
+                sf = abs(dot(half_vector, normal));
             else
-                    sf = max(dot(half_vector, normal), 0.0);
+                sf = max(dot(half_vector, normal), 0.0);
 
             sf = pow(sf, shininess);
+        }
+
+        if (ssaoEnabled) {
+            vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
+            float coeff = texture(ssaoTexture, texCoord).r;
+            outputF = vec4((color.xyz * df + specular * sf + ambient) * coeff, color.a);
+        }
+        else
+            outputF = vec4(color.xyz * df + specular * sf + ambient, color.a);
+    }
+    else {
+        outputF = color;
     }
 
-    if (ssaoEnabled) {
-        vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
-        float coeff = texture(ssaoTexture, texCoord).r;
-        outputF = vec4((color.xyz * df + specular * sf + ambient) * coeff, color.a);
+    // Selection and primitive-range highlighting tint the final color, lit or not.
+    if (highlight) {
+        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
+            outputF = mix(outputF, highlight_color, 0.8);
     }
-    else
-         outputF = vec4(color.xyz * df + specular * sf + ambient, color.a);
+    if (selected)
+        outputF = mix(outputF, highlight_color, 0.6);
 }

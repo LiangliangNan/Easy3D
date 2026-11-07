@@ -52,6 +52,7 @@ in Data{
 	flat    vec4    sphere_color;
 	smooth  vec2    tex;
 	flat    vec4    position;
+	flat    int     point_id;
 } DataIn;
 
 out vec4 outputF;
@@ -90,34 +91,22 @@ void main()
 
 		if (!lighting) {
 			outputF = DataIn.sphere_color;
-			if (highlight) {
-				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, highlight_color, 0.8);
+		}
+		else {
+			// camera pos is (0, 0, 0) in the camera coordinate system
+			vec3 light_dir = normalize(eLightPos);
+			float df = max(dot(normal, light_dir), 0);
+
+			float sf = 0.0;// specular factor
+			if (df > 0.0) { // if the vertex is lit compute the specular color
+				view_dir = -view_dir;// '-' because I used the reversed direction
+				vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
+				sf = max(dot(half_vector, normal), 0.0);
+				sf = pow(sf, shininess);
 			}
-			if (selected)
-				outputF = mix(outputF, highlight_color, 0.6);
-			return;
+
+			outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
 		}
-
-		// camera pos is (0, 0, 0) in the camera coordinate system
-		vec3 light_dir = normalize(eLightPos);
-		float df = max(dot(normal, light_dir), 0);
-
-		float sf = 0.0;// specular factor
-		if (df > 0.0) { // if the vertex is lit compute the specular color
-			view_dir = -view_dir;// '-' because I used the reversed direction
-			vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
-			sf = max(dot(half_vector, normal), 0.0);
-			sf = pow(sf, shininess);
-		}
-
-		vec3 color = DataIn.sphere_color.xyz;
-		if (highlight) {
-			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-				color = mix(color, highlight_color.xyz, 0.8);
-		}
-
-		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 
 	// without perspective correction
@@ -142,38 +131,31 @@ void main()
 
 		if (!lighting) {
 			outputF = DataIn.sphere_color;
-			if (highlight) {
-				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, highlight_color, 0.8);
+		}
+		else {
+			// camera pos is (0, 0, 0) in the camera coordinate system
+			vec3 view_dir = vec3(0, 0, 1);
+			vec3 light_dir = normalize(eLightPos);
+
+			vec3 normal = vec3(x, y, z);// sure this was normalized because (z = sqrt(1.0 - x*x - y*y))
+			float df = max(dot(normal, light_dir), 0);
+
+			float sf = 0.0;// specular factor
+			if (df > 0.0) { // if the vertex is lit compute the specular color
+				vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
+				sf = max(dot(half_vector, normal), 0.0);
+				sf = pow(sf, shininess);
 			}
-			if (selected)
-				outputF = mix(outputF, highlight_color, 0.6);
-			return;
+
+			outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
 		}
-
-		// camera pos is (0, 0, 0) in the camera coordinate system
-		vec3 view_dir = vec3(0, 0, 1);
-		vec3 light_dir = normalize(eLightPos);
-
-		vec3 normal = vec3(x, y, z);// sure this was normalized because (z = sqrt(1.0 - x*x - y*y))
-		float df = max(dot(normal, light_dir), 0);
-
-		float sf = 0.0;// specular factor
-		if (df > 0.0) { // if the vertex is lit compute the specular color
-			vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
-			sf = max(dot(half_vector, normal), 0.0);
-			sf = pow(sf, shininess);
-		}
-
-		vec3 color = DataIn.sphere_color.xyz;
-		if (highlight) {
-			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-				color = mix(color, highlight_color.xyz, 0.8);
-		}
-
-		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 
+	// Selection and primitive-range highlighting tint the final color, lit or not.
+	if (highlight) {
+		if (DataIn.point_id >= highlight_id_min && DataIn.point_id <= highlight_id_max)
+			outputF = mix(outputF, highlight_color, 0.8);
+	}
 	if (selected)
 		outputF = mix(outputF, highlight_color, 0.6);
 }

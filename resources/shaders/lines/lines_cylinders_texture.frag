@@ -54,11 +54,16 @@ in Data{
 	vec3 V;
 } DataIn;
 
+uniform bool highlight;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
+
 uniform bool selected = false;
 uniform vec4 	highlight_color;
 
 in  vec2 gOutTexcoord;
 in float gOutClipped;
+flat in int line_id;
 
 out vec4 outputF;
 
@@ -74,8 +79,6 @@ vec3 ComputeLight(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 co
 	}
 
 	color = color * df + spec * sf + amb;
-	if (selected)
-		color = mix(color, highlight_color.xyz, 0.6);
 	return color;
 }
 
@@ -175,4 +178,12 @@ void main()
 	else {
 		outputF = color;
 	}
+
+	// Selection and primitive-range highlighting tint the final color, lit or not.
+	if (highlight) {
+		if (line_id >= highlight_id_min && line_id <= highlight_id_max)
+			outputF = mix(outputF, highlight_color, 0.8);
+	}
+	if (selected)
+		outputF = mix(outputF, highlight_color, 0.6);
 }

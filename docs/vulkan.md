@@ -6639,3 +6639,78 @@ Suites: no source code changed, so the batch-38 results stand (128/128 MoltenVK,
 idle `-j2`). No changes were committed.
 
 
+
+### 2026-11-07 — W10 batch 40: Python point/line state coverage and a uniform highlight contract
+
+**Motivation.** With the Qt/wx applications off-limits, the actionable W10 remainder is
+Python API coverage. Batches 25/26 covered mesh drawable states; points and lines had no
+packaged-module coverage. This batch adds it and fixes the cross-backend discrepancies
+the new probes exposed. Per the user's direction, parity is achieved by choosing the
+correct, elegant semantics — not by encoding one backend's quirks into the other: either
+backend may be wrong, and the better implementation wins.
+
+**The contract.** Selection and primitive-range highlighting are orthogonal to drawable
+style and lighting: they tint the *final shaded color*, always. Selection mixes the
+highlight color at 0.6, a primitive range at 0.8; combined they compose to 0.92
+(order-independent for the same target color). Lighting is independent: plain lines are
+never lit (no normals exist for them), points plain/surfel need normals, sphere/cylinder/
+cone impostors and triangles are lit. Vulkan already followed this contract uniformly
+(every fragment shader applies `selection_tint` after lighting); OpenGL was internally
+inconsistent — `surface.frag` applied ranges only in the lit branch, the width-control
+and cylinder/cone shaders had no range support at all, cylinder/cone selection was
+lit-only, and several lit branches mixed the tint *before* lighting. The OpenGL shaders
+were corrected to the contract and the Vulkan adapter stays unconditional.
+
+**Coverage.** `tests/python/rendering.py` gains `check_point_line_states()`, run against
+both packaged modules (`build-u1b-opengl/lib/python`, `build-migration/vulkan-macos/lib/python`).
+It renders scene-only DPI-1 frames (129×97, orthographic) and probes exact pixels:
+plain/sphere points (uniform and per-vertex color, point-size coverage, selection,
+primitive-range highlighting, visibility), plain lines (width-1 color interpolation,
+range, selection, lighting invariance; width-9 coverage, per-segment range, lighting
+invariance), cylinder and cone impostors (lit/unlit color, per-segment ranges and
+selection in both lighting modes), and the model path (PointCloud "vertices" and
+SurfaceMesh "edges" default drawables, Tutorial 204 API). The batch-25 mesh probes now
+also assert unlit primitive ranges tint. Size-2 points and width-1 lines rasterize into
+either adjacent pixel at half-pixel projection boundaries, so thin primitives use
+strongest-neighbor 3×3 probes; large impostors keep exact probes with ≥2 px margins.
+Base colors avoid red because the default highlight color is red.
+
+**Fixes.**
+
+- *OpenGL fragment shaders* (surface, points plain/sphere/surfel, lines width-control/
+  cylinder/cone, color and texture variants): every shader now has a single tint site
+  at the end of `main()` — range mix 0.8 then selection mix 0.6 on the final output
+  color, lit or not. The width-control and cylinder/cone shaders gained the
+  `highlight`/`highlight_id_min`/`highlight_id_max` uniforms (sent by all six
+  `LinesDrawable` draw paths); cylinder/cone selection moved out of `shade()`/
+  `ComputeLight()` so it also applies unlit. Pre-lighting tint mixes were removed
+  everywhere, so a highlight no longer perturbs diffuse/specular response.
+- *OpenGL line primitive IDs* (six geometry shaders: width-control, cylinder, cone ×
+  color/texture): the line index travels as an explicit `flat int line_id` varying
+  assigned once from `gl_PrimitiveIDIn`; the fragment range checks read it. All dead
+  `gl_PrimitiveID = gl_PrimitiveIDIn` writes (and their boilerplate comments) were
+  removed — macOS ignores GS-written `gl_PrimitiveID` anyway.
+- *OpenGL sphere/surfel primitive ranges* (four geom/frag pairs:
+  `points_spheres_geometry_color/texture`, `points_surfel_color/texture`): same macOS
+  bug — the fragment shader saw emitted-triangle indices, so range `(0,0)` tinted only
+  the first triangle of point 0. The point index now travels as an explicit
+  `flat int point_id` varying. This extends the batch-38 precedent of correcting
+  OpenGL where it is objectively wrong.
+- *OpenGL wide-line width* (`lines_plain_color/texture_width_control.geom`): a stray
+  extra `* 0.5` on the offset halved the requested width — the C++ caller already
+  converts width to radius (`line_width * pixelGLRatio * 0.5`). Removed, so width 9 now
+  covers 9 framebuffer pixels on both backends (it covered ~4.5 on OpenGL).
+- *Vulkan plain-line lighting* (`backends/vulkan/drawable.cpp`): `DrawCommand::lighting`
+  is forced off for plain lines. The default vertex normal `(0,0,1)` was shading them
+  through both the native (`scene.vert`) and ribbon (`wide_lines.vert`) paths, while
+  plain lines have no meaningful normals on either backend. Cylinder/cone impostors
+  keep lighting; the low-level `DrawCommand` contract (and its renderer tests) still
+  honor explicit lighting requests. The highlight bake itself needs no per-style
+  policy: `selection_marked = selected`, `range_marked = highlighted && valid range`,
+  matching the uniform contract directly.
+
+**Validation.** `python3 tests/python/rendering.py <tree>/lib/python` passes on both
+packaged modules (Python 3.15; the OpenGL package was reconfigured this batch from stale
+3.12 bindings). A surfel range probe confirms the fixed surfel shaders compile and tint
+exactly the selected point. Both backends rebuilt and full CTest suites green at idle
+`-j2`: OpenGL 94/94, MoltenVK 128/128.

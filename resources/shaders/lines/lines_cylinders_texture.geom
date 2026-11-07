@@ -50,6 +50,7 @@ in float vOutClipped[];
 
 out vec2  gOutTexcoord;
 out float gOutClipped;
+flat out int line_id;
 
 out Data{
 	vec3 point;// camera space
@@ -64,6 +65,8 @@ out Data{
 
 void main()
 {
+	// macOS ignores GS-written gl_PrimitiveID; pass the line index explicitly.
+	line_id = gl_PrimitiveIDIn;
 	vec3  base = gl_in[0].gl_Position.xyz;  // in camera space
 	vec3  top = gl_in[1].gl_Position.xyz;   // in camera space
 	vec3  len_dir = top - base;
@@ -113,11 +116,6 @@ void main()
 	}
 	gOutTexcoord = base_texcoord;
 	gOutClipped = base_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 2
@@ -130,11 +128,6 @@ void main()
 	}
 	gOutTexcoord = base_texcoord;
 	gOutClipped = base_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 3
@@ -147,11 +140,6 @@ void main()
 	}
 	gOutTexcoord = top_texcoord;
 	gOutClipped = top_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 4
@@ -164,11 +152,6 @@ void main()
 	}
 	gOutTexcoord = top_texcoord;
 	gOutClipped = top_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 5
@@ -181,11 +164,6 @@ void main()
 	}
 	gOutTexcoord = top_texcoord;
 	gOutClipped = top_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 6
@@ -198,11 +176,6 @@ void main()
 	}
 	gOutTexcoord = top_texcoord;
 	gOutClipped = top_cpilped;
-	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
-	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
-	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
-	// of gl_PrimitiveID in the fragment shader is undefined.
-	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	EndPrimitive();

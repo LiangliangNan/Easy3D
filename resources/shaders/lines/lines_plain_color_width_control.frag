@@ -32,12 +32,17 @@
 
 uniform mat4 PROJ;
 
+uniform bool highlight;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
+
 uniform bool selected = false;
 uniform vec4 	highlight_color;
 
 in vec3  gOutPoint;
 in vec4  gOutColor;
 in float gOutClipped;
+flat in int line_id;
 
 out vec4 outputF;
 
@@ -47,6 +52,11 @@ void main()
         discard;
 
     outputF = gOutColor;
+    // Selection and primitive-range highlighting tint the final color.
+    if (highlight) {
+        if (line_id >= highlight_id_min && line_id <= highlight_id_max)
+            outputF = mix(outputF, highlight_color, 0.8);
+    }
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);
 
