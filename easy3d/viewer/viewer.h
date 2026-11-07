@@ -69,6 +69,15 @@ struct VulkanOptions {
     };
 
 #endif
+/**
+ * \brief The default viewer implementation for both OpenGL and Vulkan backends.
+ * \details Viewer provides a complete interactive 3D viewing environment. It inherits from ViewerBase
+ *      which defines the coordinate system conventions:
+ *      - Logical window coordinates (width(), height()): DPI-independent points for UI and events
+ *      - Framebuffer coordinates (framebuffer_width(), framebuffer_height()): physical pixels for GPU work
+ *      - Mouse/event coordinates: always logical with top-left origin
+ *      See ViewerBase documentation for details.
+ */
 class Viewer : public ViewerBase {
 public:
     // ... some public functions: the unified APIs used by both backends

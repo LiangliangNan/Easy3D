@@ -164,6 +164,95 @@ needs no change.
   validation), while the tests that construct `Viewer` directly still pass
   `VulkanOptions`.
 
+## Coordinate System Conventions
+
+*Established 2026-11-07 (Batch 35).* Easy3D uses three distinct coordinate systems. All code must follow these conventions consistently.
+
+### Three Coordinate Systems
+
+1. **Logical Window Coordinates** (points, DPI-independent)
+   - **Methods**: `Viewer::width()`, `Viewer::height()`, `ViewerBase::viewer_size(w, h)`, `Camera::screenWidth()`, `Camera::screenHeight()`
+   - **Purpose**: UI layout, window events, mouse coordinates, camera operations, projection calculations
+   - **Characteristics**: Represents the logical window size as the user perceives it; same on all DPI displays
+   - **Key relationship**: `Camera::screenWidth()/Height()` == `Viewer::width()/height()` (kept in sync automatically)
+
+2. **Framebuffer Coordinates** (physical pixels, DPI-dependent)
+   - **Methods**: `Viewer::framebuffer_width()`, `Viewer::framebuffer_height()`, `ViewerBase::framebuffer_size(w, h)`
+   - **Purpose**: GPU operations, texture allocation, viewport setup, render targets
+   - **Characteristics**: Physical pixel dimensions; on high-DPI displays, larger than logical size
+   - **Key relationship**: `framebuffer_width = width * dpi_scaling()`
+
+3. **Mouse/Event Coordinates**
+   - **Methods**: Parameters passed to mouse callbacks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.)
+   - **Purpose**: User interaction, picking, hover detection
+   - **Characteristics**: Always in logical window coordinates with top-left origin (0,0)
+   - **Usage**: Use directly with `width()`/`height()` for bounds checking; pass to camera methods like `projectedCoordinatesOf()`
+
+### When to Use Which
+
+**Use Camera methods** (`screenWidth()`, `screenHeight()`) for:
+- Camera operations (projection matrices, view calculations)
+- Coordinate conversions (`projectedCoordinatesOf()`, `unprojectedCoordinatesOf()`)
+- Picking operations
+- Any camera-centric computation
+
+**Use Viewer methods** (`width()`, `height()`) for:
+- UI layout and positioning
+- Window event handling
+- Mouse coordinate bounds checking
+- General viewer operations
+
+**Use Viewer framebuffer methods** (`framebuffer_width()`, `framebuffer_height()`) only for:
+- GPU operations (texture creation, framebuffer allocation)
+- Viewport setup (`glViewport`, Vulkan viewport)
+- Render target dimensions
+- Any operation that requires physical pixel dimensions
+
+### Implementation Rules
+
+1. **Never mix coordinate systems**: Don't pass framebuffer coordinates to methods expecting logical coordinates, or vice versa.
+
+2. **Keep camera and viewer in sync**: When the window resizes, both `Camera::setScreenWidthAndHeight()` and the viewer's logical size must be updated to the same values.
+
+3. **Document coordinate expectations**: When adding new methods that take coordinates, clearly document which coordinate system they expect.
+
+4. **Mouse events are logical**: All mouse event handlers receive logical window coordinates. Convert to framebuffer coordinates only when needed for GPU operations.
+
+5. **Default to logical**: When in doubt, use logical window coordinates. They work for most operations and are DPI-independent.
+
+### Example: Correct Coordinate Usage
+
+```cpp
+// Mouse event handler - receives logical coordinates
+bool MyViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+    // x, y are in logical window coordinates
+    // Check bounds using logical size
+    if (x < 0 || y < 0 || x >= width() || y >= height())
+        return false;
+    
+    // Use logical coordinates for picking
+    Model* picked = picker_->pick(models(), x, y);
+    
+    // Use logical coordinates for camera operations
+    vec3 world_pos = camera()->unprojectedCoordinatesOf(vec3(x, y, 0.5f));
+    
+    return true;
+}
+
+// GPU operation - needs framebuffer coordinates
+void MyViewer::setup_viewport() {
+    // Use framebuffer size for viewport
+    glViewport(0, 0, framebuffer_width(), framebuffer_height());
+}
+```
+
+### Common Pitfalls
+
+- **Don't use `framebuffer_width()` for mouse bounds checking** - mouse events are in logical coordinates
+- **Don't use `width()` for texture allocation** - textures need physical pixel dimensions
+- **Don't assume logical == framebuffer** - they differ on high-DPI displays
+- **Don't manually convert between systems** - use `dpi_scaling()` when needed: `framebuffer = logical * dpi_scaling()`
+
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the

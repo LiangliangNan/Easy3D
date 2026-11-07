@@ -86,6 +86,30 @@ namespace easy3d {
      * A Camera can also be used outside a viewer or even without OpenGL for its coordinate system conversion
      * capabilities. Note however that some of them explicitly rely on the presence of a Z-buffer.
      *
+     * <h3>Coordinate Systems</h3>
+     *
+     * Easy3D uses three coordinate systems. Understanding these is essential when working with camera operations:
+     *
+     * 1. <b>Logical Window Coordinates</b> (points, DPI-independent):
+     *    - screenWidth() and screenHeight() return the logical window size
+     *    - These match Viewer::width() and Viewer::height()
+     *    - Used for camera operations, projection calculations, and coordinate conversions
+     *
+     * 2. <b>Framebuffer Coordinates</b> (physical pixels, DPI-dependent):
+     *    - Related to logical size by: framebuffer_width = width * dpi_scaling()
+     *    - Used for GPU operations, texture allocation, and viewport setup
+     *    - Access via Viewer::framebuffer_width() and Viewer::framebuffer_height()
+     *
+     * 3. <b>Mouse/Event Coordinates</b>:
+     *    - Always in logical window coordinates with top-left origin
+     *    - Passed to camera methods like projectedCoordinatesOf()
+     *
+     * <b>When to use Camera vs Viewer methods:</b>
+     * - Use Camera::screenWidth()/screenHeight() for camera operations, projection matrices, and coordinate conversions
+     * - Use Viewer::width()/height() when working with UI, window events, or when you need the same logical size
+     * - Use Viewer::framebuffer_width()/height() only for GPU operations that require physical pixel dimensions
+     * - All three (Camera::screenWidth, Viewer::width, and logical window size) return the same value and are kept in sync
+     *
      * To use the camera, you need to do the following:
      *  - Create and (if necessary) setup camera in the constructor of your viewer.
      *      \code
@@ -398,18 +422,24 @@ namespace easy3d {
         }
 
         /**
-         * \brief Returns the width (in pixels) of the Camera screen.
-         * \details Set using setScreenWidthAndHeight(). This value is automatically fitted to the Viewer's window
-         *      dimensions when the Camera is attached to a viewer.
-         * \return The width in pixels.
+         * \brief Returns the width of the Camera screen in logical window coordinates (points).
+         * \details This value represents the logical window size (DPI-independent), not physical pixels.
+         *      It is kept in sync with the Viewer's logical width via setScreenWidthAndHeight().
+         *      Use this for camera operations, projection calculations, and coordinate conversions.
+         *      For physical pixel dimensions, use Viewer::framebuffer_width() instead.
+         * \return The logical width in points (equivalent to Viewer::width()).
+         * \see screenHeight(), setScreenWidthAndHeight(), Viewer::width(), Viewer::framebuffer_width()
          */
         int screenWidth() const { return screenWidth_; }
 
         /**
-         * \brief Returns the height (in pixels) of the Camera screen.
-         * \details Set using setScreenWidthAndHeight(). This value is automatically fitted to the viewer's window
-         *      dimensions when the Camera is attached to a Viewer.
-         * \return The height in pixels.
+         * \brief Returns the height of the Camera screen in logical window coordinates (points).
+         * \details This value represents the logical window size (DPI-independent), not physical pixels.
+         *      It is kept in sync with the Viewer's logical height via setScreenWidthAndHeight().
+         *      Use this for camera operations, projection calculations, and coordinate conversions.
+         *      For physical pixel dimensions, use Viewer::framebuffer_height() instead.
+         * \return The logical height in points (equivalent to Viewer::height()).
+         * \see screenWidth(), setScreenWidthAndHeight(), Viewer::height(), Viewer::framebuffer_height()
          */
         int screenHeight() const { return screenHeight_; }
 
@@ -527,9 +557,13 @@ namespace easy3d {
             setScreenWidthAndHeight(int(100.0f * aspect), 100);
         }
         /**
-         * \brief Set the screen width and height.
-         * \param width The width in pixels.
-         * \param height The height in pixels.
+         * \brief Set the screen width and height in logical window coordinates (points).
+         * \details This method should be called when the viewer window is resized. The parameters represent
+         *      the logical window size (DPI-independent), not physical pixels. The Camera's screen dimensions
+         *      are kept in sync with the Viewer's logical size (Viewer::width() and Viewer::height()).
+         * \param width The logical width in points (same as Viewer::width()).
+         * \param height The logical height in points (same as Viewer::height()).
+         * \see screenWidth(), screenHeight(), Viewer::width(), Viewer::height()
          */
         void setScreenWidthAndHeight(int width, int height);
 

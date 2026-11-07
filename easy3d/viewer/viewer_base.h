@@ -19,6 +19,30 @@ class Drawable;
 // use and destroy on the UI/main thread, with a separate scene per host.
 // Viewer, MultiViewer and OffScreen are constructed directly; backend choice is
 // fixed by the build configuration.
+//
+// \section Coordinate Systems
+// Easy3D uses three coordinate systems. Understanding these is essential for correct rendering and interaction:
+//
+// 1. <b>Logical Window Coordinates</b> (points, DPI-independent):
+//    - Returned by: width(), height(), viewer_size(w, h)
+//    - Used for: UI layout, window events, mouse coordinates, camera operations
+//    - These represent the logical window size as the user perceives it
+//
+// 2. <b>Framebuffer Coordinates</b> (physical pixels, DPI-dependent):
+//    - Returned by: framebuffer_width(), framebuffer_height(), framebuffer_size(w, h)
+//    - Used for: GPU operations, texture allocation, viewport setup, render targets
+//    - Related to logical size by: framebuffer_width = width * dpi_scaling()
+//    - On high-DPI displays, framebuffer size is larger than logical size
+//
+// 3. <b>Mouse/Event Coordinates</b>:
+//    - Always in logical window coordinates with top-left origin
+//    - Passed to mouse callbacks and event handlers
+//    - Use directly with width()/height() for bounds checking
+//
+// <b>Key relationships:</b>
+// - Camera::screenWidth()/screenHeight() == Viewer::width()/height() (both logical size)
+// - All three are kept in sync automatically when the window is resized
+// - Use logical coordinates for most operations; use framebuffer coordinates only for GPU work
 class ViewerBase : public ViewerInput {
 public:
     virtual ~ViewerBase();
@@ -40,9 +64,12 @@ public:
     virtual void set_title(const std::string&) = 0;
     virtual const std::string& title() const = 0;
     virtual void viewer_size(int& width, int& height) const = 0;
-    // Logical window units. Explicit native hosts retain their historical width/height APIs.
+    // Logical window units (points, DPI-independent). Returns the same value as
+    // Camera::screenWidth()/screenHeight(). Use for UI, events, and most operations.
     int width() const { int w, h; viewer_size(w, h); return w; }
     int height() const { int w, h; viewer_size(w, h); return h; }
+    // Framebuffer units (physical pixels, DPI-dependent). Use only for GPU operations,
+    // texture allocation, and viewport setup. Related by: framebuffer_width = width * dpi_scaling().
     virtual void framebuffer_size(int& width, int& height) const = 0;
     virtual int framebuffer_width() const = 0;
     virtual int framebuffer_height() const = 0;
