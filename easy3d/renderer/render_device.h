@@ -226,7 +226,12 @@ enum class TransparencyMethod {
     average,
     // Order-independent front-to-back depth peeling, the depth-free legacy
     // DualDepthPeeling effect without its min-max (front and back) pairing.
-    peeling
+    peeling,
+    // Order-independent per-pixel linked lists (Yang et al., NVIDIA 2010).
+    // Stores all fragments per pixel in GPU buffers, sorts by depth, and blends.
+    // Provides perfect transparency quality regardless of surface intersections.
+    // Requires more memory and is slower than peeling, but produces correct results.
+    linked_lists
 };
 
 // GPU through-selection of projected point centers in a top-left framebuffer

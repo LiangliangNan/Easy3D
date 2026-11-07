@@ -177,76 +177,9 @@
  */
 
 #ifdef EASY3D_HAS_VULKAN
-
-#include <easy3d/renderer/per_pixel_linked_lists_oit.h>
-#include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/util/logging.h>
-
-
-namespace easy3d {
-
-
-PerPixelLinkedListsOIT::PerPixelLinkedListsOIT(Camera* cam)
-    : camera_(cam)
-    , max_fragments_(8)
-{
-    LOG(WARNING) << "PerPixelLinkedListsOIT: Vulkan backend not yet implemented";
-}
-
-
-PerPixelLinkedListsOIT::~PerPixelLinkedListsOIT()
-{
-    clear();
-}
-
-
-void PerPixelLinkedListsOIT::draw(const std::vector<TrianglesDrawable*>& surfaces)
-{
-    if (!camera_)
-        return;
-
-    int w = camera_->screenWidth();
-    int h = camera_->screenHeight();
-    if (w <= 0 || h <= 0)
-        return;
-
-    init(w, h);
-    build_lists(surfaces);
-    resolve();
-}
-
-
-void PerPixelLinkedListsOIT::init(int w, int h)
-{
-    LOG(WARNING) << "PerPixelLinkedListsOIT::init: Vulkan backend not yet implemented";
-}
-
-
-void PerPixelLinkedListsOIT::build_lists(const std::vector<TrianglesDrawable*>& surfaces)
-{
-    LOG(WARNING) << "PerPixelLinkedListsOIT::build_lists: Vulkan backend not yet implemented";
-}
-
-
-void PerPixelLinkedListsOIT::resolve()
-{
-    LOG(WARNING) << "PerPixelLinkedListsOIT::resolve: Vulkan backend not yet implemented";
-}
-
-
-void PerPixelLinkedListsOIT::clear()
-{
-    // Vulkan implementation placeholder
-    // TODO: Destroy Vulkan buffers and descriptor sets
-}
-
-
-} // namespace easy3d
-
+// The Vulkan bridge is header-only (see per_pixel_linked_lists_oit.h): draw()
+// routes to the render device via Transparency::render_frame(method=3), which
+// builds the per-pixel fragment lists in storage buffers and resolves them.
 #else
 
 #include <easy3d/renderer/per_pixel_linked_lists_oit.h>
@@ -300,6 +233,8 @@ void PerPixelLinkedListsOIT::draw(const std::vector<TrianglesDrawable*>& surface
         return;
 
     // Check OpenGL version (require 4.3+ for SSBOs and atomic operations).
+    // macOS caps at OpenGL 4.1, so this feature is not available on macOS OpenGL.
+    // Users on macOS should use the Vulkan backend (via MoltenVK) or DualDepthPeeling.
     const char* version_str = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     if (!version_str) {
         LOG(ERROR) << "PerPixelLinkedListsOIT: cannot query OpenGL version";
@@ -308,8 +243,15 @@ void PerPixelLinkedListsOIT::draw(const std::vector<TrianglesDrawable*>& surface
     int major = 0, minor = 0;
     sscanf(version_str, "%d.%d", &major, &minor);
     if (major < 4 || (major == 4 && minor < 3)) {
-        LOG(ERROR) << "PerPixelLinkedListsOIT: requires OpenGL 4.3+, current version is "
-                   << major << "." << minor;
+        LOG_N_TIMES(3, ERROR) << "PerPixelLinkedListsOIT: requires OpenGL 4.3+, current version is "
+                   << major << "." << minor << ". "
+#ifdef __APPLE__
+                   << "macOS OpenGL is limited to 4.1. Use the Vulkan backend (MoltenVK) "
+                   << "or DualDepthPeeling for transparency.";
+#else
+                   << "Update your OpenGL driver or use DualDepthPeeling.";
+#endif
+
         return;
     }
 

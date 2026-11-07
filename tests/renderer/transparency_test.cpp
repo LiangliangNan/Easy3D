@@ -180,6 +180,25 @@ int main(int argc,char**) {
             const std::vector<DrawCommand> reversed_stack(stack.rbegin(),stack.rend());
             close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::peeling,0),
                        stacked_peeled,"eight-layer peeling was not order independent");
+
+            // Per-pixel linked lists store every fragment, so the resolve must
+            // reproduce the depth-sorted blend exactly and stay order independent.
+            const auto linked=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::linked_lists,8);
+            probe(linked,32,32,expected,"linked lists two");
+            close_rgba(linked,sorted,"linked lists did not reproduce the sorted blend");
+            require(linked.rgba!=averaged.rgba,"linked lists matched average transparency");
+            const auto linked_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::linked_lists,8);
+            require(linked.rgba==linked_reversed.rgba,"linked lists transparency was not order independent");
+            require(linked.ids[32*65+32].object==31 && linked.ids[32*65+32].primitive==0,
+                    "linked lists changed picking IDs");
+            require(std::abs(linked.depth[32*65+32]-.25f)<1e-5f,"linked lists changed picking depth");
+            const auto linked_three=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
+                                                   TransparencyMethod::linked_lists,8);
+            close_rgba(linked_three,sorted_three,"linked lists did not composite over the opaque scene");
+            const auto linked_stack=device->render(65,65,stack,vec4(0),count,TransparencyMethod::linked_lists,8);
+            close_rgba(linked_stack,stacked_sorted,"eight-layer linked lists did not reproduce the sorted blend");
+            close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::linked_lists,8),
+                       linked_stack,"eight-layer linked lists was not order independent");
         }
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);
@@ -193,6 +212,6 @@ int main(int argc,char**) {
         try { device->render(65,65,{bad_alpha}); } catch (const std::invalid_argument&) { rejected=true; }
         require(rejected,"out-of-range transparent alpha was accepted");
         require(device->validation_errors()==0,"transparency validation errors");
-        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color and depth-peel OIT\n";
+        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color, depth-peel and per-pixel linked lists OIT\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

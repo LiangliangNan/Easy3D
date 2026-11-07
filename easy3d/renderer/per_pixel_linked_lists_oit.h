@@ -107,9 +107,10 @@ namespace easy3d {
      *
      *      - **OpenGL:** Requires OpenGL 4.3+ for Shader Storage Buffer Objects (SSBOs) and
      *        atomic operations. Uses fragment shaders for both build and resolve passes.
-     *      - **Vulkan:** Uses storage buffers with atomic operations. The resolve pass can use
-     *        either a fragment shader or a compute shader (compute is more efficient for
-     *        sorting but requires additional synchronization).
+     *      - **Vulkan:** Implemented in the Vulkan render device using storage buffers with
+     *        atomic operations (head/node/counter) and a fragment-shader resolve. This is the
+     *        supported path on macOS (via MoltenVK), where OpenGL is capped at 4.1 and cannot
+     *        run the SSBO/atomic build pass.
      *
      *      **Usage:**
      *
@@ -134,16 +135,8 @@ namespace easy3d {
     class PerPixelLinkedListsOIT : public Transparency
     {
     public:
-        /**
-         * \brief Constructor.
-         * \param cam The camera used for rendering.
-         */
-        explicit PerPixelLinkedListsOIT(Camera* cam);
-
-        /**
-         * \brief Destructor. Releases GPU resources.
-         */
-        ~PerPixelLinkedListsOIT() override;
+        explicit PerPixelLinkedListsOIT(Camera* cam) : camera_(cam) {}
+        ~PerPixelLinkedListsOIT() override = default;
 
         /**
          * \brief Sets the maximum number of fragments per pixel.
@@ -161,50 +154,18 @@ namespace easy3d {
 
         /**
          * \brief Renders the scene with per-pixel linked lists OIT.
+         * \details The Vulkan render device builds the per-pixel fragment lists in
+         *      storage buffers and resolves them into the transparency accumulation
+         *      target. The last argument carries the node-pool capacity.
          * \param surfaces The transparent surfaces to render.
          */
-        void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
+        void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
+            render_frame(camera_, surfaces, 3, max_fragments_);
+        }
 
     private:
         Camera* camera_;
-        int max_fragments_;  ///< Maximum fragments per pixel (controls node pool size).
-
-#ifdef EASY3D_HAS_VULKAN
-        // Vulkan resources
-        // (Implementation details in cpp file)
-#else
-        // OpenGL resources
-        unsigned int head_buffer_;      ///< SSBO: per-pixel head pointers (int32 per pixel).
-        unsigned int node_buffer_;      ///< SSBO: fragment node pool.
-        unsigned int counter_buffer_;   ///< Atomic counter buffer for node allocation.
-        unsigned int fbo_;              ///< Framebuffer object for offscreen rendering.
-        int width_;                     ///< Current viewport width.
-        int height_;                    ///< Current viewport height.
-        int node_count_;                ///< Current number of allocated nodes.
-#endif
-
-        /**
-         * \brief Initializes GPU resources for the given viewport size.
-         * \param w Viewport width in pixels.
-         * \param h Viewport height in pixels.
-         */
-        void init(int w, int h);
-
-        /**
-         * \brief Build pass: renders all transparent fragments into per-pixel linked lists.
-         * \param surfaces The transparent surfaces to render.
-         */
-        void build_lists(const std::vector<TrianglesDrawable*>& surfaces);
-
-        /**
-         * \brief Resolve pass: sorts and blends the linked lists, writing to the output.
-         */
-        void resolve();
-
-        /**
-         * \brief Releases all GPU resources.
-         */
-        void clear();
+        int max_fragments_ = 8;  ///< Maximum fragments per pixel (controls node pool size).
     };
 
 }
@@ -290,9 +251,10 @@ namespace easy3d {
      *
      *      - **OpenGL:** Requires OpenGL 4.3+ for Shader Storage Buffer Objects (SSBOs) and
      *        atomic operations. Uses fragment shaders for both build and resolve passes.
-     *      - **Vulkan:** Uses storage buffers with atomic operations. The resolve pass can use
-     *        either a fragment shader or a compute shader (compute is more efficient for
-     *        sorting but requires additional synchronization).
+     *      - **Vulkan:** Implemented in the Vulkan render device using storage buffers with
+     *        atomic operations (head/node/counter) and a fragment-shader resolve. This is the
+     *        supported path on macOS (via MoltenVK), where OpenGL is capped at 4.1 and cannot
+     *        run the SSBO/atomic build pass.
      *
      *      **Usage:**
      *

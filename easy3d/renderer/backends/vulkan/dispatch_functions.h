@@ -48,6 +48,7 @@
     X(vkCmdDraw) \
     X(vkCmdDrawIndexed) \
     X(vkCmdEndRenderPass) \
+    X(vkCmdFillBuffer) \
     X(vkCmdNextSubpass) \
     X(vkCmdPipelineBarrier) \
     X(vkCmdPushConstants) \

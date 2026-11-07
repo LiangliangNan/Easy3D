@@ -495,6 +495,7 @@ void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, 
     }
     const auto transparency = method == 1 ? graphics::TransparencyMethod::average :
                               method == 2 ? graphics::TransparencyMethod::peeling :
+                              method == 3 ? graphics::TransparencyMethod::linked_lists :
                               graphics::TransparencyMethod::sorted;
     impl_->submit(std::move(commands), transparency, peels > 0 ? unsigned(peels) : 0u);
 }
@@ -1169,8 +1170,10 @@ void Viewer::set_usage(const std::string& manual, const std::string& screen_hint
 }
 void Viewer::print_usage() {
     if (usage_printed_) return;
-    usage_printed_=true;
-    if (!manual_.empty()) std::cout << manual_ << std::endl;
+    if (!manual_.empty()) {
+        std::cout << manual_ << std::endl;
+        usage_printed_ = true;
+    }
 }
 void Viewer::copy_view() {
     const auto p=camera()->position(); const auto q=camera()->orientation();
@@ -2409,10 +2412,11 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
     void Viewer::set_usage(const std::string& manual, const std::string& screen_hint)
     {
-        if (manual != "default")
+        if (manual != "default") {
             manual_ = manual;
+            usage_printed_ = false;
+        }
         hint_ = screen_hint;
-        usage_printed_ = false;
     }
 
 
@@ -2424,8 +2428,10 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
     void Viewer::print_usage() {
         if (usage_printed_) return;
-        usage_printed_ = true;
-        if (!manual_.empty()) std::cout << manual_ << std::endl;
+        if (!manual_.empty()) {
+            std::cout << manual_ << std::endl;
+            usage_printed_ = true;
+        }
     }
 
     void Viewer::update_frame_rate() {

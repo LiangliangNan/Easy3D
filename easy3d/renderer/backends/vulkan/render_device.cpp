@@ -43,6 +43,8 @@ namespace easy3d { namespace graphics { namespace {
 #include "oit_peel_frag.inc"
 #include "oit_average_composite_frag.inc"
 #include "oit_peel_composite_frag.inc"
+#include "oit_linked_lists_build_frag.inc"
+#include "oit_linked_lists_resolve_frag.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -284,6 +286,9 @@ struct Context : internal::VulkanDispatch {
         enabled.sampleRateShading = features.sampleRateShading;
         enabled.largePoints = features.largePoints;
         enabled.independentBlend = features.independentBlend;
+        // Per-pixel linked lists OIT writes and atomically updates storage buffers
+        // from the fragment stage (build and resolve passes).
+        enabled.fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
         di.pEnabledFeatures = &enabled;
         // No geometry shaders or wide lines. Large points are an optional
         // optimization for plain points; independent blending lets transparent
@@ -964,6 +969,31 @@ struct Oit {
     }
 };
 
+// Per-pixel linked lists OIT resources (Yang et al., NVIDIA 2010). Unlike the
+// image-attachment average/peel targets, the build pass appends fragments to
+// storage buffers: a per-pixel head pointer, a node array, and an atomic counter.
+// The resolve pass reads those buffers and writes the premultiplied result into
+// the shared Oit accumulation image, which the scene pass composites like peeling.
+struct LinkedLists {
+    Context& c;
+    uint32_t width = 0, height = 0, node_count = 0;
+    Buffer head, nodes, counter, params;
+    VkRenderPass build_pass = VK_NULL_HANDLE;
+    VkFramebuffer build_framebuffer = VK_NULL_HANDLE;
+    VkPipeline build_pipeline = VK_NULL_HANDLE, resolve_pipeline = VK_NULL_HANDLE;
+    VkDescriptorSet set = VK_NULL_HANDLE;
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    explicit LinkedLists(Context& context)
+        : c(context), head(context), nodes(context), counter(context), params(context) {}
+    ~LinkedLists() {
+        if (build_pipeline) c.vkDestroyPipeline(c.device, build_pipeline, nullptr);
+        if (resolve_pipeline) c.vkDestroyPipeline(c.device, resolve_pipeline, nullptr);
+        if (build_framebuffer) c.vkDestroyFramebuffer(c.device, build_framebuffer, nullptr);
+        if (build_pass) c.vkDestroyRenderPass(c.device, build_pass, nullptr);
+        if (set) c.vkFreeDescriptorSets(c.device, pool, 1, &set);
+    }
+};
+
 // Presentation semaphores belong to swapchain images, not CPU frame slots. An
 // image is reacquired only after its previous presentation wait has completed.
 struct Swapchain {
@@ -1083,7 +1113,10 @@ class VulkanDevice final : public RenderDevice {
     VkDescriptorSetLayout oit_scene_descriptors_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout oit_composite_descriptors_ = VK_NULL_HANDLE;
     VkPipelineLayout oit_peel_layout_ = VK_NULL_HANDLE, oit_composite_layout_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout oit_lists_descriptors_ = VK_NULL_HANDLE;
+    VkPipelineLayout oit_lists_layout_ = VK_NULL_HANDLE, oit_resolve_layout_ = VK_NULL_HANDLE;
     std::unique_ptr<Oit> oit_;
+    std::unique_ptr<LinkedLists> lists_;
     TransparencyMethod oit_method_ = TransparencyMethod::sorted;
     unsigned oit_layers_ = 4;
     bool oit_active_ = false;
@@ -1134,6 +1167,7 @@ public:
         if (c_.device) c_.vkDeviceWaitIdle(c_.device);
         swapchain_.reset(); target_.reset(); pixel_target_.reset(); shadow_map_.reset();
         // Free transparency descriptor sets before the textures they reference.
+        lists_.reset();
         oit_.reset();
         geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
@@ -1144,6 +1178,9 @@ public:
         if (ao_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, ao_descriptors_, nullptr);
         if (oit_peel_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_peel_layout_, nullptr);
         if (oit_composite_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_composite_layout_, nullptr);
+        if (oit_lists_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_lists_layout_, nullptr);
+        if (oit_resolve_layout_) c_.vkDestroyPipelineLayout(c_.device, oit_resolve_layout_, nullptr);
+        if (oit_lists_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, oit_lists_descriptors_, nullptr);
         if (oit_scene_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, oit_scene_descriptors_, nullptr);
         if (oit_composite_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, oit_composite_descriptors_, nullptr);
         if (layout_) c_.vkDestroyPipelineLayout(c_.device, layout_, nullptr);
@@ -1350,14 +1387,26 @@ public:
         composite_bindings[1] = composite_bindings[0]; composite_bindings[1].binding = 1;
         li.bindingCount = 2; li.pBindings = composite_bindings;
         check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_composite_descriptors_), "create transparency composite descriptor layout");
+        // Linked lists OIT: head/node/counter storage buffers plus a small uniform
+        // buffer carrying the node capacity and viewport dimensions.
+        VkDescriptorSetLayoutBinding lists_bindings[4] = {};
+        for (unsigned i = 0; i < 3; ++i) {
+            lists_bindings[i].binding = i; lists_bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            lists_bindings[i].descriptorCount = 1; lists_bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        }
+        lists_bindings[3].binding = 3; lists_bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        lists_bindings[3].descriptorCount = 1; lists_bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        li.bindingCount = 4; li.pBindings = lists_bindings;
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_lists_descriptors_), "create linked lists descriptor layout");
         VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8200},
                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1},
                                         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4},
-                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2}};
+                                        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 8},
+                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pi.maxSets = 4096; pi.poolSizeCount = 4; pi.pPoolSizes = sizes;
+        pi.maxSets = 4096; pi.poolSizeCount = 5; pi.pPoolSizes = sizes;
         check(c_.vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1387,6 +1436,15 @@ public:
         li.setLayoutCount = 1; li.pSetLayouts = &oit_composite_descriptors_;
         li.pushConstantRangeCount = 0; li.pPushConstantRanges = nullptr;
         check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &oit_composite_layout_), "create transparency composite pipeline layout");
+        // The build pass reuses the scene texture/material sets and adds the linked
+        // lists buffers at set 2; the resolve pass reads only the lists buffers.
+        const VkDescriptorSetLayout lists_sets[] = {descriptors_, impostor_descriptors_, oit_lists_descriptors_};
+        li.setLayoutCount = 3; li.pSetLayouts = lists_sets;
+        li.pushConstantRangeCount = 1; li.pPushConstantRanges = &push;
+        check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &oit_lists_layout_), "create linked lists build pipeline layout");
+        li.setLayoutCount = 1; li.pSetLayouts = &oit_lists_descriptors_;
+        li.pushConstantRangeCount = 0; li.pPushConstantRanges = nullptr;
+        check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &oit_resolve_layout_), "create linked lists resolve pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
         VkShaderModule modules[18] = {};
@@ -2681,6 +2739,152 @@ public:
         }
         c_.vkUpdateDescriptorSets(c_.device, 2, layer_writes, 0, nullptr);
     }
+    // Linked lists OIT resources are created on first use and recreated when the
+    // viewport or the per-pixel fragment capacity changes. The resolve pipeline
+    // renders into the shared Oit accumulation image (reset_pass), so the scene
+    // composite over-blends it exactly like a peeled result.
+    void ensure_linked_lists(uint32_t width, uint32_t height, unsigned max_fragments) {
+        const uint32_t node_count = width * height * std::max(1u, max_fragments);
+        if (lists_ && lists_->width == width && lists_->height == height && lists_->node_count == node_count) return;
+        lists_.reset(new LinkedLists(c_));
+        lists_->width = width; lists_->height = height; lists_->node_count = node_count;
+        lists_->pool = descriptor_pool_;
+        const VkDeviceSize head_bytes = VkDeviceSize(width) * height * 4;
+        const VkDeviceSize node_bytes = VkDeviceSize(node_count) * 32;
+        lists_->head.init(head_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
+        lists_->nodes.init(node_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, false);
+        lists_->counter.init(4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
+        lists_->params.init(16, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+        uint32_t parameters[4] = {node_count, width, height, 0};
+        lists_->params.transfer(parameters, sizeof(parameters), true);
+
+        {
+            // Attachmentless pass: the build fragment shader writes only to storage
+            // buffers, so no color or depth attachment is needed.
+            VkSubpassDescription subpass{};
+            subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            VkSubpassDependency dependencies[2] = {};
+            dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
+            dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            dependencies[1].srcSubpass = 0; dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+            dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            dependencies[1].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+            dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            VkRenderPassCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+            info.subpassCount = 1; info.pSubpasses = &subpass;
+            info.dependencyCount = 2; info.pDependencies = dependencies;
+            check(c_.vkCreateRenderPass(c_.device, &info, nullptr, &lists_->build_pass), "create linked lists build pass");
+            VkFramebufferCreateInfo fi{};
+            fi.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            fi.renderPass = lists_->build_pass; fi.width = width; fi.height = height; fi.layers = 1;
+            check(c_.vkCreateFramebuffer(c_.device, &fi, nullptr, &lists_->build_framebuffer), "create linked lists framebuffer");
+        }
+
+        VkDescriptorSetAllocateInfo allocation{};
+        allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocation.descriptorPool = descriptor_pool_; allocation.descriptorSetCount = 1;
+        allocation.pSetLayouts = &oit_lists_descriptors_;
+        check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &lists_->set), "allocate linked lists descriptors");
+        const VkDescriptorBufferInfo buffers[4] = {
+            {lists_->head.handle, 0, head_bytes}, {lists_->nodes.handle, 0, node_bytes},
+            {lists_->counter.handle, 0, 4}, {lists_->params.handle, 0, 16}};
+        VkWriteDescriptorSet writes[4] = {};
+        for (unsigned i = 0; i < 4; ++i) {
+            writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writes[i].dstSet = lists_->set; writes[i].dstBinding = i; writes[i].descriptorCount = 1;
+            writes[i].descriptorType = i == 3 ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            writes[i].pBufferInfo = &buffers[i];
+        }
+        c_.vkUpdateDescriptorSets(c_.device, 4, writes, 0, nullptr);
+
+        VkShaderModule modules[4] = {};
+        try {
+            VkShaderModuleCreateInfo mi{};
+            mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            mi.codeSize = sizeof(scene_vert); mi.pCode = scene_vert;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create linked lists vertex shader");
+            mi.codeSize = sizeof(oit_linked_lists_build_frag); mi.pCode = oit_linked_lists_build_frag;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create linked lists build shader");
+            mi.codeSize = sizeof(oit_quad_vert); mi.pCode = oit_quad_vert;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]), "create linked lists quad shader");
+            mi.codeSize = sizeof(oit_linked_lists_resolve_frag); mi.pCode = oit_linked_lists_resolve_frag;
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]), "create linked lists resolve shader");
+            VkPipelineShaderStageCreateInfo stages[2] = {};
+            for (unsigned i = 0; i < 2; ++i) {
+                stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+                stages[i].pName = "main";
+            }
+            VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+            VkVertexInputAttributeDescription attributes[] = {
+                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
+                {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
+                {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
+                {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
+                {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
+                {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
+            VkPipelineVertexInputStateCreateInfo vertex{};
+            vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+            vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
+            vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attributes;
+            VkPipelineInputAssemblyStateCreateInfo assembly{};
+            assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            VkPipelineViewportStateCreateInfo viewport{};
+            viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+            viewport.viewportCount = 1; viewport.scissorCount = 1;
+            VkPipelineRasterizationStateCreateInfo raster{};
+            raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+            raster.polygonMode = VK_POLYGON_MODE_FILL; raster.cullMode = VK_CULL_MODE_NONE;
+            raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; raster.lineWidth = 1;
+            raster.depthBiasEnable = VK_TRUE;
+            VkPipelineMultisampleStateCreateInfo multisample{};
+            multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+            multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+            VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                               VK_DYNAMIC_STATE_DEPTH_BIAS};
+            VkPipelineDynamicStateCreateInfo dynamic{};
+            dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+            dynamic.dynamicStateCount = 3; dynamic.pDynamicStates = dynamic_states;
+            VkPipelineDepthStencilStateCreateInfo depth_state{};
+            depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+            VkPipelineColorBlendStateCreateInfo blending{};
+            blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+            VkGraphicsPipelineCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            info.stageCount = 2; info.pStages = stages; info.pVertexInputState = &vertex;
+            info.pInputAssemblyState = &assembly; info.pViewportState = &viewport;
+            info.pRasterizationState = &raster; info.pMultisampleState = &multisample;
+            info.pDepthStencilState = &depth_state; info.pColorBlendState = &blending;
+            info.pDynamicState = &dynamic;
+
+            // Build: scene geometry, no attachments, every fragment appends a node.
+            stages[0].module = modules[0]; stages[1].module = modules[1];
+            blending.attachmentCount = 0; blending.pAttachments = nullptr;
+            info.renderPass = lists_->build_pass; info.layout = oit_lists_layout_;
+            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                               &lists_->build_pipeline), "create linked lists build pipeline");
+
+            // Resolve: full-screen triangle replacing the accumulation image.
+            stages[0].module = modules[2]; stages[1].module = modules[3];
+            vertex.vertexBindingDescriptionCount = 0; vertex.pVertexBindingDescriptions = nullptr;
+            vertex.vertexAttributeDescriptionCount = 0; vertex.pVertexAttributeDescriptions = nullptr;
+            VkPipelineColorBlendAttachmentState replace{};
+            replace.colorWriteMask = 0xf;
+            blending.attachmentCount = 1; blending.pAttachments = &replace;
+            info.renderPass = oit_->reset_pass; info.layout = oit_resolve_layout_;
+            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                               &lists_->resolve_pipeline), "create linked lists resolve pipeline");
+        } catch (...) {
+            for (auto module : modules) if (module) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+            throw;
+        }
+        for (auto module : modules) if (module) c_.vkDestroyShaderModule(c_.device, module, nullptr);
+    }
     void update_oit_composite(TransparencyMethod method) {
         VkDescriptorImageInfo images[2] = {
             {samplers_[0], oit_->color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
@@ -2792,6 +2996,73 @@ public:
                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
                 layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             }
+        } else if (oit_method_ == TransparencyMethod::linked_lists) {
+            ensure_linked_lists(width, height, oit_layers_);
+            // Reset the head pointers to -1 (empty list) and the node counter to 0.
+            VkMemoryBarrier clear_barrier{};
+            clear_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            clear_barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            clear_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                    0, 1, &clear_barrier, 0, nullptr, 0, nullptr);
+            c_.vkCmdFillBuffer(cmd, lists_->head.handle, 0, VkDeviceSize(width) * height * 4, 0xFFFFFFFFu);
+            c_.vkCmdFillBuffer(cmd, lists_->counter.handle, 0, 4, 0u);
+            // Make the clears (transfer) and the host-written params visible to the
+            // build fragment shader before it appends nodes.
+            VkMemoryBarrier build_barrier{};
+            build_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            build_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
+            build_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_HOST_BIT,
+                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &build_barrier, 0, nullptr, 0, nullptr);
+            VkRenderPassBeginInfo begin{};
+            begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            begin.renderPass = lists_->build_pass; begin.framebuffer = lists_->build_framebuffer;
+            begin.renderArea = {{0, 0}, {width, height}};
+            c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+            full_view();
+            for (const Prepared* draw : transparent) {
+                bind_draw(*draw, lists_->build_pipeline, oit_lists_layout_, draw->texture->set);
+                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_lists_layout_, 2, 1,
+                                           &lists_->set, 0, nullptr);
+                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+            }
+            c_.vkCmdEndRenderPass(cmd);
+            // Order the linked-list writes before the resolve pass reads them.
+            VkMemoryBarrier resolve_barrier{};
+            resolve_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            resolve_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+            resolve_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                    0, 1, &resolve_barrier, 0, nullptr, 0, nullptr);
+            // Resolve into the shared accumulation image, then expose it to the
+            // scene composite (which over-blends it like a peeled result).
+            const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->color_layout,
+                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                          fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                          fresh ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+            oit_->color_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            VkClearValue clear{};
+            VkRenderPassBeginInfo resolve{};
+            resolve.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            resolve.renderPass = oit_->reset_pass; resolve.framebuffer = oit_->reset_framebuffer;
+            resolve.renderArea = {{0, 0}, {width, height}};
+            resolve.clearValueCount = 1; resolve.pClearValues = &clear;
+            c_.vkCmdBeginRenderPass(cmd, &resolve, VK_SUBPASS_CONTENTS_INLINE);
+            full_view();
+            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lists_->resolve_pipeline);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_resolve_layout_, 0, 1,
+                                       &lists_->set, 0, nullptr);
+            c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+            c_.vkCmdEndRenderPass(cmd);
+            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+            oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         } else {
             {
                 const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;

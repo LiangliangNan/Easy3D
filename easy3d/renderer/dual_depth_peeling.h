@@ -31,6 +31,7 @@
 
 #include <vector>
 #include <easy3d/renderer/transparency.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -50,10 +51,26 @@ namespace easy3d {
     class DualDepthPeeling : public Transparency
     {
     public:
-        explicit DualDepthPeeling(Camera* cam) : camera_(cam) {}
+        explicit DualDepthPeeling(Camera* cam) : camera_(cam) {
+            LOG(INFO) << "maximum number of peeling layers: " << max_peels_;
+        }
         ~DualDepthPeeling() override = default;
 
-        void set_max_peels(int n) { max_peels_ = n; }
+        /**
+         * \brief Sets the maximum number of peeling layers.
+         * \details It has to be a positive value. Default to 4, and a special value of 0 means no maximum limit.
+         *      Given a complex object and a particular view, the theoretical ideal number equals to its actual depth
+         *      layers in that view.
+         * \param n The maximum number of peeling layers.
+         */
+        void set_max_peels(int n) {
+            max_peels_ = n;
+            LOG(INFO) << "maximum number of peeling layers: " << max_peels_;
+        }
+        /**
+         * \brief Returns the maximum number of peeling layers.
+         * \return The maximum number of peeling layers
+         */
         int max_peels() const { return max_peels_; }
 
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
@@ -71,7 +88,7 @@ namespace easy3d {
 
 #include <vector>
 #include <easy3d/renderer/transparency.h>
-
+#include <easy3d/util/logging.h>
 
 namespace easy3d {
 
@@ -134,10 +151,15 @@ namespace easy3d {
 
         /**
          * \brief Sets the maximum number of peeling layers.
-         * \details It has to be a positive value. Default value is 4. A special value of 0 means no maximum limit.
-         * \param n The maximum number of peeling layers
+         * \details It has to be a positive value. Default to 4, and a special value of 0 means no maximum limit.
+         *      Given a complex object and a particular view, the theoretical ideal number equals to its actual depth
+         *      layers in that view.
+         * \param n The maximum number of peeling layers.
          */
-        void set_max_peels(int n) { max_peels_ = n; }
+        void set_max_peels(int n) {
+            max_peels_ = n;
+            LOG(INFO) << "maximum number of peeling layers: " << max_peels_;
+        }
 
         /**
          * \brief Returns the maximum number of peeling layers.

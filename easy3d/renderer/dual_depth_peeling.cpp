@@ -67,6 +67,7 @@ namespace easy3d {
         , num_written_pixels_(0)
         , occlusion_threshold_(0)
     {
+        LOG(INFO) << "maximum number of peeling layers: " << max_peels_;
     }
 
 

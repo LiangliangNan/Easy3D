@@ -28,6 +28,7 @@
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/average_color_blending.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/per_pixel_linked_lists_oit.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
@@ -39,11 +40,10 @@ using namespace easy3d;
 
 TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
 	transparency_ = new DualDepthPeeling(camera());
-	std::cout << "method: Dual Depth Peeling" << std::endl;
 	method_ = 2;
-
-    hint_ = "Press 'space' to switch between different transparency techniques\n"
-            "Press 'up/down' to increase/decrease the transparency";
+    hint_string_ = "Press 'space' to switch between different transparency techniques\n"
+				   "Press 'up/down' to increase/decrease the transparency\n\nMethod: ";
+	Viewer::set_usage("default", hint_string_ + "Dual Depth Peeling");
 }
 
 
@@ -62,19 +62,32 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
 			transparency_ = nullptr;
 		}
 
-		method_ = (method_ + 1) % 3;
+		method_ = (method_ + 1) % 4;
 		switch (method_)
 		{
 		case 0:
-			std::cout << "method: NULL(transparency disabled)" << std::endl;
+			set_usage("default", hint_string_ + "NULL (transparency disabled)");
+			std::cout << "Method: NULL (transparency disabled)" << std::endl;
 			break;
 		case 1:
 			transparency_ = new AverageColorBlending(camera());
-			std::cout << "method: Average Color Blending" << std::endl;
+			set_usage("default", hint_string_ + "Average Color Blending");
+			std::cout << "Method: Average Color Blending" << std::endl;
 			break;
 		case 2:
 			transparency_ = new DualDepthPeeling(camera());
-			std::cout << "method: Dual Depth Peeling" << std::endl;
+			set_usage("default", hint_string_ + "Dual Depth Peeling");
+			std::cout << "Method: Dual Depth Peeling" << std::endl;
+			break;
+		case 3:
+			transparency_ = new PerPixelLinkedListsOIT(camera());
+#if defined(__APPLE__) && !defined(EASY3D_HAS_VULKAN)
+			set_usage("default", hint_string_ + "Per Pixel Linked Lists OIT - NOT available on macOS with OpenGL");
+			std::cerr << "PerPixelLinkedListsOIT: requires OpenGL 4.3+, current version is 4.1. macOS OpenGL is limited to 4.1. Use the Vulkan backend or DualDepthPeeling for transparency. " << std::endl;;
+#else
+			set_usage("default", hint_string_ + "Per Pixel Linked Lists OIT");
+			std::cout << "Method: Per Pixel Linked Lists OIT" << std::endl;
+#endif
 			break;
 		}
 		update();

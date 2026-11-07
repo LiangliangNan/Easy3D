@@ -50,6 +50,7 @@ protected:
 private:
 	easy3d::Transparency* transparency_;
 	int method_;	// 0: disabled; 1: ACB; 2: DDP
+	std::string hint_string_;
 };
 
 
