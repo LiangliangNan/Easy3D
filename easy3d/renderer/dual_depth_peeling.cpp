@@ -196,10 +196,11 @@ namespace easy3d {
 
             program->bind();
             const mat4& MVP = camera_->modelViewProjectionMatrix();
-            program->set_uniform("MVP", MVP);
             for (auto d : surfaces) {
                 if (d->is_visible()) {
-                    program->set_uniform("MANIP", d->manipulated_matrix());
+                    const mat4 MANIP = d->manipulated_matrix();
+                    program->set_uniform("MANIP", MANIP)
+                            ->set_uniform("MVP_MANIP", MVP * MANIP);
                     ClippingPlane::instance()->set_program(program);
                     ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
                     d->gl_draw();
@@ -235,7 +236,6 @@ namespace easy3d {
             const vec4& wLightPos = inverse(MV) * setting::light_position;
 
             program->bind();
-            program->set_uniform("MVP", MVP);
             program->set_uniform("wLightPos", wLightPos);
             program->set_uniform("wCamPos", wCamPos);
             program->bind_texture("DepthBlenderTex", fbo_->color_texture(depth_source_), 0);
@@ -247,6 +247,7 @@ namespace easy3d {
                     // needs be padded when using uniform blocks
                     const mat3 NORMAL = transform::normal_matrix(MANIP);
                     program->set_uniform("MANIP", MANIP)
+                            ->set_uniform("MVP_MANIP", MVP * MANIP)
                             ->set_uniform( "NORMAL", NORMAL)
                             ->set_uniform("lighting", d->lighting())
                             ->set_uniform("smooth_shading", d->smooth_shading())

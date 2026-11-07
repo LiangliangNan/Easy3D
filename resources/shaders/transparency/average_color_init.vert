@@ -33,8 +33,8 @@ in  vec3 vtx_color;		// vertex color
 uniform vec3 default_color;
 uniform bool per_vertex_color;
 
-uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat4 MVP_MANIP;  // Pre-computed MVP * MANIP for efficiency
 uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
@@ -76,5 +76,5 @@ void main(void)
 	DataOut.normal = NORMAL * vtx_normal;
 	DataOut.position = new_position.xyz;
 
-	gl_Position = MVP * new_position;
+	gl_Position = MVP_MANIP * vec4(vtx_position, 1.0);
 }

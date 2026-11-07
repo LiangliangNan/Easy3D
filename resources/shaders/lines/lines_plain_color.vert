@@ -29,8 +29,8 @@
 in  vec3 vtx_position;	// point position
 in  vec3 vtx_color;	// point color
 
-uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat4 MVP_MANIP;  // Pre-computed MVP * MANIP for efficiency
 
 uniform vec4 default_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 uniform bool per_vertex_color = false;
@@ -67,5 +67,6 @@ void main()
     else
         DataOut.color = default_color;
 
-    gl_Position = MVP * new_position;
+    // Use pre-computed MVP_MANIP for efficiency (saves one matrix multiplication per vertex)
+    gl_Position = MVP_MANIP * vec4(vtx_position, 1.0);
 }

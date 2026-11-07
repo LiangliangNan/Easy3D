@@ -29,8 +29,8 @@ precision highp float;
 
 in	vec4 vtx_position;
 
-uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat4 MVP_MANIP;  // Pre-computed MVP * MANIP for efficiency
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;
@@ -55,5 +55,5 @@ void main(void)
           }
      }
 
-     gl_Position = MVP * new_position;
+     gl_Position = MVP_MANIP * vtx_position;
 }

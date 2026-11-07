@@ -2881,7 +2881,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
-        program->set_uniform("MVP", MVP)
+        program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the corner axes
                 ->set_uniform("MANIP", mat4::identity())
                 ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
                 ->set_uniform("lighting", true)
@@ -3365,8 +3365,9 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
         glClearColor(1,1,1,1);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         program->bind();
-        program->set_uniform("MVP",snapshot.modelViewProjectionMatrix())
-               ->set_uniform("MANIP",result.drawable->manipulated_matrix());
+        const mat4 MANIP=result.drawable->manipulated_matrix();
+        program->set_uniform("MANIP",MANIP)
+               ->set_uniform("MVP_MANIP",snapshot.modelViewProjectionMatrix()*MANIP);
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program,result.drawable->plane_clip_discard_primitive());
         result.drawable->gl_draw();

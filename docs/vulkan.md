@@ -6464,4 +6464,65 @@ Files changed: `easy3d/renderer/camera.h`, `easy3d/viewer/viewer_base.h`,
 Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. Documentation-only
 changes; no behavioral differences. No changes were committed.
 
+### 2026-11-07 — W10 batch 37: MVP matrix optimization
+
+**Motivation.** Vertex shaders were computing `gl_Position = MVP * (MANIP * vertex)`, which
+is two 4x4 matrix multiplications per vertex. Since MVP and MANIP are constant per draw call,
+we can pre-compute `MVP_MANIP = MVP * MANIP` on the CPU and send it as a single uniform,
+reducing the per-vertex work to one matrix multiplication.
+
+**Design.** Added `MVP_MANIP` uniform to the OpenGL rendering shaders and removed the
+now-unused `MVP` uniform declarations and their `set_uniform("MVP", ...)` calls (no API
+compatibility constraints):
+- `surface/surface.vert` (triangles)
+- `lines/lines_plain_color.vert`, `lines/lines_plain_texture.vert` (lines)
+- `points/points_plain_color.vert`, `points/points_plain_texture.vert` (points)
+- `shadow/shadow_generate.vert`, `shadow/soft_shadow_generate.vert`,
+  `shadow/shadow_rendering.vert`, `shadow/soft_shadow_rendering.vert` (shadows)
+- `transparency/average_color_init.vert`, `transparency/dual_depth_peeling_init.vert`,
+  `transparency/dual_depth_peeling_peel_rendering.vert`,
+  `transparency/per_pixel_linked_lists_oit_build.vert` (transparency)
+- `selection/selection_single_primitive.vert`, `selection/selection_pointcloud_rect.vert`,
+  `selection/selection_pointcloud_lasso.vert` (picking/selection)
+
+These shaders now use `gl_Position = MVP_MANIP * vertex` instead of `MVP * (MANIP * vertex)`.
+The `MANIP` uniform is retained where it is still needed for clipping plane calculations
+(evaluated in model space before projection) or for passing model-space positions to later
+stages; it was removed from the rect/lasso selection shaders, which no longer reference it.
+The `MVP` uniform survives only in the surfel geometry shaders
+(`points_surfel_color.geom`, `points_surfel_texture.geom`), which transform world-space
+quad corners emitted by the vertex stage; the surfel vertex shaders keep `MANIP` and the
+C++ side keeps sending both `MVP` and `MANIP` for that pipeline.
+
+Updated C++ callers to compute and send the pre-multiplied matrix:
+- `drawable_triangles.cpp`, `drawable_lines.cpp`, `drawable_points.cpp` (plain paths)
+- `shadow.cpp`, `soft_shadow.cpp` (both passes; the render pass seeds `MVP_MANIP = MVP`
+  before the drawable loop so the background plane keeps the identity-MANIP behavior,
+  then overrides it per drawable)
+- `average_color_blending.cpp`, `dual_depth_peeling.cpp` (both stages),
+  `per_pixel_linked_lists_oit.cpp` (OpenGL build pass)
+- `picker_surface_mesh.cpp`, `viewer.cpp` (primitive picking and corner axes)
+- `backends/opengl/shape_draw.cpp` (wire box/sphere helpers)
+
+All compute `MVP * MANIP` on the CPU and send it via `set_uniform("MVP_MANIP", ...)`.
+Where `MANIP` varies per drawable inside a loop, the product is computed per drawable.
+The Vulkan backend is unaffected: it uses its own push-constant shaders under
+`resources/shaders/vulkan/`.
+
+**Performance impact.** Saves one 4x4 matrix multiplication per vertex in the most common
+rendering paths (surface, lines, points). The optimization is most beneficial for large meshes
+with many vertices. The CPU-side matrix multiplication is negligible (one 4x4 multiply per
+draw call vs. thousands of vertex transforms).
+
+Files changed: the 16 shader files listed above,
+`easy3d/renderer/drawable_triangles.cpp`, `easy3d/renderer/drawable_lines.cpp`,
+`easy3d/renderer/drawable_points.cpp`, `easy3d/renderer/shadow.cpp`,
+`easy3d/renderer/soft_shadow.cpp`, `easy3d/renderer/average_color_blending.cpp`,
+`easy3d/renderer/dual_depth_peeling.cpp`, `easy3d/renderer/per_pixel_linked_lists_oit.cpp`,
+`easy3d/gui/picker_surface_mesh.cpp`, `easy3d/viewer/viewer.cpp`,
+`easy3d/renderer/backends/opengl/shape_draw.cpp`.
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
+rendering output is identical (same matrices, just pre-multiplied on CPU). No changes were committed.
+
 

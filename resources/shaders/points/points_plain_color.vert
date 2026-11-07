@@ -33,8 +33,8 @@ in  vec3 vtx_normal;// point normal
 uniform vec4 default_color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 uniform bool per_vertex_color = false;
 
-uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat4 MVP_MANIP;  // Pre-computed MVP * MANIP for efficiency
 uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool clippingPlaneEnabled = false;
@@ -66,5 +66,6 @@ void main(void) {
             gl_ClipDistance[1] = dot(new_position, clippingPlane1);
     }
 
-    gl_Position = MVP * new_position;
+    // Use pre-computed MVP_MANIP for efficiency (saves one matrix multiplication per vertex)
+    gl_Position = MVP_MANIP * vec4(vtx_position, 1.0);
 }

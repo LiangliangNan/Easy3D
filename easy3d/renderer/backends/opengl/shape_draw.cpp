@@ -626,7 +626,7 @@ namespace easy3d {
             }
 
             program->bind();
-            program->set_uniform("MVP", mvp)
+            program->set_uniform("MVP_MANIP", mvp * m)
                     ->set_uniform("MANIP", m)
                     ->set_uniform("per_vertex_color", true)
                     ->set_uniform("clippingPlaneEnabled", false)
@@ -660,7 +660,7 @@ namespace easy3d {
             }
 
             program->bind();
-            program->set_uniform("MVP", mvp)
+            program->set_uniform("MVP_MANIP", mvp * m)
                     ->set_uniform("MANIP", m)
                     ->set_uniform("per_vertex_color", true)
                     ->set_uniform("clippingPlaneEnabled", false)

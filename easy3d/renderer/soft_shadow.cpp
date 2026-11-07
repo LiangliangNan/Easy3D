@@ -106,7 +106,7 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program->bind();
-        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error
+        program->set_uniform("MVP_MANIP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 ClippingPlane::instance()->set_program(program);
@@ -147,7 +147,7 @@ namespace easy3d {
         const vec3& wCamPos = camera_->position();
 
         program->bind();
-        program->set_uniform("MVP", MVP);
+        program->set_uniform("MVP_MANIP", MVP);
         program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error
         program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error
         program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error
@@ -172,6 +172,7 @@ namespace easy3d {
                 // needs be padded when using uniform blocks
                 const mat3 NORMAL = transform::normal_matrix(MANIP);
                 program->set_uniform("MANIP", MANIP)
+                        ->set_uniform("MVP_MANIP", MVP * MANIP)
                         ->set_uniform( "NORMAL", NORMAL)
                         ->set_uniform("two_sides_lighting", d->lighting_two_sides())
                         ->set_uniform("distinct_back_color", d->distinct_back_color())

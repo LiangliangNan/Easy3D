@@ -88,12 +88,14 @@ namespace easy3d {
 
         // transformation introduced by manipulation
         const mat4 MANIP = manipulated_matrix();
+        // Pre-compute MVP * MANIP for shader efficiency (saves one matrix multiplication per vertex)
+        const mat4 MVP_MANIP = MVP * MANIP;
         // needs be padded when using uniform blocks
         const mat3 NORMAL = transform::normal_matrix(MANIP);
 
         program->bind();
-        program->set_uniform("MVP", MVP)
-                ->set_uniform("MANIP", MANIP)
+        program->set_uniform("MANIP", MANIP)
+                ->set_uniform("MVP_MANIP", MVP_MANIP)
                 ->set_uniform( "NORMAL", NORMAL)
                 ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)

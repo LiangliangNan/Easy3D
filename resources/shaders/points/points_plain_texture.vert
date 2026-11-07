@@ -31,8 +31,8 @@ in vec3 vtx_position;
 in vec2 vtx_texcoord;
 in vec3 vtx_normal;
 
-uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat4 MVP_MANIP;  // Pre-computed MVP * MANIP for efficiency
 uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
@@ -63,6 +63,6 @@ void main() {
         }
     }
 
-    // Output position of the vertex, in clip space : MVP * position
-    gl_Position = MVP * new_position;
+    // Output position of the vertex, in clip space : MVP_MANIP * position
+    gl_Position = MVP_MANIP * vec4(vtx_position, 1.0);
 }

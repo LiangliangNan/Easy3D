@@ -99,10 +99,12 @@ namespace easy3d {
             const mat4 &MVP = camera->modelViewProjectionMatrix();
             // transformation introduced by manipulation
             const mat4 MANIP = manipulated_matrix();
+            // Pre-compute MVP * MANIP for shader efficiency (saves one matrix multiplication per vertex)
+            const mat4 MVP_MANIP = MVP * MANIP;
 
             program->bind();
-            program->set_uniform("MVP", MVP)
-                    ->set_uniform("MANIP", MANIP)
+            program->set_uniform("MANIP", MANIP)
+                    ->set_uniform("MVP_MANIP", MVP_MANIP)
                     ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                     ->set_uniform("default_color", color());
 
@@ -249,10 +251,12 @@ namespace easy3d {
             const mat4 &MVP = camera->modelViewProjectionMatrix();
             // transformation introduced by manipulation
             const mat4 MANIP = manipulated_matrix();
+            // Pre-compute MVP * MANIP for shader efficiency (saves one matrix multiplication per vertex)
+            const mat4 MVP_MANIP = MVP * MANIP;
 
             program->bind();
-            program->set_uniform("MVP", MVP)
-                    ->set_uniform("MANIP", MANIP);
+            program->set_uniform("MANIP", MANIP)
+                    ->set_uniform("MVP_MANIP", MVP_MANIP);
 
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)

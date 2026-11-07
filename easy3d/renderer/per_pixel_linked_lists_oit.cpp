@@ -371,7 +371,6 @@ void PerPixelLinkedListsOIT::build_lists(const std::vector<TrianglesDrawable*>& 
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-    program->set_uniform("MVP", MVP);
     program->set_uniform("wLightPos", wLightPos);
     program->set_uniform("wCamPos", wCamPos);
     program->set_uniform("viewport_width", width_);
@@ -404,6 +403,7 @@ void PerPixelLinkedListsOIT::build_lists(const std::vector<TrianglesDrawable*>& 
         const mat3 NORMAL = transform::normal_matrix(MANIP);
 
         program->set_uniform("MANIP", MANIP);
+        program->set_uniform("MVP_MANIP", MVP * MANIP);
         program->set_uniform("NORMAL", NORMAL);
         program->set_uniform("Alpha", d->opacity());
         program->set_uniform("lighting", d->lighting());

@@ -103,7 +103,6 @@ namespace easy3d {
         const vec4& wLightPos = inverse(MV) * setting::light_position; 
 
         program->bind();
-        program->set_uniform("MVP", MVP);
         program->set_uniform("wLightPos", wLightPos);
         program->set_uniform("wCamPos", wCamPos);
 
@@ -114,6 +113,7 @@ namespace easy3d {
                 // needs be padded when using uniform blocks
                 const mat3 NORMAL = transform::normal_matrix(MANIP);
                 program->set_uniform("MANIP", MANIP)
+                        ->set_uniform("MVP_MANIP", MVP * MANIP)
                         ->set_uniform( "NORMAL", NORMAL);
                 program->set_uniform("smooth_shading", d->smooth_shading());
                 program->set_block_uniform("Material", "ambient", d->material().ambient);

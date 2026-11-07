@@ -213,8 +213,9 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         glClearColor(1,1,1,1);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         program->bind();
-        program->set_uniform("MVP",camera()->modelViewProjectionMatrix())
-               ->set_uniform("MANIP",drawable->manipulated_matrix());
+        const mat4 MANIP=drawable->manipulated_matrix();
+        program->set_uniform("MANIP",MANIP)
+               ->set_uniform("MVP_MANIP",camera()->modelViewProjectionMatrix()*MANIP);
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
         drawable->gl_draw();
