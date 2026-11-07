@@ -620,7 +620,12 @@ struct Viewer::Window {
             if (!mode) throw std::runtime_error("no monitor available for a full-screen window");
             width = mode->width; height = mode->height;
         }
-        handle = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
+#ifndef NDEBUG
+        const std::string title_str = title + " - Debug Version";
+#else
+        const std::string title_str = title;
+#endif
+        handle = glfwCreateWindow(width, height, title_str.c_str(), monitor, nullptr);
         if (!handle) throw std::runtime_error("could not create a GLFW Vulkan window");
     }
     ~Window() { if (handle) glfwDestroyWindow(handle); }
