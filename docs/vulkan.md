@@ -267,8 +267,13 @@ void MyViewer::setup_viewport() {
 deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5 and U6 are in progress. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
-**all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
-hosts. Rendering, interaction, picking, effects, text, snapshots and custom
+**all applications on Vulkan**, including FigureMaker and toolkit-based hosts.
+**Mapple is a deliberate exception (decided 2026-11-08): it stays OpenGL-only and
+untouched** — its standalone `QOpenGLWidget` canvas (its own render loop, pickers,
+effects, HUD and snapshot, built on `easy3d::renderer`/`gui` rather than the unified
+`Viewer`) is not worth the toolkit-surface port, the same reason the Qt/wx tutorials
+were removed in batch 42; the `Easy3D_ENABLE_QT` gate skips Mapple when Vulkan is ON.
+Rendering, interaction, picking, effects, text, snapshots and custom
 subclasses must be covered; outstanding application limitations must be tracked.
 
 Backend choice will be **exclusive and fixed during CMake configuration**. Each
@@ -577,12 +582,13 @@ of this document.
   were removed with the tutorials in batch 42). U5 tutorial cleanup is effectively complete
   (remaining conditionals mirror the base constructor options type or warn about macOS GL
   limits); U5/U6 residue is deliberate tutorial behavior choices.
-- **W10** Mapple, remaining Python API/tutorial coverage, shadows parity (the Qt/wx tutorials were removed in batch 42). Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. Remaining Mapple and the rest of the Python API/tutorial coverage stay open (the Qt/wx tutorials were removed in batch 42).
+- **W10** Mapple, remaining Python API/tutorial coverage, shadows parity (the Qt/wx tutorials were removed in batch 42). Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. W10's actionable remainder was resolved by design decision on 2026-11-08: Mapple stays OpenGL-only and untouched (a deliberate exception; see the migration goal), and Python is core-only — the backend-neutral `Viewer`/`MultiViewer`/`OffScreen` and drawable/renderer surface is complete and validated on both backends, while the stale auto-generated `python/bindings/unused/` tree (old SSAO `generate()→GL texture`, `screen_to_opengl()`, GL-only internals) is deliberately removed with no revival. The Qt/wx tutorials were removed in batch 42.
 
 U1–U4 are complete. U5 and the independent U6 source/build cleanup are effectively complete
 (batch 39 closes the file responsibility audit); the residue is deliberate tutorial behavior
-choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 feature parity
-(Mapple and the rest of the Python API/tutorial coverage); re-run the tests after each batch.
+choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 feature parity, now complete: its actionable remainder was resolved by the
+2026-11-08 design decision (Mapple stays OpenGL-only; Python is core-only with the unused
+bindings removed); re-run the tests after each batch.
 
 **Current status note (2026-11-08, post-batch-42 refresh; idle `-j2`).** Mac baseline:
 OpenGL 94/94 (`build-u1b-opengl`), MoltenVK 128/128 (`build-migration/vulkan-macos`),
@@ -596,9 +602,11 @@ them (the tree now runs 133 tests, not the previously logged 99 — recurring ID
 staleness, not a regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
 re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.0 s) at a
 3200×1834 framebuffer with 4× MSAA and 0 validation errors, consistent with the earlier
-~70 FPS at 1600×1200 (the visible window was clamped to the display height). Still open:
-W10 Mapple and remaining Python coverage (both need a design decision before implementation),
-the Linux `vulkan.interactionoverlay` border check (W6, 68/69), and the RealCamera
+~70 FPS at 1600×1200 (the visible window was clamped to the display height). Decided 2026-11-08: W10's actionable remainder is closed — Mapple stays OpenGL-only
+(untouched, a deliberate exception to the all-applications-on-Vulkan goal) and Python is
+core-only (the backend-neutral viewer/drawable surface is complete; the stale `unused/`
+bindings are deliberately removed, no revival). Still open: the Linux
+`vulkan.interactionoverlay` border check (W6, 68/69), and the RealCamera
 expanded-point fallback profiling on a MoltenVK device without `largePoints` (this M4 Pro
 always takes the native path, so the fallback cannot be exercised here). The same triage is
 recorded in ToDo.md.
@@ -739,8 +747,10 @@ both backend builds compile the same tutorial API calls.
 - Finish renderer/gui counterparts according to actual application dependencies,
   including text, effects/transparency and toolkit surface/frame integration.
   Keep GL/Vulkan device calls out of backend-independent application algorithms.
-- Port Mapple, FigureMaker and other applications, then finish Python exposure
-  for the selected class family. Reuse existing extension points and avoid
+- Port FigureMaker and other applications (Mapple stays OpenGL-only by the 2026-11-08
+  decision). Python exposure is core-only: the backend-neutral Viewer/MultiViewer/OffScreen
+  and drawable/renderer surface is complete; the stale `python/bindings/unused/` tree is
+  deliberately removed (no revival). Reuse existing extension points and avoid
   application-specific core wrappers. Track unsupported features explicitly.
 
 **Gate:** all tutorials and targeted applications use the configured backend;
