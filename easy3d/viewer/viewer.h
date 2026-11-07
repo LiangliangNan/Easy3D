@@ -554,11 +554,10 @@ public:
 
 	protected:
 
-        // This function draws the scene. Called after pre_draw() and before post_draw();
-        // the bool reports whether the frame was rendered. The backend performs the
-        // native draw inside the default implementation; overrides may add backend
-        // specific rendering before calling the default.
-        virtual bool draw();
+        // This function draws the scene. Called after pre_draw() and before post_draw().
+        // The backend performs the native draw inside the default implementation;
+        // overrides may add backend-specific rendering before calling the default.
+        virtual void draw() const;
 
 		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when
 		// there exists a valid rendering context. It is (usually) a bad idea to do

@@ -20,20 +20,20 @@ struct AOViewer : Viewer {
     using Viewer::Viewer;
     ~AOViewer() override { delete occlusion_; }
     void enable() { occlusion_ = new AmbientOcclusion(camera()); }
-    int draws = 0;
+    mutable int draws = 0;
     bool occlude = false;
-    bool draw() override {
+    void draw() const override {
         ++draws;
         if (occlude && occlusion_) {
             occlusion_->begin(models_);
-            const bool ok = Viewer::draw();
+            Viewer::draw();
             occlusion_->end();
-            return ok;
+            return;
         }
-        return Viewer::draw();
+        Viewer::draw();
     }
     AmbientOcclusion* occlusion_ = nullptr;
-};
+};;
 
 std::vector<unsigned char> read(const std::string& file, int width, int height) {
     std::vector<unsigned char> data; int w = 0, h = 0, channels = 0;

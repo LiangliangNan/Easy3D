@@ -142,7 +142,7 @@ namespace easy3d {
         void init() override;
         void post_resize(int w, int h) override;
 #ifndef EASY3D_HAS_VULKAN
-        bool draw() override;
+        void draw() const override;
 #endif
 
         bool mouse_press_event(int x, int y, int button, int modifiers) override;

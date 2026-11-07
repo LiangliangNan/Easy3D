@@ -86,8 +86,8 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
         }
         return Viewer::point_under_pixel(x, y, found);
     }
-	bool draw() override {
-        PYBIND11_OVERRIDE(bool, easy3d::Viewer, draw);
+	void draw() const override {
+        PYBIND11_OVERRIDE(void, easy3d::Viewer, draw);
     }
     bool snapshot(const std::string& file, float scale, int samples, int bg, bool expand) const override {
         PYBIND11_OVERRIDE(bool, easy3d::Viewer, snapshot, file, scale, samples, bg, expand);

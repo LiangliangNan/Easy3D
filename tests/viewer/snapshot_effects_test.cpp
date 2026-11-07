@@ -41,25 +41,25 @@ struct EffectViewer : Viewer {
     using Viewer::Viewer;
     ~EffectViewer() override { delete occlusion_; delete blending_; }
     void enable_effects() { occlusion_ = new AmbientOcclusion(camera()); blending_ = new AverageColorBlending(camera()); }
-    std::vector<TrianglesDrawable*> surfaces() {
+    std::vector<TrianglesDrawable*> surfaces() const {
         std::vector<TrianglesDrawable*> result;
         for (auto& model : models_)
             for (auto& drawable : model->renderer()->triangles_drawables())
                 result.push_back(dynamic_cast<TrianglesDrawable*>(drawable.get()));
         return result;
     }
-    int draws = 0;
+    mutable int draws = 0;
     bool occlude = false, blend = false;
-    bool draw() override {
+    void draw() const override {
         ++draws;
         if (occlude && occlusion_) {
             occlusion_->begin(models_);
-            const bool ok = Viewer::draw();
+            Viewer::draw();
             occlusion_->end();
-            return ok;
+            return;
         }
-        if (blend && blending_) { blending_->draw(surfaces()); return true; }
-        return Viewer::draw();
+        if (blend && blending_) { blending_->draw(surfaces()); return; }
+        Viewer::draw();
     }
     AmbientOcclusion* occlusion_ = nullptr;
     AverageColorBlending* blending_ = nullptr;

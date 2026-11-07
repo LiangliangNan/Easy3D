@@ -262,7 +262,7 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
     return false;
 }
 #else
-    bool MultiViewer::draw() {
+    void MultiViewer::draw() const {
         CellScissor clip;
         // remember the viewer port, later we will have to restore it after drawing each view
         ivec4 viewport;
@@ -329,7 +329,6 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
         if (drawable_division_->is_visible())
             drawable_division_->draw(camera());
         draw_overlays(false);
-        return true;
     }
 
 

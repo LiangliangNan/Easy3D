@@ -66,9 +66,9 @@ bool TutorialEyeDomeLighting::key_press_event(int key, int modifiers) {
 }
 
 
-bool TutorialEyeDomeLighting::draw() {
+void TutorialEyeDomeLighting::draw() const {
     if (!current_model()) {
-        return false;
+        return;
     }
 
     if (edl_enabled_) {
@@ -76,12 +76,11 @@ bool TutorialEyeDomeLighting::draw() {
         // effect's offscreen target, Vulkan into the viewer frame that the effect
         // shades before presentation.
         edl_->begin();
-        const bool ok = Viewer::draw();
+        Viewer::draw();
         edl_->end();
-        return ok;
     }
     else
-        return Viewer::draw();
+        Viewer::draw();
 }
 
 // \endcond

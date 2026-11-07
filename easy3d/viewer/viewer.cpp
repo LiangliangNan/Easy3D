@@ -424,7 +424,7 @@ unsigned Viewer::validation_errors() const { return device().validation_errors()
 void Viewer::init() {}
 void Viewer::pre_draw() {}
 void Viewer::post_draw() {}
-bool Viewer::draw() {
+void Viewer::draw() const {
     int width = 0, height = 0;
     impl_->frame_size(width, height);
     Shadow::FrameData shadow;
@@ -477,7 +477,7 @@ bool Viewer::draw() {
         commands.insert(commands.begin(),
                         graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
                                                                 z_near, z_far, scene_size));
-    return impl_->submit(std::move(commands));
+    impl_->submit(std::move(commands));
 }
 void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels) {
     int width = 0, height = 0;
@@ -521,7 +521,7 @@ bool Viewer::snapshot_frame(int width, int height, const mat4& projection,
     camera()->setScreenWidthAndHeight(width, height);
     camera()->projectionMatrix(); // resolve resize invalidation before overriding
     camera()->set_projection_matrix(projection);
-    if (!draw()) throw std::runtime_error("draw() produced no frame");
+    draw();
     if (frame.image.rgba.size() != size_t(width) * size_t(height) * 4)
         throw std::runtime_error("the captured frame does not match the requested size");
     image = std::move(frame.image);
@@ -824,10 +824,12 @@ bool Viewer::draw_frame() {
     pre_draw();
     update_camera_path_overlays();
     update_interaction_overlays();
-    const bool drawn = draw();
-    if (drawn) {update_frame_rate();post_draw();notify_post_draw();}
+    draw();
+    update_frame_rate();
+    post_draw();
+    notify_post_draw();
     if (window_host_->error) std::rethrow_exception(window_host_->error);
-    return drawn;
+    return true;
 }
 
 void Viewer::update_camera_path_overlays() const {
@@ -2467,8 +2469,9 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         if (callback_error_) std::rethrow_exception(callback_error_);
         if (should_close()) return false;
         pre_draw();
-        const bool drawn = draw();
-        if (drawn) { update_frame_rate(); post_draw(); }
+        draw();
+        update_frame_rate();
+        post_draw();
         glfwSwapBuffers(window_);
         notify_post_draw();
         if (callback_error_) std::rethrow_exception(callback_error_);
@@ -3069,7 +3072,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
     }
 
 
-    bool Viewer::draw() {
+    void Viewer::draw() const {
 #if 0
         // Example code: split the view to have different rendering styles for the same object/scene.
         glEnable(GL_SCISSOR_TEST);
@@ -3149,7 +3152,6 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
         ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
         draw_overlays(false);
-        return true;
     }
 
 }

@@ -6227,3 +6227,74 @@ stale OpenGL-linked GUI/test binaries that dyld- or link-failed against the reli
 Vulkan library; recompiling/relinking those targets (mesh/scene picker, overlay viewer)
 restored a clean 128/128. This was pre-existing tree staleness, not a regression from this
 batch. No changes were committed.
+
+### 2026-11-07 — W10 batch 34: Viewer::draw() signature alignment with original OpenGL API
+
+**Motivation.** The original Easy3D OpenGL implementation declares `Viewer::draw()` as
+`virtual void draw() const`, matching the const-correct design pattern where rendering
+does not modify viewer state. The Vulkan migration had drifted to `virtual bool draw()`
+(non-const, returning a success flag), which broke API compatibility with client code
+written against the original Easy3D. This batch realigns the signature to
+`virtual void draw() const` on both backends, restoring source-level compatibility so
+that existing tutorials and user code compile unchanged.
+
+**Design.** The change is mechanical but touches every override and caller:
+
+- **Base class** (`easy3d/viewer/viewer.h`): `virtual bool draw()` → `virtual void draw() const`.
+  The doc comment is updated to drop the "bool reports whether the frame was rendered"
+  language, since the method now always succeeds (errors are reported through the
+  existing `window_host_->error` exception path).
+
+- **Base implementation** (`easy3d/viewer/viewer.cpp`): The Vulkan-path `draw()` at line
+  427 and the OpenGL-path `draw()` at line 3074 (inside `#else`) both change signature
+  and drop their `return true;` statements. The Vulkan path already funneled rendering
+  through `impl_->submit()`, which returns void; the OpenGL path performed direct GL
+  calls and returned true unconditionally, so the return carried no information.
+
+- **Callers that checked the return value**: `Viewer::draw_frame()` (Vulkan path, line
+  827; OpenGL path, line 2472) and `Viewer::snapshot_frame()` (line 524) previously
+  tested `if (!draw())` and threw or skipped post-draw steps. These now call `draw()`
+  unconditionally and proceed to `update_frame_rate()`, `post_draw()`, and
+  `notify_post_draw()`. The `draw_frame()` return value (bool) is preserved — it reports
+  whether the frame loop completed, not whether `draw()` succeeded.
+
+- **const_cast removal** (`easy3d/viewer/snapshot.cpp`): Two call sites at lines 123 and
+  274 used `const_cast<Viewer*>(this)->draw()` because `snapshot()` is a const method
+  but `draw()` was non-const. With `draw()` now const, the casts are removed and the
+  calls become plain `draw()`.
+
+- **Subclasses**: `MultiViewer::draw()` (OpenGL-only, `#ifndef EASY3D_HAS_VULKAN`),
+  tutorials 201/501/502/503/504/505, and four test viewers
+  (`PeelViewer` in `opengl_ddp_intersection_test.cpp` and `opengl_ddp_seam_test.cpp`,
+  `AOViewer` in `opengl_snapshot_seam_test.cpp`, `EffectViewer` in
+  `snapshot_effects_test.cpp`) all update their override signatures. Test viewers that
+  count draw calls for assertions (`mutable int draws`) mark the counter `mutable` so
+  the const override can increment it.
+
+- **Python bindings** (`python/bindings/easy3d/viewer/viewer.cpp`,
+  `multi_viewer.cpp`): The `PYBIND11_OVERRIDE` macros change from
+  `PYBIND11_OVERRIDE(bool, easy3d::Viewer, draw)` to
+  `PYBIND11_OVERRIDE(void, easy3d::Viewer, draw)`, and the trampoline methods change
+  signature to `void draw() const override`.
+
+Files changed: `easy3d/viewer/viewer.h`, `easy3d/viewer/viewer.cpp`,
+`easy3d/viewer/multi_viewer.h`, `easy3d/viewer/multi_viewer.cpp`,
+`easy3d/viewer/snapshot.cpp`, `tutorials/Tutorial_201_Viewer_default/main.cpp`,
+`tutorials/Tutorial_501_AmbientOcclusion/viewer.h` and `.cpp`,
+`tutorials/Tutorial_502_HardShadow/viewer.h` and `.cpp`,
+`tutorials/Tutorial_503_SoftShadow/viewer.h` and `.cpp`,
+`tutorials/Tutorial_504_Transparency/viewer.h` and `.cpp`,
+`tutorials/Tutorial_505_EyeDomeLighting/viewer.h` and `.cpp`,
+`tests/viewer/opengl_ddp_intersection_test.cpp`,
+`tests/viewer/opengl_ddp_seam_test.cpp`,
+`tests/viewer/opengl_snapshot_seam_test.cpp`,
+`tests/viewer/snapshot_effects_test.cpp`,
+`python/bindings/easy3d/viewer/viewer.cpp`,
+`python/bindings/easy3d/viewer/multi_viewer.cpp`.
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
+the signature change is ABI-compatible for client code that already treated `draw()` as
+a void method (the common case in tutorials) and source-compatible for code that checked
+the bool return (the return was always true in practice, so removing the check does not
+alter behavior). No changes were committed.
+

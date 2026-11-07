@@ -72,8 +72,8 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 		}
 		return MultiViewer::post_resize(a0, a1);
 	}
-    bool draw() override {
-        PYBIND11_OVERRIDE(bool,easy3d::MultiViewer,draw);
+    void draw() const override {
+        PYBIND11_OVERRIDE(void,easy3d::MultiViewer,draw);
     }
     bool snapshot(const std::string& file,float scale,int samples,int bg,bool expand) const override {
         PYBIND11_OVERRIDE(bool,easy3d::MultiViewer,snapshot,file,scale,samples,bg,expand);

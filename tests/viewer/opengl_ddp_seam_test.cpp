@@ -21,9 +21,9 @@ struct PeelViewer : Viewer {
     using Viewer::Viewer;
     ~PeelViewer() override { delete peeling_; }
     void enable() { peeling_ = new DualDepthPeeling(camera()); }
-    int draws = 0;
+    mutable int draws = 0;
     bool peel = false;
-    bool draw() override {
+    void draw() const override {
         ++draws;
         if (peel && peeling_) {
             std::vector<TrianglesDrawable*> surfaces;
@@ -31,9 +31,9 @@ struct PeelViewer : Viewer {
                 for (auto& d : m->renderer()->triangles_drawables())
                     surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d.get()));
             peeling_->draw(surfaces);
-            return true;
+            return;
         }
-        return Viewer::draw();
+        Viewer::draw();
     }
     DualDepthPeeling* peeling_ = nullptr;
 };

@@ -1,70 +1,54 @@
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
 
-#include <easy3d/util/initializer.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/dual_depth_peeling.h>
-#include <easy3d/renderer/per_pixel_linked_lists_oit.h>
+#include <easy3d/util/resource.h>
+#include <easy3d/util/initializer.h>
 
-
+/**
+ * \example{lineno} Tutorial_201_Viewer_default/main.cpp
+ * This example shows how to create a simple viewer using Easy3D.
+ */
 
 using namespace easy3d;
-using Tech = PerPixelLinkedListsOIT;
-
-
-class TransparencyViewer: public easy3d::Viewer {
-public:
-    explicit TransparencyViewer(const std::string& title = ""): Viewer(title) {
-        transparency_ = new Tech(camera());
-    }
-    ~TransparencyViewer() override {
-        delete transparency_;
-    }
-
-protected:
-    bool draw() override {
-        std::vector<TrianglesDrawable*> surfaces;
-        for (auto d: drawables_) {
-            surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d.get()));
-        }
-        transparency_->draw(surfaces);
-        return true;
-    }
-
-private:
-    Tech* transparency_;
-};
-
-
-std::shared_ptr<TrianglesDrawable> make_cube(const vec3& offset) {
-    std::vector<vec3> vertices = {
-        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
-        {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}, {-1, 1, 1}
-    };
-    for (auto& v: vertices) v += offset;
-
-    std::vector<unsigned int> indices = {
-        0, 1, 2, 0, 2, 3,
-        1, 5, 6, 1, 6, 2,
-        5, 4, 7, 5, 7, 6,
-        4, 0, 3, 4, 3, 7,
-        3, 2, 6, 3, 6, 7,
-        4, 5, 1, 4, 1, 0
-    };
-
-    auto d = std::make_shared<TrianglesDrawable>("cube");
-    d->update_vertex_buffer(vertices);
-    d->update_element_buffer(indices);
-
-    return d;
-}
 
 int main(int argc, char** argv) {
+    // initialize Easy3D.
     initialize();
 
-    TransparencyViewer viewer("Two Transparent Cubes");
+    const std::string file_name = resource::directory() + "/data/easy3d.ply";
+    Viewer viewer(EXAMPLE_TITLE);
+    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
 
-    viewer.add_drawable(make_cube(vec3(0, 0, 0)));
-    viewer.add_drawable(make_cube(vec3(0.5f, 0.5f, 0.5f)));
+    if (!viewer.add_model(file_name)) {
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
 
     return viewer.run();
 }

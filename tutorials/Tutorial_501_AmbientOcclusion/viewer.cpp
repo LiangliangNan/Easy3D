@@ -84,9 +84,9 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
 }
 
 
-bool TutorialAmbientOcclusion::draw() {
+void TutorialAmbientOcclusion::draw() const {
     if (!current_model()) {
-        return false;
+        return;
     }
 
     if (ao_enabled_) {
@@ -94,12 +94,11 @@ bool TutorialAmbientOcclusion::draw() {
         // effect's offscreen target, Vulkan into the viewer frame that the effect
         // shades before presentation.
         ao_->begin(models_);
-        const bool ok = Viewer::draw();
+        Viewer::draw();
         ao_->end();
-        return ok;
     }
     else
-        return Viewer::draw();
+        Viewer::draw();
 }
 
 // \endcond

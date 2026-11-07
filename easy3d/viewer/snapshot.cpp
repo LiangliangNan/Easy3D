@@ -120,7 +120,7 @@ namespace easy3d {
 			glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		const_cast<Viewer*>(this)->draw();
+		draw();
 
 		fbo.release();
 
@@ -271,7 +271,7 @@ namespace easy3d {
 
                 struct TileReset { ivec4& value;ivec4 old;~TileReset(){value=old;} } reset{overlay_tile_,overlay_tile_};
                 overlay_tile_=ivec4(i*sub_w,j*sub_h,w,h);
-				const_cast<Viewer*>(this)->draw();
+				draw();
                 // Scene annotations belong in snapshots; HUD callbacks do not.
                 if (show_camera_path_ && !kfi_->is_interpolation_started()) {
                     kfi_->draw_path(camera(), 2.0f);
