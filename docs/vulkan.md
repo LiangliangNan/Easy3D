@@ -419,7 +419,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; the Qt/wx GUI tutorials were removed (batch 42) as redundant with the GLFW/ImGui viewers; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
 | 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), which now also runs the virtual `draw()` on Vulkan so effects bracketed inside it reach the file (batch 28), simplified in batch 29 so the offscreen frame state lives in `Viewer::Impl` behind one private `snapshot_frame()` hook, file snapshots exclude the Viewer HUD as on OpenGL, and the snapshot background defaults to the current viewer color on both backends, and an OpenGL snapshot now renders as one whole-image offscreen FBO within the GL size limits (tiling only as an oversized fallback) so screen-space effects no longer seam at tile borders (batch 30), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -473,7 +473,7 @@ of this document.
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
 - **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Effect tutorials 501–505 now build and run on both backends; the shadow gate for 502–503 is removed (batch 16).
-  Native Qt/wx integration remains W10.
+  The Qt/wx GUI tutorials were removed in batch 42 (redundant with the GLFW/ImGui viewers); Mapple stays OpenGL-only.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
   (W5 batch 4). Tutorials 207/405/506 now use shared annotation geometry, guides
@@ -573,16 +573,16 @@ of this document.
   justified (see the divergence audit above), and the batch-8 shared OpenGL query-state guard
   (`backends/opengl/query_state.h`) is a correctly placed OpenGL-only RAII helper shared by
   Viewer and the GUI pickers. Capability gates are removed only when implementations exist;
-  the remaining tutorial gates are the intentional backend title label and the off-limits
-  Qt/wx gates. U5 tutorial cleanup is effectively complete (remaining conditionals mirror the
-  base constructor options type or warn about macOS GL limits); U5/U6 residue is off-limits
-  Qt/wx integration and deliberate tutorial behavior choices.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
+  the remaining tutorial gate is the intentional backend title label (the Qt/wx tutorial gates
+  were removed with the tutorials in batch 42). U5 tutorial cleanup is effectively complete
+  (remaining conditionals mirror the base constructor options type or warn about macOS GL
+  limits); U5/U6 residue is deliberate tutorial behavior choices.
+- **W10** Mapple, remaining Python API/tutorial coverage, shadows parity (the Qt/wx tutorials were removed in batch 42). Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. Remaining Mapple and the rest of the Python API/tutorial coverage stay open (the Qt/wx tutorials were removed in batch 42).
 
 U1–U4 are complete. U5 and the independent U6 source/build cleanup are effectively complete
-(batch 39 closes the file responsibility audit); the residue is off-limits Qt/wx integration
-and deliberate tutorial behavior choices. Remaining work is W10 feature parity (Mapple and the
-rest of the Python API/tutorial coverage; Qt/wx stay untouched); re-run the tests after each batch.
+(batch 39 closes the file responsibility audit); the residue is deliberate tutorial behavior
+choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 feature parity
+(Mapple and the rest of the Python API/tutorial coverage); re-run the tests after each batch.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
@@ -890,7 +890,7 @@ Vulkan backend:
 cmake -S . -B build-vulkan -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON
 cmake --build build-vulkan --parallel 4
 ctest --test-dir build-vulkan --output-on-failure -LE desktop   # no display needed
-./build-vulkan/bin/Tutorial_208_Offscreen [mesh.ply] [output.png]
+./build-vulkan/bin/Tutorial_204_Offscreen [mesh.ply] [output.png]
 ```
 
 OpenGL backend (needs no Vulkan SDK):
@@ -1077,7 +1077,7 @@ cause.
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
 | Threading | Externally synchronize device calls and model edits. CPU snapshots do not make concurrent model/property mutation safe. |
-| Hosts/bindings | Native GLFW is implemented; Qt's two views, wxWidgets, ImGui and Python Vulkan integration remain pending. |
+| Hosts/bindings | Native GLFW and ImGui viewers are implemented; the Qt and wxWidgets tutorials were removed (batch 42) as redundant with them; Python Vulkan integration remains pending. |
 | Presentation requirements | One queue family supporting both graphics and presentation, transfer-destination surface images, RGBA/BGRA blit support, identity surface transform. Unsupported configurations fail explicitly. FIFO presentation. UNORM formats are preferred; an sRGB-only surface introduces format conversion. |
 
 The OpenGL sources and shaders remain in the tree and are built when
@@ -6761,3 +6761,35 @@ show zero "does not exist or is not active"). The checker-sphere widget is not s
 startup; its fix is verified statically against `surface.vert`'s declarations. All three
 trees rebuilt and full CTest suites green at idle `-j2`: OpenGL 94/94, MoltenVK 128/128,
 Qt/CGAL/ffmpeg Debug tree 99/99.
+
+### 2026-11-07 — W10 batch 42: remove the Qt and wxWidgets tutorials
+
+**Decision.** The user decided to remove the Qt- and wxWidgets-based GUI tutorials
+(`Tutorial_204_Viewer_Qt` and `Tutorial_203_Viewer_wxWidgets`) instead of migrating them to
+Vulkan. They are heavy to port — each needs a toolkit-specific native surface, event loop
+and DPI handling — and largely redundant now that the GLFW viewer (Tutorial 201) and the
+ImGui viewer (Tutorial 202) already demonstrate interactive Vulkan rendering on every
+platform. This supersedes the earlier self-contained wx-host exploration: the wx tutorial
+is deleted, not ported. Only the two GUI *tutorials* are removed; the Qt *application*
+Mapple is untouched and remains OpenGL-only, so the `Easy3D_ENABLE_QT` option stays.
+
+**Changes.**
+
+- Deleted `tutorials/Tutorial_203_Viewer_wxWidgets/` and `tutorials/Tutorial_204_Viewer_Qt/`
+  (the user performed the deletion) and their gated `add_subdirectory()` calls in
+  `tutorials/CMakeLists.txt`. The remaining viewer tutorials were renumbered to fill the
+  gap: `Tutorial_205_MultiView` → `Tutorial_203_MultiView`, `Tutorial_208_Offscreen` →
+  `Tutorial_204_Offscreen`, and `Tutorial_207_RealCamera` → `Tutorial_205_RealCamera`
+  (Tutorial 206 CameraInterpolation keeps its number). Each tutorial CMake target derives
+  its name from its directory (`get_filename_component(... NAME)`), so the binaries pick up
+  the new numbers automatically.
+- Updated the references that follow the renumbering: the native-tutorial smoke-test scene
+  list (`tests/native_tutorials/test_sources.cmake`), the real-camera and annotation test
+  targets (`tests/viewer/CMakeLists.txt`) and their includes (`real_camera_test.cpp`,
+  `annotation_tutorials_test.cpp`). The Offscreen run command in *Build and run* now names
+  `Tutorial_204_Offscreen`.
+
+**Validation.** All four active build trees — Vulkan (`build-migration/vulkan-macos`),
+OpenGL (`build-u1b-opengl`), OpenGL+Qt (`build-opengl`) and Vulkan+Qt (`cmake-build-debug`)
+— reconfigure and build cleanly (exit 0) after the removal/renumbering; the smoke-test scene
+list and the real-camera/annotation viewer tests compile against the new tutorial paths.

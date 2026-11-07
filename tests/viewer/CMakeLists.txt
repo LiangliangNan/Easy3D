@@ -136,8 +136,8 @@ if(Easy3D_ENABLE_VULKAN)
         add_test(NAME vulkan.corneraxes COMMAND easy3d_vulkan_corner_axes_test ${validation_args})
         set_tests_properties(vulkan.corneraxes PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_real_camera_test real_camera_test.cpp
-                ../../tutorials/Tutorial_207_RealCamera/viewer.cpp
-                ../../tutorials/Tutorial_207_RealCamera/read_bundler_file.cpp)
+                ../../tutorials/Tutorial_205_RealCamera/viewer.cpp
+                ../../tutorials/Tutorial_205_RealCamera/read_bundler_file.cpp)
         target_link_libraries(easy3d_vulkan_real_camera_test PRIVATE easy3d::viewer)
 
         add_test(NAME vulkan.realcamera COMMAND easy3d_vulkan_real_camera_test ${validation_args})
@@ -319,8 +319,8 @@ else()
 endif()
 
 add_executable(easy3d_annotation_tutorials_test annotation_tutorials_test.cpp
-    ../../tutorials/Tutorial_207_RealCamera/viewer.cpp
-    ../../tutorials/Tutorial_207_RealCamera/read_bundler_file.cpp
+    ../../tutorials/Tutorial_205_RealCamera/viewer.cpp
+    ../../tutorials/Tutorial_205_RealCamera/read_bundler_file.cpp
     ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp
     ../../tutorials/Tutorial_506_DepthMap/viewer.cpp)
 target_link_libraries(easy3d_annotation_tutorials_test PRIVATE easy3d::viewer)

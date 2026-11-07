@@ -28,9 +28,9 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/native_tutorials")
 set(tutorial_scenes
         Tutorial_201_Viewer_default
         Tutorial_202_Viewer_imgui
-        Tutorial_205_MultiView
+        Tutorial_203_MultiView
+        Tutorial_205_RealCamera
         Tutorial_206_CameraInterpolation
-        Tutorial_207_RealCamera
         Tutorial_301_Drawables
         Tutorial_302_Imposters
         Tutorial_303_ScalarField

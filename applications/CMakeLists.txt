@@ -1,5 +1,9 @@
-if (Easy3D_ENABLE_QT AND NOT Easy3D_ENABLE_VULKAN) # Mapple is OpenGL only
-    add_subdirectory(Mapple)
+if (Easy3D_ENABLE_QT)
+    if (Easy3D_ENABLE_VULKAN) # Mapple is OpenGL only
+        message(WARNING "Vulkan is enabled but Mapple only has OpenGL backend. To built Mapple, set 'Easy3D_ENABLE_VULKAN' to OFF.")
+    else ()
+        add_subdirectory(Mapple)
+    endif ()
 endif ()
 
 add_subdirectory(FigureMaker)

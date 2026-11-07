@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
-#include <tutorials/Tutorial_207_RealCamera/viewer.h>
+#include <tutorials/Tutorial_205_RealCamera/viewer.h>
 #include <tutorials/Tutorial_405_ObjectManipulation/viewer.h>
 #include <tutorials/Tutorial_506_DepthMap/viewer.h>
 #include <easy3d/renderer/camera.h>

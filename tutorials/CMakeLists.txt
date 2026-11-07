@@ -37,16 +37,10 @@ add_subdirectory(Tutorial_115_PolyMesh_IO)
 # ui, viewer, and camera
 add_subdirectory(Tutorial_201_Viewer_default)
 add_subdirectory(Tutorial_202_Viewer_imgui)
-if(NOT Easy3D_ENABLE_VULKAN)   # wxWidgets integration still needs a Vulkan counterpart
-    add_subdirectory(Tutorial_203_Viewer_wxWidgets) # needs wxWidgets
-endif()
-if (Easy3D_ENABLE_QT AND NOT Easy3D_ENABLE_VULKAN) # Tutorial_204_Viewer_Qt is OpenGL only
-    add_subdirectory(Tutorial_204_Viewer_Qt)
-endif ()
-add_subdirectory(Tutorial_205_MultiView)
+add_subdirectory(Tutorial_203_MultiView)
+add_subdirectory(Tutorial_204_Offscreen)
+add_subdirectory(Tutorial_205_RealCamera)
 add_subdirectory(Tutorial_206_CameraInterpolation)
-add_subdirectory(Tutorial_207_RealCamera)
-add_subdirectory(Tutorial_208_Offscreen)
 
 # drawable objects and basic rendering
 add_subdirectory(Tutorial_301_Drawables)
