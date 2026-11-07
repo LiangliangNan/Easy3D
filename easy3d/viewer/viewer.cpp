@@ -1970,10 +1970,11 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
                     // A 3D version is implemented in Tutorial_204_Viewer_Qt
                     if (!drawable_pivot_)
                         drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
-                    const float size = static_cast<float>(10 * dpi_scaling());
+                    const float size = 10.0f; // arm in logical pixels (DPI-independent), matching the Vulkan overlay
                     const std::vector<vec2> points = { vec2(x - size, y), vec2(x + size, y),
                                                        vec2(x, y - size), vec2(x, y + size) };
                     drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
+                    drawable_pivot_->set_line_width(dpi_scaling());
 
                     // show, but hide the visual hint of pivot point after \p delay milliseconds.
                     show_pivot_point_ = true;

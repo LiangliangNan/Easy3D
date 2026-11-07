@@ -844,11 +844,13 @@ namespace easy3d {
             return end_x;
         }
 
-        if (upper_left) { // upper_left corner is the origin
+        if (upper_left) { // y is the top of the font box; the baseline lies ascent*dpi below it (as in TextLayoutEngine)
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
             const auto h = static_cast<float>(viewport[3]);
-            y = h - y - 1 - font_height(font_size);
+            float asc, desc, lineh;
+            sth_vmetrics(get_stash(stash_), font_ids_[font_id], font_size, &asc, &desc, &lineh);
+            y = h - y - asc * get_stash(stash_)->dpiScale;
         }
 
         std::wstring the_text = string::to_wstring(text);
@@ -968,6 +970,9 @@ namespace easy3d {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int h = viewport[3];
+        float asc, desc, lineh;
+        sth_vmetrics(get_stash(stash_), font_ids_[font_id], font_size, &asc, &desc, &lineh);
+        const float ascent = asc * get_stash(stash_)->dpiScale;
 
         std::stringstream ss(text);
         std::string s;
@@ -1024,7 +1029,7 @@ namespace easy3d {
                               font_ids_[font_id],
                               font_size,
                               x0 + x * get_stash(stash_)->dpiScale,
-                              upper_left ? (static_cast<float>(h) - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
+                              upper_left ? (static_cast<float>(h) - ys[i] - ascent - y0) : (ys[i] + y0),
                               the_text.c_str(),
                               &dx
                 );

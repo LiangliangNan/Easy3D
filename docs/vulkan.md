@@ -6525,4 +6525,48 @@ Files changed: the 16 shader files listed above,
 Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
 rendering output is identical (same matrices, just pre-multiplied on CPU). No changes were committed.
 
+### 2026-11-07 — W10 batch 38: Pivot cross and HUD text parity (OpenGL corrected to match Vulkan)
+
+**Motivation.** Two visual discrepancies were reported between the backends: the pivot cross
+appeared larger on OpenGL than on Vulkan, and the Easy3D logo (and the framerate/hint lines)
+sat at a different vertical position in the ImGui viewer. Investigation showed that the OpenGL
+reference was the incorrect side in both cases, so OpenGL was corrected to match Vulkan's clean
+semantics rather than making Vulkan replicate the OpenGL bugs.
+
+**Design.**
+
+*Pivot cross.* The OpenGL pivot used `size = 10 * dpi_scaling()` as a *logical* arm length fed
+to `LinesDrawable2D::update_vertex_buffer(points, width(), height(), ...)` (logical window
+dimensions), so the physical arm grew as `10 * dpi^2` — quadratically with DPI. The Vulkan
+overlay uses `graphics::shape::draw_lines_2d(..., framebuffer_width(), framebuffer_height(), dpi)`
+with a `10 * dpi` physical arm (= 10 logical) and `dpi` physical line thickness. Corrected OpenGL
+to a DPI-independent arm `size = 10.0f` logical (= `10 * dpi` physical) and added
+`drawable_pivot_->set_line_width(dpi_scaling())` so the physical line thickness equals Vulkan's
+`dpi`. The Vulkan pivot *position* needed no change: the Vulkan `mouse_press_event` receives
+physical framebuffer pixels (`WindowHost::position` scales the GLFW logical cursor by `fw/ww`),
+so `pivot_pixel_` is already in the physical space that `screen_space_projection(framebuffer_width(),
+framebuffer_height())` expects. Both backends now draw a 10-logical-pixel arm, `dpi` physical pixels
+thick, centered on the pivot.
+
+*HUD text.* `TextRenderer`'s upper-left conversion subtracted a *logical* `font_height(font_size)`
+(== `font_size`, the full em, not DPI-scaled) from a *physical* y, plus a `-1` fudge:
+`y = h - y - 1 - font_height(font_size)`. Vulkan's `TextLayoutEngine` anchors the baseline at
+`o.y + f.ascent * scale` (font-box top origin), where `f.ascent * scale = A * options.size` and
+`A = ascent/(ascent-descent)` is the normalized ascender. Corrected both `TextRenderer::draw`
+overloads to anchor the baseline `ascent * dpi` below the font-box top: single-line
+`y = h - y - asc * dpiScale`, multi-line `h - ys[i] - ascent - y0`, where `asc = sth_vmetrics(...)`
+returns `A * font_size` and `ascent = asc * dpiScale`. The OpenGL logo passes `y = 22.5 * dpi`
+physical and `font_size = 15`, so its baseline-from-top is now `22.5*dpi + A*15*dpi`, identical to
+Vulkan's `options.y + ascent` with `options.y = 22.5*dpi`, `options.size = 15*dpi`. Glyph physical
+size already matched (OpenGL rasterizes at `dpiScale * ScaleForPixelHeight(15)`, Vulkan at
+`ScaleForPixelHeight(15*dpi)`; both linear in pixels). This also aligns the framerate and hint, and
+any other upper-left text. A temporary `TextLayoutEngine::ascent()` accessor added during the
+investigation was removed; `text_layout.h/.cpp` are unchanged from the reference.
+
+Files changed: `easy3d/renderer/text_renderer.cpp`, `easy3d/viewer/viewer.cpp`.
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
+the pivot cross and HUD text now match across backends. The code fix was committed (`e349e59c`);
+these documentation updates were left uncommitted.
+
 
