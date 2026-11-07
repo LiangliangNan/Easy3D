@@ -14,6 +14,7 @@ set(renderer_headers
         average_color_blending.h
         dual_depth_peeling.h
         eye_dome_lighting.h
+        per_pixel_linked_lists_oit.h
         shadow.h
         soft_shadow.h
         transparency.h
@@ -23,6 +24,7 @@ set(renderer_sources
         average_color_blending.cpp
         dual_depth_peeling.cpp
         eye_dome_lighting.cpp
+        per_pixel_linked_lists_oit.cpp
         shadow.cpp
         soft_shadow.cpp
 )
@@ -209,6 +211,10 @@ set(${module}_resources
         ../../resources/shaders/transparency/dual_depth_peeling_init.frag
         ../../resources/shaders/transparency/dual_depth_peeling_peel_rendering.vert
         ../../resources/shaders/transparency/dual_depth_peeling_peel_rendering.frag
+        ../../resources/shaders/transparency/per_pixel_linked_lists_oit_build.vert
+        ../../resources/shaders/transparency/per_pixel_linked_lists_oit_build.frag
+        ../../resources/shaders/transparency/per_pixel_linked_lists_oit_resolve.vert
+        ../../resources/shaders/transparency/per_pixel_linked_lists_oit_resolve.frag
         #selection
         ../../resources/shaders/selection/selection_single_primitive.vert
         ../../resources/shaders/selection/selection_single_primitive.frag

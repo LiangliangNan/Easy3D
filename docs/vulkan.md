@@ -6111,3 +6111,58 @@ Suites (2026-11-07): 128/128 MoltenVK, 93/93 OpenGL and 92/92 Qt-enabled OpenGL,
 idle at `-j2` (the OpenGL and Qt counts each include the new `opengl.ddpseam`; the Qt
 run also passes `opengl.tutorial504`, confirming the peel shader change does not
 regress the transparency tutorial). No new flake or regression from this batch.
+
+### 2026-11-07 — W10 batch 32: PerPixelLinkedListsOIT (OpenGL backend)
+
+**PerPixelLinkedListsOIT.** New order-independent transparency method using per-pixel
+linked lists (Yang et al., NVIDIA 2010). Provides perfect transparency quality
+regardless of surface intersections or complex overlapping geometry, addressing the
+limitation of dual depth peeling at intersections identified in batch 31. Intended for
+offline rendering and scientific figure generation where quality is paramount.
+
+The algorithm operates in two passes:
+
+1. **Build pass:** All transparent fragments are rendered with depth testing disabled.
+   Each fragment atomically appends itself to a per-pixel linked list stored in GPU
+   buffers (SSBOs). An atomic counter allocates unique node indices, and
+   `atomicCompSwap` inserts nodes at the head of each pixel's list.
+
+2. **Resolve pass:** A fullscreen quad is rendered. For each pixel, the linked list is
+   traversed, fragments are sorted by depth (insertion sort, efficient for small N),
+   and blended front-to-back using premultiplied alpha compositing over the background.
+
+Files added:
+- `easy3d/renderer/per_pixel_linked_lists_oit.h` — class declaration with thorough
+  documentation (algorithm overview, memory layout, performance characteristics,
+  backend support, usage, limitations). Both Vulkan and OpenGL class declarations
+  share the same public API.
+- `easy3d/renderer/per_pixel_linked_lists_oit.cpp` — OpenGL implementation (requires
+  GL 4.3+ for SSBOs and atomic operations). Vulkan backend is a placeholder that logs
+  a warning. Implementation comments document the algorithm in detail.
+- `resources/shaders/transparency/per_pixel_linked_lists_oit_build.vert` — build pass
+  vertex shader (transforms vertices, passes data to fragment shader).
+- `resources/shaders/transparency/per_pixel_linked_lists_oit_build.frag` — build pass
+  fragment shader (SSBO writes, atomic linked list insertion, same lighting model as
+  dual depth peeling). Uses `#version 430` for SSBO support.
+- `resources/shaders/transparency/per_pixel_linked_lists_oit_resolve.vert` — resolve
+  pass vertex shader (fullscreen quad pass-through).
+- `resources/shaders/transparency/per_pixel_linked_lists_oit_resolve.frag` — resolve
+  pass fragment shader (traverse linked list, insertion sort by depth, premultiplied
+  alpha blending). Uses `#version 430`.
+
+Memory layout: head buffer (int32 per pixel), node buffer (FragmentNode struct: vec4
+color + float depth + int next = 24 bytes payload, 32 bytes stride with std430
+padding), atomic counter (uint32). For a 1920×1080 viewport at 8 fragments/pixel:
+~513 MB total.
+
+The OpenGL implementation uses `glClearBufferData` for efficient head buffer clearing
+(each frame), disables color writes during the build pass (fragment data goes to
+SSBOs), and reads back the atomic counter to detect pool overflow. The resolve pass
+currently uses a white background; integration with the viewer's opaque scene is a
+TODO.
+
+`CMakeLists.txt` updated to register the new source files and shaders.
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No new flake
+or regression from this batch. The Vulkan placeholder logs a warning when instantiated
+but does not affect existing Vulkan transparency (DualDepthPeeling, AverageColorBlending).
