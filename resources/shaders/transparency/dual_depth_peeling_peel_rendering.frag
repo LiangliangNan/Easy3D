@@ -188,21 +188,19 @@ void main(void)
 	float nearestDepth = -depthBlender.x;
 	float farthestDepth = depthBlender.y;
 
-	// the .0000001 below is an epsilon.  It turns out that
-	// graphics cards can render the same polygon two times
-	// in a row with different z values. I suspect it has to
-	// do with how rasterization of the polygon is broken up.
-	// A different breakup across fragment shaders can result in
-	// very slightly different z values for some of the pixels.
-	// The end result is that with depth peeling, you can end up
-	// counting/accumulating pixels of the same surface twice
-	// simply due to this randomness in z values. So we introduce
-	// an epsilon into the transparent test to require some
-	// minimal z seperation between pixels. This value was determined
-	// through trial-and-error -- it may need to be increased at
-	// some point. See also the comment in vtkDepthPeelingPass's shader.
-//	float epsilon = 0.000001; // VTK uses this value
-	float epsilon = 0.00001;
+	// Liangliang: The dual depth peeling algorithm classifies fragments based on depth ranges with an epsilon
+	//      tolerance. At surface intersections, two transparent surfaces cross at similar depths. When both
+	//      surfaces fall within epsilon of the current peel layer, they're both classified as "front peel" and
+	//      both write to the front buffer. The GL_MAX blend state takes the maximum value, which produces incorrect
+	//      blending at the intersection boundary, creating the visible dark seam. This appears to be a fundamental
+	//      limitation of dual depth peeling at surface intersections. The algorithm assumes well-separated depth
+	//      layers, but intersections violate this assumption. To obtain perfect visual quality, use a different
+	//      transparency algorithm for intersections (e.g., per-pixel linked lists OIT), but that require significant
+	//      amount of effort.
+	//      In this implementation, I choose to use a smaller epsilon (e.g., 0.000001 instead of 0.00001). This reduces
+	//      false grouping but doesn't eliminate seams. Works well for surfaces that are slightly separated but less
+	//      effective for true intersections.
+	float epsilon = 0.000001;
 
 	// Is this fragment outside the current peels?
 	if (gl_FragDepth < nearestDepth - epsilon || gl_FragDepth > farthestDepth + epsilon) {

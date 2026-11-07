@@ -21,7 +21,19 @@ void main() {
     float previous = texture(previous_depth, previous_uv).r;
     // The same epsilon as the OpenGL peel shaders absorbs rasterization
     // differences between passes of one surface.
-    if (gl_FragCoord.z <= previous + 0.00001) discard;
+    // Liangliang: The dual depth peeling algorithm classifies fragments based on depth ranges with an epsilon
+    //      tolerance. At surface intersections, two transparent surfaces cross at similar depths. When both
+    //      surfaces fall within epsilon of the current peel layer, they're both classified as "front peel" and
+    //      both write to the front buffer. The GL_MAX blend state takes the maximum value, which produces incorrect
+    //      blending at the intersection boundary, creating the visible dark seam. This appears to be a fundamental
+    //      limitation of dual depth peeling at surface intersections. The algorithm assumes well-separated depth
+    //      layers, but intersections violate this assumption. To obtain perfect visual quality, use a different
+    //      transparency algorithm for intersections (e.g., per-pixel linked lists OIT), but that require significant
+    //      amount of effort.
+    //      In this implementation, I choose to use a smaller epsilon (e.g., 0.000001 instead of 0.00001). This reduces
+    //      false grouping but doesn't eliminate seams. Works well for surfaces that are slightly separated but less
+    //      effective for true intersections.
+    if (gl_FragCoord.z <= previous + 0.000001) discard;
     gl_FragDepth = gl_FragCoord.z;
     vec4 color = vertex_color * texture(image_texture, uv);
     if (material.shading.x != 0 && world_normal_out.w != 0)
