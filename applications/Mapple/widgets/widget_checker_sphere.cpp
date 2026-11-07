@@ -232,9 +232,11 @@ void WidgetCheckerSphere::paintGL() {
     const mat4& MV = camera_->modelViewMatrix();
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
+    const mat4 lightManip = mat4::translation(lightPos_.xyz());
     program->bind();
     program->set_uniform("ssaoTexture", 0);
-    program->set_uniform("MVP", MVP)
+    program->set_uniform("MVP_MANIP", MVP * lightManip)
+            ->set_uniform("MANIP", lightManip)
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
             ->set_uniform("lighting", true)
             ->set_uniform("wLightPos", wLightPos)
@@ -253,10 +255,10 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("use_texture", false);
 
-    program->set_uniform("MANIP", mat4::translation(lightPos_.xyz()));
     lightSphere_->gl_draw();
 
-    program->set_uniform("MANIP", mat4::identity());
+    program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the checker sphere
+            ->set_uniform("MANIP", mat4::identity());
     checkerSphere_->gl_draw();
 
     program->release_texture();

@@ -1240,7 +1240,7 @@ void PaintCanvas::drawCornerAxes() {
 
     program->bind();
     program->set_uniform("ssaoTexture", 0);
-    program->set_uniform("MVP", MVP)
+    program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the corner axes
             ->set_uniform("MANIP", mat4::identity())
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
             ->set_uniform("lighting", true)

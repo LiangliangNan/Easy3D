@@ -6714,3 +6714,42 @@ packaged modules (Python 3.15; the OpenGL package was reconfigured this batch fr
 3.12 bindings). A surfel range probe confirms the fixed surfel shaders compile and tint
 exactly the selected point. Both backends rebuilt and full CTest suites green at idle
 `-j2`: OpenGL 94/94, MoltenVK 128/128.
+
+
+### 2026-11-07 — W10 batch 41: Qt/wx MVP uniform warnings (batch-37 follow-up)
+
+**Motivation.** The user configured an OpenGL-only tree with Qt/CGAL/ffmpeg ON
+(`cmake-build-debug`); Mapple, Tutorial_204_Viewer_Qt and Tutorial_203_Viewer_wxWidgets
+all warned `uniform 'MVP' does not exist or is not active — 'surface/surface'`. Batch 37
+renamed the vertex-transform uniform to `MVP_MANIP` and updated every caller in scope
+then, but the Qt/wx apps were off-limits, so their manual corner-axes/pivot/checker-sphere
+draw code kept sending `MVP`. The user explicitly asked to fix these and audit related
+MVP/MANIP/MVP_MANIP warnings, opening the Qt/wx files for this follow-up.
+
+**Audit.** Every `set_uniform("MVP"/"MANIP"/"MVP_MANIP")` call site was cross-checked
+against the target shader's declarations: five stale `MVP` sends in four files;
+everything else already consistent. The two remaining `MVP` sends
+(`drawable_points.cpp` surfel paths) are legitimate — the surfel geometry shaders
+declare `MVP` and transform world-space quad corners themselves. MANIP/MVP_MANIP sends
+in the pickers, shared viewer, `shape_draw`, drawables and shadow/transparency passes
+all match their shaders; the rect/lasso selection shaders have no C++ callers.
+
+**Fixes.**
+
+- *Corner axes* (Tutorial_204 `viewer.cpp`, Tutorial_203 `viewer.cpp`, Mapple
+  `paint_canvas.cpp`): `MVP` → `MVP_MANIP` (= MVP, MANIP is identity), mirroring the
+  shared viewer's batch-37 pattern.
+- *Tutorial_204 pivot cross*: `MVP` → `MVP_MANIP` (= proj) plus an explicit identity
+  `MANIP` — the cached `lines/lines_plain_color` program could otherwise carry a stale
+  MANIP from a previously drawn manipulated drawable.
+- *Mapple `widget_checker_sphere.cpp`*: the light sphere is drawn with
+  `MANIP = translation(lightPos)`, so it now sends `MVP_MANIP = MVP * translation`;
+  the checker sphere sends `MVP_MANIP = MVP` with identity MANIP. NORMAL stays identity
+  (pure translation does not change normals).
+
+**Validation.** All three apps run warning-free (6 s smoke run each; corner axes and
+pivot draw on the first frame; Mapple/Tutorial_203 file logs and Tutorial_204 stderr
+show zero "does not exist or is not active"). The checker-sphere widget is not shown at
+startup; its fix is verified statically against `surface.vert`'s declarations. All three
+trees rebuilt and full CTest suites green at idle `-j2`: OpenGL 94/94, MoltenVK 128/128,
+Qt/CGAL/ffmpeg Debug tree 99/99.

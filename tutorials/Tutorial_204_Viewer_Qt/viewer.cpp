@@ -920,7 +920,7 @@ namespace easy3d {
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
-        program->set_uniform("MVP", MVP)
+        program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the corner axes
                 ->set_uniform("MANIP", mat4::identity())
                 ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
                 ->set_uniform("lighting", true)
@@ -1001,7 +1001,8 @@ namespace easy3d {
                                                 -1.0f);
             glDisable(GL_DEPTH_TEST);   // always on top
             program->bind();
-            program->set_uniform("MVP", proj);
+            program->set_uniform("MVP_MANIP", proj)   // MANIP is identity for the pivot cross
+                    ->set_uniform("MANIP", mat4::identity());
             program->set_uniform("per_vertex_color", false);
             program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
             drawable.gl_draw();
