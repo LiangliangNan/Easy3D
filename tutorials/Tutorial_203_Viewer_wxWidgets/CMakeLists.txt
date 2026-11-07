@@ -72,10 +72,12 @@ else ()
 endif ()
 
 # The resources directory and app title
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "RESOURCE_DIR=\"${CMAKE_CURRENT_LIST_DIR}/resources\""
-        "EXAMPLE_TITLE=\"${PROJECT_NAME}\""
-        )
+target_compile_definitions(${PROJECT_NAME} PRIVATE "RESOURCE_DIR=\"${CMAKE_CURRENT_LIST_DIR}/resources\"")
+if (Easy3D_ENABLE_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME} - Vulkan\"")
+else ()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME} - OpenGL\"")
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} easy3d::core easy3d::renderer ${wxWidgets_LIBRARIES})

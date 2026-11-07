@@ -3,7 +3,11 @@ function(add_example example files dependencies)
     set_target_properties(${example} PROPERTIES FOLDER "tutorials")
     target_include_directories(${example} PRIVATE ${Easy3D_INCLUDE_DIR})
     target_link_libraries(${example} PRIVATE ${dependencies})
-    target_compile_definitions(${example} PRIVATE "EXAMPLE_TITLE=\"${example}\"")
+    if (Easy3D_ENABLE_VULKAN)
+        target_compile_definitions(${example} PRIVATE "EXAMPLE_TITLE=\"${example} - Vulkan\"")
+    else ()
+        target_compile_definitions(${example} PRIVATE "EXAMPLE_TITLE=\"${example} - OpenGL\"")
+    endif ()
 endfunction()
 
 

@@ -76,7 +76,11 @@ if (WIN32 OR MSVC)
 endif ()
 
 # The app title
-target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME}\"")
+if (Easy3D_ENABLE_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME} - Vulkan\"")
+else ()
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME} - OpenGL\"")
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${QtLibs} easy3d::renderer)
