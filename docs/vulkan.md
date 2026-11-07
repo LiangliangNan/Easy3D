@@ -6298,3 +6298,40 @@ a void method (the common case in tutorials) and source-compatible for code that
 the bool return (the return was always true in practice, so removing the check does not
 alter behavior). No changes were committed.
 
+### 2026-11-07 — W10 batch 35: Picker coordinate system documentation
+
+**Motivation.** The picker classes (`Picker`, `ModelPicker`, `SurfaceMeshPicker`,
+`PointCloudPicker`) accept screen coordinates but the documentation was inconsistent
+about the coordinate system, DPI scaling, and backend differences. Some methods mentioned
+"screen coordinate system with an origin in the upper left corner" while others just said
+"cursor position". The ViewerBase class already had clear documentation (batch 31) of the
+coordinate contract; the pickers needed the same level of clarity.
+
+**Design.** All picker methods now document that they accept **logical window coordinates**
+(top-left origin, x right, y down), matching the coordinate system used by
+`ViewerBase::project_point()`, `unproject_point()`, and mouse event callbacks. The
+documentation clarifies:
+
+- **Logical vs physical:** The coordinate is in logical window units
+  (`camera()->screenWidth()`/`Height()`), not framebuffer pixels. On HiDPI displays the
+  logical extent is smaller than the framebuffer by the DPI scaling factor.
+
+- **Backend consistency:** Both OpenGL and Vulkan backends present the same coordinate
+  contract to callers. Internally, OpenGL pickers convert logical coordinates to
+  framebuffer pixels via `screen_to_opengl()` before calling `glReadPixels()`; Vulkan
+  pickers sample the logical coordinate directly through `RenderDevice::sample_pixel()`.
+  Client code is backend-independent.
+
+- **Region selection:** Rectangle and polygon region selections are evaluated in logical
+  window coordinates, not framebuffer pixels.
+
+Files changed: `easy3d/gui/picker.h` (class documentation and method docs),
+`easy3d/gui/picker_model.h` (pick method docs), `easy3d/gui/picker_surface_mesh.h`
+(all pick method docs), `easy3d/gui/picker_point_cloud.h` (all pick method docs).
+
+Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL (one load-sensitive timeout on
+`opengl.annotationtutorials` passes when rerun individually, matching the known flaky
+behavior documented in W6). Documentation-only changes; no behavioral differences.
+No changes were committed.
+
+

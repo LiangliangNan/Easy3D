@@ -83,35 +83,39 @@ namespace easy3d {
         /**
          * \brief Pick the visible point at a screen location.
          * \param model The point cloud model.
-         * \param x The x coordinate of the screen point.
-         * \param y The y coordinate of the screen point.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The front-most point covering that pixel, or an invalid vertex if nothing is visible.
-         * \details Hidden models/drawables, clipped points, and deleted source vertices are never returned.
+         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         *       The method renders the visible point drawable with source vertex IDs into an offscreen target,
+         *       samples the pixel at (x, y), and returns the corresponding source vertex. Hidden models/drawables,
+         *       clipped points, and deleted source vertices are never returned. Both OpenGL and Vulkan backends
+         *       present the same coordinate contract.
          */
         PointCloud::Vertex pick_vertex(PointCloud *model, int x, int y);
 
         /**
-         * \brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex
-         *      property "v:select".
+         * \brief Pick vertices of a point cloud by a rectangle.
          * \param model The point cloud model.
-         * \param rect The rectangle region.
-         * \param deselect True to perform an inverse operation.
-         * \details The region is evaluated on the GPU with through-selection: a
-         *      point is selected when its projected center is inside the rectangle,
-         *      in front of the camera, and not clipped. Occlusion by other scene
-         *      geometry is not considered.
+         * \param rect The rectangle region in logical window coordinates (top-left origin).
+         * \param deselect True to deselect the selected vertices instead of selecting them.
+         * \note The rectangle is evaluated on the GPU with through-selection: a point is selected when its
+         *       projected center is inside the rectangle, in front of the camera, and not clipped. Occlusion
+         *       by other scene geometry is not considered. The coordinates are in logical window units
+         *       (camera()->screenWidth()/Height()), not framebuffer pixels. Both OpenGL and Vulkan backends
+         *       present the same coordinate contract. Selected vertices are marked in the "v:select" property.
          */
         void pick_vertices(PointCloud *model, const Rect& rect, bool deselect);
 
         /**
-         * \brief Pick vertices of a point cloud by a polygon/lasso. The selected vertices will be marked in
-         *      vertex property "v:select".
+         * \brief Pick vertices of a point cloud by a polygon/lasso.
          * \param model The point cloud model.
-         * \param plg The polygon region.
-         * \param deselect True to perform an inverse operation.
-         * \details Same GPU through-selection as the rectangle overload. The polygon
-         *      may be concave; it is given in screen coordinates with the origin at
-         *      the upper-left corner.
+         * \param plg The polygon region in logical window coordinates (top-left origin).
+         * \param deselect True to deselect the selected vertices instead of selecting them.
+         * \note The polygon is evaluated on the GPU with through-selection, same as the rectangle overload.
+         *       The polygon may be concave; it is given in logical window units (camera()->screenWidth()/Height()),
+         *       not framebuffer pixels. Both OpenGL and Vulkan backends present the same coordinate contract.
+         *       Selected vertices are marked in the "v:select" property.
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 

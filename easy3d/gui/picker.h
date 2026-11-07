@@ -91,6 +91,17 @@ namespace easy3d {
      *
      *      The camera is borrowed and must outlive the picker. OpenGL GPU queries
      *      and resource destruction require the owning context to be current.
+     *
+     *      **Coordinate systems.** All picker methods accept screen coordinates
+     *      expressed in logical window units (top-left origin, x right, y down),
+     *      matching ViewerBase::project_point() and mouse event callbacks. The
+     *      camera's screenWidth()/screenHeight() define the logical extent; on HiDPI
+     *      displays this is smaller than the framebuffer pixel dimensions by the
+     *      DPI scaling factor. Internally, single-element picks convert the logical
+     *      coordinate to a framebuffer pixel before sampling; region selections
+     *      evaluate the polygon/rectangle directly in logical coordinates. Both
+     *      backends present the same coordinate contract to callers, so client code
+     *      is backend-independent.
      * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker, Viewer::pick()
      */
     class Picker {
@@ -115,12 +126,12 @@ namespace easy3d {
 
         /**
          * \brief Construct a picking line.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *      corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *      a Retina display.
-         * \return The picking line.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picking line from the near plane through the cursor position into the scene.
+         * \note The coordinate is in logical window units, not framebuffer pixels. On HiDPI displays
+         *       the logical extent is camera()->screenWidth()/Height(), which is smaller than the
+         *       framebuffer pixel dimensions by the DPI scaling factor.
          */
         Line3 picking_line(int x, int y) const {
             const vec3 p_near = unproject(x, y, 0);
@@ -130,12 +141,10 @@ namespace easy3d {
 
         /**
          * \brief The picking direction, pointing inside the screen.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *      corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *      a Retina display.
-         * \return The picking direction.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The normalized direction vector of the picking line.
+         * \note Same coordinate convention as picking_line().
          */
         vec3 picking_dir(int x, int y) const {
             return picking_line(x, y).direction();
@@ -144,12 +153,11 @@ namespace easy3d {
         /**
          * \brief Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
          * \param p A 3D point in the world coordinate system.
-         * \return The x and y components of the returned value denote the projected screen point expressed in the
-         *      screen coordinate system, with (0, 0) being the upper left corner of the content area. The z
-         *      component ranges between 0.0 (near plane) and 1.0 (excluded, far plane).
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *      corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *      a Retina display.
+         * \return The projected point in logical window coordinates: x and y are in the range
+         *         [0, screenWidth()) x [0, screenHeight()) with top-left origin; z is the normalized
+         *         depth in [0, 1) where 0 is the near plane and 1 is the far plane.
+         * \note The returned coordinate is in logical window units, matching the coordinate system
+         *       used by mouse event callbacks and picker input parameters.
          */
         vec3 project(const vec3 &p) const {
             return camera()->projectedCoordinatesOf(p);
@@ -157,13 +165,11 @@ namespace easy3d {
 
         /**
          * \brief Compute the world coordinates of a point defined in the screen coordinate system.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \param depth The depth value of the screen point, ranging between 0.0 and 1.0 (excluded).
-         * \return The world unprojected coordinates of the screen point.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *      corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *      a Retina display.
+         * \param x The x-coordinate in logical window units (top-left origin, x right).
+         * \param y The y-coordinate in logical window units (top-left origin, y down).
+         * \param depth The depth value in [0, 1), where 0 is the near plane and 1 is the far plane.
+         * \return The world-space coordinates of the unprojected point.
+         * \note This is the inverse of project(). The input coordinate is in logical window units.
          */
         vec3 unproject(int x, int y, float depth) const {
             return camera()->unprojectedCoordinatesOf(vec3(static_cast<float>(x), static_cast<float>(y), depth));
@@ -173,12 +179,15 @@ namespace easy3d {
          * \brief Convert a point expressed in the screen coordinate system (with an origin in the upper left corner)
          *      into the OpenGL coordinate system (with an origin in the lower left corner). The high DPI scaling is
          *      also taken into consideration, so the result always corresponds to its image pixel.
-         * \param x The x-coordinate, relative to the left edge of the content area.
-         * \param y The y-coordinate, relative to the top edge of the content area.
-         * \param gl_x Returns the x component of the point in the OpenGL coordinate system.
-         * \param gl_y Returns the y component of the point in the OpenGL coordinate system.
-         * \param width The width of the OpenGL viewport (may not be identical to the width of the screen in pixels).
-         * \param height The height of the OpenGL viewport (may not be identical to the height of the screen in pixels).
+         * \param x The x-coordinate in logical window units (top-left origin, x right).
+         * \param y The y-coordinate in logical window units (top-left origin, y down).
+         * \param gl_x Returns the x component of the point in OpenGL framebuffer coordinates (bottom-left origin).
+         * \param gl_y Returns the y component of the point in OpenGL framebuffer coordinates (bottom-left origin).
+         * \param width The width of the OpenGL viewport in framebuffer pixels.
+         * \param height The height of the OpenGL viewport in framebuffer pixels.
+         * \note This method is primarily used internally by OpenGL backend pickers to convert logical window
+         *       coordinates to framebuffer pixels before calling glReadPixels(). Vulkan pickers sample the
+         *       logical coordinate directly through RenderDevice::sample_pixel().
          */
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 

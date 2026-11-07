@@ -87,66 +87,59 @@ namespace easy3d {
         /**
          * \brief Pick a face from a surface mesh given the cursor position.
          * \param model The surface mesh model.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked face.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked face, or an invalid face if no face is under the cursor.
+         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         *       The method renders the visible face drawable with primitive IDs into an offscreen target, samples
+         *       the pixel at (x, y), and maps the primitive ID back to the mesh face. Both OpenGL and Vulkan
+         *       backends present the same coordinate contract.
          */
         SurfaceMesh::Face pick_face(SurfaceMesh *model, int x, int y);
 
         /**
          * \brief Pick a vertex from a surface mesh given the cursor position.
          * \param model The surface mesh model.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked vertex.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked vertex, or an invalid vertex if no vertex is within the hit resolution.
+         * \note The method first picks the face under the cursor, then searches for the closest vertex of that
+         *       face within the picker resolution (in logical window pixels).
          */
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, int x, int y);
 
         /**
          * \brief Pick an edge from a surface mesh given the cursor position.
          * \param model The surface mesh model.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked halfedge.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked halfedge, or an invalid halfedge if no edge is within the hit resolution.
+         * \note The method first picks the face under the cursor, then searches for the closest edge of that
+         *       face within the picker resolution (in logical window pixels).
          */
         SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, int x, int y);
 
         /**
          * \brief Pick a vertex from a surface mesh given the cursor position and a known picked face.
          * \param model The surface mesh model.
-         * \param picked_face The picked face.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked vertex.
-         * \attention This method must be called after calling to pick_face(). The result is valid only if the
-         *            picked_face is valid.
+         * \param picked_face The previously picked face (must be valid).
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked vertex, or an invalid vertex if no vertex is within the hit resolution.
+         * \note This overload skips the face picking step when the face is already known. The picked_face
+         *       must have been obtained from a prior call to pick_face().
          */
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
         /**
          * \brief Pick an edge from a surface mesh given the cursor position and a known picked face.
          * \param model The surface mesh model.
-         * \param picked_face The picked face.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked halfedge.
-         * \attention This method must be called after calling to pick_face(). The result is valid only if the
-         *            picked_face is valid.
+         * \param picked_face The previously picked face (must be valid).
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked halfedge, or an invalid halfedge if no edge is within the hit resolution.
+         * \note This overload skips the face picking step when the face is already known. The picked_face
+         *       must have been obtained from a prior call to pick_face().
          */
         SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
@@ -164,11 +157,11 @@ namespace easy3d {
          * \brief Query the visible surface position of the previously picked face.
          * \param model The surface mesh model.
          * \param picked_face The picked face.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
+         * \param x The cursor x-coordinate in logical window units (must match the last pick).
+         * \param y The cursor y-coordinate in logical window units (must match the last pick).
          * \return The world-space surface point sampled during the last pick, or zero if invalid.
-         * \attention This method must be called after calling to pick_face(). The result is valid only if the
-         *            picked_face is valid. The sampled point corresponds to the pixel of that pick.
+         * \note This method must be called after calling pick_face(). The result is valid only if the
+         *       picked_face is valid and the coordinates match the last pick.
          */
         vec3 picked_point(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) const;
 
@@ -178,16 +171,23 @@ namespace easy3d {
         /**
          * \brief Pick faces of a surface mesh by a rectangle.
          * \param model The surface mesh model.
-         * \param rect The rectangle region.
+         * \param rect The rectangle region in logical window coordinates (top-left origin).
          * \return The faces selected during this operation (regardless of their previous status).
+         * \note The rectangle is evaluated with through-selection: a face is selected when all its vertices
+         *       project inside the rectangle, are in front of the camera, and are not clipped. The coordinates
+         *       are in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels. Both
+         *       OpenGL and Vulkan backends present the same coordinate contract.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Rect &rect);
 
         /**
          * \brief Pick faces of a surface mesh by a polygon/lasso.
          * \param model The surface mesh model.
-         * \param plg The polygon region.
+         * \param plg The polygon region in logical window coordinates (top-left origin).
          * \return The faces selected during this operation (regardless of their previous status).
+         * \note The polygon is evaluated with through-selection, same as the rectangle overload. The polygon
+         *       may be concave; it is given in logical window units (camera()->screenWidth()/Height()), not
+         *       framebuffer pixels. Both OpenGL and Vulkan backends present the same coordinate contract.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 

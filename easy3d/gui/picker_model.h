@@ -60,13 +60,15 @@ namespace easy3d {
 
         /**
          * \brief Pick a model from a set of models given the cursor position in the screen coordinate system.
-         * \param models The models.
-         * \param x The cursor x-coordinate, relative to the left edge of the content area.
-         * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
-         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
-         * \return The picked model.
+         * \param models The models to pick from.
+         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
+         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
+         * \return The picked model, or nullptr if no model is under the cursor or the coordinate is out of bounds.
+         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         *       On HiDPI displays the logical extent is smaller than the framebuffer by the DPI scaling factor.
+         *       The method renders each visible model with a unique ID into an offscreen target, then samples the
+         *       pixel at (x, y) to determine which model is nearest. Both OpenGL and Vulkan backends present the
+         *       same coordinate contract.
          */
         Model *pick(const std::vector< std::shared_ptr<Model> >& models, int x, int y);
 
