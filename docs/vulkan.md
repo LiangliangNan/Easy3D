@@ -6166,3 +6166,64 @@ TODO.
 Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No new flake
 or regression from this batch. The Vulkan placeholder logs a warning when instantiated
 but does not affect existing Vulkan transparency (DualDepthPeeling, AverageColorBlending).
+
+### 2026-11-07 — W10 batch 33: PerPixelLinkedListsOIT (Vulkan backend) and the macOS path
+
+**Motivation.** The batch-32 OpenGL implementation needs GL 4.3+ (SSBOs + fragment
+atomics). macOS caps OpenGL at 4.1, so that path cannot run there. A like-for-like
+OpenGL replacement is impractical: image load/store needs 4.2 and the atomic
+linked-list build needs 4.3, neither available on macOS, and emulating them with
+transform feedback or CPU readback would be far more effort than it is worth. The
+practical macOS replacement is the Vulkan backend via MoltenVK, which exposes storage
+buffers and fragment-stage atomics natively. This batch completes that backend, so
+`PerPixelLinkedListsOIT` now works on macOS through Vulkan; the OpenGL draw() also
+prints a macOS-specific fallback message pointing at Vulkan/MoltenVK or
+`DualDepthPeeling` when the GL version is below 4.3.
+
+**Design.** The Vulkan effect reuses the existing order-independent transparency
+infrastructure in `backends/vulkan/render_device.cpp` rather than inventing a parallel
+path. A new `TransparencyMethod::linked_lists` enumerator joins `average`/`peeling`;
+the viewer's frame renderer maps effect method `3` to it and passes the per-pixel
+fragment capacity as the layer argument. `PerPixelLinkedListsOIT`'s Vulkan class is now
+a header-only bridge (mirroring `DualDepthPeeling`): `draw()` calls
+`Transparency::render_frame(camera_, surfaces, 3, max_fragments_)`.
+
+The render device gains a `LinkedLists` resource struct (sibling of `Oit`) holding three
+storage buffers — head (int32/pixel), nodes (32-byte stride `FragmentNode`), counter
+(uint32) — plus a small uniform buffer carrying `{max_nodes, width, height}`. Two new
+GLSL 450 shaders compile through the existing `glslangValidator` → embedded-SPIR-V CMake
+rule:
+- `resources/shaders/vulkan/oit_linked_lists_build.frag` shades a fragment exactly like
+  the average/peel passes, then `atomicAdd` reserves a node and `atomicCompSwap` pushes
+  it onto the pixel's head list. It runs in an attachmentless render pass (no color or
+  depth target), so every fragment survives regardless of order.
+- `resources/shaders/vulkan/oit_linked_lists_resolve.frag` is a fullscreen triangle that
+  walks each pixel's list, insertion-sorts by depth, and composites front-to-back into a
+  premultiplied accumulation written to the shared `Oit` color image. The scene pass then
+  over-blends that image with the existing peel composite, so an empty pixel leaves the
+  opaque scene untouched and picking keeps the nearest transparent surface.
+
+Per frame the head buffer is filled with `-1` and the counter with `0` via
+`vkCmdFillBuffer`; memory barriers order transfer/host writes → build shader writes →
+resolve shader reads → composite. `fragmentStoresAndAtomics` is now enabled at device
+creation (required for fragment-stage storage-buffer writes/atomics), and
+`vkCmdFillBuffer` was added to the dispatch table. The descriptor pool gained
+storage-buffer capacity. Resources are recreated only when the viewport or fragment
+capacity changes.
+
+Files changed: `render_device.h` (enumerator), `backends/vulkan/render_device.cpp`
+(`LinkedLists`, `ensure_linked_lists`, `encode_oit` branch, descriptors/layouts, device
+feature), `backends/vulkan/dispatch_functions.h` (`vkCmdFillBuffer`),
+`backends/vulkan/CMakeLists.txt` (two shaders), `viewer/viewer.cpp` (method-3 mapping),
+`transparency.h` (bridge doc), `per_pixel_linked_lists_oit.h/.cpp` (header-only Vulkan
+bridge + macOS fallback message), and the two new shaders. `tests/renderer/transparency_test.cpp`
+gains linked-lists checks: exact match to the depth-sorted blend, order independence,
+nearest picking ID/depth, compositing over an opaque surface, and an eight-layer stack —
+all under validation layers.
+
+Suites (2026-11-07): 128/128 MoltenVK (validation clean, including the new linked-lists
+probes), 94/94 OpenGL, 93/93 OpenGL+Qt. Note: the IDE `cmake-build-debug` tree carried
+stale OpenGL-linked GUI/test binaries that dyld- or link-failed against the relinked
+Vulkan library; recompiling/relinking those targets (mesh/scene picker, overlay viewer)
+restored a clean 128/128. This was pre-existing tree staleness, not a regression from this
+batch. No changes were committed.
