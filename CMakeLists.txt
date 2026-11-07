@@ -400,7 +400,7 @@ message(STATUS "    Build Python bindings  :  ${Easy3D_BUILD_PYTHON_BINDINGS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt (>= v5.8.0)    :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
-message(STATUS "    With Vulkan (experimental) : ${Easy3D_ENABLE_VULKAN}")
+message(STATUS "    With Vulkan (ongoing)  :  ${Easy3D_ENABLE_VULKAN}")
 
 message(STATUS "----------------------------------------------------------------------------")
 

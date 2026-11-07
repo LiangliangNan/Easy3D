@@ -1,4 +1,4 @@
-if (Easy3D_ENABLE_QT)
+if (Easy3D_ENABLE_QT AND NOT Easy3D_ENABLE_VULKAN) # Mapple is OpenGL only
     add_subdirectory(Mapple)
 endif ()
 

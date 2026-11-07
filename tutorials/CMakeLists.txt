@@ -40,7 +40,7 @@ add_subdirectory(Tutorial_202_Viewer_imgui)
 if(NOT Easy3D_ENABLE_VULKAN)   # wxWidgets integration still needs a Vulkan counterpart
     add_subdirectory(Tutorial_203_Viewer_wxWidgets) # needs wxWidgets
 endif()
-if (Easy3D_ENABLE_QT)
+if (Easy3D_ENABLE_QT AND NOT Easy3D_ENABLE_VULKAN) # Tutorial_204_Viewer_Qt is OpenGL only
     add_subdirectory(Tutorial_204_Viewer_Qt)
 endif ()
 add_subdirectory(Tutorial_205_MultiView)
