@@ -22,6 +22,14 @@ the principles win and the other text is superseded.
 project-owned test sources, fixtures and registration live under root `tests/`.
 This supersedes retired test switches and locations in the historical notes below.
 
+**Cross-backend parity policy (2026-11-07).** When matching the two backends, always
+keep in mind that **both could be wrong or have bugs**. How to make a change depends on
+which is the correct/better way of implementation: which is more elegant, easy to extend,
+and user-friendly, and which is the best practice. **When this happens, prompt options
+to the user to make the decision** — present the candidate implementations with their
+tradeoffs and let the user choose; do not silently pick one backend's behavior as the
+reference. Record the chosen semantics and the reasoning in the batch section below.
+
 **P1. Same class names, same files.** A class has the same name and lives in the same
 `.h`/`.cpp` pair for both backends, as in `main`: `Viewer` in `viewer.h/.cpp`,
 `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`, and likewise

@@ -1365,11 +1365,11 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         // Add a generic method for adding vertex properties with a dtype argument
         cl.def("add_vertex_property",
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
-                   if (dtype.is(pybind11::float_().get_type())) {
+                   if (dtype.is(pybind11::type::of(pybind11::float_()))) {
                        return pybind11::cast(mesh.add_vertex_property<float>(name));
-                   } else if (dtype.is(pybind11::int_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::int_()))) {
                        return pybind11::cast(mesh.add_vertex_property<int>(name));
-                   } else if (dtype.is(pybind11::bool_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::bool_()))) {
                        return pybind11::cast(mesh.add_vertex_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
                        return pybind11::cast(mesh.add_vertex_property<easy3d::vec3>(name));
@@ -1384,11 +1384,11 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         // Add a generic method for adding face properties with a dtype argument
         cl.def("add_face_property",
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
-                   if (dtype.is(pybind11::float_().get_type())) {
+                   if (dtype.is(pybind11::type::of(pybind11::float_()))) {
                        return pybind11::cast(mesh.add_face_property<float>(name));
-                   } else if (dtype.is(pybind11::int_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::int_()))) {
                        return pybind11::cast(mesh.add_face_property<int>(name));
-                   } else if (dtype.is(pybind11::bool_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::bool_()))) {
                        return pybind11::cast(mesh.add_face_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
                        return pybind11::cast(mesh.add_face_property<easy3d::vec3>(name));
@@ -1403,11 +1403,11 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         // Add a generic method for getting vertex properties with a dtype argument
         cl.def("get_vertex_property",
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
-                   if (dtype.is(pybind11::float_().get_type())) {
+                   if (dtype.is(pybind11::type::of(pybind11::float_()))) {
                        return pybind11::cast(mesh.get_vertex_property<float>(name));
-                   } else if (dtype.is(pybind11::int_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::int_()))) {
                        return pybind11::cast(mesh.get_vertex_property<int>(name));
-                   } else if (dtype.is(pybind11::bool_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::bool_()))) {
                        return pybind11::cast(mesh.get_vertex_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
                        return pybind11::cast(mesh.get_vertex_property<easy3d::vec3>(name));
@@ -1422,11 +1422,11 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         // Add a generic method for getting face properties with a dtype argument
         cl.def("get_face_property",
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
-                   if (dtype.is(pybind11::float_().get_type())) {
+                   if (dtype.is(pybind11::type::of(pybind11::float_()))) {
                        return pybind11::cast(mesh.get_face_property<float>(name));
-                   } else if (dtype.is(pybind11::int_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::int_()))) {
                        return pybind11::cast(mesh.get_face_property<int>(name));
-                   } else if (dtype.is(pybind11::bool_().get_type())) {
+                   } else if (dtype.is(pybind11::type::of(pybind11::bool_()))) {
                        return pybind11::cast(mesh.get_face_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
                        return pybind11::cast(mesh.get_face_property<easy3d::vec3>(name));
