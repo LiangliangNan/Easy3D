@@ -423,11 +423,18 @@ Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 | `tutorials/` | 0 | 4 | 63 | 67 |
 
 The 89 Easy3D additions include 52 test files and 27 backend files, which P4 permits;
-10 others require the remaining U6 responsibility audit. They are
+the 10 others were reviewed by the U6 responsibility audit (batch 39) and are retained:
 `obj_materials.h/.cpp`, `render_device.h/.cpp`, `text_layout.h/.cpp`, `viewer_base.h/.cpp`,
-`viewer_callbacks.h` and `viewer_input.h`. D3 already retains the four viewer API files;
-review the renderer files against their original class responsibilities before moving
-or deleting code. `snapshot.cpp` has been restored; no original Easy3D file is missing.
+`viewer_callbacks.h` and `viewer_input.h`. D3 retains the four viewer API files
+(`viewer_base`, `viewer_callbacks`, `viewer_input`) as the shared viewer API consumed by both
+backends. The three renderer pairs are justified new shared abstractions, not code displaced
+from original classes: `render_device` is the backend-neutral `graphics::` annotation/type
+layer plus the abstract `RenderDevice` interface (Vulkan implementation separated in
+`backends/vulkan/render_device.cpp`); `text_layout` is the shared CPU TrueType layout engine;
+and `obj_materials` is a renderer-side OBJ/MTL material importer that must live in `renderer/`
+(a `fileio/` home would create a circular `fileio→renderer` dependency). No move or deletion is
+warranted; see batch 39 for the full rationale. `snapshot.cpp` has been restored; no original
+Easy3D file is missing.
 
 The four added tutorial files are Tutorial 208's `main.cpp`/CMake file and Tutorials
 311/312's `animation.h`/`point_worker.h`. Differing tutorial filenames total 24
@@ -553,14 +560,21 @@ of this document.
   shared by both backends. U6d removes dual-build texture routing in favor of the
   original texture factories. U6e removes the redundant drawable buffer-mode switch
   and restores the two-argument Renderer constructor. U6f removes the catch-all
-  unavailable-OpenGL source and puts methods in their owning files. Continue
-  the file-by-file responsibility audit (including the shared OpenGL query-state
-  guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
-  gates only when implementations exist. U5/API work remains open.
+  unavailable-OpenGL source and puts methods in their owning files. The file-by-file
+  responsibility audit is complete (batch 39): the 10 non-test/non-backend additions are
+  justified (see the divergence audit above), and the batch-8 shared OpenGL query-state guard
+  (`backends/opengl/query_state.h`) is a correctly placed OpenGL-only RAII helper shared by
+  Viewer and the GUI pickers. Capability gates are removed only when implementations exist;
+  the remaining tutorial gates are the intentional backend title label and the off-limits
+  Qt/wx gates. U5 tutorial cleanup is effectively complete (remaining conditionals mirror the
+  base constructor options type or warn about macOS GL limits); U5/U6 residue is off-limits
+  Qt/wx integration and deliberate tutorial behavior choices.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
-U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
-larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
+U1–U4 are complete. U5 and the independent U6 source/build cleanup are effectively complete
+(batch 39 closes the file responsibility audit); the residue is off-limits Qt/wx integration
+and deliberate tutorial behavior choices. Remaining work is W10 feature parity (Mapple and the
+rest of the Python API/tutorial coverage; Qt/wx stay untouched); re-run the tests after each batch.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
@@ -6568,5 +6582,60 @@ Files changed: `easy3d/renderer/text_renderer.cpp`, `easy3d/viewer/viewer.cpp`.
 Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
 the pivot cross and HUD text now match across backends. The code fix was committed (`e349e59c`);
 these documentation updates were left uncommitted.
+
+### 2026-11-07 — U6 batch 39: core-file responsibility audit
+
+**Motivation.** The divergence audit listed 10 non-test, non-backend `easy3d/` additions
+that still required the U6 file-by-file responsibility audit: `obj_materials.h/.cpp`,
+`render_device.h/.cpp`, `text_layout.h/.cpp`, `viewer_base.h/.cpp`, `viewer_callbacks.h`
+and `viewer_input.h`. The question for each was whether it holds code that properly belongs
+in an original `main` class/file (and so should be moved or deleted), or is a justified new
+shared abstraction. This batch completes that audit. It also reviews the batch-8 shared
+OpenGL query-state guard, which the U6 work item named explicitly.
+
+**Findings.** No move or deletion is warranted; every file is correctly placed.
+
+- The four viewer API files (`viewer_base.h/.cpp`, `viewer_callbacks.h`, `viewer_input.h`)
+  are retained by decision **D3** as the shared viewer API consumed by both backends.
+- `render_device.h/.cpp` is the backend-neutral `easy3d::graphics` annotation/type layer
+  (`PointData`, `Vertex`, `Geometry`, `Sampler`, `Image`, `DrawCommand`, `FrameImage`,
+  `ScenePixel`, `TransparencyMethod`, `PointSelectionRequest`, `screen_space_projection`,
+  `normalize_clipping_planes`) plus the abstract `RenderDevice` interface and the
+  `create_vulkan_device` factory declaration. It contains no backend handles and is built in
+  **both** configurations (shared lists in `renderer/CMakeLists.txt`). The concrete Vulkan
+  implementation is cleanly separated in `backends/vulkan/render_device.cpp` (Vulkan-only),
+  so the two `render_device.cpp` files are a deliberate shared-interface / backend-impl
+  split, not duplication. This is a new shared abstraction permitted by P4, not code
+  displaced from an original class.
+- `text_layout.h/.cpp` is the shared CPU TrueType rasterization/layout engine
+  (`graphics::TextLayoutEngine`) used by the annotation system on both backends (Viewer HUD
+  text, Tutorial 309, renderer/viewer tests). It requires no graphics context and is distinct
+  from the OpenGL-only `TextRenderer`; correctly placed in `renderer/`.
+- `obj_materials.h/.cpp` is a renderer-side OBJ/MTL diffuse-material importer
+  (`load_obj_materials`, `ObjMaterialMesh::create_drawables`) that produces one drawable per
+  material part. It depends on `renderer/` headers (`renderer.h`, `drawable_triangles.h`,
+  `texture_manager.h`), so it **cannot** live in `fileio/` without creating a circular
+  `fileio→renderer→fileio` dependency; `renderer/` is the correct home. It reads `fast_obj`
+  directly to access per-face material/texture/UV data that `fileio::load_obj` discards.
+  (`FAST_OBJ_IMPLEMENTATION` is consequently compiled in both `fileio/surface_mesh_io_obj.cpp`
+  and `renderer/obj_materials.cpp`; this is minor code duplication, not a correctness or
+  responsibility problem, and is left as-is under the minimal-change principle.)
+- The batch-8 guard `backends/opengl/query_state.h` (`opengl::QueryState`) is an OpenGL-only
+  RAII save/restore helper around scene queries and annotation rendering, shared by Viewer and
+  the GUI pickers (`picker_model`, `picker_surface_mesh`, `picker_point_cloud`). It is a
+  correctly placed backend file (P4), not one of the 10 shared additions.
+
+**U5 status.** The tutorial audit found U5 effectively complete: the only remaining tutorial
+code conditionals are Tutorial 202's constructor options type (a necessary mirror of the base
+`Viewer` constructor's `VulkanOptions`/`OpenGLOptions` parameter) and Tutorial 504's macOS
+OpenGL capability warning. The remaining `tutorials/CMakeLists.txt` gates are the intentional
+`EXAMPLE_TITLE` backend label and the off-limits Qt/wx gates. Other tutorial diffs vs `main`
+are forced by shared core APIs or the native-tutorial test harness, or are deliberate
+behavior/visual choices, not removable backend cruft.
+
+Files changed: `docs/vulkan.md`, `ToDo.md` (documentation only; no source changes).
+
+Suites: no source code changed, so the batch-38 results stand (128/128 MoltenVK, 94/94 OpenGL,
+idle `-j2`). No changes were committed.
 
 
