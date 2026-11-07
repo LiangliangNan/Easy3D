@@ -584,6 +584,25 @@ U1–U4 are complete. U5 and the independent U6 source/build cleanup are effecti
 choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 feature parity
 (Mapple and the rest of the Python API/tutorial coverage); re-run the tests after each batch.
 
+**Current status note (2026-11-08, post-batch-42 refresh; idle `-j2`).** Mac baseline:
+OpenGL 94/94 (`build-u1b-opengl`), MoltenVK 128/128 (`build-migration/vulkan-macos`),
+OpenGL+Qt 93/93 (`build-opengl`), Qt/CGAL/ffmpeg Vulkan Debug 133/133 (`cmake-build-debug`).
+`vulkan.imgui` is load-sensitive — it failed in the concurrent `-j2` full run ("File menu did
+not open through the GLFW callback chain"; the `R32G32_UINT` blending validation messages it
+prints are non-fatal, 0 counted errors on the passing run) but passes alone (5.86 s). The
+Debug tree's five viewer-tutorial smoke tests (201/202/203/205/206) were "Not Run" from
+stale/missing `_test` binaries after the batch-42 renumber; building the five targets clears
+them (the tree now runs 133 tests, not the previously logged 99 — recurring IDE-tree
+staleness, not a regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
+re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.0 s) at a
+3200×1834 framebuffer with 4× MSAA and 0 validation errors, consistent with the earlier
+~70 FPS at 1600×1200 (the visible window was clamped to the display height). Still open:
+W10 Mapple and remaining Python coverage (both need a design decision before implementation),
+the Linux `vulkan.interactionoverlay` border check (W6, 68/69), and the RealCamera
+expanded-point fallback profiling on a MoltenVK device without `largePoints` (this M4 Pro
+always takes the native path, so the fallback cannot be exercised here). The same triage is
+recorded in ToDo.md.
+
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
 > **Partly superseded (2026-10-31):** the `OpenGL*`/`Vulkan*` class names and root-level
