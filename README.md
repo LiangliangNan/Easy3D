@@ -3,21 +3,6 @@
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
-This **Vulkan development branch** builds Easy3D with exactly one renderer, selected at
-configure time by `Easy3D_ENABLE_VULKAN`: `ON` (the default on this branch) builds the native
-Vulkan/GLFW viewer, `OFF` builds the original OpenGL viewer. The goal is that existing Easy3D client code builds unchanged against
-either backend: the classes keep the names and headers of the `main` branch (`Viewer`,
-`MultiViewer`, `OffScreen`), and only the CMake option changes. The `Viewer` constructor is
-`Viewer(title, width, height, samples, full_screen, visible, resizable, options)` (sizes and `samples`
-are `unsigned int`, `samples` defaults to 1), where the last parameter is `OpenGLOptions` or
-`VulkanOptions`; it differs from the older OpenGL-only argument order, so positional calls with more
-than a title need updating. The unification of the class
-structure is still in progress. A Vulkan SDK is required only for
-the Vulkan backend. Tutorials are off by default (`-DEasy3D_BUILD_TUTORIALS=ON`). Vulkan feature
-coverage is still incomplete; see [build instructions and migration status](docs/vulkan.md).
-The Qt applications (e.g., Mapple), Python bindings and multi-view features require
-`-DEasy3D_ENABLE_VULKAN=OFF` for now. Existing CMake cache values are preserved until you reset
-them or pass new `-D` options.
 
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
@@ -269,8 +254,18 @@ Dec. 8, 2018
 
 ### Experimental Vulkan migration
 
-The `Easy3D-Vulkan` branch adds a native Vulkan offscreen renderer and an interactive GLFW viewer
-that use the existing model/drawable/camera APIs. A build contains either the Vulkan or the
-OpenGL backend (`Easy3D_ENABLE_VULKAN=ON/OFF`), never both, and the migration aims to change
-the OpenGL-based source as little as possible. See [build instructions, supported
-features and migration status](docs/vulkan.md).
+The `Easy3D-Vulkan` branch builds Easy3D with exactly one renderer, selected at
+configure time by `Easy3D_ENABLE_VULKAN`: `ON` (the default on this branch) builds the native
+Vulkan/GLFW viewer, `OFF` builds the original OpenGL viewer. The goal is that existing Easy3D client code builds unchanged against
+either backend: the classes keep the names and headers of the `main` branch (`Viewer`,
+`MultiViewer`, `OffScreen`), and only the CMake option changes. The `Viewer` constructor is
+`Viewer(title, width, height, samples, full_screen, visible, resizable, options)` (sizes and `samples`
+are `int`, `samples` defaults to 1), where the last parameter is `OpenGLOptions` or
+`VulkanOptions`; it differs from the older OpenGL-only argument order, so positional calls with more
+than a title need updating. The unification of the class
+structure is still in progress. A Vulkan SDK is required only for
+the Vulkan backend. Tutorials are off by default (`-DEasy3D_BUILD_TUTORIALS=ON`). Vulkan feature
+coverage is still incomplete; see [build instructions and migration status](docs/vulkan.md).
+The Qt applications (e.g., Mapple) still require `-DEasy3D_ENABLE_VULKAN=OFF`; the Python
+bindings and multi-view features work on both backends. Existing CMake cache values are preserved until you reset
+them or pass new `-D` options.

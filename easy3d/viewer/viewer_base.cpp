@@ -41,6 +41,19 @@ vec3 homogeneous_point(const vec4 &point) {
     return result;
 }
 } // namespace
+
+// Coordinate contract, identical on the OpenGL and Vulkan backends:
+//  * World space: the scene's 3D coordinates. The camera's model-view-projection
+//    matrix maps world -> clip; these helpers hide that matrix from callers.
+//  * Window (viewer) logical coordinates: top-left origin, x right, y down, in
+//    logical point units spanning [0,width) x [0,height) from viewer_size().
+//    Mouse events and project_point()/unproject_point() use these, so client
+//    code is independent of the display's pixel density.
+//  * Framebuffer pixels: physical device pixels spanning [0,fw) x [0,fh) from
+//    framebuffer_size(). On a HiDPI display fw = width * dpi_scaling(). Only the
+//    internal depth read in point_under_pixel() works in these units.
+// Depth is always normalized to [0,1] (near=0, far=1) in the public APIs, matching
+// Vulkan; OpenGL's native [-1,1] clip depth is remapped here so both agree.
 vec3 ViewerBase::project_point(const vec3 &world) const {
     finite_coordinates(world);
     int w, h;
@@ -54,6 +67,8 @@ vec3 ViewerBase::project_point(const vec3 &world) const {
     finite_coordinates(result);
     return result;
 }
+// Inverse of project_point(): window logical coordinates (top-left origin,
+// depth in [0,1]) -> world space. See the coordinate contract above.
 vec3 ViewerBase::unproject_point(const vec3 &window) const {
     finite_coordinates(window);
     int w, h;
@@ -63,6 +78,10 @@ vec3 ViewerBase::unproject_point(const vec3 &window) const {
     const auto inv = checked_inverse(camera()->modelViewProjectionMatrix());
     return homogeneous_point(inv * vec4(2 * window.x / w - 1, 1 - 2 * window.y / h, 2 * window.z - 1, 1));
 }
+// Fresh visible-surface query at a logical window pixel. Maps the logical
+// coordinate to its containing framebuffer pixel (DPI-aware), reads the scene
+// depth there, and unprojects that pixel's center back to world space. See the
+// coordinate contract above; HUD/overlays are excluded by read_scene_depth().
 vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
     found = false;
     int w, h, fw, fh;

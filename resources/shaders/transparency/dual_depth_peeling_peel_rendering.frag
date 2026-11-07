@@ -79,17 +79,13 @@ in Data{
 } DataIn;
 
 
-// Recent OSX/ATI drivers perform some out-of-order execution that's causing
-// the dFdx/dFdy calls to be conditionally executed. Specifically, it looks
-// like the early returns when the depth is not on a current peel layer are 
-// moved before the dFdx/dFdy calls used to compute normals. Disable the 
-// early returns on apple for now, I don't think most GPUs really benefit 
-// from them anyway at this point.
-#ifdef __APPLE__
-#define NO_PRECOLOR_EARLY_RETURN
-#endif
-
-vec4 ShadeFragment()
+// dFdx/dFdy are undefined in non-uniform control flow. The peel classification
+// below returns early for fragments outside the current layer, so the flat
+// (face) normal must be computed in main() before those returns -- in uniform
+// flow across the whole quad -- and handed to ShadeFragment(). Computing it
+// inside ShadeFragment() left helper invocations with garbage derivatives,
+// producing NaN normals and black seams along cube edges/intersections (#219).
+vec4 ShadeFragment(vec3 flat_normal)
 {
 	vec4 color;
 	if (use_texture) {
@@ -121,13 +117,7 @@ vec4 ShadeFragment()
 	if (smooth_shading)
 		normal = normalize(DataIn.normal);
 	else {
-#if 0	// Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
-		vec3 fdx = vec3( dFdx( DataIn.position.x ), dFdx( DataIn.position.y ), dFdx( DataIn.position.z ) );
-		vec3 fdy = vec3( dFdy( DataIn.position.x ), dFdy( DataIn.position.y ), dFdy( DataIn.position.z ) );
-		normal = normalize(cross(fdx, fdy));
-#else
-		normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-#endif
+		normal = flat_normal;
 //		// Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
 //		if (dot(normal, DataIn.normal) < 0)
 		if ((gl_FrontFacing == false) && (two_sides_lighting == false))
@@ -162,6 +152,11 @@ vec4 ShadeFragment()
 
 void main(void)
 {
+	// Evaluate the face normal here, before any discard/return, so the
+	// derivatives run in uniform control flow across the quad (see #219 note
+	// above ShadeFragment). The value is only used for flat shading.
+	vec3 flat_normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+
 	if (DataIn.clipped > 0.0)
 		discard;
 
@@ -211,9 +206,7 @@ void main(void)
 
 	// Is this fragment outside the current peels?
 	if (gl_FragDepth < nearestDepth - epsilon || gl_FragDepth > farthestDepth + epsilon) {
-#ifndef NO_PRECOLOR_EARLY_RETURN
 		return;
-#endif
 	}
 
 	// Is this fragment inside the current peels?
@@ -221,14 +214,12 @@ void main(void)
 		// Write out depth so this frag will be peeled later:
 		fragOutput0.xy = vec2(-gl_FragDepth, gl_FragDepth);
 
-#ifndef NO_PRECOLOR_EARLY_RETURN
 		return;
-#endif
 	}
 	
 	// If we made it here, this fragment is on the peeled layer from last pass
 	// therefore, we need to shade it, and make sure it is not peeled any farther
-	vec4 color = ShadeFragment();
+	vec4 color = ShadeFragment(flat_normal);
 	fragOutput0.xy = vec2(-MAX_DEPTH);
 	
 	// Check if this fragment is on a current peel:

@@ -272,6 +272,11 @@ if(NOT Easy3D_ENABLE_VULKAN)
     target_link_libraries(easy3d_opengl_snapshot_seam_test PRIVATE easy3d::viewer)
     add_test(NAME opengl.snapshotseam COMMAND easy3d_opengl_snapshot_seam_test)
     set_tests_properties(opengl.snapshotseam PROPERTIES TIMEOUT 120 LABELS desktop)
+
+    add_executable(easy3d_opengl_ddp_seam_test opengl_ddp_seam_test.cpp)
+    target_link_libraries(easy3d_opengl_ddp_seam_test PRIVATE easy3d::viewer)
+    add_test(NAME opengl.ddpseam COMMAND easy3d_opengl_ddp_seam_test)
+    set_tests_properties(opengl.ddpseam PROPERTIES TIMEOUT 120 LABELS desktop)
 endif()
 
     add_executable(easy3d_imgui_viewer_test imgui_viewer_test.cpp

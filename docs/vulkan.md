@@ -6055,3 +6055,59 @@ continuous occlusion and no middle seams.
 Suites (2026-11-06): 128/128 MoltenVK, 92/92 OpenGL and 91/91 Qt-enabled OpenGL,
 all idle at `-j2` (the OpenGL and Qt counts each include the new `opengl.snapshotseam`).
 No new flake or regression from this batch.
+
+### 2026-11-07 — W10 batch 31: transparency seam fix (#219), coordinate/DPI docs, README sync
+
+With the Qt host integration paused, this batch closes three open non-Qt ToDo items.
+
+**Transparency issue #219 (OpenGL dual depth peeling).** The reported artifact — wide
+black seams along the edges and intersections of transparent cubes under
+`DualDepthPeeling` — came from undefined GLSL derivative behavior, not from the
+peeling math. `dual_depth_peeling_peel_rendering.frag` computed the flat (face)
+normal as `normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)))` inside
+`ShadeFragment()`, which `main()` only calls *after* the peel-classification early
+`return`s. Fragments of a quad take different peel paths, so those derivatives ran
+in non-uniform control flow: helper invocations supplied garbage, the normal went
+NaN, and the lit color collapsed to black bands. The old `#ifdef __APPLE__ /
+NO_PRECOLOR_EARLY_RETURN` guard was dead code (`__APPLE__` is not a GLSL-defined
+macro and the loader does not inject it), so it never actually disabled the returns.
+
+The fix evaluates the derivative once at the top of `main()`, before any
+`discard`/`return`, in uniform flow across the quad, and passes it into
+`ShadeFragment(vec3 flat_normal)`. The dead Apple workaround and the `#if 0` Adreno
+variant were removed and the peel early-returns restored (they are safe now that no
+derivative lives behind them). The Vulkan peel (`oit_peel.frag`) shades from provided
+vertex normals and never used derivatives, so it was unaffected and needed no change.
+
+`tests/viewer/opengl_ddp_seam_test.cpp` (`opengl.ddpseam`, OpenGL-only) builds two
+intersecting transparent cubes (the #219 scene), brackets `DualDepthPeeling` in a
+`draw()` override as Tutorial 504 does, and snapshots with flat shading
+(`set_smooth_shading(false)`) on a white background. It requires the peel to run the
+virtual `draw()`, to light a substantial part of the frame, to contain no black seam
+pixels, and to keep coverage comparable to the smooth-shaded reference (which uses
+provided normals). The artifact is driver-dependent and did not reproduce on this
+Mac's OpenGL driver (the test passes with and without the hoist there), but the
+undefined behavior is removed and the test guards the correct output on drivers
+where the NaN seams do appear.
+
+**Coordinate/DPI documentation.** The handling was already unified in `ViewerBase`;
+the contract is now written at the top of `project_point`, `unproject_point` and
+`point_under_pixel` in `viewer_base.cpp`: world space; window logical coordinates
+(top-left origin, x right, y down, `[0,width) x [0,height)` from `viewer_size()`, used
+by mouse events and the public projection helpers so client code is DPI-independent);
+framebuffer pixels (`[0,fw) x [0,fh)`, `fw = width * dpi_scaling()`, used only by the
+internal depth read); and depth normalized to `[0,1]` in the public APIs on both
+backends (OpenGL's native `[-1,1]` clip depth is remapped). Identical on OpenGL and
+Vulkan; comment-only change.
+
+**README sync.** Corrected the constructor note (sizes and `samples` are `int`, not
+`unsigned int`, per the revised D1 signature) and the backend-coverage sentence: the
+Python bindings and multi-view features now build and pass on Vulkan (verified:
+`Easy3D_BUILD_PYTHON_BINDINGS=ON` produces `lib/python/easy3d`, and `vulkan.multiview`
+is registered), so only the Qt applications (e.g. Mapple) still require
+`-DEasy3D_ENABLE_VULKAN=OFF`.
+
+Suites (2026-11-07): 128/128 MoltenVK, 93/93 OpenGL and 92/92 Qt-enabled OpenGL, all
+idle at `-j2` (the OpenGL and Qt counts each include the new `opengl.ddpseam`; the Qt
+run also passes `opengl.tutorial504`, confirming the peel shader change does not
+regress the transparency tutorial). No new flake or regression from this batch.
