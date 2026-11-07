@@ -61,7 +61,7 @@ viewer.assign(0, 0, points_drawable)                # Assign the drawable to the
 # points_drawable.set_uniform_coloring(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set color (RGBA).
 
 # -------------------------------------------------------------------------------
-# View (0, 1): A set of set of triangles (i.e., a surface) representing a unit cube
+# View (0, 1): A set of triangles (i.e., a surface) representing a unit cube
 # -------------------------------------------------------------------------------
 # In this tutorial, we use an element/index buffer together with the vertex buffer.
 # This is most efficient in terms of memory usage. For example, to render a unique
