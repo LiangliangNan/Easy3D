@@ -37,7 +37,9 @@ namespace easy3d {
 	class PointCloud;
 
 	/**
-	 * \brief Implementation of file input/output operations for PointCloud.
+	 * \brief Load and save point clouds using extension-selected formats.
+     * \details Supported extensions are \c bin, \c xyz, \c bxyz, \c ply, \c las, \c laz, \c vg, and \c bvg.
+     * Extension matching is case-insensitive. Loading an empty or unsupported file fails.
      * \class PointCloudIO easy3d/fileio/point_cloud_io.h
      */
 	class PointCloudIO
@@ -45,21 +47,21 @@ namespace easy3d {
 	public:
         /**
          * \brief Reads a point cloud from file \p file_name.
-         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg)
-         * and type (i.e. binary or ASCII).
-         * \return The pointer of the point cloud (nullptr if failed).
+         * \details The extension determines the format. Loading an empty or unsupported file fails.
+         * \param file_name Path to the input file.
+         * \return Newly allocated point cloud owned by the caller, or nullptr if the extension is unsupported,
+         *         loading fails, or the file contains no vertices.
          */
 		static PointCloud* load(const std::string& file_name);
 
         /**
          * \brief Saves a point_cloud to a file.
-         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg) and type (i.e. binary
-         * or ASCII).
-         * \param file_name The file name.
-         * \param cloud The point cloud.
-         * \return The status of the operation
-         *      \arg true if succeeded
-         *      \arg false if failed
+         * \details The extension selects the format. If the path has no extension, \c .ply is appended and binary
+         *          PLY is written.
+         * \param file_name Output path.
+         * \param cloud Point cloud to write; must not be null.
+         * \return True if the selected format was written successfully; false for a null cloud, unsupported
+         *         extension, or I/O/format failure.
          */
 		static bool	save(const std::string& file_name, const PointCloud* cloud);
 	};
@@ -67,39 +69,64 @@ namespace easy3d {
 
 	namespace io {
 
-	    /// \brief Reads point cloud from a \c bin format file.
-	    /// \details A typical \c bin format file contains three blocks storing points, colors (optional),
-	    /// and normals (optional).
+	    /// \brief Read a point cloud from Easy3D's binary \c bin format.
+	    /// \param file_name Input path.
+	    /// \param cloud Destination point cloud.
+	    /// \return True on success; false on an I/O or format error.
 		bool load_bin(const std::string& file_name, PointCloud* cloud);
-        /// \brief Saves a point cloud to a \c bin format file.
-        /// \details A typical \c bin format file contains three blocks storing points, colors (optional),
-        /// and normals (optional).
+        /// \brief Save a point cloud in Easy3D's binary \c bin format.
+        /// \param file_name Output path.
+        /// \param cloud Point cloud to write.
+        /// \return True on success; false on an I/O error.
 		bool save_bin(const std::string& file_name, const PointCloud* cloud);
 
         /// \brief Reads point cloud from an \c xyz format file.
-        /// \details Each line of an \c xyz file contains three floating point numbers representing the three
-        ///			coordinates of a point.
+        /// \details Each data line contains three floating-point coordinates.
+        /// \param file_name Input path.
+        /// \param cloud Destination point cloud.
+        /// \return True on success; false on an I/O or parse error.
 		bool load_xyz(const std::string& file_name, PointCloud* cloud);
 		/// \brief Saves a point cloud to an \c xyz format file.
-		/// \details Each line of an \c xyz file contains three floating point numbers representing the three
-		///			coordinates of a point.
+		/// \details Writes one line of three coordinates per point.
+        /// \param file_name Output path.
+        /// \param cloud Point cloud to write.
+        /// \return True on success; false on an I/O error.
 		bool save_xyz(const std::string& file_name, const PointCloud* cloud);
 
         /// \brief Reads point cloud from a binary \c xyz format file.
+        /// \param file_name Input path.
+        /// \param cloud Destination point cloud.
+        /// \return True on success; false on an I/O or format error.
 		bool load_bxyz(const std::string& file_name, PointCloud* cloud);
         /// \brief Saves a point cloud to a binary \c xyz format file.
+        /// \param file_name Output path.
+        /// \param cloud Point cloud to write.
+        /// \return True on success; false on an I/O error.
 		bool save_bxyz(const std::string& file_name, const PointCloud* cloud);
 
         /// \brief Reads point cloud from a \c ply format file.
+        /// \param file_name Input PLY path.
+        /// \param cloud Destination point cloud.
+        /// \return True on success; false on an I/O or parse error.
 		bool load_ply(const std::string& file_name, PointCloud* cloud);
-        /// \brief Saves a point cloud to a \c ply format file.
+        /// \brief Saves a point cloud to a PLY file.
+        /// \param file_name Output path.
+        /// \param cloud Point cloud to write.
+        /// \param binary True to write binary PLY; false to write ASCII PLY.
+        /// \return True on success; false on an I/O or format error.
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary = true);
 
-        /// \brief Reads point cloud from an \c las/laz format file.
-        ///     Internally the method uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
+        /// \brief Read a point cloud from an \c las or \c laz file.
+        /// \details Requires LASlib-backed support available in the build.
+        /// \param file_name Input path.
+        /// \param cloud Destination point cloud.
+        /// \return True on success; false when unsupported or on I/O/parse failure.
         bool load_las(const std::string &file_name, PointCloud *cloud);
-        /// \brief Saves a point cloud to an \c LAS/LAS format file.
-        /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
+        /// \brief Save a point cloud to an \c las or \c laz file.
+        /// \details Requires LASlib-backed support available in the build.
+        /// \param file_name Output path.
+        /// \param cloud Point cloud to write.
+        /// \return True on success; false when unsupported or on I/O failure.
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
 
 	} // namespace io

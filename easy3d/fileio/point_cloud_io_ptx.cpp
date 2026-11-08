@@ -68,7 +68,7 @@ namespace easy3d {
 			unsigned int num = 0;
 			mat4 sensorTransD, cloudTransD;
 
-			LineInputStream in = *in_;
+			LineInputStream& in = *in_;
 			//read header
 			{
 				unsigned int width = 0, height = 0;

@@ -47,6 +47,8 @@ namespace easy3d {
      *      viewer's update() function. So in Easy3D, the viewer's update function is connected to the camera's
      *      corresponding signal.
      *
+     * \note Slots are invoked synchronously in unspecified order. This class does not provide synchronization;
+     *       connecting, disconnecting, or emitting concurrently requires external coordination.
      * \see A more powerful implementation [sigslot](https://github.com/palacaze/sigslot) based on C++14.
      */
 
@@ -54,19 +56,29 @@ namespace easy3d {
     class Signal {
 
     public:
+        /// Construct a signal with no connected slots.
         Signal() = default;
         ~Signal() { disconnect_all(); }
 
-        /// \brief Copy constructor and assignment create a new signal.
-        Signal(Signal const & /*unused*/) {}
+        /**
+         * \brief Copy construction creates a fresh signal with no slots.
+         */
+        Signal(Signal const & /*other*/) {}
 
-        /// \brief Move constructor.
+        /**
+         * \brief Move a signal and its connections.
+         * \param other Signal whose connections are transferred.
+         */
         Signal(Signal &&other) noexcept:
                 slots_(std::move(other.slots_)),
                 current_id_(other.current_id_) {
         }
 
-        /// \brief The assignment operator
+        /**
+         * \brief Move-assign a signal and its connections.
+         * \param other Signal whose connections are transferred.
+         * \return Reference to this signal.
+         */
         Signal &operator=(Signal &&other) noexcept {
             if (this != &other) {
                 slots_ = std::move(other.slots_);
@@ -75,7 +87,11 @@ namespace easy3d {
             return *this;
         }
 
-        /// \brief The assignment operator
+        /**
+         * \brief Copy-assign a signal by disconnecting this signal's current slots.
+         * \param other Source signal; its connections are not copied.
+         * \return Reference to this signal.
+         */
         Signal &operator=(Signal const &other) {
             if (this != &other) {
                 disconnect_all();
@@ -91,6 +107,8 @@ namespace easy3d {
          *          static_cast<void (*)(const std::string&, int)>(&print)
          *      \endcode
          *     Or use the helper function \c overload for a lighter syntax.
+         * \param slot Callable invoked when the signal is sent.
+         * \return Connection identifier, usable with disconnect().
          */
         int connect(std::function<void(Args...)> const &slot) {
             slots_.insert(std::make_pair(++current_id_, slot));
@@ -108,6 +126,9 @@ namespace easy3d {
          *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
          *      \endcode
          *     Or use the helper function \c overload for a lighter syntax.
+         * \param inst Object on which the member function is called; it must outlive the connection.
+         * \param func Non-const member function to invoke.
+         * \return Connection identifier, usable with disconnect().
          */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...)) {
@@ -127,6 +148,9 @@ namespace easy3d {
          *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
          *      \endcode
          *     Or use the helper function \c overload for a lighter syntax.
+         * \param inst Object on which the member function is called; it must outlive the connection.
+         * \param func Const member function to invoke.
+         * \return Connection identifier, usable with disconnect().
          */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...) const) {
@@ -139,29 +163,35 @@ namespace easy3d {
          * \brief Connects this signal to another signal \p receiver.
          * \details Upon return, the emission of this signal will trigger \p receiver to emit.
          * The returned value can be used to disconnect the connected signal.
+         * \param receiver Signal to emit when this signal is sent; it must outlive the connection.
+         * \return Connection identifier, usable with disconnect().
          */
         int connect(Signal<Args...> *receiver) {
             return connect(receiver, &Signal<Args...>::send);
         }
 
-        /// \brief Disconnects a previously connected function.
+        /// Disconnect a slot by the identifier returned from connect().
+        /// \param id Connection identifier.
         void disconnect(int id) {
             slots_.erase(id);
         }
 
-        /// \brief Disconnects all previously connected functions.
+        /// Disconnect all slots.
         void disconnect_all() {
             slots_.clear();
         }
 
-        /// \brief Calls all connected functions.
+        /// Invoke all connected slots synchronously.
+        /// \param p Arguments forwarded to each slot.
         void send(Args... p) {
             for (auto const &it : slots_) {
                 it.second(p...);
             }
         }
 
-        /// \brief Calls all connected functions except for one.
+        /// Invoke every connected slot except the specified connection.
+        /// \param excludedConnectionID Connection identifier to skip.
+        /// \param p Arguments forwarded to each invoked slot.
         void send_for_all_but_one(int excludedConnectionID, Args... p) {
             for (auto const &it : slots_) {
                 if (it.first != excludedConnectionID) {
@@ -170,7 +200,9 @@ namespace easy3d {
             }
         }
 
-        /// \brief Calls only one connected function.
+        /// Invoke the slot with the specified connection identifier, if it is still connected.
+        /// \param connectionID Connection identifier to invoke.
+        /// \param p Arguments forwarded to the slot.
         void emit_for(int connectionID, Args... p) {
             auto const &it = slots_.find(connectionID);
             if (it != slots_.end()) {
@@ -195,6 +227,9 @@ namespace easy3d {
      *          static_cast<void (*)(const std::string&, int)>(&print)
      *      \endcode
      *     Or use the helper function \c overload for a lighter syntax.
+     * \param signal Signal receiving the connection.
+     * \param slot Callable to connect.
+     * \return Connection identifier, usable with disconnect().
      */
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
@@ -212,6 +247,10 @@ namespace easy3d {
      *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
      *      \endcode
      *     Or use the helper function \c overload for a lighter syntax.
+     * \param signal Signal receiving the connection.
+     * \param inst Object whose member function is connected; it must outlive the connection.
+     * \param slot Member function to connect.
+     * \return Connection identifier, usable with disconnect().
      */
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
@@ -222,19 +261,25 @@ namespace easy3d {
      * \brief Connects this signal to \p another signal.
      * \details Upon return, the emission of this signal will trigger \p another to be emitted.
      * The returned value can be used to disconnect the connected signal.
+     * \param sender Signal whose emission is forwarded.
+     * \param receiver Signal emitted by the sender.
+     * \return Connection identifier, usable with disconnect().
      */
     template<typename... Args>
     int connect(Signal<Args...> *sender, Signal<Args...> *receiver) {
         return sender->connect(receiver);
     }
 
-    /// \brief Disconnects a previously connected function.
+    /// Disconnect a slot by the identifier returned from connect().
+    /// \param signal Signal to update.
+    /// \param id Connection identifier.
     template<typename SIGNAL>
     inline void disconnect(SIGNAL *signal, int id) {
         signal->disconnect(id);
     }
 
-    /// \brief Disconnects all previously connected functions.
+    /// Disconnect all slots from a signal.
+    /// \param signal Signal to clear.
     template<typename SIGNAL>
     inline void disconnect_all(SIGNAL *signal) {
         signal->disconnect_all();
@@ -257,6 +302,9 @@ namespace easy3d {
      *         sig_2.connect(overload<int>(&foo)); // sig_2 connects to function #2
      *     \endcode
      * \sa overload(void (C::*func)(Args...))
+     * \tparam Args Function parameter types.
+     * \param func Overloaded function pointer to disambiguate.
+     * \return The same function pointer with its parameter types fixed.
      */
     template <typename... Args>
     inline constexpr auto overload(void (*func)(Args...)) -> void (*)(Args...) {
@@ -280,6 +328,10 @@ namespace easy3d {
      *         sig_2.connect(overload<int>(&foo::bar)); // sig_2 connects to function #2
      *     \endcode
      * \sa overload(void (*func)(Args...))
+     * \tparam C Class declaring the member function.
+     * \tparam Args Function parameter types.
+     * \param func Overloaded member-function pointer to disambiguate.
+     * \return The same member-function pointer with its parameter types fixed.
      */
     template <typename C, typename... Args>
     inline constexpr auto overload(void (C::*func)(Args...)) -> void (C::*)(Args...) {

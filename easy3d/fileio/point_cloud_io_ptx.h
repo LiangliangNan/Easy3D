@@ -28,6 +28,7 @@
 #define EASY3D_FILEIO_POINT_CLOUD_IO_PTX_H
 
 #include <string>
+#include <fstream>
 
 namespace easy3d {
 
@@ -125,10 +126,24 @@ namespace easy3d {
 		class PointCloudIO_ptx
 		{
 		public:
+            /**
+             * \brief Open a PTX file for sequential scan loading.
+             * \param file_name Path to an ASCII PTX file.
+             *
+             * The file is opened lazily by the first call to load_next().
+             */
 			explicit PointCloudIO_ptx(const std::string& file_name);
+            /// Close the input file and release the stream resources.
 			~PointCloudIO_ptx();
 
-			/// \brief Reads a single point cloud from the file.
+			/**
+             * \brief Read the next scan from the PTX file.
+             * \return Newly allocated point cloud owned by the caller, or nullptr at end of file, for a scan
+             *         with at most one point, or on an open, parse, or cancellation failure.
+             *
+             * Each successful call returns one scan, with its stored transform applied to point coordinates.
+             * Call repeatedly until nullptr is returned.
+             */
 			PointCloud* load_next();
 
 		private:
@@ -144,4 +159,3 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_FILEIO_POINT_CLOUD_IO_PTX_H
-

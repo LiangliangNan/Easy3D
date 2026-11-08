@@ -48,28 +48,28 @@ namespace easy3d {
         /**
          * @brief Tests if 'path' is an existing file.
          * @param path The full path of a file (including file extension).
-         * @return ture If the file 'path' exists.
+         * @return True if \p path exists and is a regular file.
          */
         bool    is_file(const std::string& path);
 
         /**
          * @brief Tests if 'path' is an existing directory.
          * @param path The full path of a directory.
-         * @return ture If the directory 'path' exists.
+         * @return True if \p path exists and is a directory (a filesystem root is considered a directory).
          */
         bool	is_directory(const std::string& path);
 
         /**
          * @brief Creates a directory entitled 'path'.
          * @param path The full path of the directory to be created.
-         * @return ture If the directory has been successfully created or already exists.
+         * @return True if the directory exists or was created successfully.
          */
         bool	create_directory(const std::string& path);
 
         /**
          * @brief Deletes the file 'path'.
          * @param path The full path of a file.
-         * @return ture If the file has been successfully deleted or doesn't exist.
+         * @return True if the file was removed; false if it does not exist or cannot be removed.
          * @todo [Liangliang] Test if path should be absolute.
          */
         bool	delete_file(const std::string& path);
@@ -77,7 +77,7 @@ namespace easy3d {
         /**
          * @brief Deletes the directory 'path' (and its contents will be deleted recursively).
          * @param path The full path of a directory.
-         * @return ture If the directory has been successfully deleted or doesn't exist.
+         * @return True if the directory was removed or did not exist; false if removal failed.
          * @todo [Liangliang] Test if path should be absolute.
          */
         bool	delete_directory(const std::string& path);
@@ -85,7 +85,7 @@ namespace easy3d {
         /**
          * @brief Deletes the contents of the directory 'path' (the directory will not be deleted).
          * @param path The full path of a directory.
-         * @return ture If the contents of directory have been successfully deleted or don't exist.
+         * @return True if the contents were removed or the path is not a directory; false if removal failed.
          * @todo [Liangliang] Test if path should be absolute.
          */
         bool	delete_contents(const std::string& path);
@@ -244,11 +244,10 @@ namespace easy3d {
         std::string path_root(const std::string& path);
 
         /**
-        * @brief Tests if path is absolute, as !get_path_root(path).empty(). .
-        * @param path The path.
-        * @return true if the path is absolute.
+        * \brief Test whether the path has a root component.
+        * \param path Path to inspect.
+        * \return True if the path has a root component.
         */
-        /** Tests if path is absolute, as !get_path_root(path).empty(). */
         bool    is_absolute_path(const std::string& path);
 
         /**
@@ -301,8 +300,9 @@ namespace easy3d {
         char native_path_separator();
 
         /**
-         * @brief Checks sif the path contains only the current platform's path separators.
-         * @return true if the path contains only the current platform's path separators.
+         * @brief Check whether the path uses only the current platform's path separator.
+         * @param path Path to inspect.
+         * @return True if all path separators use the platform-native style.
          */
         bool is_native_style(const std::string& path);
 

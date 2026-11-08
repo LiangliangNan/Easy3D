@@ -57,18 +57,14 @@ namespace easy3d {
 
         /**
          * @brief Initializes the logging module.
-         * @param info_to_stdout \c true to log messages at a the \c INFO level to standard output.
-         * @param warning_to_stdcout \c true to log messages at a the \c WARNING level to standard output.
-         * @param error_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
-         * @param verbose_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
-		 * @param log_file A string specifying the name of log file. Three different values are accepted:
-         *    - "": an empty string, indicating that no log file will be created.
-		 *    - "default": create a log file with a title in the form "AppName.log" next to the executable file.
-		 *    - any non-empty string: (if it is a valid path) a log file with the same name will be created and log
-         *      messages will be written to this file.
-         * @param verbosity_threshold A \c VLOG(level) with \c level <= \c verbosity_threshold will be written into the
-         *      log file (if specified). Value must be in the range [0, 9]. Default is 0.
-         * @note This initialization is optional. If not called, log messages will be written to standard output only.
+         * @param info_to_stdout Whether \c INFO messages are written to standard output.
+         * @param warning_to_stdcout Whether \c WARNING messages are written to standard output.
+         * @param error_to_stdcout Whether \c ERROR and \c FATAL messages are written to standard output.
+         * @param verbose_to_stdcout Whether \c VLOG messages are written to standard output.
+		 * @param log_file Log destination: empty disables file logging; \c "default" selects an application-named
+         *                 log file; any other value is treated as a path.
+         * @param verbosity_threshold Maximum verbose logging level, in the range [0, 9].
+         * @note Initialization is optional. Calling it more than once leaves the existing configuration unchanged.
          */
         void initialize(
                 bool info_to_stdout = false,
@@ -79,10 +75,10 @@ namespace easy3d {
                 int verbosity_threshold = 9
         );
 
-        /// Returns whether the logging has been initialized.
+        /// \return Whether initialize() has successfully configured logging.
         bool is_initialized();
 
-        /// Returns the full path of the log file (empty if no log file has been created).
+        /// \return The log file path, or an empty string if file logging is unavailable or disabled.
         std::string log_file();
 
         /// Base class for a logger (that can log messages to whatever)
@@ -91,7 +87,11 @@ namespace easy3d {
         class Logger {
         public:
             Logger();
-            /// writes the log message \p msg (and may also other given information).
+            /**
+             * \brief Receives a log message.
+             * \param level Severity level of the message.
+             * \param msg Message text.
+             */
             virtual void send(el::Level level, const std::string& msg) = 0;
         };
 

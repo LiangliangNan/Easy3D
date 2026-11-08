@@ -37,7 +37,8 @@ namespace easy3d {
 
 
     /**
-     * \brief Implementation of file input/output operations for PolyMesh.
+     * \brief Load and save polyhedral meshes using extension-selected formats.
+     * \details The convenience interface currently supports the ASCII \c .plm format.
      * \class PolyMeshIO easy3d/fileio/poly_mesh_io.h
      */
 	class PolyMeshIO
@@ -46,20 +47,16 @@ namespace easy3d {
 
         /**
          * \brief Reads a polyhedral mesh from a file.
-         * \details File extension determines file format (now only '*.plm' format is supported).
-         * \param file_name The file name.
-         * \return The pointer of the polyhedral mesh (nullptr if failed).
+         * \param file_name Input \c .plm path.
+         * \return Newly allocated mesh owned by the caller, or nullptr if loading fails.
          */
 		static PolyMesh* load(const std::string& file_name);
 
         /**
          * \brief Saves a polyhedral mesh to a file.
-         * \details File extension determines file format (now only '*.plm' format is supported).
-         * \param file_name The file name.
-         * \param mesh The polyhedral mesh.
-         * \return The status of the operation
-         *      \arg true if succeeded
-         *      \arg false if failed
+         * \param file_name Output \c .plm path.
+         * \param mesh Polyhedral mesh to write.
+         * \return True on success; false for an unsupported extension or I/O/format failure.
          */
 		static bool	save(const std::string& file_name, const PolyMesh* mesh);
 	};
@@ -67,19 +64,37 @@ namespace easy3d {
 
     namespace io {
 
-        /// Reads a polyhedral mesh from a \p PM format file. This is the built-in binary format of Easy3D.
+        /// Read a polyhedral mesh from Easy3D's binary \c .pm format.
+        /// \param file_name Input path.
+        /// \param mesh Destination mesh.
+        /// \return True on success; false on an I/O or format error.
         bool load_pm(const std::string& file_name, PolyMesh* mesh);
-        /// Saves a polyhedral mesh to a \p PM format file. This is the built-in binary format of Easy3D.
+        /// Save a polyhedral mesh in Easy3D's binary \c .pm format.
+        /// \param file_name Output path.
+        /// \param mesh Mesh to write.
+        /// \return True on success; false on an I/O error.
         bool save_pm(const std::string& file_name, const PolyMesh* mesh);
 
-        /// Reads a polyhedral mesh from a \p PLM format file. This is the built-in ASCII format of Easy3D.
+        /// Read a polyhedral mesh from Easy3D's ASCII \c .plm format.
+        /// \param file_name Input path.
+        /// \param mesh Destination mesh.
+        /// \return True on success; false on an I/O or format error.
         bool load_plm(const std::string& file_name, PolyMesh* mesh);
-        /// Saves a polyhedral mesh to a \p PLM format file. This is the built-in ASCII format of Easy3D.
+        /// Save a polyhedral mesh in Easy3D's ASCII \c .plm format.
+        /// \param file_name Output path.
+        /// \param mesh Mesh to write.
+        /// \return True on success; false on an I/O error.
         bool save_plm(const std::string& file_name, const PolyMesh* mesh);
 
-        /// Reads a polyhedral mesh from a \p MESH format file. This ASCII format is supported by Tetgen and Medit.
+        /// Read a polyhedral mesh from the TetGen/Medit ASCII \c .mesh format.
+        /// \param file_name Input path.
+        /// \param mesh Destination mesh.
+        /// \return True on success; false on an I/O or parse error.
         bool load_mesh(const std::string& file_name, PolyMesh* mesh);
-        /// Saves a polyhedral mesh to a \p MESH format file. This ASCII format is supported by Tetgen and Medit.
+        /// Save a polyhedral mesh to the TetGen/Medit ASCII \c .mesh format.
+        /// \param file_name Output path.
+        /// \param mesh Mesh to write.
+        /// \return True on success; false on an I/O error.
         bool save_mesh(const std::string& file_name, const PolyMesh* mesh);
 
     } // namespace io

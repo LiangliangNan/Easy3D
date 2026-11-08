@@ -64,7 +64,7 @@ namespace easy3d {
          * \param requested_channels User requested image channels. If non-zero, force to treat the image as if it has
          *		this number of components. For example, if you set it 4,  you will always get RGBA output, but you can
          *		check channels to get the actual number of channels.
-         * \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+         * \param flip_vertically Flip the image data vertically if true (default value). This is convenient for
          *		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
          *		of the image.
          * \return true on success or false if failed.
@@ -101,9 +101,9 @@ namespace easy3d {
 		 *                  | 4            | Red, Green, Blue, Alpha |
          * \param width The width of the image, in pixels.
          * \param height The height of the image, in pixels.
-         * \param channels The number of 8-bit image channels per pixel.
+         * \param channels Number of 8-bit image channels per pixel (must be between 1 and 4).
          * \param flip_vertically Flip the image data vertically before writing.
-         * \return Return true on success or false if failed.
+         * \return True on success; false for unsupported dimensions/channel counts, insufficient data, or write failure.
          */
         static bool	save(
                 const std::string& file_name,
@@ -120,23 +120,38 @@ namespace easy3d {
 	namespace io {
 
         /**
-          * Some image IO functions I wrote years ago, and I just want to keep them here. Users should use ImageIO.
-          * \attention These functions assume specific input storage.
+          * Legacy image writers. Prefer ImageIO::save(), which accepts an explicit channel count and handles
+          * orientation and format-specific encoding.
           */
 
 
         /**
-         * \attention This function assumes that each pixel has 3 channels in RGB order.
+         * \brief Write RGB pixel data as a PPM image.
+         * \param file_name Output path.
+         * \param bits Packed RGB bytes, three per pixel.
+         * \param width Image width in pixels.
+         * \param height Image height in pixels.
+         * \return True on success; false if writing fails.
          */
         bool save_ppm(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
         /**
-         * \attention This function assumes that each pixel has 4 channels in BGRA order.
+         * \brief Write BGRA pixel data as a BMP image.
+         * \param file_name Output path.
+         * \param bits Packed BGRA bytes, four per pixel.
+         * \param width Image width in pixels.
+         * \param height Image height in pixels.
+         * \return True on success; false if writing fails.
          */
         bool save_bmp(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
         /**
-         * \attention This function assumes that each pixel has 4 channels in BGRA order.
+         * \brief Write BGRA pixel data as a TGA image.
+         * \param file_name Output path.
+         * \param bits Packed BGRA bytes, four per pixel.
+         * \param width Image width in pixels.
+         * \param height Image height in pixels.
+         * \return True on success; false if writing fails.
          */
         bool save_tga(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 

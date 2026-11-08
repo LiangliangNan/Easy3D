@@ -39,8 +39,10 @@
 namespace easy3d {
 
     /**
-     * \brief A high resolution stop watch/timer.
-     * \details This timer is able to measure the elapsed time with 1 micro-second accuracy on Windows, Linux, and Unix.
+     * \brief Measures elapsed wall-clock time.
+     * \details The timer starts on construction and uses the platform's elapsed-time clock
+     *          (QueryPerformanceCounter on Windows and gettimeofday elsewhere). Its resolution and
+     *          behavior if the system clock changes are platform-dependent.
      *  Usage example:
      *      \code
      *          StopWatch w ;
@@ -54,20 +56,27 @@ namespace easy3d {
      */
     class StopWatch {
     public:
-        /// default constructor. The watch will automatically start after construction.
+        /// Constructs and starts the watch.
         StopWatch();
-        /// destructor.
         ~StopWatch() = default;
 
-        /// starts the timer
+        /// Starts or restarts the watch from zero.
         void start();
-        /// restarts the timer. It has the same effect as start()
+        /// Restarts the watch; equivalent to start().
         void restart();
 
-        /// returns user elapsed time (in seconds) since the construction / start.
+        /**
+         * \brief Get the elapsed time since construction or the most recent start.
+         * \param num_digits Number of decimal places retained in the returned value.
+         * \return Elapsed seconds, rounded to \p num_digits decimal places.
+         */
         double elapsed_seconds(int num_digits = 1) const;
 
-        /// the elapsed time string, e.g., 88ms, 2.3s, 1.7m, 0.1h. This function automatically determines the best unit.
+        /**
+         * \brief Format elapsed time using a unit selected from milliseconds, seconds, minutes, hours, or days.
+         * \param num_digits Number of digits after the decimal point.
+         * \return Formatted elapsed time.
+         */
         std::string time_string(int num_digits = 1) const;
 
     private:
@@ -86,4 +95,3 @@ namespace easy3d {
 
 
 #endif  // EASY3D_UTIL_STOP_WATCH_H
-

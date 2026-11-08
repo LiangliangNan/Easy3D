@@ -38,13 +38,17 @@ namespace easy3d {
     /// \namespace easy3d::resource
     namespace resource {
 
-        /// \brief Initializes the resource directory (that contains color maps, shaders, textures, fonts, etc.).
+        /// \brief Selects the resource directory (containing color maps, shaders, textures, fonts, etc.).
         /// \details \c Easy3D_RESOURCE_DIR is the default value, which is the directory coming with the Easy3D
-        ///     distribution. In most cases you should use the default resource directory (unless you want to use
-        ///     different resources).
+        ///     distribution. The supplied directory is selected only if it contains the required resource
+        ///     subdirectories; an invalid directory leaves the current selection unchanged.
+        /// \param resource_dir Candidate resource directory.
         void initialize(const std::string& resource_dir = Easy3D_RESOURCE_DIR);
 
-        /// Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)
+        /// \brief Get the selected resource directory.
+        /// \details If the selected path is invalid, searches locations relative to the executable; if none
+        ///          contains valid resources, logs an error and returns the current working directory.
+        /// \return A resource directory path.
         std::string directory();
 
 

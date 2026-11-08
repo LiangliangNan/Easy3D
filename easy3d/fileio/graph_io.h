@@ -35,24 +35,25 @@ namespace easy3d {
 
     class Graph;
 
-    /// \brief Implementation of file input/output operations for Graph (Currently only PLY format is supported).
+    /// \brief Load and save graphs in PLY format.
     /// \class GraphIO easy3d/fileio/graph_io.h
     class GraphIO
 	{
 	public:
         /**
          * \brief Reads a graph from file \p file_name.
-         * \return The pointer of the graph (nullptr if failed).
-         * \details File extension determines file format (currently only PLY format is supported).
+         * \param file_name Input PLY path.
+         * \return Newly allocated graph owned by the caller, or nullptr if loading fails.
+         * \details The PLY extension is matched case-insensitively.
          */
         static Graph* load(const std::string& file_name);
 
         /**
          * \brief Saves \p graph to file \p file_name.
          * \details File extension determines file format (currently only PLY format is supported).
-         * \return The status of the operation
-         *      \arg true if succeeded
-         *      \arg false if failed
+         * \param file_name Output path.
+         * \param graph Graph to write.
+         * \return True on success; false for an unsupported extension or I/O/format failure.
          */
         static bool	save(const std::string& file_name, const Graph* graph);
 	};
@@ -60,20 +61,18 @@ namespace easy3d {
     namespace io {
 
         /**
-         * \brief Loads \p graph from a PLY file \p file_name.
-         * \return The status of the operation
-         *      \arg true if succeeded
-         *      \arg false if failed
+         * \brief Load a graph from PLY.
+         * \param file_name Input path.
+         * \param graph Destination graph.
+         * \return True on success; false on an I/O or parse error.
          */
         bool load_ply(const std::string& file_name, Graph* graph);
         /**
-         * \brief Saves \p graph into a PLY file \p file_name.
-         * \param file_name The full path of the file.
-         * \param graph The graph.
-         * \param binary \c true for binary format, otherwise ASCII format.
-         * \return The status of the operation
-         *      \arg \c true if succeeded
-         *      \arg \c false if failed
+         * \brief Save a graph to PLY.
+         * \param file_name Output path.
+         * \param graph Graph to write.
+         * \param binary True to write binary PLY; false to write ASCII PLY.
+         * \return True on success; false on an I/O or format error.
          */
         bool save_ply(const std::string& file_name, const Graph* graph, bool binary = true);
 

@@ -41,7 +41,8 @@ namespace easy3d {
 	public:
 
         /**
-         * \brief Returns the instance of the translator
+         * \brief Get the process-wide translator instance.
+         * \return Pointer to the shared Translator; ownership remains with the library.
          */
        static Translator* instance();
 

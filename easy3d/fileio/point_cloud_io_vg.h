@@ -70,16 +70,16 @@ namespace easy3d {
          *       num_groups: M      // M is an integer denoting the number of segments/primitives/objects in this point cloud (can be 0)
          *
          *       // now the information for the 1st segment/primitive/object
-         *       group_type: type           // integer denoting the of the segment (0: PLANE, 1: CYLINDER, 2: SPHERE, 3: CONE, 4: TORUS, 5: GENERAL)
+         *       group_type: type           // integer: 0 PLANE, 1 SPHERE, 2 CYLINDER, 3 CONE, 4 TORUS, 5 GENERAL
          *       num_group_parameters: NUM_GROUP_PARAMETERS    // integer number denoting the number of floating point values representing the segment (e.g., 4 for planes)
          *       group_parameters: float[NUM_GROUP_PARAMETERS] // a sequence of NUM_GROUP_PARAMETERS floating point numbers (e.g., a, b, c, and d for a plane)
          *       group_label: label         // the label (a string) of the segment
          *       group_color: r g b         // 3 floating point numbers denoting the color of this segment
-         *       group_num_points: N        // N is an integer denoting the number of points in this segment (can be 0)
+         *       group_num_point: N         // N is the number of point indices in this group (can be 0)
          *       id1 ... idN                // N integer numbers denoting the indices of the points in this segment
          *       num_children: num          // a segment/primitive/object may contain subsegment (that has the same representation as this segment)
          *       ...
-         *       group_type: type           // integer denoting the of the segment (0: PLANE, 1: CYLINDER, 2: SPHERE, 3: CONE, 4: TORUS, 5: GENERAL)
+         *       group_type: type           // integer: 0 PLANE, 1 SPHERE, 2 CYLINDER, 3 CONE, 4 TORUS, 5 GENERAL
          *       num_group_parameters: NUM_GROUP_PARAMETERS    // integer number denoting the number of floating point values representing the segment (e.g., 4 for planes)
          *       group_parameters: float[NUM_GROUP_PARAMETERS] // a sequence of NUM_GROUP_PARAMETERS floating point numbers (e.g., a, b, c, and d for a plane)
          *       group_label: label         // the label (a string) of the segment
@@ -97,38 +97,30 @@ namespace easy3d {
             /**
              * \brief Reads a point cloud from an ASCII file.
              * \param file_name The file name.
-             * \param cloud The point cloud to write to.
-             * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
+             * \param cloud Destination point cloud, populated on success.
+             * \return True on success; false on an I/O or format error.
              */
             static bool load_vg(const std::string& file_name, PointCloud* cloud);
             /**
              * \brief Saves a point_cloud to an ASCII file.
              * \param file_name The file name.
-             * \param cloud The point cloud.
-             * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
+             * \param cloud Point cloud to write.
+             * \return True on success; false on an I/O or format error.
              */
             static bool save_vg(const std::string& file_name, const PointCloud* cloud);
 
             /**
              * \brief Reads a point cloud from a binary file.
              * \param file_name The file name.
-             * \param cloud The point cloud to write to.
-             * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
+             * \param cloud Destination point cloud, populated on success.
+             * \return True on success; false on an I/O or format error.
              */
             static bool load_bvg(const std::string& file_name, PointCloud* cloud);
             /**
              * \brief Saves a point_cloud to a binary file.
              * \param file_name The file name.
-             * \param cloud The point cloud.
-             * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
+             * \param cloud Point cloud to write.
+             * \return True on success; false on an I/O or format error.
              */
             static bool save_bvg(const std::string& file_name, const PointCloud* cloud);
 
@@ -187,4 +179,3 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_FILEIO_POINT_CLOUD_IO_VG_H
-

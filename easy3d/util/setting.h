@@ -40,23 +40,29 @@ namespace easy3d {
     namespace setting {
 
         /**
-         * \brief Initializes the default setting for rendering.
-         * \details By calling this function with a valid file name, a setting file with an extension ".ini" will be
-         *    created on the first startup of the program. This setting file stores the default rendering parameters.
-         *    Users can modify this file to change the default rendering parameters, then the changes will be
-         *    effective for the future.
-		 * @param setting_file A string specifying the name of setting file. Three different values are accepted:
-         *    - ""(an empty string): indicating that no setting file will be created.
-		 *    - "default": create a setting file with a title in the form "AppName.ini" next to the executable file.
-		 *    - any non-empty string: (if it is a valid path) a setting file with the same name will be created and
-         *      rendering parameters will be written to this file.
+         * \brief Load rendering settings from a file, or create that file if it does not exist.
+         * \details The file contains JSON data (the default filename has an \c .ini extension). If the file exists
+         *          and loads successfully, its values replace the current settings; otherwise, the current settings
+         *          are written to the file. Invalid JSON or incompatible value types may throw an exception.
+         * \param setting_file File path, an empty string to disable file access, or \c "default" to use an
+         *                     application-named file next to the executable.
          */
         void initialize(const std::string &setting_file = "default");
 
-        /// Save the setting (i.e., rendering parameters) to a file.
+        /**
+         * \brief Save the rendering settings as JSON.
+         * \param filename Destination file path.
+         * \return True if the file could be opened for writing; false if opening it failed.
+         */
         bool save(const std::string &filename);
 
-        /// Load the setting (i.e., rendering parameters) from a file.
+        /**
+         * \brief Load rendering settings from a JSON file.
+         * \param filename Source file path.
+         * \return True if the file could be opened and parsed; false if opening it failed. Missing setting keys
+         *         leave the corresponding current values unchanged.
+         * \note Invalid JSON or incompatible value types may throw an exception.
+         */
         bool load(const std::string &filename);
 
         /// @brief Background color of the viewer.
