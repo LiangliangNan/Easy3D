@@ -439,11 +439,11 @@ namespace easy3d {
             result.clear();
 
             result.push_back(polygon_a);
-            if (polygon_a.is_clockwise())
+            if (!polygon_a.is_clockwise())
                 result.back().reverse_orientation();
 
             result.push_back(polygon_b);
-            if (!polygon_b.is_clockwise())
+            if (polygon_b.is_clockwise())
                 result.back().reverse_orientation();
 
             tessellate(result, Tessellator::WINDING_POSITIVE);
