@@ -115,6 +115,5 @@ int main(int argc, char **argv) {
                      "Ctrl + u: uniform remeshing (target = 1.5 x average edge length)\n"
                      "Ctrl + a: adaptive remeshing (curvature-driven)");
 
-    viewer.fit_screen();
     return viewer.run();
 }

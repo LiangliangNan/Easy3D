@@ -53,8 +53,8 @@ using namespace easy3d;
 namespace {
 
     void add_noise(SurfaceMesh *mesh) {
-        const float sigma = mesh->bounding_box().diagonal_length() * 0.001f;
-        GaussianNoise::apply(mesh, sigma);
+        const float sigma = mesh->bounding_box().diagonal_length() * 0.005f;
+        GaussianNoise::apply(mesh, sigma, true);
     }
 
     bool noise(Viewer *viewer, Model *model) {
@@ -95,7 +95,7 @@ namespace {
 int main(int argc, char **argv) {
     initialize();
 
-    const std::string file = resource::directory() + "/data/bunny.ply";
+    const std::string file = resource::directory() + "/data/hemisphere.ply";
 
     Viewer viewer(EXAMPLE_TITLE);
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file, true));
@@ -118,6 +118,5 @@ int main(int argc, char **argv) {
                      "Ctrl + c: minimize surface curvature (fairing degree 2)\n"
                      "Ctrl + n: add Gaussian noise again");
 
-    viewer.fit_screen();
     return viewer.run();
 }

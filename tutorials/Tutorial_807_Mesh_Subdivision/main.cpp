@@ -99,6 +99,5 @@ int main(int argc, char **argv) {
                      "Ctrl + l: Loop subdivision\n"
                      "Ctrl + t: sqrt(3) subdivision");
 
-    viewer.fit_screen();
     return viewer.run();
 }

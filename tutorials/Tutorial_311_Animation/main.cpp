@@ -70,8 +70,6 @@ int main(int argc, char **argv) {
     // Add the drawable to the viewer
     viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
 
-    viewer.fit_screen();
-
     // allow animation
     viewer.set_animation(true);
 

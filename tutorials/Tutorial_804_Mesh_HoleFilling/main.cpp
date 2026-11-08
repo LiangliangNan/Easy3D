@@ -67,7 +67,7 @@ namespace {
 int main(int argc, char **argv) {
     initialize();
 
-    const std::string file = resource::directory() + "/data/hemisphere.ply";
+    const std::string file = resource::directory() + "/data/bunny.ply";
 
     Viewer viewer(EXAMPLE_TITLE);
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file, true));
@@ -76,7 +76,9 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    viewer.camera()->setViewDirection(vec3(1, 1, -1));
+    // Turn the camera to look at the bottom of the bunny model
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->setViewDirection(vec3(0, 0, 1));
 
     // Highlight the boundary loops (the holes to be filled).
     auto borders = mesh->renderer()->get_lines_drawable("borders");
@@ -87,6 +89,5 @@ int main(int argc, char **argv) {
     viewer.bind([](Viewer *v, Model *m) { return fill_holes(v, m); }, mesh, Viewer::KEY_F, Viewer::MODIF_CTRL);
     viewer.set_usage("default", "Ctrl + f: fill the holes");
 
-    viewer.fit_screen();
     return viewer.run();
 }

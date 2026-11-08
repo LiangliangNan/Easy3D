@@ -25,19 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-
-namespace {
-const char* const usage_manual = "-------------- Virtual Scanner usage -------------- \n"
-            "- change the view using the mouse.\n"
-            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
-            "  will be captured in a point cloud.\n"
-            "- press 'n' to toggle Gaussian noise.\n"
-            "---------------------------------------------------------- \n";
-const char* const usage_hint = "press 'Space' to perform scanning\n"
-            "press 'n' to toggle Gaussian noise";
-}
-
-
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -48,8 +35,14 @@ const char* const usage_hint = "press 'Space' to perform scanning\n"
 using namespace easy3d;
 
 TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : Viewer(title) {
-    manual_ = usage_manual;
-    hint_ = usage_hint;
+    manual_ = "-------------- Virtual Scanner usage -------------- \n"
+            "- change the view using the mouse.\n"
+            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
+            "  will be captured in a point cloud.\n"
+            "- press 'n' to toggle Gaussian noise.\n"
+            "---------------------------------------------------------- \n";
+    hint_ = "press 'Space' to perform scanning\n"
+            "press 'n' to toggle Gaussian noise";
     camera()->setUpVector(easy3d::vec3(0,1,0));
 }
 

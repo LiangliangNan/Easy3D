@@ -146,9 +146,6 @@ int main(int argc, char **argv) {
 
     //-------------------------------------------------------------
 
-    // Make sure everything is within the visible region of the viewer.
-    viewer.fit_screen();
-
     // run the viewer
     return viewer.run();
 }
@@ -253,9 +250,6 @@ int main(int argc, char **argv) {
     viewer.add_drawable(std::shared_ptr<LinesDrawable>(bbox_drawable));
 
     //-------------------------------------------------------------
-
-    // Make sure everything is within the visible region of the viewer.
-    viewer.fit_screen();
 
     // run the viewer
     return viewer.run();
@@ -385,9 +379,6 @@ int main(int argc, char **argv) {
     bbox_drawable->set_line_width(5.0f);
 
     //-------------------------------------------------------------
-
-    // Make sure everything is within the visible region of the viewer.
-    viewer.fit_screen();
 
     // run the viewer
     return viewer.run();

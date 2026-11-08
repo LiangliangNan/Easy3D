@@ -31,9 +31,11 @@
 #include <easy3d/util/logging.h>
 
 namespace easy3d {
+
     TexturedViewer::TexturedViewer(const std::string& title) : Viewer(title) {
         camera()->setUpVector(vec3(0,1,0));
     }
+
     Model* TexturedViewer::add_model(const std::string& file,bool create) {
         try {
             // Parse before replacing the scene, so read failures retain the current model.

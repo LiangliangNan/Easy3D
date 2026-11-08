@@ -117,6 +117,5 @@ int main(int argc, char **argv) {
         "Ctrl + r: reorient normals");
 
     // run the viewer
-    viewer.fit_screen();
     return viewer.run();
 }

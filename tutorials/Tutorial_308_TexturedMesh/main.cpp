@@ -50,7 +50,6 @@ int main(int argc, char **argv) {
     // create the viewer.
     TexturedViewer viewer(EXAMPLE_TITLE);
 
-
     //----------------------- Load a mesh from a file ------------------------
 
     const std::string &file_name = resource::directory() + "/data/domik/domik.obj";

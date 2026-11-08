@@ -110,6 +110,5 @@ int main(int argc, char **argv) {
                      "Ctrl + u: uniform downsampling to half of the current points\n"
                      "Ctrl + g: grid downsampling (cell size = 2 x average spacing)");
 
-    viewer.fit_screen();
     return viewer.run();
 }

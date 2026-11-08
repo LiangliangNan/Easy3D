@@ -193,6 +193,5 @@ int main(int argc, char **argv) {
                      "Bottom-left: intersection (A & B)\n"
                      "Bottom-right: difference (A - B)");
 
-    viewer.fit_screen();
     return viewer.run();
 }

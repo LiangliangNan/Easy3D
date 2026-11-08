@@ -103,7 +103,8 @@ int main(int argc, char **argv) {
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
     // The mesher appended geometry after attaching the model; refresh its buffers and fit both strings.
-    if (auto* model=viewer.current_model()) model->renderer()->update();
-    viewer.fit_screen();
+    if (auto* model=viewer.current_model())
+        model->renderer()->update();
+
     return viewer.run();
 }

@@ -60,7 +60,6 @@
     - [x] simplification → `Tutorial_806_Mesh_Simplification`
     - [x] subdivision → `Tutorial_807_Mesh_Subdivision`
     - [x] parameterization → `Tutorial_808_Mesh_Parameterization`
-
 - [x] Add the three remaining algorithm tutorials (batch 44): the last `#TODO` placeholders in `tutorials/CMakeLists.txt` are now implemented, built, and smoke-tested on both backends (the underlying algorithms are also covered by `tests/algo`).
     - [x] point-cloud down-sampling → `Tutorial_704_Cloud_DownSampling` (Ctrl+U uniform / Ctrl+G grid, via `PointCloudSimplification`)
     - [x] mesh fairing → `Tutorial_803_Mesh_Fairing` (Ctrl+A minimize area / Ctrl+C minimize curvature, via `SurfaceMeshFairing`; noise added at startup)
@@ -78,9 +77,7 @@
 
 
 ### About deployment on mac:
-Missing or Invalid Code Signature:
-The application or one of its dependencies is not properly code-signed.
-
+Missing or Invalid Code Signature: The application or one of its dependencies is not properly code-signed.
 Solution: 
 - Re-sign the application and all its dependencies using the codesign tool. This will ensure that all libraries and frameworks are properly signed.
     `codesign --force --deep --sign - Mapple.app`

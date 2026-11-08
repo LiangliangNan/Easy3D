@@ -50,8 +50,9 @@ using namespace easy3d;
 namespace {
 
     void add_noise(SurfaceMesh *mesh) {
-        const float sigma = mesh->bounding_box().diagonal_length() * 0.01f;
+        const float sigma = mesh->bounding_box().diagonal_length() * 0.003f;
         GaussianNoise::apply(mesh, sigma);
+        mesh->renderer()->update();
     }
 
     bool noise(Viewer *viewer, Model *model) {
@@ -92,9 +93,9 @@ namespace {
 int main(int argc, char **argv) {
     initialize();
 
-    const std::string file = resource::directory() + "/data/bunny.ply";
-
     Viewer viewer(EXAMPLE_TITLE);
+
+    const std::string file = resource::directory() + "/data/bunny.ply";
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file, true));
     if (!mesh) {
         std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
@@ -105,7 +106,6 @@ int main(int argc, char **argv) {
 
     // Perturb the model so the smoothing effect is clearly visible.
     add_noise(mesh);
-    mesh->renderer()->update();
 
     viewer.bind([](Viewer *v, Model *m) { return smooth_explicit(v, m); }, mesh, Viewer::KEY_E, Viewer::MODIF_CTRL);
     viewer.bind([](Viewer *v, Model *m) { return smooth_implicit(v, m); }, mesh, Viewer::KEY_I, Viewer::MODIF_CTRL);
@@ -115,6 +115,5 @@ int main(int argc, char **argv) {
                      "Ctrl + i: implicit Laplacian smoothing\n"
                      "Ctrl + n: add Gaussian noise again");
 
-    viewer.fit_screen();
     return viewer.run();
 }

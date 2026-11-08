@@ -25,16 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-
-namespace {
-const char* const usage_hint = "Left button:  rotate the clipping plane    \n"
-            "Right button: translate the clipping plane \n"
-            "Alt + 'c':    enable/disable clipping plane\n"
-            "Alt + 'v':    show/hide clipping plane     \n"
-            "Alt + 'x':    toggle cross-section";
-}
-
-
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
@@ -44,7 +34,11 @@ namespace easy3d {
 CrossSection::CrossSection(const std::string& title) : Viewer(title) {
     // Code of interest: both backends use the shared clipping-plane controller.
     ClippingPlane::instance()->set_enabled(true);
-    hint_ = usage_hint;
+    hint_ = "Left button:  rotate the clipping plane    \n"
+            "Right button: translate the clipping plane \n"
+            "Alt + 'c':    enable/disable clipping plane\n"
+            "Alt + 'v':    show/hide clipping plane     \n"
+            "Alt + 'x':    toggle cross-section";
 }
 
 bool CrossSection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {

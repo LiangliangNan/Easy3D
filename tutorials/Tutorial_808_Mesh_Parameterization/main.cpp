@@ -98,6 +98,5 @@ int main(int argc, char **argv) {
                      "Ctrl + a: harmonic parameterization\n"
                      "Ctrl + l: least squares conformal mapping (LSCM)");
 
-    viewer.fit_screen();
     return viewer.run();
 }

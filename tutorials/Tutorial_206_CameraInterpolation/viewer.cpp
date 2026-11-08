@@ -25,13 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-
-namespace {
-const char* const usage_hint = "Press 'k' to add key frames\n"
-            "Press 'space' to start/stop the animation\n"
-            "Press 'd' to delete the camera path";
-}
-
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -48,8 +41,9 @@ TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& titl
     : Viewer(title)
 {
     show_camera_path_ = true;
-
-    hint_ = usage_hint;
+    hint_ = "Press 'k' to add key frames\n"
+            "Press 'space' to start/stop the animation\n"
+            "Press 'd' to delete the camera path";
 }
 
 

@@ -104,6 +104,5 @@ int main(int argc, char **argv) {
                      "Ctrl + g: Gaussian curvature\n"
                      "Ctrl + k: maximum absolute curvature");
 
-    viewer.fit_screen();
     return viewer.run();
 }

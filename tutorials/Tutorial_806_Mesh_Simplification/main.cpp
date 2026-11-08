@@ -87,6 +87,5 @@ int main(int argc, char **argv) {
     viewer.bind([](Viewer *v, Model *m) { return simplify(v, m); }, mesh, Viewer::KEY_D, Viewer::MODIF_CTRL);
     viewer.set_usage("default", "Ctrl + d: simplify to half of the current vertices");
 
-    viewer.fit_screen();
     return viewer.run();
 }
