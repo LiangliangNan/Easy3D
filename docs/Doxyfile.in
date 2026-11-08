@@ -832,7 +832,19 @@ EXCLUDE_SYMLINKS       = NO
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/tutorials/*.h
+EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/tutorials/*.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/opengl/* \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/clipping.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/clipping.cpp \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/dispatch_functions.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/loader.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/drawable.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/clipping_plane.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/key_frame_interpolator.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/*.cpp \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/frame.cpp \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/manipulated_frame.cpp \
+                         @PROJECT_SOURCE_DIR@/easy3d/viewer/backends/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the

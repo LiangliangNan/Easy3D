@@ -367,7 +367,7 @@ public:
     /// Destroy the backend device.
     virtual ~RenderDevice() = default;
     /// Return a human-readable backend/device name.
-    virtual     /// \return Backend/device name.
+    /// \return Backend/device name.
     virtual const std::string& name() const = 0;
     // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
     // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
