@@ -1006,14 +1006,24 @@ bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
                 pivot_expires_ = std::chrono::steady_clock::now()+std::chrono::seconds(10);
             }
             if (found && pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+#if 1   // with animation
+                camera()->interpolateToLookAt(point);
+#else   // without animation
                 // Apply the legacy zoom target directly on the UI thread.
                 camera()->setPosition(0.1f*camera()->position()+0.9f*point);
                 camera()->lookAt(point);
+#endif
             }
         } else if (button == BUTTON_RIGHT) {
             camera()->setPivotPoint(camera()->sceneCenter());
             show_pivot_point_ = false;
-            if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) camera()->showEntireScene();
+            if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+#if 1   // with animation
+                camera()->interpolateToFitScene();
+#else   // without animation
+                camera()->showEntireScene();
+#endif
+            }
         }
     }
     update_interaction_overlays(true);
