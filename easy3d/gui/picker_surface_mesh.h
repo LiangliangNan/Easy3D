@@ -40,8 +40,8 @@ namespace easy3d {
     /**
      * \brief Implementation of picking elements (i.e, vertices, faces, edges) from a surface mesh.
      * \class SurfaceMeshPicker easy3d/gui/picker_surface_mesh.h
-     * \details Coordinates follow Camera::projectedCoordinatesOf(). Callers convert
-     *      window coordinates to the camera's screen size.
+     * \details Coordinates use the camera's logical screen extent; on HiDPI displays
+     *      this differs from framebuffer pixels.
      *      A single-face pick renders the visible face drawable into a private
      *      primitive-ID/depth target, including active clipping planes, then decodes
      *      the cursor pixel and maps the triangle index back to its original face.
@@ -49,7 +49,8 @@ namespace easy3d {
      *      edge selection then snaps within the picked face using the picker
      *      resolution. Region selection remains geometric through-selection: all
      *      original face vertices must be inside the region, camera frustum and
-     *      clipping planes.
+     *      clipping planes. Vulkan face picking also requires CPU-side drawable
+     *      buffers so the rasterized triangle can be mapped back to a source face.
      *      Like all pickers, it acts on the supplied model and never traverses a
      *      Viewer's scene; use Viewer::pick() to identify the hit drawable first
      *      (see Picker for the division of work).
@@ -59,7 +60,7 @@ namespace easy3d {
     public:
         /**
          * \brief Constructor.
-         * \param cam The camera used for picking.
+         * \param cam Non-null camera used for picking; it is borrowed and must outlive the picker.
          */
         explicit SurfaceMeshPicker(const Camera *cam);
         /**
@@ -70,15 +71,15 @@ namespace easy3d {
         //------------------ sensitivity  ---------------------
 
         /**
-         * \brief Returns the picker resolution (in pixels).
-         * \details The picker resolution indicates the sensitivity for picking a vertex or an edge.
-         * \return The picker resolution in pixels.
+         * \brief Returns the vertex/edge hit tolerance in logical screen units.
+         * \details The tolerance is a radius around the cursor, measured in the same logical units as pick coordinates.
+         * \return The hit tolerance.
          */
         unsigned int resolution() const { return hit_resolution_; }
         /**
-         * \brief Sets the picker resolution (in pixels).
-         * \details The picker resolution indicates the sensitivity for picking a vertex or an edge.
-         * \param r The new picker resolution in pixels.
+         * \brief Set the vertex/edge hit tolerance in logical screen units.
+         * \details The tolerance is a radius around the cursor, measured in the same logical units as pick coordinates.
+         * \param r New hit tolerance.
          */
         void set_resolution(unsigned int r) { hit_resolution_ = r; }
 
@@ -86,7 +87,7 @@ namespace easy3d {
 
         /**
          * \brief Pick a face from a surface mesh given the cursor position.
-         * \param model The surface mesh model.
+         * \param model Surface mesh with a visible face drawable.
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked face, or an invalid face if no face is under the cursor.
@@ -104,7 +105,7 @@ namespace easy3d {
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked vertex, or an invalid vertex if no vertex is within the hit resolution.
          * \note The method first picks the face under the cursor, then searches for the closest vertex of that
-         *       face within the picker resolution (in logical window pixels).
+         *       face within the hit tolerance.
          */
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, int x, int y);
 
@@ -115,7 +116,7 @@ namespace easy3d {
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked halfedge, or an invalid halfedge if no edge is within the hit resolution.
          * \note The method first picks the face under the cursor, then searches for the closest edge of that
-         *       face within the picker resolution (in logical window pixels).
+         *       face within the hit tolerance.
          */
         SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, int x, int y);
 
@@ -126,8 +127,8 @@ namespace easy3d {
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked vertex, or an invalid vertex if no vertex is within the hit resolution.
-         * \note This overload skips the face picking step when the face is already known. The picked_face
-         *       must have been obtained from a prior call to pick_face().
+         * \note Skips face rasterization. \p picked_face and \p model must match the face/model from the most recent
+         *       successful pick_face() call; otherwise an invalid vertex is returned.
          */
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
@@ -138,8 +139,8 @@ namespace easy3d {
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked halfedge, or an invalid halfedge if no edge is within the hit resolution.
-         * \note This overload skips the face picking step when the face is already known. The picked_face
-         *       must have been obtained from a prior call to pick_face().
+         * \note Skips face rasterization. \p picked_face and \p model must match the face/model from the most recent
+         *       successful pick_face() call; otherwise an invalid halfedge is returned.
          */
         SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
@@ -169,10 +170,10 @@ namespace easy3d {
         //------------------ multiple selection of faces ------------------
 
         /**
-         * \brief Pick faces of a surface mesh by a rectangle.
+         * \brief Return faces of a surface mesh fully inside a rectangle.
          * \param model The surface mesh model.
-         * \param rect The rectangle region in logical window coordinates (top-left origin).
-         * \return The faces selected during this operation (regardless of their previous status).
+         * \param rect Rectangle in logical window coordinates (top-left origin).
+         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
          * \note The rectangle is evaluated with through-selection: a face is selected when all its vertices
          *       project inside the rectangle, are in front of the camera, and are not clipped. The coordinates
          *       are in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels. Both
@@ -181,13 +182,14 @@ namespace easy3d {
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Rect &rect);
 
         /**
-         * \brief Pick faces of a surface mesh by a polygon/lasso.
+         * \brief Return faces of a surface mesh fully inside a polygon/lasso.
          * \param model The surface mesh model.
-         * \param plg The polygon region in logical window coordinates (top-left origin).
-         * \return The faces selected during this operation (regardless of their previous status).
+         * \param plg Polygon region in logical window coordinates (top-left origin).
+         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
          * \note The polygon is evaluated with through-selection, same as the rectangle overload. The polygon
          *       may be concave; it is given in logical window units (camera()->screenWidth()/Height()), not
-         *       framebuffer pixels. Both OpenGL and Vulkan backends present the same coordinate contract.
+         *       framebuffer pixels. A polygon with fewer than three points or zero area returns no faces.
+         *       This operation does not modify mesh selection properties.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 

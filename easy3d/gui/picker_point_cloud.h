@@ -53,8 +53,8 @@ namespace easy3d {
      *      vertex shader with transform feedback: each shader invocation owns one
      *      32-bit word of the packed selection mask, so no atomics are needed.
      *      Vulkan dispatches an equivalent compute shader. Positions are read
-     *      straight from the rendering buffers in both backends; only the mask
-     *      words travel back to the CPU.
+     *      from rendering buffers when available; otherwise a source-slot snapshot
+     *      is used. Only the packed selection mask travels back to the CPU.
      *
      *      Both paths respect the camera frustum, the model/drawable transform,
      *      clipping planes, indexed drawables, and point impostors, and they report
@@ -72,7 +72,7 @@ namespace easy3d {
     public:
         /**
          * \brief Constructor.
-         * \param cam The camera used for picking.
+         * \param cam Non-null camera used for picking; it is borrowed and must outlive the picker.
          */
         explicit PointCloudPicker(const Camera *cam);
         /**
@@ -82,7 +82,7 @@ namespace easy3d {
 
         /**
          * \brief Pick the visible point at a screen location.
-         * \param model The point cloud model.
+         * \param model Point cloud to query; it is not modified.
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The front-most point covering that pixel, or an invalid vertex if nothing is visible.
@@ -96,26 +96,30 @@ namespace easy3d {
 
         /**
          * \brief Pick vertices of a point cloud by a rectangle.
-         * \param model The point cloud model.
-         * \param rect The rectangle region in logical window coordinates (top-left origin).
-         * \param deselect True to deselect the selected vertices instead of selecting them.
+         * \param model Point cloud whose \c v:select property is updated.
+         * \param rect Rectangle in logical window coordinates (top-left origin).
+         * \param deselect If true, clear selection for vertices inside the region; otherwise select them. Vertices
+         *                 outside the region retain their previous state.
          * \note The rectangle is evaluated on the GPU with through-selection: a point is selected when its
          *       projected center is inside the rectangle, in front of the camera, and not clipped. Occlusion
          *       by other scene geometry is not considered. The coordinates are in logical window units
          *       (camera()->screenWidth()/Height()), not framebuffer pixels. Both OpenGL and Vulkan backends
-         *       present the same coordinate contract. Selected vertices are marked in the "v:select" property.
+         *       present the same coordinate contract. Selected vertices are marked in the \c v:select property.
+         *       A degenerate rectangle selects nothing.
          */
         void pick_vertices(PointCloud *model, const Rect& rect, bool deselect);
 
         /**
          * \brief Pick vertices of a point cloud by a polygon/lasso.
-         * \param model The point cloud model.
-         * \param plg The polygon region in logical window coordinates (top-left origin).
-         * \param deselect True to deselect the selected vertices instead of selecting them.
+         * \param model Point cloud whose \c v:select property is updated.
+         * \param plg Polygon region in logical window coordinates (top-left origin).
+         * \param deselect If true, clear selection for vertices inside the region; otherwise select them. Vertices
+         *                 outside the region retain their previous state.
          * \note The polygon is evaluated on the GPU with through-selection, same as the rectangle overload.
          *       The polygon may be concave; it is given in logical window units (camera()->screenWidth()/Height()),
          *       not framebuffer pixels. Both OpenGL and Vulkan backends present the same coordinate contract.
-         *       Selected vertices are marked in the "v:select" property.
+         *       Selected vertices are marked in the \c v:select property. Polygons with fewer than three vertices
+         *       or zero area select nothing.
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 

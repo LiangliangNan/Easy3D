@@ -50,7 +50,7 @@ namespace easy3d {
     public:
         /**
          * \brief Constructor.
-         * \param cam The camera used for picking.
+         * \param cam Non-null camera used for picking; it is borrowed and must outlive the picker.
          */
         explicit ModelPicker(const Camera *cam);
         /**
@@ -63,10 +63,12 @@ namespace easy3d {
          * \param models The models to pick from.
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
-         * \return The picked model, or nullptr if no model is under the cursor or the coordinate is out of bounds.
+         * \return The visible model at the cursor, or nullptr if the list is empty, the coordinate is out of bounds,
+         *         or no visible drawable covers the pixel.
          * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
          *       On HiDPI displays the logical extent is smaller than the framebuffer by the DPI scaling factor.
-         *       The method renders each visible model with a unique ID into an offscreen target, then samples the
+         *       Null models and models without visible renderers are skipped. The method renders visible drawables
+         *       with their model's unique ID into an offscreen target, then samples the
          *       pixel at (x, y) to determine which model is nearest. Both OpenGL and Vulkan backends present the
          *       same coordinate contract.
          */

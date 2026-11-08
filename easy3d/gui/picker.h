@@ -108,7 +108,7 @@ namespace easy3d {
     public:
         /**
          * \brief Constructor.
-         * \param cam The camera used for picking.
+         * \param cam Non-null camera used for picking; it is borrowed and must outlive the picker.
          */
         explicit Picker(const Camera *cam);
         /**
@@ -129,7 +129,7 @@ namespace easy3d {
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picking line from the near plane through the cursor position into the scene.
-         * \note The coordinate is in logical window units, not framebuffer pixels. On HiDPI displays
+         * \note The coordinate must lie within the camera screen extent and is in logical window units, not framebuffer pixels. On HiDPI displays
          *       the logical extent is camera()->screenWidth()/Height(), which is smaller than the
          *       framebuffer pixel dimensions by the DPI scaling factor.
          */
@@ -185,9 +185,12 @@ namespace easy3d {
          * \param gl_y Returns the y component of the point in OpenGL framebuffer coordinates (bottom-left origin).
          * \param width The width of the OpenGL viewport in framebuffer pixels.
          * \param height The height of the OpenGL viewport in framebuffer pixels.
-         * \note This method is primarily used internally by OpenGL backend pickers to convert logical window
+         * \note The logical coordinate and framebuffer dimensions must describe the same viewport. This method is
+         *       primarily used internally by OpenGL backend pickers to convert logical window
          *       coordinates to framebuffer pixels before calling glReadPixels(). Vulkan pickers sample the
          *       logical coordinate directly through RenderDevice::sample_pixel().
+         * \throws std::invalid_argument if viewport or camera screen dimensions are not positive.
+         * \throws std::out_of_range if the converted coordinate exceeds the integer range.
          */
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
