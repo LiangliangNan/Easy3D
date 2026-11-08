@@ -52,46 +52,64 @@ class TrianglesDrawable;
 class TextRenderer;
 class KeyFrameInterpolator;
 #ifdef EASY3D_HAS_VULKAN
+/**
+ * \brief Options for creating a Vulkan-backed Viewer.
+ * \details Vulkan is selected by the Easy3D build configuration; these
+ * settings do not switch an existing viewer between graphics backends.
+ */
 struct VulkanOptions {
-    // Explicitly requested validation must be available, otherwise creation fails.
+    /// Request Vulkan validation layers; construction fails if they are unavailable.
     bool validation = false;
-    bool sync_validation = false; // also enables validation
-    // Optional physical-device name substring; useful for reproducible CI runs.
+    /// Request synchronization validation; this also enables validation layers.
+    bool sync_validation = false;
+    /// Optional substring used to select a matching physical-device name.
     std::string device_name;
 };
 #else
-    // OpenGL context settings of a viewer window.
-    struct OpenGLOptions {
-        int major = 3;          // must >= 3
-        int minor = 2;          // must >= 2
-        int depth_bits = 24;
-        int stencil_bits = 8;
-    };
-
+/**
+ * \brief Requested OpenGL context settings for a Viewer.
+ * \details OpenGL is selected by the Easy3D build configuration. The requested
+ * context must support at least OpenGL 3.2.
+ */
+struct OpenGLOptions {
+    /// Requested OpenGL context major version (at least 3).
+    int major = 3;
+    /// Requested OpenGL context minor version (at least 2).
+    int minor = 2;
+    /// Requested depth-buffer precision in bits.
+    int depth_bits = 24;
+    /// Requested stencil-buffer precision in bits.
+    int stencil_bits = 8;
+};
 #endif
 /**
  * \brief The default viewer implementation for both OpenGL and Vulkan backends.
- * \details Viewer provides a complete interactive 3D viewing environment. It inherits from ViewerBase
- *      which defines the coordinate system conventions:
- *      - Logical window coordinates (width(), height()): DPI-independent points for UI and events
- *      - Framebuffer coordinates (framebuffer_width(), framebuffer_height()): physical pixels for GPU work
- *      - Mouse/event coordinates: always logical with top-left origin
- *      See ViewerBase documentation for details.
+ * \details Viewer provides a windowed interactive 3D scene, camera controls,
+ * model and drawable management, event handling, picking, and image capture.
+ * The graphics backend is chosen at build time. See ViewerBase for coordinate,
+ * callback, ownership, and frame-lifecycle conventions. Use MultiViewer for a
+ * grid of views or OffScreen for rendering without a displayed window.
+ *
+ * Subclasses may customize the protected drawing and event hooks. Backend
+ * resources must be created and released only while the appropriate graphics
+ * context/device is valid; see init() and cleanup().
  */
 class Viewer : public ViewerBase {
 public:
     // ... some public functions: the unified APIs used by both backends
 
         /**
-         * \brief Constructor.
+         * \brief Create a windowed viewer.
          * \param title The window title, which can be changed by set_title().
          * \param width Initial logical window width (positive).
          * \param height Initial logical window height (positive).
-         * \param samples Requested MSAA sample count; 0 or 1 disables MSAA.
+         * \param samples Requested multisample count; 0 or 1 disables MSAA.
          * \param full_screen Whether to use the primary monitor in fullscreen mode.
          * \param visible Whether the window is initially visible.
          * \param resizable Whether the user can resize the window.
-         * \details The last parameter supplies backend-specific device/context options.
+         * \param options Backend-specific Vulkan device or OpenGL context options.
+         * \details The final options parameter is backend-specific: Vulkan
+         * builds accept VulkanOptions and OpenGL builds accept OpenGLOptions.
          */
 		explicit Viewer(
 			const std::string& title = "Easy3D Viewer",
@@ -103,17 +121,31 @@ public:
 			bool resizable = true,
 
 #ifdef EASY3D_HAS_VULKAN
-            const VulkanOptions& vk_options = {}
+            const VulkanOptions& options = {}
 #else
-            const OpenGLOptions& gl_options = {}
+            const OpenGLOptions& options = {}
 #endif
 		);
 
-        /**
-         * \brief The destructor.
-         */
+        /// Destroy the viewer and release its window and graphics resources.
 		~Viewer() override;
+
+        /**
+         * \brief Return the number of graphics validation errors.
+         * \return The backend's validation-error count; OpenGL builds currently
+         *         report zero.
+         */
         unsigned validation_errors() const override;
+
+        /**
+         * \brief Install or clear the frame-based animation callback.
+         * \param callback Function invoked on the UI thread before the normal
+         *        pre-draw hook for each renderable frame. An empty function
+         *        clears the callback.
+         * \details Install a callback and call set_animation(true) to enable
+         * updates. The callback's return value is advisory; it does not stop
+         * animation automatically.
+         */
         void set_animation_callback(const ViewerBase::AnimationFunction& callback) override {
             if (callback) animation_func_ = [callback](Viewer* viewer) { return callback(viewer); };
             else animation_func_ = nullptr;
@@ -123,20 +155,63 @@ public:
          * \brief Run the viewer.
          * \param see_all See all contents within the screen? If true, the entire scene (i.e., all models) will be
          *      centered on the screen at a proper scale.
+         * \return EXIT_SUCCESS when the loop exits normally, or EXIT_FAILURE
+         *         when a standard exception is reported.
+         * \details Initializes the viewer, optionally fits the complete scene,
+         * and enters the event and rendering loop. Window visibility behavior
+         * depends on the selected backend; use show() or hide() when an
+         * explicit state is required. Use run_frames() when the current camera
+         * must be preserved.
          */
         int run(bool see_all = true) override;
-        // Preserve camera and visibility. Zero runs until closed; a positive
-        // budget counts completed frames, excluding minimized/zero-size frames.
+        /**
+         * \brief Run the viewer loop for a frame budget.
+         * \param max_frames Maximum number of successfully rendered frames;
+         *        zero runs until the viewer is closed.
+         * \return EXIT_SUCCESS on success or EXIT_FAILURE when a standard
+         *         exception is reported by the viewer.
+         * \details Unlike run(), this preserves the current camera and window
+         * visibility. Frames skipped because the window is minimized or has a
+         * zero-sized framebuffer do not count toward the budget.
+         */
         int run_frames(unsigned max_frames = 0) override;
-        // Render one frame, including animation before pre_draw(). Does not poll
-        // events or show/refit the window. Rendering/callback failures throw.
+
+        /**
+         * \brief Render and present at most one frame.
+         * \return True if the frame was rendered and presented; false if the
+         *         window is closed, minimized, or has no drawable framebuffer.
+         * \details Does not poll events, show the window, or fit the scene.
+         * Runs an enabled animation callback before pre_draw(), then invokes
+         * the installed ViewerCallbacks and legacy drawing hooks in frame order.
+         * Exceptions from rendering or callbacks are rethrown.
+         */
         bool draw_frame() override;
+
+        /// Poll pending window-system events without rendering a frame.
         static void poll_events();
+
+        /// Request that the window close; destruction occurs separately.
         void request_close() override;
+
+        /// Returns true after the window has been asked to close.
+        /// \return True when a close request is pending.
         bool should_close() const override;
+
+        /// Show the viewer window.
         void show() override;
+
+        /// Hide the viewer window.
         void hide() override;
-        GLFWwindow* window() const override { return window_; } // borrowed native window; null for windowless Vulkan OffScreen
+
+        /**
+         * \brief Return the borrowed native GLFW window handle.
+         * \return The viewer's window, or nullptr for a windowless Vulkan
+         *         OffScreen host.
+         * \details The viewer owns the handle; callers must not destroy it.
+         * A non-null handle does not by itself guarantee that its graphics
+         * context is current.
+         */
+        GLFWwindow* window() const override { return window_; }
 
         /**
          * \brief Terminate the viewer.
@@ -159,23 +234,32 @@ public:
 		const std::string& title() const override { return title_; }
 
         /**
-         * \brief Set/Change the viewer size.
-         * \param w/h The requested width/height (in pixels) of the viewer.
+         * \brief Set the viewer's logical window size.
+         * \param w Requested logical width.
+         * \param h Requested logical height.
          */
         void resize(int w, int h) override;
 
-        /// \brief Returns the width of the viewer/window.
+        /// Returns the logical width of the viewer window.
+        /// \return Width in logical units.
         int width() const { return width_; }
-        /// \brief Returns the height of the viewer/window.
+        /// Returns the logical height of the viewer window.
+        /// \return Height in logical units.
         int height() const { return height_; }
-        /// \brief Queries the size of the viewer/window.
+        /// Query the logical window size.
+        /// \param w Receives the logical width.
+        /// \param h Receives the logical height.
         void viewer_size(int& w, int& h) const override;
 
-		/// \brief Returns the width of the framebuffer, which is identical to: width() * dpi_scaling().
+		/// Returns the framebuffer width in physical pixels.
+		/// \return Width in pixels.
 		int framebuffer_width() const override;
-		/// \brief Returns the height of the framebuffer, which is identical to: height() * dpi_scaling().
+		/// Returns the framebuffer height in physical pixels.
+		/// \return Height in pixels.
 		int framebuffer_height() const override;
-		/// \brief Queries the size of the framebuffer.
+		/// Query the framebuffer size in physical pixels.
+		/// \param w Receives the framebuffer width.
+		/// \param h Receives the framebuffer height.
 		void framebuffer_size(int& w, int& h) const override;
 
         /**
@@ -189,33 +273,36 @@ public:
         void set_position(int xpos, int ypos) override;
 
         /**
-         * \brief Query the actual samples of the viewer.
-         * \note The requested sample may not be supported by the context or graphics driver. This
-         *       method returns the actual samples that the viewer supports.
+         * \brief Return the effective multisample count.
+         * \details The requested count may be reduced to a supported count
+         * during viewer creation. A result of 1 means multisampling is disabled.
+         * \return Effective sample count.
          */
         int	 samples() const { return samples_ > 1 ? samples_ : 1; }
 
         /**
-         * \brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
+         * \brief Query the framebuffer-to-window scale for high-DPI displays.
          * \return The high DPI scaling factor.
          */
         float dpi_scaling() const override;
 
         /**
-         * \brief Set the background color of the viewer
+         * \brief Set the scene background color.
          * \param color The background color.
          */
         void set_background_color(const vec4& color) override { background_color_ = color; }
 
         /**
-         * \brief Query the background color of the viewer.
-         * \return The background color of the viewer
+         * \brief Return the scene background color.
+         * \return The background color.
          */
         const vec4& background_color() const override { return background_color_; }
 
-        /// \brief Returns the camera used by the viewer. See \c Camera.
+        /// Return the mutable camera owned by the viewer.
+        /// \return Pointer to the viewer-owned camera.
         Camera* camera() override { return camera_.get(); }
-        /// \brief Returns the camera used by the viewer. See \c Camera.
+        /// Return the camera owned by the viewer for read-only access.
+        /// \return Pointer to the viewer-owned camera.
         const Camera* camera() const override { return camera_.get(); }
         //@}
 
@@ -223,13 +310,10 @@ public:
         //@{
 
         /**
-         * \brief Open a model (PointCloud/SurfaceMesh/Graph) from a file into the viewer. On
-         *        success, the viewer will be in charge of the memory management of the model.
-         * \details This method loads a model into the viewer. Internally, it will pop up a file
-         *          dialog for the user to navigate to the file. After loading the model, the
-         *          necessary drawables (e.g., "vertices" for point clouds, "faces" for surface
-         *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
-         * \return true on success and false otherwise.
+         * \brief Load and add a supported model file using a file-selection dialog.
+         * \return True on success, false on cancellation or loading failure.
+         * \details On success, the viewer retains ownership of the model and
+         * creates its standard rendering drawables.
          */
         bool open() override;
 
@@ -246,65 +330,35 @@ public:
         //@{
 
         /**
-         * \brief Add a model from a file to the viewer to be visualized. On success, the viewer
-         *        will be in charge of the memory management of the model. The loaded model can be
-         *        accessed by the 'current_model()' method.
-         * \details This method loads a model into the viewer. It allows the user to control if
-         *          default drawables will be created. The default drawables are
-         *            - for point clouds: "vertices".
-         *            - for surface meshes: "faces", "vertices", "edges", "borders", and "locks".
-         *            - for graphs: "vertices" and "edges".
-         *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
-         *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, you can
-         *          set 'create_default_drawables' to false and create your needed drawables by
-         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of
-         *          "points", "lines", and "triangles'.
-         * \param file_name The string of the file name.
-         * \param create_default_drawables If true, the default drawables will be created.
-         * \return The pointer to the model added to the viewer (nullptr if failed).
-         * \related add_model(Model*, bool).
+         * \brief Add a model loaded from a file.
+         * \param file_name Path to the model file.
+         * \param create_default_drawables If true, create the model's standard
+         *        rendering drawables.
+         * \return The added model, or nullptr if loading or addition fails.
+         * \details On success, the viewer retains ownership of the model. Turn
+         * off default drawable creation when the model will be rendered using
+         * custom drawables.
          */
         Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
 
         /**
-         * \brief Add an existing model to the viewer to be visualized. On success, the viewer will
-         *      be in charge of the memory management of the model.
-         * \details This method adds a model into the viewer. It allows the user to control if
-         *          default drawables will be created. The default drawables are
-         *            - for point clouds: "vertices".
-         *            - for surface meshes: "faces", "vertices", "edges", "borders", and "locks".
-         *            - for graphs: "vertices" and "edges".
-         *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
-         *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, you can
-         *          set 'create_default_drawables' to false and create your needed drawables by
-         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of
-         *          "points", "lines", and "triangles'.
-         * \param model The pointer to the model.
-         * \param create_default_drawables If true, the default drawables will be created.
-         * \return The pointer to the model added to the viewer (nullptr if failed).
-         * \related add_model(const std::string&, bool).
+         * \brief Add an existing model through shared ownership.
+         * \param model Shared pointer to the model.
+         * \param create_default_drawables If true, create the model's standard
+         *        rendering drawables.
+         * \return The added model, or nullptr if addition fails.
+         * \details The viewer retains a shared reference to the model. Turn off
+         * default drawable creation when using custom drawables.
          */
         Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) override;
 		/**
-		 * @brief Add an existing model to the viewer to be visualized. On success, the viewer will
-		 *      be in charge of the memory management of the model.
-		 * @details This method adds a model into the viewer. It allows the user to control if
-		 *          default drawables will be created. The default drawables are
-		 *            - for point clouds: "vertices".
-		 *            - for surface meshes: "faces", "vertices", "edges", "borders", and "locks".
-		 *            - for graphs: "vertices" and "edges".
-		 *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
-		 *          These drawables are usually sufficient for basic rendering of the model. In case
-		 *          the default drawables don't meet the particular visualization purpose, you can
-		 *          set 'create_default_drawables' to false and create your needed drawables by
-		 *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of
-		 *          "points", "lines", and "triangles'.
-		 * @param model The pointer to the model.
-		 * @param create_default_drawables If true, the default drawables will be created.
-		 * @return The pointer to the model added to the viewer (nullptr if failed).
-		 * @sa add_model(const std::string&, bool).
+		 * \brief Add a model supplied as a raw pointer.
+		 * \param model Pointer to the model; ownership is transferred to the viewer.
+		 * \param create_default_drawables If true, create the model's standard
+		 *        rendering drawables.
+		 * \return The added model, or nullptr if addition fails.
+		 * \details Turn off default drawable creation when using custom drawables.
+		 * \sa add_model(std::shared_ptr<Model>, bool)
 		 */
         Model* add_model(Model* model, bool create_default_drawables = true) override;
 
@@ -337,32 +391,24 @@ public:
         //@{
 
         /**
-         * \brief Add a drawable to the viewer to be visualized. On success, the viewer will be in
-         *      charge of the memory management of the drawable
-         * \details The use of drawables for visualization is quite flexible. Drawables are
-         *          typically created for rendering 3D models (e.g., point clouds, meshes, graphs)
-         *          and a 3D model is usually loaded from a file or generated by an algorithm. This
-         *          method allows the user to visualize drawables without defining a 3D model.
-         * \param drawable The pointer to the drawable.
-         * \return The pointer of the drawable added to the viewer.
+         * \brief Add a standalone drawable to the viewer.
+         * \param drawable Shared pointer to the drawable.
+         * \return The added drawable, or nullptr if addition fails.
+         * \details The viewer retains shared ownership. Use standalone
+         * drawables to visualize geometry that is not owned by a Model.
          */
         Drawable* add_drawable(std::shared_ptr<Drawable> drawable) override;
 		/**
-		 * @brief Add a drawable to the viewer to be visualized. On success, the viewer will be in
-		 *      charge of the memory management of the drawable
-		 * @details The use of drawables for visualization is quite flexible. Drawables are
-		 *          typically created for rendering 3D models (e.g., point clouds, meshes, graphs)
-		 *          and a 3D model is usually loaded from a file or generated by an algorithm. This
-		 *          method allows the user to visualize drawables without defining a 3D model.
-		 * @param drawable The pointer to the drawable.
-		 * @return The pointer of the drawable added to the viewer.
+		 * \brief Add a standalone drawable supplied as a raw pointer.
+		 * \param drawable Drawable pointer; ownership is transferred to the viewer.
+		 * \return The added drawable, or nullptr if addition fails.
 		 */
         Drawable* add_drawable(Drawable* drawable) override;
 
         /**
-         * Delete the drawable from the viewer. The related drawables will also be deleted.
+         * \brief Delete a standalone drawable managed by the viewer.
          * \param drawable The pointer to the drawable.
-         * \return True if the drawable has been deleted.
+         * \return True if the drawable was managed directly by the viewer and removed.
          */
 	    bool delete_drawable(Drawable* drawable) override;
 
@@ -382,9 +428,8 @@ public:
         //@{
 
         /**
-         * \brief Update the display (i.e., repaint).
-         * \details This method is used to update the display of the rendering. Client should call
-         *          it when your data/view is changed.
+         * \brief Request a repaint of the viewer.
+         * \details Call after changing data or view state that should be rendered.
          */
         void update() const override;
 
@@ -407,8 +452,9 @@ public:
         /**
          * \brief  Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.
          * \details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
-         *      It allows the snapshot image to have a dimension different from the viewer, and it has no limit on the
-         *      image size (if memory allows).
+         *      It allows the snapshot image to have a dimension different from
+         *      the viewer. The output size is subject to available memory and
+         *      graphics-backend limits.
          * \param file_name The image file name.
          * \param scaling The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e.,
          *      image_width = viewer_width * scaling;
@@ -416,16 +462,17 @@ public:
          * \param samples The required number of samples for antialiased rendering (which can be different from
          *      that of the default framebuffer). The default value is 4.
          * \param background Determines the background color. 0: current color (default); 1: white; 2: transparent.
-         * \param expand Expand the frustum to ensure the image aspect ratio.
+         * \param expand If true, expand the frustum as needed to match the
+         *        output aspect ratio while retaining the visible scene.
          * \return true on success and false otherwise.
          */
 		bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 0, bool expand = true) const override;
 
         /**
-         * \brief The usage information of the viewer.
-         * \param manual The manual of the viewer, to be shown in the console window. Using "default" will show the
-         *		default shortcuts of the viewer.
-         * \param screen_hint The hint to the user, which will be sown in the top-left corner of the viewer.
+         * \brief Set the viewer's usage text and on-screen hint.
+         * \param manual Text printed to the console; "default" requests the
+         *        built-in shortcut manual.
+         * \param screen_hint Short text shown near the top-left of the window.
          * \attention The default shortcuts could be overridden by bind() function calls.
          */
         void set_usage(const std::string& manual = "default", const std::string& screen_hint = "") override;
@@ -436,10 +483,11 @@ public:
 
         // Key, Modifier and Button are shared with Viewer through ViewerInput.
         /**
-         * A function type, which applies the user's algorithm(s)/operation(s) on the given model.
+         * \brief Function type for a user operation bound to a keyboard shortcut.
          * \param viewer A pointer to this viewer.
          * \param model The model to be operated on.
-         * Example of defining such a function:
+         * \return True when the operation succeeds.
+         * \par Example
          *      \code
          *          bool reconstruct(Viewer* viewer, Model* model) {
          *              auto cloud = dynamic_cast<PointCloud *>(model);
@@ -470,15 +518,22 @@ public:
 
 	    /// \name Animation
 	    //@{
-        /// \brief UI-thread callback before pre_draw() for each renderable frame.
-        /// Frame based, not a fixed-rate clock. The return is advisory; pause with set_animation(false).
-        std::function<bool(Viewer* viewer)> animation_func_;
+	    /**
+	     * \brief Public animation callback invoked before pre_draw().
+	     * \details Invoked on the UI thread once per renderable frame while
+	     * animation is enabled. It is frame-based, not a fixed-rate clock; its
+	     * return value does not automatically disable animation. Prefer
+	     * set_animation_callback() to install or clear it.
+	     */
+	    std::function<bool(Viewer* viewer)> animation_func_;
 
-        /// \brief Enable/Disable animation.
-        /// \attention To have animation, \c animation_func_ must be provided to specify how scene geometry is modified.
+        /// Enable or disable frame-based animation.
+        /// \param b True to enable animation; false to pause it.
+        /// \details Animation runs only when an animation callback has been installed.
         void set_animation(bool b) override;
 
-        /// \brief Is animation currently being performed.
+        /// Returns true when animation is enabled and a callback is installed.
+        /// \return True when the viewer will invoke its animation callback.
         bool is_animating() const override;
         //@}
 
@@ -492,135 +547,295 @@ public:
          *      are not updated by later topology edits.
          */
         struct PickResult {
-            std::shared_ptr<Model> model; // null for a standalone drawable
+            /// Owning model for the hit; null when it came from a standalone drawable.
+            std::shared_ptr<Model> model;
+            /// Drawable that produced the hit; shared ownership keeps it alive.
             std::shared_ptr<Drawable> drawable;
-            std::uint32_t primitive = UINT32_MAX; // generated primitive, or UINT32_MAX when unavailable
-            int face_index = -1; // original SurfaceMesh face, when provenance is available
-            vec3 position = vec3(0); // world-space surface point at the pixel center
+            /// Generated primitive index, or UINT32_MAX when unavailable.
+            std::uint32_t primitive = UINT32_MAX;
+            /// Original SurfaceMesh face index when provenance is available; otherwise -1.
+            int face_index = -1;
+            /// World-space hit position at the queried pixel center.
+            vec3 position = vec3(0);
+            /// Normalized scene depth at the hit; 0 is near and 1 is far.
             float depth = 1;
+            /// True when a drawable was hit.
             explicit operator bool() const { return bool(drawable); }
         };
-        // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
-        // an empty result for background/outside pixels. Retains source ownership;
-        // face indices describe the current mesh, not future topology edits.
-        // This is a whole-scene query rather than a Picker instance: the viewer owns
-        // the models, drawables and device, so it resolves the nearest drawable (and
-        // its triangle) itself. It could reuse the picker classes in principle (it has
-        // a camera and the models), but those query one caller-supplied model each,
-        // and a scene-wide hit must be ordered across all models in one submission.
-        // Pickers therefore refine an already-identified model; clients that manage
-        // their own scene (e.g. Mapple) use them directly.
+
+        /**
+         * \brief Pick the nearest visible scene primitive at a framebuffer pixel.
+         * \param x Framebuffer x coordinate, with the origin at top-left.
+         * \param y Framebuffer y coordinate, with the origin at top-left.
+         * \return PickResult with the hit drawable and available provenance;
+         *         an empty result when the pixel is outside the framebuffer or
+         *         shows only the background.
+         * \details This synchronous whole-scene query retains shared ownership
+         * of the hit model and drawable. A returned face index describes the
+         * mesh at query time and is not updated after topology edits. HUD and
+         * overlay content is not pickable.
+         */
         PickResult pick(int x, int y) const;
         //@}
 
-	    // Triangle annotations and HUD overlays. Their immutable
-	    // geometry/images are retained; MVPs are supplied by the caller (for example
-	    // graphics::screen_space_projection()). overlay_depth_test annotations test
-	    // scene depth and blend first, in input order; independent-depth 3D HUDs
-	    // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
-	    // back-to-front. None write scene depth/IDs.
-	    // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
-	    // Both backends accept flat/scene-depth triangles, independently depth-tested
-	    // 3D HUD triangles (including diffuse and material lighting), and GPU scene-depth previews.
+        /**
+         * \brief Replace the viewer's custom overlay draw commands.
+         * \param commands Commands to retain and draw.
+         * \param foreground If true, draw this set after the built-in viewer HUD.
+         * \details Geometry and images are retained by the commands; callers
+         * provide the transforms. Scene-depth annotations are depth-tested and
+         * blended before independent-depth 3D HUD and flat HUD commands. Their
+         * input order is preserved; overlapping scene-depth annotations should
+         * be supplied back-to-front. These overlays do not write scene depth or
+         * object IDs.
+         */
 	    void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
-	    // GPU through-selection; use point_resource() from this viewer for portable requests.
-	    // OpenGL accepts only its owning viewer's native snapshot. Vulkan also accepts CPU PointData.
+
+        /**
+         * \brief Select point indices intersecting a graphics selection request.
+         * \param request Selection region, point data, and selection options.
+         * \return Indices into the request's point data selected by the backend.
+         * \details This is GPU-backed selection. For portable requests, obtain
+         * point data with point_resource(). OpenGL requests must use a native
+         * point resource created by this viewer; Vulkan also accepts CPU
+         * PointData.
+         */
 	    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
-	    // Unclipped immutable point positions shared by this drawable's rendering
-	    // and selection. OpenGL snapshots are GPU-only and valid for their owning viewer.
-	    // Extraction is refreshed as needed; attribute-only buffer updates retain positions.
+
+        /**
+         * \brief Get the immutable point positions for a point drawable.
+         * \param drawable Drawable whose positions are requested.
+         * \return Shared point data for the drawable.
+         * \details Positions are not clipped and are shared by rendering and
+         * selection. OpenGL resources are native snapshots usable only by the
+         * viewer that created them. Position extraction is refreshed when
+         * needed; attribute-only buffer changes retain the position data.
+         * \throws std::invalid_argument if drawable is null, is not a point
+         * drawable, or is not managed by this viewer.
+         */
 	    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
-	    // Effective world-space planes. The shared ClippingPlane takes precedence;
-	    // Vulkan additionally supports explicitly configured per-host planes.
+
+        /**
+         * \brief Return the effective world-space clipping planes.
+         * \details A shared ClippingPlane takes precedence. Vulkan builds may
+         * also support explicitly configured per-viewer planes; see
+         * set_clipping_planes().
+         * \return Reference to the effective world-space plane equations.
+         */
 	    const std::vector<vec4>& clipping_planes() const;
-	    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
-	    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
+
+        /**
+         * \brief Unproject a framebuffer pixel and normalized depth to world space.
+         * \param x Framebuffer x coordinate, with the origin at top-left.
+         * \param y Framebuffer y coordinate, with the origin at top-left.
+         * \param depth Normalized depth in [0, 1].
+         * \return World-space position at the pixel center.
+         */
 	    virtual vec3 unproject_pixel(int x, int y, float depth) const;
-	    // Raw composited RGBA; scene depth/object IDs are center-sampled and exclude HUD.
-	    // Default object IDs index models(), followed by standalone drawables().
-	    // OpenGL capture reports unavailable primitive IDs as UINT32_MAX.
-	    // Color is multisampled when requested; IDs/depth stay center-sampled.
-	    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
+
+        /**
+         * \brief Capture the current viewer image and scene attachments.
+         * \return Frame image containing composited RGBA color plus available
+         *         scene depth and object/primitive identifiers.
+         * \details Uses the viewer's effective sample count for color rendering.
+         */
 	    graphics::FrameImage capture() const;
+
+        /**
+         * \brief Capture the current viewer image with a requested color sample count.
+         * \param samples Requested multisample count for color rendering.
+         * \return Frame image containing composited RGBA color plus available
+         *         scene depth and object/primitive identifiers.
+         * \details Depth and object identifiers are center-sampled and exclude
+         * HUD overlays. Default object IDs index models() followed by standalone
+         * drawables(). OpenGL may report UINT32_MAX when a primitive identifier
+         * is unavailable. Invalid or unsupported requests may throw.
+         */
 	    virtual graphics::FrameImage capture(unsigned samples) const;
 #ifdef EASY3D_HAS_VULKAN
-	    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
-	    // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
-	    // Empty disables this host's explicit planes. At most two finite,
-	    // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
-	    // Overlays remain unclipped. Scene clearing retains this configuration.
+        /**
+         * \brief Set Vulkan-only world-space clipping halfspaces for this viewer.
+         * \param planes Plane equations; a point is retained when
+         *        dot(plane, vec4(world, 1)) is nonnegative.
+         * \details Pass an empty vector to disable explicit planes. At most two
+         * finite planes with nonzero normals are accepted. An enabled shared
+         * ClippingPlane takes precedence. Overlays are not clipped, and
+         * clear_scene() does not reset this configuration.
+         * \throws std::invalid_argument for unsupported or invalid planes.
+         */
 	    void set_clipping_planes(const std::vector<vec4>& planes);
-	    // Synchronous visible-surface scan: one world point per non-background
-	    // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
-	    // Uses one camera snapshot and inverse MVP; overlays never produce points.
-	    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
-	    // modify scene/camera or advance animation; includes every visible drawable.
+
+        /**
+         * \brief Scan visible scene surfaces into one point per covered pixel.
+         * \param samples Requested color sample count for the capture.
+         * \return World-space points in framebuffer row order, top to bottom,
+         *         with one point for each non-background pixel.
+         * \details Uses pixel centers and one camera snapshot. Overlays are
+         * excluded; color multisampling does not change center-sampled depth
+         * semantics. The operation does not modify the scene or camera and
+         * does not advance animation.
+         */
 	    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
+
+        /// Return the Vulkan render device used by this viewer.
 	    const graphics::RenderDevice& device() const;
+
+        /**
+         * \brief Set the Vulkan window's multisample count.
+         * \param samples Supported nonzero power-of-two sample count.
+         * \throws std::invalid_argument if the device does not support the count.
+         */
 	    void set_samples(unsigned samples);
+
+        /**
+         * \brief Add a shared model and optionally fit the scene.
+         * \param model Model to add.
+         * \param create_default_drawables Whether to create standard drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition.
+         * \return The added model, or nullptr if addition fails.
+         */
 	    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
 #endif
 
 	protected:
 
-        // This function draws the scene. Called after pre_draw() and before post_draw().
-        // The backend performs the native draw inside the default implementation;
-        // overrides may add backend-specific rendering before calling the default.
+        /**
+         * \brief Draw the current scene.
+         * \details Called between pre_draw() and post_draw(). The base
+         * implementation performs the backend's normal scene rendering;
+         * overrides may add custom rendering and call the base implementation
+         * to retain that rendering.
+         */
         virtual void draw() const;
 
-		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when
-		// there exists a valid rendering context. It is (usually) a bad idea to do
-		// this in a constructor because the OpenGL context may not have been
-		// created yet or the visible one is not *current*. This init() function is
-		// to ensure you have a valid rendering context. It will be called before
-		// the draw procedure. See also cleanup().
-		// NOTE: Don't forget to call Viewer::init() at the beginning of your
-		//		 inherited function.
-		virtual void init();
+        /**
+         * \brief Initialize viewer rendering resources.
+         * \details Called before the first frame's draw procedure, when the
+         * backend is ready for resource creation. Overrides should call
+         * Viewer::init() before creating subclass resources.
+         */
+        virtual void init();
 
-		// To destroy OpenGL resources (e.g., shaders, textures, VAOs), there must exist a valid rendering context.
-        // It is (usually) a bad idea to clean up OpenGL in a destructor because the OpenGL context may not exist
-		// (e.g., destroyed already) or the visible one is not *current*. This cleanup() function is to ensure you
-        // have a valid rendering context. See also init().
-		// NOTE: Don't forget to call Viewer::cleanup() at the end of your inherited function.
-		void cleanup();
+        /**
+         * \brief Release viewer rendering resources while the backend is valid.
+         * \details Overrides should release subclass resources and call
+         * Viewer::cleanup() as part of the cleanup sequence. Do not assume a
+         * graphics context is current in a destructor.
+         */
+        void cleanup();
 
-		// This function will be called before the main draw procedure.
+        /**
+         * \brief Hook called before scene drawing on each rendered frame.
+         * \details Runs after the installed ViewerCallbacks::pre_draw callback.
+         */
         virtual void pre_draw();
 
-        // This function draws axes of the coordinate system, Easy3D logo, frame rate, etc. overlaid on the scene.
-		// It will be called after the main draw procedure.
-		virtual void post_draw();
+        /**
+         * \brief Hook called after scene drawing on each rendered frame.
+         * \details The default implementation draws the viewer HUD. It runs
+         * before the installed ViewerCallbacks::post_draw callback.
+         */
+        virtual void post_draw();
 
-		// External resize due to user interaction.
-		// This function will be called after the window size being changed.
-        // w/h: the new width and height of the viewer (not framebuffer, not viewport)
+        /**
+         * \brief Hook called after the logical viewer size changes.
+         * \param w New logical width.
+         * \param h New logical height.
+         * \details These are logical window dimensions, not framebuffer pixels.
+         */
         virtual void post_resize(int w, int h) { (void)w, (void)h; }
 
-		// Mouse button press event handler
-		virtual bool mouse_press_event(int x, int y, int button, int modifiers);
-		// Mouse button release event handler
-		virtual bool mouse_release_event(int x, int y, int button, int modifiers);
-		// Mouse drag (i.e., a mouse button was pressed) event handler
-		virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers);
-		// Mouse free move (i.e., no mouse button was pressed) event handler
-		virtual bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers);
-		// Mouse scroll event handler
-		virtual bool mouse_scroll_event(int x, int y, int dx, int dy);
+        /**
+         * \brief Handle a mouse-button press.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_press_event(int x, int y, int button, int modifiers);
 
-		// Text input event handler: codepoint is native endian UTF-32 format
-		// NOTE: This one reveals the actual character being sent (not just the physical key)
-		virtual bool char_input_event(unsigned int codepoint);
-		// Keyboard event handler.
-		// NOTE: This function does not reveal the actual character.
-		virtual bool key_press_event(int key, int modifiers);
-		virtual bool key_release_event(int key, int modifiers);
+        /**
+         * \brief Handle a mouse-button release.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_release_event(int x, int y, int button, int modifiers);
 
-		// Handle a file drop event
-		virtual bool drop_event(const std::vector<std::string> & filenames);
+        /**
+         * \brief Handle pointer motion while a mouse button is pressed.
+         * \param x Current logical x coordinate from the top-left.
+         * \param y Current logical y coordinate from the top-left.
+         * \param dx Horizontal logical displacement since the previous event.
+         * \param dy Vertical logical displacement since the previous event.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers);
 
-		// Handle a focus change event
-		virtual bool focus_event(bool focused);
+        /**
+         * \brief Handle pointer motion when no mouse button is pressed.
+         * \param x Current logical x coordinate from the top-left.
+         * \param y Current logical y coordinate from the top-left.
+         * \param dx Horizontal logical displacement since the previous event.
+         * \param dy Vertical logical displacement since the previous event.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event.
+         */
+        virtual bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers);
+
+        /**
+         * \brief Handle a mouse-wheel event.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param dx Horizontal scroll offset.
+         * \param dy Vertical scroll offset.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_scroll_event(int x, int y, int dx, int dy);
+
+        /**
+         * \brief Handle text input as a Unicode code point.
+         * \param codepoint Native-endian UTF-32 code point.
+         * \return True to consume the event.
+         */
+        virtual bool char_input_event(unsigned int codepoint);
+
+        /**
+         * \brief Handle a physical key press.
+         * \param key ViewerInput::Key identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in shortcut handling.
+         * \details This reports a key identifier, not the entered text; use
+         * char_input_event() for text.
+         */
+        virtual bool key_press_event(int key, int modifiers);
+
+        /**
+         * \brief Handle a physical key release.
+         * \param key ViewerInput::Key identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event.
+         */
+        virtual bool key_release_event(int key, int modifiers);
+
+        /**
+         * \brief Handle files dropped onto the viewer.
+         * \param filenames Dropped file paths.
+         * \return True to consume the event.
+         */
+        virtual bool drop_event(const std::vector<std::string> & filenames);
+
+        /**
+         * \brief Handle a viewer focus change.
+         * \param focused True if focus was gained, false if lost.
+         * \return True to consume the event.
+         */
+        virtual bool focus_event(bool focused);
 
         void draw_corner_axes() const;
         void copy_view();

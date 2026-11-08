@@ -3,26 +3,38 @@
 #define EASY3D_VIEWER_VIEWER_INPUT_H
 
 namespace easy3d {
-// Input identifiers shared by the OpenGL and Vulkan viewer counterparts.
+/**
+ * \brief Key, modifier, and mouse-button identifiers used by viewer input APIs.
+ * \details These values are shared by the supported graphics backends. Do not
+ * change the explicitly assigned values: client code may use them in bindings
+ * and event callbacks.
+ */
 struct ViewerInput {
-    enum Key { // Do NOT modify the values!!!
-        // the unknown key
+    /**
+     * \brief Keyboard key identifiers used in events and shortcut bindings.
+     * \details Character-key values use their ASCII codes; the remaining
+     * identifiers follow the corresponding GLFW key values where applicable.
+     * A key event reports a key identifier, not text input; use
+     * ViewerCallbacks::char_input_event to receive entered characters.
+     */
+    enum Key {
+        /// No recognized key.
         KEY_UNKNOWN = -1,
-        // the number keys
+        /// Number-row keys, with values matching ASCII '0' through '9'.
         KEY_0 = 48, KEY_1 = 49, KEY_2 = 50, KEY_3 = 51, KEY_4 = 52, KEY_5 = 53, KEY_6 = 54, KEY_7 = 55,
         KEY_8 = 56, KEY_9 = 57,
-        // the character keys
+        /// Letter keys, with values matching uppercase ASCII 'A' through 'Z'.
         KEY_A = 65, KEY_B = 66, KEY_C = 67, KEY_D = 68, KEY_E = 69, KEY_F = 70, KEY_G = 71, KEY_H = 72,
         KEY_I = 73, KEY_J = 74, KEY_K = 75, KEY_L = 76, KEY_M = 77, KEY_N = 78, KEY_O = 79, KEY_P = 80,
         KEY_Q = 81, KEY_R = 82, KEY_S = 83, KEY_T = 84, KEY_U = 85, KEY_V = 86, KEY_W = 87, KEY_X = 88,
         KEY_Y = 89, KEY_Z = 90,
-        // the functional keys
-        /* Function keys */
+        /// Common control and navigation keys.
         KEY_ESCAPE = 256, KEY_ENTER = 257, KEY_DELETE = 261,
         KEY_RIGHT = 262, KEY_LEFT = 263, KEY_DOWN = 264, KEY_UP = 265,
+        /// Function keys F1 through F9.
         KEY_F1 = 290,   KEY_F2 = 291,   KEY_F3 = 292,   KEY_F4 = 293,   KEY_F5 = 294,
         KEY_F6 = 295,   KEY_F7 = 296,   KEY_F8 = 297,   KEY_F9 = 298,
-        // some printable keys
+        /// Additional printable-key identifiers using ASCII values.
         KEY_SPACE = 32,
         KEY_COMMA = 44/* , */,  KEY_MINUS     = 45/* - */,  KEY_PERIOD = 46/* . */,
         KEY_SLASH = 47/* / */,  KEY_SEMICOLON = 59/* ; */,  KEY_EQUAL  = 61/* = */,
@@ -32,23 +44,29 @@ struct ViewerInput {
     /**
      * \brief The key modifiers. Currently only Shift, Ctrl, and Alt are supported.
      */
-    enum Modifier { /* Do NOT modify the values!!! */
+    enum Modifier {
+        /// No modifier key is pressed.
         MODIF_NONE = 0x0000,
+        /// Shift modifier.
         MODIF_SHIFT = 0x0001,
 #ifdef __APPLE__    // To have the same shortcut behavior on macOS and other platforms (i.e., Windows and Linux)
+        /// Control modifier (normalized to the platform's shortcut value).
         MODIF_CTRL = 0x0008,
 #else
+        /// Control modifier (normalized to the platform's shortcut value).
         MODIF_CTRL = 0x0002,
 #endif
+        /// Alt modifier.
         MODIF_ALT = 0x0004
     };
 
-    /**
-     * \brief Mouse buttons.
-     */
-    enum Button { // Do NOT modify the values!!!
+    /// Mouse button identifiers used by viewer callbacks and event handlers.
+    enum Button {
+        /// Left mouse button.
         BUTTON_LEFT = 0,
+        /// Right mouse button.
         BUTTON_RIGHT = 1,
+        /// Middle mouse button.
         BUTTON_MIDDLE = 2
     };
 

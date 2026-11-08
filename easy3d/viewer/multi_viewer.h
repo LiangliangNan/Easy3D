@@ -38,17 +38,34 @@ namespace easy3d {
     class LinesDrawable2D;
 
     /**
-     * \brief A viewer that supports multiple views (arranged in a grid layout).
+     * \brief A viewer that displays assigned scene content in a grid of views.
      * \class MultiViewer easy3d/viewer/multi_viewer.h
+     * \details MultiViewer shares a single viewer window and camera across a
+     * regular rows-by-columns grid. Models and standalone drawables must first
+     * be added to the viewer, then assigned to one or more cells with assign().
+     * Adding an item alone does not make it visible in a cell. Inherited
+     * scene-management methods still manage the viewer-wide collection.
+     *
+     * project_point() uses the active cell (initially the top-left cell and
+     * changed by mouse interaction); unproject_point() selects the cell
+     * containing its logical window position. File snapshots contain the grid
+     * scene and do not include the ordinary Viewer HUD.
      */
     class MultiViewer : public Viewer {
     public:
-        // ... some public functions: the unified APIs used by both backends
         /**
-         * \brief Constructor.
-         * \param rows The number of rows (of the grid-like layout).
-         * \param cols The number of columns (of the grid-like layout).
-         * \param title The title of the viewer window.
+         * \brief Create a multi-view grid in a viewer window.
+         * \param rows Number of view rows; must be positive.
+         * \param cols Number of view columns; must be positive.
+         * \param title Window title.
+         * \param width Initial logical window width.
+         * \param height Initial logical window height.
+         * \param samples Requested multisample count.
+         * \param full_screen Whether to use fullscreen mode.
+         * \param visible Whether the window is initially visible.
+         * \param resizable Whether the user can resize the window.
+         * \param options Backend-specific Vulkan or OpenGL creation options.
+         * \throws std::invalid_argument if rows or cols is not positive.
          */
         MultiViewer(int rows, int cols, const std::string &title = "untitled",
                           int width = 800, int height = 600, int samples = 1,
@@ -64,78 +81,115 @@ namespace easy3d {
         ~MultiViewer() override;
 
         /**
-         * \brief Assigns the model \p m to the view at position (\p row, \p col).
-         * \details This function assigns the model \p m to the view at position (\p row, \p col). After that, the
-         *      model will be visualized in this view (regardless of other views visualizing the same model).
-         * \note You need to first add the model to the viewer by calling add_model(). The add_model() function
-         *      does not assign the model to any view for rendering. However, add_model() allows the viewer to
-         *      take ownership of the model.
+         * \brief Add a managed model to a grid cell.
+         * \details The model is drawn in this cell in addition to any content
+         * already assigned there. It may also be assigned to other cells.
+         * First add it to this viewer with add_model(); assignment does not
+         * transfer ownership. Membership is a caller precondition and is not
+         * checked by this method.
          * \param row The row index of the view.
          * \param col The column index of the view.
-         * \param m The model to assign.
+         * \param m The model to assign; it must be managed by this viewer.
+         * \note Invalid coordinates or a null model are logged and ignored.
          */
         void assign(int row, int col, const Model *m);
 
         /**
-         * \brief Assigns the drawable \p d to the view at position (\p row, \p col).
-         * \details This function assigns the drawable \p d to the view at position (\p row, \p col). After that, the
-         *      drawable will be visualized in this view (regardless of other views visualizing the same drawable).
-         * \note You need to first add the drawable to the viewer by calling add_drawable(). The add_drawable()
-         *      function does not assign the drawable to any view for rendering. However, add_drawable() allows the
-         *      viewer to take ownership of the drawable.
+         * \brief Add a managed standalone drawable to a grid cell.
+         * \details The drawable is drawn in this cell in addition to any
+         * already assigned content. It may also be assigned to other cells.
+         * First add it with add_drawable(); assignment does not transfer
+         * ownership. Membership is a caller precondition and is not checked.
          * \param row The row index of the view.
          * \param col The column index of the view.
-         * \param d The drawable to assign.
+         * \param d The drawable to assign; it must be managed by this viewer.
+         * \note Invalid coordinates or a null drawable are logged and ignored.
          */
         void assign(int row, int col, const Drawable *d);
 
         /**
-         * \brief Sets the visibility of the splitting lines of the views.
-         * \param b Whether the splitting lines are visible.
+         * \brief Set whether grid division lines are visible.
+         * \param b True to show the lines; false to hide them.
          */
         void set_division_visible(bool b);
 
         /**
-         * \brief Returns if the splitting lines of the views are visible.
+         * \brief Query whether grid division lines are visible.
          * \return \c true if the splitting lines are visible, \c false otherwise.
          */
         bool division_visible() const;
 
-        /**
-         * \brief Return the number of rows (of the grid-like layout) of the viewer.
-         * \return The number of rows.
-         */
+        /// Return the number of rows in the grid.
+        /// \return Grid row count.
         int rows() const { return num_rows_; }
 
-        /**
-         * \brief Return the number of columns (of the grid-like layout) of the viewer.
-         * \return The number of columns.
-         */
+        /// Return the number of columns in the grid.
+        /// \return Grid column count.
         int columns() const { return num_cols_; }
 
         /**
-         * \brief Set/Change the layout of the viewer.
-         * \param rows The number of rows (of the grid-like layout).
-         * \param cols The number of columns (of the grid-like layout).
+         * \brief Set the grid dimensions.
+         * \param rows Number of rows; must be positive.
+         * \param cols Number of columns; must be positive.
+         * \throws std::invalid_argument if either dimension is not positive.
+         * \details Assignments in cells retained by the new dimensions remain
+         * in place; cells removed by shrinking the grid are discarded.
          */
         void set_layout(int rows, int cols);
 
         /**
-         * \brief Take a snapshot of the screen and save it to a file.
-         * \details This method takes a snapshot of the screen and saves the snapshot into an image file.
-         *          Internally, it will pop up a file dialog for specifying the file name.
-         * \return \c true on success and \c false otherwise.
+         * \brief Save the multi-view scene using a file-selection dialog.
+         * \return True on success, false on cancellation or failure.
          */
         bool snapshot() const override;
-        // background: 0 = current viewer color (default), 1 = white, 2 = transparent.
+
+        /**
+         * \brief Render the grid scene to an image file.
+         * \param filename Destination image path.
+         * \param scaling Output-size multiplier relative to the viewer canvas.
+         * \param samples Requested antialiasing sample count.
+         * \param background Background mode: 0 uses the viewer background,
+         *        1 uses white, 2 uses transparency.
+         * \param expand If true, expand the view to match the output aspect ratio.
+         * \return True on success, false if the image could not be written.
+         * \details The saved image contains the assigned cell content and grid
+         * divisions, but not the ordinary Viewer HUD.
+         */
         bool snapshot(const std::string& filename, float scaling = 1, int samples = 4,
                       int background = 0, bool expand = true) const override;
-        // Projects into the last pressed cell (initially the top-left cell).
-        // Unprojection resolves the cell from the canvas coordinate.
+
+        /**
+         * \brief Project a world point using the active cell's camera viewport.
+         * \param world World-space point.
+         * \return Continuous logical window coordinates and normalized depth.
+         * \details The active cell starts at the top-left and changes when a
+         * cell is pressed. Points are not clipped to the selected cell.
+         */
         vec3 project_point(const vec3& world) const override;
+
+        /**
+         * \brief Unproject a logical window position using its grid cell.
+         * \param window Logical x/y position from the top-left and normalized
+         *        depth in [0, 1].
+         * \return Corresponding world-space point.
+         */
         vec3 unproject_point(const vec3& window) const override;
+
+        /**
+         * \brief Remove a model and its assignments from every cell.
+         * \param model Model to remove.
+         * \return True if the model was managed by this viewer and removed.
+         */
         bool delete_model(Model* model) override;
+
+        /**
+         * \brief Remove a standalone drawable and its assignments from every cell.
+         * \param drawable Drawable to remove.
+         * \return True if the drawable was managed by this viewer and removed.
+         */
         bool delete_drawable(Drawable* drawable) override;
+
+        /// Clear all cell assignments and all viewer-managed scene content.
         void clear_scene() override;
 
     protected:
