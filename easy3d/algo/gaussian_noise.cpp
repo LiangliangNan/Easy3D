@@ -38,7 +38,7 @@
 
 namespace easy3d {
 
-    void GaussianNoise::apply(SurfaceMesh *mesh, float sigma) {
+    void GaussianNoise::apply(SurfaceMesh *mesh, float sigma, bool preserve_boundary) {
         if (!mesh) {
             LOG(WARNING) << "empty surface mesh";
             return;
@@ -58,6 +58,8 @@ namespace easy3d {
 
         auto points = mesh->get_vertex_property<vec3>("v:point");
         for (auto v : mesh->vertices()) {
+            if (preserve_boundary && mesh->is_border(v))
+                continue;
             double offset = distribution(generator);
             vec3 dir(random_float(-1.0f, 1.0f), random_float(-1.0f, 1.0f),
                      random_float(-1.0f, 1.0f));
