@@ -50,7 +50,13 @@ namespace easy3d {
         ~LinesDrawable2D() override;
 
         /// Width in framebuffer pixels (default 1). Must be positive and finite.
+        /// \return Current line width.
         float line_width() const { return line_width_; }
+
+        /**
+         * \brief Set the framebuffer-pixel line width.
+         * \param width Positive finite width in pixels.
+         */
         void set_line_width(float width);
 
 		/**

@@ -61,64 +61,88 @@ namespace easy3d {
     class Shadow
     {
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /// \brief Create a shadow mapper for a camera.
+        /// \param cam Camera whose scene is shadowed.
         explicit Shadow(Camera* cam);
+        /// Destroy the shadow mapper.
         virtual ~Shadow();
 
         /// Shadow allows to have a virtual background as the shadow receiver. The virtual background plane is
         /// perpendicular to the light direction and is placed at the far plane of the light frustum.
         /// \note This only works for directional lights.
+        /// \return True when the virtual background receiver is enabled.
         bool virtual_background() const { return virtual_background_; }
-        /// Enable/Disable the virtual background. \see virtual_background()
+        /// Enable or disable the virtual background. \see virtual_background()
+        /// \param b True to enable the receiver.
         void set_virtual_background(bool b) { virtual_background_ = b; }
 
         /// Query the virtual background color.
+        /// \return Receiver color in RGBA.
         const vec4& virtual_background_color() const { return virtual_background_color_; }
         /// Set the virtual background color.
+        /// \param c Receiver color in RGBA.
         void set_virtual_background_color(const vec4& c) { virtual_background_color_ = c; }
 
         /// Query the size of the shadow map. The shadow is assumed to be square.
+        /// \return Shadow-map side length in pixels.
         int shadow_map_size() const { return shadow_map_size_; }
-        /// Set/Change the size of the shadow map. The shadow is assumed to be square. Default: 1024 by 1024.
+        /// Set the square shadow-map size in pixels. The default is 1024.
+        /// \param size Shadow-map side length in pixels.
         void set_shadow_map_size(int size) { shadow_map_size_ = size; }
 
         /// The distance of the light source to the scene (w.r.t. the scene radius).
+        /// \return Light-frustum distance factor.
         float light_distance() const { return light_distance_; }
-        /// Set/Change the distance of the light source to the scene (w.r.t. the scene radius). Default value is
-        /// 50 (large enough to mimic the directional light used in the default viewer).
-        /// \note Value must be > 1.0.
+        /// Set the light-frustum distance relative to the scene radius.
+        /// \param dist Requested distance factor; values below 1.1 are clamped to 1.1. Default is 50.
         void set_light_distance(float dist);
 
         /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
         /// dark/black). \see set_darkness(float darkness).
+        /// \return Shadow darkness in [0,1].
         float darkness() const { return darkness_; }
-        /// Set the darkness of the shadow region. Values must be in [0, 1.0] (0: no shadow at all; 1: completely
-        /// dark/black). The default value is 0.6.
+        /// Set shadow darkness in [0,1] (0 is no darkening, 1 is black). Default is 0.6.
+        /// \param darkness Requested shadow darkness; clamped to [0,1].
         void set_darkness(float darkness);
 
-        /// Registers the surfaces that cast shadows for the next Viewer::draw() on this camera.
-        /// begin() must be paired with end().
+        /// Register the surfaces that cast shadows for the next draw on this camera.
+        /// \param surfaces Triangle drawables to use as shadow casters.
+        /// \details Pair every call with end().
         void begin(const std::vector<TrianglesDrawable*>& surfaces);
-        /// Ends the shadow registration started by begin().
+        /// End the shadow registration started by begin().
         void end();
-        /// Returns the shadow registered for the camera, or null.
+        /// Return the active shadow registration for a camera, or nullptr.
+        /// \param camera Camera to query.
+        /// \return Active shadow or nullptr.
         static Shadow* active(const Camera* camera);
 
-        // The registered surfaces of the active shadow, or an empty list.
+        /// Return the registered shadow-caster drawables, or an empty list.
+        /// \return Registered drawable pointers.
         const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
 
         // Shadow frame parameters published by begin() for the registered camera.
         struct FrameData {
+            /// Transform from world positions to shadow texture coordinates.
             mat4 shadow_matrix;                 // world position -> shadow texture coordinates
+            /// World-space corners of the virtual background receiver.
             std::vector<vec3> background_corners;
+            /// Virtual background RGBA color.
             vec4 background_color = vec4(0);
+            /// Shadow map size in pixels.
             unsigned shadow_map_size = 1024;
+            /// Shadow darkness in [0,1].
             float darkness = 0;
+            /// Shadow softness; zero denotes hard shadows.
             float softness = 0;
+            /// Near plane of the light frustum.
             float light_near = 1;
+            /// Far plane of the light frustum.
             float light_far = 2;
         };
+        /// Return published shadow parameters for a camera, if available.
+        /// \param camera Camera whose active shadow frame is requested.
+        /// \param data Receives the frame data when one is available.
+        /// \return True when frame data was written; otherwise false.
         static bool frame_data(const Camera* camera, FrameData& data);
 
     protected:
@@ -162,53 +186,66 @@ namespace easy3d {
     class Shadow
     {
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /// \brief Create a shadow mapper for a camera.
+        /// \param cam Camera whose scene is shadowed.
         explicit Shadow(Camera* cam);
+        /// Destroy the shadow mapper.
         virtual ~Shadow();
 
         /// Shadow allows to have a virtual background as the shadow receiver. The virtual background plane is
         /// perpendicular to the light direction and is placed at the far plane of the light frustum.
         /// \note This only works for directional lights.
+        /// \return True when the virtual background receiver is enabled.
         bool virtual_background() const { return virtual_background_; }
-        /// Enable/Disable the virtual background. \see virtual_background()
+        /// Enable or disable the virtual background. \see virtual_background()
+        /// \param b True to enable the receiver.
         void set_virtual_background(bool b) { virtual_background_ = b; }
 
         /// Query the virtual background color.
+        /// \return Receiver color in RGBA.
         const vec4& virtual_background_color() const { return virtual_background_color_; }
         /// Set the virtual background color.
+        /// \param c Receiver color in RGBA.
         void set_virtual_background_color(const vec4& c) { virtual_background_color_ = c; }
 
         /// Query the size of the shadow map. The shadow is assumed to be square.
+        /// \return Shadow-map side length in pixels.
         int shadow_map_size() const { return shadow_map_size_; }
-        /// Set/Change the size of the shadow map. The shadow is assumed to be square. Default: 1024 by 1024.
+        /// Set the square shadow-map size in pixels. The default is 1024.
+        /// \param size Shadow-map side length in pixels.
         void set_shadow_map_size(int size) { shadow_map_size_ = size; }
 
         /// The distance of the light source to the scene (w.r.t. the scene radius).
+        /// \return Light-frustum distance factor.
         float light_distance() const { return light_distance_; }
-        /// Set/Change the distance of the light source to the scene (w.r.t. the scene radius). Default value is
-        /// 50 (large enough to mimic the directional light used in the default viewer).
-        /// \note Value must be > 1.0.
+        /// Set the light-frustum distance relative to the scene radius.
+        /// \param dist Requested distance factor; values below 1.1 are clamped to 1.1. Default is 50.
         void set_light_distance(float dist);
 
         /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
         /// dark/black). \see set_darkness(float darkness).
+        /// \return Shadow darkness in [0,1].
         float darkness() const { return darkness_; }
-        /// Set the darkness of the shadow region. Values must be in [0, 1.0] (0: no shadow at all; 1: completely
-        /// dark/black). The default value is 0.6.
+        /// Set shadow darkness in [0,1] (0 is no darkening, 1 is black). Default is 0.6.
+        /// \param darkness Requested shadow darkness; clamped to [0,1].
         void set_darkness(float darkness);
 
-        /// Rendering the surfaces.
+        /// Render the supplied shadow casters and scene surfaces.
+        /// \param surfaces Triangle drawables to render.
         void draw(const std::vector<TrianglesDrawable*>& surfaces);
 
-        /// Registers the surfaces that cast shadows for the next Viewer::draw() on this camera.
-        /// begin() must be paired with end().
+        /// Register the surfaces that cast shadows for the next draw on this camera.
+        /// \param surfaces Triangle drawables to use as shadow casters.
+        /// \details Pair every call with end().
         void begin(const std::vector<TrianglesDrawable*>& surfaces);
-        /// Ends the shadow registration started by begin().
+        /// End the shadow registration started by begin().
         void end();
-        /// Returns the shadow registered for the camera, or null.
+        /// Return the active shadow registration for a camera, or nullptr.
+        /// \param camera Camera to query.
+        /// \return Active shadow or nullptr.
         static Shadow* active(const Camera* camera);
-        /// The registered surfaces.
+        /// Return the registered shadow-caster drawables.
+        /// \return Registered drawable pointers.
         const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
 
     protected:

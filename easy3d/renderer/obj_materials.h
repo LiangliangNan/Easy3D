@@ -7,30 +7,57 @@
 #include <vector>
 
 namespace easy3d {
-// CPU import snapshot for OBJ/MTL diffuse materials. No context is required.
-// Parts contain tessellated, seam-preserving attributes; they describe the mesh
-// at load time. Reload/rebuild after editing the mesh's topology or attributes.
+/**
+ * \brief CPU-side snapshot of diffuse materials imported from an OBJ/MTL file.
+ * \details Loading requires no graphics context. Parts contain tessellated,
+ * seam-preserving attributes and describe the mesh at load time. Reload or
+ * rebuild the snapshot after changing mesh topology or attributes.
+ */
 struct ObjMaterialMesh {
+    /// Tessellated geometry and material properties for one OBJ material group.
     struct Part {
+        /// Material/group name used when creating the drawable.
         std::string name;
+        /// Diffuse color, defaulting to white.
         vec3 diffuse = vec3(1);
-        std::string texture_file; // empty for missing maps or incomplete face UVs
-        std::vector<vec3> positions, normals;
+        /// Diffuse texture path; empty if no usable map or face UVs are available.
+        std::string texture_file;
+        /// Tessellated vertex positions and normals.
+        std::vector<vec3> positions; ///< Tessellated vertex positions.
+        std::vector<vec3> normals; ///< Tessellated vertex normals.
+        /// Tessellated vertex texture coordinates.
         std::vector<vec2> texcoords;
+        /// Triangle indices into the vertex arrays.
         std::vector<unsigned int> indices;
+        /// Source mesh face ID for each tessellated triangle.
         std::vector<int> source_faces;
     };
+    /// Mesh used to resolve material groups.
     std::shared_ptr<SurfaceMesh> mesh;
+    /// Imported material-group snapshots.
     std::vector<Part> parts;
-    // Attach mesh to a host with create_default_drawables=false first. Creates
-    // one drawable per part in its renderer, with CPU or OpenGL textures matching
-    // that renderer. Does not replace an existing drawable of the same name.
+    /**
+     * \brief Create one renderer drawable per imported material part.
+     * \details Attach the mesh to a host with create_default_drawables=false
+     * first. Texture representation follows the host renderer backend. Existing
+     * drawables with matching names cause std::logic_error; they are not replaced.
+     * \throws std::logic_error if the mesh has no attached renderer or a part
+     *         drawable name is already in use.
+     */
     void create_drawables() const;
 };
-// Throws on unreadable files, invalid indices or faces rejected by the mesh
-// builder. Texture lookup failures use Kd. Only diffuse maps/colors are rendered;
-// ambient/specular maps serve as color-map fallbacks. Independent material
-// lighting, MTL opacity and PBR are not implemented.
+
+/**
+ * \brief Load OBJ geometry and its supported MTL diffuse material data.
+ * \param filename Path to the OBJ file.
+ * \return CPU-side mesh and tessellated material-part snapshots.
+ * \throws std::runtime_error for unreadable files, invalid indices, or faces
+ *         rejected by the mesh builder.
+ * \details Texture lookup failures fall back to the material Kd color. Only
+ * diffuse maps/colors are rendered; ambient/specular maps are accepted as
+ * color-map fallbacks. Independent material lighting, MTL opacity, and PBR
+ * are not implemented.
+ */
 ObjMaterialMesh load_obj_materials(const std::string& filename);
 }
 #endif

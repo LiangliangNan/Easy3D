@@ -50,6 +50,7 @@ namespace easy3d {
          * \param top       Specifies the coordinates for the top horizontal clipping plane.
          * \param near      Specifies the distance from the viewer to the near clipping plane (always positive).
          * \param far       Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \return Orthographic projection matrix.
          * See http://www.songho.ca/opengl/gl_projectionmatrix.html
          *     https://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
          */
@@ -61,6 +62,7 @@ namespace easy3d {
          * \param right  Specify the coordinates for the right vertical clipping plane.
          * \param bottom Specify the coordinates for the bottom horizontal clipping plane.
          * \param top    Specify the coordinates for the top horizontal clipping plane.
+         * \return Orthographic projection matrix.
          */
         mat4 ortho(float left, float right, float bottom, float top);
 
@@ -74,6 +76,7 @@ namespace easy3d {
          * \param top    Specifies the coordinates for the top horizontal clipping plane.
          * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
          * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \return Perspective frustum projection matrix.
          */
         mat4 frustum(float left, float right, float bottom, float top, float near, float far);
 
@@ -84,6 +87,7 @@ namespace easy3d {
          *      ratio is the ratio of x (width) to y (height).
          * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
          * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \return Symmetric perspective projection matrix.
          * \note In this function, angles are expressed in radians.
          * See https://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
          */
@@ -96,6 +100,7 @@ namespace easy3d {
          *      defines the field of view in the x direction.
          * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
          * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \return Symmetric perspective projection matrix.
          * \note In this function, angles are expressed in radians.
          */
         mat4 perspective(float fov_y, float width, float height, float near, float far);
@@ -106,6 +111,7 @@ namespace easy3d {
          * \param aspect Specifies the aspect ratio that determines the field of view in the x direction. The
          *		   aspect ratio is the ratio of x (width) to y (height).
          * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \return Symmetric perspective projection matrix with an infinite far plane.
          * \note In this function, angles are expressed in radians.
          */
         mat4 infinite_perspective(float fov_y, float aspect, float near);
@@ -114,6 +120,7 @@ namespace easy3d {
          * Creates a viewport matrix. Simulating glViewport(), with the origin located at (0, 0).
          * \param width  Specifies the width of the viewport.
          * \param height Specifies the height of the viewport.
+         * \return Viewport transform matrix.
          */
         mat4 viewport(float width, float height);
 
@@ -122,6 +129,7 @@ namespace easy3d {
          * \param eye    Position of the camera.
          * \param center Position where the camera is looking at.
          * \param up     Normalized up vector determining how the camera is oriented. Typically (0, 0, 1).
+         * \return World-to-camera view matrix.
          */
         mat4 look_at(const vec3& eye, const vec3& center, const vec3& up);
 
@@ -130,6 +138,7 @@ namespace easy3d {
          * \param center The center of the picking region.
          * \param delta  The width and height of the picking region.
          * \param viewport The viewport.
+         * \return Transform that maps the picking region to the viewport.
          */
         mat4 pick_matrix(const vec2& center, const vec2& delta, const vec4& viewport);
 
@@ -184,6 +193,7 @@ namespace easy3d {
          * \param mat The transformation matrix.
          * \note The returned matrix is NOT padded. Use the padded version for uniform blocks.
          * \ normal_matrix_padded.
+         * \return Unpadded 3x3 normal matrix.
          */
         mat3  normal_matrix(const mat4& mat);
 
@@ -192,6 +202,7 @@ namespace easy3d {
          * \param mat The transformation matrix.
          * \note This is the padded version suitable for uniform blocks.
          * \see normal_matrix.
+         * \return Padded normal matrix suitable for a uniform block.
          */
         mat43 normal_matrix_padded(const mat4& mat);
 

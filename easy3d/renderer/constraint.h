@@ -153,7 +153,10 @@ namespace easy3d {
 
 		\p translation is expressed in local frame coordinate system. Use
 		Frame::inverseTransformOf() to express it in the world coordinate system if
-		needed. */
+		needed.
+		\param translation Desired translation in the local frame coordinates.
+		\param frame Frame that receives the translation.
+		*/
 		virtual void constrainTranslation(vec3 &translation, Frame *const frame) {
 			(void)translation;
 			(void)frame;
@@ -165,7 +168,10 @@ namespace easy3d {
 		constraint. See constrainTranslation() for details.
 
 		Use Frame::inverseTransformOf() on the \p rotation quat::axis() to
-		express \p rotation in the world coordinate system if needed. */
+		express \p rotation in the world coordinate system if needed.
+		\param rotation Desired rotation increment.
+		\param frame Frame that receives the rotation.
+		*/
 		virtual void constrainRotation(quat &rotation, Frame *const frame) {
 			(void)(rotation);
 			(void)(frame);
@@ -244,18 +250,30 @@ namespace easy3d {
 
 		/*! @name Translation constraint */
 		//@{
-		/*! Overloading of Constraint::constrainTranslation(). Empty */
+		/*! Overloading of Constraint::constrainTranslation(). Empty.
+		 * \param translation Proposed translation, unchanged by this implementation.
+		 * \param frame Frame receiving the translation.
+		 */
         void constrainTranslation(vec3 &translation, Frame *const frame) override {
 			(void)(translation);
 			(void)(frame);
 		}
 
+		/**
+		 * \brief Set translation constraint type and direction.
+		 * \param type Translation constraint mode.
+		 * \param direction Axis direction or plane normal, depending on type.
+		 */
 		void setTranslationConstraint(Type type, const vec3 &direction);
 		/*! Sets the Type() of the translationConstraintType(). Default is
-		 * AxisPlaneConstraint::FREE. */
+		 * AxisPlaneConstraint::FREE.
+		 * \param type Translation constraint mode.
+		 */
 		void setTranslationConstraintType(Type type) {
 			translationConstraintType_ = type;
 		};
+		/// \brief Set the translation constraint direction.
+		/// \param direction Axis direction or plane normal.
 		void setTranslationConstraintDirection(const vec3 &direction);
 
 		/*! Returns the translation constraint Type().
@@ -267,7 +285,9 @@ namespace easy3d {
 		(AxisPlaneConstraint::FORBIDDEN).
 
 		Use Frame::setPosition() to define the position of the constrained Frame
-		before it gets constrained. */
+		before it gets constrained.
+		\return Translation constraint type.
+		*/
 		Type translationConstraintType() const { return translationConstraintType_; };
 		/*! Returns the direction used by the translation constraint.
 
@@ -279,7 +299,9 @@ namespace easy3d {
 		The AxisPlaneConstraint derived classes express this direction in different
 		coordinate system (camera for CameraConstraint, local for LocalConstraint, and
 		world for WorldConstraint). This value can be modified with
-		setTranslationConstraintDirection(). */
+		setTranslationConstraintDirection().
+		\return Translation axis direction or plane normal.
+		*/
 		vec3 translationConstraintDirection() const {
 			return translationConstraintDir_;
 		};
@@ -287,17 +309,31 @@ namespace easy3d {
 
 		/*! @name Rotation constraint */
 		//@{
-		/*! Overloading of Constraint::constrainRotation(). Empty. */
+		/*! Overloading of Constraint::constrainRotation(). Empty.
+		 * \param rotation Proposed rotation, unchanged by this implementation.
+		 * \param frame Frame receiving the rotation.
+		 */
         void constrainRotation(quat &rotation, Frame *const frame) override {
 			(void)(rotation);
 			(void)(frame);
 		}
 
+		/**
+		 * \brief Set rotation constraint type and axis.
+		 * \param type Rotation constraint mode.
+		 * \param direction Rotation axis.
+		 */
 		void setRotationConstraint(Type type, const vec3 &direction);
+		/// \brief Set the rotation constraint mode.
+		/// \param type Rotation constraint mode.
 		void setRotationConstraintType(Type type);
+		/// \brief Set the rotation constraint axis.
+		/// \param direction Axis in the constraint's coordinate system.
 		void setRotationConstraintDirection(const vec3 &direction);
 
-		/*! Returns the rotation constraint Type(). */
+		/*! Returns the rotation constraint Type().
+		 * \return Rotation constraint type.
+		 */
 		Type rotationConstraintType() const { return rotationConstraintType_; };
 		/*! Returns the axis direction used by the rotation constraint.
 
@@ -307,7 +343,9 @@ namespace easy3d {
 		The AxisPlaneConstraint derived classes express this direction in different
 		coordinate system (camera for CameraConstraint, local for LocalConstraint, and
 		world for WorldConstraint). This value can be modified with
-		setRotationConstraintDirection(). */
+		setRotationConstraintDirection().
+		\return Rotation axis direction.
+		*/
 		vec3 rotationConstraintDirection() const { return rotationConstraintDir_; };
 		//@}
 
@@ -333,7 +371,13 @@ namespace easy3d {
 		/*! Virtual destructor. Empty. */
         ~LocalConstraint() override = default;
 
+        /// Apply the local-coordinate translation constraint.
+        /// \param translation Proposed translation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        /// Apply the local-coordinate rotation constraint.
+        /// \param rotation Proposed rotation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainRotation(quat &rotation, Frame *const frame) override;
 	};
 
@@ -351,7 +395,13 @@ namespace easy3d {
 		/*! Virtual destructor. Empty. */
         ~WorldConstraint() override = default;
 
+        /// Apply the world-coordinate translation constraint.
+        /// \param translation Proposed translation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        /// Apply the world-coordinate rotation constraint.
+        /// \param rotation Proposed rotation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainRotation(quat &rotation, Frame *const frame) override;
 	};
 
@@ -366,14 +416,25 @@ namespace easy3d {
 	  for an illustration. */
 	class CameraConstraint : public AxisPlaneConstraint {
 	public:
+		/**
+		 * \brief Create a constraint expressed in a camera coordinate system.
+		 * \param camera Camera defining the constraint coordinate system.
+		 */
 		explicit CameraConstraint(const Camera *const camera);
 		/*! Virtual destructor. Empty. */
         ~CameraConstraint() override = default;
 
+        /// Apply the camera-coordinate translation constraint.
+        /// \param translation Proposed translation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        /// Apply the camera-coordinate rotation constraint.
+        /// \param rotation Proposed rotation, modified to satisfy the constraint.
+        /// \param frame Constrained frame.
         void constrainRotation(quat &rotation, Frame *const frame) override;
 
 		/*! Returns the associated Camera. Set using the CameraConstraint constructor.
+		 * \return Non-owning pointer to the associated camera.
 		 */
 		const Camera *camera() const { return camera_; };
 

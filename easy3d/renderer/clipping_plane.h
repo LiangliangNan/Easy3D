@@ -43,70 +43,95 @@ namespace easy3d {
      */
     class ClippingPlane {
     public:
+        /// Create the process-wide clipping-plane controller.
         ClippingPlane();
+
+        /// Destroy the clipping-plane controller.
         virtual ~ClippingPlane();
 
-        /// returns the instance of the clipping plane.
-        /// The entire program will have only one clipping plane.
+        /// Return the process-wide clipping-plane instance.
+        /// \return The singleton clipping plane.
         static ClippingPlane* instance();
 
-        /// returns whether the clipping plane has been enabled.
+        /// Return whether clipping is enabled.
+        /// \return True when clipping is active.
         bool is_enabled() const { return enabled_; }
-        /// enables/disables the clipping plane.
+        /// Enable or disable clipping.
+        /// \param b True to enable clipping.
         void set_enabled(bool b) { enabled_ = b; }
 
-        /// puts the clipping plane at the center of the scene.
+        /**
+         * \brief Center the clipping plane on a scene bounding sphere.
+         * \param center Scene center in world coordinates.
+         * \param radius Scene radius in world units.
+         */
         void fit_scene(const vec3 &center, float radius);
         /// radius used by the plane guide and relative cross-section width.
+        /// \return Scene radius in world units.
         float scene_radius() const { return scene_radius_; }
 
-        /// the center of the clipping plane. \sa normal()
+        /// Return the clipping plane center in world coordinates.
+        /// \return Plane center.
         vec3 center() const;
-        /// the normal direction of the clipping plane. \sa center().
+        /// Return the clipping plane normal in world coordinates.
+        /// \return Plane normal.
         vec3 normal() const;
 
-        /// the clipping plane
+        /// Return the first clipping halfspace.
+        /// \return First clipping plane.
         Plane3 plane0() const;
-        /// the other clipping plane. plane0() and plane1() together define a cross section.
+        /// Return the second halfspace used to define a cross section.
+        /// \return Second clipping plane.
         Plane3 plane1() const;
 
-        /// returns whether the clipping plane is visible.
+        /// Return whether the plane guide is visible.
+        /// \return True when the guide is shown.
         bool is_visible() const { return visible_; }
-        /// shows/hides the clipping plane.
+        /// Show or hide the plane guide without changing clipping.
+        /// \param v True to show the guide.
         void set_visible(bool v) { visible_ = v; }
 
-        /// returns the color of the clipping plane.
+        /// Return the plane-guide color.
+        /// \return Color in RGBA.
         const vec4& color() const { return color_; }
-        /// sets the color of the clipping plane.
+        /// Set the plane-guide color.
+        /// \param c Color in RGBA.
         void set_color(const vec4& c) { color_ = c; }
 
-        /// returns whether cross section is enabled.
+        /// Return whether cross-section mode is enabled.
+        /// \return True when cross-section mode is enabled.
         bool cross_section() const { return cross_section_; }
-        /// enables/disables cross section.
+        /// Enable or disable cross-section mode.
+        /// \param b True to enable cross-section mode.
         void set_cross_section(bool b) { cross_section_ = b; }
 
         /// returns the thickness of the cross section.
         /// \details The thickness is defined relative to the scene bounding box. Default value is 0.01.
+        /// \return Relative cross-section thickness.
         float cross_section_width() const { return cross_section_width_; }
-        /// sets the thickness of the cross section.
+        /// Set cross-section thickness as a relative fraction of the scene radius.
+        /// \param w Relative thickness.
         void set_cross_section_width(float w) { cross_section_width_ = w; }
 
         /// sets up the shader program for rendering.
-        /// \param program The shader program.
+        /// \param program Shader program to configure.
         void set_program(ShaderProgram *program) const;
-        /// sets up whether a primitive should be completely discarded if one of its vertices is clipped.
+        /// Configure whether a primitive is rejected when a vertex is clipped.
         /// \param program The shader program.
         /// \param plane_clipping_discard Controls clipping plane behavior.
-        ///     - true: completely discard a primitive if one of its vertices is clipped by this clipping plane.
-        ///     - false: standard plane clipping
+        ///     - true: discard a primitive when any vertex is clipped.
+        ///     - false: use standard geometric plane clipping.
         void set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard) const;
 
-        /// draws the clipping plane itself.
+        /// Draw the plane guide using the supplied camera.
+        /// \param cam Camera used to compute the guide's screen-space representation.
         void draw(const Camera* cam) const;
 
-        /// returns the manipulator attached to the clipping plane.
+        /// Return the manipulator attached to the clipping plane.
+        /// \return Non-owning manipulator pointer.
         virtual Manipulator *manipulator() { return manipulator_; }
-        /// returns the manipulator attached to the clipping plane.
+        /// Return the manipulator attached to the clipping plane.
+        /// \return Non-owning manipulator pointer.
         virtual const Manipulator *manipulator() const { return manipulator_; }
 
     protected:

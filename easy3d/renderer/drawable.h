@@ -45,9 +45,9 @@ namespace easy3d {
     namespace opengl { class PointSelector; }
 
     /**
-     * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
+     * \brief Base class for objects drawn as points, line segments, or triangles.
      * \class Drawable easy3d/renderer/drawable.h
-     * @details A Drawable is an abstraction for "something that can be drawn", e.g., a point cloud, the surface
+     * \details A Drawable is an abstraction for "something that can be drawn", e.g., a point cloud, the surface
      *          of a mesh, the wireframe of a surface mesh, the vertices of a graph, the border of a polyhedral mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.
      *          A drawable can live independently or be associated with a Model. A drawable is considered standalone
@@ -61,17 +61,52 @@ namespace easy3d {
     public:
         // CPU-owned geometry selected automatically by a Vulkan build.
         // OpenGL builds use native GL buffers.
+        /**
+         * \brief CPU-side snapshot of drawable geometry and optional provenance.
+         * \details Available when the drawable uses CPU buffers (as in Vulkan
+         * builds). Buffer updates change the revision and invalidate any
+         * source-face provenance associated with prior geometry.
+         */
         struct BufferData {
-            std::vector<vec3> vertices, normals, colors;
+            /// Uploaded vertex positions in drawable order.
+            std::vector<vec3> vertices;
+            /// Per-vertex normals.
+            std::vector<vec3> normals;
+            /// Per-vertex colors.
+            std::vector<vec3> colors;
+            /// Per-vertex texture coordinates.
             std::vector<vec2> texcoords;
+            /// Optional indices into the vertex arrays.
             std::vector<unsigned int> indices;
-            // Optional original SurfaceMesh face index per rendered triangle; -1 is unknown.
+            /// Original SurfaceMesh face index for each rendered triangle; -1 means unknown.
             std::vector<int> source_faces;
+            /// Incremented when the CPU-side buffer snapshot changes.
             std::size_t revision = 0;
         };
+
+        /**
+         * \brief Query whether CPU-side buffer data is available.
+         * \return True when this drawable has CPU buffers.
+         */
         bool has_cpu_buffers() const { return bool(cpu_buffers_); }
+
+        /**
+         * \brief Access the current CPU-side buffer snapshot.
+         * \return Current buffer data, refreshing it first when an update is pending.
+         * \throws std::logic_error when CPU buffers are not enabled for this drawable.
+         */
         const BufferData& cpu_buffers();
-        // CPU triangle provenance. Set after geometry uploads, which invalidate it.
+
+        /**
+         * \brief Associate rendered triangles with source SurfaceMesh faces.
+         * \param faces One source face index per rendered triangle, or an empty
+         *        vector to clear the mapping. Use -1 for unknown provenance.
+         * \throws std::logic_error unless CPU buffers are available and this is
+         *        a triangle drawable.
+         * \throws std::invalid_argument if the count or an index is invalid.
+         * \details Set this after uploading triangle geometry; geometry uploads
+         * invalidate the mapping.
+         */
         void set_source_faces(const std::vector<int>& faces);
         /**
          * \brief The type of the drawable.
@@ -239,6 +274,10 @@ namespace easy3d {
          * \return The number of vertices.
          */
         std::size_t num_vertices() const { return num_vertices_; }
+        /**
+         * \brief Return the number of indices in the element buffer.
+         * \return Index count; zero when no element buffer is used.
+         */
         std::size_t num_indices() const { return num_indices_; }
 
         /// \name Rendering

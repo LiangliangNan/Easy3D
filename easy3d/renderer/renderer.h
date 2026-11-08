@@ -44,8 +44,13 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * \brief A Renderer manages the drawables (and thus the rendering) of a model.
-     * \details Renderer also allow to create default drawables for most rendering purposes.
+     * \brief Manage the drawables used to render a model.
+     * \details A Renderer owns the point, line, and triangle drawables
+     * associated with one Model. It can create standard drawables for supported
+     * model types; custom visualizations can instead create and configure
+     * drawables explicitly. Model geometry or attribute changes must be
+     * reflected in drawable buffers, either through the standard update path or
+     * a custom drawable update function.
      * \class Renderer easy3d/renderer/renderer.h
      * \sa Drawable, PointsDrawable, LinesDrawable, TrianglesDrawable
      *
@@ -58,45 +63,49 @@ namespace easy3d {
     class Renderer {
     public:
         /**
-         * @brief Constructor.
-         * @param model The model to which this renderer is attached.
-         * @param create_drawables \c true to create default drawables for this model. Skip the creation if \c false.
-         *        The supported default drawables are
-         *              - PointCloud: "vertices".
-         *              - SurfaceMesh: "faces", "vertices", "edges", and "borders".
-         *              - Graph: "vertices", and "edges".
-         *              - PolyMesh: "faces:border" and "faces:interior".
-         * After the \c model has been changed or modified (in geometry, texture, color, etc.), client code
-         * can call update() for the rendering buffers of its default drawable to be automatically updated
-         * during the rendering stage.
-         * In case the default drawables don't meet a particular visualization purpose, client code should skip
-         * the creation of the default drawables (by passing \c false to \p create_drawables). Instead, create a
-         * customized drawable and update the buffers accordingly. If the drawable changes or will be modified
-         * frequently and its visualization is expected to be automatically updated after each change, provide
-         * an update function.
-         * \sa update(),
+         * \brief Create a renderer for a model.
+         * \param model Model whose rendering drawables are managed.
+         * \param create_drawables True to create default drawables for this model.
+         * \details When requested, default drawables are created for supported
+         * model types: PointCloud ("vertices"); SurfaceMesh ("faces", "vertices",
+         * "edges", "borders"); Graph ("vertices", "edges"); and PolyMesh
+         * ("faces:border", "faces:interior"). Call update() after changing model
+         * data to refresh these buffers. For custom visualization, pass false,
+         * create the desired drawable, and provide an update function if its
+         * buffers must be rebuilt when model data changes.
+         * \sa update()
          */
         explicit Renderer(Model *model, bool create_drawables = true);
 
+        /// Destroy the renderer and release its managed drawables.
         virtual ~Renderer();
 
         /**
-         * @brief The model to which this renderer is attached.
+         * \brief Return the model associated with this renderer.
+         * \return The non-owning model pointer supplied to the constructor.
          */
         Model *model() { return model_; }
 
         //-------------------- rendering functionalities  -----------------------
 
-        /// Returns whether the model is currently visible.
+        /// Return whether the model is currently visible.
+        /// \return True when the model's drawables are eligible for rendering.
         bool is_visible() const { return visible_; }
 
-        /// Shows/Hides the model.
+        /// Set whether the model is visible.
+        /// \param b True to show the model; false to hide it.
         void set_visible(bool b) { visible_ = b; }
 
-        /// Returns whether the model has been selected.
+        /// Return whether the model is selected.
+        /// \return True when selected.
         bool is_selected() const { return selected_; }
 
-        /// Select/Deselect the model. The state of all its drawables will change accordingly.
+        /**
+         * \brief Select or deselect the model.
+         * \param b True to select the model; false to deselect it.
+         * \details The selected state is propagated to all of the model's
+         * drawables.
+         */
         void set_selected(bool b);
 
         /**
@@ -112,20 +121,26 @@ namespace easy3d {
         //-------------------- drawable management  -----------------------
 
         /**
-         * Get the points drawable with a given name.
-         * Return nullptr if the drawable does not exist.
+         * \brief Find a point drawable by name.
+         * \param name Drawable name.
+         * \param warning_not_found If true, log a warning when no drawable matches.
+         * \return The matching drawable, or nullptr if it does not exist.
          */
         PointsDrawable *get_points_drawable(const std::string &name, bool warning_not_found = true) const;
 
         /**
-         * Get the lines drawable with a given name.
-         * Return nullptr if the drawable does not exist.
+         * \brief Find a line drawable by name.
+         * \param name Drawable name.
+         * \param warning_not_found If true, log a warning when no drawable matches.
+         * \return The matching drawable, or nullptr if it does not exist.
          */
         LinesDrawable *get_lines_drawable(const std::string &name, bool warning_not_found = true) const;
 
         /**
-         * Get the triangles drawable with a given name.
-         * Return nullptr if the drawable does not exist.
+         * \brief Find a triangle drawable by name.
+         * \param name Drawable name.
+         * \param warning_not_found If true, log a warning when no drawable matches.
+         * \return The matching drawable, or nullptr if it does not exist.
          */
         TrianglesDrawable *get_triangles_drawable(const std::string &name, bool warning_not_found = true) const;
 
@@ -154,17 +169,20 @@ namespace easy3d {
         TrianglesDrawable *add_triangles_drawable(const std::string &name);
 
         /**
-         * All available points drawables managed by this renderer.
+         * \brief Return the managed point drawables.
+         * \return A const reference to the renderer-owned collection.
          */
         const std::vector< std::shared_ptr<PointsDrawable> > &points_drawables() const { return points_drawables_; }
 
         /**
-         * All available lines drawables managed by this renderer.
+         * \brief Return the managed line drawables.
+         * \return A const reference to the renderer-owned collection.
          */
         const std::vector< std::shared_ptr<LinesDrawable> > &lines_drawables() const { return lines_drawables_; }
 
         /**
-         * All available triangles drawables managed by this renderer.
+         * \brief Return the managed triangle drawables.
+         * \return A const reference to the renderer-owned collection.
          */
         const std::vector< std::shared_ptr<TrianglesDrawable> > &triangles_drawables() const { return triangles_drawables_; }
 

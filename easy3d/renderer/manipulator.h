@@ -58,28 +58,46 @@ namespace easy3d {
      */
     class Manipulator {
     public:
-        /// Constructor. A manipulator can be attached to a \p model.
+        /**
+         * \brief Create a manipulator for an optional model.
+         * \param model Model whose transform is manipulated; may be nullptr.
+         */
         explicit Manipulator(Model *model = nullptr);
 
+        /// Destroy the manipulator and its managed frame.
         ~Manipulator();
 
-        /// Resets the manipulated frame, i.e., no transformation.
+        /// Reset the manipulated frame to the identity transform.
         void reset();
 
-        /// Returns the manipulated frame.
+        /// Return the manipulated frame.
+        /// \return Non-owning pointer to the manipulated frame.
         ManipulatedFrame *frame() { return frame_; }
 
-        /// Returns the manipulated frame.
+        /// Return the manipulated frame.
+        /// \return Non-owning pointer to the manipulated frame.
         const ManipulatedFrame *frame() const { return frame_; }
 
-        /// Returns the transformation introduced by this manipulator.
-        /// \note Rotation is performed around object 'center'. Thus the returned transformation is different from
-        ///     'frame()->matrix()'. Their relation is: 'matrix() == frame()->matrix() * mat4::translation(-center)'.
+        /**
+         * \brief Return the transform applied to the manipulated object.
+         * \details Rotation is performed around the object center. The returned
+         * transform is therefore frame()->matrix() * translation(-center), not
+         * frame()->matrix() alone.
+         * \return Object transform.
+         */
         mat4 matrix() const;
 
-        /// Draws the manipulated frame.
+        /// Draw the manipulated frame with the backend's native line rendering.
+        /// \param cam Camera used for rendering.
         void draw_frame(const Camera* cam) const;
-        /// Immutable depth-tested frame annotation in framebuffer pixels, for Viewer::set_overlays().
+        /**
+         * \brief Create a depth-tested frame annotation for Viewer::set_overlays().
+         * \param cam Camera used to project the frame.
+         * \param width Framebuffer width in pixels.
+         * \param height Framebuffer height in pixels.
+         * \param line_width Annotation line width in framebuffer pixels.
+         * \return Immutable draw command for the annotation.
+         */
         graphics::DrawCommand draw_frame(const Camera* cam, int width, int height, float line_width = 1) const;
 
     protected:

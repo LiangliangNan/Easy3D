@@ -396,6 +396,7 @@ namespace easy3d {
          *      aperture of the Camera. The X (horizontal) angle is inferred from the window aspect ratio (see
          *      aspectRatio() and horizontalFieldOfView()).
          *      Use setFOVToFitScene() to adapt the fieldOfView() to a given scene.
+         * \return Vertical field of view in radians.
          */
         float fieldOfView() const { return fieldOfView_; }
 

@@ -54,34 +54,47 @@ namespace easy3d {
         };
 
         /**
-         * \brief Creates a texture from an image file.
-         * \param image_file The full path to the image file.
-         * \param wrap The wrap mode of the texture.
-         * \param filter The filter mode of the texture.
-         * \return The created texture.
+         * \brief Create a texture from an image file.
+         * \param image_file Path to the image file.
+         * \param wrap Texture-coordinate wrap mode.
+         * \param filter Texture filtering mode.
+         * \return The created texture, or nullptr if the image cannot be loaded
+         *         or the image format is unsupported.
          */
         static Texture* create(const std::string &image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
         /**
-         * \brief Creates a texture from the given image data.
-         * \param rgb_data The image data.
-         * \param width The width (i.e., number of columns) of the image.
-         * \param height The height (i.e., number of rows) of the image.
-         * \param comp The number of components for each pixel (e.g., 3 for RGB).
-         * \param wrap The wrap mode of the texture.
-         * \param filter The filter mode of the texture.
-         * \return The created texture.
+         * \brief Create a texture from interleaved image data.
+         * \param rgb_data Pixel bytes in row-major order, with row zero at the
+         *        bottom. Component counts from one through four are supported.
+         * \param width Image width in pixels.
+         * \param height Image height in pixels.
+         * \param comp Number of components per pixel.
+         * \param wrap Texture-coordinate wrap mode.
+         * \param filter Texture filtering mode.
+         * \return The created texture, or nullptr for invalid dimensions,
+         *         unsupported component counts, or an incorrectly sized buffer.
          */
         static Texture *create(const std::vector<unsigned char> &rgb_data, int width, int height, int comp,
                                WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
-        // Input row zero is the bottom row. Vulkan retains immutable image data;
-        // OpenGL also uploads a texture and requires a current context.
-        // Invalid dimensions/formats return nullptr.
+        /**
+         * \brief CPU-side immutable pixel snapshot.
+         * \details Input row zero is the bottom row. Vulkan retains this image
+         * data; OpenGL also uploads a texture and therefore requires a current
+         * context when the texture is created.
+         */
         struct PixelData {
-            int width, height, channels;
+            /// Image width in pixels.
+            int width; ///< Image width in pixels.
+            int height; ///< Image height in pixels.
+            int channels; ///< Number of components per pixel.
+            /// Interleaved pixel bytes in row-major order.
             std::vector<unsigned char> bytes;
         };
+
+        /// Return the immutable CPU-side pixel snapshot.
+        /// \return Shared pointer to the pixel data.
         const std::shared_ptr<const PixelData>& pixels() const { return pixels_; }
 
         /**
@@ -101,7 +114,8 @@ namespace easy3d {
         const std::string &name() const { return name_; }
         /**
          * \brief Bind the texture to a texture unit.
-         * \param unit The texture unit to bind to.
+         * \param unit Zero-based texture unit to bind to.
+         * \details In OpenGL builds, a valid current context is required.
          */
         void bind(int unit = 0) const;
         /**
@@ -181,4 +195,3 @@ namespace easy3d {
 
 
 #endif  // EASY3D_RENDERER_OPENGL_TEXTURE_H
-

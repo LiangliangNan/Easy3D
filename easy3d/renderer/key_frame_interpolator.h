@@ -352,15 +352,18 @@ namespace easy3d {
          */
         void start_interpolation();
 
-        // UI-thread alternative: no timer or worker is created. The host calls
-        // advance_interpolation() at interpolation_period() intervals. Stop and
-        // restart preserve the next sample; completion resets to the first one.
-        // Captures/readback alone must not advance playback. Use a fresh
-        // interpolator for manual mode: the legacy detached timer cannot be
-        // joined, so switching a timer-used instance to manual mode is rejected.
+        /**
+         * \brief Start interpolation without creating a timer or worker thread.
+         * \details The host must call advance_interpolation() at
+         * interpolation_period() intervals. Stop and restart preserve the next
+         * sample; completion resets to the first. Use a fresh interpolator for
+         * manual mode: switching an instance that used timer playback is rejected.
+         */
         void start_manual_interpolation();
-        // Applies exactly one sample on the calling thread and emits the same
-        // frame/stopped signals. Returns false when manual playback is inactive.
+        /**
+         * \brief Advance manual playback by one interpolation sample.
+         * \return True when a sample was applied; false when manual playback is inactive.
+         */
         bool advance_interpolation();
 
         /**
