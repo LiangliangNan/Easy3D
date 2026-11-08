@@ -63,9 +63,12 @@ set(tutorial_scenes
         Tutorial_701_Cloud_NormalEstimation
         Tutorial_702_Cloud_SurfaceReconstruction
         Tutorial_703_Cloud_PlaneExtraction
+        Tutorial_704_Cloud_DownSampling
         Tutorial_801_Mesh_Curvature
         Tutorial_802_Mesh_Smoothing
+        Tutorial_803_Mesh_Fairing
         Tutorial_804_Mesh_HoleFilling
+        Tutorial_805_Mesh_Remeshing
         Tutorial_806_Mesh_Simplification
         Tutorial_807_Mesh_Subdivision
         Tutorial_808_Mesh_Parameterization

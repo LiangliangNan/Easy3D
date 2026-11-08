@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     const std::string file_name = resource::directory() + "/data/graph.ply";
     Graph* graph = GraphIO::load(file_name);
     if (!graph) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
 	}
     std::cout << "graph loaded. " << std::endl;

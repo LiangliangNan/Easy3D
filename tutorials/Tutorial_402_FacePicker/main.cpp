@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     TutorialFacePicker viewer(EXAMPLE_TITLE);
 
     if (!viewer.add_model(file_name)) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
 

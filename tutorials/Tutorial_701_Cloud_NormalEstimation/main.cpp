@@ -69,7 +69,7 @@ bool reorient(Viewer* viewer, Model* model) {
     auto cloud = dynamic_cast<PointCloud *>(model);
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
     if (!normals) {
-        LOG(WARNING) << "normal information does not exist";
+        std::cerr << "normal information does not exist" << std::endl;
         return false;
     }
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
     auto model = viewer.add_model(file, true);
     if (!model) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
     // to view the bunny from its front

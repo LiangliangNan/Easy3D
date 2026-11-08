@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
     if (!viewer.add_model(file_name)) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
 

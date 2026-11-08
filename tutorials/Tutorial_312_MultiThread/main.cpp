@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     // No worker ever reads or modifies the cloud, renderer or viewer.
     PointBatchWorker worker;
     if (!worker.wait_for_batch(std::chrono::seconds(5))) {
-        LOG(ERROR) << "point worker did not produce its first batch";
+        std::cerr << "point worker did not produce its first batch" << std::endl;
         return EXIT_FAILURE;
     }
 

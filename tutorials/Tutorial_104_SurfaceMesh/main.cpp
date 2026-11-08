@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         builder.end_surface(false);
     }
     else
-        LOG(ERROR) << "option must be 1 or 2";
+        std::cerr << "option must be 1 or 2" << std::endl;
 
     std::cout << "#face:   " << mesh.n_faces() << std::endl;
 	std::cout << "#vertex: " << mesh.n_vertices() << std::endl;

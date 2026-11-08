@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     Viewer viewer(EXAMPLE_TITLE);
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file, true));
     if (!mesh) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+       std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
 

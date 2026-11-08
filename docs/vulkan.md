@@ -590,21 +590,24 @@ choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 fe
 2026-11-08 design decision (Mapple stays OpenGL-only; Python is core-only with the unused
 bindings removed); re-run the tests after each batch.
 
-**Current status note (2026-11-08, post-batch-43 refresh; idle `-j2`).** Mac baseline:
-OpenGL 102/102 (`build-u1b-opengl`), MoltenVK 136/136 (`build-migration/vulkan-macos`),
-OpenGL+Qt 101/101 (`build-opengl`), Qt/CGAL/ffmpeg Vulkan Debug 141/141 (`cmake-build-debug`).
-Batch 43 added eight algorithm tutorials (605 Delaunay2D, 603 CSG as a 2×2 MultiViewer, and
-801/802/804/806/807/808 surface-mesh), each wired into the bounded smoke-test suite on both
-backends, plus the core fixes they exposed (GenericPolygon range constructor, `csg::difference_of`
+**Current status note (2026-11-08, post-batch-44 refresh; idle `-j2`).** Mac baseline:
+OpenGL 105/105 (`build-u1b-opengl`), MoltenVK 139/139 (`build-migration/vulkan-macos`),
+OpenGL+Qt 104/104 (`build-opengl`), Qt/CGAL/ffmpeg Vulkan Debug 144/144 (`cmake-build-debug`).
+Batch 44 implemented the three remaining `#TODO` algorithm tutorials — 704 Cloud_DownSampling,
+803 Mesh_Fairing and 805 Mesh_Remeshing — completing the algorithm-tutorial set; each is wired
+into the bounded smoke-test suite on both backends. Batch 43 had added the other eight
+(605 Delaunay2D, 603 CSG as a 2×2 MultiViewer, and 801/802/804/806/807/808 surface-mesh) plus
+the core fixes they exposed (GenericPolygon range constructor, `csg::difference_of`
 orientation, smoothing no-rescale default).
-`vulkan.imgui` and `vulkan.realcamera` are load-sensitive — in the batch-43 concurrent `-j2`
-full Debug-tree run they failed (139/141) but both pass alone (imgui 4.51 s; realcamera 2.72 s).
-For imgui the earlier symptom was "File menu did not open through the GLFW callback chain"; the
-`R32G32_UINT` blending validation messages it prints are non-fatal (0 counted errors on the
-passing run). The Debug tree's five viewer-tutorial smoke tests (201/202/203/205/206) were
-"Not Run" from stale/missing `_test` binaries after the batch-42 renumber; building the five
-targets clears them (the tree now runs 141 tests — recurring IDE-tree staleness, not a
-regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
+`vulkan.imgui`, `vulkan.window`, `vulkan.realcamera` and `opengl.imgui` are load-sensitive —
+under concurrent `-j2` they can fail but pass when run alone (e.g. batch-44 Debug tree
+142/144 with `vulkan.window`/`vulkan.imgui` failing, both passing alone; native OpenGL
+`opengl.imgui` likewise). For imgui the earlier symptom was "File menu did not open through the
+GLFW callback chain"; the `R32G32_UINT` blending validation messages it prints are non-fatal
+(0 counted errors on the passing run). The Debug tree's five viewer-tutorial smoke tests
+(201/202/203/205/206) were "Not Run" from stale/missing `_test` binaries after the batch-42
+renumber; building the five targets clears them (the tree now runs 144 tests — recurring
+IDE-tree staleness, not a regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
 re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.0 s) at a
 3200×1834 framebuffer with 4× MSAA and 0 validation errors, consistent with the earlier
 ~70 FPS at 1600×1200 (the visible window was clamped to the display height). Decided 2026-11-08: W10's actionable remainder is closed — Mapple stays OpenGL-only
@@ -6873,3 +6876,41 @@ Qt/CGAL/ffmpeg Vulkan Debug 141/141 (`cmake-build-debug`). In the concurrent `-j
 Debug tree reported 139/141 with `vulkan.realcamera` and `vulkan.imgui` failing; both are the
 previously documented load-sensitive tests and pass when run alone (2.72 s and 4.51 s). The
 eight new tutorial smoke tests and the CSG geometry coverage pass on both backends.
+
+### 2026-11-08 — W10 batch 44: the three remaining algorithm tutorials (704 / 803 / 805)
+
+**Scope.** Implement the three tutorials that were still commented `#TODO` in
+`tutorials/CMakeLists.txt`, completing the algorithm-tutorial set. Like batch 43 this is
+tutorial coverage on the shared, backend-neutral `Viewer` API; no backend code changes.
+
+**Changes.**
+
+- *`Tutorial_704_Cloud_DownSampling`* (point cloud, `bunny.bin`): demonstrates
+  `PointCloudSimplification` (`algo/point_cloud_simplification.h`). Ctrl+U uniformly
+  downsamples to half the current point count; Ctrl+G grid-downsamples with a cell size of
+  twice the average spacing. The functions return the vertices to remove, which are deleted
+  followed by `collect_garbage()` and `renderer()->update()`.
+- *`Tutorial_803_Mesh_Fairing`* (surface mesh, `bunny.ply`): demonstrates `SurfaceMeshFairing`
+  (`algo/surface_mesh_fairing.h`, implicit fairing of Desbrun et al.). Gaussian noise is added
+  first so the effect is visible; Ctrl+A minimizes surface area (`fair(1)`), Ctrl+C minimizes
+  curvature (`fair(2)`), Ctrl+N re-adds noise. Boundaries stay locked; with no selection the
+  whole interior is faired.
+- *`Tutorial_805_Mesh_Remeshing`* (surface mesh, `bunny.ply`): demonstrates
+  `SurfaceMeshRemeshing` (`algo/surface_mesh_remeshing.h`, incremental collapse/split/flip +
+  tangential relaxation). Ctrl+U uniformly remeshes toward 1.5× the average edge length;
+  Ctrl+A adaptively remeshes (min/max edge length and approximation error scaled from the
+  bounding-box diagonal, as in Mapple). Edges are drawn so the new triangulation is visible;
+  `renderer()->update()` re-extracts buffers after the connectivity changes.
+- Each tutorial has the standard `CMakeLists.txt` (`easy3d::algo easy3d::viewer`);
+  `tutorials/CMakeLists.txt` uncomments the three `add_subdirectory()` calls;
+  `tests/native_tutorials/test_sources.cmake` adds all three to the bounded smoke-test scene
+  list. The underlying algorithms are already exercised by `tests/algo` (point-cloud
+  simplification; surface-mesh fairing `minimize_area`/`minimize_curvature`/`fair(3)` and
+  uniform/adaptive remeshing), so the keypress actions are covered by the full suites.
+
+**Validation.** All four active build trees reconfigure and build cleanly (exit 0) and their
+full CTest suites are green at idle `-j2`: OpenGL 105/105 (`build-u1b-opengl`), MoltenVK
+139/139 (`build-migration/vulkan-macos`), OpenGL+Qt 104/104 (`build-opengl`), and
+Qt/CGAL/ffmpeg Vulkan Debug 144/144 (`cmake-build-debug`). The three new tutorial smoke tests
+pass on both backends. Load-sensitive flakes under concurrent `-j2`: `opengl.imgui` (native
+OpenGL tree) and `vulkan.window`/`vulkan.imgui` (Debug tree) each pass when run alone.

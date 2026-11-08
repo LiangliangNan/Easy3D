@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     const std::string texture_file = resource::directory() + "/images/logo.jpg";
     Texture *tex = TextureManager::request(texture_file);
     if (!tex) {
-        LOG(ERROR) << "failed to create texture. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to create texture. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
 

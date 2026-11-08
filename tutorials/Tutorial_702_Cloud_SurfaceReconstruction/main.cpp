@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
     Model *model = viewer.add_model(file, true);
     if (!model) {
-        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;
         return EXIT_FAILURE;
     }
 
