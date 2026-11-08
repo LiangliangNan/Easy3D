@@ -48,11 +48,11 @@ namespace easy3d {
          * \brief Perform implicit Laplacian smoothing with \p timestep.
          * \param timestep The timestep for implicit smoothing. Default: 0.001.
          * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian. Default: false.
-         * \param rescale Decide whether to re-center and re-scale model after smoothing. Default: true.
+         * \param rescale Decide whether to re-center and re-scale model after smoothing. Default: false.
          */
         void implicit_smoothing(float timestep = 0.001,
                                 bool use_uniform_laplace = false,
-                                bool rescale = true);
+                                bool rescale = false);
 
         /**
          * \brief Initialize edge and vertex weights.
