@@ -37,57 +37,30 @@ namespace easy3d {
     class PointCloud;
 
     /**
-     * \brief Base class for nearest neighbor search using KdTree.
+     * \brief Base interface for nearest-neighbor and spatial range queries over 3D points.
      * \class KdTreeSearch easy3d/kdtree/kdtree_search.h
      * \see KdTreeSearch_ANN, KdTreeSearch_ETH, KdTreeSearch_FLANN, and KdTreeSearch_NanoFLANN
      *
-     * \details Easy3D has a collection of KdTree implementations, including [ANN](http://www.cs.umd.edu/~mount/ANN/),
-     * ETH, [FLANN](https://github.com/mariusmuja/flann), and [NanoFLANN](https://github.com/jlblancoc/nanoflann) and
-     * tried to get the best performance of each implementation. Runtime tests (on Windows, using a Visual C++ 2008,
-     * release build) indicated that the ETH implementation has the best performance. Bellow is the statistic summary
-     * of the test on two point clouds.
+     * \details Implementations differ in supported queries, approximation controls, result ordering, and
+     *          concurrency guarantees. Unless a specific implementation documents otherwise, do not assume
+     *          concurrent queries or mutation of the indexed data are safe.
      *
-     * \arg Build:  time for constructing the kd-tree.
-     * \arg Single: time for querying closest vertex (for each point in the point cloud).
-     * \arg KNN:    time for querying K(=16) closest vertex.
-     * \arg Radius: time for querying closest vertex within a radius.
-     *
-     * Test 1: 362, 271 points (the Stanford bunny). radius = 0.001
-     * \code
-     * --------------------------------------------------------------------------------------
-     *       Build         |       Single        |        KNN         |       Radius
-     * --------------------|---------------------|--------------------|---------------------
-     * ANN    ETH   FLANN  |  ANN   ETH   FLANN  |  ANN   ETH   FLANN |  ANN   ETH   FLANN
-     * --------------------|---------------------|--------------------|---------------------
-     * 0.14   0.05   0.12  |  0.17  0.11   0.71  |  1.33  1.0   1.48  |  1.32  1.01  1.51
-     * --------------------------------------------------------------------------------------
-     * \endcode
-     *
-     * Test 2: 4, 116, 466 points (an noisy urban scan). radius = 0.03
-     * \code
-     * --------------------------------------------------------------------------------------
-     *       Build         |       Single        |        KNN          |       Radius
-     * --------------------|---------------------|---------------------|---------------------
-     * ANN    ETH   FLANN  |  ANN   ETH   FLANN  |  ANN   ETH   FLANN  |  ANN    ETH   FLANN
-     * --------------------|---------------------|---------------------|---------------------
-     * 2.2   0.76   1.88   |  2.61  1.84  11.8   |  20.8  13.5  22.0   |  8.75  4.79   15.1
-     * --------------------------------------------------------------------------------------
-     *\endcode
-     *
-     * \attention KdTreeSearch_FLANN and KdTreeSearch_NanoFLANN are thread-safe. Others seem not (not tested yet).
+     *          The point cloud or vector supplied to a constructor must contain at least one point and must
+     *          remain alive and unchanged for the lifetime of the search object. The index refers to the source
+     *          data rather than providing a general-purpose mutable copy.
      */
 
     class KdTreeSearch {
     public:
         /**
          * \brief Constructor.
-         * \param cloud The point cloud for which a KdTree will be constructed.
+         * \param cloud Non-empty point cloud to index; it must outlive this search object and remain unchanged.
          */
         explicit KdTreeSearch(const PointCloud *cloud);
 
         /**
          * \brief Constructor.
-         * \param points The points for which a KdTree will be constructed.
+         * \param points Non-empty points to index; the vector must outlive this search object and remain unchanged.
          */
         explicit KdTreeSearch(const std::vector<vec3>& points);
 
@@ -101,14 +74,14 @@ namespace easy3d {
          * \param p The query point.
          * \param squared_distance The squared distance between the query point and its closest neighbor.
          * \note A \b squared distance is returned by the second argument \p squared_distance.
-         * \return The index of the nearest neighbor found (the same as in the original point cloud).
+         * \return Index of the nearest point in the source data, or -1 if the implementation finds no point.
          */
         virtual int find_closest_point(const vec3 &p, float &squared_distance) const = 0;
 
         /**
          * \brief Queries the closest point for a given point.
          * \param p The query point.
-         * \return The index of the nearest neighbor found (the same as in the original point cloud).
+         * \return Index of the nearest point in the source data, or -1 if the implementation finds no point.
          */
         virtual int find_closest_point(const vec3 &p) const = 0;
         /// @}
@@ -124,6 +97,7 @@ namespace easy3d {
          * \param squared_distances The squared distances between the query point and its K nearest neighbors.
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
+         *       Results and distances are implementation-dependent if fewer than \p k points are available.
          */
         virtual void find_closest_k_points(const vec3 &p, int k, std::vector<int> &neighbors,
                                            std::vector<float> &squared_distances) const = 0;
@@ -133,6 +107,7 @@ namespace easy3d {
          * \param p The query point.
          * \param k The number of required neighbors.
          * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
+         * \note Results are implementation-dependent if fewer than \p k points are available.
          */
         virtual void find_closest_k_points(const vec3 &p, int k, std::vector<int> &neighbors) const = 0;
         /// @}
@@ -148,6 +123,7 @@ namespace easy3d {
          * \param squared_distances The squared distances between the query point and the neighbors found.
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
+         * \note Result ordering is implementation-dependent.
          */
         virtual void find_points_in_range(const vec3 &p, float squared_radius, std::vector<int> &neighbors,
                                           std::vector<float> &squared_distances) const = 0;
@@ -157,6 +133,7 @@ namespace easy3d {
          * \param p The query point.
          * \param squared_radius The search range (which is required to be \b squared).
          * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
+         * \note Result ordering is implementation-dependent.
          */
         virtual void find_points_in_range(const vec3 &p, float squared_radius, std::vector<int> &neighbors) const = 0;
         /// @}
@@ -165,5 +142,4 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_KD_TREE_SEARCH_H
-
 

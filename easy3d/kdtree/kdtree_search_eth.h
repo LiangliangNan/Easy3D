@@ -150,6 +150,7 @@ namespace easy3d {
          * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
          *      ordered by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
          * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
+         * \return Number of points found; both output vectors are resized to this count.
          */
         int find_points_in_cylinder(
                 const vec3 &p1, const vec3 &p2, float radius,
@@ -167,7 +168,7 @@ namespace easy3d {
          * \param neighbors The indices of the neighbors found.
          * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
          *           ordered by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
-         * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
+         * \return Number of points found; \p neighbors is resized to this count.
          */
         int find_points_in_cylinder(
                 const vec3 &p1, const vec3 &p2, float radius,
@@ -182,19 +183,19 @@ namespace easy3d {
 
         /**
          * \brief Queries the nearest neighbors within a cone.
-         * \details Searches for the nearest points with a cone from \p p1 to \p p2.
+         * \details Searches for points in the cone defined by the eye point and the axis segment \p p1-\p p2.
          * \param eye The view point.
          * \param p1 One end point of a line segment.
          * \param p2 The other end point of a line segment.
-         * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
-         * is a candidate point.
+         * \param angle_range Maximum cone angle in radians.
          * \param neighbors The indices of the neighbors found.
-         * \param squared_distances The squared distances between the found neighbors to the query line segment.
+         * \param squared_distances Squared distances associated with the returned points.
          * The values are stored in accordance with their indices.
          * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
          *      ordered by their distances to the line. Otherwise, they are ordered by their distances to the view
          *      point \p eye.
          * \note The angle is specified in \b radian and \b squared distances are returned.
+         * \return Number of points found; output vectors are resized to this count.
          */
         int find_points_in_cone(
                 const vec3 &eye, const vec3 &p1, const vec3 &p2, float angle_range,
@@ -204,16 +205,15 @@ namespace easy3d {
 
         /**
          * \brief Queries the nearest neighbors within a cone.
-         * \details Searches for the nearest points with a cone from \p p1 to \p p2.
+         * \details Searches for points in the cone defined by the eye point and the axis segment \p p1-\p p2.
          * \param eye The view point.
          * \param p1 One end point of a line segment.
          * \param p2 The other end point of a line segment.
-         * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
-         * is a candidate point.
+         * \param angle_range Maximum cone angle in radians.
          * \param neighbors The indices of the neighbors found.
-         * \param bToLine Specifies how the points found are ordered. If \p bToLine=true, the points found are ordered
+         * \param bToLine Specifies how the points found are ordered. If \p bToLine is true, the points found are ordered
          * by their distances to the line. Otherwise, they are ordered by their distances to the view point \p eye.
-         * \note The angle is specified in \b radian and \b squared distances are returned.
+         * \return Number of points found; \p neighbors is resized to this count.
          */
         int find_points_in_cone(
                 const vec3 &eye, const vec3 &p1, const vec3 &p2, float angle_range,
@@ -231,5 +231,4 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_KD_TREE_SEARCH_ETH_H
-
 

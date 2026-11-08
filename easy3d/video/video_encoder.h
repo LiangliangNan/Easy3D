@@ -38,8 +38,12 @@ namespace internal {
 namespace easy3d {
 
 	/**
-	 * \brief A class that encodes video frames (e.g., images) into a video file.
-	 * \details The output format is automatically guessed according to the file extension. Below is an example:
+	 * \brief Encodes same-sized image frames into a video file using FFmpeg.
+	 * \details The output format is selected from the filename extension when supported by the linked FFmpeg build.
+	 *          Encoding starts on the first frame; that frame fixes the stream dimensions. Frames are encoded
+	 *          synchronously by encode() and the encoded stream is finalized when the object is destroyed.
+	 *          Frame dimensions must be multiples of eight and must remain the same for every frame.
+	 *          Input pixels are tightly packed rows in the selected channel order.
      *      \code
      *          VideoEncoder encoder(image_file, 30, 8 * 1024 * 1024); // framereate: 30 fps. bitrate: 8 Mbits/sec.
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
@@ -55,20 +59,15 @@ namespace easy3d {
 	{
 	public:
 		/**
-		 * \brief Constructor to initialize the video encoder.
-		 * \param file_name The name of the output video file, e.g., "D:/result.mp4".
-		 *      The output format is automatically guessed according to the file extension, which can be:
-		 *          - mp4: MPEG-4 Part 14;
-		 *          - mpeg: MPEG-1 Systems / MPEG program stream;
-		 *          - avi: Audio Video Interleaved;
-		 *          - mov: QuickTime / MOV;
-		 *      If it can't be guessed this way then "mp4" is used by default.
-		 * \param framerate The frame rate (normally between 25 and 60, default is 30 fps).
-		 * \param bitrate The bit rate (default is 8 Mbits/sec).
+		 * \brief Configure the output video stream.
+		 * \param file_name Output filename. Its extension selects the muxer if supported; if FFmpeg cannot infer
+		 *                  a format, the implementation attempts to use MP4.
+		 * \param framerate Frames per second; defaults to 30.
+		 * \param bitrate Target bitrate in bits per second; defaults to 8 * 1024 * 1024.
          */
 		explicit VideoEncoder(const std::string& file_name, int framerate = 30, int bitrate = 8 * 1024 * 1024);
 
-        /// \brief Destructor to clean up resources.
+        /// \brief Finalize the stream and release encoder resources.
 		~VideoEncoder();
 
         /// \brief The supported pixel formats for the video frames.
@@ -80,26 +79,25 @@ namespace easy3d {
         };
 
 		/**
-		 * \brief Encodes one frame to the video stream.
-		 * \param image_data The input image data as a 1D array of 'unsigned char' pointing to the pixel data.
-		 *		The pixel data consists of 'height' rows of 'width' pixels, with each pixel has one of the
-		 *		following structures.
-		 * \param width The video width (must be a multiple of 8).
-		 * \param height The video height (must be a multiple of 8).
-		 * \param pixel_format The pixel format. Correspondences between image structures and pixel/OpenGL formats are:
+		 * \brief Encode one frame into the output stream.
+		 * \param image_data Pointer to tightly packed pixel data. The buffer must contain at least
+		 *                   \p width * \p height pixels in the selected format and remain valid for this call.
+		 * \param width Frame width in pixels; must be a multiple of eight and match the first frame.
+		 * \param height Frame height in pixels; must be a multiple of eight and match the first frame.
+		 * \param pixel_format Channel layout of the input pixels:
 		 *     - RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
 		 *     - BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
 		 *     - RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
 		 *     - BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
-		 * \return True on success, false otherwise.
+		 * \return True if the frame was accepted and encoded; false if initialization, dimensions, or encoding fails.
 		 */
 		bool encode(const unsigned char* image_data, int width, int height, PixelFormat pixel_format);
 
 		/**
-		 * \brief Checks if the image size (width, height) is acceptable.
-		 * \param width The width of the image.
-		 * \param height The height of the image.
-		 * \return True if the size is acceptable, false otherwise.
+		 * \brief Check whether the dimensions are divisible by eight.
+		 * \param width Frame width in pixels.
+		 * \param height Frame height in pixels.
+		 * \return True if both dimensions are multiples of eight. This check does not verify positivity or codec support.
 		 */
         static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }
 

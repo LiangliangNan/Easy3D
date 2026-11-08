@@ -108,11 +108,12 @@ namespace easy3d {
         /// @{
 
         /**
-         * \brief Specifies the K for fixed range search.
+         * \brief Set the maximum number of neighbors returned by a fixed-range search.
          * \details ANN's annkFRSearch() needs to specify k. ANN's fixed range search is done in two steps.
-         * First, it computes the k nearest neighbors within the radius bound. Second, it returns the total number
-         * of points lying within the radius bound. It is permitted to set k = 0, in which case it only answers a range
-         * counting query.
+         *          It finds at most this many neighbors in the range; if more points lie within the radius, the
+         *          output vectors are truncated to this capacity. Setting k to zero requests a count-only query
+         *          and therefore yields no neighbor indices.
+         * \param k Maximum number of returned neighbors; must be non-negative.
          */
         void set_k_for_radius_search(int k) { k_for_radius_search_ = k; }
 
@@ -154,5 +155,4 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_KD_TREE_SEARCH_ANN_H
-
 
