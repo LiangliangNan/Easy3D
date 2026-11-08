@@ -99,21 +99,42 @@ namespace easy3d {
                         linear_extrapolation_(false) {
         }
 
-        /// Sets the boundary condition (optional).
-        /// \attention If called, it has to come before set_points().
+        /**
+         * \brief Set endpoint derivative boundary conditions.
+         * \param left Boundary type at the first sample.
+         * \param left_value First- or second-derivative value at the left endpoint.
+         * \param right Boundary type at the final sample.
+         * \param right_value First- or second-derivative value at the right endpoint.
+         * \param linear_extrapolation Use linear extrapolation outside the data range.
+         * \details Call before set_data(). The default is zero second derivative
+         * at both endpoints.
+         */
         void set_boundary(BoundaryType left, FT left_value,
                           BoundaryType right, FT right_value,
                           bool linear_extrapolation = false);
 
-        /// Sets the data can carry out the interpolation.
-        /// \c true for cubic spline interpolation; \c false for linear interpolation.
-        /// \attention The \c x has to be monotonously increasing.
+        /**
+         * \brief Set sample abscissae and values.
+         * \param x Strictly increasing sample coordinates.
+         * \param y Sample values corresponding elementwise to x.
+         * \param cubic_spline Use cubic interpolation, or linear segments when false.
+         * \details The coordinate and value arrays must have matching lengths.
+         */
         void set_data(const std::vector<FT> &x, const std::vector<FT> &y, bool cubic_spline = true);
 
-        /// Evaluates the spline at \p x.
+        /**
+         * \brief Evaluate the interpolant at a coordinate.
+         * \param x Coordinate at which to evaluate.
+         * \return Interpolated or extrapolated value.
+         */
         FT operator()(FT x) const;
 
-        /// Returns the \p order -th derivative of the spline at x.
+        /**
+         * \brief Evaluate a derivative of the interpolant.
+         * \param order Derivative order.
+         * \param x Coordinate at which to evaluate.
+         * \return Derivative value.
+         */
         FT derivative(int order, FT x) const;
 
     private:

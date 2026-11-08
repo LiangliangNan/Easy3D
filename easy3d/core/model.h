@@ -41,23 +41,30 @@ namespace easy3d {
     class Manipulator;
 
     /**
-     * \brief The base class of renderable 3D models.
+     * \brief Base class for spatial models with optional rendering and manipulation state.
      * \class Model easy3d/core/model.h
-     * \details A model can represent a SurfaceMesh, a PointCloud, or a Graph. A model can have multiple drawables,
-     * e.g., faces, vertices, edges.
+     * \details Concrete models provide their vertex positions through points()
+     * and may provide additional typed properties. The bounding box is cached
+     * until invalidated; it does not include manipulator transforms. Renderer
+     * and manipulator ownership is shared through std::shared_ptr.
      */
     class Model
     {
     public:
-        /// \brief Default constructor.
-        /// The parameter \p name is optional, but it is useful for handling multiple models with the same viewer.
+        /**
+         * \brief Construct a model with a name.
+         * \param name Optional model name, defaulting to "unknown".
+         */
         explicit Model(const std::string& name = "unknown");
+
+        /// Destroy the model.
         virtual ~Model();
 
-        /// \brief Sets/Changes the name of a model.
-        /// Assigning a name to a model is optional, but it is useful for handling multiple models with the same viewer.
+        /// Set the model name.
+        /// \param n New name.
         void set_name(const std::string& n) { name_ = n; }
-        /// \brief The name of a model.
+        /// Return the model name.
+        /// \return Name string.
         const std::string& name() const { return name_; }
 
         /**
@@ -66,6 +73,7 @@ namespace easy3d {
          *      box of the model. Otherwise, it returns the known bounding box.
          * \note Manipulation transformation is not handled.
          * \see invalidate_bounding_box().
+         * \return Cached or recomputed model bounds.
          */
         const Box3& bounding_box(bool recompute = false) const;
 
@@ -75,36 +83,48 @@ namespace easy3d {
          */
         void invalidate_bounding_box();
 
-        /** \brief The vertices of the model. */
+        /**
+         * \brief Return mutable vertex positions.
+         * \return Model positions; modifying them may require invalidating derived bounds.
+         */
         virtual std::vector<vec3>& points() = 0;
-        /** \brief The vertices of the model. */
+        /// Return the model's vertex positions.
+        /// \return Model positions.
         virtual const std::vector<vec3>& points() const = 0;
 
-        /** \brief Tests if the model is empty. */
+        /// Test whether the model contains any points.
+        /// \return True when points() is empty.
         bool empty() const { return points().empty(); };
 
-        /** \brief Prints the names of all properties to an output stream (e.g., std::cout). */
+        /**
+         * \brief Write property names and statistics to a stream.
+         * \param output Destination stream.
+         */
         virtual void property_stats(std::ostream &output) const {}
 
         /**
          * \brief Sets the renderer of this model.
-         * \note Memory management of the renderer is the user's responsibility.
+         * \param r Shared renderer to associate with the model.
          */
         void set_renderer(std::shared_ptr<Renderer> r) { renderer_ = r; }
-        /** \brief Gets the renderer of this model. */
+        /// Return the associated renderer.
+        /// \return Non-owning renderer pointer, or nullptr if unset.
         Renderer* renderer();
-        /** \brief Gets the constant renderer of this model. */
+        /// Return the associated renderer from a const model.
+        /// \return Non-owning renderer pointer, or nullptr if unset.
         const Renderer* renderer() const;
 
         /**
          * \brief Attaches a manipulator to this model.
-         * \note Memory management of the manipulator is the user's responsibility.
+         * \param manip Shared manipulator to associate with the model.
          */
         void set_manipulator(std::shared_ptr<Manipulator> manip) { manipulator_ = manip; }
 
-        /** \brief Gets the manipulator attached to this model. */
+        /// Return the associated manipulator.
+        /// \return Non-owning manipulator pointer, or nullptr if unset.
         Manipulator* manipulator() { return manipulator_.get(); }
-        /** \brief Gets the manipulator attached to this model. */
+        /// Return the associated manipulator from a const model.
+        /// \return Non-owning manipulator pointer, or nullptr if unset.
         const Manipulator* manipulator() const { return manipulator_.get(); }
 
     protected:

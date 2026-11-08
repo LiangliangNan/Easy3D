@@ -83,8 +83,12 @@ namespace easy3d {
         }
 
         /**
-         * Sets the boundary condition (optional).
-         * \attention If called, it has to come before set_points().
+         * \brief Set endpoint derivative boundary conditions for each coordinate.
+         * \param left Boundary type at the first sample.
+         * \param left_value Endpoint derivative value at the start.
+         * \param right Boundary type at the final sample.
+         * \param right_value Endpoint derivative value at the end.
+         * \details Call before set_points(). Default conditions are zero curvature.
          */
         void set_boundary(BoundaryType left, T left_value,
                           BoundaryType right, T right_value);
@@ -113,6 +117,7 @@ namespace easy3d {
          * Evaluates the position of the spline curve at a given parameter.
          * \param u Curve parameter in the range [0, 1]. The actual meaning of the parameter is given by
          *      the \p parameters provided in set_points().
+         * \return Interpolated point on the curve.
          */
         Point<N, T> eval_f(T u) const;
 

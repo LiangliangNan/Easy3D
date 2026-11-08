@@ -561,13 +561,19 @@ namespace easy3d {
     }
 
 
-    /// Output stream support for GenericPlane.
+    /// Write the four plane-equation coefficients separated by spaces.
+    /// \param os Output stream.
+    /// \param plane Plane to write.
+    /// \return The output stream.
     template<typename FT>
     std::ostream &operator<<(std::ostream &os, const GenericPlane<FT> &plane) {
         return os << plane[0] << ' ' << plane[1] << ' ' << plane[2] << ' ' << plane[3];
     }
 
-    /// Input stream support for GenericPlane.
+    /// Read the four plane-equation coefficients separated by whitespace.
+    /// \param is Input stream.
+    /// \param plane Plane to populate.
+    /// \return The input stream.
     template<typename FT>
     std::istream &operator>>(std::istream &is, GenericPlane<FT> &plane) {
         return is >> plane[0] >> plane[1] >> plane[2] >> plane[3];

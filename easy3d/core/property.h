@@ -302,7 +302,8 @@ namespace easy3d {
 
     /**
      * \brief Specialization for bool properties. It crashes the program and simply returns nullptr as bool* is
-     *      not allowed.
+     *      not allowed. Use indexed access or vector() instead of requesting raw storage.
+     * \return Always nullptr; the assertion fires in debug builds.
      */
     template <>
     inline const bool*

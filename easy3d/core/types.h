@@ -116,14 +116,20 @@ namespace easy3d {
     typedef GenericPolygon<float> Polygon2;
 
 
-    /// Is this NaN?
+    /// Test whether a floating-point value is non-finite.
+    /// \param v Value to test.
+    /// \return True for NaN or infinity.
     template <typename FT>
     inline bool is_nan(FT v) {
         return (std::isnan(v) || std::isinf(v));
     }
 
     /**
-     * @brief Clamps a num to be within a given range.
+     * \brief Clamp a value to an inclusive interval.
+     * \param x Value to clamp.
+     * \param lower Lower bound.
+     * \param upper Upper bound.
+     * \return x restricted to [lower, upper].
      */
     template<class T>
     inline T clamp(T x, T lower, T upper) {
@@ -145,7 +151,13 @@ namespace easy3d {
         return rval;
     }
 
-    /** \brief Rounds the given floating point number \p v to have \p num digits.*/
+    /**
+     * \brief Round a floating-point value to a specified number of decimal digits.
+     * \param v Value to round.
+     * \param num Number of digits after the decimal point; negative values round
+     *        to tens, hundreds, and so on.
+     * \return Rounded value.
+     */
     template<class FT>
     inline FT truncate_digits(const FT &v, int num) {
         FT tmp = std::pow(10.0, num);
@@ -158,7 +170,11 @@ namespace easy3d {
     /// \namespace easy3d::geom
     namespace geom {
 
-        /** \brief Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
+        /**
+         * \brief Return a vector orthogonal to a 3D vector.
+         * \param v Input vector.
+         * \return Orthogonal vector; it is zero only when v is zero.
+         */
         inline vec3 orthogonal(const vec3 &v) {
             const float absx = std::fabs(v.x);
             const float absy = std::fabs(v.y);
@@ -174,7 +190,13 @@ namespace easy3d {
             }
         }
 
-        /** \brief Computes the bounding box of a set of points. */
+        /**
+         * \brief Compute the axis-aligned bounding box of a point range.
+         * \tparam Box Bounding-box type compatible with the points.
+         * \tparam Container Point container type.
+         * \param points Input points.
+         * \return Smallest box containing the points; default/empty for no points.
+         */
         template<typename Box, typename Container>
         inline Box bounding_box(const Container& points) {
             Box result;
@@ -184,7 +206,13 @@ namespace easy3d {
             return result;
         }
 
-        /** \brief Computes the centroid of a set of points. */
+        /**
+         * \brief Compute the arithmetic mean of a point range.
+         * \tparam Vec Result vector type.
+         * \tparam Container Point container type.
+         * \param points Input points; must not be empty.
+         * \return Arithmetic centroid.
+         */
         template<typename Vec, typename Container>
         inline Vec centroid(const Container& points) {
             Vec v(0);
@@ -193,26 +221,44 @@ namespace easy3d {
             return v / points.size();
         }
 
-        /** \brief Computes the barycenter of two points. */
+        /// \brief Compute the midpoint of two points.
+        /// \param p1 First point.
+        /// \param p2 Second point.
+        /// \return Arithmetic midpoint.
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2) {
             return (p1 + p2) * 0.5f;
         }
 
-        /** \brief Computes the barycenter of three points. */
+        /// \brief Compute the arithmetic barycenter of three points.
+        /// \param p1 First point.
+        /// \param p2 Second point.
+        /// \param p3 Third point.
+        /// \return Arithmetic barycenter.
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2, const Vec &p3) {
             return (p1 + p2 + p3) / 3.0f;
         }
 
-        /** \brief Computes the barycenter of four points. */
+        /// \brief Compute the arithmetic barycenter of four points.
+        /// \param p1 First point.
+        /// \param p2 Second point.
+        /// \param p3 Third point.
+        /// \param p4 Fourth point.
+        /// \return Arithmetic barycenter.
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2, const Vec &p3, const Vec &p4) {
             return (p1 + p2 + p3 + p4) * 0.25f;
         }
 
         /** \brief Computes the barycentric coordinates of a point \p p with respect to
-         * three points \p u, \p v, and \p w.*/
+         * three points \p u, \p v, and \p w.
+         * \param p Point to express.
+         * \param u First triangle vertex.
+         * \param v Second triangle vertex.
+         * \param w Third triangle vertex.
+         * \return Three barycentric weights.
+         */
         template<typename FT>
         inline Vec<3, FT> barycentric_coordinates(const Vec<3, FT> &p,
                                                   const Vec<3, FT> &u,
@@ -222,81 +268,138 @@ namespace easy3d {
         /**
          * \brief Tests if a point \p p lies inside or outside of a \p polygon.
          * This function is robust to handle general polygons (no matter convex or concave).
+         * \param p Point to test.
+         * \param polygon Ordered polygon vertices.
+         * \return True if the point is inside the polygon.
          */
         inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon);
 
-        /** \brief Clamps cotangent values as if angles are in [1, 179]    */
+        /// Clamp a cotangent to the range corresponding approximately to angles [3,177] degrees.
+        /// \param v Cotangent value.
+        /// \return Clamped cotangent.
         inline double clamp_cot(const double v) {
             const double bound = 19.1; // 3 degrees
             return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        /** \brief Clamps cosine values as if angles are in [1, 179]    */
+        /// Clamp a cosine to avoid angles within approximately 3 degrees of 0 or pi.
+        /// \param v Cosine value.
+        /// \return Clamped cosine.
         inline double clamp_cos(const double v) {
             const double bound = 0.9986; // 3 degrees
             return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        /** \brief Computes cosine of angle between two (un-normalized) vectors */
+        /// Compute the cosine of the angle between two unnormalized vectors.
+        /// \param a First vector.
+        /// \param b Second vector.
+        /// \return Cosine of their angle.
         template<typename Vec>
         inline double cos_angle(const Vec &a, const Vec &b) {
             return dot(a, b) / std::sqrt(length2(a) * length2(b));
         }
 
-        /** \brief Computes sine of angle between two (un-normalized) vectors */
+        /// Compute the sine of the angle between two unnormalized vectors.
+        /// \param a First vector.
+        /// \param b Second vector.
+        /// \return Non-negative sine magnitude.
         template<typename Vec>
         inline double sin_angle(const Vec &a, const Vec &b) {
             return norm(cross(a, b)) / (norm(a) * norm(b));
         }
 
-        /** \brief Computes cotangent of angle between two (un-normalized) vectors */
+        /// Compute a clamped cotangent of the angle between two vectors.
+        /// \param a First vector.
+        /// \param b Second vector.
+        /// \return Clamped cotangent.
         template<typename Vec>
         inline typename Vec::FT cotan_angle(const Vec &a, const Vec &b) {
             return clamp_cot(dot(a, b) / norm(cross(a, b)));
         }
 
-        /** \brief Computes angle between two (un-normalized) vectors */
+        /// Compute the angle between two unnormalized vectors.
+        /// \param a First vector.
+        /// \param b Second vector.
+        /// \return Angle in radians in [0,pi].
         template<typename Vec>
         inline double angle(const Vec &a, const Vec &b) {
             return std::atan2(norm(cross(a, b)), dot(a, b));
         }
 
-        /** \brief Converts an angle from degrees to radians. */
+        /// Convert degrees to radians.
+        /// \param degrees Angle in degrees.
+        /// \return Angle in radians.
         template<typename FT>
         inline FT to_radians(FT degrees) {
             return degrees * static_cast<FT>(0.01745329251994329576923690768489);
         }
 
-        /** \brief Converts an angle from radians to degrees. */
+        /// Convert radians to degrees.
+        /// \param radians Angle in radians.
+        /// \return Angle in degrees.
         template<typename FT>
         inline FT to_degrees(FT radians) {
             return radians * static_cast<FT>(57.295779513082320876798154814105);
         }
 
-        /** \brief Computes area of a triangle given by three points. */
+        /// Compute the unsigned area of a 3D triangle.
+        /// \param p1 First vertex.
+        /// \param p2 Second vertex.
+        /// \param p3 Third vertex.
+        /// \return Triangle area.
         inline float triangle_area(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             return 0.5f * length(cross(p2 - p1, p3 - p1));
         }
 
-        /** \brief Computes signed area of a triangle given by three points. */
+        /// Compute the signed area of a 2D triangle.
+        /// \param p1 First vertex.
+        /// \param p2 Second vertex.
+        /// \param p3 Third vertex.
+        /// \return Signed area; sign follows the vertex orientation.
         inline float triangle_signed_area(const vec2 &p1, const vec2 &p2, const vec2 &p3) {
             return 0.5f * det(p2 - p1, p3 - p1);
         }
 
-        /** \brief Computes the normal vector of a triangle given by three points. */
+        /// Compute the normalized normal of a 3D triangle.
+        /// \param p1 First vertex.
+        /// \param p2 Second vertex.
+        /// \param p3 Third vertex.
+        /// \return Unit normal following the vertex winding, or zero for degeneracy.
         inline vec3 triangle_normal(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             vec3 n = cross(p2 - p1, p3 - p2);
             return normalize(n);
         }
 
-        /** \brief Computes the distance of a point p to a line segment given by vec3s (v0,v1). */
+        /**
+         * \brief Compute the distance from a point to a 3D line segment.
+         * \param p Point to test.
+         * \param v0 First segment endpoint.
+         * \param v1 Second segment endpoint.
+         * \param nearest_point Receives the closest point on the segment.
+         * \return Euclidean distance.
+         */
         inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_point);
 
-        /** \brief Computes the distance of a point p to the triangle given by vec3s (v0, v1, v2). */
+        /**
+         * \brief Compute the distance from a point to a 3D triangle.
+         * \param p Point to test.
+         * \param v0 First triangle vertex.
+         * \param v1 Second triangle vertex.
+         * \param v2 Third triangle vertex.
+         * \param nearest_point Receives the closest point on the triangle.
+         * \return Euclidean distance.
+         */
         inline float
         dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_point);
 
-        /** \brief Computes the circum center of a tetrahedron. */
+        /**
+         * \brief Compute the circumcenter of a tetrahedron.
+         * \param p First vertex.
+         * \param q Second vertex.
+         * \param r Third vertex.
+         * \param s Fourth vertex.
+         * \return Center of the sphere through all four vertices.
+         */
         inline vec3 tetra_circum_center(const vec3& p, const vec3& q, const vec3& r, const vec3& s);
 
     } // namespace geom
@@ -644,5 +747,4 @@ namespace easy3d {
 // \endcond
 
 #endif  // EASY3D_CORE_TYPES_H
-
 

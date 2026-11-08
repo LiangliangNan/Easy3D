@@ -1351,13 +1351,16 @@ namespace easy3d {
          */
         SurfaceMesh();
 
-        /// destructor (is virtual, since we inherit from Geometry_representation)
+        /// Destroy the surface mesh.
         ~SurfaceMesh() override = default;
 
-        /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
+        /// Copy a mesh and deeply copy its properties.
+        /// \param rhs Mesh to copy.
         SurfaceMesh(const SurfaceMesh& rhs) { operator=(rhs); }
 
-        /// assign \c rhs to \c *this. performs a deep copy of all properties.
+        /// Deep-copy another mesh and all its properties.
+        /// \param rhs Mesh to copy.
+        /// \return Reference to this mesh.
         SurfaceMesh& operator=(const SurfaceMesh& rhs);
 
         /// \brief Merges another surface mesh into the current one.
@@ -1366,6 +1369,8 @@ namespace easy3d {
         /// Copies entries of all property maps which have the same name in both meshes. That is, properties maps which
         /// are only in `other` are ignored.
         /// Also copies elements which are marked as removed, and concatenates the freelists of both meshes.
+        /// \param other Mesh to append.
+        /// \return Reference to this mesh after appending.
         SurfaceMesh& operator+=(const SurfaceMesh& other) { join(other); return *this; }
 
         /// \brief Merges another surface mesh into the current one.
@@ -1374,21 +1379,29 @@ namespace easy3d {
         /// Copies entries of all property maps which have the same name in both meshes. That is, properties maps which
         /// are only in `other` are ignored.
         /// Also copies elements which are marked as removed, and concatenates the freelists of both meshes.
+        /// \param other Mesh whose elements and matching properties are appended.
+        /// \return Reference to this mesh.
         SurfaceMesh& join(const SurfaceMesh& other);
 
-        /// assign \c rhs to \c *this. does not copy custom properties.
+        /// Assign another mesh without copying custom properties.
+        /// \param rhs Source mesh.
+        /// \return Reference to this mesh.
         SurfaceMesh& assign(const SurfaceMesh& rhs);
         //@}
 
         //! \name File IO
         //!@{
 
-        //! \brief Read mesh from a SM file \p filename.
+        //! \brief Read mesh from a native SM file.
+        //! \param filename Path to the file.
+        //! \return True if the file was read successfully.
         //! Mainly for quick debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
         bool read(const std::string& filename);
 
-        //! \brief Write mesh to a SM file \p filename.
+        //! \brief Write mesh to a native SM file.
+        //! \param filename Destination path.
+        //! \return True if the file was written successfully.
         //! Mainly for quick debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
         bool write(const std::string& filename) const;
@@ -1414,13 +1427,20 @@ namespace easy3d {
          */
         Face add_face(const std::vector<Vertex>& vertices);
 
-        /// add a new triangle connecting vertices \c v1, \c v2, \c v3
-        /// \param {v1, v2, v3} The input vertices created by add_vertex().
+        /// Add a triangle using three existing vertices in boundary order.
+        /// \param v1 First vertex.
+        /// \param v2 Second vertex.
+        /// \param v3 Third vertex.
+        /// \return New face handle, invalid if topology would be inconsistent.
         /// \sa add_face, add_quad
         Face add_triangle(Vertex v1, Vertex v2, Vertex v3);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
+        /// Add a quadrilateral using four existing vertices in boundary order.
+        /// \param v1 First vertex.
+        /// \param v2 Second vertex.
+        /// \param v3 Third vertex.
+        /// \param v4 Fourth vertex.
+        /// \return New face handle, invalid if topology would be inconsistent.
         /// \sa add_triangle, add_face
         Face add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
@@ -1432,23 +1452,31 @@ namespace easy3d {
         /// \name Memory Management
         //@{
 
-        /// returns number of (deleted and valid) vertices in the mesh
+        /// Return the allocated vertex-slot count, including deleted slots.
+        /// \return Number of allocated vertex slots.
         unsigned int vertices_size() const { return (unsigned int) vprops_.size(); }
-        /// returns number of (deleted and valid)halfedge in the mesh
+        /// Return the allocated halfedge-slot count, including deleted slots.
+        /// \return Number of allocated halfedge slots.
         unsigned int halfedges_size() const { return (unsigned int) hprops_.size(); }
-        /// returns number of (deleted and valid)edges in the mesh
+        /// Return the allocated edge-slot count, including deleted slots.
+        /// \return Number of allocated edge slots.
         unsigned int edges_size() const { return (unsigned int) eprops_.size(); }
-        /// returns number of (deleted and valid)faces in the mesh
+        /// Return the allocated face-slot count, including deleted slots.
+        /// \return Number of allocated face slots.
         unsigned int faces_size() const { return (unsigned int) fprops_.size(); }
 
 
-        /// returns number of vertices in the mesh
+        /// Return the number of live vertices.
+        /// \return Live vertex count.
         unsigned int n_vertices() const { return vertices_size() - deleted_vertices_; }
-        /// returns number of halfedge in the mesh
+        /// Return the number of live halfedges.
+        /// \return Live halfedge count.
         unsigned int n_halfedges() const { return halfedges_size() - 2*deleted_edges_; }
-        /// returns number of edges in the mesh
+        /// Return the number of live edges.
+        /// \return Live edge count.
         unsigned int n_edges() const { return edges_size() - deleted_edges_; }
-        /// returns number of faces in the mesh
+        /// Return the number of live faces.
+        /// \return Live face count.
         unsigned int n_faces() const { return faces_size() - deleted_faces_; }
 
         /**
@@ -1466,9 +1494,10 @@ namespace easy3d {
          */
         void reserve(unsigned int n_vertices, unsigned int n_edges, unsigned int n_faces);
 
-        /// resizes space for vertices, halfedges, edges, faces, and their currently
-        /// associated properties.
-        /// Note: ne is the number of edges. for halfedges, nh = 2 * ne. */
+        /// Resize element slots and all associated property arrays.
+        /// \param nv Number of vertex slots.
+        /// \param ne Number of edge slots; halfedge slots are set to 2*ne.
+        /// \param nf Number of face slots.
         void resize(unsigned int nv, unsigned int ne, unsigned int nf) {
             vprops_.resize(nv);
             hprops_.resize(2 * ne);
@@ -1476,48 +1505,65 @@ namespace easy3d {
             fprops_.resize(nf);
         }
 
-        /// are there deleted vertices, edges or faces?
+        /// Return whether deleted elements are present.
+        /// \return True when garbage has not yet been collected.
         bool has_garbage() const { return garbage_; }
 
         /// remove deleted vertices/edges/faces
         void collect_garbage();
 
 
-        /// returns whether vertex \c v is deleted
+        /// Return whether a vertex handle refers to a deleted slot.
+        /// \param v Vertex to test.
+        /// \return True if the vertex was deleted.
         /// \sa collect_garbage()
         bool is_deleted(Vertex v) const {
             return vdeleted_[v];
         }
-        /// returns whether halfedge \c h is deleted
+        /// Return whether a halfedge's edge has been deleted.
+        /// \param h Halfedge to test.
+        /// \return True if its edge was deleted.
         /// \sa collect_garbage()
         bool is_deleted(Halfedge h) const {
             return edeleted_[edge(h)];
         }
-        /// returns whether edge \c e is deleted
+        /// Return whether an edge handle refers to a deleted slot.
+        /// \param e Edge to test.
+        /// \return True if the edge was deleted.
         /// \sa collect_garbage()
         bool is_deleted(Edge e) const {
             return edeleted_[e];
         }
-        /// returns whether face \c f is deleted
+        /// Return whether a face handle refers to a deleted slot.
+        /// \param f Face to test.
+        /// \return True if the face was deleted.
         /// \sa collect_garbage()
         bool is_deleted(Face f) const {
             return fdeleted_[f];
         }
 
 
-        /// return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
+        /// Test whether a vertex index is within allocated storage.
+        /// \param v Vertex handle to test.
+        /// \return True if its index is in range; deleted slots can still be valid.
         bool is_valid(Vertex v) const {
             return (0 <= v.idx()) && (v.idx() < (int)vertices_size());
         }
-        /// return whether halfedge \c h is valid, i.e. the index is stores it within the array bounds.
+        /// Test whether a halfedge index is within allocated storage.
+        /// \param h Halfedge handle to test.
+        /// \return True if its index is in range; deleted slots can still be valid.
         bool is_valid(Halfedge h) const {
             return (0 <= h.idx()) && (h.idx() < (int)halfedges_size());
         }
-        /// return whether edge \c e is valid, i.e. the index is stores it within the array bounds.
+        /// Test whether an edge index is within allocated storage.
+        /// \param e Edge handle to test.
+        /// \return True if its index is in range; deleted slots can still be valid.
         bool is_valid(Edge e) const {
             return (0 <= e.idx()) && (e.idx() < (int)edges_size());
         }
-        /// return whether face \c f is valid, i.e. the index is stores it within the array bounds.
+        /// Test whether a face index is within allocated storage.
+        /// \param f Face handle to test.
+        /// \return True if its index is in range; deleted slots can still be valid.
         bool is_valid(Face f) const {
             return (0 <= f.idx()) && (f.idx() < (int)faces_size());
         }
@@ -1531,29 +1577,38 @@ namespace easy3d {
         /// \name Low-level connectivity
         //@{
 
-        /// returns an outgoing halfedge of vertex \c v.
-        /// if \c v is a boundary vertex this will be a boundary halfedge.
+        /// Return an outgoing halfedge of a vertex.
+        /// \param v Vertex to query.
+        /// \return Outgoing halfedge; for a boundary vertex this is a boundary halfedge.
         Halfedge out_halfedge(Vertex v) const {
             return vconn_[v].halfedge_;
         }
 
-        /// set the outgoing halfedge of vertex \c v to \c h
+        /// Set the representative outgoing halfedge of a vertex.
+        /// \param v Vertex to update.
+        /// \param h Outgoing halfedge.
         void set_out_halfedge(Vertex v, Halfedge h) {
             vconn_[v].halfedge_ = h;
         }
 
-        /// returns whether \c v is a boundary vertex
+        /// Test whether a vertex lies on the mesh boundary.
+        /// \param v Vertex to test.
+        /// \return True if the vertex is on the boundary.
         bool is_border(Vertex v) const {
             Halfedge h(out_halfedge(v));
             return (!(h.is_valid() && face(h).is_valid()));
         }
 
-        /// returns whether \c v is isolated, i.e., not incident to any face
+        /// Test whether a vertex is isolated (not incident to a face).
+        /// \param v Vertex to test.
+        /// \return True if no outgoing halfedge is stored.
         bool is_isolated(Vertex v) const {
             return !out_halfedge(v).is_valid();
         }
 
-        /// returns whether \c v is a manifold vertex (not incident to several patches)
+        /// Test whether a vertex is manifold (not incident to multiple boundary gaps).
+        /// \param v Vertex to test.
+        /// \return True if fewer than two outgoing boundary halfedges are found.
         bool is_manifold(Vertex v) const
         {
             // [Liangliang: I doubt. It should also check if more than 1 cones meet at the same vertex.
@@ -1572,125 +1627,173 @@ namespace easy3d {
             return n<2;
         }
 
-        /// returns whether \c f is degenerate
+        /// Test whether a face is degenerate.
+        /// \param f Face to test.
+        /// \return True if the face is degenerate.
         bool is_degenerate(Face f) const;
 
-        /// returns the vertex the halfedge \c h points to
+        /// Return the target vertex of a halfedge.
+        /// \param h Halfedge to query.
+        /// \return Target vertex.
         Vertex target(Halfedge h) const {
             return hconn_[h].vertex_;
         }
 
-        /// returns the vertex the halfedge \c h emanates from
+        /// Return the source vertex of a halfedge.
+        /// \param h Halfedge to query.
+        /// \return Source vertex.
         Vertex source(Halfedge h) const {
             return target(opposite(h));
         }
 
-        /// sets the vertex the halfedge \c h points to to \c v
+        /// Set the target vertex of a halfedge.
+        /// \param h Halfedge to update.
+        /// \param v New target vertex.
         void set_target(Halfedge h, Vertex v) {
             hconn_[h].vertex_ = v;
         }
 
-        /// returns the face incident to halfedge \c h
+        /// Return the face incident to a halfedge.
+        /// \param h Halfedge to query.
+        /// \return Incident face, invalid for a boundary halfedge.
         Face face(Halfedge h) const {
             return hconn_[h].face_;
         }
 
-        /// sets the incident face to halfedge \c h to \c f
+        /// Set the face incident to a halfedge.
+        /// \param h Halfedge to update.
+        /// \param f New incident face, or invalid for a boundary halfedge.
         void set_face(Halfedge h, Face f) {
             hconn_[h].face_ = f;
         }
 
-        /// returns the next halfedge within the incident face
+        /// Return the next halfedge around the incident face.
+        /// \param h Halfedge to query.
+        /// \return Next halfedge.
         Halfedge next(Halfedge h) const {
             return hconn_[h].next_;
         }
 
-        /// sets the next halfedge of \c h within the face to \c nh
+        /// Set the next halfedge around a face and update the reciprocal prev link.
+        /// \param h Halfedge to update.
+        /// \param nh New next halfedge.
         void set_next(Halfedge h, Halfedge nh) {
             hconn_[h].next_ = nh;
             hconn_[nh].prev_ = h;
         }
 
-        /// returns the previous halfedge within the incident face
+        /// Return the previous halfedge around the incident face.
+        /// \param h Halfedge to query.
+        /// \return Previous halfedge.
         Halfedge prev(Halfedge h) const {
             return hconn_[h].prev_;
         }
 
-        /// returns the opposite halfedge of \c h
+        /// Return the opposite orientation of a halfedge.
+        /// \param h Halfedge to query.
+        /// \return Opposite halfedge.
         Halfedge opposite(Halfedge h) const {
             return Halfedge((h.idx() & 1) ? h.idx()-1 : h.idx()+1);
         }
 
-        /// returns the halfedge that is rotated \b counter-clockwise around the
+        /// Return the halfedge rotated counter-clockwise around the
         /// start vertex of \c h. it is the opposite halfedge of the previous halfedge of \c h.
+        /// \param h Halfedge to query.
+        /// \return Previous halfedge around the source vertex.
         Halfedge prev_around_source(Halfedge h) const {
             return opposite(prev(h));
         }
 
-        /// returns the halfedge that is rotated \b clockwise around the
+        /// Return the halfedge rotated clockwise around the
         /// start vertex of \c h. it is the next halfedge of the opposite halfedge of \c h.
+        /// \param h Halfedge to query.
+        /// \return Next halfedge around the source vertex.
         Halfedge next_around_source(Halfedge h) const {
             return next(opposite(h));
         }
 
-        /// returns the halfedge that is rotated \b counter-clockwise around the
+        /// Return the halfedge rotated counter-clockwise around the
         /// end vertex of \c h. it is the prev halfedge of the opposite halfedge of \c h.
+        /// \param h Halfedge to query.
+        /// \return Previous halfedge around the target vertex.
         Halfedge prev_around_target(Halfedge h) const {
             return prev(opposite(h));
         }
 
-        /// returns the halfedge that is rotated \b clockwise around the
+        /// Return the halfedge rotated clockwise around the
         /// end vertex of \c h. it is the opposite halfedge of the next halfedge of \c h.
+        /// \param h Halfedge to query.
+        /// \return Next halfedge around the target vertex.
         Halfedge next_around_target(Halfedge h) const {
             return opposite(next(h));
         }
 
-        /// return the edge that contains halfedge \c h as one of its two halfedges.
+        /// Return the edge containing a halfedge.
+        /// \param h Halfedge to query.
+        /// \return Containing edge.
         Edge edge(Halfedge h) const {
             return Edge(h.idx() >> 1);
         }
 
-        /// returns whether h is a boundary halfedge, i.e., if its face does not exist.
+        /// Test whether a halfedge is on the boundary.
+        /// \param h Halfedge to test.
+        /// \return True when the halfedge has no incident face.
         bool is_border(Halfedge h) const {
             return !face(h).is_valid();
         }
 
 
-        /// returns the \c i'th halfedge of edge \c e. \c i has to be 0 or 1.
+        /// Return one of an edge's two halfedges.
+        /// \param e Edge to query.
+        /// \param i Halfedge index, either 0 or 1.
+        /// \return Selected halfedge.
         Halfedge halfedge(Edge e, unsigned int i) const {
             assert(i<=1);
             return Halfedge(static_cast<int>((e.idx() << 1) + i));
         }
 
-        /// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
+        /// Return one of an edge's two endpoint vertices.
+        /// \param e Edge to query.
+        /// \param i Endpoint index, either 0 or 1.
+        /// \return Selected endpoint.
         Vertex vertex(Edge e, unsigned int i) const {
             assert(i<=1);
             return target(halfedge(e, i));
         }
 
-        /// returns the face incident to the \c i'th halfedge of edge \c e. \c i has to be 0 or 1.
+        /// Return the face incident to one of an edge's halfedges.
+        /// \param e Edge to query.
+        /// \param i Halfedge index, either 0 or 1.
+        /// \return Incident face, possibly invalid at the boundary.
         Face face(Edge e, unsigned int i) const {
             assert(i<=1);
             return face(halfedge(e, i));
         }
 
-        /// returns whether \c e is a boundary edge, i.e., if one of its
-        /// halfedges is a boundary halfedge.
+        /// Test whether either halfedge of an edge is on the boundary.
+        /// \param e Edge to test.
+        /// \return True if either side is a boundary halfedge.
         bool is_border(Edge e) const {
             return (is_border(halfedge(e, 0)) || is_border(halfedge(e, 1)));
         }
 
-        /// returns a halfedge of face \c f
+        /// Return the representative halfedge of a face.
+        /// \param f Face to query.
+        /// \return One halfedge on the face boundary.
         Halfedge halfedge(Face f) const {
             return fconn_[f].halfedge_;
         }
 
-        /// sets the halfedge of face \c f to \c h
+        /// Set the representative halfedge of a face.
+        /// \param f Face to update.
+        /// \param h Halfedge on the face boundary.
         void set_halfedge(Face f, Halfedge h) {
             fconn_[f].halfedge_ = h;
         }
 
-        /// returns whether \c f is a boundary face, i.e., it one of its edges is a boundary edge.
+        /// Test whether a face is adjacent to a boundary edge.
+        /// \param f Face to test.
+        /// \return True if any edge on the face boundary borders the mesh boundary.
         bool is_border(Face f) const
         {
             Halfedge h  = halfedge(f);
@@ -1762,6 +1865,7 @@ namespace easy3d {
          * \brief Adds a model property of type \c T with name \c name and default value \c t.
          * \param name The name of the property.
          * \param t The default value of the property.
+         * \return New model property handle, invalid if the name already exists.
          * \details Fails if a property named \c name exists already, since the name has to be unique.
          *      In this case it returns an invalid property.
          * Example:
@@ -2251,23 +2355,28 @@ namespace easy3d {
         /// \name Higher-level Topological Operations
         //@{
 
-        /// returns whether the mesh closed (i.e., no boundary edges)
+        /// Test whether the mesh has no boundary edges.
+        /// \return True when the mesh is closed.
         bool is_closed() const;
 
-        /// returns whether the mesh a triangle mesh. this function simply tests
-        /// each face, and therefore is not very efficient.
+        /// Test whether every face has three edges.
+        /// \return True for a triangle mesh.
+        /// \details Tests each face and is not constant-time.
         /// \sa triangulate(), triangulate(Face)
         bool is_triangle_mesh() const;
 
-        /// returns whether the mesh a quad mesh. this function simply tests
-        /// each face, and therefore is not very efficient.
+        /// Test whether every face has four edges.
+        /// \return True for a quad mesh.
+        /// \details Tests each face and is not constant-time.
         bool is_quad_mesh() const;
 
-        /// triangulate the entire mesh, by calling triangulate(Face) for each face.
+        /// Triangulate every polygonal face.
+        /// \details Calls triangulate(Face) for each face.
         /// \sa triangulate(Face)
         void triangulate();
 
-        /// triangulate the face \c f
+        /// Triangulate one polygonal face.
+        /// \param f Face to triangulate.
         /// \sa triangulate()
         void triangulate(Face f);
 
@@ -2276,7 +2385,9 @@ namespace easy3d {
         /// As a consequence, the normal computed for each face using compute_face_normal() is also reversed.
         void reverse_orientation();
 
-        /// returns whether collapsing the halfedge \c h is topologically legal.
+        /// Test whether collapsing a halfedge is topologically legal.
+        /// \param h Halfedge to test.
+        /// \return True if collapse(h) satisfies the topology checks.
         /// \attention This function is only valid for triangle meshes.
         bool is_collapse_ok(Halfedge h) const;
 
@@ -2290,49 +2401,57 @@ namespace easy3d {
          \attention The removed items are only marked as deleted. You have
          to call collect_garbage() to finally remove them.
          */
+        /// \param h Halfedge to collapse; its source vertex is moved to its target.
         void collapse(Halfedge h);
 
 
-        /** Split the face \c f by first adding point \c p to the mesh and then
-         inserting edges between \c p and the vertices of \c f. For a triangle
-         this is a standard one-to-three split.
-         \sa split(Face, Vertex)
+        /**
+         * \brief Split a face by adding a point and connecting it to its vertices.
+         * \param f Face to split.
+         * \param p Position of the new vertex.
+         * \return Handle of the inserted vertex.
+         * \details For a triangle this is a one-to-three split.
+         * \sa split(Face, Vertex)
          */
         Vertex split(Face f, const vec3& p) { Vertex v=add_vertex(p); split(f,v); return v; }
 
-        /** Split the face \c f by inserting edges between \c v and the vertices
-         of \c f. For a triangle this is a standard one-to-three split.
-         \sa split(Face, const vec3&)
+        /**
+         * \brief Split a face using an existing vertex.
+         * \param f Face to split.
+         * \param v Existing vertex connected to the face boundary.
+         * \details For a triangle this creates a one-to-three split.
+         * \sa split(Face, const vec3&)
          */
         void split(Face f, Vertex v);
 
 
-        /** Split the edge \c e by first adding point \c p to the mesh and then
-         connecting it to the two vertices of the adjacent triangles that are
-         opposite to edge \c e. Returns the halfedge pointing to \c p that is
-         created by splitting the existing edge \c e.
-
-         \attention This function is only valid for triangle meshes.
-         \sa split(Edge, Vertex)
+        /**
+         * \brief Split a triangle-mesh edge by inserting a point.
+         * \param e Edge to split.
+         * \param p Position of the new vertex.
+         * \return Halfedge pointing to the new vertex.
+         * \details Connects the new vertex to the opposite vertices of adjacent triangles.
+         * \sa split(Edge, Vertex)
          */
         Halfedge split(Edge e, const vec3& p) { return split(e, add_vertex(p)); }
 
 
-        /** Split the edge \c e by connecting vertex \c v it to the two
-         vertices of the adjacent triangles that are opposite to edge \c
-         e. Returns the halfedge pointing to \c p that is created by splitting
-         the existing edge \c e.
-
-         \attention This function is only valid for triangle meshes.
-         \sa split(Edge, vec3)
+        /**
+         * \brief Split a triangle-mesh edge using an existing vertex.
+         * \param e Edge to split.
+         * \param v Existing vertex inserted on the edge.
+         * \return Halfedge pointing to the inserted vertex.
+         * \details Connects the inserted vertex to the opposite vertices of adjacent triangles.
+         * \sa split(Edge, vec3)
          */
         Halfedge split(Edge e, Vertex v);
 
 
-        /** Subdivide the edge \c e = (v0,v1) by splitting it into the two edge
-         (v0,p) and (p,v1). Note that this function does not introduce any
-         other edge or faces. It simply splits the edge. Returns halfedge that
-         points to \c p.
+        /**
+         * \brief Insert a new point into an edge without changing incident faces.
+         * \param e Edge to subdivide.
+         * \param p Position of the new vertex.
+         * \return Halfedge pointing to the inserted vertex.
          \sa insert_vertex(Edge, Vertex)
          \sa insert_vertex(Halfedge, Vertex)
          \related join_edges(Vertex)
@@ -2342,9 +2461,11 @@ namespace easy3d {
             return insert_vertex(halfedge(e,0), add_vertex(p));
         }
 
-        /** Subdivide the edge \c e = (v0,v1) by splitting it into the two edge
-         (v0,v) and (v,v1). Note that this function does not introduce any other
-         edge or faces. It simply splits the edge. Returns halfedge that points to \c v.
+        /**
+         * \brief Insert an existing vertex into an edge without changing incident faces.
+         * \param e Edge to subdivide.
+         * \param v Existing vertex to insert.
+         * \return Halfedge pointing to the inserted vertex.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Halfedge, Vertex)
          \related join_edges(Vertex)
@@ -2354,9 +2475,11 @@ namespace easy3d {
             return insert_vertex(halfedge(e,0), v);
         }
 
-        /** Subdivide the edge \c e = (v0,v1) by splitting it into the two edge
-         (v0,v) and (v,v1). Note that this function does not introduce any other
-         edge or faces. It simply splits the edge. Returns halfedge that points to \c v.
+        /**
+         * \brief Insert an existing vertex into the edge identified by a halfedge.
+         * \param h Halfedge identifying the edge.
+         * \param v Existing vertex to insert.
+         * \return Halfedge pointing to the inserted vertex.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Edge, Vertex)
          \related join_edges(Vertex)
@@ -2364,35 +2487,45 @@ namespace easy3d {
         Halfedge insert_vertex(Halfedge h, Vertex v);
 
         /**
-         * Merges the two incident edges of a 2-degree vertex. This is the reverse operation of insert_vertex().
+         * \brief Merge the two incident edges of a degree-two vertex.
          * \pre valence(v) == 2.
+         * \param v Vertex whose incident edges are merged.
+         * \return True if the merge was performed.
          * \sa insert_vertex(Edge, vec3)
          * \sa insert_vertex(Edge, Vertex)
          * \sa insert_vertex(Halfedge, Vertex)
          */
         bool join_edges(Vertex v);
         /**
-         * Check whether the two incident edges of a vertex can be joined. It only allows for vertices of valence two.
+         * \brief Check whether the two incident edges of a vertex can be joined.
+         * \param v Vertex to test.
+         * \return True if the vertex has valence two and the merge is legal.
          * \sa join_edges(Vertex)
          */
         bool can_join_edges(Vertex v) const;
 
 
-        /// insert edge between the to-vertices v0 of h0 and v1 of h1.
-        /// returns the new halfedge from v0 to v1.
+        /// Insert an edge between the target vertices of two halfedges on one face.
+        /// \param h0 First halfedge on the face.
+        /// \param h1 Second halfedge on the same face.
+        /// \return New halfedge from target(h0) to target(h1).
         /// \attention h0 and h1 have to belong to the same face
         Halfedge insert_edge(Halfedge h0, Halfedge h1);
 
 
         /**
-         * Check whether flipping edge \c e is topologically allowed.
+         * \brief Check whether flipping an edge is topologically allowed.
+         * \param e Edge to test.
+         * \return True if flipping the edge preserves triangle topology.
          \attention This function is only valid for triangle meshes.
          \sa flip(Edge)
          */
         bool is_flip_ok(Edge e) const;
 
         /**
-         * Flip edge \c e: Remove edge \c e and add an edge between the two vertices opposite to edge \c e of the two
+         * \brief Flip an edge between two adjacent triangles.
+         * \param e Edge to flip.
+         * \details Removes the edge and adds one between the opposite vertices.
          * incident triangles.
          * \attention This function is only valid for triangle meshes. \sa is_flip_ok(Edge)
          */
@@ -2400,13 +2533,18 @@ namespace easy3d {
 
 
         /**
-         * Check whether stitching two halfedges \c h0 an \c h1 is topologically allowed. Two halfedges can be stitched
-         * if they are both on on the border and point in reverse directions.
+         * \brief Check whether two boundary halfedges can be stitched.
+         * \param h0 First boundary halfedge.
+         * \param h1 Second boundary halfedge.
+         * \return True if they point in opposite directions and stitching is legal.
          */
         bool is_stitch_ok(Halfedge h0, Halfedge h1);
 
         /**
-         * @brief Stitch two halfedges h0 and h1. Precondition: h0 and h1 are both on the border and point in reversed
+         * @brief Stitch two boundary halfedges.
+         * @param h0 First boundary halfedge.
+         * @param h1 Second boundary halfedge.
+         * \details Precondition: both halfedges are on the border and point in reversed
          *      directions.
          * @attention Stitching two halfedges changes the topology and geometry significantly, thus it may result in a
          *      non-manifold mesh, client code must check if this operation can be executed. @see is_stitch_ok().
@@ -2414,30 +2552,44 @@ namespace easy3d {
         void stitch(Halfedge h0, Halfedge h1);
 
 
-        /** returns the valence (number of incident edges or neighboring vertices)
-         of vertex \c v. */
+        /**
+         * \brief Return the number of incident edges at a vertex.
+         * \param v Vertex to query.
+         * \return Vertex valence.
+         */
         unsigned int valence(Vertex v) const;
 
-        /// returns the valence of face \c f (its number of vertices)
+        /// Return the number of vertices on a face.
+        /// \param f Face to query.
+        /// \return Face valence.
         unsigned int valence(Face f) const;
 
-        /// find the halfedge from start to end
+        /// Find the directed halfedge from start to end.
+        /// \param start Source vertex.
+        /// \param end Target vertex.
+        /// \return Matching halfedge, or an invalid handle if none exists.
         Halfedge find_halfedge(Vertex start, Vertex end) const;
 
-        /// find the edge (a, b)
+        /// Find the edge connecting two vertices, in either direction.
+        /// \param a First endpoint.
+        /// \param b Second endpoint.
+        /// \return Matching edge, or an invalid handle if none exists.
         Edge find_edge(Vertex a, Vertex b) const;
 
-        /// deletes the vertex \c v from the mesh. Its incident edges and faces will also be deleted.
+        /// Mark a vertex and its incident edges and faces as deleted.
+        /// \param v Vertex to delete.
         /// \attention This function only marks the vertex and its incident edges and faces as deleted, and you have
         ///     to call collect_garbage() to finally remove them.
         void delete_vertex(Vertex v);
 
-        /// deletes the edge \c e from the mesh. Its incident faces will also be deleted.
+        /// Mark an edge and its incident faces as deleted.
+        /// \param e Edge to delete.
         /// \attention This function only marks the edge and its incident faces as deleted, and you have to call
         ///     collect_garbage() to finally remove them.
         void delete_edge(Edge e);
 
-        /// deletes the face \c f from the mesh. Its incident edges (if on boundary) will also be deleted.
+        /// Mark a face as deleted, including its boundary edges when they become unused.
+        /// \param f Face to delete.
         /// \attention This function only marks the face and its incident edges (if on boundary) as deleted, and
         ///     you have to call collect_garbage() to finally remove them.
         void delete_face(Face f);
@@ -2476,7 +2628,7 @@ namespace easy3d {
          */
         std::vector<vec3>& points() override { return vpoint_.vector(); }
 
-        /// compute face normals by calling compute_face_normal(Face) for each face.
+        /// Recompute and store normals for all faces.
         void update_face_normals();
 
         /**
@@ -2486,16 +2638,22 @@ namespace easy3d {
          */
         vec3 compute_face_normal(Face f) const;
 
-        /// compute vertex normals by calling compute_vertex_normal(Vertex) for each vertex.
+        /// Recompute and store normals for all vertices.
         void update_vertex_normals();
 
-        /// compute normal vector of vertex \c v. This is the angle-weighted average of incident face normals.
-        /// @note The per-face normals much have been computed.
+        /// Compute the angle-weighted average of incident face normals.
+        /// \param v Vertex to evaluate.
+        /// \return Normalized vertex normal.
+        /// \note Per-face normals must have been computed first.
         vec3 compute_vertex_normal(Vertex v) const;
 
-        /// compute the length of edge \c e.
+        /// Compute the Euclidean length of an edge.
+        /// \param e Edge to measure.
+        /// \return Edge length.
         float edge_length(Edge e) const;
-        /// compute the length of an edge denoted by one of its halfedge \c h.
+        /// Compute the Euclidean length of the edge containing a halfedge.
+        /// \param h Halfedge identifying the edge.
+        /// \return Edge length.
         float edge_length(Halfedge h) const;
 
         //@}
@@ -2600,25 +2758,37 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
-    /// Output stream support for SurfaceMesh::Vertex.
+    /// Write a vertex handle to a stream.
+    /// \param os Destination stream.
+    /// \param v Vertex to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Vertex v)
     {
         return (os << 'v' << v.idx());
     }
 
-    /// Output stream support for SurfaceMesh::Halfedge.
+    /// Write a halfedge handle to a stream.
+    /// \param os Destination stream.
+    /// \param h Halfedge to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Halfedge h)
     {
         return (os << 'h' << h.idx());
     }
 
-    /// Output stream support for SurfaceMesh::Edge.
+    /// Write an edge handle to a stream.
+    /// \param os Destination stream.
+    /// \param e Edge to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Edge e)
     {
         return (os << 'e' << e.idx());
     }
 
-    /// Output stream support for SurfaceMesh::Face.
+    /// Write a face handle to a stream.
+    /// \param os Destination stream.
+    /// \param f Face to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Face f)
     {
         return (os << 'f' << f.idx());

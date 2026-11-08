@@ -41,6 +41,7 @@ namespace easy3d {
         explicit Vec(const T& s) { for (size_t i = 0; i < N; i++) { data_[i] = s; } }
 
         /// @brief Constructs a vector from another vector of the same dimension/size.
+        /// @param rhs Source vector.
         // This one should never be called : a template constructor cannot be a copy constructor
         template<class T2> explicit Vec(const Vec<N, T2>& rhs) {
             for (size_t i = 0; i < N; i++) {
@@ -49,6 +50,7 @@ namespace easy3d {
         }
 
         /// @brief Constructs a vector from another vector of the same dimension/size.
+        /// @param rhs Source vector; its dimension must equal N.
         // to avoid compilation problems
         template<class T2, size_t M> explicit Vec(const Vec<M, T2>& rhs) {
             assert(M == N);
@@ -58,6 +60,7 @@ namespace easy3d {
         }
 
         /// @brief Constructs a vector from an array of values.
+        /// @param rhs Pointer to at least N values.
         template<class T2> explicit Vec(const T2* rhs) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] = T(rhs[i]);
@@ -65,6 +68,8 @@ namespace easy3d {
         }
 
         /// @brief Assignment operator. It assigns the value of this vector from another vector.
+        /// @param rhs Source vector.
+        /// @return Reference to this vector.
         thisclass& operator=(const thisclass& rhs) {
             // Check for self-assignment
             if (this == &rhs)
@@ -73,14 +78,18 @@ namespace easy3d {
             return *this;
         }
 
-        /// @brief Returns the dimension/size of this vector.
+        /// @brief Returns the dimension of this vector.
+        /// @return Compile-time dimension N.
         static size_t dimension() { return (size_t)N; }
         /// @brief Returns the dimension/size of this vector.
+        /// @return Compile-time dimension N.
         static size_t size() { return (size_t)N; }
 
         /// @brief Returns the memory address of the vector.
+        /// @return Pointer to the first component.
         T* data()             { return data_; }
         /// @brief Returns the constant memory address of the vector.
+        /// @return Pointer to the first component.
         const T* data() const { return data_; }
 
         /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
@@ -103,6 +112,7 @@ namespace easy3d {
         //}
 
         /// @brief Returns the squared length of this vector.
+        /// @return Sum of squared components.
         T length2() const {
             T result = T(0);
             for (size_t i = 0; i < N; i++) {
@@ -112,16 +122,20 @@ namespace easy3d {
         }
 
         /// @brief Returns the length of this vector.
+        /// @return Euclidean length.
         T length() const {
             return std::sqrt(length2());
         }
 
         /// @brief Returns the norm (i.e., length/magnitude) of this vector.
+        /// @return Euclidean norm.
         T norm() const {
             return length();
         }
 
         /// @brief Returns the squared Euclidean distance to another vector.
+        /// @param rhs Other vector.
+        /// @return Squared distance to rhs.
         T distance2(const thisclass &rhs) const {
             T result = T(0);
             for (size_t i = 0; i < N; i++) {
@@ -132,6 +146,7 @@ namespace easy3d {
         }
 
         /// @brief Normalizes this vector.
+        /// \return Reference to this vector; a zero or near-zero vector remains zero.
         thisclass& normalize() {
             T s = length();
             s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -140,6 +155,8 @@ namespace easy3d {
         }
 
         /// @brief Compound addition with another vector.
+        /// @param v Vector to add componentwise.
+        /// @return Reference to this vector.
         thisclass& operator+=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] += v.data_[i];
@@ -148,6 +165,8 @@ namespace easy3d {
         }
 
         /// @brief Compound subtraction with another vector.
+        /// @param v Vector to subtract componentwise.
+        /// @return Reference to this vector.
         thisclass& operator-=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] -= v.data_[i];
@@ -156,6 +175,8 @@ namespace easy3d {
         }
 
         /// @brief Compound component-wise multiplication with another vector.
+        /// @param v Componentwise factors.
+        /// @return Reference to this vector.
         thisclass& operator*=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] *= v.data_[i];
@@ -164,6 +185,8 @@ namespace easy3d {
         }
 
         /// @brief Compound component-wise division with another vector.
+        /// @param v Componentwise divisors.
+        /// @return Reference to this vector.
         thisclass& operator/=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] /= v.data_[i];
@@ -172,6 +195,8 @@ namespace easy3d {
         }
 
         /// @brief Compound vector-scalar multiplication.
+        /// @param s Scalar factor.
+        /// @return Reference to this vector.
         template <class T2> thisclass& operator*=(T2 s) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] *= T(s);
@@ -180,6 +205,8 @@ namespace easy3d {
         }
 
         /// @brief Compound vector-scalar division.
+        /// @param s Scalar divisor.
+        /// @return Reference to this vector.
         template <class T2> thisclass& operator/=(T2 s) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] /= T(s);
@@ -188,6 +215,8 @@ namespace easy3d {
         }
 
         /// @brief Addition with another vector.
+        /// @param v Vector to add.
+        /// @return Componentwise sum.
         thisclass operator+ (const thisclass& v) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -197,6 +226,8 @@ namespace easy3d {
         }
 
         /// @brief Subtraction with another vector.
+        /// @param v Vector to subtract.
+        /// @return Componentwise difference.
         thisclass operator- (const thisclass& v) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -206,6 +237,8 @@ namespace easy3d {
         }
 
         /// @brief Vector-scalar multiplication.
+        /// @param s Scalar factor.
+        /// @return Scaled vector.
         template <class T2> thisclass operator* (T2 s) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -215,6 +248,8 @@ namespace easy3d {
         }
 
         /// @brief Vector-scalar division.
+        /// @param s Scalar divisor.
+        /// @return Quotient vector.
         template <class T2> thisclass operator/ (T2 s) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -224,6 +259,7 @@ namespace easy3d {
         }
 
         /// @brief Negates this vector (i.e., adds a \c minus sign).
+        /// @return Negated vector.
         thisclass operator- () const {
             thisclass result;
             for (size_t i = 0; i < N; i++) {
@@ -238,7 +274,10 @@ namespace easy3d {
     };
 
 
-    /// Computes the dot product of two vectors
+    /// Compute the dot product of two vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum of corresponding component products.
     template <size_t N, class T> T dot(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         T result = 0;
         for (size_t i = 0; i < N; i++) {
@@ -247,7 +286,9 @@ namespace easy3d {
         return result;
     }
 
-    /// Computes the 'negative' vector
+    /// Negate every component of a vector.
+    /// \param v1 Input vector.
+    /// \return Negated vector.
     template <size_t N, class T> Vec<N, T> operator-(const Vec<N, T>& v1) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -256,7 +297,10 @@ namespace easy3d {
         return result;
     }
 
-    /// Computes the scalar-vector product
+    /// Multiply a vector by a scalar.
+    /// \param s Scalar factor.
+    /// \param v Input vector.
+    /// \return Scaled vector.
     template <class T2, size_t N, class T> Vec<N, T> operator*(T2 s, const Vec<N, T>& v) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -265,7 +309,10 @@ namespace easy3d {
         return result;
     }
 
-    /// Computes the addition of two vectors
+    /// Add two vectors componentwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum vector.
     template <size_t N, class T> Vec<N, T> operator+(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -274,7 +321,10 @@ namespace easy3d {
         return result;
     }
 
-    /// Computes the subtraction of two vectors
+    /// Subtract two vectors componentwise.
+    /// \param v1 Minuend vector.
+    /// \param v2 Subtrahend vector.
+    /// \return Difference vector.
     template <size_t N, class T> Vec<N, T> operator-(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -285,17 +335,31 @@ namespace easy3d {
 
     // Global functions for vectors (compatible with GLSL)
 
-    /// Computes the length/magnitude of a vector
+    /// Compute the Euclidean length of a vector.
+    /// \param v Input vector.
+    /// \return Euclidean length.
     template <size_t N, class T> T length(const Vec<N, T>& v) { return v.length(); }
-    /// Computes the length/magnitude of a vector
+    /// Compute the Euclidean norm of a vector.
+    /// \param v Input vector.
+    /// \return Euclidean norm.
     template <size_t N, class T> T norm(const Vec<N, T>& v) { return v.length(); }
-    /// Computes the squared length/magnitude of a vector
+    /// Compute the squared Euclidean length of a vector.
+    /// \param v Input vector.
+    /// \return Squared length.
     template <size_t N, class T> T length2(const Vec<N, T>& v) { return v.length2(); }
-    /// Computes the distance between two vectors/points
+    /// Compute the Euclidean distance between two vectors or points.
+    /// \param v1 First point or vector.
+    /// \param v2 Second point or vector.
+    /// \return Euclidean distance.
     template <size_t N, class T> T distance(const Vec<N, T>& v1, const Vec<N, T>& v2)	{ return length(v2 - v1); }
-    /// Computes the squared distance between two vectors/points
+    /// Compute the squared Euclidean distance between two vectors or points.
+    /// \param v1 First point or vector.
+    /// \param v2 Second point or vector.
+    /// \return Squared distance.
     template <size_t N, class T> T distance2(const Vec<N, T>& v1, const Vec<N, T>& v2)	{ return v2.distance2(v1); }
-    /// Computes and returns the normalized vector (Note: the input vector is not modified).
+    /// Return a unit-length copy of a vector (or the zero vector for a near-zero input).
+    /// \param v Input vector; it is not modified.
+    /// \return Normalized vector.
     template <size_t N, class T> Vec<N, T> normalize(const Vec<N, T>& v) {
         T s = v.length();
         s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -304,6 +368,10 @@ namespace easy3d {
 
     /// linear interpolation between two vectors (x and y).
     /// The return value is computed as (1 − w) * v1 + w * v2.
+    /// \param v1 First endpoint.
+    /// \param v2 Second endpoint.
+    /// \param w Interpolation weight; values outside [0, 1] extrapolate.
+    /// \return Interpolated vector.
     template <size_t N, class T> Vec<N, T> mix(const Vec<N, T>& v1, const Vec<N, T>& v2, T w) {
         return (T(1) - w) * v1 + w * v2;
     }
@@ -475,29 +543,46 @@ namespace easy3d {
     };
 
     /// Compute the dot product of two 2D vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum of corresponding component products.
     template <class T> T dot(const Vec<2, T>& v1, const Vec<2, T>& v2) { return v1.x*v2.x + v1.y*v2.y; }
 
-    /// Compute the determinant of the 2x2 matrix formed by the two 2D vectors as the two rows.
+    /// Compute the determinant of the 2x2 matrix with v1 and v2 as rows.
+    /// \param v1 First row vector.
+    /// \param v2 Second row vector.
+    /// \return Determinant.
     template <class T> T det(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return v1.x*v2.y - v1.y*v2.x;
     }
 
-    /// The negative vector.
+    /// Negate every component of a 2D vector.
+    /// \param v1 Input vector.
+    /// \return Negated vector.
     template <class T> Vec<2, T> operator-(const Vec<2, T>& v1) {
         return Vec<2, T>(-v1.x, -v1.y);
     }
 
-    /// Scalar-vector multiplication.
+    /// Multiply a 2D vector by a scalar.
+    /// \param s Scalar factor.
+    /// \param v Input vector.
+    /// \return Scaled vector.
     template <class T2, class T> Vec<2, T> operator*(T2 s, const Vec<2, T>& v) {
         return Vec<2, T>(T(s)*v.x, T(s)*v.y);
     }
 
-    /// Vector-vector addition.
+    /// Add two 2D vectors componentwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum vector.
     template <class T> Vec<2, T> operator+(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return Vec<2, T>(v1.x + v2.x, v1.y + v2.y);
     }
 
-    /// Vector-vector subtraction.
+    /// Subtract two 2D vectors componentwise.
+    /// \param v1 Minuend.
+    /// \param v2 Subtrahend.
+    /// \return Difference vector.
     template <class T> Vec<2, T> operator-(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return Vec<2, T>(v1.x - v2.x, v1.y - v2.y);
     }
@@ -677,11 +762,17 @@ namespace easy3d {
     };
 
     /// Compute the dot product of two 3D vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum of corresponding component products.
     template <class T> T dot(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
     }
 
     /// Compute the cross product of two 3D vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Vector perpendicular to both operands, following the right-hand rule.
     template <class T> Vec<3, T> cross(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(
             v1.y*v2.z - v1.z*v2.y,
@@ -690,25 +781,38 @@ namespace easy3d {
             );
     }
 
-    /// The negative vector.
+    /// Negate every component of a 3D vector.
+    /// \param v1 Input vector.
+    /// \return Negated vector.
     template <class T> Vec<3, T> operator-(const Vec<3, T>& v1) { return Vec<3, T>(-v1.x, -v1.y, -v1.z); }
 
-    /// Scalar-vector multiplication.
+    /// Multiply a 3D vector by a scalar.
+    /// \param s Scalar factor.
+    /// \param v Input vector.
+    /// \return Scaled vector.
     template <class T2, class T> Vec<3, T> operator*(T2 s, const Vec<3, T>& v) {
         return Vec<3, T>(T(s)*v.x, T(s)*v.y, T(s)*v.z);
     }
 
-    /// Vector-vector addition.
+    /// Add two 3D vectors componentwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum vector.
     template <class T> Vec<3, T> operator+(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     }
 
-    /// Vector-vector subtraction.
+    /// Subtract two 3D vectors componentwise.
+    /// \param v1 Minuend.
+    /// \param v2 Subtrahend.
+    /// \return Difference vector.
     template <class T> Vec<3, T> operator-(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     }
 
-    /// Compute a vector that is orthogonal to the given vector.
+    /// Compute a nonzero vector orthogonal to the input when possible.
+    /// \param v Input vector.
+    /// \return A vector orthogonal to v; zero input produces a zero vector.
     template <class T> Vec<3, T> orthogonal(const Vec<3, T>& v) {
         T absx = std::fabs(v.x);
         T absy = std::fabs(v.y);
@@ -901,24 +1005,38 @@ namespace easy3d {
     };
 
     /// Compute the dot product of two 4D vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum of corresponding component products.
     template <class T> T dot(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w;
     }
 
-    /// The negative vector.
+    /// Negate every component of a 4D vector.
+    /// \param v1 Input vector.
+    /// \return Negated vector.
     template <class T> Vec<4, T> operator-(const Vec<4, T>& v1) { return Vec<4, T>(-v1.x, -v1.y, -v1.z, -v1.w); }
 
-    /// Scalar-vector multiplication.
+    /// Multiply a 4D vector by a scalar.
+    /// \param s Scalar factor.
+    /// \param v Input vector.
+    /// \return Scaled vector.
     template <class T2, class T> Vec<4, T> operator*(T2 s, const Vec<4, T>& v) {
         return Vec<4, T>(T(s)*v.x, T(s)*v.y, T(s)*v.z, T(s)*v.w);
     }
 
-    /// Vector-vector addition.
+    /// Add two 4D vectors componentwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Sum vector.
     template <class T> Vec<4, T> operator+(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return Vec<4, T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w);
     }
 
-    /// Vector-vector subtraction.
+    /// Subtract two 4D vectors componentwise.
+    /// \param v1 Minuend.
+    /// \param v2 Subtrahend.
+    /// \return Difference vector.
     template <class T> Vec<4, T> operator-(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return Vec<4, T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w);
     }
@@ -927,7 +1045,10 @@ namespace easy3d {
 
     //------------------------------- IO (input/output) ----------------------------
 
-    /// Output stream support for Vec.
+    /// Write the components of a vector separated by spaces.
+    /// \param out Output stream.
+    /// \param v Vector to write.
+    /// \return The output stream.
     template <size_t N, class T> std::ostream& operator<<(std::ostream& out, const Vec<N, T>& v) {
         for (size_t i = 0; i < N; i++) {
             out << v[i] << " ";
@@ -935,7 +1056,10 @@ namespace easy3d {
         return out;
     }
 
-    /// Input stream support for Vec.
+    /// Read vector components separated by whitespace.
+    /// \param in Input stream.
+    /// \param v Vector to populate.
+    /// \return The input stream.
     template <size_t N, class T> std::istream& operator>>(std::istream& in, Vec<N, T>& v) {
         for (size_t i = 0; i < N; i++) {
             in >> v[i];
@@ -943,39 +1067,59 @@ namespace easy3d {
         return in;
     }
 
-    /// Output stream support specialized for 2D vectors.
+    /// Write the x and y components separated by a space.
+    /// \param out Output stream.
+    /// \param v Vector to write.
+    /// \return The output stream.
     template <class T> std::ostream& operator<<(std::ostream& out, const Vec<2, T>& v) {
         return out << v.x << " " << v.y;
     }
 
-    /// Input stream support specialized for 2D vectors.
+    /// Read the x and y components.
+    /// \param in Input stream.
+    /// \param v Vector to populate.
+    /// \return The input stream.
     template <class T> std::istream& operator>>(std::istream& in, Vec<2, T>& v) {
         return in >> v.x >> v.y;
     }
 
-    /// Output stream support specialized for 3D vectors.
+    /// Write the x, y, and z components separated by spaces.
+    /// \param out Output stream.
+    /// \param v Vector to write.
+    /// \return The output stream.
     template <class T> std::ostream& operator<<(std::ostream& out, const Vec<3, T>& v) {
         return out << v.x << " " << v.y << " " << v.z;
     }
 
-    /// Input stream support specialized for 3D vectors.
+    /// Read the x, y, and z components.
+    /// \param in Input stream.
+    /// \param v Vector to populate.
+    /// \return The input stream.
     template <class T> std::istream& operator>>(std::istream& in, Vec<3, T>& v) {
         return in >> v.x >> v.y >> v.z;
     }
 
-    /// Output stream support specialized for 4D vectors.
+    /// Write the x, y, z, and w components separated by spaces.
+    /// \param out Output stream.
+    /// \param v Vector to write.
+    /// \return The output stream.
     template <class T> std::ostream& operator<<(std::ostream& out, const Vec<4, T>& v) {
         return out << v.x << " " << v.y << " " << v.z << " " << v.w;
     }
 
-    /// Input stream support specialized for 4D vectors.
+    /// Read the x, y, z, and w components.
+    /// \param in Input stream.
+    /// \param v Vector to populate.
+    /// \return The input stream.
     template <class T> std::istream& operator>>(std::istream& in, Vec<4, T>& v) {
         return in >> v.x >> v.y >> v.z >> v.w;
     }
 
     //----------------------------------------------------------------------
 
-    /// Do the coordinates of a vector have NaN?
+    /// Test whether any component is NaN or infinite.
+    /// \param v Vector to inspect.
+    /// \return True if any component is non-finite.
     template <size_t N, class T>
     bool has_nan(const Vec<N, T> &v) {
         for (std::size_t i = 0; i < N; ++i) {
@@ -985,7 +1129,10 @@ namespace easy3d {
         return false;
     }
 
-    /// Test if two vectors are strictly identical.
+    /// Test exact componentwise equality.
+    /// \param a First vector.
+    /// \param b Second vector.
+    /// \return True if every corresponding component compares equal.
     template <size_t N, class T>
     bool operator==(const Vec<N,T> &a, const Vec<N,T> &b) {
         for (size_t i = 0; i < N; i++) {
@@ -994,7 +1141,10 @@ namespace easy3d {
         return true;
     }
 
-    /// Test if two vectors are strictly not identical.
+    /// Test exact componentwise inequality.
+    /// \param a First vector.
+    /// \param b Second vector.
+    /// \return True if any corresponding component differs.
     template <size_t N, class T>
     bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b) {
         for (size_t i = 0; i < N; i++) {
@@ -1003,7 +1153,10 @@ namespace easy3d {
         return false;
     }
 
-    /// Lexicographic comparison of two vectors
+    /// Compare vectors lexicographically by component.
+    /// \param a First vector.
+    /// \param b Second vector.
+    /// \return True when a is lexicographically less than b.
     template <size_t N, class T>
     bool operator<(const Vec<N,T> &a, const Vec<N,T> &b) {
         for(unsigned int i=0; i<N; ++i){
@@ -1013,7 +1166,10 @@ namespace easy3d {
         return false;
     }
 
-    /// Component-wise product of two vectors
+    /// Multiply two vectors componentwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Componentwise product.
     template <size_t N, class T>
     Vec<N, T> comp_product(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -1022,7 +1178,10 @@ namespace easy3d {
         return result;
     }
 
-    /// Component-wise minimum vector
+    /// Compute the componentwise minimum of two vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Vector containing the smaller value at each component.
     template <size_t N, class T>
     Vec<N, T> comp_min(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -1031,7 +1190,10 @@ namespace easy3d {
         return result;
     }
 
-    /// Component-wise maximum vector
+    /// Compute the componentwise maximum of two vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector.
+    /// \return Vector containing the larger value at each component.
     template <size_t N, class T>
     Vec<N, T> comp_max(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -1040,7 +1202,9 @@ namespace easy3d {
         return result;
     }
 
-    /// The minimum coordinate of elements in a vector
+    /// Find the minimum component of a vector.
+    /// \param a Nonempty vector.
+    /// \return Smallest component.
     template<size_t N, class T>
     T min_coord(const Vec<N, T> &a) {
         T result = a[0];
@@ -1048,7 +1212,9 @@ namespace easy3d {
         return result;
     }
 
-    /// The maximum coordinate of elements in a vector
+    /// Find the maximum component of a vector.
+    /// \param a Nonempty vector.
+    /// \return Largest component.
     template<size_t N, class T>
     T max_coord(const Vec<N, T> &a) {
         T result = a[0];
@@ -1056,7 +1222,11 @@ namespace easy3d {
         return result;
     }
 
-    /// Component-wise clamp
+    /// Clamp each component to its corresponding lower and upper bounds.
+    /// \param a Input vector.
+    /// \param lower Per-component lower bounds.
+    /// \param upper Per-component upper bounds.
+    /// \return Clamped vector.
     template<size_t N, class T>
     Vec<N, T> clamp(const Vec<N, T> &a, const Vec<N, T> &lower, const Vec<N, T> &upper) {
         Vec<N, T> result;
@@ -1067,4 +1237,3 @@ namespace easy3d {
 }
 
 #endif  // EASY3D_CORE_VEC_H
-

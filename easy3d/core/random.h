@@ -35,17 +35,31 @@
 namespace easy3d {
 
 
-    /** \brief Random real in [0, 1]. */
+    /**
+     * \brief Generate a pseudo-random float in [0,1].
+     * \details Uses the C library rand() generator and its global state.
+     * \return Uniformly scaled value in the inclusive range [0,1].
+     */
     inline float random_float() {
         return float(std::rand()) / float(RAND_MAX);
     }
 
-    /** \brief Random real number in the range [min, max]. */
+    /**
+     * \brief Generate a pseudo-random float in a specified interval.
+     * \param min Lower endpoint.
+     * \param max Upper endpoint.
+     * \return Value in [min,max] when min <= max.
+     */
     inline float random_float(float min, float max) {
         return min + random_float() * (max - min);
     }
 
-    /** \brief Generates a random color. The parameter \p allow_dark controls if too dark colors are allowed. */
+    /**
+     * \brief Generate a pseudo-random RGB color.
+     * \param allow_dark If true, channels may range from 0 to 1; otherwise the
+     *        lower channel bound is 0.3.
+     * \return Random RGB color with independently sampled channels.
+     */
     inline vec3 random_color(bool allow_dark = false) {
         static float min_rgb = 0.3f;
         min_rgb = allow_dark ? 0.0f : min_rgb;

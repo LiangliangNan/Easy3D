@@ -230,6 +230,10 @@ namespace easy3d {
              * This type stores the vertex connectivity
              * \sa EdgeConnectivity, HalfFaceConnectivity, CellConnectivity
              */
+            /**
+             * \brief Read vertex connectivity from a stream.
+             * \param in Input stream.
+             */
             void read(std::istream& in);
             /**
              * \brief Writes the edge connectivity to an output stream.
@@ -1301,6 +1305,7 @@ namespace easy3d {
          * \brief Adds a model property of type \c T with name \c name and default value \c t.
          * \param name The name of the property.
          * \param t The default value of the property.
+         * \return New model property handle, invalid if the name already exists.
          * \details Fails if a property named \c name exists already, since the name has to be unique.
          *      In this case it returns an invalid property.
          * Example:
@@ -2165,31 +2170,46 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
-    /// Output stream support for PolyMesh::Vertex.
+    /// Write a vertex handle to a stream.
+    /// \param os Destination stream.
+    /// \param v Vertex to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Vertex v)
     {
         return (os << 'v' << v.idx());
     }
 
-    /// Output stream support for PolyMesh::Edge.
+    /// Write an edge handle to a stream.
+    /// \param os Destination stream.
+    /// \param e Edge to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Edge e)
     {
         return (os << 'e' << e.idx());
     }
 
-    /// Output stream support for PolyMesh::HalfFace.
+    /// Write a half-face handle to a stream.
+    /// \param os Destination stream.
+    /// \param h Half-face to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::HalfFace h)
     {
         return (os << 'h' << h.idx());
     }
 
-    /// Output stream support for PolyMesh::Face.
+    /// Write a face handle to a stream.
+    /// \param os Destination stream.
+    /// \param f Face to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Face f)
     {
         return (os << 'f' << f.idx());
     }
 
-    /// Output stream support for PolyMesh::Cell.
+    /// Write a cell handle to a stream.
+    /// \param os Destination stream.
+    /// \param c Cell to write.
+    /// \return The output stream.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Cell c)
     {
         return (os << 'c' << c.idx());

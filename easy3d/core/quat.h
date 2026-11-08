@@ -116,13 +116,22 @@ namespace easy3d {
             _q[0] = _q[1] = _q[2] = FT(0);  _q[3] = FT(1);
         }
 
-        /** \brief Constructor from rotation matrix. See also set_from_rotation_matrix(). */
+        /**
+         * \brief Construct from a rotation matrix.
+         * \param m 3x3 rotation matrix.
+         * \see set_from_rotation_matrix().
+         */
         explicit Quat(const Mat3<FT>& m)
         {
             set_from_rotation_matrix(m);
         }
 
-        /** \brief Constructor from rotation axis (non null) and angle (in radians). See also set_axis_angle(). */
+        /**
+         * \brief Construct from a rotation axis and angle in radians.
+         * \param axis Nonzero rotation axis.
+         * \param angle Rotation angle in radians.
+         * \see set_axis_angle().
+         */
         Quat(const Vec3& axis, FT angle)
         {
             set_axis_angle(axis, angle);
@@ -132,6 +141,8 @@ namespace easy3d {
          * \brief Constructs a quaternion that will rotate from the \p from direction to the \p to direction.
          * \note This rotation is not uniquely defined. The selected axis is usually orthogonal to \p from and \p to,
          * minimizing the rotation angle. This method is robust and can handle small or almost identical vectors.
+         * \param from Initial direction.
+         * \param to Target direction.
          */
         Quat(const Vec3& from, const Vec3& to);
 
@@ -140,15 +151,23 @@ namespace easy3d {
          * the last one is std::cos(angle/2).
          * \attention The identity Quaternion is Quat(0,0,0,1) and not Quat(0,0,0,0) (which is not unitary). The
          * default Quat() creates such identity Quaternion.
+         * \param q0 First vector component.
+         * \param q1 Second vector component.
+         * \param q2 Third vector component.
+         * \param q3 Scalar component.
          */
         Quat(FT q0, FT q1, FT q2, FT q3)
         { _q[0]=q0;    _q[1]=q1;    _q[2]=q2;    _q[3]=q3; }
 
-        /** brief Copy constructor. */
+        /** \brief Copy constructor. \param Q Quaternion to copy. */
         Quat(const thisclass& Q)
         { for (int i=0; i<4; ++i) _q[i] = Q._q[i]; }
 
-        /** brief Equal operator. */
+        /**
+         * \brief Assign another quaternion.
+         * \param Q Source quaternion.
+         * \return Reference to this quaternion.
+         */
         Quat& operator=(const thisclass& Q) {
             for (int i=0; i<4; ++i)
                 _q[i] = Q._q[i];
@@ -158,10 +177,18 @@ namespace easy3d {
         /**
          * brief Sets the Quaternion as a rotation of axis and angle (in radians).
          * \p axis does not need to be normalized. A null axis will result in an identity Quaternion.
+         * \param axis Rotation axis; it need not be normalized.
+         * \param angle Rotation angle in radians.
          */
         void set_axis_angle(const Vec3& axis, FT angle);
 
-        /** brief Sets the Quaternion value. */
+        /**
+         * \brief Set the four quaternion components.
+         * \param q0 First vector component.
+         * \param q1 Second vector component.
+         * \param q2 Third vector component.
+         * \param q3 Scalar component.
+         */
         void set_value(FT q0, FT q1, FT q2, FT q3)
         { _q[0]=q0;    _q[1]=q1;    _q[2]=q2;    _q[3]=q3; }
 
@@ -170,18 +197,23 @@ namespace easy3d {
          * The matrix is expressed in European format: its three columns are the images by the rotation of the three
          * vectors of an orthogonal basis.
          * See http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+         * \param m 3x3 rotation matrix.
          */
         void set_from_rotation_matrix(const Mat3<FT>& m);
 
         /**
          * \brief Set a Quaternion from the three axis of a rotated frame.
          * It actually fills the three columns of a matrix with these rotated basis vectors and calls this method.
+         * \param X First rotated basis vector.
+         * \param Y Second rotated basis vector.
+         * \param Z Third rotated basis vector.
          */
         void set_from_rotated_basis(const Vec3& X, const Vec3& Y, const Vec3& Z);
 
         /**
          * \brief Returns the normalized axis direction of the rotation represented by the Quaternion.
          * It is null for an identity Quaternion. See also angle() and get_axis_angle().
+         * \return Normalized rotation axis; the identity quaternion has a zero axis.
          */
         Vec3 axis() const;
 
@@ -189,20 +221,29 @@ namespace easy3d {
          * \brief Returns the angle (in radians) of the rotation represented by the Quaternion.
          * This value is always in the range [0-pi]. Larger rotational angles are obtained by inverting the axis()
          * direction. See also axis() and get_axis_angle().
+         * \return Rotation angle in radians, in [0, pi].
          */
         FT angle() const;
 
         /**
          * \brief Returns the axis vector and the angle (in radians) of the rotation represented by the Quaternion.
+         * \param axis Receives the normalized axis; zero for an identity rotation.
+         * \param angle Receives the rotation angle in radians.
          */
         void get_axis_angle(Vec3& axis, FT& angle) const;
 
         /**
-         * \brief Bracket operator, with a constant return value. i must range in [0..3].
+         * \brief Access a quaternion component.
+         * \param i Component index in [0, 3].
+         * \return Component value.
          */
         FT operator[](int i) const { return _q[i]; }
 
-        /** \brief Bracket operator returning an l-value. i must range in [0..3]. */
+        /**
+         * \brief Access a mutable quaternion component.
+         * \param i Component index in [0, 3].
+         * \return Reference to the selected component.
+         */
         FT& operator[](int i) { return _q[i]; }
 
         /* Rotation computations */
@@ -232,6 +273,8 @@ namespace easy3d {
          * See operator*(), since this is equivalent to this = this * q.
          * \note For efficiency reasons, the resulting Quaternion is not normalized.
          * You may normalize() it after each application in case of numerical drift.
+         * \param q Rotation to compose after this quaternion.
+         * \return Reference to this quaternion.
          */
         Quat& operator*=(const Quat &q) {
             *this = (*this)*q;
@@ -247,12 +290,16 @@ namespace easy3d {
         /**
          * \brief Returns the image of v by the Quaternion rotation.
          * \see inverse_rotate() and operator*(const Quat&, const Vec&).
+         * \param v Vector to transform.
+         * \return Rotated vector.
          */
         Vec3 rotate(const Vec3& v) const;
 
         /**
          * \brief Returns the image of v by the Quaternion inverse() rotation.
          * rotate() performs an inverse transformation. Same as inverse().rotate(v).
+         * \param v Vector to transform.
+         * \return Rotated vector.
          */
         Vec3 inverse_rotate(const Vec3& v) const {
             return inverse().rotate(v);
@@ -262,6 +309,7 @@ namespace easy3d {
          * Returns the inverse Quaternion (inverse rotation). Result has a negated axis() direction and the same
          * angle(). A composition (see operator*()) of a Quaternion and its inverse() results in an identity function.
          * Use invert() to actually modify the Quaternion.
+         * \return Quaternion representing the inverse rotation.
          */
         Quat inverse() const { return Quat(-_q[0], -_q[1], -_q[2], _q[3]); }
 
@@ -281,7 +329,7 @@ namespace easy3d {
          */
         void negate() { invert(); _q[3] = -_q[3]; }
 
-        /** \brief Return the length of the quaternion. */
+        /** \brief Return the length of the quaternion. \return Euclidean norm of its four components. */
         FT length() const {
             return std::sqrt(_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
         }
@@ -291,6 +339,7 @@ namespace easy3d {
          * This method should not need to be called since we only deal with unit Quaternions. This is however useful to
          * prevent numerical drifts, especially with small rotational increments.
          * \see normalized().
+         * \return The quaternion's length before normalization.
          */
         FT normalize() {
             const FT norm = std::sqrt(_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
@@ -302,6 +351,7 @@ namespace easy3d {
         /**
          * \brief Returns a normalized version of the Quaternion.
          * \see normalize().
+         * \return Unit quaternion.
          */
         Quat normalized() const {
             FT Q[4];
@@ -314,10 +364,15 @@ namespace easy3d {
         /**
          * \brief Returns the Quaternion associated 4x4 rotation matrix.
          * Use glMultMatrixf(q.matrix()) to apply the rotation represented by Quaternion q to the current OpenGL matrix.
+         * \return 4x4 rotation matrix.
          */
         Mat4<FT> matrix() const;
 
-        /** \brief Returns the associated 4x4 inverse rotation matrix. This is simply the matrix() of the inverse().*/
+        /**
+         * \brief Return the associated 4x4 inverse rotation matrix.
+         * This is the matrix() of the inverse().
+         * \return 4x4 inverse rotation matrix.
+         */
         Mat4<FT> inverse_matrix() const;
 
         /** Interpolate between 2 quaternions */
@@ -328,6 +383,11 @@ namespace easy3d {
          * Result is a when t=0 and b when t=1.
          * When allowFlip is true (default) the slerp interpolation will always use the "shortest path" between
          * the Quaternions' orientations, by "flipping" the source Quaternion if needed (see negate()).
+         * \param a First endpoint quaternion.
+         * \param b Second endpoint quaternion.
+         * \param t Interpolation parameter, normally in [0, 1].
+         * \param allowFlip Whether to use the shortest orientation path.
+         * \return Interpolated quaternion.
          */
         static Quat slerp(const Quat<FT>& a, const Quat<FT>& b, FT t, bool allowFlip = true);
 
@@ -335,22 +395,42 @@ namespace easy3d {
          * \brief Returns the slerp interpolation of the two Quaternions a and b, at time t, using tangents tgA and tgB.
          * The resulting Quaternion is "between" a and b (result is a when t=0 and b for t=1).
          * Use squad_tangent() to define the Quaternion tangents tgA and tgB.
+         * \param a First endpoint.
+         * \param tgA Tangent at a.
+         * \param tgB Tangent at b.
+         * \param b Second endpoint.
+         * \param t Interpolation parameter.
+         * \return Interpolated quaternion.
          */
         static Quat squad(const Quat<FT>& a, const Quat<FT>& tgA, const Quat<FT>& tgB, const Quat<FT>& b, FT t);
 
-        /** \brief Returns the "dot" product of a and b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]. */
+        /**
+         * \brief Compute the componentwise dot product of two quaternions.
+         * \param a First quaternion.
+         * \param b Second quaternion.
+         * \return Sum of the four component products.
+         */
         static FT dot(const Quat<FT>& a, const Quat<FT>& b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]; }
 
-        /** \brief Returns the logarithm of the Quaternion. See also exp(). */
+        /** \brief Return the quaternion logarithm. \return Quaternion logarithm. \see exp(). */
         Quat log();
-        /** \brief Returns the exponential of the Quaternion. See also log(). */
+        /** \brief Return the quaternion exponential. \return Quaternion exponential. \see log(). */
         Quat exp();
 
-        /** \brief Returns log(a. inverse() * b). Useful for squad_tangent(). */
+        /**
+         * \brief Return log(a.inverse() * b), used by squad_tangent().
+         * \param a First quaternion.
+         * \param b Second quaternion.
+         * \return Quaternion logarithm of the relative rotation.
+         */
         static Quat ln_dif(const Quat<FT>& a, const Quat<FT>& b);
         /**
          * \brief Returns a tangent Quaternion for \p center, defined by \p before and \p after Quaternions.
          * Useful for smooth spline interpolation of Quaternion with squad() and slerp().
+         * \param before Quaternion preceding the center.
+         * \param center Quaternion at the current interpolation knot.
+         * \param after Quaternion following the center.
+         * \return Tangent quaternion for squad interpolation.
          */
         static Quat squad_tangent(const Quat<FT>& before, const Quat<FT>& center, const Quat<FT>& after);
 
@@ -362,6 +442,7 @@ namespace easy3d {
          *      \endcode
          * \note This function uses rand() to create pseudo-random numbers and the random number generator can
          * be initialized using srand().
+         * \return Random unit quaternion.
          */
         static thisclass random_quat();
 
@@ -749,20 +830,28 @@ namespace easy3d {
         return Quat(std::sin(t1)*r1, std::cos(t1)*r1, std::sin(t2)*r2, std::cos(t2)*r2);
     }
 
-    /// Output stream support for Quat.
+    /// Write the four quaternion components separated by spaces.
+    /// \param os Output stream.
+    /// \param Q Quaternion to write.
+    /// \return The output stream.
     template <typename FT> inline
     std::ostream& operator<<(std::ostream& os, const Quat<FT>& Q)
     {
         return os << Q[0] << ' ' << Q[1] << ' ' << Q[2] << ' ' << Q[3];
     }
 
-    /// Input stream support for Quat.
+    /// Read four quaternion components separated by whitespace.
+    /// \param is Input stream.
+    /// \param Q Quaternion to populate.
+    /// \return The input stream.
     template <typename FT> inline
     std::istream& operator>>(std::istream& is, Quat<FT>& Q) {
         return is >> Q[0] >> Q[1] >> Q[2] >> Q[3];
     }
 
-    /// Do the coordinates of the quaternion have NaN?
+    /// Test whether any quaternion component is NaN or infinite.
+    /// \param Q Quaternion to inspect.
+    /// \return True if any component is non-finite.
     template <class FT> inline
     bool has_nan(const Quat<FT>& Q) {
         for (int i=0; i<4; ++i) {

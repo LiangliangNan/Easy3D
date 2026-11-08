@@ -1128,7 +1128,11 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /** Compute the trace of a square matrix. **/
+    /**
+     * \brief Compute the trace of a square matrix.
+     * \param m Input matrix.
+     * \return Sum of the diagonal entries.
+     */
     template <size_t D, typename T>
     T trace(const Mat<D, D, T> &m) {
         T result = m(0, 0);
@@ -1138,7 +1142,6 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /** Compute the determinant of a square matrix. **/
     template <size_t N, typename T>
     T determinant(const Mat<N, N, T> &m) {
         /*	Use LU decomposition to find the determinant. */
@@ -1151,13 +1154,21 @@ namespace easy3d {
         return result;
     }
 
-    /** Partial specialization for computing the determinant of a 2x2 matrix. **/
+    /**
+     * \brief Compute the determinant of a 2x2 matrix.
+     * \param m Input matrix.
+     * \return Determinant.
+     */
     template <typename T>
     T determinant(const Mat2<T> &m) {
         return m(0, 0) * m(1, 1) - m(0, 1) * m(1, 0);
     }
 
-    /** Partial specialization for computing the determinant of a 3x3 matrix. **/
+    /**
+     * \brief Compute the determinant of a 3x3 matrix.
+     * \param m Input matrix.
+     * \return Determinant.
+     */
     template <typename T>
     T determinant(const Mat3<T> &m) {
         return
@@ -1166,7 +1177,11 @@ namespace easy3d {
             m(0, 2) * (m(1, 0) * m(2, 1) - m(2, 0) * m(1, 1));
     }
 
-    /** Partial specialization for computing the determinant of a 4x4 matrix. **/
+    /**
+     * \brief Compute the determinant of a 4x4 matrix.
+     * \param m Input matrix.
+     * \return Determinant.
+     */
     template <typename T>
     T determinant(const Mat4<T> &m) {
         return
@@ -1185,7 +1200,6 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /** Compute the inverse of a square matrix. **/
     template <size_t N, typename T>
     Mat<N, N, T> inverse(const Mat<N, N, T> &m) {
         // Use Gauss-Jordan elimination to find inverse. This uses less memory than the LU decomposition method.
@@ -1255,7 +1269,11 @@ namespace easy3d {
         return result;
     }
 
-    /** Partial specialization for computing the inverse of a 2x2 matrix. **/
+    /**
+     * \brief Compute the inverse of a 2x2 matrix.
+     * \param m Input matrix.
+     * \return Inverse matrix.
+     */
     template <typename T>
     Mat2<T> inverse(const Mat2<T> &m) {
         Mat2<T> result;
@@ -1271,7 +1289,11 @@ namespace easy3d {
         return result;
     }
 
-    /** Partial specialization for computing the inverse of a 3x3 matrix. **/
+    /**
+     * \brief Compute the inverse of a 3x3 matrix.
+     * \param m Input matrix.
+     * \return Inverse matrix.
+     */
     template <typename T>
     Mat3<T> inverse(const Mat3<T> &m) {
         Mat3<T> result;
@@ -1292,7 +1314,11 @@ namespace easy3d {
         return result;
     }
 
-    /** Partial specialization for computing the inverse of a 4x4 matrix. **/
+    /**
+     * \brief Compute the inverse of a 4x4 matrix.
+     * \param m Input matrix.
+     * \return Inverse matrix.
+     */
     template <typename T>
     Mat4<T> inverse(const Mat4<T> &m) {
         Mat4<T> result;
@@ -1598,7 +1624,6 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
-    /** Output stream support for Mat. **/
     template <size_t N, size_t M, typename T> inline
     std::ostream& operator<< (std::ostream& output, const Mat<N, M, T>& m) {
         output << std::fixed << std::setprecision(8);
@@ -1614,7 +1639,6 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /** Input stream support for Mat. **/
     template <size_t N, size_t M, typename T>
     std::istream& operator>> (std::istream& input, Mat<N, M, T>& m) {
         for (int i = 0; i < N; i++) {
@@ -1628,14 +1652,22 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
-    /** \brief Convert a N-dimensional vector into a N by 1 matrix. */
+    /**
+     * \brief Convert an N-dimensional vector into an N-by-1 matrix.
+     * \param v Input vector.
+     * \return Column matrix containing the vector components.
+     */
     template<size_t N, typename FT>
     Mat<N, 1, FT> to_matrix(const Vec<N, FT>& v) {
         return Mat<N, 1, FT>(v.data());
     }
 
 
-    /**	\brief Construct a 1 by N matrix from a N-dimensional vector. */
+    /**
+     * \brief Construct a 1-by-N matrix from an N-dimensional vector.
+     * \param v Input vector.
+     * \return Row matrix containing the vector components.
+     */
     template<size_t N, typename FT>
     Mat<1, N, FT> transpose(const Vec<N, FT>& v) {
         return Mat<1, N, FT>(v.data());
@@ -1643,7 +1675,11 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
-    /**	\brief Test if a matrix has NaN entry. */
+    /**
+     * \brief Test whether any matrix element is NaN or infinite.
+     * \param m Matrix to inspect.
+     * \return True if any element is non-finite.
+     */
     template <size_t N, size_t M, typename T>
     bool has_nan(const Mat<N, M, T>& m) {
         for (int i = 0; i < N; i++) {
@@ -1686,30 +1722,43 @@ namespace easy3d {
          */
         explicit Mat2(T s);
 
-        /**	\brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
+        /**
+         * \brief Copy constructor compatible with generic Mat operations.
+         * \param rhs Source matrix.
+         */
         Mat2(const Mat<2, 2, T> &rhs);
 
         /**
          * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
          * by Mat.
+         * \param rhs Source 3x3 matrix.
          */
         explicit Mat2(const Mat<3, 3, T> &rhs);
 
         /**
          * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
          * the row/column of the element being set.
+         * \param s00 Element at row 0, column 0.
+         * \param s01 Element at row 0, column 1.
+         * \param s10 Element at row 1, column 0.
+         * \param s11 Element at row 1, column 1.
          */
         Mat2(
             T s00, T s01,
             T s10, T s11
             );
 
-        /**	\brief Initialize elements from an array of type T. */
+        /**
+         * \brief Initialize elements from an array of type T.
+         * \param m Pointer to the matrix elements in configured storage order.
+         */
         explicit Mat2(const T *m);
 
         /**
          * \brief Initialize elements from two vectors. If MATRIX_ROW_MAJOR is defined, x and y specify rows of the
          * matrix, else columns.
+         * \param x First row or column vector.
+         * \param y Second row or column vector.
          */
         Mat2(
             const Vec<2, T> &x,
@@ -1720,12 +1769,14 @@ namespace easy3d {
          * \brief Static constructor return a 2D rotation matrix.
          * \param angle Angle of rotation in radians.
          * \note Positive values of angle rotate counter-clockwise as per the right-hand rule.
+         * \return 2D rotation matrix.
          */
         static Mat2<T> rotation(T angle);
 
         /**
          * \brief Static constructor return a 2D uniform scale matrix.
          * @param s x, y scale (uniform).
+         * \return Uniform 2D scale matrix.
          */
         static Mat2<T> scale(T s);
 
@@ -1733,6 +1784,7 @@ namespace easy3d {
          * \brief Static constructor return a 2D non-uniform scale matrix.
          * @param x x scale.
          * @param y y scale.
+         * \return Non-uniform 2D scale matrix.
          */
         static Mat2<T> scale(T x, T y);
 
@@ -1857,18 +1909,31 @@ namespace easy3d {
          */
         explicit Mat3(T s);
 
-        /** \brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
+        /**
+         * \brief Copy constructor compatible with generic Mat operations.
+         * \param rhs Source matrix.
+         */
         Mat3(const Mat<3, 3, T> &rhs);
 
         /**
          * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
          * by Mat.
+         * \param rhs Source 4x4 matrix.
          */
         explicit Mat3(const Mat<4, 4, T> &rhs);
 
         /**
          * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
          * the row/column of the element being set.
+         * \param s00 Element at row 0, column 0.
+         * \param s01 Element at row 0, column 1.
+         * \param s02 Element at row 0, column 2.
+         * \param s10 Element at row 1, column 0.
+         * \param s11 Element at row 1, column 1.
+         * \param s12 Element at row 1, column 2.
+         * \param s20 Element at row 2, column 0.
+         * \param s21 Element at row 2, column 1.
+         * \param s22 Element at row 2, column 2.
          */
         Mat3(
             T s00, T s01, T s02,
@@ -1876,12 +1941,18 @@ namespace easy3d {
             T s20, T s21, T s22
             );
 
-        /**	Initialize elements from an array of type T. */
+        /**
+         * \brief Initialize elements from an array of type T.
+         * \param m Pointer to the matrix elements in configured storage order.
+         */
         explicit Mat3(const T *m);
 
         /**
          * \brief Initialize elements from three vectors. If MATRIX_ROW_MAJOR is defined, x, y and z specify rows of
          * the matrix, else columns.
+         * \param x First row or column vector.
+         * \param y Second row or column vector.
+         * \param z Third row or column vector.
          */
         Mat3(
             const Vec<3, T> &x,
@@ -1892,6 +1963,7 @@ namespace easy3d {
         /**
          * Initialize from a 2D matrix. rhs forms the upper-left 2x2 sub-matrix, other elements are initialized as the
          * identity.
+         * \param rhs Source 2x2 matrix.
          */
         explicit Mat3(const Mat<2, 2, T> &rhs);
 
@@ -1902,12 +1974,13 @@ namespace easy3d {
          */
         explicit Mat3(const Quat<T> &q);
 
-        /** \brief the upper-left 2x2 sub-matrix. */
+        /** \brief Return the upper-left 2x2 sub-matrix. \return Upper-left 2x2 matrix. */
         Mat2<T> sub() const;
 
         /**
          * \brief Static constructor returning a 3D uniform scale matrix.
          * \param s x, y, z scale (uniform).
+         * \return Uniform 3D scale matrix.
          */
         static Mat3<T> scale(T s);
 
@@ -1916,6 +1989,7 @@ namespace easy3d {
          * @param x x scale.
          * @param y y scale.
          * @param z z scale.
+         * \return Non-uniform 3D scale matrix.
          */
         static Mat3<T> scale(T x, T y, T z);
 
@@ -1926,6 +2000,7 @@ namespace easy3d {
          *      rotate counter-clockwise about axis as per the right-hand rule.
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
+         * \return Rotation matrix.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis, T angle);
         
@@ -1936,20 +2011,27 @@ namespace easy3d {
          * @param axis_angle: direction is the axis and length is the angle (in radian)
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
+         * \return Rotation matrix.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis_angle);
         
         /**
-         * \brief Static constructor return a 3D rotation matrix defined by a quaternion.
-         * \note q is a unit quaternion representing a rotation. */
+         * \brief Construct a 3D rotation matrix from a unit quaternion.
+         * \param q Unit quaternion representing the rotation.
+         * \return Rotation matrix.
+         */
         static Mat3<T> rotation(const Quat<T> &q);
         
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
          *      The three rotations are applied successively.
-         * @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
+         * @param x Rotation angle around X, in radians.
+         * @param y Rotation angle around Y, in radians.
+         * @param z Rotation angle around Z, in radians.
          * @param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \return Rotation matrix.
+         * \return Rotation matrix.
          */
         static Mat3<T> rotation(T x, T y, T z, int order = 312);
 
@@ -2193,12 +2275,31 @@ namespace easy3d {
          */
         explicit Mat4(T s);
 
-        /**	\brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
+        /**
+         * \brief Copy constructor compatible with generic Mat operations.
+         * \param rhs Source matrix.
+         */
         Mat4(const Mat<4, 4, T> &rhs);
 
         /**
          * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
          * the row/column of the element being set.
+         * \param s00 Element at row 0, column 0.
+         * \param s01 Element at row 0, column 1.
+         * \param s02 Element at row 0, column 2.
+         * \param s03 Element at row 0, column 3.
+         * \param s10 Element at row 1, column 0.
+         * \param s11 Element at row 1, column 1.
+         * \param s12 Element at row 1, column 2.
+         * \param s13 Element at row 1, column 3.
+         * \param s20 Element at row 2, column 0.
+         * \param s21 Element at row 2, column 1.
+         * \param s22 Element at row 2, column 2.
+         * \param s23 Element at row 2, column 3.
+         * \param s30 Element at row 3, column 0.
+         * \param s31 Element at row 3, column 1.
+         * \param s32 Element at row 3, column 2.
+         * \param s33 Element at row 3, column 3.
          */
         Mat4(
             T s00, T s01, T s02, T s03,
@@ -2207,12 +2308,19 @@ namespace easy3d {
             T s30, T s31, T s32, T s33
             );
 
-        /**	\brief Initialize elements from an array of type T. */
+        /**
+         * \brief Initialize elements from an array of type T.
+         * \param m Pointer to the matrix elements in configured storage order.
+         */
         explicit Mat4(const T *m);
 
         /**
          * \brief Initialize elements from four vectors. If MATRIX_ROW_MAJOR is defined, x, y, z and w specify rows of
          * the matrix, else columns.
+         * \param x First row or column vector.
+         * \param y Second row or column vector.
+         * \param z Third row or column vector.
+         * \param w Fourth row or column vector.
          */
         Mat4(
             const Vec<4, T> &x,
@@ -2224,21 +2332,26 @@ namespace easy3d {
         /**
          * \brief Initialize from a 3D matrix. rhs forms the upper-left 3x3 sub-matrix, other elements are initialized
          * as the identity.
+         * \param rhs Source 3x3 matrix.
          */
         explicit Mat4(const Mat<3, 3, T> &rhs);
 
         /**
          * \brief Initialize from scale/rotation/translation.
          * The order of the transformations is scale, rotation, translation.
+         * \param s 3D scale vector.
+         * \param r Rotation quaternion.
+         * \param t Translation vector.
          */
         Mat4(const Vec<3, T> &s, const Quat<T> &r, const Vec<3, T> &t);
 
-        /** \brief Return the upper-left 3x3 sub-matrix. */
+        /** \brief Return the upper-left 3x3 sub-matrix. \return Upper-left 3x3 matrix. */
         Mat3<T> sub() const;
 
         /**
          * \brief Static constructor returning a 4D uniform scale matrix.
          * \param s x, y, z, w scale (uniform).
+         * \return Uniform 4D scale matrix.
          * \see scale(Vec<4, T> s), scale(T x, T y, T z, T w).
          */
         static Mat4<T> scale(T s);
@@ -2246,6 +2359,7 @@ namespace easy3d {
         /**
          * \brief Static constructor returning a 4D non-uniform scale matrix,
          * \param s a 4D vector denoting the x, y, z, and w scales.
+         * \return Scale matrix.
          * \see scale(T s), scale(T x, T y, T z, T w).
          */
         static Mat4<T> scale(const Vec<4, T>& s);  // set w to 1 for 3D scaling
@@ -2255,6 +2369,7 @@ namespace easy3d {
          * \param y y scale.
          * \param z z scale.
          * \param w w scale.
+         * \return Scale matrix.
          * \see scale(T s), scale(Vec<4, T> s).
          */
         static Mat4<T> scale(T x, T y, T z, T w);  // set w to 1 for 3D scaling
@@ -2266,6 +2381,7 @@ namespace easy3d {
          *      rotate counter-clockwise about axis as per the right-hand rule.
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
+         * \return Rotation matrix.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
         
@@ -2276,28 +2392,35 @@ namespace easy3d {
          * \param axis_angle: direction is the axis and length is the angle (in radian)
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
+         * \return Rotation matrix.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis_angle);
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by a quaternion.
-         * \note q is a unit quaternion representing a rotation.
+         * \param q Unit quaternion representing the rotation.
+         * \return Rotation matrix.
          */
         static Mat4<T> rotation(const Quat<T> &q);
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
          *      The three rotations are applied successively.
-         * \param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
+         * \param x Rotation angle around X, in radians.
+         * \param y Rotation angle around Y, in radians.
+         * \param z Rotation angle around Z, in radians.
          * \param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \return Rotation matrix.
          *      See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+         * \return Rotation matrix.
          */
         static Mat4<T> rotation(T x, T y, T z, int order = 312);
 
         /**
          * \brief Static constructor return a 3D translation matrix (as a 4D affine transformation).
          * \param t Translation vector.
+         * \return Translation matrix.
          */
         static Mat4<T> translation(const Vec<3, T> &t);
         /**
@@ -2305,6 +2428,7 @@ namespace easy3d {
          * \param x The x component of the translation vector.
          * \param y The y component of the translation vector.
          * \param z The z component of the translation vector.
+         * \return Translation matrix.
          */
         static Mat4<T> translation(T x, T y, T z);
 

@@ -37,20 +37,30 @@
 
 namespace easy3d {
 
-    /// \brief A 2D polygon representation.
+    /**
+     * \brief A polygon represented by an ordered sequence of 2D vertices.
+     * \details The polygon is implicitly closed between its final and first
+     * vertices. Point containment uses an even-odd ray-crossing test; callers
+     * should provide a simple polygon for unambiguous results.
+     */
     /// \class GenericPolygon easy3d/core/polygon.h
     template<typename FT>
     class GenericPolygon : public std::vector< Vec<2, FT> > {
         typedef std::vector< Vec<2, FT> > BaseClass;
 
     public:
-        /// \brief Default constructor.
+        /// Construct an empty polygon.
         GenericPolygon() = default;
 
-        /// \brief Initializes with a know size.
+        /// Construct a polygon with a fixed number of default-initialized vertices.
+        /// \param size Number of vertices.
         explicit GenericPolygon(std::size_t size) { BaseClass::resize(size); }
 
-        /// \brief Initializes from a known range.
+        /**
+         * \brief Construct a polygon by copying a vertex range.
+         * \param first Start of the input range.
+         * \param last End of the input range.
+         */
         template<class InputIterator>
         GenericPolygon(InputIterator first, InputIterator last);
 
@@ -59,6 +69,7 @@ namespace easy3d {
          * @details This method determines the orientation of a polygon based on the sign of its signed area:
          *              - negative: clockwise
          *              - positive: counterclockwise
+         * \return True when the vertex order is clockwise.
          */
         bool is_clockwise() const;
 
@@ -66,21 +77,31 @@ namespace easy3d {
         /// remains the same.
         void reverse_orientation();
 
-        /// \brief Tests if a \p point lies inside the polygon.
+        /**
+         * \brief Test whether a point lies inside the polygon.
+         * \param point Point to test.
+         * \return True when the even-odd ray-crossing test classifies it inside.
+         */
         bool contains(const Vec<2, FT> &point) const;
 
-        /// \brief Tests if a polygon \p plg lies inside this polygon (i.e., all its vertices are inside).
+        /**
+         * \brief Test whether all vertices of another polygon lie inside this polygon.
+         * \param plg Polygon whose vertices are tested.
+         * \return True when every vertex passes contains(point); edge crossings
+         *         between the polygons are not tested.
+         */
         bool contains(const GenericPolygon<FT> &plg) const;
 
-        /// \brief Returns the signed area of the polygon. The signed area is positive for counter clockwise polygons
-        /// and negative for clockwise polygons.
+        /// Return signed area (positive counterclockwise, negative clockwise).
+        /// \return Signed area in squared coordinate units.
         FT signed_area() const;
 
-        /// \brief Returns the area of this polygon. This is the absolute value of the signed area, so it is always
-        /// positive.
+        /// Return the absolute area of the polygon.
+        /// \return Non-negative area in squared coordinate units.
         FT area() const;
 
-        /// \brief Returns the smallest axis-aligned bounding box containing this polygon.
+        /// Return the smallest axis-aligned box containing the vertices.
+        /// \return Polygon bounding box; empty for an empty polygon.
         GenericBox<2, FT> bbox() const;
     };
 

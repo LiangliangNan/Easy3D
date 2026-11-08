@@ -381,7 +381,11 @@ namespace easy3d {
 		{
 		public:
 
-			/// Default constructor
+			/**
+			 * \brief Construct an edge iterator.
+			 * \param e Initial edge handle.
+			 * \param g Graph traversed by the iterator.
+			 */
             explicit EdgeIterator(Edge e = Edge(), const Graph* g = nullptr) : hnd_(e), graph_(g)
 			{
 				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
@@ -458,9 +462,11 @@ namespace easy3d {
 			 * \param _end The end iterator.
 			 */
 			VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
-			/// Returns the begin iterator.
+			/// Return the begin iterator.
+			/// \return Iterator at the first live vertex.
 			VertexIterator begin() const { return begin_; }
-			/// Returns the end iterator.
+			/// Return the end iterator.
+			/// \return Past-the-end vertex iterator.
 			VertexIterator end()   const { return end_; }
 		private:
 			VertexIterator begin_, end_;
@@ -479,9 +485,11 @@ namespace easy3d {
 			 * \param _end The end iterator.
 			 */
 			EdgeContainer(EdgeIterator _begin, EdgeIterator _end) : begin_(_begin), end_(_end) {}
-			/// Returns the begin iterator.
+			/// Return the begin iterator.
+			/// \return Iterator at the first live edge.
 			EdgeIterator begin() const { return begin_; }
-			/// Returns the end iterator.
+			/// Return the end iterator.
+			/// \return Past-the-end edge iterator.
 			EdgeIterator end()   const { return end_; }
 		private:
 			EdgeIterator begin_, end_;
@@ -577,9 +585,11 @@ namespace easy3d {
 			 */
 			Vertex vertex() const { return vertex_; }
 
-			/// Helper for C++11 range-based for-loops
+			/// Initialize range iteration and return this circulator.
+			/// \return Reference to this circulator at the first incident edge.
 			EdgeAroundVertexCirculator& begin() { iterator_ = graph_->vconn_[vertex_].edges_.begin(); return *this; }
-			/// Helper for C++11 range-based for-loops
+			/// Initialize the end state for range iteration and return this circulator.
+			/// \return Reference to this circulator at its end state.
 			EdgeAroundVertexCirculator& end() { iterator_ = end_; return *this; }
 
 	    private:
@@ -601,7 +611,11 @@ namespace easy3d {
 		{
 		public:
 
-			/// default constructor
+			/**
+			 * \brief Construct a circulator over vertices adjacent to a vertex.
+			 * \param g Graph containing the vertex.
+			 * \param v Vertex whose neighbors are traversed.
+			 */
             explicit VertexAroundVertexCirculator(const Graph* g, Vertex v = Vertex())
 				: graph_(g), vertex_(v), finished_(false)
 			{
@@ -680,12 +694,14 @@ namespace easy3d {
 			 */
 	        Vertex vertex() const { return vertex_; }
 
-			/// Helper for C++11 range-based for-loops
+			/// Initialize range iteration and return this circulator.
+			/// \return Reference to this circulator at the first neighboring vertex.
 			VertexAroundVertexCirculator& begin() {
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
 				return *this;
 			}
-			/// Helper for C++11 range-based for-loops
+			/// Initialize the end state for range iteration and return this circulator.
+			/// \return Reference to this circulator at its end state.
 			VertexAroundVertexCirculator& end() {
 				iterator_ = end_;
 				return *this;
@@ -880,15 +896,13 @@ namespace easy3d {
                 return econn_[e].target_;
 		}
 
-		/**
-		 * \brief Returns the starting vertex of an edge, which is equal to vertex(e, 0).
-		 * \param e The edge.
-		 */
+		/// Return the source vertex of an edge.
+        /// \param e Edge to query.
+        /// \return Edge source vertex.
         Vertex source(Edge e) const { return econn_[e].source_; }
-		/**
-		 * \brief Returns the ending vertex of an edge, which is equal to vertex(e, 1).
-		 * \param e The edge.
-		 */
+		/// Return the target vertex of an edge.
+        /// \param e Edge to query.
+        /// \return Edge target vertex.
         Vertex target(Edge e) const { return econn_[e].target_; }
 		//@}
 
@@ -1003,38 +1017,59 @@ namespace easy3d {
 			return ModelProperty<T>(mprops_.get_or_add<T>(name, t));
 		}
 
-        /// remove the vertex property \c p
+        /// Remove a vertex property handle.
+        /// \param p Property handle to remove; invalidated on success.
+        /// \return True if the property was removed.
         template<class T>
         bool remove_vertex_property(VertexProperty<T> &p) { return vprops_.remove(p); }
 
-        /// remove the vertex property named \c n
+        /// Remove a vertex property by name.
+        /// \param n Property name.
+        /// \return True if the property was removed.
         bool remove_vertex_property(const std::string &n) { return vprops_.remove(n); }
 
-        /// remove the edge property \c p
+        /// Remove an edge property handle.
+        /// \param p Property handle to remove; invalidated on success.
+        /// \return True if the property was removed.
         template<class T>
         bool remove_edge_property(EdgeProperty<T> &p) { return eprops_.remove(p); }
 
-        /// remove the edge property named \c n
+        /// Remove an edge property by name.
+        /// \param n Property name.
+        /// \return True if the property was removed.
         bool remove_edge_property(const std::string &n) { return eprops_.remove(n); }
 
-        /// remove the model property \c p
+        /// Remove a model property handle.
+        /// \param p Property handle to remove; invalidated on success.
+        /// \return True if the property was removed.
         template<class T>
         bool remove_model_property(ModelProperty<T> &p) { return mprops_.remove(p); }
 
-        /// remove the model property named \c n
+        /// Remove a model property by name.
+        /// \param n Property name.
+        /// \return True if the property was removed.
         bool remove_model_property(const std::string &n) { return mprops_.remove(n); }
 
-        /// rename a vertex property given its name
+        /// Rename a vertex property.
+        /// \param old_name Existing property name.
+        /// \param new_name New property name.
+        /// \return True if the property was found and renamed.
         bool rename_vertex_property(const std::string &old_name, const std::string &new_name) {
             return vprops_.rename(old_name, new_name);
         }
 
-        /// rename an edge property given its name
+        /// Rename an edge property.
+        /// \param old_name Existing property name.
+        /// \param new_name New property name.
+        /// \return True if the property was found and renamed.
         bool rename_edge_property(const std::string &old_name, const std::string &new_name) {
             return eprops_.rename(old_name, new_name);
         }
 
-        /// rename a model property given its name
+        /// Rename a model property.
+        /// \param old_name Existing property name.
+        /// \param new_name New property name.
+        /// \return True if the property was found and renamed.
         bool rename_model_property(const std::string &old_name, const std::string &new_name) {
             return mprops_.rename(old_name, new_name);
         }
@@ -1071,17 +1106,20 @@ namespace easy3d {
 		}
 
 
-		/// Returns the names of all vertex properties
+		/// Return the names of all vertex properties.
+		/// \return Vertex property names.
 		std::vector<std::string> vertex_properties() const
 		{
 			return vprops_.properties();
 		}
-		/// Returns the names of all edge properties
+		/// Return the names of all edge properties.
+		/// \return Edge property names.
 		std::vector<std::string> edge_properties() const
 		{
 			return eprops_.properties();
 		}
-		/// Returns the names of all model properties
+		/// Return the names of all model properties.
+		/// \return Model property names.
 		std::vector<std::string> model_properties() const
 		{
 			return mprops_.properties();
@@ -1296,6 +1334,7 @@ namespace easy3d {
      * \brief Output stream support for Graph::Vertex.
      * \param os The output stream.
      * \param v The vertex.
+     * \return The output stream.
      */
 	inline std::ostream& operator<<(std::ostream& os, Graph::Vertex v) {
 		return (os << 'v' << v.idx());
@@ -1305,6 +1344,7 @@ namespace easy3d {
      * \brief Output stream support for Graph::Edge.
      * \param os The output stream.
      * \param e The edge.
+     * \return The output stream.
      */
 	inline std::ostream& operator<<(std::ostream& os, Graph::Edge e) {
 		return (os << 'e' << e.idx());
@@ -1313,5 +1353,3 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif // EASY3D_CORE_GRAPH_H
-
-

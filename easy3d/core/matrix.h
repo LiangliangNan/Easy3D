@@ -94,66 +94,101 @@ namespace easy3d {
 
         ~Matrix();
 
-        /// Assign A to this matrix
+        /// Assign another matrix to this matrix.
+        /// \param A Matrix to copy.
+        /// \return Reference to this matrix.
         Matrix<FT> &operator=(const Matrix<FT> &A);    // overload evaluate operator = from matrix to matrix
-        /// Assign x to every entry of this matrix
+        /// Assign a scalar to every entry.
+        /// \param x Value assigned to all entries.
+        /// \return Reference to this matrix.
         Matrix<FT> &operator=(const FT &x);            // overload evaluate operator = from scalar to matrix
 
-        /// Return the row_th row as a 1D array.
+        /// Return a pointer to a row.
+        /// \param row Zero-based row index.
+        /// \return Pointer to the first element in the row.
         FT *operator[](int row);
 
-        /// Return the row_th row as a 1D array (const version).
+        /// Return a const pointer to a row.
+        /// \param row Zero-based row index.
+        /// \return Pointer to the first element in the row.
         const FT *operator[](int row) const;
 
-        /// Return the element at (row, col).
+        /// Access a matrix element.
+        /// \param row Zero-based row index.
+        /// \param col Zero-based column index.
+        /// \return Reference to the selected element.
         FT &operator()(int row, int col);
 
-        /// Return the element at (row, col) (const version).
+        /// Access a matrix element read-only.
+        /// \param row Zero-based row index.
+        /// \param col Zero-based column index.
+        /// \return Const reference to the selected element.
         const FT &operator()(int row, int col) const;
 
-        /// Set the value of the element at (row, col).
+        /// Set a matrix element.
+        /// \param row Zero-based row index.
+        /// \param col Zero-based column index.
+        /// \param v New value.
         void set(int row, int col, FT v);
 
-        /// Get the value of the element at (row, col).
+        /// Read a matrix element.
+        /// \param row Zero-based row index.
+        /// \param col Zero-based column index.
+        /// \return Const reference to the selected element.
         const FT &get(int row, int col) const;
 
         /**
          * Return the data of the matrix as a 1D array.
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
+         * \return Pointer to the first row-major element.
          */
         FT *data() { return data_; }
 
         /**
          * Return the data of the matrix as a 1D array (const version).
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
+         * \return Const pointer to the first row-major element.
          */
         const FT *data() const { return data_; }
 
         /// Return the number of rows.
+        /// \return Row count.
         int rows() const;
 
         /// Return the number of columns.
+        /// \return Column count.
         int cols() const;
 
-        /// Change the size/dimension of the matrix.
+        /// Change the dimensions of the matrix.
+        /// \param rows New row count.
+        /// \param cols New column count.
+        /// \return Reference to this matrix.
         Matrix<FT> &resize(int rows, int cols);
 
-        /// Get the matrix's row vector as a 1D array.
+        /// Copy a row into a vector.
+        /// \param row Zero-based row index.
+        /// \return Values in the selected row.
         std::vector<FT> get_row(int row) const;
 
-        /// Get the matrix's column vector as a 1D array.
+        /// Copy a column into a vector.
+        /// \param col Zero-based column index.
+        /// \return Values in the selected column.
         std::vector<FT> get_column(int col) const;
 
-        /// Set the matrix's row vector
+        /// Replace a row.
+        /// \param v Values to assign.
+        /// \param row Zero-based row index.
         void set_row(const std::vector<FT> &v, int row);
 
-        /// Set the matrix's column vector
+        /// Replace a column.
+        /// \param v Values to assign.
+        /// \param col Zero-based column index.
         void set_column(const std::vector<FT> &v, int col);
 
         /// Set all elements to zero.
         void load_zero();
 
-        /// Make this matrix identity (i.e., all elements on the diagonal have a value of 1).
+        /// Make this matrix diagonal with the requested diagonal value.
         /// @note This function also allow to set the elements on the diagonal to have values other than 1.
         void load_identity(FT v = FT(1));
 
@@ -161,33 +196,49 @@ namespace easy3d {
         void load_random();
 
         /// Return the transposed matrix.
+        /// \return Matrix with rows and columns exchanged.
         Matrix<FT> transpose() const;
 
-        /// Return the inverse of the matrix (for positive square matrices only)
+        /// Return the inverse of a square matrix.
+        /// \return Inverse matrix; caller must ensure the matrix is invertible.
         Matrix<FT> inverse() const;
 
-        /// Return the determinant of the matrix (for square matrices only)
+        /// Return the determinant of a square matrix.
+        /// \return Determinant.
         FT determinant() const;
 
-        /// Return the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
-        /// @note: the matrix can be of any dimension, not necessarily square.
+        /// Return the trace, the sum of the main diagonal.
+        /// \return Sum over the diagonal extent.
+        /// \note The matrix need not be square.
         FT trace() const;
 
-        /// computed assignment. Add each element by v
-        Matrix<FT> &operator+=(const FT &v);    //compound assignment operators +=
-        /// computed assignment. Subtract each element by v
-        Matrix<FT> &operator-=(const FT &v);    //compound assignment operators -=
-        /// computed assignment. Multiply each element by v
+        /// Add a scalar to every element of this matrix.
+        /// \param x Scalar addend.
+        /// \return Reference to this matrix.
+        Matrix<FT> &operator+=(const FT &x);    //compound assignment operators +=
+        /// Subtract a scalar from every element of this matrix.
+        /// \param x Scalar subtrahend.
+        /// \return Reference to this matrix.
+        Matrix<FT> &operator-=(const FT &x);    //compound assignment operators -=
+        /// Multiply every element of this matrix by a scalar.
+        /// \param x Scalar factor.
+        /// \return Reference to this matrix.
         template<typename FT2>
-        Matrix<FT> &operator*=(const FT2 &v);   //compound assignment operators *=
-        /// computed assignment. Divide each element by v
+        Matrix<FT> &operator*=(const FT2 &x);   //compound assignment operators *=
+        /// Divide every element of this matrix by a scalar.
+        /// \param x Divisor.
+        /// \return Reference to this matrix.
         template<typename FT2>
-        Matrix<FT> &operator/=(const FT2 &v);   //compound assignment operators /=
-        /// computed assignment. Add A to this matrix.
-        Matrix<FT> &operator+=(const Matrix<FT> &A);
+        Matrix<FT> &operator/=(const FT2 &x);   //compound assignment operators /=
+        /// Add a matrix elementwise to this matrix.
+        /// \param rhs Matrix with the same dimensions.
+        /// \return Reference to this matrix.
+        Matrix<FT> &operator+=(const Matrix<FT> &rhs);
 
-        /// computed assignment. Subtract A from this matrix.
-        Matrix<FT> &operator-=(const Matrix<FT> &);
+        /// Subtract a matrix elementwise from this matrix.
+        /// \param rhs Matrix with the same dimensions.
+        /// \return Reference to this matrix.
+        Matrix<FT> &operator-=(const Matrix<FT> &rhs);
 
     private:
 
@@ -400,7 +451,9 @@ namespace easy3d {
     template<typename FT>
     FT dot(const std::vector<FT> &, const std::vector<FT> &);            // Inner product for vectors.
 
-    /// Generate a vector with all its elements randomly initialized in the range [0.0, 1.0].
+    /// Generate a vector with elements randomly initialized in the range [0, 1].
+    /// \param size Number of elements.
+    /// \return Randomly initialized vector.
     template<typename FT>
     std::vector<FT> random(int size);
 
@@ -431,7 +484,9 @@ namespace easy3d {
     template<typename FT>
     std::vector<FT> imag(const std::vector<std::complex<FT>> &);   /// Get imaginary part of a complex vector.
 
-    /// Convert real vector to complex vector.
+    /// Convert a real vector to a complex vector with zero imaginary parts.
+    /// \param rv Input real vector.
+    /// \return Complex-valued vector.
     template<typename FT>
     std::vector<std::complex<FT>> complex_vector(const std::vector<FT> &);
 
@@ -668,9 +723,9 @@ namespace easy3d {
     }
 
     /**
-     * Sets the matrix to identity
-     * This sets all coefficients of this matrix to be equal to
-     * nROW x nCOL identity matrix.
+     * \brief Set this matrix to a rectangular identity matrix.
+     * \param v Value placed on the main diagonal (defaults to one).
+     * Entries outside the diagonal are set to zero.
      */
     template<typename FT>
     inline void Matrix<FT>::load_identity(FT v /* = FT(1.0)*/) {
@@ -833,9 +888,6 @@ namespace easy3d {
         return trac;
     }
 
-    /**
-    * compound assignment operators +=
-    */
     template<typename FT>
     Matrix<FT> &Matrix<FT>::operator+=(const FT &x) {
         FT **rowPtr = prow_;
@@ -871,9 +923,6 @@ namespace easy3d {
     }
 
 
-    /**
-    * compound assignment operators -=
-    */
     template<typename FT>
     Matrix<FT> &Matrix<FT>::operator-=(const FT &x) {
         FT **rowPtr = prow_;
@@ -909,9 +958,6 @@ namespace easy3d {
     }
 
 
-    /**
-    * compound assignment operators *=
-    */
     template<typename FT>
     template<typename FT2>
     Matrix<FT> &Matrix<FT>::operator*=(const FT2 &x) {
@@ -928,9 +974,6 @@ namespace easy3d {
     }
 
 
-    /**
-    * compound assignment operators /=
-    */
     template<typename FT>
     template<typename FT2>
     Matrix<FT> &Matrix<FT>::operator/=(const FT2 &x) {
@@ -947,8 +990,11 @@ namespace easy3d {
     }
 
     /**
-    * Overload the output stream function.
-    */
+     * \brief Write a matrix as its dimensions followed by its rows.
+     * \param out Output stream.
+     * \param A Matrix to write.
+     * \return The output stream.
+     */
     template<typename FT>
     std::ostream &operator<<(std::ostream &out, const Matrix<FT> &A) {
         int rows = A.rows();
@@ -970,8 +1016,11 @@ namespace easy3d {
 
 
     /**
-    * Overload the input stream function.
-    */
+     * \brief Read matrix dimensions and row-major element values.
+     * \param in Input stream.
+     * \param A Receives the matrix data and is resized when needed.
+     * \return The input stream.
+     */
     template<typename FT>
     std::istream &operator>>(std::istream &in, Matrix<FT> &A) {
         int rows, cols;
@@ -989,8 +1038,10 @@ namespace easy3d {
 
 
     /**
-    * get negative matrix
-    */
+     * \brief Return the elementwise negation of a matrix.
+     * \param A Input matrix.
+     * \return Matrix with every element negated.
+     */
     template<typename FT>
     Matrix<FT> operator-(const Matrix<FT> &A) {
         int rows = A.rows();
@@ -1005,14 +1056,20 @@ namespace easy3d {
     }
 
 
-    /** matrix-scalar addition*/
+    /// Add a scalar to every matrix element.
+    /// \param A Input matrix.
+    /// \param x Scalar addend.
+    /// \return Resulting matrix.
     template<typename FT>
     inline Matrix<FT> operator+(const Matrix<FT> &A, const FT &x) {
         Matrix<FT> tmp(A);
         return tmp += x;
     }
 
-    /** scalar-matrix addition*/
+    /// Add a scalar to every matrix element.
+    /// \param x Scalar addend.
+    /// \param A Input matrix.
+    /// \return Resulting matrix.
     template<typename FT>
     inline Matrix<FT> operator+(const FT &x, const Matrix<FT> &A) {
         return A + x;
@@ -1020,8 +1077,11 @@ namespace easy3d {
 
 
     /**
-    * matrix-matrix addition
-    */
+     * \brief Add two matrices elementwise.
+     * \param A1 First matrix.
+     * \param A2 Second matrix with matching dimensions.
+     * \return Sum matrix.
+     */
     template<typename FT>
     inline Matrix<FT> operator+(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
@@ -1029,14 +1089,20 @@ namespace easy3d {
     }
 
 
-    /** matrix-scalar subtraction */
+    /// Subtract a scalar from every matrix element.
+    /// \param A Input matrix.
+    /// \param x Scalar subtrahend.
+    /// \return Resulting matrix.
     template<typename FT>
     inline Matrix<FT> operator-(const Matrix<FT> &A, const FT &x) {
         Matrix<FT> tmp(A);
         return tmp -= x;
     }
 
-    /** scalar-matrix subtraction */
+    /// Subtract every matrix element from a scalar.
+    /// \param x Scalar minuend.
+    /// \param A Input matrix.
+    /// \return Resulting matrix.
     template<typename FT>
     inline Matrix<FT> operator-(const FT &x, const Matrix<FT> &A) {
         Matrix<FT> tmp(A);
@@ -1044,7 +1110,10 @@ namespace easy3d {
     }
 
 
-    /** matrix-matrix subtraction */
+    /// Subtract two matrices elementwise.
+    /// \param A1 First matrix.
+    /// \param A2 Second matrix with matching dimensions.
+    /// \return Difference matrix.
     template<typename FT>
     inline Matrix<FT> operator-(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
@@ -1052,8 +1121,11 @@ namespace easy3d {
     }
 
     /**
-    * matrix-matrix multiplication
-    */
+     * \brief Multiply two matrices.
+     * \param A1 Left matrix.
+     * \param A2 Right matrix; its row count must match A1's column count.
+     * \return Product matrix.
+     */
     template<typename FT>
     Matrix<FT> operator*(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         assert(A1.cols() == A2.rows());
@@ -1078,8 +1150,11 @@ namespace easy3d {
 
 
     /**
-    * matrix-vector multiplication
-    */
+     * \brief Multiply a matrix by a vector.
+     * \param A Matrix.
+     * \param b Vector with one value per matrix column.
+     * \return Product vector with one value per matrix row.
+     */
     template<typename FT>
     std::vector<FT> operator*(const Matrix<FT> &A, const std::vector<FT> &b) {
         assert(A.cols() == b.size());
@@ -1093,7 +1168,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// matrix-scalar multiplication
+    /// Multiply every matrix element by a scalar.
+    /// \param A Input matrix.
+    /// \param s Scalar factor.
+    /// \return Scaled matrix.
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator*(const Matrix<FT1> &A, const FT2 &s) {
@@ -1101,14 +1179,20 @@ namespace easy3d {
         return tmp *= s;
     }
 
-    /// scalar-matrix multiplication
+    /// Multiply every matrix element by a scalar.
+    /// \param s Scalar factor.
+    /// \param A Input matrix.
+    /// \return Scaled matrix.
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator*(const FT2 &s, const Matrix<FT1> &A) {
         return A * s;
     }
 
-    /// matrix-scalar division
+    /// Divide every matrix element by a scalar.
+    /// \param A Input matrix.
+    /// \param s Divisor.
+    /// \return Scaled matrix.
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator/(const Matrix<FT1> &A, const FT2 &s) {
@@ -1116,7 +1200,10 @@ namespace easy3d {
         return tmp /= s;
     }
 
-    /// scalar-matrix division
+    /// Divide a scalar by each matrix element.
+    /// \param s Scalar numerator.
+    /// \param A Matrix of divisors.
+    /// \return Elementwise quotient matrix.
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator/(const FT2 &s, const Matrix<FT1> &A) {
@@ -1134,6 +1221,9 @@ namespace easy3d {
     /**
      * This is an optimized version of matrix-matrix multiplication,
      * where the destination matrix has already been allocated.
+     * \param A Left matrix.
+     * \param B Right matrix; row count must equal A's column count.
+     * \param C Receives the product and is resized to the result dimensions.
      */
     template<typename FT>
     void mult(const Matrix<FT> &A, const Matrix<FT> &B, Matrix<FT> &C) {
@@ -1166,6 +1256,9 @@ namespace easy3d {
     /**
      * This is an optimized version of matrix-vector multiplication,
      * where the destination vector has already been allocated.
+     * \param A Matrix.
+     * \param b Vector with one value per matrix column.
+     * \param c Receives the product and is resized to the row count.
      */
     template<typename FT>
     void mult(const Matrix<FT> &A, const std::vector<FT> &b, std::vector<FT> &c) {
@@ -1195,7 +1288,10 @@ namespace easy3d {
 
     /**
      * This is an optimized version of matrix-matrix multiplication,
-     * where the destination matrix has already been allocated.
+     * that returns a newly allocated result.
+     * \param A Left matrix.
+     * \param B Right matrix; row count must equal A's column count.
+     * \return Product matrix.
      */
     template<typename FT>
     Matrix<FT> mult(const Matrix<FT> &A, const Matrix<FT> &B) {
@@ -1228,7 +1324,10 @@ namespace easy3d {
 
     /**
      * This is an optimized version of matrix-vector multiplication,
-     * where the destination vector has already been allocated.
+     * that returns a newly allocated result.
+     * \param A Matrix.
+     * \param b Vector with one value per matrix column.
+     * \return Product vector with one value per matrix row.
      */
     template<typename FT>
     std::vector<FT> mult(const Matrix<FT> &A, const std::vector<FT> &b) {
@@ -1257,35 +1356,59 @@ namespace easy3d {
     }
 
 
-    /** matrix-matrix element-wise multiplication */
+    /**
+     * \brief Multiply two matrices elementwise.
+     * \param A1 First matrix.
+     * \param A2 Second matrix with matching dimensions.
+     * \return Elementwise product.
+     */
     template<typename FT>
     inline Matrix<FT> elem_mult(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
         return tmp *= A2;
     }
 
-    /** matrix-matrix element-wise multiplication */
+    /**
+     * \brief Multiply a matrix elementwise in place.
+     * \param A1 Matrix to update.
+     * \param A2 Elementwise factors with matching dimensions.
+     * \return Reference to the updated matrix.
+     */
     template<typename FT>
     inline Matrix<FT> &elem_mult_eq(Matrix<FT> &A1, const Matrix<FT> &A2) {
         return A1 *= A2;
     }
 
 
-    /** * matrix-matrix element-wise division */
+    /**
+     * \brief Divide two matrices elementwise.
+     * \param A1 Numerator matrix.
+     * \param A2 Divisor matrix with matching dimensions.
+     * \return Elementwise quotient.
+     */
     template<typename FT>
     inline Matrix<FT> elem_divd(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
         return tmp /= A2;
     }
 
-    /** * matrix-matrix element-wise division */
+    /**
+     * \brief Divide a matrix elementwise in place.
+     * \param A1 Matrix to update.
+     * \param A2 Elementwise divisors with matching dimensions.
+     * \return Reference to the updated matrix.
+     */
     template<typename FT>
     inline Matrix<FT> &elem_divd_eq(Matrix<FT> &A1, const Matrix<FT> &A2) {
         return A1 /= A2;
     }
 
 
-    /** matrix transpose */
+    /**
+     * \brief Return the transpose of a matrix.
+     * \param A Input matrix.
+     * \return Transposed matrix.
+     */
     template<typename FT>
     Matrix<FT> transpose(const Matrix<FT> &A) {
         int rows = A.cols();
@@ -1300,7 +1423,11 @@ namespace easy3d {
     }
 
 
-    /** matrix conjugate transpose */
+    /**
+     * \brief Return the conjugate transpose of a matrix.
+     * \param A Input matrix.
+     * \return Conjugate-transposed matrix.
+     */
     template<typename FT>
     Matrix<FT> conjugate_transpose(const Matrix<FT> &A) {
         int rows = A.cols();
@@ -1315,7 +1442,12 @@ namespace easy3d {
     }
 
 
-    /** matrix-matrix transpose multiplication: A^T * B. */
+    /**
+     * \brief Compute A^T * B.
+     * \param A1 Left operand before transposition.
+     * \param A2 Right operand; row count must match A1.
+     * \return Product matrix.
+     */
     template<typename FT>
     Matrix<FT> transpose_mult(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         assert(A1.rows() == A2.rows());
@@ -1334,7 +1466,12 @@ namespace easy3d {
     }
 
 
-    /** matrix-vector transpose multiplication: A^T * b. */
+    /**
+     * \brief Compute A^T * v.
+     * \param A Matrix operand.
+     * \param v Vector whose length equals A's row count.
+     * \return Product vector with one value per column of A.
+     */
     template<typename FT>
     std::vector<FT> transpose_mult(const Matrix<FT> &A, const std::vector<FT> &v) {
         assert(A.rows() == v.size());
@@ -1351,7 +1488,12 @@ namespace easy3d {
     }
 
 
-    /** matrix-matrix tranpose multiplication: A * B^T. */
+    /**
+     * \brief Compute A * B^T.
+     * \param A1 Left matrix.
+     * \param A2 Right matrix before transposition; column counts must match.
+     * \return Product matrix.
+     */
     template<typename FT>
     Matrix<FT> mult_transpose(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         assert(A1.cols() == A2.cols());
@@ -1370,7 +1512,12 @@ namespace easy3d {
     }
 
 
-    /** vector-vector tranpose multiplication: a * b^T. */
+    /**
+     * \brief Compute the outer product a * b^T.
+     * \param a First vector.
+     * \param b Second vector.
+     * \return Matrix with a.size() rows and b.size() columns.
+     */
     template<typename FT>
     Matrix<FT> mult_transpose(const std::vector<FT> &a, const std::vector<FT> &b) {
         int rows = a.size();
@@ -1385,7 +1532,10 @@ namespace easy3d {
     }
 
 
-    /// Generate a matrix with its elements in the range [0.0, 1.0].
+    /// Generate a matrix with elements sampled in the range [0, 1].
+    /// \param row Number of rows.
+    /// \param col Number of columns.
+    /// \return Randomly initialized matrix.
     template<typename FT>
     Matrix<FT> random(int row, int col) {
         Matrix<FT> tmp(row, col);
@@ -1394,9 +1544,15 @@ namespace easy3d {
                 tmp[i][j] = random_float();
             }
         }
+        return tmp;
     }
 
-    /** Generate an identity matrix. */
+    /**
+     * \brief Generate a square diagonal matrix.
+     * \param N Number of rows and columns.
+     * \param x Value placed on the main diagonal (defaults to one).
+     * \return Matrix with x on the diagonal and zero elsewhere.
+     */
     template<typename FT>
     Matrix<FT> identity(int N, const FT& x /*= FT(1)*/) {
         Matrix<FT> tmp(N, N);
@@ -1407,7 +1563,11 @@ namespace easy3d {
     }
 
 
-    /** Get the diagonal entries of matrix. */
+    /**
+     * \brief Extract the main diagonal of a matrix.
+     * \param A Input matrix.
+     * \return Diagonal entries, up to the smaller matrix dimension.
+     */
     template<typename FT>
     std::vector<FT> diagonal(const Matrix<FT> &A) {
         int nColumn_ = A.rows();
@@ -1422,7 +1582,11 @@ namespace easy3d {
     }
 
 
-    /** Generate the diagonal of matrix by given its diagonal elements. */
+    /**
+     * \brief Construct a square matrix from diagonal entries.
+     * \param d Values to place on the main diagonal.
+     * \return Square diagonal matrix.
+     */
     template<typename FT>
     Matrix<FT> diagonal(const std::vector<FT> &d) {
         int N = static_cast<int>(d.size());
@@ -1438,6 +1602,8 @@ namespace easy3d {
     /**
      * Compute the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
      * NOTE: the matrix can be any matrix, not necessarily square.
+     * \param A Input matrix.
+     * \return Sum of the main-diagonal entries up to the smaller dimension.
      */
     template<typename FT>
     FT trace(const Matrix<FT> &A) {
@@ -1450,7 +1616,11 @@ namespace easy3d {
     }
 
 
-    /** Compute Frobenius norm of matrix. */
+    /**
+     * \brief Compute the Frobenius norm.
+     * \param A Input matrix.
+     * \return Square root of the sum of squared element magnitudes for real-valued matrices.
+     */
     template<typename FT>
     FT norm(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1465,7 +1635,11 @@ namespace easy3d {
     }
 
 
-    /** Swap two matrices. */
+    /**
+     * \brief Swap corresponding elements of equally sized matrices.
+     * \param lhs First matrix.
+     * \param rhs Second matrix; dimensions must match lhs.
+     */
     template<typename FT>
     void swap(Matrix<FT> &lhs, Matrix<FT> &rhs) {
         int m = lhs.rows();
@@ -1480,7 +1654,11 @@ namespace easy3d {
     }
 
 
-    /** Matrix's column vectors sum. */
+    /**
+     * \brief Sum each column.
+     * \param A Input matrix.
+     * \return Vector containing one sum per column.
+     */
     template<typename FT>
     std::vector<FT> sum(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1494,7 +1672,11 @@ namespace easy3d {
     }
 
 
-    /** Minimum of matrix's column vectors. */
+    /**
+     * \brief Find the minimum value in each column.
+     * \param A Input matrix; must have at least one row.
+     * \return Vector containing one minimum per column.
+     */
     template<typename FT>
     std::vector<FT> min(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1513,7 +1695,11 @@ namespace easy3d {
     }
 
 
-    /** Maximum of matrix's column vectors. */
+    /**
+     * \brief Find the maximum value in each column.
+     * \param A Input matrix; must have at least one row.
+     * \return Vector containing one maximum per column.
+     */
     template<typename FT>
     std::vector<FT> max(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1532,14 +1718,20 @@ namespace easy3d {
     }
 
 
-    /** Matrix's column vectors mean. */
+    /**
+     * \brief Compute the mean of each column.
+     * \param A Input matrix; must have at least one row.
+     * \return Vector containing one mean per column.
+     */
     template<typename FT>
     inline std::vector<FT> mean(const Matrix<FT> &A) {
         return sum(A) / FT(A.rows());
     }
 
 
-    /// Get magnitude of a std::complex matrix.
+    /// Return the magnitude of each complex matrix element.
+    /// \param A Input complex matrix.
+    /// \return Real-valued matrix of magnitudes.
     template<typename FT>
     Matrix<FT> abs(const Matrix<std::complex<FT> > &A) {
         int m = A.rows(),
@@ -1553,7 +1745,9 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Get angle of a std::complex matrix.
+    /// Return the phase angle of each complex matrix element, in radians.
+    /// \param A Input complex matrix.
+    /// \return Real-valued matrix of phase angles.
     template<typename FT>
     Matrix<FT> arg(const Matrix<std::complex<FT> > &A) {
         int m = A.rows(),
@@ -1567,7 +1761,9 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Get real part of a std::complex matrix.
+    /// Extract the real part of every complex matrix element.
+    /// \param A Input complex matrix.
+    /// \return Real-valued matrix.
     template<typename FT>
     Matrix<FT> real(const Matrix<std::complex<FT> > &A) {
         int m = A.rows(),
@@ -1582,7 +1778,9 @@ namespace easy3d {
     }
 
 
-    /// Get imaginary part of a std::complex matrix.
+    /// Extract the imaginary part of every complex matrix element.
+    /// \param A Input complex matrix.
+    /// \return Real-valued matrix.
     template<typename FT>
     Matrix<FT> imag(const Matrix<std::complex<FT> > &A) {
         int m = A.rows(),
@@ -1597,7 +1795,9 @@ namespace easy3d {
     }
 
 
-    /// Convert real matrix to std::complex matrix.
+    /// Convert a real matrix to a complex matrix with zero imaginary parts.
+    /// \param rA Input real matrix.
+    /// \return Complex-valued matrix.
     template<typename FT>
     Matrix<std::complex<FT> > complex_matrix(const Matrix<FT> &rA) {
         int rows = rA.rows();
@@ -1611,7 +1811,10 @@ namespace easy3d {
         return cA;
     }
 
-    /// Convert real matrix to std::complex matrix (A for real, B for imaginary)
+    /// Combine real and imaginary component matrices into a complex matrix.
+    /// \param mR Real components.
+    /// \param mI Imaginary components with the same dimensions.
+    /// \return Complex-valued matrix.
     template<typename FT>
     Matrix<std::complex<FT> > complex_matrix(const Matrix<FT> &mR, const Matrix<FT> &mI) {
         int rows = mR.rows();
@@ -1632,7 +1835,10 @@ namespace easy3d {
     //-----------------------------  std::vector  Implementation ------------------------------------//
 
 
-    /// Output stream support for std::vector<FT>.
+    /// Write a vector as its size followed by its elements.
+    /// \param out Output stream.
+    /// \param A Vector to write.
+    /// \return The output stream.
     template<typename FT>
     std::ostream &operator<<(std::ostream &out, const std::vector<FT> &A) {
         out << "size: " << A.size() << "\n";
@@ -1643,7 +1849,10 @@ namespace easy3d {
     }
 
 
-    /// Input stream support for std::vector<FT>.
+    /// Read a vector encoded as its size followed by its elements.
+    /// \param in Input stream.
+    /// \param A Receives the vector contents.
+    /// \return The input stream.
     template<typename FT>
     std::istream &operator>>(std::istream &in, std::vector<FT> &A) {
         int size;
@@ -1655,7 +1864,9 @@ namespace easy3d {
     }
 
 
-    /// get negative vector
+    /// Negate every element of a vector.
+    /// \param A Input vector.
+    /// \return Negated vector.
     template<typename FT>
     std::vector<FT> operator-(const std::vector<FT> &A) {
         std::vector<FT> tmp = A;
@@ -1666,7 +1877,10 @@ namespace easy3d {
     }
 
 
-    /// vector-vector addition
+    /// Add two vectors elementwise.
+    /// \param A First vector.
+    /// \param B Second vector of equal size.
+    /// \return Sum vector.
     template<typename FT>
     std::vector<FT> operator+(const std::vector<FT> &A, const std::vector<FT> &B) {
         assert(A.size() == B.size());
@@ -1678,7 +1892,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-scalar addition.
+    /// Add a scalar to every vector element.
+    /// \param A Input vector.
+    /// \param s Scalar addend.
+    /// \return Sum vector.
     template<typename FT>
     std::vector<FT> operator+(const std::vector<FT> &A, const FT &s) {
         std::vector<FT> tmp = A;
@@ -1688,7 +1905,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// scalar-vector addition.
+    /// Add a scalar to every vector element.
+    /// \param s Scalar addend.
+    /// \param A Input vector.
+    /// \return Sum vector.
     template<typename FT>
     std::vector<FT> operator+(const FT &s, const std::vector<FT> &A) {
         std::vector<FT> tmp = A;
@@ -1698,7 +1918,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-vector subtraction
+    /// Subtract two vectors elementwise.
+    /// \param A First vector.
+    /// \param B Second vector of equal size.
+    /// \return Difference vector.
     template<typename FT>
     std::vector<FT> operator-(const std::vector<FT> &A, const std::vector<FT> &B) {
         assert(A.size() == B.size());
@@ -1710,7 +1933,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-scalar subtraction.
+    /// Subtract a scalar from every vector element.
+    /// \param A Input vector.
+    /// \param s Scalar subtrahend.
+    /// \return Difference vector.
     template<typename FT>
     std::vector<FT> operator-(const std::vector<FT> &A, const FT &s) {
         std::vector<FT> tmp = A;
@@ -1720,7 +1946,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// scalar-vector subtraction.
+    /// Subtract each vector element from a scalar.
+    /// \param s Scalar minuend.
+    /// \param A Input vector.
+    /// \return Difference vector.
     template<typename FT>
     std::vector<FT> operator-(const FT &s, const std::vector<FT> &A) {
         std::vector<FT> tmp = A;
@@ -1730,7 +1959,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-scalar multiplication
+    /// Multiply every vector element by a scalar.
+    /// \param A Input vector.
+    /// \param s Scalar factor.
+    /// \return Scaled vector.
     template<typename FT1, typename FT2>
     std::vector<FT1> operator*(const std::vector<FT1> &A, const FT2 &s) {
         std::vector<FT1> tmp = A;
@@ -1740,13 +1972,19 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-scalar multiplication
+    /// Multiply every vector element by a scalar.
+    /// \param s Scalar factor.
+    /// \param A Input vector.
+    /// \return Scaled vector.
     template<typename FT1, typename FT2>
     std::vector<FT1> operator*(const FT2 &s, const std::vector<FT1> &A) {
         return A * s;
     }
 
-    /// vector-scalar division
+    /// Divide every vector element by a scalar.
+    /// \param A Input vector.
+    /// \param s Divisor.
+    /// \return Quotient vector.
     template<typename FT1, typename FT2>
     std::vector<FT1> operator/(const std::vector<FT1> &A, const FT2 &s) {
         std::vector<FT1> tmp = A;
@@ -1756,7 +1994,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-scalar division
+    /// Divide a scalar by every vector element.
+    /// \param s Scalar numerator.
+    /// \param A Vector of divisors.
+    /// \return Quotient vector.
     template<typename FT1, typename FT2>
     std::vector<FT1> operator/(const FT2 &s, const std::vector<FT1> &A) {
         std::vector<FT1> tmp = A;
@@ -1766,7 +2007,10 @@ namespace easy3d {
         return tmp;
     }
 
-    /// vector-vector element-wise multiplication
+    /// Multiply two vectors elementwise.
+    /// \param v1 First vector.
+    /// \param v2 Second vector of equal size.
+    /// \return Elementwise product.
     template<typename FT>
     inline std::vector<FT> elem_mult(const std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1778,7 +2022,10 @@ namespace easy3d {
         return result;
     }
 
-    /// vector-vector element-wise multiplication: v1 *= v2.
+    /// Multiply a vector elementwise in place.
+    /// \param v1 Vector to update.
+    /// \param v2 Elementwise factors of equal size.
+    /// \return Reference to the updated vector.
     template<typename FT>
     inline std::vector<FT> &elem_mult_eq(std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1790,7 +2037,10 @@ namespace easy3d {
     }
 
 
-    /// vector-vector element-wise division
+    /// Divide two vectors elementwise.
+    /// \param v1 Numerator vector.
+    /// \param v2 Divisor vector of equal size.
+    /// \return Elementwise quotient.
     template<typename FT>
     inline std::vector<FT> elem_divd(const std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1802,7 +2052,10 @@ namespace easy3d {
         return result;
     }
 
-    /// vector-vector element-wise division: v1 /= v2.
+    /// Divide a vector elementwise in place.
+    /// \param v1 Vector to update.
+    /// \param v2 Elementwise divisors of equal size.
+    /// \return Reference to the updated vector.
     template<typename FT>
     inline std::vector<FT> &elem_divd_eq(std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1814,7 +2067,10 @@ namespace easy3d {
     }
 
 
-    /// Inner product for vectors.
+    /// Compute the inner product of two vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector of equal size.
+    /// \return Sum of corresponding element products.
     template<typename FT>
     FT operator*(const std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1829,7 +2085,10 @@ namespace easy3d {
         return sum;
     }
 
-    /// Inner product for vectors.
+    /// Compute the inner product of two vectors.
+    /// \param v1 First vector.
+    /// \param v2 Second vector of equal size.
+    /// \return Sum of corresponding element products.
     template<typename FT>
     FT dot(const std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1845,7 +2104,9 @@ namespace easy3d {
     }
 
 
-    /// std::vector's sum.
+    /// Sum all elements of a vector.
+    /// \param v Input vector.
+    /// \return Sum of its elements.
     template<typename FT>
     FT sum(const std::vector<FT> &v) {
         FT sum = 0;
@@ -1857,7 +2118,9 @@ namespace easy3d {
         return sum;
     }
 
-    /// Minimum value of vector.
+    /// Find the minimum element of a vector.
+    /// \param v Nonempty input vector.
+    /// \return Minimum element.
     template<typename FT>
     FT min(const std::vector<FT> &v) {
         FT m = v[0];
@@ -1868,7 +2131,9 @@ namespace easy3d {
         return m;
     }
 
-    /// Maximum value of vector.
+    /// Find the maximum element of a vector.
+    /// \param v Nonempty input vector.
+    /// \return Maximum element.
     template<typename FT>
     FT max(const std::vector<FT> &v) {
         FT M = v[0];
@@ -1879,13 +2144,15 @@ namespace easy3d {
         return M;
     }
 
-    /// std::vector's mean.
+    /// Compute the arithmetic mean of a vector.
+    /// \param v Nonempty input vector.
+    /// \return Sum of elements divided by the vector size.
     template<typename FT>
     inline FT mean(const std::vector<FT> &v) {
         return sum(v) / FT(v.size());
     }
 
-    /// Generate a vector with all its elements randomly initialized in the range [0.0, 1.0].
+    /// Generate a vector with elements randomly initialized in the range [0, 1].
     template<typename FT>
     inline std::vector<FT> random(int size) {
         std::vector<FT> V(size);
@@ -1894,7 +2161,9 @@ namespace easy3d {
         return V;
     }
 
-    /// std::vector's norm in Euclidean space.
+    /// Compute the Euclidean norm of a real-valued vector.
+    /// \param v Input vector.
+    /// \return Square root of the sum of squared elements.
     template<typename FT>
     inline FT norm(const std::vector<FT> &v) {
         FT sum = 0;
@@ -1908,7 +2177,9 @@ namespace easy3d {
         return FT(std::sqrt(sum));
     }
 
-    /// std::vector's norm in Euclidean space.
+    /// Compute the Euclidean norm of a complex-valued vector.
+    /// \param v Input vector.
+    /// \return Square root of the sum of squared magnitudes.
     template<typename FT>
     FT norm(const std::vector<std::complex<FT> > &v) {
         FT sum = 0;
@@ -1921,7 +2192,9 @@ namespace easy3d {
         return FT(std::sqrt(sum));
     }
 
-    /// Swap two vectors.
+    /// Swap corresponding elements of equally sized vectors.
+    /// \param lhs First vector.
+    /// \param rhs Second vector of the same size.
     template<typename FT>
     void swap(std::vector<FT> &lhs, std::vector<FT> &rhs) {
         typename std::vector<FT>::iterator itrL = lhs.begin(),
@@ -1931,7 +2204,11 @@ namespace easy3d {
             std::swap(*itrL++, *itrR++);
     }
 
-    /// Generates a vector of n points linearly spaced between and including a and b.
+    /// Generate n linearly spaced values from a through b, including endpoints when n > 1.
+    /// \param a First endpoint.
+    /// \param b Last endpoint.
+    /// \param n Number of values; values below one produce an empty vector.
+    /// \return Generated sequence (for n == 1, contains a).
     template<typename FT>
     std::vector<FT> linspace(FT a, FT b, int n) {
         if (n < 1)
@@ -1949,7 +2226,9 @@ namespace easy3d {
         }
     }
 
-    /// Get magnitude of a complex vector.
+    /// Extract the magnitude of every complex vector element.
+    /// \param v Input complex vector.
+    /// \return Real-valued vector of magnitudes.
     template<typename FT>
     std::vector<FT> abs(const std::vector<std::complex<FT> > &v) {
         std::vector<FT> tmp(v.size());
@@ -1962,7 +2241,9 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Get angle of a complex vector.
+    /// Extract the phase angle of every complex vector element, in radians.
+    /// \param v Input complex vector.
+    /// \return Real-valued vector of phase angles.
     template<typename FT>
     std::vector<FT> arg(const std::vector<std::complex<FT> > &v) {
         std::vector<FT> tmp(v.size());
@@ -1975,7 +2256,9 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Get real part of a complex vector.
+    /// Extract the real part of every complex vector element.
+    /// \param v Input complex vector.
+    /// \return Real-valued vector.
     template<typename FT>
     std::vector<FT> real(const std::vector<std::complex<FT> > &v) {
         std::vector<FT> tmp(v.size());
@@ -1988,7 +2271,9 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Get imaginary part of a complex vector.
+    /// Extract the imaginary part of every complex vector element.
+    /// \param v Input complex vector.
+    /// \return Real-valued vector.
     template<typename FT>
     std::vector<FT> imag(const std::vector<std::complex<FT> > &v) {
         std::vector<FT> tmp(v.size());
@@ -2001,7 +2286,7 @@ namespace easy3d {
         return tmp;
     }
 
-    /// Convert real vector to complex vector.
+    /// Convert a real vector to complex values with zero imaginary parts.
     template<typename FT>
     std::vector<std::complex<FT> > complex_vector(const std::vector<FT> &rv) {
         int N = rv.size();
@@ -2016,7 +2301,10 @@ namespace easy3d {
         return cv;
     }
 
-    /// Convert real vector to complex vector (A for real, B for imaginary)
+    /// Combine real and imaginary component vectors into a complex vector.
+    /// \param vR Real components.
+    /// \param vI Imaginary components with the same size.
+    /// \return Complex-valued vector.
     template<typename FT>
     std::vector<std::complex<FT> > complex_vector(const std::vector<FT> &vR, const std::vector<FT> &vI) {
         int N = static_cast<int>(vR.size());

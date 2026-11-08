@@ -16,14 +16,16 @@
 
 namespace easy3d {
 
-    /// The sign.
+    /// Sign of a scalar or oriented-line predicate.
     enum Sign {
         NEGATIVE = -1,
         ZERO = 0,
         POSITIVE = 1,
     };
 
-    /// returns the sign of a value.
+    /// Return the sign of a value.
+    /// \param x Value to classify.
+    /// \return NEGATIVE, ZERO, or POSITIVE.
     template<class T>
     inline Sign sign(T x) {
         return (x > 0) ? POSITIVE : ((x < 0) ? NEGATIVE : ZERO);
@@ -34,7 +36,9 @@ namespace easy3d {
      *
      * \class GenericOrientedLine easy3d/core/oriented_line.h
      *
-     * \details The comparison, implemented by the side() function, is a predicate similar to the right hand rule.
+     * \details The comparison, implemented by side(), is a Plucker-coordinate
+     * orientation predicate that classifies two oriented lines as positive,
+     * negative, or incident/coplanar. It is not a metric distance.
      * For instance, this class is used for the line-polygon intersection test.
      * (See D.M.Y. Sommerville, Analytical Geometry of Three Dimensions. Cambridge University Press, 1959).
      */
@@ -44,15 +48,21 @@ namespace easy3d {
     public:
         typedef Vec<3, FT> Point;   ///< The type of the point.
 
-        /// \brief Constructs a line from two points \p p and \p q.
+        /**
+         * \brief Construct an oriented line through two points.
+         * \param p First point defining the orientation.
+         * \param q Second point defining the orientation.
+         */
         GenericOrientedLine(const Point &p, const Point &q);
+
+        /// Construct a zero-initialized line representation.
         GenericOrientedLine();
 
         /**
-         * "right hand rule" like predicate.
-         * @return
-         *  - +1 Positive side
-         *  - -1 for negative side.
+         * \brief Classify the relative orientation of two lines.
+         * \param a First oriented line.
+         * \param b Second oriented line.
+         * \return Sign of their Plucker product: positive, negative, or zero.
          */
         static Sign side(const GenericOrientedLine<FT> &a, const GenericOrientedLine<FT> &b);
 
