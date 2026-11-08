@@ -65,11 +65,15 @@
     - [x] mesh fairing → `Tutorial_803_Mesh_Fairing` (Ctrl+A minimize area / Ctrl+C minimize curvature, via `SurfaceMeshFairing`; noise added at startup)
     - [x] mesh remeshing → `Tutorial_805_Mesh_Remeshing` (Ctrl+U uniform / Ctrl+A adaptive, via `SurfaceMeshRemeshing`)
 
-- Add a distance measuring tool in Mapple
-- Add contents and brief info for each model in WidgetModelList.
-- Polygonization may fail for complex models (Zhaiyu once reported an example)
-- Walkthrough and animation; allow to modify the cameras interactively
-- Implement potree for huge point cloud visualization (https://github.com/potree/potree)
+- [ ] Complete Easy3D documentation and correct errors (typos, logic issues, language issues, consistency issues, reference issues...)
+- [ ] Fix warning in Doxygen documentation generation.
+- [ ] Lasso selection of only visible mesh faces.
+- [ ] Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).
+- [ ] Add a distance measuring tool in Mapple
+- [ ] Add contents and brief info for each model in WidgetModelList.
+- [ ] Polygonization may fail for complex models (Zhaiyu once reported an example)
+- [ ] Walkthrough and animation; allow to modify the cameras interactively
+
 - Check if clipper can be used to handle overlapping faces.
 - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).
 - Previous timer events may interrupt the current one when visualizing pivot points;

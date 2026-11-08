@@ -1,0 +1,26 @@
+# Formatting standard for Easy3D core library.
+# Whitespace-only: comment blocks (license headers and the Doxygen \example lessons)
+# are never reflowed, and include order is preserved.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 120
+BreakBeforeBraces: Attach
+NamespaceIndentation: All
+AccessModifierOffset: -4
+PointerAlignment: Right
+DerivePointerAlignment: false
+AlignAfterOpenBracket: Align
+BinPackParameters: false
+IndentCaseLabels: false
+ReflowComments: false
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+SpaceAfterCStyleCast: true
+SpacesBeforeTrailingComments: 1

@@ -1,0 +1,26 @@
+# Formatting standard for the Easy3D applications.
+# Matches the Easy3D core library style so the source reads like the library itself.
+# Whitespace-only: comment blocks (e.g., license headers) are never reflowed, and include order is preserved.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 120
+BreakBeforeBraces: Attach
+NamespaceIndentation: All
+AccessModifierOffset: -4
+PointerAlignment: Right
+DerivePointerAlignment: false
+AlignAfterOpenBracket: Align
+BinPackParameters: false
+IndentCaseLabels: false
+ReflowComments: false
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+SpaceAfterCStyleCast: true
+SpacesBeforeTrailingComments: 1
