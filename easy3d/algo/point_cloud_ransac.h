@@ -35,13 +35,12 @@ namespace easy3d {
 
     class PointCloud;
 
-    ///Todo:
-    /// (1) redesign the APIs
-    /// (2) allow all five types of primitives (and support parameters)
-
     /**
      * \brief Extract primitives from point clouds using RANSAC.
      * \class PrimitivesRansac easy3d/algo/point_cloud_ransac.h
+     * \details Detection requires a per-vertex \c v:normal property. Plane and cylinder parameters are available
+     *          through get_planes() and get_cylinders(); other supported types are represented only by the
+     *          per-vertex type and index properties.
      * Usage example:
      *  \code
      *      PrimitivesRansac ransac;
@@ -51,7 +50,7 @@ namespace easy3d {
      */
     class PrimitivesRansac {
     public:
-        /// The primitive types that can be extracted.
+        /// Primitive types accepted by the detector. UNKNOWN is the unassigned-point label, not a detection type.
         enum PrimType { // Do NOT modify the order!!! Values have to be exactly the same as in RANSAC
             PLANE = 0,      ///< Plane primitive
             SPHERE = 1,     ///< Sphere primitive
@@ -64,28 +63,34 @@ namespace easy3d {
     public:
         /**
          * \brief Set up the primitive types to be extracted.
-         * \details This is done by adding the interested primitive types one by one.
+         * \details Adds a type to the set of types considered by subsequent detect() calls. Duplicate additions
+         *          have no effect. UNKNOWN does not enable a detector.
+         * \param t Primitive type to include.
          */
         void add_primitive_type(PrimType t);
         /**
-         * \brief Exclude a primitive types to be extracted.
-         * \details This is done by removing the primitive type from the existing list.
+         * \brief Exclude a primitive type from detection.
+         * \details Removes the type from the set considered by subsequent detect() calls; removing a type that
+         *          is not present has no effect.
+         * \param t Primitive type to remove.
          */
         void remove_primitive_type(PrimType t);
 
         /**
          * \brief Extract primitives from a point cloud.
-         * \details The extracted primitives are stored as properties:
+         * \details Requires a point cloud with at least three vertices, a \c v:normal property, and at least one
+         *          configured primitive type. On a valid call, replaces the point cloud's \c v:primitive_type
+         *          and \c v:primitive_index properties:
          *      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
          *      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
          *        primitive_type must be UNKNOWN).
-         * \param cloud The input point cloud.
-         * \param min_support The minimal number of points required for a primitive.
-         * \param dist_threshold The distance threshold, defined relative to the bounding box's max dimension.
-         * \param bitmap_resolution The bitmap resolution, defined relative to the bounding box width.
-         * \param normal_threshold The cosine of the maximal normal deviation.
-         * \param overlook_probability The probability with which a primitive is overlooked.
-         * \return The number of extracted primitives.
+         * \param cloud Input point cloud; must not be null.
+         * \param min_support Minimum number of points required to accept a primitive.
+         * \param dist_threshold Distance tolerance as a fraction of the scale derived from the point cloud bounds.
+         * \param bitmap_resolution Bitmap resolution as a fraction of the same point-cloud scale.
+         * \param normal_threshold Cosine threshold for normal deviation.
+         * \param overlook_probability Probability parameter passed to the RANSAC detector.
+         * \return Number of accepted primitives, or zero when prerequisites are not met.
          */
         int detect(
                 PointCloud *cloud,
@@ -99,20 +104,22 @@ namespace easy3d {
 
         /**
          * \brief Extract primitives from a subset of a point cloud.
-         * \details The extracted primitives are stored as per-vertex properties:
+         * \details Detects only among \p vertices, whose entries must be valid indices into \p cloud. Requires a
+         *          point cloud with at least three vertices, a \c v:normal property, and at least one configured
+         *          primitive type. On a valid call, replaces the point cloud's \c v:primitive_type and
+         *          \c v:primitive_index properties:
          *          - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
          *          - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus
          *            its primitive_type must be UNKNOWN).
-         *      In addition to the primitive information stored as properties, the parameters of the detected primitives
-         *      can also be queried using this functions. \see get_planes, get_cylinders.
-         * \param cloud The input point cloud.
-         * \param vertices The indices of the subset of the input point cloud.
-         * \param min_support The minimal number of points required for a primitive.
-         * \param dist_threshold The distance threshold, defined relative to the bounding box's max dimension.
-         * \param bitmap_resolution The bitmap resolution, defined relative to the bounding box width.
-         * \param normal_threshold The cosine of the maximal normal deviation.
-         * \param overlook_probability The probability with which a primitive is overlooked.
-         * \return The number of extracted primitives.
+         *          Plane and cylinder parameters can also be queried with get_planes() and get_cylinders().
+         * \param cloud Input point cloud; must not be null.
+         * \param vertices Indices of the subset of vertices to process.
+         * \param min_support Minimum number of points required to accept a primitive.
+         * \param dist_threshold Distance tolerance as a fraction of the point cloud's bounding-box-derived scale.
+         * \param bitmap_resolution Bitmap resolution as a fraction of the same point-cloud scale.
+         * \param normal_threshold Cosine threshold for normal deviation.
+         * \param overlook_probability Probability parameter passed to the RANSAC detector.
+         * \return Number of accepted primitives, or zero when prerequisites are not met.
          */
         int detect(
                 PointCloud *cloud,
@@ -135,7 +142,9 @@ namespace easy3d {
             vec3  normal;   ///< the normal of the plane
         };
         /**
-         * \brief Get the detected planes.
+         * \brief Get the accumulated plane parameters.
+         * \return Reference to the detector-owned plane list, including each primitive's cloud vertex indices.
+         *         A full-cloud detection clears the list before detecting; subset detections append to it.
          */
         const std::vector<PlanePrim>& get_planes() const { return plane_primitives_; }
 
@@ -150,7 +159,9 @@ namespace easy3d {
             vec3  direction;    ///< the direction of the cylinder
         };
         /**
-         * Get the detected cylinders.
+         * \brief Get the accumulated cylinder parameters.
+         * \return Reference to the detector-owned cylinder list, including each primitive's cloud vertex indices.
+         *         A full-cloud detection clears the list before detecting; subset detections append to it.
          */
         const std::vector<CylinderPrim>& get_cylinders() const { return cylinder_primitives_; }
 

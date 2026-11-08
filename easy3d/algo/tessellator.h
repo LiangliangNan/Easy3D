@@ -170,17 +170,20 @@ namespace easy3d {
          *        otherwise projection perpendicular to the computed normal may substantially change the geometry. The
          *        sign of the normal is chosen so that the sum of the signed areas of all input contours is non-negative
          *        (where a CCW contour has positive area).
+         * \param normal Projection-plane normal. A zero vector asks the tessellator to determine the normal.
          * \attention The supplied normal persists until it is changed by another call to this function.
          */
         void begin_polygon(const vec3 &normal);
         /**
-         * @brief Begin the tessellation of a complex polygon.
-         * @details This function does not provide the polygon normal and let the tessellator decide.
+         * \brief Begin tessellation of a complex polygon without changing the configured normal.
+         * \details The tessellator determines the normal if none was previously supplied with
+         *          begin_polygon(const vec3&). Otherwise, that normal remains in effect.
          */
         void begin_polygon();
 
         /**
-         * @brief Begin a contour of a complex polygon (a polygon may have multiple contours).
+         * \brief Begin a contour of the current polygon.
+         * \details A polygon can contain multiple contours, for example an outer boundary and holes.
          */
         void begin_contour();
 
@@ -250,26 +253,28 @@ namespace easy3d {
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = 0);
 
         /**
-         * \brief Finish the current contour of a polygon.
+         * \brief Finish the current contour.
          */
         void end_contour();
 
         /**
-         * \brief Finish the current polygon.
+         * \brief Finish tessellating the current polygon and append its elements to the result.
          */
         void end_polygon();
 
         ///-------------------------------------------------------------------------
 
         /**
-         * \brief The list of vertices in the result.
-         * \return The list of vertices.
+         * \brief Get the unique vertices accumulated since the last reset().
+         * \return Tessellator-owned vertex pointers; do not delete them. The pointers remain valid until reset()
+         *         or destruction, and may be referenced by elements().
          */
         const std::vector<Vertex *> &vertices() const;
 
         /**
-         * \brief The list of elements (triangle or contour) created over many calls. Each element is represented by
-         *      its vertex indices.
+         * \brief Get elements accumulated since the last reset().
+         * \details In filled mode each element is a triangle; in boundary-only mode each element is a contour.
+         *          Indices refer to vertices().
          * \return The list of elements.
          */
         const std::vector<std::vector<unsigned int> > &elements() const { return elements_; }
@@ -285,7 +290,7 @@ namespace easy3d {
         ///-------------------------------------------------------------------------
 
         /**
-         * \brief Clear all recorded data (triangle list and vertices) and restart index counter.
+         * \brief Clear all recorded elements and vertices.
          * \details This function is useful if you want to selectively stitch faces/components. In this case, call
          *      reset() before you process each set. Then for each set, you collect the vertices and vertex indices of
          *      the triangles.
