@@ -88,8 +88,8 @@ namespace easy3d {
 
     template<typename FT>
     template<class InputIterator>
-    inline GenericPolygon<FT>::GenericPolygon(InputIterator first, InputIterator last) {
-        std::copy(first, last, BaseClass::end());
+    inline GenericPolygon<FT>::GenericPolygon(InputIterator first, InputIterator last)
+        : BaseClass(first, last) {
     }
 
     template<typename FT>
