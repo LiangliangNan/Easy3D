@@ -35,7 +35,7 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_205_MultiView/main.cpp
+ * \example{lineno} Tutorial_203_MultiView/main.cpp
  * This example shows how to use the built-in multi-view viewer.
  */
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     if (graph)
         viewer.assign(0, 0, graph);
     else
-        LOG(ERROR) << "failed to load model from file: " << file_graph;
+        std::cerr << "failed to load model from file: " << file_graph << std::endl;
 
     // ---------------------------------------------------------------------------
     // setup content for view(0, 1): the surface of the sphere model
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
         viewer.assign(0, 1, sphere_faces);
     }
     else
-        LOG(ERROR) << "failed to load model from file: " << file_sphere;
+        std::cerr << "failed to load model from file: " << file_sphere << std::endl;
 
     // ---------------------------------------------------------------------------
     // setup content for view(1, 0): the wireframe of the sphere model

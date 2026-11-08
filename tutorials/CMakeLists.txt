@@ -75,7 +75,9 @@ add_subdirectory(Tutorial_506_DepthMap)
 # algorithms - core
 add_subdirectory(Tutorial_601_Tessellator)
 add_subdirectory(Tutorial_602_ConvexPartition)
-add_subdirectory(Tutorial_603_Curves)
+add_subdirectory(Tutorial_603_CSG)
+add_subdirectory(Tutorial_604_Curves)
+add_subdirectory(Tutorial_605_Delaunay2D)
 
 # algorithms - of point cloud
 add_subdirectory(Tutorial_701_Cloud_NormalEstimation)
@@ -84,10 +86,11 @@ add_subdirectory(Tutorial_703_Cloud_PlaneExtraction)
 #add_subdirectory(Tutorial_704_Cloud_DownSampling)    #TODO
 
 # algorithms - surface mesh
-#add_subdirectory(Tutorial_801_Mesh_Curvature)        #TODO
-#add_subdirectory(Tutorial_802_Mesh_Smoothing)        #TODO
+add_subdirectory(Tutorial_801_Mesh_Curvature)
+add_subdirectory(Tutorial_802_Mesh_Smoothing)
 #add_subdirectory(Tutorial_803_Mesh_Fairing)          #TODO
-#add_subdirectory(Tutorial_804_Mesh_HoleFilling)      #TODO
+add_subdirectory(Tutorial_804_Mesh_HoleFilling)
 #add_subdirectory(Tutorial_805_Mesh_Remeshing)        #TODO
-#add_subdirectory(Tutorial_806_Mesh_Simplification)   #TODO
-#add_subdirectory(Tutorial_807_Mesh_Subdidivision)    #TODO
+add_subdirectory(Tutorial_806_Mesh_Simplification)
+add_subdirectory(Tutorial_807_Mesh_Subdivision)
+add_subdirectory(Tutorial_808_Mesh_Parameterization)

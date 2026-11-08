@@ -1,5 +1,5 @@
 # Reuse tutorial implementations without test guards in production sources.
-foreach(tutorial IN ITEMS Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_Curves
+foreach(tutorial IN ITEMS Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_CSG Tutorial_604_Curves
         Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
     set_source_files_properties("../../tutorials/${tutorial}/main.cpp" PROPERTIES
         COMPILE_DEFINITIONS "main=easy3d_test_${tutorial}_main;EXAMPLE_TITLE=\"${tutorial}\"")
@@ -160,7 +160,8 @@ if(Easy3D_ENABLE_VULKAN)
         add_executable(easy3d_vulkan_geometry_tutorials_test geometry_tutorials_test.cpp
                 ../../tutorials/Tutorial_601_Tessellator/main.cpp
                 ../../tutorials/Tutorial_602_ConvexPartition/main.cpp
-                ../../tutorials/Tutorial_603_Curves/main.cpp)
+                ../../tutorials/Tutorial_603_CSG/main.cpp
+                ../../tutorials/Tutorial_604_Curves/main.cpp)
         target_link_libraries(easy3d_vulkan_geometry_tutorials_test PRIVATE easy3d::viewer)
         add_test(NAME vulkan.geometrytutorials COMMAND easy3d_vulkan_geometry_tutorials_test ${validation_args})
         set_tests_properties(vulkan.geometrytutorials PROPERTIES TIMEOUT 120 LABELS desktop)
@@ -249,7 +250,7 @@ if(NOT Easy3D_ENABLE_VULKAN)
     add_test(NAME opengl.objmaterials COMMAND easy3d_opengl_obj_viewer_test)
     set_tests_properties(opengl.objmaterials PROPERTIES TIMEOUT 120 LABELS desktop)
     add_executable(easy3d_opengl_screen_lines_test opengl_screen_lines_test.cpp
-        ../../tutorials/Tutorial_603_Curves/main.cpp)
+        ../../tutorials/Tutorial_604_Curves/main.cpp)
     target_link_libraries(easy3d_opengl_screen_lines_test PRIVATE easy3d::viewer)
     add_test(NAME opengl.screenlines COMMAND easy3d_opengl_screen_lines_test)
     set_tests_properties(opengl.screenlines PROPERTIES TIMEOUT 120 LABELS desktop)

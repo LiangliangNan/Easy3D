@@ -590,16 +590,21 @@ choices (the Qt/wx tutorials were removed in batch 42). Remaining work is W10 fe
 2026-11-08 design decision (Mapple stays OpenGL-only; Python is core-only with the unused
 bindings removed); re-run the tests after each batch.
 
-**Current status note (2026-11-08, post-batch-42 refresh; idle `-j2`).** Mac baseline:
-OpenGL 94/94 (`build-u1b-opengl`), MoltenVK 128/128 (`build-migration/vulkan-macos`),
-OpenGL+Qt 93/93 (`build-opengl`), Qt/CGAL/ffmpeg Vulkan Debug 133/133 (`cmake-build-debug`).
-`vulkan.imgui` is load-sensitive — it failed in the concurrent `-j2` full run ("File menu did
-not open through the GLFW callback chain"; the `R32G32_UINT` blending validation messages it
-prints are non-fatal, 0 counted errors on the passing run) but passes alone (5.86 s). The
-Debug tree's five viewer-tutorial smoke tests (201/202/203/205/206) were "Not Run" from
-stale/missing `_test` binaries after the batch-42 renumber; building the five targets clears
-them (the tree now runs 133 tests, not the previously logged 99 — recurring IDE-tree
-staleness, not a regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
+**Current status note (2026-11-08, post-batch-43 refresh; idle `-j2`).** Mac baseline:
+OpenGL 102/102 (`build-u1b-opengl`), MoltenVK 136/136 (`build-migration/vulkan-macos`),
+OpenGL+Qt 101/101 (`build-opengl`), Qt/CGAL/ffmpeg Vulkan Debug 141/141 (`cmake-build-debug`).
+Batch 43 added eight algorithm tutorials (605 Delaunay2D, 603 CSG as a 2×2 MultiViewer, and
+801/802/804/806/807/808 surface-mesh), each wired into the bounded smoke-test suite on both
+backends, plus the core fixes they exposed (GenericPolygon range constructor, `csg::difference_of`
+orientation, smoothing no-rescale default).
+`vulkan.imgui` and `vulkan.realcamera` are load-sensitive — in the batch-43 concurrent `-j2`
+full Debug-tree run they failed (139/141) but both pass alone (imgui 4.51 s; realcamera 2.72 s).
+For imgui the earlier symptom was "File menu did not open through the GLFW callback chain"; the
+`R32G32_UINT` blending validation messages it prints are non-fatal (0 counted errors on the
+passing run). The Debug tree's five viewer-tutorial smoke tests (201/202/203/205/206) were
+"Not Run" from stale/missing `_test` binaries after the batch-42 renumber; building the five
+targets clears them (the tree now runs 141 tests — recurring IDE-tree staleness, not a
+regression). Tutorial_205_RealCamera's Vulkan native `largePoints` path was
 re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.0 s) at a
 3200×1834 framebuffer with 4× MSAA and 0 validation errors, consistent with the earlier
 ~70 FPS at 1600×1200 (the visible window was clamped to the display height). Decided 2026-11-08: W10's actionable remainder is closed — Mapple stays OpenGL-only
@@ -6822,3 +6827,49 @@ Mapple is untouched and remains OpenGL-only, so the `Easy3D_ENABLE_QT` option st
 OpenGL (`build-u1b-opengl`), OpenGL+Qt (`build-opengl`) and Vulkan+Qt (`cmake-build-debug`)
 — reconfigure and build cleanly (exit 0) after the removal/renumbering; the smoke-test scene
 list and the real-camera/annotation viewer tests compile against the new tutorial paths.
+
+### 2026-11-08 — W10 batch 43: algorithm tutorials (2D + surface mesh) and the core fixes they exposed
+
+**Scope.** Add the eight requested algorithm tutorials, organized into the existing groups,
+and fix the latent core-library bugs the new scenes were the first to exercise. This batch is
+tutorial/algorithm coverage rather than backend migration; the shared `Viewer`/`MultiViewer`
+API and both configured backends carry the new scenes unchanged.
+
+**Changes.**
+
+- *2D / polygon group (6xx).* `Tutorial_604_Curves` keeps its content but was renumbered from
+  603 to 604 to place CSG next to convex partition. Added `Tutorial_603_CSG` (2D constructive
+  solid geometry via `csg::union_of/intersection_of/difference_of` in `algo/tessellator.h`) and
+  `Tutorial_605_Delaunay2D` (2D Delaunay triangulation of a point set). `Tutorial_603_CSG` is a
+  2×2 `MultiViewer`: top-left shows the two input polygons in distinct colors (A red, B blue,
+  B lifted slightly toward the camera so the overlap does not z-fight), and the other three
+  cells show union / intersection / difference (A − B), each filled by the tessellator with
+  edges and borders drawn. The scene keeps a namespace-scope `create_csg_mesh()` (the union)
+  so the geometry tutorial test can reuse it.
+- *Surface-mesh group (8xx).* Added `Tutorial_801_Mesh_Curvature`, `Tutorial_802_Mesh_Smoothing`,
+  `Tutorial_804_Mesh_HoleFilling`, `Tutorial_806_Mesh_Simplification`,
+  `Tutorial_807_Mesh_Subdivision` and `Tutorial_808_Mesh_Parameterization`. Each loads a model,
+  runs the algorithm, refreshes the GPU buffers with `Renderer::update()` and redraws;
+  parameterization binds harmonic / LSCM and shows the `v:texcoord` texture. `803_Mesh_Fairing`
+  and `805_Mesh_Remeshing` remain commented `#TODO` placeholders in `tutorials/CMakeLists.txt`.
+- *Core fixes exposed by the new scenes.* `GenericPolygon`'s range constructor
+  (`core/polygon.h`) did `std::copy(first, last, BaseClass::end())` into a default-constructed
+  empty vector — a null-iterator write that segfaulted the first CSG `Polygon2 a(begin, end)`;
+  it now delegates to the base `std::vector` range constructor (`: BaseClass(first, last)`).
+  `csg::difference_of()` (`algo/tessellator.cpp`) had its contour-orientation tests inverted;
+  the outer/inner orientations under `WINDING_POSITIVE` are corrected so the result is A − B.
+  Surface-mesh smoothing no longer rescales the model to its original bounding box by default
+  (`algo/surface_mesh_smoothing.h`).
+- *Registration and tests.* `tutorials/CMakeLists.txt` registers the new subdirectories;
+  `tests/native_tutorials/test_sources.cmake` adds all eight to the bounded smoke-test scene
+  list (each runs `--frames 3` on the configured backend); `tests/viewer/CMakeLists.txt` and
+  `geometry_tutorials_test.cpp` extend the shared 601/602/604 scene-builder test with a CSG
+  kind (union) and inside/outside probes, snapshotting `vulkan-csg.png`.
+
+**Validation.** All four active build trees reconfigure and build cleanly (exit 0) and their
+full CTest suites are green at idle `-j2`: OpenGL 102/102 (`build-u1b-opengl`), MoltenVK
+136/136 (`build-migration/vulkan-macos`), OpenGL+Qt 101/101 (`build-opengl`), and
+Qt/CGAL/ffmpeg Vulkan Debug 141/141 (`cmake-build-debug`). In the concurrent `-j2` run the
+Debug tree reported 139/141 with `vulkan.realcamera` and `vulkan.imgui` failing; both are the
+previously documented load-sensitive tests and pass when run alone (2.72 s and 4.51 s). The
+eight new tutorial smoke tests and the CSG geometry coverage pass on both backends.

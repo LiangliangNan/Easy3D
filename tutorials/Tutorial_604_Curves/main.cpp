@@ -34,7 +34,7 @@
 #include <algorithm>
 
 /**
- * \example{lineno} Tutorial_603_Curves/main.cpp
+ * \example{lineno} Tutorial_604_Curves/main.cpp
  *
  * This example shows how to create/evaluate several types of curves and curve fitting/interpolation methods in Easy3D.
  */

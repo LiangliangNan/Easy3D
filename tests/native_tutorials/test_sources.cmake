@@ -57,10 +57,18 @@ set(tutorial_scenes
         Tutorial_506_DepthMap
         Tutorial_601_Tessellator
         Tutorial_602_ConvexPartition
-        Tutorial_603_Curves
+        Tutorial_603_CSG
+        Tutorial_604_Curves
+        Tutorial_605_Delaunay2D
         Tutorial_701_Cloud_NormalEstimation
         Tutorial_702_Cloud_SurfaceReconstruction
         Tutorial_703_Cloud_PlaneExtraction
+        Tutorial_801_Mesh_Curvature
+        Tutorial_802_Mesh_Smoothing
+        Tutorial_804_Mesh_HoleFilling
+        Tutorial_806_Mesh_Simplification
+        Tutorial_807_Mesh_Subdivision
+        Tutorial_808_Mesh_Parameterization
 )
 foreach(tutorial IN LISTS tutorial_scenes)
     string(REGEX MATCH "^Tutorial_([0-9]+)_" tutorial_prefix "${tutorial}")

@@ -29,7 +29,7 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_207_RealCamera/main.cpp
+ * \example{lineno} Tutorial_205_RealCamera/main.cpp
  * 
  * This example shows how to
  *     - render a model from the view given the camera's intrinsic and
@@ -39,9 +39,9 @@
  *     - how a 3D point is projected onto the image.
  *
  * The header file of the viewer class:
- * \include{lineno} Tutorial_207_RealCamera/viewer.h
+ * \include{lineno} Tutorial_205_RealCamera/viewer.h
  * The source file of the viewer class:
- * \include{lineno} Tutorial_207_RealCamera/viewer.cpp
+ * \include{lineno} Tutorial_205_RealCamera/viewer.cpp
  */
 
 
