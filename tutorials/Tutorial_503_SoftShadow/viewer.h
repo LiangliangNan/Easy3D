@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,36 +22,48 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_SOFT_SHADOW_H
 #define EASY3D_TUTORIAL_SOFT_SHADOW_H
 
 #include <easy3d/viewer/viewer.h>
 
+/**
+ * \brief A Viewer that renders the scene with soft shadows (PCSS).
+ *
+ * This class renders a scene with soft shadow using the Percentage-Closer Soft Shadows
+ * (PCSS) technique. It follows the standard Easy3D effect pattern: derive from Viewer, own
+ * an effect object, and override draw() so the base-class scene render is sandwiched between
+ * the effect's begin() and end() calls. Compared to Tutorial_502_HardShadow, only the effect
+ * object differs: SoftShadow derives from Shadow and adds blocker search + variable-size PCF
+ * filtering. key_press_event() is overridden to toggle the shadow interactively.
+ */
 
-// This class renders a scene with soft shadow using the 
-// Percentage-Closer Soft Shadows (PCSS) technique.
-
+// Forward declaration only: the header does not need the full Shadow definition (a pointer
+// member is enough), so we avoid pulling its header into every includer. The pointer actually
+// holds a SoftShadow instance (see viewer.cpp); the virtual destructor of Shadow makes
+// deleting through the base pointer safe.
 namespace easy3d {
-	class Shadow;
+    class Shadow;
 }
 
-/// \see easy3d::Viewer, easy3d::Shadow, easy3d::SoftShadow
-class TutorialSoftShadow : public easy3d::Viewer
-{
+class TutorialSoftShadow : public easy3d::Viewer {
 public:
-	explicit TutorialSoftShadow(const std::string& title = "");
+    // Builds the viewer and creates the soft-shadow effect bound to its camera.
+    explicit TutorialSoftShadow(const std::string &title = "");
+    // Releases the owned effect. The base-class destructor handles the rest of the cleanup.
     ~TutorialSoftShadow() override;
 
 protected:
+    // Handles 'space' (toggle); forwards other keys to Viewer.
     bool key_press_event(int key, int modifiers) override;
+    // Renders the scene, applying PCSS soft shadows when enabled (see viewer.cpp).
     void draw() const override;
 
 private:
-	easy3d::Shadow* shadow_;
-	bool			shadow_enabled_;
+    easy3d::Shadow *shadow_; //!< The owned effect; actually a SoftShadow (created with new, deleted in the destructor).
+    bool shadow_enabled_;    //!< Whether shadowing is currently applied; toggled with the space key.
 };
-
 
 #endif // EASY3D_TUTORIAL_SOFT_SHADOW_H

@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
@@ -37,62 +37,77 @@
 /**
  * \example{lineno} Tutorial_603_CSG/main.cpp
  *
- * This example shows how to compute 2D constructive solid geometry (CSG) operations
- * (union, intersection, and difference) on polygons using the csg operators provided
- * in easy3d/algo/tessellator.h.
+ * \brief Computing 2D constructive solid geometry (union, intersection, difference) on polygons with the csg operators.
  *
- * The csg operators accept polygons of unknown structure (e.g., self-intersecting or
- * overlapping contours) and return simple contours: counter-clockwise contours define
- * the outer boundary and clockwise contours define holes. We fill these contours into a
- * triangle mesh with the tessellator for display.
- *
- * The result is shown in a 2 x 2 MultiViewer so the inputs and the three operations can be
- * compared side by side:
+ * <b>Overview</b>
+ * This tutorial computes the three classic 2D boolean operations on two overlapping squares using the
+ * csg operators provided in easy3d/algo/tessellator.h. The result is shown in a 2 x 2 MultiViewer so the
+ * inputs and the three operations can be compared side by side:
  *      - top-left:     the two input polygons A (red) and B (blue);
  *      - top-right:    union (A | B);
  *      - bottom-left:  intersection (A & B);
  *      - bottom-right: difference (A - B).
  *
- * See Tutorial_602_ConvexPartition for partitioning the resulting simple polygons into
- * convex pieces.
+ * <b>The technique</b>
+ * Constructive solid geometry builds complex shapes by combining simpler ones with set operations.
+ * In 2D these are exactly the boolean operations on regions: union (A | B) is the area covered by either,
+ * intersection (A & B) the area covered by both, and difference (A - B) the part of A not covered by B.
+ * The csg operators accept polygons of unknown structure (e.g., self-intersecting or overlapping contours)
+ * and return simple contours: counter-clockwise contours define the outer boundary and clockwise contours
+ * define holes. Internally they reuse the same sweep-line + winding-number machinery as the Tessellator
+ * (see Tutorial_601_Tessellator): each operation corresponds to a different winding rule for classifying
+ * the interior of the combined contours — union keeps regions with non-zero winding, intersection keeps
+ * regions covered by both inputs, and difference subtracts one region's winding from the other's. The
+ * returned simple contours are then filled into a triangle mesh with the Tessellator for display.
+ * See the OpenGL Programming Guide (the "Red Book"), chapter 11, for the winding-rule formulation of CSG.
+ *
+ * <b>Easy3D API</b>
+ * - csg::union_of(), csg::intersection_of(), csg::difference_of(): the boolean operators. They take/return
+ *   Polygon2 contours (a GenericPolygon of vec2). union_of() merges a whole vector in place.
+ * - Tessellator: fills the resulting simple contours (CCW outer, CW holes) into triangles.
+ * - SurfaceMesh, DrawableTriangles, LinesDrawable: store and display the filled result and its boundary.
+ * - MultiViewer: a grid of synchronized views; assign(row, col, model) places a model in one cell.
+ *
+ * <b>Running it</b>
+ * A 2 x 2 window opens comparing the inputs (top-left) with union (top-right), intersection (bottom-left),
+ * and difference (bottom-right). All views share navigation. See Tutorial_602_ConvexPartition for
+ * partitioning the resulting simple polygons into convex pieces.
+ *
+ * \see Tessellator, MultiViewer, SurfaceMesh, Tutorial_601_Tessellator, Tutorial_602_ConvexPartition
  */
 
 using namespace easy3d;
 
-
 namespace {
 
     // Two overlapping squares (both in counter-clockwise order).
-    const std::vector<vec2> square_a = {
-            vec2(  0,   0),
-            vec2(400,   0),
-            vec2(400, 400),
-            vec2(  0, 400)
-    };
-    const std::vector<vec2> square_b = {
-            vec2(200, 200),
-            vec2(600, 200),
-            vec2(600, 600),
-            vec2(200, 600)
-    };
+    const std::vector<vec2> square_a = {vec2(0, 0), vec2(400, 0), vec2(400, 400), vec2(0, 400)};
+    const std::vector<vec2> square_b = {vec2(200, 200), vec2(600, 200), vec2(600, 600), vec2(200, 600)};
 
     enum Operation { UNION, INTERSECTION, DIFFERENCE };
 
+    // Run one boolean operation on the two squares and return the resulting simple contours.
     std::vector<Polygon2> compute(Operation op) {
         Polygon2 a(square_a.begin(), square_a.end());
         Polygon2 b(square_b.begin(), square_b.end());
         std::vector<Polygon2> result;
         switch (op) {
-            case UNION:
-                result = {a, b};
-                csg::union_of(result);
-                break;
-            case INTERSECTION:
-                csg::intersection_of(a, b, result);
-                break;
-            case DIFFERENCE:
-                csg::difference_of(a, b, result);
-                break;
+        case UNION:
+            // Union = tessellate all contours together with the non-zero winding rule:
+            // any region covered by at least one input polygon is kept.
+            result = {a, b};
+            csg::union_of(result);
+            break;
+        case INTERSECTION:
+            // Intersection = keep only regions covered by both inputs (winding number >= 2
+            // in absolute value, i.e. WINDING_ABS_GEQ_TWO).
+            csg::intersection_of(a, b, result);
+            break;
+        case DIFFERENCE:
+            // Difference = A with B subtracted: the operator reverses one contour's orientation
+            // and extracts the regions with positive winding number.
+            csg::difference_of(a, b, result);
+            break;
         }
         return result;
     }
@@ -101,25 +116,26 @@ namespace {
     void build_mesh(const std::vector<Polygon2> &contours, SurfaceMesh *mesh) {
         mesh->clear();
 
+        // All contours belong to one complex polygon in the z = 0 plane (normal +z). The CSG
+        // output is already simple, so the non-zero rule fills outer boundaries and leaves
+        // the clockwise hole contours empty.
         Tessellator tessellator;
         tessellator.begin_polygon(vec3(0, 0, 1));
         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);
-        for (const auto &contour: contours) {
+        for (const auto &contour : contours) {
             tessellator.begin_contour();
-            for (const auto &p: contour)
+            for (const auto &p : contour)
                 tessellator.add_vertex(vec3(p, 0.0));
             tessellator.end_contour();
         }
         tessellator.end_polygon();
 
-        for (auto v: tessellator.vertices())
+        // Rebuild the mesh from the tessellator's unique vertices and triangle indices.
+        for (auto v : tessellator.vertices())
             mesh->add_vertex(vec3(v->data()));
-        for (const auto &t: tessellator.elements()) {
-            mesh->add_triangle(
-                    SurfaceMesh::Vertex(static_cast<int>(t[0])),
-                    SurfaceMesh::Vertex(static_cast<int>(t[1])),
-                    SurfaceMesh::Vertex(static_cast<int>(t[2]))
-            );
+        for (const auto &t : tessellator.elements()) {
+            mesh->add_triangle(SurfaceMesh::Vertex(static_cast<int>(t[0])), SurfaceMesh::Vertex(static_cast<int>(t[1])),
+                               SurfaceMesh::Vertex(static_cast<int>(t[2])));
         }
     }
 
@@ -132,7 +148,6 @@ namespace {
 
 } // namespace
 
-
 // The default (union) result, also used by the geometry tutorial test.
 std::shared_ptr<SurfaceMesh> create_csg_mesh() {
     auto mesh = std::make_shared<SurfaceMesh>();
@@ -140,11 +155,14 @@ std::shared_ptr<SurfaceMesh> create_csg_mesh() {
     return mesh;
 }
 
-
 int main(int argc, char **argv) {
+    // Bootstrap Easy3D (logging, resource directory, ...). Must come first.
     initialize();
 
+    // A 2 x 2 grid of views sharing one camera, so the inputs and the three boolean
+    // results can be compared side by side under identical navigation.
     MultiViewer viewer(2, 2, EXAMPLE_TITLE);
+    // Look straight down onto the XY plane: y is up on screen, the camera looks along -z.
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
@@ -162,11 +180,13 @@ int main(int argc, char **argv) {
     // Lift B slightly toward the camera so the overlapping region does not z-fight
     // and B is drawn on top of A there (the intersection is shown explicitly below).
     auto points_b = input_b->get_vertex_property<vec3>("v:point");
-    for (auto v: input_b->vertices())
+    for (auto v : input_b->vertices())
         points_b[v].z += 1.0f;
 
+    // Color A red and B blue so the two inputs are easy to tell apart in the top-left view.
     input_a->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(vec4(0.90f, 0.30f, 0.25f, 1.0f));
     input_b->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(vec4(0.25f, 0.45f, 0.90f, 1.0f));
+    // assign(row, col, model) pins a model to one cell of the grid; both inputs share cell (0, 0).
     viewer.assign(0, 0, input_a.get());
     viewer.assign(0, 0, input_b.get());
 
@@ -183,15 +203,16 @@ int main(int argc, char **argv) {
     set_boundary_visible(union_mesh.get());
     set_boundary_visible(intersection_mesh.get());
     set_boundary_visible(difference_mesh.get());
+    // Each boolean result is pinned to its own cell for the side-by-side comparison.
     viewer.assign(0, 1, union_mesh.get());
     viewer.assign(1, 0, intersection_mesh.get());
     viewer.assign(1, 1, difference_mesh.get());
 
-    viewer.set_usage("default",
-                     "Top-left: the two input polygons A (red) and B (blue)\n"
-                     "Top-right: union (A | B)\n"
-                     "Bottom-left: intersection (A & B)\n"
-                     "Bottom-right: difference (A - B)");
+    // Explain the four cells in the viewer's on-screen help.
+    viewer.set_usage(
+        "default",
+        "Top-left: the two input polygons A (red) and B (blue)\n" "Top-right: union (A | B)\n" "Bottom-left: intersection (A & B)\n" "Bottom-right: difference (A - B)");
 
+    // Enter the interactive loop (returns when the window is closed).
     return viewer.run();
 }

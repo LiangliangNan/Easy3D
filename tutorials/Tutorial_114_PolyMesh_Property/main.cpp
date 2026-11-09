@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,65 +22,93 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/initializer.h>
 
 /**
  * \example{lineno} Tutorial_114_PolyMesh_Property/main.cpp
- * This example shows how to create and access properties defined on a polyhedral mesh (consisting of a single
- * tetrahedron). We use per-face properties as example, you should be able to do similarly for per-edge/vertex/cell
- * properties as well.
+ *
+ * \brief Storing per-element attributes on a PolyMesh (a polyhedral / volumetric mesh).
+ *
+ * <b>Overview</b>
+ * This console tutorial attaches a custom attribute to every face of a polyhedral mesh and reads
+ * it back. It reuses the single-tetrahedron mesh built in Tutorial_112_PolyMesh and computes the
+ * centroid (geometric center) of each of its four triangular faces. The same pattern works for
+ * per-vertex, per-edge, and per-cell properties — only the element type and the "v:" / "e:" /
+ * "f:" / "c:" name prefix change.
+ *
+ * <b>The technique</b>
+ * A PolyMesh is Easy3D's volumetric data structure: unlike a SurfaceMesh (which only has a boundary
+ * surface), it also represents the interior as 3D cells — here a single tetrahedron. It exposes
+ * four element types: vertices, edges, faces, and cells. As with all Easy3D models, attributes are
+ * stored as named properties: one contiguous array per attribute, indexed by element handle. The
+ * face centroid is simply the arithmetic mean of the face's corner positions,
+ * c = (p0 + p1 + ... + pn-1) / n, a basic quantity used everywhere in geometry processing (e.g.,
+ * for rendering, integration, or locating a face).
+ *
+ * <b>Easy3D API</b>
+ * - PolyMesh: the polyhedral mesh class. add_vertex() adds a corner; add_tetra(v0,v1,v2,v3) adds a
+ *   tetrahedral cell from four vertices.
+ * - PolyMesh::add_face_property<T>(name): creates a per-face property of type T and returns a
+ *   FaceProperty<T> accessor; values are read/written with center[f].
+ * - PolyMesh::faces(): a range of all face handles. PolyMesh::vertices(f): the corner vertices of
+ *   face f. PolyMesh::position(v): the 3D coordinates of vertex v.
+ *
+ * <b>Running it</b>
+ * Console-only. It prints one line per face giving the face handle and its computed centroid,
+ * e.g. "center of f0: ...". The mesh is heap-allocated and explicitly deleted at the end.
+ *
+ * \see PolyMesh, Tutorial_112_PolyMesh, Tutorial_113_PolyMesh_Connectivity, Tutorial_106_SurfaceMesh_Property
  */
 
 using namespace easy3d;
 
-
-// the mesh created in the previous tutorial (so you can skip it)
+// Rebuilds the single-tetrahedron mesh from Tutorial_112_PolyMesh so this example is self-contained.
 PolyMesh *old_mesh_from_previous_example() {
-    // Create a polyhedral mesh
+    // Create an empty polyhedral mesh.
     auto mesh = new PolyMesh;
 
-    // Add four vertices
+    // Add the four corner vertices of the tetrahedron (all lie in the XZ plane, y = 0).
     auto v0 = mesh->add_vertex(vec3(-1.0, 0.0, 0.0));
     auto v1 = mesh->add_vertex(vec3(0.0, 0.0, 1.0));
     auto v2 = mesh->add_vertex(vec3(1.0, 0.0, 0.0));
     auto v3 = mesh->add_vertex(vec3(0.0, 0.0, -1.0));
 
-    // Add the only tetrahedron
+    // Add the single tetrahedral cell bounded by the four vertices. This also creates its faces.
     mesh->add_tetra(v0, v1, v2, v3);
 
     return mesh;
 }
 
-
-int main(int argc, char** argv) {
-    // initialize Easy3D.
+int main(int argc, char **argv) {
+    // Bootstrap Easy3D (logging, resource directory, ...). Must come first.
     initialize();
 
-    // Create a mesh
+    // Create the mesh (the tetrahedron from the previous tutorial).
     PolyMesh *mesh = old_mesh_from_previous_example();
 
-	// We add a per-face property "f:normal" storing the normal of each face
+    // Create a per-face property named "f:center" holding one vec3 per face. The "f:" prefix marks
+    // it as a face property; add_face_property<T>() returns a typed accessor indexed by face handle.
     PolyMesh::FaceProperty<vec3> center = mesh->add_face_property<vec3>("f:center");
 
-	// for each face, we compute the face center.
-	for (auto f : mesh->faces()) {
+    // For each face, compute its centroid: the average of its corner positions.
+    for (auto f : mesh->faces()) {
         vec3 c(0, 0, 0);
+        // vertices(f) yields the corner vertices of face f; position(v) gives each corner's xyz.
         for (auto v : mesh->vertices(f))
             c += mesh->position(v);
-        center[f] = c / mesh->vertices(f).size();
-	}
+        center[f] = c / mesh->vertices(f).size(); // divide by the number of corners to get the mean
+    }
 
-    // now we print the face center for each face.
+    // Read the property back: print the centroid stored for each face.
     for (auto f : mesh->faces()) {
         std::cout << "center of " << f << ": " << center[f] << std::endl;
     }
 
-    // Delete the mesh (i.e., release memory)
-	delete mesh;
+    // Delete the mesh (i.e., release memory).
+    delete mesh;
 
     return EXIT_SUCCESS;
 }
-

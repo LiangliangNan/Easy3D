@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include "viewer.h"
 #include <easy3d/renderer/camera.h>
@@ -32,9 +32,10 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/setting.h>
 
-
 using namespace easy3d;
 
+// The implementation is reproduced on the example page via \include in main.cpp, so we hide
+// it from Doxygen's separate symbol documentation to avoid documenting it twice.
 // \cond
 
 TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
@@ -42,36 +43,48 @@ TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(titl
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
 
+    // hint_ is shown in the viewer HUD; it tells the user how to interact.
     hint_ = "Press the left button to pick/unpick a model";
 }
 
-
+// A left click without modifiers is interpreted as a pick; every other event (including
+// modifier-clicks and drags) is forwarded to the base Viewer so navigation still works.
 bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
     // Legacy mouse hooks use camera screen units; pick() uses framebuffer pixels.
-    const int px=int(double(x)*framebuffer_width()/camera()->screenWidth());
-    const int py=int(double(y)*framebuffer_height()/camera()->screenHeight());
-    const auto hit=(button==BUTTON_LEFT && modifiers==0)?pick(px,py):PickResult{};
-    auto* model=hit.model.get();
+    // On HiDPI displays the two differ by the DPI scaling factor, so we convert here.
+    const int px = int(double(x) * framebuffer_width() / camera()->screenWidth());
+    const int py = int(double(y) * framebuffer_height() / camera()->screenHeight());
+    // pick() re-rasterizes the scene off screen with primitive IDs and reads back the pixel
+    // under the cursor. hit.model is null when the click landed on the background.
+    const auto hit = (button == BUTTON_LEFT && modifiers == 0) ? pick(px, py) : PickResult{};
+    auto *model = hit.model.get();
     if (model)
         mark(model);
 
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
-
+// Visual feedback for the pick: toggle the clicked model's selection flag, then recolor
+// every model according to its (possibly updated) selection state.
 void TutorialModelPicker::mark(easy3d::Model *model) {
     for (auto m : models()) {
+        // Only the clicked model changes state: selected becomes unselected and vice versa.
         if (m.get() == model)
             m->renderer()->set_selected(!m->renderer()->is_selected());
 
+        // "faces" is the standard triangles drawable of a surface mesh. Point clouds or
+        // graphs may not have one, so skip those.
         auto faces = m->renderer()->get_triangles_drawable("faces");
-        if (!faces) continue;
+        if (!faces)
+            continue;
+        // Selected models are painted solid red; the others get the default surface color.
         if (m->renderer()->is_selected())
             faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
         else
             faces->set_uniform_coloring(setting::surface_mesh_faces_color);
     }
     std::cout << "picked model: " << file_system::simple_name(model->name()) << std::endl;
+    // Request a redraw so the new colors appear immediately.
     update();
 }
 

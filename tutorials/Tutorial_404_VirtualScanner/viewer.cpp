@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include "viewer.h"
 #include <easy3d/core/point_cloud.h>
@@ -34,47 +34,81 @@
 
 using namespace easy3d;
 
-TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : Viewer(title) {
-    manual_ = "-------------- Virtual Scanner usage -------------- \n"
-            "- change the view using the mouse.\n"
-            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
-            "  will be captured in a point cloud.\n"
-            "- press 'n' to toggle Gaussian noise.\n"
-            "---------------------------------------------------------- \n";
-    hint_ = "press 'Space' to perform scanning\n"
-            "press 'n' to toggle Gaussian noise";
-    camera()->setUpVector(easy3d::vec3(0,1,0));
+TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title) : Viewer(title) {
+    // manual_ is the full help text (shown on demand); hint_ is the short HUD reminder.
+    manual_ =
+        "-------------- Virtual Scanner usage -------------- \n" "- change the view using the mouse.\n" "- press the 'Space' key to perform scanning. Everything (and only those) visible\n" "  will be captured in a point cloud.\n" "- press 'n' to toggle Gaussian noise.\n" "---------------------------------------------------------- \n";
+    hint_ = "press 'Space' to perform scanning\n" "press 'n' to toggle Gaussian noise";
+    // Keep the world's "up" aligned with +Y so scans are captured in a natural orientation.
+    camera()->setUpVector(easy3d::vec3(0, 1, 0));
 }
 
-bool TutorialVirtualScanner::key_press_event(int key,int modifiers) {
-    if (modifiers==0 && key==KEY_N) { add_noise_=!add_noise_; return true; }
-    if (modifiers==0 && key==KEY_SPACE) {
-        int w,h; framebuffer_size(w,h);
-        if (w<=0 || h<=0) return true;
-        const auto inv=inverse(camera()->modelViewProjectionMatrix());
-        const auto frame=capture(samples());
+// 'n' toggles sensor noise; 'space' performs the virtual scan. Other keys go to the base Viewer.
+bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
+    if (modifiers == 0 && key == KEY_N) {
+        add_noise_ = !add_noise_;
+        return true;
+    }
+    if (modifiers == 0 && key == KEY_SPACE) {
+        // The scan resolution equals the framebuffer resolution: one point per pixel.
+        int w, h;
+        framebuffer_size(w, h);
+        if (w <= 0 || h <= 0)
+            return true;
+        // Rendering maps world -> screen via the MVP; back-projection needs the inverse.
+        const auto inv = inverse(camera()->modelViewProjectionMatrix());
+        // Render the scene off screen and read back color, depth, and object IDs. The depth
+        // buffer already contains only the nearest (visible) surface — exactly what a range
+        // scanner measures. samples() requests the viewer's multisampling for the color.
+        const auto frame = capture(samples());
         std::vector<vec3> points;
-        for(unsigned y=0;y<frame.height;++y) for(unsigned x=0;x<frame.width;++x) {
-            const size_t pixel=size_t(y)*frame.width+x;const float d=frame.depth[pixel];
-            if(frame.ids[pixel].object==UINT32_MAX || !std::isfinite(d) || d<0 || d>=1) continue;
-            const vec4 p=inv*vec4(2*(float(x)+.5f)/frame.width-1,1-2*(float(y)+.5f)/frame.height,2*d-1,1);
-            if(std::isfinite(p.w) && p.w!=0) points.emplace_back(p.x/p.w,p.y/p.w,p.z/p.w);
-        }
-        if (points.empty()) return true;
-        auto cloud=std::make_shared<easy3d::PointCloud>();
+        for (unsigned y = 0; y < frame.height; ++y)
+            for (unsigned x = 0; x < frame.width; ++x) {
+                const size_t pixel = size_t(y) * frame.width + x;
+                const float d = frame.depth[pixel];
+                // Skip background pixels (no object) and invalid/out-of-range depth values.
+                if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
+                    continue;
+                // Back-project the pixel center: map (x, y, d) to normalized device
+                // coordinates in [-1, 1] (the +0.5 samples pixel centers; y is flipped
+                // because screen rows grow downward), then apply the inverse MVP.
+                const vec4 p = inv * vec4(2 * (float(x) + .5f) / frame.width - 1,
+                                          1 - 2 * (float(y) + .5f) / frame.height, 2 * d - 1, 1);
+                // Perspective division converts the homogeneous result to a world point.
+                if (std::isfinite(p.w) && p.w != 0)
+                    points.emplace_back(p.x / p.w, p.y / p.w, p.z / p.w);
+            }
+        if (points.empty())
+            return true;
+        // Package the captured samples as a new point cloud model.
+        auto cloud = std::make_shared<easy3d::PointCloud>();
         cloud->set_name("Virtual scan");
-        for (const auto& p:points) cloud->add_vertex(p);
-        if (add_noise_) easy3d::GaussianNoise::apply(cloud.get(),camera()->sceneRadius()*.0001f);
+        for (const auto &p : points)
+            cloud->add_vertex(p);
+        // Optionally imitate sensor noise: zero-mean Gaussian perturbation with a standard
+        // deviation scaled to the scene size, so it stays subtle regardless of model scale.
+        if (add_noise_)
+            easy3d::GaussianNoise::apply(cloud.get(), camera()->sceneRadius() * .0001f);
         // Keep the complete acquisition camera state, including its pivot.
         // Model attachment may fit the scene; retain the acquisition camera.
-        Camera saved(*camera());saved.frame()->setPivotPoint(camera()->pivotPoint());
-        saved.set_projection_matrix(camera()->projectionMatrix());saved.set_modelview_matrix(camera()->modelViewMatrix());
-        const auto* plane=ClippingPlane::instance();const auto center=plane->center();const float radius=plane->scene_radius();
+        // Adding a model can re-fit the scene and move the camera; we save the exact view
+        // used for the scan and restore it afterwards so repeated scans stay aligned.
+        Camera saved(*camera());
+        saved.frame()->setPivotPoint(camera()->pivotPoint());
+        saved.set_projection_matrix(camera()->projectionMatrix());
+        saved.set_modelview_matrix(camera()->modelViewMatrix());
+        // The clipping plane is also tied to the scene bounds; remember its center/radius.
+        const auto *plane = ClippingPlane::instance();
+        const auto center = plane->center();
+        const float radius = plane->scene_radius();
         add_model(cloud);
-        ClippingPlane::instance()->fit_scene(center,radius);
-        *camera()=saved;camera()->frame()->setPivotPoint(saved.pivotPoint());
-        camera()->set_projection_matrix(saved.projectionMatrix());camera()->set_modelview_matrix(saved.modelViewMatrix());
-        update(); return true;
+        ClippingPlane::instance()->fit_scene(center, radius);
+        *camera() = saved;
+        camera()->frame()->setPivotPoint(saved.pivotPoint());
+        camera()->set_projection_matrix(saved.projectionMatrix());
+        camera()->set_modelview_matrix(saved.modelViewMatrix());
+        update();
+        return true;
     }
-    return Viewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key, modifiers);
 }
