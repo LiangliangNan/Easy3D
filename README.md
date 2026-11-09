@@ -23,27 +23,27 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
   RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more (the implementation of
   several surface mesh processing algorithms was taken from [PMP](http://www.pmp-library.org/)).
-   
-* A bunch of rendering techniques, e.g., point/line impostors, ambient occlusion (GTAO), hard shadows (shadow maps), 
-  soft shadows (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (sorted 
-  alpha blending, average color blending, dual depth peeling, per-pixel linked lists), and more — all available on 
-  both rendering backends.
-   
-* High-level encapsulation of the graphics APIs for convenient and efficient rendering. Client code does not need to 
-  touch the low-level APIs of Vulkan or OpenGL. 
   
-* Step-by-step tutorials demonstrating various uses of the API, to get acquainted with the data structures, rendering techniques, and algorithms 
-  for 3D modeling and geometry processing. 
-  
-* Very easy to use as a callable library (usually only a few lines of code).
+* High-level encapsulation of the graphics APIs for convenient and efficient rendering — client code does not need to 
+  touch the low-level APIs of Vulkan or OpenGL. A bunch of rendering techniques, e.g., point/line impostors, ambient 
+  occlusion (GTAO), hard shadows (shadow maps), soft shadows (PCSS), eye-dome lighting (for rendering point clouds 
+  without normal information), transparency (sorted alpha blending, average color blending, dual depth peeling, 
+  per-pixel linked lists), and more — all available on both rendering backends.
   
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
   Window and event handling are based on [GLFW](https://www.glfw.org/) (e.g., [the default viewer](https://github.com/LiangliangNan/Easy3D/blob/main/easy3d/viewer)), 
   with an optional [ImGui](https://github.com/ocornut/imgui) interface (see [the ImGui viewer tutorial](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_imgui)).
-
-* A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data (built on the OpenGL backend).
-
+  There is also <b>Mapple</b>, a handy tool created out of the Easy3D library for rendering and processing 3D data 
+  (built on the OpenGL backend).
+  
 * Python bindings for Easy3D, which allow you to use Easy3D in Python scripts (with either rendering backend). 
+  
+* Very easy to use as a callable library (usually only a few lines of code), with 60+ step-by-step 
+  [C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html) demonstrating various uses of the API, to get 
+  acquainted with the data structures, rendering techniques, user interaction, and algorithms for 3D modeling and 
+  geometry processing (with detailed explanations in code), and a series of 
+  [Python tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/) covering data structures, rendering, 
+  and geometry processing in Python.
 
 |              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
@@ -221,8 +221,9 @@ viewer.run()
 
 ### Documentation
  - [Easy3D documentation](https://liangliangnan.github.io/Easy3D/)
+ - [Easy3D C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html)
  - [Easy3D Python bindings documentation](https://liangliangnan.github.io/Easy3D/python)
- - [Easy3D Python bindings tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials)
+ - [Easy3D Python bindings tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/)
 
 The documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.
