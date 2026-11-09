@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include "viewer.h"
 
@@ -33,36 +33,56 @@
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/renderer.h>
 
-
 using namespace easy3d;
 
+// The implementation is reproduced on the example page via \include in main.cpp, so we hide
+// it from Doxygen's separate symbol documentation to avoid documenting it twice.
 // \cond
 
-TutorialDepthMap::TutorialDepthMap(const std::string& title)
-    : Viewer(title)
-{
+TutorialDepthMap::TutorialDepthMap(const std::string &title) : Viewer(title) {
+    // A conventional viewing setup: y up, looking down -z, framed on the whole scene.
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->showEntireScene();
 }
 
-
 TutorialDepthMap::~TutorialDepthMap() = default;
 
+// pre_draw() is called by the Viewer before the main scene render each frame. We keep the
+// base-class behavior and add our depth inset registration on top.
 void TutorialDepthMap::pre_draw() {
     Viewer::pre_draw();
     draw_depth();
 }
 
+// Builds the overlay that visualizes the frame's depth buffer in a corner quad.
 void TutorialDepthMap::draw_depth() const {
-    const float dpi=dpi_scaling();
+    // High-DPI displays scale logical pixels to framebuffer pixels; all screen-space
+    // geometry must use the same scaling to keep a constant apparent size and margin.
+    const float dpi = dpi_scaling();
     // The device generates and samples current scene depth in its render passes.
     // Keep only the inset's immutable geometry here; presentation stays GPU-only.
-    if (framebuffer_width()!=depth_width_ || framebuffer_height()!=depth_height_ || dpi!=depth_dpi_) {
-        const Rect quad(20*dpi,20*dpi+framebuffer_width()/4.0f,40*dpi,40*dpi+framebuffer_height()/4.0f);
-        depth_commands_={graphics::shape::draw_depth_texture(quad,framebuffer_width(),framebuffer_height()),
-            graphics::shape::draw_quad_wire(quad,vec4(1,0,0,1),framebuffer_width(),framebuffer_height(),dpi)};
-        depth_width_=framebuffer_width();depth_height_=framebuffer_height();depth_dpi_=dpi;
+    if (framebuffer_width() != depth_width_ || framebuffer_height() != depth_height_ || dpi != depth_dpi_) {
+        // The inset rectangle: a quarter of the framebuffer in each dimension, offset by a
+        // small DPI-scaled margin from the lower-left corner. Rect takes (xmin, xmax, ymin, ymax).
+        const Rect quad(20 * dpi, 20 * dpi + framebuffer_width() / 4.0f, 40 * dpi,
+                        40 * dpi + framebuffer_height() / 4.0f);
+        // Two immutable overlay commands: one samples the frame's scene depth texture into
+        // the quad (as a grayscale range image, in top-left image order, entirely on the
+        // GPU), and one draws a red wire frame around it so the inset is easy to spot.
+        depth_commands_ = {
+            graphics::shape::draw_depth_texture(quad, framebuffer_width(), framebuffer_height()),
+            graphics::shape::draw_quad_wire(quad, vec4(1, 0, 0, 1), framebuffer_width(), framebuffer_height(), dpi)};
+        // Remember the configuration the cached geometry was built for; it stays valid
+        // until the window is resized or moved to a display with different DPI scaling.
+        depth_width_ = framebuffer_width();
+        depth_height_ = framebuffer_height();
+        depth_dpi_ = dpi;
     }
-    const_cast<TutorialDepthMap*>(this)->set_overlays(depth_commands_);
+    // draw_depth() is logically const (it only prepares what the frame will show), so we
+    // cast away constness to hand the cached commands to the non-const Viewer API. The
+    // viewer draws them on top of the scene later in this frame.
+    const_cast<TutorialDepthMap *>(this)->set_overlays(depth_commands_);
 }
+
+// \endcond

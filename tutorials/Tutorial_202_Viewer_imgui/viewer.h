@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,31 +22,33 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_VIEWER_IMGUI_H
 #define EASY3D_TUTORIAL_VIEWER_IMGUI_H
 
-
-
 #include <easy3d/viewer/viewer.h>
-
-
 
 // A very good tutorial for imgui:
 // https://eliasdaler.github.io/using-imgui-with-sfml-pt1/
 // https://eliasdaler.github.io/using-imgui-with-sfml-pt2/
 
-
 struct ImGuiContext;
-
 
 namespace easy3d {
 
-    /// \see Viewer, ViewerCallbacks
-    class ViewerImGui : public Viewer
-	{
-	public:
+    /**
+     * \brief A Viewer subclass that adds a Dear ImGui menu bar and widgets on top of the scene.
+     *
+     * This is the standard pattern for putting an immediate-mode GUI into Easy3D: derive from
+     * Viewer, own an ImGuiContext, and hook the frame at init() (create the context/backend),
+     * pre_draw() (start the ImGui frame, emit widgets, convert them to overlays), and
+     * post_resize() (keep the display size in sync). Input callbacks forward mouse/keyboard
+     * events to ImGui first so that GUI clicks do not also navigate the 3D scene. Subclass
+     * draw_gui() to add your own windows and controls.
+     */
+    class ViewerImGui : public Viewer {
+    public:
         /**
          * @brief Constructor
          * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
@@ -59,7 +61,7 @@ namespace easy3d {
          * @param options Backend device/context settings.
          */
         explicit ViewerImGui(
-            const std::string& title = "Easy3D ViewerImGui",
+            const std::string &title = "Easy3D ViewerImGui",
             int width = 800,
             int height = 600,
             int samples = 1,
@@ -67,9 +69,9 @@ namespace easy3d {
             bool visible = true,
             bool resizable = true,
 #ifdef EASY3D_HAS_VULKAN
-            const VulkanOptions& options = {}
+            const VulkanOptions &options = {}
 #else
-            const OpenGLOptions& options = {}
+            const OpenGLOptions &options = {}
 #endif
         );
 
@@ -78,42 +80,43 @@ namespace easy3d {
          */
         ~ViewerImGui() override;
 
-	protected:
+    protected:
+        // Creates the ImGui context, GLFW backend, input callbacks, and font atlas.
+        void init() override;
 
-		// imgui plugins
-		void init() override;
+        // Starts an ImGui frame, draws the widgets, and converts them to viewer overlays.
+        void pre_draw() override;
 
-		// draw the widgets
-		void pre_draw() override;
-
-		//  the widgets
-
-		void post_resize(int w, int h) override;
-
+        // Keeps ImGui's display size in sync when the window is resized.
+        void post_resize(int w, int h) override;
 
         // Override to add widgets, then call ViewerImGui::draw_gui() to finish the frame.
         virtual void draw_gui();
+        // The individual top-level menus emitted by draw_gui().
         void draw_menu_file();
         void draw_menu_view();
 
-	protected:
+    protected:
         // Ratio between the framebuffer size and the window size.
         // May be different from the DPI scaling!
-		float pixel_ratio();
+        float pixel_ratio();
 
-		float widget_scaling() { return dpi_scaling() / pixel_ratio(); }
+        // Scale factor applied to widgets so they stay crisp on high-DPI displays.
+        float widget_scaling() {
+            return dpi_scaling() / pixel_ratio();
+        }
 
-		// Rebuild the font atlas for this viewer.
-		void  reload_font(int font_size = 16);
+        // Rebuild the font atlas for this viewer.
+        void reload_font(int font_size = 16);
 
-	protected:
-		// Each viewer owns its UI context.
-        ImGuiContext* context_ = nullptr;
+    protected:
+        // Each viewer owns its UI context.
+        ImGuiContext *context_ = nullptr;
 
-		float menu_height_ = 0;
-        std::shared_ptr<const graphics::Image> font_image_;
-	};
+        float menu_height_ = 0; //!< Height of the menu bar, in pixels (used to lay out the scene).
+        std::shared_ptr<const graphics::Image> font_image_; //!< GPU texture holding the ImGui font atlas.
+    };
 
-}
+} // namespace easy3d
 
-#endif	// EASY3D_TUTORIAL_VIEWER_IMGUI_H
+#endif // EASY3D_TUTORIAL_VIEWER_IMGUI_H

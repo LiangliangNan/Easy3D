@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
@@ -36,18 +36,47 @@
 /**
  * \example{lineno} Tutorial_808_Mesh_Parameterization/main.cpp
  *
- * This example shows how to compute a texture parameterization of a surface mesh using the
- * SurfaceMeshParameterization class, and how to visualize it by mapping a checkerboard texture
- * onto the surface.
+ * \brief Computing a 2D texture parameterization of an open surface and visualizing it with a checkerboard.
  *
- * Two methods are available: discrete harmonic parameterization and least squares conformal
- * mapping (LSCM). Both require a mesh with a boundary and store the resulting 2D coordinates in
- * the "v:texcoord" vertex property, which is then used with set_texture_coloring(). A hemisphere
- * (a disk-topology patch) is used here because parameterization needs an open boundary.
+ * <b>Overview</b>
+ * This tutorial demonstrates surface parameterization with SurfaceMeshParameterization. It computes a
+ * (u, v) coordinate for every vertex of the girl_face mesh — an open surface patch (a scanned face) with
+ * a boundary — and visualizes the result by mapping a checkerboard texture onto the surface. Two methods
+ * are available: discrete harmonic parameterization and least squares conformal mapping (LSCM).
+ * Parameterization is the foundation of texture mapping: it flattens a 3D surface into the 2D domain
+ * where images live, so a texture can be painted or stored without seams or excessive distortion.
+ *
+ * <b>The technique</b>
+ * A parameterization is a map from the surface to the plane; the goal is to minimize distortion (of
+ * angles and/or areas) while keeping the map bijective. Both methods here require a mesh with a boundary
+ * (disk topology) and store the resulting 2D coordinates in the "v:texcoord" vertex property. Discrete
+ * harmonic parameterization (Desbrun et al., "Intrinsic parameterizations of surface meshes", CGF 2002)
+ * fixes the boundary to a convex polygon (the unit circle) and solves a Laplace equation for the interior
+ * vertices, minimizing the Dirichlet (stretching) energy; it is simple and guaranteed flip-free for a
+ * convex boundary, but can distort areas. LSCM (Lévy et al., "Least squares conformal maps for automatic
+ * texture atlas generation", SIGGRAPH 2002) instead pins only two boundary vertices and solves a least-
+ * squares system enforcing the Cauchy-Riemann equations, producing a conformal (angle-preserving) map
+ * with free boundaries; it preserves local shapes well but may stretch areas. The checkerboard makes the
+ * distortion visible: square, evenly sized cells indicate a good parameterization, while sheared or
+ * stretched cells reveal angle/area distortion.
+ *
+ * <b>Easy3D API</b>
+ * - SurfaceMeshParameterization::harmonic(): discrete harmonic map (boundary mapped to the unit circle).
+ * - SurfaceMeshParameterization::lscm(): least squares conformal map; requires a triangle mesh, so the
+ *   mesh is triangulated first. Both fill the "v:texcoord" vertex property.
+ * - DrawableTriangles::set_texture_coloring(): samples a texture using the per-vertex "v:texcoord"
+ *   coordinates to paint the checkerboard onto the surface.
+ * - Renderer::update(): re-extracts the rendering buffers after the texture coordinates change.
+ * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ *
+ * <b>Running it</b>
+ * The harmonic parameterization is shown first. Press Ctrl+a for harmonic parameterization and Ctrl+l for
+ * LSCM; compare how the checkerboard cells deform under each method.
+ *
+ * \see SurfaceMeshParameterization, SurfaceMesh, DrawableTriangles, Tutorial_801_Mesh_Curvature
  */
 
 using namespace easy3d;
-
 
 namespace {
 
@@ -73,7 +102,6 @@ namespace {
 
 } // namespace
 
-
 int main(int argc, char **argv) {
     initialize();
 
@@ -95,8 +123,7 @@ int main(int argc, char **argv) {
     viewer.bind([](Viewer *v, Model *m) { return parameterize(0, v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
     viewer.bind([](Viewer *v, Model *m) { return parameterize(1, v, m); }, mesh, Viewer::KEY_L, Viewer::MODIF_CTRL);
     viewer.set_usage("default",
-                     "Ctrl + a: harmonic parameterization\n"
-                     "Ctrl + l: least squares conformal mapping (LSCM)");
+                     "Ctrl + a: harmonic parameterization\n" "Ctrl + l: least squares conformal mapping (LSCM)");
 
     return viewer.run();
 }
