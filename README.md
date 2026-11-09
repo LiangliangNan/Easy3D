@@ -1,3 +1,10 @@
+# IMPORTANT: 
+ - ## Code in this branch is archive of Easy3D before Vulkan migration (see 'docs/vulkan.md' in [main](https://github.com/LiangliangNan/Easy3D) branch).
+ - ## This branch will not be maintained, and client should always use the [main](https://github.com/LiangliangNan/Easy3D) branch.
+
+
+
+
 <p align="right">
     <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
