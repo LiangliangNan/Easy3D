@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,34 +22,44 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_HARD_SHADOW_H
 #define EASY3D_TUTORIAL_HARD_SHADOW_H
 
 #include <easy3d/viewer/viewer.h>
 
+/**
+ * \brief A Viewer that renders the scene with hard shadows (shadow mapping).
+ *
+ * This class illustrates the standard way to add a rendering effect to Easy3D: derive from
+ * Viewer, own an effect object, and override draw() so the base-class scene render is
+ * sandwiched between the effect's begin() and end() calls. key_press_event() is overridden
+ * to let the user toggle the shadow on and off interactively.
+ */
 
-// This class renders a scene with hard shadow using the shadow map technique.
-
+// Forward declaration only: the header does not need the full Shadow definition (a pointer
+// member is enough), so we avoid pulling its header into every includer.
 namespace easy3d {
-	class Shadow;
+    class Shadow;
 }
 
-class TutorialHardShadow : public easy3d::Viewer
-{
+class TutorialHardShadow : public easy3d::Viewer {
 public:
-	explicit TutorialHardShadow(const std::string& title = "");
+    // Builds the viewer and creates the shadow effect bound to its camera.
+    explicit TutorialHardShadow(const std::string &title = "");
+    // Releases the owned effect. The base-class destructor handles the rest of the cleanup.
     ~TutorialHardShadow() override;
 
 protected:
+    // Handles 'space' (toggle); forwards other keys to Viewer.
     bool key_press_event(int key, int modifiers) override;
+    // Renders the scene, applying the shadow map when enabled (see viewer.cpp).
     void draw() const override;
 
 private:
-	easy3d::Shadow* shadow_;
-	bool			shadow_enabled_;
+    easy3d::Shadow *shadow_; //!< The owned shadow effect (created with new, deleted in the destructor).
+    bool shadow_enabled_;    //!< Whether shadowing is currently applied; toggled with the space key.
 };
-
 
 #endif // EASY3D_TUTORIAL_HARD_SHADOW_H

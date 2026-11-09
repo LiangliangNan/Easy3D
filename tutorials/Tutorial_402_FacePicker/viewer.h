@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,29 +22,39 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
 #define EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
 
+// This class demonstrates how to pick faces in a surface mesh using the mouse.
 
-// This class demonstrates how to pick faces in a surface mesh using the mouse
-
+// Forward declaration only: the header just needs the Model name for the add_model()
+// signature, so we avoid pulling the full model header into every includer.
 namespace easy3d {
     class Model;
 }
 
+/**
+ * \brief A Viewer that highlights the surface-mesh face under a left click.
+ *
+ * Two overrides do the work: mouse_press_event() runs the GPU pick and converts the hit
+ * triangle into the original face's highlight range, and add_model() ensures the mesh edges
+ * are visible so the faces can be told apart. All other events go to the base Viewer.
+ */
 class TutorialFacePicker : public easy3d::Viewer {
 public:
+    // Sets up a front view and installs the on-screen usage hint.
     explicit TutorialFacePicker(const std::string &title);
 
-    easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+    // Loads a model via the base class, then makes its "edges" drawable visible.
+    easy3d::Model *add_model(const std::string &file_name, bool create_default_drawables = true) override;
 
 protected:
+    // Intercepts plain left clicks to pick and highlight a face; forwards the rest to Viewer.
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
 };
-
 
 #endif // EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H

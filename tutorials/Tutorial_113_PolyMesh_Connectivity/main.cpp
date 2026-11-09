@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,33 +22,64 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/initializer.h>
 
 /**
  * \example{lineno} Tutorial_113_PolyMesh_Connectivity/main.cpp
- * This example shows how to access the adjacency information of a polyhedral mesh (consisting of a single tetrahedron):
- *		- the incident vertices of each vertex
- *		- the incident edges of each vertex
- *		- the incident halffaces of each vertex
- *		- the incident cells of each vertex
- *		- the incident vertices of each edge
- *		- the incident halffaces of each edge
- *		- the incident cells of each edge
- *		- the incident vertices of each halfface
- *		- the incident edges of each halfface
- *		- the associated cell of each halfface
- *		- the opposite cell of each halfface
- *		- the incident vertices of each cell
- *		- the incident edges of each cell
- *		- the incident halffaces of each cell
- *		- the two halffaces of each face
+ *
+ * \brief Walking the full adjacency of a PolyMesh through its half-face links.
+ *
+ * <b>Overview</b>
+ * Using the single-tetrahedron mesh from Tutorial_112_PolyMesh, this console tutorial prints every
+ * adjacency relationship of a polyhedral mesh:
+ *      - the incident vertices of each vertex
+ *      - the incident edges of each vertex
+ *      - the incident halffaces of each vertex
+ *      - the incident cells of each vertex
+ *      - the incident vertices of each edge
+ *      - the incident halffaces of each edge
+ *      - the incident cells of each edge
+ *      - the incident vertices of each halfface
+ *      - the incident edges of each halfface
+ *      - the associated cell of each halfface
+ *      - the opposite cell of each halfface
+ *      - the incident vertices of each cell
+ *      - the incident edges of each cell
+ *      - the incident halffaces of each cell
+ *      - the two halffaces of each face
+ * It is the volumetric counterpart of Tutorial_105_SurfaceMesh_Connectivity.
+ *
+ * <b>The technique</b>
+ * A PolyMesh stores connectivity with halffaces: every face is split into two oppositely oriented
+ * halffaces, one for each cell it separates, with the normal pointing out of its cell. cell(h)
+ * gives the cell that halfface h bounds, and opposite(h) crosses the face to the twin halfface in
+ * the neighboring cell — this is how you walk from one volume to the next. On the boundary of the
+ * solid there is no neighboring cell, so the opposite halfface (and its cell) is an invalid handle
+ * (index -1); since our mesh is a lone tetrahedron, all four faces are boundary faces and their
+ * opposites are invalid. The remaining queries circulate around an element: vertices/edges/
+ * halffaces/cells of a vertex, edge, halfface or cell, and halfface(f, 0/1) recovers the two
+ * halffaces of a face. These traversals are the foundation of volumetric algorithms such as cell
+ * neighbors, boundary extraction, and finite-element assembly.
+ *
+ * <b>Easy3D API</b>
+ * - PolyMesh::vertices(x)/edges(x)/halffaces(x)/cells(x): incident elements of a vertex, edge,
+ *   halfface or cell (the overloads relevant to each are used below).
+ * - PolyMesh::vertex(e, i): an edge endpoint; halfface(f, i): the i-th halfface of a face.
+ * - PolyMesh::cell(h): the cell bounded by halfface h; opposite(h): its twin across the face.
+ * - PolyMesh::vertices()/edges()/halffaces()/faces()/cells(): ranges over all elements.
+ *
+ * <b>Running it</b>
+ * Console-only. It prints a titled section for each query, listing element handles (e.g. "v0",
+ * "e1", "h2", "f0", "c0"). For the boundary faces the opposite halfface/cell print as invalid
+ * handles. The mesh is heap-allocated and deleted at the end.
+ *
+ * \see PolyMesh, Tutorial_112_PolyMesh, Tutorial_105_SurfaceMesh_Connectivity, Tutorial_109_Graph_Connectivity
  */
 
 using namespace easy3d;
-
 
 // the mesh created in the previous tutorial (so you can skip it)
 PolyMesh *old_mesh_from_previous_example() {
@@ -192,6 +223,9 @@ int main(int argc, char **argv) {
     std::cout << "----------------------------------------\n";
     // loop over all halffaces
     for (auto h : mesh->halffaces()) {
+        // opposite(h) crosses the face to the twin halfface in the neighboring cell, and
+        // cell(opposite(h)) is that neighbor. On the boundary there is no neighbor, so both are
+        // invalid handles (index -1) — which is the case for every face of this lone tetrahedron.
         std::cout << "opposite halfface of halfface " << h << ": " << mesh->opposite(h) << ". ";
         std::cout << "opposite cell of halfface " << h << ": " << mesh->cell(mesh->opposite(h)) << std::endl;
     }
@@ -237,6 +271,8 @@ int main(int argc, char **argv) {
     std::cout << "----------------------------------------\n";
     // loop over all faces
     for (auto f : mesh->faces()) {
+        // A face is stored as two halffaces (one per side). For a boundary face the outward side
+        // has no cell, so one of these two handles is invalid.
         std::cout << "incident halffaces of face " << f << ": " << mesh->halfface(f, 0) << " " << mesh->halfface(f, 1)
                   << std::endl;
     }
@@ -246,4 +282,3 @@ int main(int argc, char **argv) {
 
     return EXIT_SUCCESS;
 }
-

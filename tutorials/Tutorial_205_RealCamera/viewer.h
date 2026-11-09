@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_REAL_CAMERA_H
 #define EASY3D_TUTORIAL_REAL_CAMERA_H
@@ -37,14 +37,22 @@
 namespace easy3d {
     class Camera;
     class LinesDrawable;
-}
+} // namespace easy3d
 
-class TutorialRealCamera : public easy3d::Viewer
-{
+/**
+ * \brief A Viewer that reproduces a real calibrated camera and links image pixels to 3D rays.
+ *
+ * We subclass Viewer because the tutorial needs custom data (a set of recovered camera poses),
+ * custom drawing (the camera frusta, a back-projected ray, and the source photo as a 2D
+ * overlay), and custom interaction (cycling views and projecting under the cursor). The static
+ * helpers camera_pos(), pixel_to_ray(), and point_to_pixel() implement the pinhole-camera math
+ * and are reusable independently of the viewer. The private members cache the overlay geometry
+ * so it is only rebuilt when the image, window size, or cursor marker actually changes.
+ */
+class TutorialRealCamera : public easy3d::Viewer {
 public:
-    TutorialRealCamera(const std::string& title,
-               const std::string& bundler_file,
-               const std::string& cloud_file);
+    // Loads the point cloud and the Bundler camera parameters, then sets up the scene/overlays.
+    TutorialRealCamera(const std::string &title, const std::string &bundler_file, const std::string &cloud_file);
 
     /// two useful functions
 
@@ -60,9 +68,12 @@ public:
 
     /** \brief Computes the ray in the world coordinate system from an image point using the camera
      *      intrinsic and extrinsic parameters.
-     *  \param img_x and img_y: the image point (the image origin corresponds to the top-left corner of the image)
-     *  \param fx and fy: the focal length
-     *  \param cx and cy: the principal point
+     *  \param img_x the x coordinate of the image point (the image origin corresponds to the top-left corner)
+     *  \param img_y the y coordinate of the image point (the image origin corresponds to the top-left corner)
+     *  \param fx the focal length along the x axis (in pixels)
+     *  \param fy the focal length along the y axis (in pixels)
+     *  \param cx the x coordinate of the principal point (in pixels)
+     *  \param cy the y coordinate of the principal point (in pixels)
      *  \param skew: distortion
      *  \param R: the camera rotation. It denotes the coordinate system transformation from 3D world coordinates
      *      to 3D camera coordinates.
@@ -79,14 +90,23 @@ public:
      *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
      *      coordinates.
      */
-    static easy3d::vec3 pixel_to_ray(int img_x, int img_y,
-                              float fx, float fy, float skew, float cx, float cy,
-                              const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
+    static easy3d::vec3 pixel_to_ray(int img_x,
+                                     int img_y,
+                                     float fx,
+                                     float fy,
+                                     float skew,
+                                     float cx,
+                                     float cy,
+                                     const easy3d::mat3 &R,
+                                     const easy3d::vec3 &t,
+                                     bool convert = true);
 
     /** \brief Computes the 2D projection of a 3D point using the camera intrinsic and extrinsic parameters.
      *  \param p the 3D point
-     *  \param fx and fy: the focal length
-     *  \param cx and cy: the principal point
+     *  \param fx the focal length along the x axis (in pixels)
+     *  \param fy the focal length along the y axis (in pixels)
+     *  \param cx the x coordinate of the principal point (in pixels)
+     *  \param cy the y coordinate of the principal point (in pixels)
      *  \param skew: distortion
      *  \param R: the camera rotation. It denotes the coordinate system transformation from 3D world coordinates
      *      to 3D camera coordinates.
@@ -104,53 +124,66 @@ public:
      *      coordinates.
      */
     static easy3d::vec2 point_to_pixel(const easy3d::vec3 &p,
-                                float fx, float fy, float skew, float cx, float cy,
-                                const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
+                                       float fx,
+                                       float fy,
+                                       float skew,
+                                       float cx,
+                                       float cy,
+                                       const easy3d::mat3 &R,
+                                       const easy3d::vec3 &t,
+                                       bool convert = true);
 
 protected:
+    // Cycles views ('space'), toggles calibration/ground-truth ('1'/'2'), and hides cameras ('h').
     bool key_press_event(int key, int modifiers) override;
+    // Projects between the cursor position and 3D: pixel->ray over the image, point->pixel over the scene.
     bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) override;
 
+    // Computes where the source photo is drawn on screen, preserving its aspect ratio.
     easy3d::Rect calculate_image_rect() const;
-    
+
 private:
+    // One recovered camera: image size, intrinsics (fx, fy, cx, cy), and extrinsics (R, t).
     struct CameraPara {
-        int w, h;           // image size
-        float fx, fy;       // focal length
-        float cx, cy;       // principal point
-        easy3d::mat3 R;     // rotation
-        easy3d::vec3 t;     // the translation
+        int w, h;       // image size
+        float fx, fy;   // focal length
+        float cx, cy;   // principal point
+        easy3d::mat3 R; // rotation
+        easy3d::vec3 t; // the translation
     };
-    std::vector<CameraPara> views_;
-    int current_view_;
-    
-    bool read_bundler_file(const std::string& file_name);
-    
+    std::vector<CameraPara> views_; //!< All cameras read from the Bundler file.
+    int current_view_;              //!< Index of the view currently shown.
+
+    // Parses the Bundler file into views_ (implemented in read_bundler_file.cpp).
+    bool read_bundler_file(const std::string &file_name);
+
     // K [R t] -> easy3d camera representation
-    bool KRT_to_camera(int view_index, easy3d::Camera* c, bool ground_truth);
-    
+    bool KRT_to_camera(int view_index, easy3d::Camera *c, bool ground_truth);
+
+    // Rebuilds the line drawable that draws every camera frustum in the scene.
     void update_cameras_drawable(bool ground_truth);
 
+    // Loads the photo corresponding to current_view_ for the 2D overlay.
     void load_image();
 
-    void pre_draw() override;
-    void post_resize(int, int) override;
-    std::shared_ptr<const easy3d::graphics::Image> image_;
-    int image_view_ = -1;
-    easy3d::Rect overlay_rect_{0,0,0,0};
-    const easy3d::graphics::Image* overlay_image_ = nullptr;
-    bool cross_geometry_dirty_ = true;
-    std::vector<easy3d::vec3> cross_points_;
-    bool cross_overlay_visible_ = false;
-    int overlay_width_ = 0, overlay_height_ = 0;
-    std::vector<easy3d::graphics::DrawCommand> image_commands_;
-    easy3d::graphics::DrawCommand cross_command_;
+    void pre_draw() override;            // builds/updates the image and crosshair overlays each frame
+    void post_resize(int, int) override; // invalidates the cursor marker on resize
+    // Cached overlay state: rebuilt only when something relevant changes (see pre_draw()).
+    std::shared_ptr<const easy3d::graphics::Image> image_;      //!< The current source photo (GPU texture).
+    int image_view_ = -1;                                       //!< Which view image_ belongs to (-1 = none).
+    easy3d::Rect overlay_rect_{0, 0, 0, 0};                     //!< On-screen rectangle of the photo overlay.
+    const easy3d::graphics::Image *overlay_image_ = nullptr;    //!< Image used to build the cached overlay.
+    bool cross_geometry_dirty_ = true;                          //!< Whether the crosshair geometry must be rebuilt.
+    std::vector<easy3d::vec3> cross_points_;                    //!< Endpoints of the 2D crosshair marker.
+    bool cross_overlay_visible_ = false;                        //!< Whether the crosshair is currently shown.
+    int overlay_width_ = 0, overlay_height_ = 0;                //!< Framebuffer size the overlay was built for.
+    std::vector<easy3d::graphics::DrawCommand> image_commands_; //!< Cached photo + border draw commands.
+    easy3d::graphics::DrawCommand cross_command_;               //!< Cached crosshair draw command.
 
 private:
-    easy3d::LinesDrawable* cameras_drawable_;
-    easy3d::LinesDrawable* ray_drawable_;   // in 3D
-    bool cross_visible_ = false; // 2D annotation, never a scene drawable
+    easy3d::LinesDrawable *cameras_drawable_; //!< Draws all camera frusta in the 3D scene.
+    easy3d::LinesDrawable *ray_drawable_;     // in 3D
+    bool cross_visible_ = false;              // 2D annotation, never a scene drawable
 };
-
 
 #endif // EASY3D_TUTORIAL_REAL_CAMERA_H

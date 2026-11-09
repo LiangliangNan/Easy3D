@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_COLLISION_DETECTION_H
 #define EASY3D_TUTORIAL_COLLISION_DETECTION_H
@@ -36,22 +36,22 @@ namespace easy3d {
     class Model;
     class SurfaceMesh;
     class Collider;
-}
+} // namespace easy3d
 
 class TutorialCollisionDetection : public easy3d::Viewer {
 public:
-    explicit TutorialCollisionDetection(const std::string& title);
+    explicit TutorialCollisionDetection(const std::string &title);
     void clear_scene() override;
-    bool delete_model(easy3d::Model* model) override;
+    bool delete_model(easy3d::Model *model) override;
     ~TutorialCollisionDetection() override;
 
 protected:
     // Rebuild the collision trees for the two currently attached triangle meshes.
     void initialize_collision();
-    bool mouse_press_event(int x,int y,int button,int modifiers) override;
-    bool mouse_release_event(int x,int y,int button,int modifiers) override;
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_release_event(int x, int y, int button, int modifiers) override;
     bool focus_event(bool focused) override;
-    void post_resize(int width,int height) override;
+    void post_resize(int width, int height) override;
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
     bool key_press_event(int key, int modifiers) override;
 
@@ -70,8 +70,6 @@ private:
 
     easy3d::vec3 model0_color_;
     easy3d::vec3 model1_color_;
-
 };
-
 
 #endif // EASY3D_TUTORIAL_COLLISION_DETECTION_H

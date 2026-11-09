@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 #define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
@@ -32,13 +32,21 @@
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
 
-class TutorialCameraInterpolation : public easy3d::Viewer
-{
+/**
+ * \brief A Viewer that records camera keyframes and plays them back as a smooth animation.
+ *
+ * The base Viewer already owns a KeyFrameInterpolator bound to the camera and can draw/play a
+ * camera path; this subclass merely remaps a few friendly keys ('k', 'space', 'd') onto that
+ * machinery by overriding key_press_event(). No extra rendering or state is needed, which is
+ * why the destructor is defaulted.
+ */
+class TutorialCameraInterpolation : public easy3d::Viewer {
 public:
-    explicit TutorialCameraInterpolation(const std::string& title);
+    explicit TutorialCameraInterpolation(const std::string &title);
     ~TutorialCameraInterpolation() override = default;
 
 protected:
+    // Maps 'k' (add keyframe), 'space' (play/stop), and 'd' (delete path) to the interpolator.
     bool key_press_event(int key, int modifiers) override;
 };
 

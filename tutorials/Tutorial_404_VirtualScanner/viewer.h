@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,22 +22,32 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 #define EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 
 #include <easy3d/viewer/viewer.h>
 
+/**
+ * \brief A Viewer that captures the visible surface as a point cloud, like a virtual 3D scanner.
+ *
+ * Only key_press_event() is overridden: 'space' renders the scene, reads back the depth
+ * buffer, back-projects every valid pixel into world space, and adds the resulting point
+ * cloud as a new model; 'n' toggles optional Gaussian sensor noise. All navigation events
+ * are handled by the base Viewer, so the user can freely choose the scanning viewpoint.
+ */
 class TutorialVirtualScanner : public easy3d::Viewer {
 public:
-    explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner");
+    // Installs the usage manual/hint and fixes the camera's up direction.
+    explicit TutorialVirtualScanner(const std::string &title = "VirtualScanner");
 
 protected:
+    // Handles 'space' (capture a scan) and 'n' (toggle noise); forwards other keys to Viewer.
     bool key_press_event(int key, int modifiers) override;
 
 private:
-    bool add_noise_ = false;
+    bool add_noise_ = false; //!< When true, captured points are perturbed with Gaussian noise.
 };
 
 #endif // EASY3D_TUTORIAL_VIRTUAL_SCANNER_H

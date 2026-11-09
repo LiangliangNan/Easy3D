@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include "viewer.h"
 #include <easy3d/core/surface_mesh.h>
@@ -31,60 +31,76 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 
-
 using namespace easy3d;
 
+// The implementation is reproduced on the example page via \include in main.cpp, so we hide
+// it from Doxygen's separate symbol documentation to avoid documenting it twice.
 // \cond
 
-TutorialSoftShadow::TutorialSoftShadow(const std::string& title) : Viewer(title) {
-	camera()->setUpVector(vec3(0, 1, 0));
-	camera()->setViewDirection(vec3(0, 0, 1));
+TutorialSoftShadow::TutorialSoftShadow(const std::string &title) : Viewer(title) {
+    // Choose a natural "walk into the room" viewpoint: y is up and we look along +z.
+    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->setViewDirection(vec3(0, 0, 1));
 
-	shadow_ = new SoftShadow(camera());
+    // The only substantive difference from Tutorial_502_HardShadow: instantiate SoftShadow
+    // (PCSS) instead of Shadow. It derives from Shadow, so the rest of the code — stored in
+    // a base-class pointer — is unchanged.
+    shadow_ = new SoftShadow(camera());
+    // Enable a virtual background plane (colored like the viewer background) that receives
+    // shadows, so the scene casts a ground shadow even without explicit floor geometry.
     shadow_->set_virtual_background_color(background_color());
-	shadow_enabled_ = true;
+    // Start with shadows visible so the effect is obvious on launch.
+    shadow_enabled_ = true;
 
+    // hint_ is shown in the viewer HUD; it tells the user which key controls the effect.
     hint_ = "Press 'space' to switch on/off shadowing";
 }
 
-
 TutorialSoftShadow::~TutorialSoftShadow() {
+    // We created shadow_ with new, so we must delete it here. Shadow has a virtual
+    // destructor, so the SoftShadow instance is destroyed correctly through the base pointer.
     delete shadow_;
 
     // Not needed: it will be called in the destructor of the base class
     //Viewer::cleanup();
 }
 
-
+// Interactive control of the effect. Returning true marks the key as handled; any key we do
+// not recognize is forwarded to the base Viewer so navigation and other shortcuts still work.
 bool TutorialSoftShadow::key_press_event(int key, int modifiers) {
     if (key == KEY_SPACE) {
-		shadow_enabled_ = !shadow_enabled_;
-		update();
+        // Toggle shadowing on/off and request a redraw.
+        shadow_enabled_ = !shadow_enabled_;
+        update();
         return true;
-    }
-    else
+    } else
         return Viewer::key_press_event(key, modifiers);
 }
 
-
+// The heart of the effect: the PCSS pass wrapped around the normal scene render.
 void TutorialSoftShadow::draw() const {
+    // Nothing to shade until a model has been loaded.
     if (!current_model()) {
         return;
     }
 
-    std::vector<TrianglesDrawable*> surfaces;
+    // Collect every triangles drawable of every model: these are the surfaces that both
+    // cast shadows (they are rendered into the shadow map) and receive them.
+    std::vector<TrianglesDrawable *> surfaces;
     for (auto m : models_) {
         for (auto d : m->renderer()->triangles_drawables()) {
             surfaces.push_back(d.get());
         }
     }
-	if (shadow_enabled_) {
-		shadow_->begin(surfaces);
-		Viewer::draw();
-		shadow_->end();
-	}
-	else
-		Viewer::draw();
+    if (shadow_enabled_) {
+        // Both backends shadow the scene inside begin()/end(): begin() sets up the light
+        // frame and shadow map, and end() applies the PCSS test (blocker search, penumbra
+        // estimation, PCF filtering) to the scene rendered by Viewer::draw().
+        shadow_->begin(surfaces); // prepare the light-space depth pass for this frame
+        Viewer::draw();           // render the scene normally
+        shadow_->end();           // darken points by fractional light visibility
+    } else
+        Viewer::draw(); // effect disabled: plain rendering, for comparison
 }
 
 // \endcond
