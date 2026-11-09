@@ -15,9 +15,10 @@ and fit use the existing `Camera::interpolateToLookAt()` and
 maintain a second interpolator for these actions. The updated
 validation-enabled `vulkan.input` test checks that focus animation progresses
 and reaches its target. Earlier local Vulkan and OpenGL full-suite results are
-recorded below; they predate this cleanup. Migration completion remains gated
-on Linux and Windows evidence, running the restored CI workflow,
-package-consumer checks, and measuring the unprofiled portable point fallback.
+recorded below; they predate this cleanup. Clean Release builds and installed
+package consumers for both backends also passed locally on macOS. Migration
+completion remains gated on Linux and Windows evidence, a successful run of the
+restored CI workflow, and measuring the unprofiled portable point fallback.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -420,6 +421,11 @@ The migration is **not yet validated complete**:
   `Easy3D_BUILD_TESTS=ON`, optional Python/CGAL/Qt/ffmpeg dependencies off)
   built successfully and passed all 104 CTests, including retained tutorial
   smoke tests and `opengl.viewerloop`.
+* On 2026-11-09, clean Release Vulkan and OpenGL configurations were built and
+  installed to temporary prefixes. Installed-package consumers compiled for
+  both; all three Vulkan consumers and both OpenGL consumers ran successfully.
+  This local macOS check is separate from the GitHub Linux/Mesa jobs and
+  Windows hardware validation.
 * `vulkan.interactionoverlay` passed in that local run, but the prior Linux
   baseline was 68/69 for a one-pixel selection-border expectation. Reproduce
   that case on the target Linux/Mesa runner and record the disposition.
@@ -1221,15 +1227,17 @@ The prior Linux `vulkan.interactionoverlay` baseline (68/69, one-pixel border
 expectation) remains to be reproduced on the intended Mesa/CI environment. Its
 passing result in the latest local run does not close the Linux-specific item.
 Portable expanded-point fallback profiling on MoltenVK without `largePoints`,
-Windows Vulkan hardware validation, and cross-platform package-consumer checks
+Windows Vulkan hardware validation, and Linux/Windows package-consumer checks
 remain outstanding. There is no controlled, same-scene OpenGL-versus-Vulkan
 performance or image-comparison result yet.
 
 The archived Vulkan/OpenGL workflow is restored at
-`.github/workflows/vulkan.yml`; it still needs to run successfully on GitHub
-before its Linux/Mesa coverage can count as validation. Mapple is intentionally
-OpenGL-only, Qt/wx viewer tutorials were retired, and backend-internal Python
-bindings are outside the agreed scope.
+`.github/workflows/vulkan.yml`. Run `42612100874` was not started because
+GitHub reported an account billing lock; it provides no Linux/Mesa, SPIR-V, or
+CI package-consumer evidence. The workflow must complete successfully before
+those checks count as validated. Mapple is intentionally OpenGL-only, Qt/wx
+viewer tutorials were retired, and backend-internal Python bindings are outside
+the agreed scope.
 
 The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF`
 configuration. There is no automatic fallback between backends. See

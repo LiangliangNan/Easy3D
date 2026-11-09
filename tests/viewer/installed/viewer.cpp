@@ -34,7 +34,7 @@ int main() {
         const auto c = mesh->add_vertex(vec3(0, 0, 1)); mesh->add_triangle(a, b, c); viewer->add_model(mesh);
         auto faces = mesh->renderer()->get_triangles_drawable("faces");
         faces->set_uniform_coloring(vec4(.8f, .2f, .1f, 1)); faces->set_lighting(false);
-        viewer->set_usage(""); viewer->fit_screen();
+        viewer->set_usage("", ""); viewer->fit_screen();
         unsigned ticks = 0, before = 0, after = 0;
         ViewerCallbacks callbacks;
         callbacks.pre_draw = [&](ViewerBase* host) { require(host == viewer.get(), "callback received another viewer"); ++before; };
