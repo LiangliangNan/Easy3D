@@ -1,11 +1,22 @@
 # Native Vulkan migration
 
-The `Easy3D-Vulkan` branch migrates Easy3D to a native Vulkan renderer and viewer.
-A build contains **exactly one backend**, chosen at configure time with
-`Easy3D_ENABLE_VULKAN` (default `ON` on this branch; `OFF` builds the original
-OpenGL backend). The Vulkan backend does not yet cover everything the OpenGL one
-does: Mapple and legacy GUI picking/effects still need Vulkan
-counterparts. Python Viewer, MultiViewer and OffScreen now use the configured backend. MultiViewer, FigureMaker and Tutorial 205 now build with either backend. See *Current status and work order* below.
+The `Easy3D-Vulkan` branch provides a native Vulkan renderer and viewer alongside
+the OpenGL backend. A build contains **exactly one backend**, chosen at configure
+time with `Easy3D_ENABLE_VULKAN` (default `ON`; `OFF` builds OpenGL). The shared
+viewer, renderer, picking, effects, GUI, and supported tutorial workflows are
+implemented for both configured backends. Mapple is intentionally OpenGL-only;
+the Qt/wx viewer tutorials were retired; Python bindings deliberately cover the
+supported backend-neutral API rather than backend internals.
+
+**Status audited 2026-11-09:** core feature implementation for the agreed shared
+surface is substantially complete. Migration completion is gated on resolving
+current Vulkan input/window regressions, confirming Linux behavior, restoring
+active CI and recording Linux/Windows/package evidence, and measuring the
+unprofiled portable point fallback. The recent local Vulkan run passed 136/138
+tests; `vulkan.input` and `vulkan.window` failed reproducibly on isolated reruns.
+See [Migration completion status](#migration-completion-status) and the
+checkable work list in `ToDo.md`. Historical implementation notes below are not
+the current status.
 
 ## Migration principles (highest priority)
 
@@ -261,20 +272,23 @@ void MyViewer::setup_viewport() {
 - **Don't assume logical == framebuffer** - they differ on high-DPI displays
 - **Don't manually convert between systems** - use `dpi_scaling()` when needed: `framebuffer = logical * dpi_scaling()`
 
-## Final migration goal and backend policy
+## Migration goal and backend policy
 
-**Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5 and U6 are in progress. What is done and what remains is tracked in *Current status and work order* below.
+The architectural decisions and migration principles below remain in force.
+Current implementation and validation status is summarized separately in
+*Migration completion status*; dated status snapshots further down are historical.
 
-The completed migration must support **all tutorials on Vulkan** and targets
-**all applications on Vulkan**, including FigureMaker and toolkit-based hosts.
+The agreed migration scope supports **all retained tutorials on Vulkan** and
+the applications intended to use the unified viewer, including FigureMaker.
 **Mapple is a deliberate exception (decided 2026-11-08): it stays OpenGL-only and
 untouched** — its standalone `QOpenGLWidget` canvas (its own render loop, pickers,
 effects, HUD and snapshot, built on `easy3d::renderer`/`gui` rather than the unified
 `Viewer`) is not worth the toolkit-surface port, the same reason the Qt/wx tutorials
 were removed in batch 42; the `Easy3D_ENABLE_QT` gate skips Mapple when Vulkan is ON.
-Rendering, interaction, picking, effects, text, snapshots and custom
-subclasses must be covered; outstanding application limitations must be tracked.
+The Qt/wx viewer tutorials were retired by decision. Rendering, interaction,
+picking, effects, text, snapshots and custom subclasses in the supported surface
+must work in both configured backends; deliberate scope exceptions are not
+unfinished migration tasks.
 
 Backend choice will be **exclusive and fixed during CMake configuration**. Each
 build compiles and links either Vulkan or OpenGL, never both. The single `Viewer`, `MultiViewer` and `OffScreen` classes are compiled for
@@ -290,10 +304,9 @@ This supersedes the earlier runtime-selection/fallback objective, the proposal t
 let both backends coexist in one library, and the headless Vulkan configuration.
 
 The render lifecycle hook is likewise unified across concrete hosts as
-`virtual bool draw()`, with `draw_frame()` calling it and the concrete hosts
-updating frame rate, posting draw callbacks and presenting only when the hook
-returns true. Tutorials and custom subclasses implement this single frame hook
-instead of backend-specific draw entry points.
+`virtual void draw() const`, matching the original OpenGL API. Tutorials and
+custom subclasses implement this single frame hook instead of backend-specific
+draw entry points.
 
 Use exactly one backend-selection option: `Easy3D_ENABLE_VULKAN`, defaulting to
 `ON` on this branch:
@@ -350,17 +363,21 @@ override the configured backend.
 
 Remove `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials, including shared tutorial
 headers and helpers, and remove its definition from the final public selector.
-Tutorials must use the same public APIs for both configured backends. Implement
+Supported tutorials must use the common public APIs available in both configured
+backends. Implement
 backend differences inside the backend classes; do not replace this macro with
 another tutorial backend switch. Align missing counterpart APIs before removing
 each conditional, preserving the original tutorial behavior.
 All targets in one build use the same selected backend; code cannot name or
 instantiate the other family. There is no runtime preference or fallback.
 
-**The viewers of both backends must expose the same public API**, so that user code,
-including every tutorial, compiles unchanged against either backend. The original
-OpenGL `Viewer` API is the reference. Keep public renderer/viewer/gui operations consistent across backends, retaining
-explicit low-level backend APIs where needed. Do not reintroduce `easy3d/graphics`.
+The supported common viewer-facing API must work unchanged against either
+backend, including all supported tutorials. The original OpenGL `Viewer` API is
+the behavioral reference. Keep common renderer/viewer/gui operations consistent
+across backends. The complete installed API is not guaranteed to be symbol
+identical: backend-specific low-level extensions must remain explicit and be
+guarded by `EASY3D_HAS_VULKAN`; constructor source compatibility is a tracked
+completion gate. Do not reintroduce `easy3d/graphics`.
 The host classes follow P1 (the `main` file names), superseding both the root-level
 `opengl_*`/`vulkan_*` files and the earlier relocation into backend directories.
 Device/pipeline/shader operations still belong in renderer backend implementations;
@@ -375,7 +392,62 @@ Tutorials 701–703 retain their original algorithm code without extra ownership
 configuration helpers. Match OpenGL materials, two-sided lighting/back colors,
 flat/smooth shading, background and canvas behavior.
 
-## Current status (2026-11-04)
+## Migration completion status
+
+**Last status update: 2026-11-09.** The agreed shared viewer and tutorial
+implementation is broadly present: `Viewer`, `MultiViewer`, and `OffScreen`,
+supported tutorials, FigureMaker, shared GUI pickers, selection, effects,
+transparency, and effect-aware snapshots have Vulkan counterparts. U1–U6 and
+the W10 scope decision are complete according to `ToDo.md`. Mapple remains an
+intentional OpenGL-only exception; Qt/wx viewer tutorials were removed by
+decision; Python remains scoped to the backend-neutral API. These are decisions,
+not outstanding migration ports.
+
+The migration is **not yet validated complete**:
+
+* The latest local Vulkan build compiled all tutorials and tests in an isolated
+  configuration with CGAL disabled. Its 138-test CTest run passed 136 tests.
+  `vulkan.input` failed with “Z-click did not approach picked surface”; its
+  isolated rerun failed again. `vulkan.window` failed with “sphere
+  presentation/capture is empty”; its isolated rerun failed with “snapshot
+  background option was ignored”. Fix or establish the correct runner/device
+  conditions for these regressions before treating them as flakes.
+* `vulkan.interactionoverlay` passed in that local run, but the prior Linux
+  baseline was 68/69 for a one-pixel selection-border expectation. Reproduce
+  that case on the target Linux/Mesa runner and record the disposition.
+* `cmake-build-debug` could not regenerate in this environment because its
+  configuration requires CGAL, which was unavailable. The isolated build
+  therefore disabled CGAL; it is not a substitute for the configured full
+  dependency matrix.
+* The tracker records Mac suite results from 2026-11-08 (OpenGL 105/105,
+  MoltenVK 139/139, OpenGL+Qt 104/104, Vulkan Debug 144/144); these are recorded
+  results, not a fresh run in this audit. Windows Vulkan hardware and
+  cross-platform package-consumer checks remain unverified.
+* The proposed Vulkan GitHub workflow is present in
+  `.github/uncompress_here.zip`, not at the active
+  `.github/workflows/vulkan.yml` path in this checkout. Archived workflow
+  content is not evidence of active CI.
+* The supported tutorial-facing API is intended to be shared, but the installed
+  API is not symbol-identical: some `Viewer` members are Vulkan-only. The
+  constructor order/default also changed, so some old positional calls can
+  compile with different meanings. Resolve the compatibility policy and verify
+  consumers as tracked in `ToDo.md`.
+
+The tracked Mac measurement of approximately 80 FPS for the native
+`largePoints` RealCamera path at 3200×1834, 4× MSAA, and zero validation errors
+does not profile the portable expanded-point fallback and is not a controlled
+OpenGL-versus-Vulkan comparison.
+
+The migration completion checklist is maintained in `ToDo.md`. It separates
+correctness and platform acceptance gates from follow-up maintainability and
+performance improvements. Do not treat the old U1–U6/W10 work-order snapshots
+below as current.
+
+## Historical implementation status (2026-11-04; superseded)
+
+The statements below record an intermediate build and API state. They are kept
+for implementation history only; their open-work labels are superseded by
+*Migration completion status* and the checkboxes in `ToDo.md`.
 
 - The remaining migration build breaks are cleared. The OpenGL-only
   (`build-opengl`), Vulkan-only (`build-ci-vulkan`) and migration
@@ -398,14 +470,17 @@ flat/smooth shading, background and canvas behavior.
   which follow the migration principles; the former steps 3, 5 and 6 are folded into
   them and the `viewer.h` aliases are not extended.
 
-## Implementation plan and remaining steps
+## Historical implementation plan and work order (2026-11-04; superseded)
 
-The following sequence is the work order. Temporary compatibility needed
-to keep intermediate builds usable must be removed by the runtime-dispatch cleanup
-step. Do not leave empty implementations or claim a class is supported because
-only its header compiles.
+The following sequence records an earlier work order. Its status labels and
+remaining-step descriptions are historical. See *Migration completion status*
+and `ToDo.md` for current tasks. Temporary compatibility needed for intermediate
+builds was to be removed by the runtime-dispatch cleanup step.
 
-### Current status and work order (revised 2026-11-04)
+### Historical status and work order (revised 2026-11-04; superseded)
+
+The in-progress labels in the table are an archival snapshot from that date;
+they do not describe the current migration state.
 
 Decisions in force:
 
@@ -1097,8 +1172,8 @@ cause.
 
 | Area | Current behavior |
 |---|---|
-| Backend | One backend per build (`Easy3D_ENABLE_VULKAN`, default ON). `Viewer`/`OffScreen` are currently aliases of that backend's classes (to be unified, U1–U2); `MultiViewer` exists only on OpenGL until `VulkanMultiViewer` is implemented. |
-| `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
+| Backend and common API | One backend per build (`Easy3D_ENABLE_VULKAN`, default ON). `Viewer`, `MultiViewer`, and `OffScreen` use the shared public classes in either build. The tutorial-facing common API is shared; some installed `Viewer` extensions are Vulkan-only, and the changed constructor order/default is a compatibility risk for old positional calls. |
+| `OffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | Coplanar mesh edges | Filled triangles are pushed away with the OpenGL polygon offset (`glPolygonOffset(0.5, -0.0001)`) whenever the same model draws visible lines, including MSAA color passes. Picking keeps unbiased surfaces, matching the OpenGL picker. |
 | `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable, then per triangle within each drawable; order-independent accumulation and depth peeling are implemented (Vulkan `TransparencyMethod::average`/`peeling`, batch 27) and validated on both backends at 1x/4x MSAA (2026-11-06). |
@@ -1108,58 +1183,51 @@ cause.
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, current/white/transparent background (default 0 = current viewer color, batch 29) and image saving work. A file snapshot runs the virtual `draw()` through one offscreen frame funnel in `Viewer::Impl` (a single private `snapshot_frame()` hook), so effects bracketed inside it (ambient occlusion, shadows, eye-dome lighting, a transparency method) are included, as in OpenGL (batch 28); the Viewer HUD is excluded from files on both backends (batch 29); `capture()` stays a raw scene frame and keeps the HUD per `snapshot_hud_`. No tiled oversized captures. OpenGL now matches the single-pass behavior: an in-limit snapshot renders into one whole-image offscreen FBO (with an explicit viewport), and window-sized tiling remains only as the fallback for images beyond the GL texture/renderbuffer limits, so ambient occlusion, eye-dome lighting and shadows stay continuous instead of seaming at tile borders (batch 30). |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
-| Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
+| Picking IDs | Raw captures retain model/standalone order and generated primitive indices. Shared viewer/offscreen pickers map supported visible hits to models, drawables, and original SurfaceMesh faces when provenance exists; GPU point-cloud rectangle/lasso through-selection is supported on both backends. General vertex/edge hit provenance and raw OpenGL primitive IDs are not universally available. |
 | Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. As in the OpenGL `surface.frag`, selection tints unlit draws but primitive ranges require lighting. |
 | Resource scheduling | Synchronous capture/uploads and one submitted frame at a time; presentation stays on the GPU with no CPU pixel readback. Per-image presentation semaphores; queue/device idle only at swapchain recreation and destruction. Multiple frames in flight and asynchronous capture are pending. |
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
 | Threading | Externally synchronize device calls and model edits. CPU snapshots do not make concurrent model/property mutation safe. |
-| Hosts/bindings | Native GLFW and ImGui viewers are implemented; the Qt and wxWidgets tutorials were removed (batch 42) as redundant with them; Python Vulkan integration remains pending. |
+| Hosts/bindings | Native GLFW and ImGui viewers are implemented. The Qt and wxWidgets viewer tutorials were removed (batch 42); Mapple remains OpenGL-only by decision. Python bindings deliberately expose the supported backend-neutral Viewer/MultiViewer/OffScreen and drawable/renderer surface; backend internals are outside their scope. |
 | Presentation requirements | One queue family supporting both graphics and presentation, transfer-destination surface images, RGBA/BGRA blit support, identity surface transform. Unsupported configurations fail explicitly. FIFO presentation. UNORM formats are preferred; an sRGB-only surface introduces format conversion. |
 
 The OpenGL sources and shaders remain in the tree and are built when
 `Easy3D_ENABLE_VULKAN=OFF`. The Vulkan build excludes the legacy renderer/GUI/viewer
 implementations, GLEW and ImGui; it includes GLFW for the window host. Both
-configurations share the CPU scene APIs. Retire obsolete implementation details only
-after their replacements pass application/feature tests.
+configurations share the supported CPU scene APIs and tutorial-facing viewer
+contract. The complete installed API is not symbol-identical: guard use of
+Vulkan-only viewer extensions with `EASY3D_HAS_VULKAN`.
 
 ## Validation and remaining migration
 
-> Results in this section were recorded before the dual, combined and headless
-> configurations were retired. They describe past runs, not the current build matrix.
+The tracker records Mac suite results after batch 44 (2026-11-08): OpenGL
+105/105, MoltenVK 139/139, OpenGL+Qt 104/104, and Vulkan Debug 144/144. These
+are recorded results, not a fresh run for this status update. The latest local
+Vulkan build on 2026-11-09 compiled successfully with tutorials and tests
+enabled, but CGAL disabled because it was unavailable. The 138-test CTest run
+passed 136; `vulkan.input` and `vulkan.window` failed, including on isolated
+reruns. Their failure messages and the unavailable CGAL dependency are recorded
+under *Migration completion status*.
 
-CI (`.github/workflows/vulkan.yml`) builds one Vulkan and one OpenGL matrix entry,
-validates SPIR-V, renders with lavapipe and synchronization validation without
-X/Wayland, and runs the native window tests under Xvfb, including resize, multiple
-devices/windows, callback failure containment and independent window lifetime.
-The legacy build workflows select OpenGL explicitly.
+The prior Linux `vulkan.interactionoverlay` baseline (68/69, one-pixel border
+expectation) remains to be reproduced on the intended Mesa/CI environment. Its
+passing result in the latest local run does not close the Linux-specific item.
+Portable expanded-point fallback profiling on MoltenVK without `largePoints`,
+Windows Vulkan hardware validation, and cross-platform package-consumer checks
+remain outstanding. There is no controlled, same-scene OpenGL-versus-Vulkan
+performance or image-comparison result yet.
 
-Local verification for this stage used Linux, GCC 14, Qt 6.8.2 and Mesa lavapipe:
-Vulkan-only and dual-backend rendering tests passed with Khronos validation and
-synchronization validation; the installed-package consumer rendered successfully;
-SPIR-V validation passed; native shared libraries had no GL/GLEW/Qt linkage or
-imported GL calls, and the headless configuration excluded GLFW. The enabled legacy tutorials, FigureMaker and Mapple
-compiled, and all 34 automated legacy test groups passed under Xvfb. This does not
-validate native macOS/Windows execution, interactive Qt behavior, or Python
-rendering on Vulkan. The new GitHub workflow is added but has not been run on
-GitHub as part of this local work.
+This checkout contains `.github/uncompress_here.zip` but no active
+`.github/workflows/vulkan.yml`; the archived workflow is not evidence of current
+CI. Restore the workflow under `.github/workflows/` before relying on automated
+platform coverage. Mapple is intentionally OpenGL-only, Qt/wx viewer tutorials
+were retired, and backend-internal Python bindings are outside the agreed scope.
 
-The native-window stage additionally passed headless and Xvfb presentation tests
-with synchronization validation, including live window-image inspection. Tutorial
-201 builds unchanged through the native Viewer alias. Installed-resource
-validation no longer requires legacy GL shaders in Vulkan-only packages.
-
-The MSAA stage verifies real partial edge coverage at four samples, unchanged
-center-sample IDs/depth for triangles/points/lines, sample-count changes and resize,
-transparent PNG edges, and window presentation. Expected negative tests no longer
-use the logging wrappers. Fresh-configure checks verify the new four defaults.
-The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
-
-Next gates are the work items above, then native Qt/wx surface/frame adapters,
-ID mapping/pickers, oversized capture, effects/transparency, all applications and
-Python integration, then hardware validation and packaging on macOS/Windows/Linux.
-The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF` configuration;
-there is no automatic fallback between backends. The defaults select Vulkan for development.
+The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF`
+configuration. There is no automatic fallback between backends. See
+`ToDo.md` for the checkable migration completion gates and separate
+maintainability/performance follow-ups.
 
 ## Portable points, spheres and surfels
 
