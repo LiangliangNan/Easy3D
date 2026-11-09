@@ -1623,8 +1623,16 @@ namespace easy3d {
         if ((in >> extra) || !std::isfinite(norm) || norm < 1e-12f)
             return;
         q.normalize();
-        camera()->setPosition(p);
-        camera()->setOrientation(q);
+        // change view directly
+        // camera()->setPosition(p);
+        // camera()->setOrientation(q);
+        // I prefer to make animation
+        Frame new_frame;
+        new_frame.setPosition(p);
+        new_frame.setOrientation(q);
+        const float duration = 0.5f;
+        camera()->interpolateTo(&new_frame, duration);
+
         update();
     }
     bool Viewer::open() {
