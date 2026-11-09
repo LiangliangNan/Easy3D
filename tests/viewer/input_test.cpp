@@ -9,9 +9,11 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 using namespace easy3d;
 void require(bool ok,const char* message) { if (!ok) throw std::runtime_error(message); }
 bool same_orientation(const quat& a,const quat& b) {
@@ -65,7 +67,18 @@ int main(int argc,char**) {
         v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         const auto before_focus=v.camera()->position(); press(InputViewer::KEY_Z);
         v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,0);
-        require((v.camera()->position()-picked).norm()<(before_focus-picked).norm(),"Z-click did not approach picked surface");
+        const auto expected_focus=0.1f*before_focus+0.9f*picked;
+        const auto animation_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+        bool approached=false;
+        while ((v.camera()->position()-expected_focus).norm()>=1e-5f &&
+               std::chrono::steady_clock::now()<animation_deadline) {
+            approached=approached ||
+                       (v.camera()->position()-picked).norm()<(before_focus-picked).norm();
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            v.draw_frame();
+        }
+        require(approached,"Z-click did not approach picked surface");
+        require((v.camera()->position()-expected_focus).norm()<1e-5f,"Z-click camera animation did not reach its target");
         v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,0); release(InputViewer::KEY_Z); v.fit_screen();
         auto* renderer=first->renderer();
         auto* faces=renderer->get_triangles_drawable("faces");

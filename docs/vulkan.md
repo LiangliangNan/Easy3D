@@ -8,12 +8,16 @@ implemented for both configured backends. Mapple is intentionally OpenGL-only;
 the Qt/wx viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
-**Status audited 2026-11-09:** core feature implementation for the agreed shared
-surface is substantially complete. Migration completion is gated on resolving
-current Vulkan input/window regressions, confirming Linux behavior, restoring
-active CI and recording Linux/Windows/package evidence, and measuring the
-unprofiled portable point fallback. The recent local Vulkan run passed 136/138
-tests; `vulkan.input` and `vulkan.window` failed reproducibly on isolated reruns.
+**Status after local Z-click transition cleanup:** core feature implementation
+for the agreed shared surface is substantially complete. Viewer-triggered focus
+and fit use the existing `Camera::interpolateToLookAt()` and
+`Camera::interpolateToFitScene()` APIs on both backends; the Viewer does not
+maintain a second interpolator for these actions. The updated
+validation-enabled `vulkan.input` test checks that focus animation progresses
+and reaches its target. Earlier local Vulkan and OpenGL full-suite results are
+recorded below; they predate this cleanup. Migration completion remains gated
+on Linux and Windows evidence, running the restored CI workflow,
+package-consumer checks, and measuring the unprofiled portable point fallback.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -394,7 +398,7 @@ flat/smooth shading, background and canvas behavior.
 
 ## Migration completion status
 
-**Last status update: 2026-11-09.** The agreed shared viewer and tutorial
+**Status update: local Z-click transition fix.** The agreed shared viewer and tutorial
 implementation is broadly present: `Viewer`, `MultiViewer`, and `OffScreen`,
 supported tutorials, FigureMaker, shared GUI pickers, selection, effects,
 transparency, and effect-aware snapshots have Vulkan counterparts. U1–U6 and
@@ -405,28 +409,31 @@ not outstanding migration ports.
 
 The migration is **not yet validated complete**:
 
-* The latest local Vulkan build compiled all tutorials and tests in an isolated
-  configuration with CGAL disabled. Its 138-test CTest run passed 136 tests.
-  `vulkan.input` failed with “Z-click did not approach picked surface”; its
-  isolated rerun failed again. `vulkan.window` failed with “sphere
-  presentation/capture is empty”; its isolated rerun failed with “snapshot
-  background option was ignored”. Fix or establish the correct runner/device
-  conditions for these regressions before treating them as flakes.
+* On the local working tree based on `563d35ec`, the configured
+  `cmake-build-debug` Vulkan build completed and the full 144-test CTest run
+  passed. That run included the earlier frame-driven Z-click transition
+  implementation. After the current cleanup restored the existing Camera
+  interpolation APIs, the rebuilt validation-enabled `vulkan.input` test
+  passed (1/1), checking progress and arrival at the target. `vulkan.window`
+  also passed in the full run and five consecutive repeat runs.
+* A fresh OpenGL Debug configuration (`Easy3D_ENABLE_VULKAN=OFF`,
+  `Easy3D_BUILD_TESTS=ON`, optional Python/CGAL/Qt/ffmpeg dependencies off)
+  built successfully and passed all 104 CTests, including retained tutorial
+  smoke tests and `opengl.viewerloop`.
 * `vulkan.interactionoverlay` passed in that local run, but the prior Linux
   baseline was 68/69 for a one-pixel selection-border expectation. Reproduce
   that case on the target Linux/Mesa runner and record the disposition.
-* `cmake-build-debug` could not regenerate in this environment because its
-  configuration requires CGAL, which was unavailable. The isolated build
-  therefore disabled CGAL; it is not a substitute for the configured full
-  dependency matrix.
+* The successful local run used the existing `cmake-build-debug` cache
+  (Vulkan, CGAL, and Python bindings enabled); it was not a clean configure.
+  Clean dependency-matrix builds and other platform configurations remain
+  separate validation gates.
 * The tracker records Mac suite results from 2026-11-08 (OpenGL 105/105,
   MoltenVK 139/139, OpenGL+Qt 104/104, Vulkan Debug 144/144); these are recorded
   results, not a fresh run in this audit. Windows Vulkan hardware and
   cross-platform package-consumer checks remain unverified.
-* The proposed Vulkan GitHub workflow is present in
-  `.github/uncompress_here.zip`, not at the active
-  `.github/workflows/vulkan.yml` path in this checkout. Archived workflow
-  content is not evidence of active CI.
+* The archived Vulkan/OpenGL GitHub workflow has been restored to
+  `.github/workflows/vulkan.yml`. It has not yet run on GitHub, so automated
+  Linux/Mesa coverage and installed-package consumer results remain unverified.
 * The supported tutorial-facing API is intended to be shared, but the installed
   API is not symbol-identical: some `Viewer` members are Vulkan-only. The
   constructor order/default also changed, so some old positional calls can
@@ -1203,12 +1210,12 @@ Vulkan-only viewer extensions with `EASY3D_HAS_VULKAN`.
 
 The tracker records Mac suite results after batch 44 (2026-11-08): OpenGL
 105/105, MoltenVK 139/139, OpenGL+Qt 104/104, and Vulkan Debug 144/144. These
-are recorded results, not a fresh run for this status update. The latest local
-Vulkan build on 2026-11-09 compiled successfully with tutorials and tests
-enabled, but CGAL disabled because it was unavailable. The 138-test CTest run
-passed 136; `vulkan.input` and `vulkan.window` failed, including on isolated
-reruns. Their failure messages and the unavailable CGAL dependency are recorded
-under *Migration completion status*.
+are recorded historical results. In the local working tree based on
+`563d35ec`, the configured Vulkan Debug build completed and the full 144-test
+CTest run passed. After simplifying the Z-click implementation, the rebuilt
+validation-enabled `vulkan.input` test passed (1/1) and verified that the camera
+reaches its target using the existing Camera interpolation API. `vulkan.window`
+also passed in the earlier full run and five consecutive repeats.
 
 The prior Linux `vulkan.interactionoverlay` baseline (68/69, one-pixel border
 expectation) remains to be reproduced on the intended Mesa/CI environment. Its
@@ -1218,11 +1225,11 @@ Windows Vulkan hardware validation, and cross-platform package-consumer checks
 remain outstanding. There is no controlled, same-scene OpenGL-versus-Vulkan
 performance or image-comparison result yet.
 
-This checkout contains `.github/uncompress_here.zip` but no active
-`.github/workflows/vulkan.yml`; the archived workflow is not evidence of current
-CI. Restore the workflow under `.github/workflows/` before relying on automated
-platform coverage. Mapple is intentionally OpenGL-only, Qt/wx viewer tutorials
-were retired, and backend-internal Python bindings are outside the agreed scope.
+The archived Vulkan/OpenGL workflow is restored at
+`.github/workflows/vulkan.yml`; it still needs to run successfully on GitHub
+before its Linux/Mesa coverage can count as validation. Mapple is intentionally
+OpenGL-only, Qt/wx viewer tutorials were retired, and backend-internal Python
+bindings are outside the agreed scope.
 
 The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF`
 configuration. There is no automatic fallback between backends. See

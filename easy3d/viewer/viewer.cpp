@@ -1335,9 +1335,9 @@ namespace easy3d {
                     pivot_expires_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
                 }
                 if (found && pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation
+#if 1 // with animation  Do NOT delete!!!
                     camera()->interpolateToLookAt(point);
-#else               // without animation
+#else // without animation  Do NOT delete!!!
                     // Apply the legacy zoom target directly on the UI thread.
                     camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
                     camera()->lookAt(point);
@@ -1347,9 +1347,9 @@ namespace easy3d {
                 camera()->setPivotPoint(camera()->sceneCenter());
                 show_pivot_point_ = false;
                 if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation
+#if 1 // with animation  Do NOT delete!!!
                     camera()->interpolateToFitScene();
-#else // without animation
+#else // without animation  Do NOT delete!!!
                     camera()->showEntireScene();
 #endif
                 }
@@ -2396,9 +2396,9 @@ namespace easy3d {
         if (pressed_key_ == GLFW_KEY_Z || modifiers == GLFW_MOD_SHIFT) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
                 bool found = false;
-                const vec3 &p = point_under_pixel(x, y, found);
+                const vec3 &point = point_under_pixel(x, y, found);
                 if (found) {
-                    camera_->setPivotPoint(p);
+                    camera_->setPivotPoint(point);
                     // We draw the pivot mark in the screen space.
                     // A 3D version is implemented in Tutorial_204_Viewer_Qt
                     if (!drawable_pivot_)
@@ -2417,14 +2417,12 @@ namespace easy3d {
                     });
 
                     if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation
-                        camera()->interpolateToLookAt(p);
-#else // without animation
-                        const float coef = 0.1f;
-                        const vec3 &pos = coef * camera()->frame()->position() + (1.0f - coef) * p;
-                        const quat &ori = camera()->frame()->orientation();
-                        camera_->frame()->setPositionAndOrientation(pos, ori);
-                        camera_->lookAt(p);
+#if 1 // with animation  Do NOT delete!!!
+                        camera()->interpolateToLookAt(point);
+#else // without animation  Do NOT delete!!!
+                        // Apply the legacy zoom target directly on the UI thread.
+                        camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
+                        camera()->lookAt(point);
 #endif
                     }
                 } else {
@@ -2435,9 +2433,9 @@ namespace easy3d {
                 camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
                 if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation
+#if 1 // with animation  Do NOT delete!!!
                     camera()->interpolateToFitScene();
-#else // without animation
+#else // without animation  Do NOT delete!!!
                     camera()->showEntireScene();
 #endif
                 }
