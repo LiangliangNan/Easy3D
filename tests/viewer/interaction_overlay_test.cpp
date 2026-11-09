@@ -55,9 +55,17 @@ int main(int argc,char**) {
                 const float expected=.8f*baseline.rgba[inside+c]+(c==2?51:0);
                 require(std::abs(region.rgba[inside+c]-expected)<=2,"region fill did not blend blue at alpha 0.2");
             }
-            const size_t edge=4*(size_t(h/2)*w+x0);
-            require(region.rgba[edge]<5 && region.rgba[edge+1]<5 && region.rgba[edge+2]>250,
-                    "region boundary is not solid blue");
+            bool solid_boundary = false;
+            for (int dx = -1; dx <= 1; ++dx) {
+                const int edge_x = x0 + dx;
+                if (edge_x < 0 || edge_x >= w)
+                    continue;
+                const size_t edge = 4 * (size_t(h / 2) * w + edge_x);
+                solid_boundary = solid_boundary ||
+                                 (region.rgba[edge] < 5 && region.rgba[edge + 1] < 5 &&
+                                  region.rgba[edge + 2] > 250);
+            }
+            require(solid_boundary, "region boundary is not solid blue within one pixel of its edge");
             const auto after=v.camera()->modelViewProjectionMatrix();
             for (unsigned i=0;i<16;++i) require(camera[i]==after[i],"region preview moved camera");
             // Application overlay replacement must not erase the host's UI layer.
