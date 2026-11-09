@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/point_cloud.h>
@@ -36,46 +36,76 @@
 /**
  * \example{lineno} Tutorial_704_Cloud_DownSampling/main.cpp
  *
- * This example shows how to downsample (simplify) a point cloud using the
- * PointCloudSimplification class. Two strategies are demonstrated:
- *      - uniform simplification to a target number of points;
- *      - grid simplification, which keeps one representative point per cell of a
- *        regular grid whose cell size is derived from the average point spacing.
+ * \brief Reducing a point cloud's size (downsampling) with two complementary strategies.
  *
- * The simplification functions return the vertices to remove. We delete them,
- * collect the garbage, and call renderer()->update() so the rendering buffers are
- * re-extracted from the reduced cloud.
+ * <b>Overview</b>
+ * This interactive tutorial loads the fountain point cloud and offers two keyboard-triggered
+ * simplification steps: uniform downsampling to a target point count (Ctrl+U) and grid-based
+ * downsampling (Ctrl+G). Both shrink the cloud in place and refresh the rendering so the effect is
+ * immediately visible. Downsampling is a common preprocessing step to tame the massive clouds
+ * produced by LiDAR and photogrammetry.
+ *
+ * <b>The technique</b>
+ * The goal is to keep far fewer points while preserving the overall shape. Uniform simplification
+ * targets an explicit point count and removes points so the survivors stay roughly evenly spaced
+ * (it can also serve to drop near-duplicate points). Grid simplification instead overlays a regular
+ * 3D grid on the cloud's bounding box and keeps a single representative point per occupied cell —
+ * very fast, but the representative is chosen arbitrarily, so the result is non-uniform. A good cell
+ * size is tied to the data: here it is twice the average nearest-neighbor spacing, reported by
+ * average_space(). Both algorithms return the set of vertices to remove; the caller then deletes
+ * them, calls collect_garbage() to compact the storage, and updates the renderer so the GPU buffers
+ * are re-extracted from the reduced cloud.
+ *
+ * <b>Easy3D API</b>
+ * - PointCloudSimplification::uniform_simplification(cloud, num): returns vertices to delete to
+ *   reach the target count num. ::grid_simplification(cloud, cell_size): one survivor per grid cell.
+ *   ::average_space(cloud): estimates the mean point spacing used to size the grid.
+ * - PointCloud::delete_vertex(v) / collect_garbage(): remove points and compact the data structure.
+ * - Renderer::update(): re-extract rendering buffers after the cloud changes.
+ * - Viewer::bind(...): registers the two callbacks on Ctrl+U and Ctrl+G.
+ *
+ * <b>Running it</b>
+ * Press Ctrl+U to uniformly downsample to half the current points (never fewer than 100), or
+ * Ctrl+G for grid downsampling with cell size = 2 x average spacing. The console reports how many
+ * points were removed and how many remain after each step.
+ *
+ * \see PointCloudSimplification, PointCloud, Renderer
  */
 
 using namespace easy3d;
 
-
 namespace {
 
+    // Shared helper: delete the vertices the algorithm flagged, compact the cloud, and refresh
+    // the rendering buffers so the reduced cloud is what gets drawn.
     void remove_points(PointCloud *cloud, const std::vector<PointCloud::Vertex> &to_remove) {
         const auto old_num = cloud->n_vertices();
-        for (auto v: to_remove)
-            cloud->delete_vertex(v);
-        cloud->collect_garbage();
-        std::cout << old_num - cloud->n_vertices() << " points removed, "
-                  << cloud->n_vertices() << " points remain" << std::endl;
-        cloud->renderer()->update();
+        for (auto v : to_remove)
+            cloud->delete_vertex(v); // marks a vertex deleted (does not compact yet)
+        cloud->collect_garbage();    // actually removes deleted vertices and renumbers handles
+        std::cout << old_num - cloud->n_vertices() << " points removed, " << cloud->n_vertices() << " points remain"
+                  << std::endl;
+        cloud->renderer()->update(); // re-extract GPU buffers from the now-smaller cloud
     }
 
+    // Callback for Ctrl+U: uniformly reduce the cloud to half its current size (min 100 points).
     bool uniform_downsample(Viewer *viewer, Model *model) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (!cloud)
             return false;
+        // Target count: half the points, but never below 100 so the cloud stays visible.
         const auto target = std::max(100u, cloud->n_vertices() / 2);
         remove_points(cloud, PointCloudSimplification::uniform_simplification(cloud, target));
         viewer->update();
         return true;
     }
 
+    // Callback for Ctrl+G: keep one representative point per cell of a regular grid.
     bool grid_downsample(Viewer *viewer, Model *model) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (!cloud)
             return false;
+        // Size the grid from the data: cell = 2 x the average nearest-neighbor spacing.
         const float spacing = PointCloudSimplification::average_space(cloud);
         remove_points(cloud, PointCloudSimplification::grid_simplification(cloud, spacing * 2.0f));
         viewer->update();
@@ -84,12 +114,13 @@ namespace {
 
 } // namespace
 
-
 int main(int argc, char **argv) {
+    // Bootstrap Easy3D (logging, resource directory, ...). Must come first.
     initialize();
 
     const std::string file = resource::directory() + "/data/fountain/pointcloud.ply";
 
+    // Create the viewer and load the fountain cloud; downcast the generic Model to PointCloud.
     Viewer viewer(EXAMPLE_TITLE);
     auto cloud = dynamic_cast<PointCloud *>(viewer.add_model(file, true));
     if (!cloud) {
@@ -97,18 +128,22 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // to view the scene from its front
+    // Orient the camera to view the scene from its front.
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
     auto drawable = cloud->renderer()->get_points_drawable("vertices");
     drawable->set_point_size(3.0f);
 
+    // Register the two strategies on Ctrl+U and Ctrl+G. The lambdas adapt the (Viewer*, Model*)
+    // callback signature expected by bind() to our helper functions.
     viewer.bind([](Viewer *v, Model *m) { return uniform_downsample(v, m); }, cloud, Viewer::KEY_U, Viewer::MODIF_CTRL);
     viewer.bind([](Viewer *v, Model *m) { return grid_downsample(v, m); }, cloud, Viewer::KEY_G, Viewer::MODIF_CTRL);
-    viewer.set_usage("default",
-                     "Ctrl + u: uniform downsampling to half of the current points\n"
-                     "Ctrl + g: grid downsampling (cell size = 2 x average spacing)");
+    // Show the shortcuts in the on-screen help overlay.
+    viewer.set_usage(
+        "default",
+        "Ctrl + u: uniform downsampling to half of the current points\n" "Ctrl + g: grid downsampling (cell size = 2 x average spacing)");
 
+    // Enter the event loop; returns when the window is closed.
     return viewer.run();
 }
