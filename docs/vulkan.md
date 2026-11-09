@@ -1257,8 +1257,11 @@ compatibility hazard: the old OpenGL positional overloads can compile while
 silently changing the requested window size, sample count, or other settings.
 Replace old positional calls with the D1 order
 `Viewer(title, width, height, samples, full_screen, visible, resizable, options)`.
-The default sample count is now one. `OpenGLOptions` and `VulkanOptions` are
-available only in their respective configured builds.
+The default sample count is now one. Both Viewer constructors emit a warning
+when both requested dimensions are at most 16 pixels, as this may indicate that
+old OpenGL context-version arguments were supplied positionally. This is only
+an advisory heuristic and does not reject tiny windows. `OpenGLOptions` and
+`VulkanOptions` are available only in their respective configured builds.
 
 The following `Viewer` extensions are Vulkan-only, guarded by
 `EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,

@@ -264,6 +264,9 @@ are `int`, `samples` defaults to 1), where the last parameter is `OpenGLOptions`
 `VulkanOptions`; this differs from the older OpenGL-only argument order. Old positional calls may
 still compile with different meanings: for example, `Viewer(title, 4, 3, 2, false, false)` now
 requests a 4x3 window with 2 samples, not 4 samples with OpenGL 3.2. Update such calls explicitly.
+The constructor warns when both requested dimensions are at most 16 pixels, since these may be
+legacy OpenGL context-version arguments; this heuristic is advisory and does not prevent creating
+an intentionally tiny window.
 The common Viewer, MultiViewer, and OffScreen APIs are implemented on both backends, with some
 documented Vulkan-only extensions; cross-platform migration validation remains in progress. A
 Vulkan SDK is required only for

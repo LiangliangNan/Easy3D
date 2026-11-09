@@ -921,6 +921,10 @@ namespace easy3d {
                    bool resizable,
                    const VulkanOptions &vk_options)
         : Viewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {
+        if (width <= 16 && height <= 16)
+            LOG(WARNING) << "Viewer dimensions " << width << "x" << height
+                         << " are unusually small and may be legacy OpenGL context-version arguments; "
+                            "use Viewer(title, width, height, samples, full_screen, visible, resizable, options)";
     }
     Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions &options)
         : window_(host->handle), width_(host->width), height_(host->height), title_(host->title), camera_(new Camera),
@@ -928,6 +932,10 @@ namespace easy3d {
           show_camera_path_(false), show_easy3d_logo_(true), model_idx_(-1), window_host_(std::move(host)),
           impl_(new Impl(*this)) {
         try {
+            // Initialize logging (if it has not been initialized yet)
+            if (!logging::is_initialized())
+                logging::initialize(false, true, true, false, "default", 9);
+
             impl_->device = window_host_->device(options);
             manual_ = default_manual;
             kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
@@ -1823,6 +1831,11 @@ namespace easy3d {
         // Initialize logging (if it has not been initialized yet)
         if (!logging::is_initialized())
             logging::initialize(false, true, true, false, "default", 9);
+
+        if (width <= 16 && height <= 16)
+            LOG(WARNING) << "Viewer dimensions " << width << "x" << height
+                         << " are unusually small and may be legacy OpenGL context-version arguments; "
+                            "use Viewer(title, width, height, samples, full_screen, visible, resizable, options)";
 
         // create and setup window
         window_ = create_window(title, int(samples), gl_options.major, gl_options.minor, full_screen, resizable,
