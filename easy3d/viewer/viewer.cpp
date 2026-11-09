@@ -268,6 +268,13 @@ namespace easy3d {
         return model.get();
     }
     Model *Viewer::add_model(const std::string &filename, bool create) {
+        const std::string file_name = file_system::convert_to_native_style(filename);
+        for (auto m : models_) {
+            if (m->name() == file_name) {
+                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
+                return m.get();
+            }
+        }
         const auto ext = file_system::extension(filename, true);
         std::shared_ptr<Model> model;
         if (ext == "ply" && io::PlyReader::num_instances(filename, "face") > 0)
