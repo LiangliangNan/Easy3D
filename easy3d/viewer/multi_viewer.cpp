@@ -69,8 +69,10 @@ ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
 #ifdef EASY3D_HAS_VULKAN
 void configure_cell(Camera& cell,const Camera& source,int width,int height,float aspect) {
     cell.setScreenWidthAndHeight(width,height);
-    mat4 projection=source.projectionMatrix();projection(0,0)*=aspect/(float(width)/height);
-    cell.set_projection_matrix(projection);cell.set_modelview_matrix(source.modelViewMatrix());
+    mat4 projection=source.projectionMatrix();
+    projection(0,0)*=aspect/(float(width)/height);
+    cell.set_projection_matrix(projection);
+    cell.set_modelview_matrix(source.modelViewMatrix());
 }
 #endif
 

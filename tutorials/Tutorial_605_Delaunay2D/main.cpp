@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
@@ -38,16 +38,42 @@
 /**
  * \example{lineno} Tutorial_605_Delaunay2D/main.cpp
  *
- * This example shows how to compute the 2D Delaunay triangulation of a set of 2D points
- * using the Delaunay2 class of Easy3D, and how to visualize the resulting triangulation.
+ * \brief Computing and visualizing the 2D Delaunay triangulation of a point set with Delaunay2.
  *
- * The input is a set of 2D points. Delaunay2 computes the triangulation; we then read back
- * the vertices (vertex()) and triangles (tri_vertex()) and store them in a SurfaceMesh for
- * rendering.
+ * <b>Overview</b>
+ * This tutorial scatters 80 random 2D points, computes their Delaunay triangulation with Delaunay2,
+ * and reads the result back into a SurfaceMesh for display. It is the canonical example of turning an
+ * unstructured point set into a well-shaped triangle mesh — a building block for terrain modeling,
+ * mesh generation, and spatial interpolation.
+ *
+ * <b>The technique</b>
+ * A Delaunay triangulation of a point set is a triangulation such that no input point lies inside the
+ * circumcircle of any triangle (the "empty circumcircle" property). Among all possible triangulations
+ * of the same points, the Delaunay triangulation maximizes the minimum angle, so it avoids skinny
+ * "sliver" triangles and produces the most equilateral, numerically well-behaved mesh. It is also the
+ * geometric dual of the Voronoi diagram: two points are connected by a Delaunay edge exactly when their
+ * Voronoi cells share a boundary. The triangulation covers the convex hull of the point set, which is
+ * why the outer border of the result is the convex hull. Easy3D's Delaunay2 wraps Jonathan Richard
+ * Shewchuk's robust "Triangle" implementation.
+ * References: B. Delaunay, "Sur la sphere vide", 1934; J. R. Shewchuk, "Triangle: Engineering a 2D
+ * Quality Mesh Generator and Delaunay Triangulator", 1996.
+ *
+ * <b>Easy3D API</b>
+ * - Delaunay2: set_vertices() computes the triangulation; nb_vertices()/vertex(i) read back the points;
+ *   nb_triangles()/tri_vertex(t, lv) read back each triangle's three vertex indices.
+ * - SurfaceMesh: stores the vertices (lifted to z = 0) and triangles for rendering.
+ * - Viewer, PointsDrawable, LinesDrawable: show the points, the triangulation edges, and the convex-hull
+ *   border.
+ *
+ * <b>Running it</b>
+ * A window opens showing the 80 points (as spheres) connected by the Delaunay edges, with the convex hull
+ * highlighted as the border. The camera looks almost straight down (with a slight tilt) so the flat
+ * triangulation is easy to read. The random sample is seeded, so the result is reproducible.
+ *
+ * \see Delaunay2, SurfaceMesh, Viewer, Tutorial_601_Tessellator
  */
 
 using namespace easy3d;
-
 
 std::shared_ptr<SurfaceMesh> create_delaunay_mesh() {
     // A set of 2D points (a deterministic random sample so the result is reproducible).
@@ -69,15 +95,12 @@ std::shared_ptr<SurfaceMesh> create_delaunay_mesh() {
         mesh->add_vertex(vec3(p, 0.0));
     }
     for (unsigned int t = 0; t < delaunay.nb_triangles(); ++t) {
-        mesh->add_triangle(
-                SurfaceMesh::Vertex(delaunay.tri_vertex(t, 0)),
-                SurfaceMesh::Vertex(delaunay.tri_vertex(t, 1)),
-                SurfaceMesh::Vertex(delaunay.tri_vertex(t, 2))
-        );
+        mesh->add_triangle(SurfaceMesh::Vertex(delaunay.tri_vertex(t, 0)),
+                           SurfaceMesh::Vertex(delaunay.tri_vertex(t, 1)),
+                           SurfaceMesh::Vertex(delaunay.tri_vertex(t, 2)));
     }
     return mesh;
 }
-
 
 int main(int argc, char **argv) {
     initialize();
@@ -87,7 +110,8 @@ int main(int argc, char **argv) {
     viewer.camera()->setViewDirection(vec3(0.2, 0.2, -1));
 
     auto mesh = create_delaunay_mesh();
-    if (!mesh || mesh->empty()) return EXIT_FAILURE;
+    if (!mesh || mesh->empty())
+        return EXIT_FAILURE;
     viewer.add_model(mesh, true);
 
     // show the vertices

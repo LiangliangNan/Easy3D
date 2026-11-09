@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,10 +22,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #include "viewer.h"
-
 
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
@@ -33,7 +32,7 @@
 #include <easy3d/renderer/camera.h>
 
 #define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
+#include <3rd_party/glfw/include/GLFW/glfw3.h> // for glfw functions
 
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
@@ -42,207 +41,237 @@
 #include <cmath>
 #include <stdexcept>
 
-
 namespace easy3d {
 
-	// \cond
+    // \cond
 
-
-    ViewerImGui::ViewerImGui(
-        const std::string& title,
-        int width,
-        int height,
-        int samples,
-        bool full_screen,
-        bool visible,
-        bool resizable,
+    // Forward all window/backend settings to the base Viewer; the GUI itself is set up later
+    // in init(), once the window and rendering context exist.
+    ViewerImGui::ViewerImGui(const std::string &title,
+                             int width,
+                             int height,
+                             int samples,
+                             bool full_screen,
+                             bool visible,
+                             bool resizable,
 #ifdef EASY3D_HAS_VULKAN
-        const VulkanOptions& options
+                             const VulkanOptions &options
 #else
-        const OpenGLOptions& options
+                             const OpenGLOptions &options
 #endif
-    ) : Viewer(title, width, height, samples, full_screen, visible, resizable, options)
-	{
+                             )
+        : Viewer(title, width, height, samples, full_screen, visible, resizable, options) {
 #if defined(_WIN32) && defined(_MSC_VER)
-		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)
+        // Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)
         // see https://github.com/LiangliangNan/Easy3D/issues/178
-		glfwInit();
+        glfwInit();
 #endif
-	}
-
+    }
 
     ViewerImGui::~ViewerImGui() {
-        if (!context_) return;
+        if (!context_)
+            return;
+        // Tear down ImGui in reverse order of setup: detach input callbacks, shut down the
+        // GLFW backend, then destroy the context. The base Viewer handles the rest.
         set_callbacks({});
         ImGui::SetCurrentContext(context_);
-        if (ImGui::GetIO().BackendPlatformUserData) ImGui_ImplGlfw_Shutdown();
+        if (ImGui::GetIO().BackendPlatformUserData)
+            ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext(context_);
 
         // Not needed: it will be called in the destructor of the base class
         //Viewer::cleanup();
     }
 
-
+    // One-time GUI setup, called by the viewer after the window/context are ready.
     void ViewerImGui::init() {
         Viewer::init();
 
-		if (!context_) {
-			// Setup ImGui binding
-			IMGUI_CHECKVERSION();
+        if (!context_) {
+            // Setup ImGui binding
+            IMGUI_CHECKVERSION();
 
-			context_ = ImGui::CreateContext();
+            // Each viewer owns a separate ImGui context (ImGui is otherwise global-state based).
+            context_ = ImGui::CreateContext();
 
+            // Bind ImGui to GLFW for input/time; "InitForOther" leaves rendering to Easy3D.
             if (!ImGui_ImplGlfw_InitForOther(window(), true))
                 throw std::runtime_error("could not initialize ImGui GLFW backend");
             ImGui::GetIO().BackendRendererName = "Easy3D annotations";
             ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
+            // Route input through ImGui first: if ImGui wants the mouse/keyboard (e.g. a menu
+            // or popup is open), the callbacks return true so the viewer does NOT also act on it.
             ViewerCallbacks inputs;
-            const auto mouse = [this]() { ImGui::SetCurrentContext(context_); return ImGui::GetIO().WantCaptureMouse; };
-            const auto keyboard = [this]() { ImGui::SetCurrentContext(context_); return ImGui::GetIO().WantCaptureKeyboard || ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopup); };
-            inputs.mouse_press_event = [mouse](ViewerBase*,int,int,int,int) { return mouse(); };
+            const auto mouse = [this]() {
+                ImGui::SetCurrentContext(context_);
+                return ImGui::GetIO().WantCaptureMouse;
+            };
+            const auto keyboard = [this]() {
+                ImGui::SetCurrentContext(context_);
+                return ImGui::GetIO().WantCaptureKeyboard || ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+            };
+            inputs.mouse_press_event = [mouse](ViewerBase *, int, int, int, int) { return mouse(); };
             inputs.mouse_release_event = inputs.mouse_press_event;
-            inputs.mouse_drag_event = [mouse](ViewerBase*,int,int,int,int,int,int) { return mouse(); };
-            inputs.mouse_free_move_event = [mouse](ViewerBase*,int,int,int,int,int) { return mouse(); };
-            inputs.mouse_scroll_event = [mouse](ViewerBase*,int,int,int,int) { return mouse(); };
-            inputs.key_press_event = [keyboard](ViewerBase*,int,int) { return keyboard(); };
+            inputs.mouse_drag_event = [mouse](ViewerBase *, int, int, int, int, int, int) { return mouse(); };
+            inputs.mouse_free_move_event = [mouse](ViewerBase *, int, int, int, int, int) { return mouse(); };
+            inputs.mouse_scroll_event = [mouse](ViewerBase *, int, int, int, int) { return mouse(); };
+            inputs.key_press_event = [keyboard](ViewerBase *, int, int) { return keyboard(); };
             inputs.key_release_event = inputs.key_press_event;
-            inputs.char_input_event = [keyboard](ViewerBase*,unsigned) { return keyboard(); };
+            inputs.char_input_event = [keyboard](ViewerBase *, unsigned) { return keyboard(); };
             set_callbacks(std::move(inputs));
-			ImGuiIO& io = ImGui::GetIO();
+            ImGuiIO &io = ImGui::GetIO();
             io.WantCaptureKeyboard = true;
             io.WantTextInput = true;
-            io.IniFilename = nullptr;
-			ImGui::StyleColorsLight();
-			ImGuiStyle& style = ImGui::GetStyle();
-			style.FrameRounding = 5.0f;
+            io.IniFilename = nullptr; // do not persist window layout to an .ini file
+            ImGui::StyleColorsLight();
+            ImGuiStyle &style = ImGui::GetStyle();
+            style.FrameRounding = 5.0f;
 
-			// load font
-			reload_font();
-		}
-	}
-
-
-    float ViewerImGui::pixel_ratio() {
-        // Computes pixel ratio for hidpi devices
-		int fw = framebuffer_width();
-		int vw = width();
-		return static_cast<float>(fw) / static_cast<float>(vw);
+            // load font
+            reload_font();
+        }
     }
 
+    // Framebuffer pixels per window pixel; >1 on high-DPI (e.g. Retina) displays.
+    float ViewerImGui::pixel_ratio() {
+        // Computes pixel ratio for hidpi devices
+        int fw = framebuffer_width();
+        int vw = width();
+        return static_cast<float>(fw) / static_cast<float>(vw);
+    }
 
-    void ViewerImGui::reload_font(int font_size)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->Clear();
-        io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, static_cast<float>(font_size) * dpi_scaling());
-		io.FontGlobalScale = 1.0f / pixel_ratio();
-        unsigned char* pixels; int w, h;
+    // Rebuilds the font atlas at the current DPI and uploads it as an Easy3D image so the
+    // overlay renderer can sample it. Called at init and whenever the pixel ratio changes.
+    void ViewerImGui::reload_font(int font_size) {
+        ImGuiIO &io = ImGui::GetIO();
+        io.Fonts->Clear();
+        io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size,
+                                                 static_cast<float>(font_size) * dpi_scaling());
+        io.FontGlobalScale = 1.0f / pixel_ratio();
+        // Rasterize the glyphs into an RGBA bitmap...
+        unsigned char *pixels;
+        int w, h;
         io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
-        graphics::Sampler sampler; sampler.filter = graphics::TextureFilter::linear;
-        font_image_ = std::make_shared<graphics::Image>(w, h,
-            std::vector<unsigned char>(pixels, pixels + size_t(w)*h*4), sampler);
+        graphics::Sampler sampler;
+        sampler.filter = graphics::TextureFilter::linear;
+        // ...wrap it in an Easy3D graphics::Image (the overlay texture)...
+        font_image_ = std::make_shared<graphics::Image>(
+            w, h, std::vector<unsigned char>(pixels, pixels + size_t(w) * h * 4), sampler);
+        // ...and tell ImGui to use that texture id when drawing text.
         io.Fonts->SetTexID(ImTextureID(reinterpret_cast<uintptr_t>(font_image_.get())));
-	}
-
+    }
 
     void ViewerImGui::post_resize(int w, int h) {
         Viewer::post_resize(w, h);
-		if (context_) {
-			ImGui::GetIO().DisplaySize.x = float(w);
-			ImGui::GetIO().DisplaySize.y = float(h);
-		}
-	}
+        if (context_) {
+            // ImGui lays out widgets against this display size, so keep it current.
+            ImGui::GetIO().DisplaySize.x = float(w);
+            ImGui::GetIO().DisplaySize.y = float(h);
+        }
+    }
 
-
+    // The heart of the integration: build the ImGui frame, then translate its draw lists into
+    // Easy3D overlay draw commands that the viewer composites on top of the 3D scene.
     void ViewerImGui::pre_draw() {
         ImGui::SetCurrentContext(context_);
         ImGui_ImplGlfw_NewFrame();
-        if (std::abs(ImGui::GetIO().FontGlobalScale - 1.0f/pixel_ratio()) > 1e-4f) reload_font();
-        ImGui::NewFrame();   
+        // Re-bake the font if the DPI/pixel ratio changed since the last frame.
+        if (std::abs(ImGui::GetIO().FontGlobalScale - 1.0f / pixel_ratio()) > 1e-4f)
+            reload_font();
+        ImGui::NewFrame();
 
         Viewer::pre_draw();
-        draw_gui();
-        const auto* data = ImGui::GetDrawData();
+        draw_gui(); // user widgets are emitted here (between NewFrame and Render)
+        // After Render(), ImGui produces triangle lists with a scissor rect per command.
+        const auto *data = ImGui::GetDrawData();
         const ImVec2 scale = data->FramebufferScale, origin = data->DisplayPos;
         std::vector<graphics::DrawCommand> commands;
         for (int n = 0; n < data->CmdListsCount; ++n) {
-            const auto* list = data->CmdLists[n];
-            for (const auto& draw : list->CmdBuffer) {
+            const auto *list = data->CmdLists[n];
+            for (const auto &draw : list->CmdBuffer) {
                 if (draw.UserCallback) {
-                    if (draw.UserCallback != ImDrawCallback_ResetRenderState) draw.UserCallback(list, &draw);
+                    if (draw.UserCallback != ImDrawCallback_ResetRenderState)
+                        draw.UserCallback(list, &draw);
                     continue;
                 }
-                if (!draw.ElemCount) continue;
-                const int x = std::max(0, int(std::floor((draw.ClipRect.x-origin.x)*scale.x)));
-                const int y = std::max(0, int(std::floor((draw.ClipRect.y-origin.y)*scale.y)));
-                const int right = std::min(framebuffer_width(), int(std::ceil((draw.ClipRect.z-origin.x)*scale.x)));
-                const int bottom = std::min(framebuffer_height(), int(std::ceil((draw.ClipRect.w-origin.y)*scale.y)));
-                if (right <= x || bottom <= y) continue;
+                if (!draw.ElemCount)
+                    continue;
+                // Convert ImGui's scissor rectangle to framebuffer pixels; this becomes the
+                // viewport for the overlay command so widgets clip correctly.
+                const int x = std::max(0, int(std::floor((draw.ClipRect.x - origin.x) * scale.x)));
+                const int y = std::max(0, int(std::floor((draw.ClipRect.y - origin.y) * scale.y)));
+                const int right = std::min(framebuffer_width(), int(std::ceil((draw.ClipRect.z - origin.x) * scale.x)));
+                const int bottom =
+                    std::min(framebuffer_height(), int(std::ceil((draw.ClipRect.w - origin.y) * scale.y)));
+                if (right <= x || bottom <= y)
+                    continue;
                 if (draw.GetTexID() != ImGui::GetIO().Fonts->TexID)
                     throw std::logic_error("this tutorial supports the ImGui font atlas texture only");
-                std::vector<graphics::Vertex> vertices; vertices.reserve(draw.ElemCount);
+                // Expand the indexed triangles into a plain vertex list, converting ImGui's
+                // packed RGBA color and pixel-space position into Easy3D vertex attributes.
+                std::vector<graphics::Vertex> vertices;
+                vertices.reserve(draw.ElemCount);
                 for (unsigned i = 0; i < draw.ElemCount; ++i) {
-                    const auto& source = list->VtxBuffer[list->IdxBuffer[draw.IdxOffset+i]+draw.VtxOffset];
+                    const auto &source = list->VtxBuffer[list->IdxBuffer[draw.IdxOffset + i] + draw.VtxOffset];
                     graphics::Vertex v;
-                    v.position = vec3((source.pos.x-origin.x)*scale.x-x, (source.pos.y-origin.y)*scale.y-y, 0);
+                    v.position =
+                        vec3((source.pos.x - origin.x) * scale.x - x, (source.pos.y - origin.y) * scale.y - y, 0);
                     v.texcoord = vec2(source.uv.x, source.uv.y);
-                    v.color = vec4(float((source.col >> IM_COL32_R_SHIFT)&255)/255,
-                                   float((source.col >> IM_COL32_G_SHIFT)&255)/255,
-                                   float((source.col >> IM_COL32_B_SHIFT)&255)/255,
-                                   float((source.col >> IM_COL32_A_SHIFT)&255)/255);
+                    v.color = vec4(float((source.col >> IM_COL32_R_SHIFT) & 255) / 255,
+                                   float((source.col >> IM_COL32_G_SHIFT) & 255) / 255,
+                                   float((source.col >> IM_COL32_B_SHIFT) & 255) / 255,
+                                   float((source.col >> IM_COL32_A_SHIFT) & 255) / 255);
                     vertices.push_back(v);
                 }
                 graphics::DrawCommand command;
-                command.overlay = true; command.texture = font_image_;
-                command.viewport = ivec4(x, y, right-x, bottom-y);
-                command.model_view_projection = graphics::screen_space_projection(right-x, bottom-y);
+                command.overlay = true; // drawn on top of the 3D scene, in screen space
+                command.texture = font_image_;
+                command.viewport = ivec4(x, y, right - x, bottom - y);
+                command.model_view_projection = graphics::screen_space_projection(right - x, bottom - y);
                 command.geometry = std::make_shared<graphics::Geometry>(std::move(vertices));
                 commands.push_back(std::move(command));
             }
         }
+        // Hand the translated GUI geometry to the viewer for compositing this frame.
         set_overlays(std::move(commands), true);
     }
 
-
+    // The actual widgets. In immediate mode this runs every frame: each MenuItem both draws
+    // itself and returns true when clicked, so the action is invoked right here.
     void ViewerImGui::draw_gui() {
         ImGui::SetCurrentContext(context_);
         static bool show_about = false;
-		if (show_about) {
-            ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        if (show_about) {
+            ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f),
+                                    ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
             ImGui::Begin("About Easy3D ImGui Viewer", &show_about, ImGuiWindowFlags_NoResize);
-			ImGui::Text("This viewer shows how to use ImGui for GUI creation and event handling");
-			ImGui::Separator();
-			ImGui::Text(
-				"\n"
-				"Liangliang Nan\n"
-				"liangliang.nan@gmail.com\n"
-				"https://3d.bk.tudelft.nl/liangliang/\n"
-			);
-			ImGui::End();
-		}
+            ImGui::Text("This viewer shows how to use ImGui for GUI creation and event handling");
+            ImGui::Separator();
+            ImGui::Text("\n" "Liangliang Nan\n" "liangliang.nan@gmail.com\n" "https://3d.bk.tudelft.nl/liangliang/\n");
+            ImGui::End();
+        }
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 0));
-        if (ImGui::BeginMainMenuBar())
-		{
+        // The main menu bar spans the top of the window; its height is recorded for layout.
+        if (ImGui::BeginMainMenuBar()) {
             draw_menu_file();
             draw_menu_view();
 
-			if (ImGui::BeginMenu("Help")) {
+            if (ImGui::BeginMenu("Help")) {
                 ImGui::MenuItem("About", nullptr, &show_about);
-				ImGui::EndMenu();
-			}
-			menu_height_ = ImGui::GetWindowHeight();
-			ImGui::EndMainMenuBar();
-		}
+                ImGui::EndMenu();
+            }
+            menu_height_ = ImGui::GetWindowHeight();
+            ImGui::EndMainMenuBar();
+        }
         ImGui::PopStyleVar();
 
         ImGui::Render();
     }
 
-
+    // The "File" menu: each MenuItem invokes the matching base-Viewer action when clicked.
     void ViewerImGui::draw_menu_file() {
-        if (ImGui::BeginMenu("File"))
-        {
+        if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Open", "Ctrl+O"))
                 open();
             if (ImGui::MenuItem("Save As...", "Ctrl+S"))
@@ -256,10 +285,9 @@ namespace easy3d {
         }
     }
 
-
+    // The "View" menu: exposes the viewer's snapshot action.
     void ViewerImGui::draw_menu_view() {
-        if (ImGui::BeginMenu("View"))
-        {
+        if (ImGui::BeginMenu("View")) {
             if (ImGui::MenuItem("Snapshot", nullptr))
                 snapshot();
 
@@ -267,6 +295,6 @@ namespace easy3d {
         }
     }
 
-	// \endcond
+    // \endcond
 
-}
+} // namespace easy3d

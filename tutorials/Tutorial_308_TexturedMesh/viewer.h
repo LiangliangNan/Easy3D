@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,29 +22,36 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_TUTORIAL_TEXTURED_VIEWER_H
 #define EASY3D_TUTORIAL_TEXTURED_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
 
-
 namespace easy3d {
-
 
     class SurfaceMesh;
 
-    // An enhanced viewer that can handle textured meshes (now it supports the OBJ format only).
-    /// \see Viewer, easy3d::SurfaceMesh
-    class TexturedViewer : public Viewer
-    {
+    /**
+     * \brief An enhanced viewer that can handle textured meshes (now it supports the OBJ format only).
+     *
+     * The only extension point needed is add_model(): for OBJ files it loads the geometry
+     * together with the MTL materials and creates one textured drawable per material part;
+     * every other format falls through to the default Viewer loading path. Because
+     * add_model() is virtual in Viewer, file-open dialogs and drag-and-drop automatically
+     * use this texture-aware version too.
+     */
+    class TexturedViewer : public Viewer {
     public:
-        explicit TexturedViewer(const std::string& title = "");
+        // Sets up a Y-up camera, matching the usual OBJ authoring convention.
+        explicit TexturedViewer(const std::string &title = "");
 
-        Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+        // Texture-aware loading: OBJ files are parsed with load_obj_materials() and their
+        // material parts become textured drawables; other formats use Viewer::add_model().
+        Model *add_model(const std::string &file_name, bool create_default_drawables = true) override;
     };
 
-}
+} // namespace easy3d
 
 #endif //EASY3D_TUTORIAL_TEXTURED_VIEWER_H
