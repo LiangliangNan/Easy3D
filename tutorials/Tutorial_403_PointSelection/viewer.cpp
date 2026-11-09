@@ -36,12 +36,18 @@
 
 using namespace easy3d;
 
+// \cond
 TutorialPointSelection::TutorialPointSelection(const std::string &title) : Viewer(title) {
     // manual_ is the full help text (shown on demand); hint_ is the short HUD reminder.
     manual_ =
-        "-------------- Point selection usage --------------\n" "Shift + left/right drag: select/deselect points\n" "L: lasso mode; R: rectangle mode; Escape: cancel\n" "---------------------------------------------------\n";
+        "-------------- Point selection usage --------------\n"
+        "Shift + left/right drag: select/deselect points\n"
+        "L: lasso mode; R: rectangle mode; Escape: cancel\n"
+        "---------------------------------------------------\n";
     hint_ =
-        "Pressing Shift, drag the mouse to select (left) or deselect (right) points\n" "\tL: lasso mode (default)\n" "\tR: rectangle mode";
+        "Pressing Shift, drag the mouse to select (left) or deselect (right) points\n"
+        "\tL: lasso mode (default)\n"
+        "\tR: rectangle mode";
 }
 
 // Shift + left/right press starts a selection gesture — but only if the current model is a
@@ -256,3 +262,5 @@ void TutorialPointSelection::cancel() {
     dirty_ = true;
     update();
 }
+
+// \endcond

@@ -26,29 +26,28 @@
 
 #ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
 #define EASY3D_TUTORIAL_CROSS_SECTION_H
+
 #include "easy3d/viewer/viewer.h"
 
-namespace easy3d {
 
-    /**
-     * \brief A Viewer with a directly manipulable clipping plane for inspecting model interiors.
-     *
-     * Easy3D's Viewer already knows how to render with the global ClippingPlane and provides
-     * Alt-based shortcuts for it. This subclass makes the interaction more immediate: the
-     * constructor enables the plane, and mouse_drag_event() is overridden so plain left/right
-     * drags rotate/translate the plane itself instead of the camera.
-     */
-    class CrossSection : public easy3d::Viewer {
-    public:
-        // Enables the clipping plane and installs the on-screen key hints.
-        explicit CrossSection(const std::string &title);
+/**
+ * \brief A Viewer with a directly manipulable clipping plane for inspecting model interiors.
+ *
+ * Easy3D's Viewer already knows how to render with the global ClippingPlane and provides
+ * Alt-based shortcuts for it. This subclass makes the interaction more immediate: the
+ * constructor enables the plane, and mouse_drag_event() is overridden so plain left/right
+ * drags rotate/translate the plane itself instead of the camera.
+ */
+class CrossSection : public easy3d::Viewer {
+public:
+    // Enables the clipping plane and installs the on-screen key hints.
+    CrossSection(const std::string &title);
 
-    protected:
-        // Left drag rotates the plane, right drag translates it; other buttons keep the
-        // default viewer behavior (see viewer.cpp).
-        bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-    };
+protected:
+    // Left drag rotates the plane, right drag translates it; other buttons keep the
+    // default viewer behavior (see viewer.cpp).
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+};
 
-} // namespace easy3d
 
 #endif // EASY3D_TUTORIAL_CROSS_SECTION_H

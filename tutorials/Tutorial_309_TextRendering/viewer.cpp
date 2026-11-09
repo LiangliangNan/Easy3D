@@ -26,10 +26,6 @@
 
 #include "viewer.h"
 
-namespace {
-    const char *const usage_manual =
-        "----------------------- Text Rendering usage ------------------------ \n" "Press '+'/'-' to increase/decrease font size                          \n" "Press '<'/'>' to increase/decrease character spacing                  \n" "Press 'up'/'down' to increase/decrease line spacing                   \n" "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n" "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n" "Press 'space' to enable/disable kerning                               \n" "--------------------------------------------------------------------- \n";
-}
 
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/util/file_system.h>
@@ -41,9 +37,19 @@ namespace {
 
 using namespace easy3d;
 
+// \cond
 TutorialTextRendering::TutorialTextRendering(const std::string &title) : Viewer(title) {
     // manual_ is the help text shown by the viewer's built-in help overlay.
-    manual_ = usage_manual;
+    manual_ =
+        "----------------------- Text Rendering usage ------------------------ \n"
+        "Press '+'/'-' to increase/decrease font size                          \n"
+        "Press '<'/'>' to increase/decrease character spacing                  \n"
+        "Press 'up'/'down' to increase/decrease line spacing                   \n"
+        "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n"
+        "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n"
+        "Press 'space' to enable/disable kerning                               \n"
+        "--------------------------------------------------------------------- \n";
+
     // Discover every font shipped with the resources and register it with the engine.
     // Each font gets an index (its position in font_names()), used later as TextOptions::font.
     std::vector<std::string> files;
@@ -174,3 +180,4 @@ void TutorialTextRendering::pre_draw() {
     set_overlays(std::move(commands));
     dirty_ = false;
 }
+// \endcond

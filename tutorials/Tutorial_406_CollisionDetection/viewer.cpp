@@ -42,9 +42,19 @@ using namespace easy3d;
 TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
     : Viewer(title), model0_color_(.8f, 1, .8f), model1_color_(.8f, .8f, 1) {
     manual_ =
-        "--------------------- Collision Viewer usage ----------------------\n" "On start, you will see an animation with highlighted intersecting  \n" "faces. Press 'space' to pause/resume the animation.                \n" "When the animation is paused, you can manipulate the bunny model   \n" "(using your mouse) to perform real-time collection detection:      \n" "    - Alt + left button: rotate bunny model                        \n" "    - Alt + right button: translate bunny model                    \n" "------------------------------------------------------------------ \n";
+        "--------------------- Collision Viewer usage ----------------------\n"
+        "On start, you will see an animation with highlighted intersecting  \n"
+        "faces. Press 'space' to pause/resume the animation.                \n"
+        "When the animation is paused, you can manipulate the bunny model   \n"
+        "(using your mouse) to perform real-time collection detection:      \n"
+        "    - Alt + left button: rotate bunny model                        \n"
+        "    - Alt + right button: translate bunny model                    \n"
+        "------------------------------------------------------------------ \n";
     hint_ =
-        "Press 'space' to pause/resume animation\n" "When paused:\n" "  - Alt + left button: rotate bunny model\n" "  - Alt + right button: translate bunny model";
+        "Press 'space' to pause/resume animation\n"
+        "When paused:\n"
+        "  - Alt + left button: rotate bunny model\n"
+        "  - Alt + right button: translate bunny model";
     add_model(resource::directory() + "/data/bunny.ply");
     add_model(resource::directory() + "/data/mannequin.ply");
     animation_func_ = [this](Viewer *) {

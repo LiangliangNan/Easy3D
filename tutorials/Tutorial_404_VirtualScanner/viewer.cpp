@@ -34,11 +34,19 @@
 
 using namespace easy3d;
 
+// \cond
 TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title) : Viewer(title) {
     // manual_ is the full help text (shown on demand); hint_ is the short HUD reminder.
     manual_ =
-        "-------------- Virtual Scanner usage -------------- \n" "- change the view using the mouse.\n" "- press the 'Space' key to perform scanning. Everything (and only those) visible\n" "  will be captured in a point cloud.\n" "- press 'n' to toggle Gaussian noise.\n" "---------------------------------------------------------- \n";
-    hint_ = "press 'Space' to perform scanning\n" "press 'n' to toggle Gaussian noise";
+        "-------------- Virtual Scanner usage -------------- \n"
+        "- change the view using the mouse.\n"
+        "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
+        "  will be captured in a point cloud.\n"
+        "- press 'n' to toggle Gaussian noise.\n"
+        "--------------------------------------------------- \n";
+    hint_ =
+        "press 'Space' to perform scanning\n"
+        "press 'n' to toggle Gaussian noise";
     // Keep the world's "up" aligned with +Y so scans are captured in a natural orientation.
     camera()->setUpVector(easy3d::vec3(0, 1, 0));
 }
@@ -112,3 +120,4 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
     }
     return Viewer::key_press_event(key, modifiers);
 }
+// \endcond

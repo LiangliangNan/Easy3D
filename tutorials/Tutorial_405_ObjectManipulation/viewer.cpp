@@ -46,9 +46,17 @@ TutorialObjectManipulation::TutorialObjectManipulation(const std::string &title)
 
     // manual_ is the full help text (shown on demand); hint_ is the short HUD reminder.
     manual_ =
-        "-------------------- Manipulator Viewer usage ---------------------\n" "Press the left button to pick/unpick a model.                      \n" "When a model is picked, using the mouse to manipulate it:          \n" "    - Alt + left button: rotate the model                          \n" "    - Alt + right button: translate the model                      \n" "------------------------------------------------------------------ \n";
+        "-------------------- Manipulator Viewer usage ---------------------\n"
+        "Press the left button to pick/unpick a model.                      \n"
+        "When a model is picked, using the mouse to manipulate it:          \n"
+        "    - Alt + left button: rotate the model                          \n"
+        "    - Alt + right button: translate the model                      \n"
+        "------------------------------------------------------------------ \n";
     hint_ =
-        "Press left button to pick/unpick a model\n" "When picked:\n" "  - Alt + left button: rotate the model\n" "  - Alt + right button: translate the model";
+        "Press left button to pick/unpick a model\n"
+        "When picked:\n"
+        "  - Alt + left button: rotate the model\n"
+        "  - Alt + right button: translate the model";
 }
 // Validates the weak selection handle: the model must still exist, still be part of the
 // scene, and have both a renderer and a manipulator before we act on it.

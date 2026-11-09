@@ -42,7 +42,10 @@ TutorialImageViewer::TutorialImageViewer(const std::string &title, const std::st
     // This is a 2D image viewer, so suppress the default 3D-navigation manual text and show
     // only the image-specific shortcuts in the HUD.
     manual_ = "";
-    hint_ = "Ctrl + o: open an image\n" "Mouse wheel: zoom in/out\n" "f: reset the view";
+    hint_ =
+        "Ctrl + o: open an image\n"
+        "Mouse wheel: zoom in/out\n"
+        "f: reset the view";
     // Load the initial image; failing here is fatal, so report it as an exception.
     if (!load_image(file))
         throw std::runtime_error("could not load image: " + file);
