@@ -16,6 +16,11 @@ endif()
 
 add_executable(installed_offscreen_consumer unified.cpp)
 target_link_libraries(installed_offscreen_consumer PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    target_compile_definitions(installed_offscreen_consumer PRIVATE EASY3D_EXPECT_VULKAN=1)
+else()
+    target_compile_definitions(installed_offscreen_consumer PRIVATE EASY3D_EXPECT_VULKAN=0)
+endif()
 
 add_executable(installed_viewer_consumer viewer.cpp)
 target_link_libraries(installed_viewer_consumer PRIVATE easy3d::viewer easy3d::gui)

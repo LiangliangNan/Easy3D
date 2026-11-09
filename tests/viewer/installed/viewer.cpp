@@ -27,8 +27,13 @@ int main() {
     initialize(false, false, false);
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
     try {
+#ifdef EASY3D_HAS_VULKAN
+        const VulkanOptions options{};
+#else
+        const OpenGLOptions options{};
+#endif
         std::shared_ptr<ViewerBase> viewer = std::make_shared<Viewer>(
-            "Installed Viewer", 181, 151, 1, false, false, true);
+            "Installed Viewer", 181, 151, 1, false, false, true, options);
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));
         const auto c = mesh->add_vertex(vec3(0, 0, 1)); mesh->add_triangle(a, b, c); viewer->add_model(mesh);
@@ -59,7 +64,7 @@ int main() {
         const auto center = (size_t(h / 2) * w + w / 2) * 4;
         require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center+1]) - 51) <= 2,
                 "installed viewer material/default camera did not render the model");
-        MultiViewer grid(1,2,"Installed MultiViewer",181,151,1,false,false,true);
+        MultiViewer grid(1,2,"Installed MultiViewer",181,151,1,false,false,true,options);
         auto shared=std::make_shared<SurfaceMesh>();
         auto ga=shared->add_vertex(vec3(0,-1,-1)),gb=shared->add_vertex(vec3(0,1,-1)),gc=shared->add_vertex(vec3(0,0,1));
         shared->add_triangle(ga,gb,gc);grid.add_model(shared);

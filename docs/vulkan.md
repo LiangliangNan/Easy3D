@@ -426,6 +426,10 @@ The migration is **not yet validated complete**:
   both; all three Vulkan consumers and both OpenGL consumers ran successfully.
   This local macOS check is separate from the GitHub Linux/Mesa jobs and
   Windows hardware validation.
+* The installed consumers compile the common `Viewer`, `MultiViewer`, and
+  `OffScreen` APIs with each backend's explicit options type. The shared
+  consumer also checks that installed Vulkan targets export
+  `EASY3D_HAS_VULKAN` and OpenGL targets do not.
 * `vulkan.interactionoverlay` passed in that local run, but the prior Linux
   baseline was 68/69 for a one-pixel selection-border expectation. Reproduce
   that case on the target Linux/Mesa runner and record the disposition.
@@ -1243,6 +1247,27 @@ The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF`
 configuration. There is no automatic fallback between backends. See
 `ToDo.md` for the checkable migration completion gates and separate
 maintainability/performance follow-ups.
+
+### Viewer API boundary
+
+The portable API is the shared `ViewerBase`, `Viewer`, `MultiViewer`, and
+`OffScreen` surface, including their common construction and rendering
+operations. The intentional D1 `Viewer` constructor change is a source
+compatibility hazard: the old OpenGL positional overloads can compile while
+silently changing the requested window size, sample count, or other settings.
+Replace old positional calls with the D1 order
+`Viewer(title, width, height, samples, full_screen, visible, resizable, options)`.
+The default sample count is now one. `OpenGLOptions` and `VulkanOptions` are
+available only in their respective configured builds.
+
+The following `Viewer` extensions are Vulkan-only, guarded by
+`EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,
+`device()`, `set_samples()`, and the three-argument `add_model()` overload.
+They are native extensions, not part of the cross-backend API; use the shared
+clipping-plane, visible-surface query, and model APIs where portability is
+required. Installed-package consumer sources compile the common surface under
+both configurations and assert the exported backend macro matches the selected
+package.
 
 ## Portable points, spheres and surfels
 

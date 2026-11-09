@@ -7,9 +7,25 @@
 #include <easy3d/util/initializer.h>
 #include <easy3d/fileio/image_io.h>
 #include <iostream>
+#ifndef EASY3D_EXPECT_VULKAN
+#error "The installed consumer must declare the configured backend"
+#elif EASY3D_EXPECT_VULKAN
+#ifndef EASY3D_HAS_VULKAN
+#error "The installed Vulkan package did not export EASY3D_HAS_VULKAN"
+#endif
+#else
+#ifdef EASY3D_HAS_VULKAN
+#error "The installed OpenGL package unexpectedly exports EASY3D_HAS_VULKAN"
+#endif
+#endif
 int main() {
     easy3d::initialize(false,false,false);
-    easy3d::OffScreen renderer(101,77);
+#if EASY3D_EXPECT_VULKAN
+    const easy3d::VulkanOptions options{};
+#else
+    const easy3d::OpenGLOptions options{};
+#endif
+    easy3d::OffScreen renderer(101,77,options);
     auto mesh=std::make_shared<easy3d::SurfaceMesh>();
     auto a=mesh->add_vertex(easy3d::vec3(0,-1,-1)),b=mesh->add_vertex(easy3d::vec3(0,1,-1)),c=mesh->add_vertex(easy3d::vec3(0,0,1));
     mesh->add_triangle(a,b,c);renderer.add_model(mesh);
