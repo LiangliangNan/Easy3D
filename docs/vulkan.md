@@ -430,6 +430,14 @@ The migration is **not yet validated complete**:
   `OffScreen` APIs with each backend's explicit options type. The shared
   consumer also checks that installed Vulkan targets export
   `EASY3D_HAS_VULKAN` and OpenGL targets do not.
+* The shared `viewer.offscreen` regression now checks deterministic unlit
+  triangle color agreement between file snapshot and capture (one-channel
+  tolerance), valid center depth/object ID, preservation of scene IDs after
+  resize, and primitive-ID behavior in both backend configurations. It passed
+  in Vulkan and OpenGL Debug builds on 2026-11-09. OpenGL currently reports
+  `UINT32_MAX` for the center primitive ID while Vulkan reports primitive 0;
+  this known capability difference is asserted explicitly. Picking, interactive
+  behavior, and DPI parity are still outstanding.
 * `vulkan.interactionoverlay` passed in that local run, but the prior Linux
   baseline was 68/69 for a one-pixel selection-border expectation. Reproduce
   that case on the target Linux/Mesa runner and record the disposition.

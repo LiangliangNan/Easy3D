@@ -43,6 +43,20 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     const auto rgba=image(prefix+".png",161,127);const auto center=(size_t(63)*161+80)*4;
     require(std::abs(int(rgba[center])-204)<=1 && std::abs(int(rgba[center+1])-51)<=1,"common scene did not render its material color");
     require(std::abs(int(rgba[0])-31)<=1 && std::abs(int(rgba[1])-59)<=1,"common background did not render");
+    const auto frame=renderer.capture(1);
+    const size_t center_pixel=size_t(63)*frame.width+80;
+    require(frame.width==161 && frame.height==127,"capture dimensions differ from the shared viewport");
+    require(frame.ids[center_pixel].object==0 &&
+            std::isfinite(frame.depth[center_pixel]) && frame.depth[center_pixel]>=0 && frame.depth[center_pixel]<1,
+            "center capture lost its scene depth or object ID");
+#ifdef EASY3D_HAS_VULKAN
+    require(frame.ids[center_pixel].primitive==0,"Vulkan capture lost its primitive ID");
+#else
+    require(frame.ids[center_pixel].primitive==UINT32_MAX,"OpenGL capture unexpectedly reported a primitive ID");
+#endif
+    for (unsigned channel=0;channel<4;++channel)
+        require(std::abs(int(frame.rgba[4*center_pixel+channel])-int(rgba[center+channel]))<=1,
+                "file snapshot color differs from the common capture");
     for(unsigned i=0;i<16;++i) require(std::abs(renderer.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"file rendering changed live camera matrices");
     require(!renderer.render(prefix+"-invalid.png",-1),"invalid render request accepted");
 #ifdef EASY3D_HAS_VULKAN
@@ -56,6 +70,11 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     bool rejected=false;try{renderer.resize(0,127);}catch(const std::invalid_argument&){rejected=true;}
     require(rejected && renderer.width()==161,"invalid resize changed the scene");
     renderer.resize(212,144);require(renderer.width()==212 && renderer.height()==144,"resize was not synchronous");
+    const auto resized_frame=renderer.capture(1);
+    bool resized_hit=false;
+    for (const auto& id:resized_frame.ids) resized_hit=resized_hit || id.object!=UINT32_MAX;
+    require(resized_frame.width==212 && resized_frame.height==144 && resized_hit,
+            "resize changed capture extent or removed scene IDs");
     require(renderer.render(prefix+"-msaa.png",1.25f,4,2),"scaled multisample render failed");
     const auto transparent=image(prefix+"-msaa.png",265,180);require(transparent[3]==0,"transparent background was lost");
     require(renderer.current_model()==mesh.get() && renderer.models().size()==1,"current model ownership changed");
