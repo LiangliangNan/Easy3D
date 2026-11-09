@@ -531,9 +531,15 @@ namespace easy3d {
         // Implemented by the renderer Vulkan backend. Throws if devices or requested
         // validation facilities are unavailable. Sync validation implies validation;
         // device_name optionally filters physical devices by name substring.
+        // use_native_large_points controls the optional largePoints feature; false forces
+        // portable expanded-point rendering.
         std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false,
                                                            bool sync_validation = false,
                                                            const std::string &device_name = {});
+        std::unique_ptr<RenderDevice> create_vulkan_device(bool validation,
+                                                           bool sync_validation,
+                                                           const std::string &device_name,
+                                                           bool use_native_large_points);
 
     } // namespace graphics
 } // namespace easy3d

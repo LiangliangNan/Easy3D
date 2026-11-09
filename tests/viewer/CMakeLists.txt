@@ -41,6 +41,11 @@ endforeach()
     endif()
 
 if(Easy3D_ENABLE_VULKAN)
+    add_executable(easy3d_vulkan_point_fallback_test point_fallback_test.cpp)
+    target_link_libraries(easy3d_vulkan_point_fallback_test PRIVATE easy3d::viewer)
+    add_test(NAME vulkan.pointfallback COMMAND easy3d_vulkan_point_fallback_test ${validation_args})
+    set_tests_properties(vulkan.pointfallback PROPERTIES TIMEOUT 120)
+
     add_executable(easy3d_vulkan_scene_test scene_test.cpp)
     target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
     add_test(NAME vulkan.scene COMMAND easy3d_vulkan_scene_test ${validation_args})

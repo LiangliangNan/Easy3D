@@ -144,7 +144,8 @@ needs no change.
   full_screen, visible, resizable, options)` with `width`, `height` and `samples` of type
   `int` (revised 2026-11-04), `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
   version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
-  validation, device name), as in the layout of P2. Consequences, recorded because they break
+  validation, device name, and native large-points preference), as in the layout of P2.
+  Consequences, recorded because they break
   the otherwise unchanged client code: `main`'s order was `(title, samples, gl_major,
   gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)` and its default
   was 4 samples. The new order differs, and `width`, `height` and `samples` are all integers,
@@ -154,7 +155,10 @@ needs no change.
   title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
   audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` uses default member initializers, like `VulkanOptions`;
   default construction with `{}` works in C++11, while custom values are assigned to fields; `VulkanOptions` is defined directly in `viewer.h`, alongside `OpenGLOptions`.
-  Renderer factories take validation, sync-validation and device-name arguments directly. `visible=false` keeps the
+  Renderer factories take validation, sync-validation, device-name, and native large-points
+  preference arguments directly. Set `VulkanOptions::use_native_large_points` to `false` to
+  force the portable expanded-point path for diagnostics and controlled comparisons; it
+  defaults to `true` and has no effect on devices without the feature. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
   uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
   power of two the device does not support steps down with a warning, so a request such as 4
@@ -715,8 +719,10 @@ re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.
 core-only (the backend-neutral viewer/drawable surface is complete; the stale `unused/`
 bindings are deliberately removed, no revival). Still open: the Linux
 `vulkan.interactionoverlay` border check (W6, 68/69), and the RealCamera
-expanded-point fallback profiling on a MoltenVK device without `largePoints` (this M4 Pro
-always takes the native path, so the fallback cannot be exercised here). The same triage is
+expanded-point fallback profiling on MoltenVK. `VulkanOptions::use_native_large_points = false`
+and `vulkan.pointfallback` now provide a deterministic way to exercise the portable path and
+check primitive coverage on this device; this is not yet a RealCamera performance profile
+or a controlled OpenGL/Vulkan benchmark. The same triage is
 recorded in ToDo.md.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed

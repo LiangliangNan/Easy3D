@@ -224,7 +224,8 @@ namespace easy3d {
           show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
         resize_render_target(width, height);
         impl_->device =
-            graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name);
+            graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name,
+                                           options.use_native_large_points);
         camera()->setType(Camera::PERSPECTIVE);
         camera()->setUpVector(vec3(0, 0, 1));
         camera()->setViewDirection(vec3(-1, 0, 0));
@@ -765,7 +766,7 @@ namespace easy3d {
                 return glfwCreateWindowSurface(instance, handle, nullptr, result);
             };
             return graphics::create_vulkan_window_device(surface, options.validation, options.sync_validation,
-                                                         options.device_name);
+                                                         options.device_name, options.use_native_large_points);
         }
         void position(double px, double py, int &x, int &y) const {
             int ww = 0, wh = 0, fw = 0, fh = 0;

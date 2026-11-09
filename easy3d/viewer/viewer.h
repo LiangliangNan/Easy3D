@@ -64,6 +64,9 @@ struct VulkanOptions {
     bool sync_validation = false;
     /// Optional substring used to select a matching physical-device name.
     std::string device_name;
+    /// Use the native Vulkan large-points feature when available. Disable to
+    /// exercise the portable expanded-point renderer or compare its performance.
+    bool use_native_large_points = true;
 };
 #else
 /**

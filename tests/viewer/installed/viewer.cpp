@@ -28,7 +28,8 @@ int main() {
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
     try {
 #ifdef EASY3D_HAS_VULKAN
-        const VulkanOptions options{};
+        VulkanOptions options;
+        options.use_native_large_points = false;
 #else
         const OpenGLOptions options{};
 #endif

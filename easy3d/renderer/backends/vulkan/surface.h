@@ -78,6 +78,8 @@ namespace easy3d {
  *        \p validation.
  * \param device_name Optional substring that the selected Vulkan device name
  *        must contain. An empty string allows any compatible device.
+ * \param use_native_large_points Use the optional largePoints feature when
+ *        available; false forces portable expanded-point rendering.
  * \return An owning render device. Destroy it before destroying the native
  * window supplied to the callback.
  * \throws std::invalid_argument If the surface callback is empty.
@@ -93,6 +95,11 @@ namespace easy3d {
                                                                   bool validation = false,
                                                                   bool sync_validation = false,
                                                                   const std::string &device_name = {});
+        std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
+                                                                  bool validation,
+                                                                  bool sync_validation,
+                                                                  const std::string &device_name,
+                                                                  bool use_native_large_points);
     } // namespace graphics
 } // namespace easy3d
 #endif
