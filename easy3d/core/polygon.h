@@ -42,6 +42,7 @@ namespace easy3d {
      * \details The polygon is implicitly closed between its final and first
      * vertices. Point containment uses an even-odd ray-crossing test; callers
      * should provide a simple polygon for unambiguous results.
+     * \see Polygon2
      */
     /// \class GenericPolygon easy3d/core/polygon.h
     template<typename FT>

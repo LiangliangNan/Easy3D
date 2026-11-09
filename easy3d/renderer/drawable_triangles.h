@@ -36,6 +36,7 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
      * \class TrianglesDrawable easy3d/renderer/drawable_triangles.h
+     * \sa Drawable, LinesDrawable, PointsDrawable
      * \sa LinesDrawable, PointsDrawable
      *
      * \note TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating

@@ -93,6 +93,7 @@ struct OpenGLOptions {
  * Subclasses may customize the protected drawing and event hooks. Backend
  * resources must be created and released only while the appropriate graphics
  * context/device is valid; see init() and cleanup().
+ * \see ViewerBase, ViewerInput, ViewerCallbacks, MultiViewer, OffScreen
  */
 class Viewer : public ViewerBase {
 public:

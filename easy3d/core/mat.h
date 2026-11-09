@@ -1701,7 +1701,7 @@ namespace easy3d {
     /**
      * \brief 2 by 2 matrix. Extends Mat with 2D-specific functionality and constructors.
      * \tparam T The scalar type for vector elements.
-     * \see Mat.
+     * \see Mat, Mat3, Mat4.
      * \class Mat2 easy3d/core/mat.h
      */
     template <typename T>
@@ -1889,7 +1889,7 @@ namespace easy3d {
 
     /**
      * \brief 3 by 3 matrix. Extends Mat with 3D-specific functionality and constructors.
-     * \tparam T The scalar type for vector elements. \see Mat.
+     * \tparam T The scalar type for vector elements. \see Mat, Mat2, Mat4.
      * \class Mat3 easy3d/core/mat.h
      */
     template <typename T>
@@ -2255,7 +2255,7 @@ namespace easy3d {
 
     /**
      * \brief 4 by 4 matrix. Extends Mat with 4D-specific functionality and constructors.
-     * \tparam T The scalar type for vector elements. \see Mat.
+     * \tparam T The scalar type for vector elements. \see Mat, Mat2, Mat3.
      * \class Mat4 easy3d/core/mat.h
      */
     template <typename T>

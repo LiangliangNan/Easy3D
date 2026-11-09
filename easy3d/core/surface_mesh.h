@@ -45,7 +45,7 @@ namespace easy3d {
      * mesh of a 2-manifold topology. In any case, client code is highly recommended to use SurfaceMeshBuilder.
      *
      * \class SurfaceMesh easy3d/core/surface_mesh.h
-     * \sa SurfaceMeshBuilder.
+     * \sa Model, Graph, PointCloud, PolyMesh, SurfaceMeshBuilder.
      */
     class SurfaceMesh : public Model
     {

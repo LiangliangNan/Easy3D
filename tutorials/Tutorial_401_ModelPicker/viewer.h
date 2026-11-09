@@ -35,6 +35,7 @@ namespace easy3d {
     class Model;
 }
 
+/// \see easy3d::Viewer, easy3d::ModelPicker
 class TutorialModelPicker : public easy3d::Viewer {
 public:
     explicit TutorialModelPicker(const std::string &title);

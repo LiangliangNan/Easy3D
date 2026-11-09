@@ -24,7 +24,7 @@ namespace easy3d {
      *      It manages vertices, cells, and their relationships, and provides methods for querying
      *      the triangulation structure.
      * @class Delaunay easy3d/algo/delaunay.h
-     * @see Delaunay2D, Delaunay3D
+     * @see Delaunay2, Delaunay3
      */
     class Delaunay {
     public:

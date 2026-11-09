@@ -36,6 +36,7 @@ namespace easy3d {
     class Model;
 }
 
+/// \see easy3d::Viewer, easy3d::SurfaceMeshPicker
 class TutorialFacePicker : public easy3d::Viewer {
 public:
     explicit TutorialFacePicker(const std::string &title);

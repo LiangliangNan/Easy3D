@@ -37,7 +37,7 @@ namespace easy3d {
     /**
      * \brief KdTree implementation based on Richard Keiser's KdTree code.
      * \class KdTreeSearch_ETH easy3d/kdtree/kdtree_search_eth.h
-     * \see KdTreeSearch_ANN, KdTreeSearch_FLANN, and KdTreeSearch_NanoFLANN.
+     * \see KdTreeSearch, KdTreeSearch_ANN, KdTreeSearch_FLANN, and KdTreeSearch_NanoFLANN.
      */
     class KdTreeSearch_ETH : public KdTreeSearch {
     public:
@@ -231,4 +231,3 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_KD_TREE_SEARCH_ETH_H
-

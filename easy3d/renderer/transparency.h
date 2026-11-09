@@ -45,7 +45,7 @@ namespace easy3d {
      * \brief Base class for rendering with transparency.
      * \class Transparency easy3d/renderer/transparency.h
      * \details This class provides an interface for rendering scenes with transparency effects.
-     * \see AverageColorBlending, DualDepthPeeling
+     * \see AverageColorBlending, DualDepthPeeling, PerPixelLinkedListsOIT
      */
     class Transparency
     {
@@ -103,7 +103,7 @@ namespace easy3d {
      * \brief Base class for rendering with transparency.
      * \class Transparency easy3d/renderer/transparency.h
      * \details This class provides an interface for rendering scenes with transparency effects.
-     * \see AverageColorBlending, DualDepthPeeling
+     * \see AverageColorBlending, DualDepthPeeling, PerPixelLinkedListsOIT
      */
     class Transparency
     {

@@ -44,7 +44,7 @@ namespace easy3d {
      *      exactly like the OpenGL average-color shaders, and composites the
      *      average over the opaque scene.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
-     * \sa DualDepthPeeling
+     * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT
      */
     class AverageColorBlending : public Transparency
     {
@@ -79,7 +79,7 @@ namespace easy3d {
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
      *      geometry pass.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
-     * \sa DualDepthPeeling
+     * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT
      */
     class AverageColorBlending : public Transparency
     {

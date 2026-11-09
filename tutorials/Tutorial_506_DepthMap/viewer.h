@@ -33,6 +33,7 @@
 // This DepthMap class visualizes 3D models as depth images.
 
 
+/// \see easy3d::Viewer, easy3d::OffScreen
 class TutorialDepthMap : public easy3d::Viewer
 {
 public:

@@ -47,6 +47,7 @@ namespace easy3d {
      * and may provide additional typed properties. The bounding box is cached
      * until invalidated; it does not include manipulator transforms. Renderer
      * and manipulator ownership is shared through std::shared_ptr.
+     * \see Graph, PointCloud, PolyMesh, SurfaceMesh
      */
     class Model
     {

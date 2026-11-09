@@ -40,6 +40,7 @@ namespace easy3d {
  * The canvas has a fixed pixel size and DPI scale 1. Resize it explicitly with
  * resize(). File rendering is performed by render(); this class does not
  * provide an interactive run loop.
+ * \see Viewer, ViewerBase, MultiViewer
  */
     class OffScreen : protected Viewer {
     public:

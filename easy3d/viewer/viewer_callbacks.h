@@ -47,6 +47,8 @@ namespace easy3d {
  * release: drag and release are treated as handled even if their callbacks
  * return false. Losing focus clears the captured gesture. Replacing the
  * callback set while one is executing does not destroy the active callable.
+ *
+ * \see ViewerInput, ViewerBase, Viewer
  */
     struct ViewerCallbacks {
         /// Called immediately before the viewer's legacy pre-draw hook and scene draw.

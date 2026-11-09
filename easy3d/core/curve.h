@@ -233,6 +233,7 @@ namespace easy3d {
      *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class Bezier easy3d/core/curve.h
+     * \see Curve, BSpline, CatmullRom
      */
     template<template <size_t, class> class Point, size_t N, typename T>
     class Bezier : public Curve<Point, N, T> {
@@ -288,6 +289,7 @@ namespace easy3d {
      *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class BSpline easy3d/core/curve.h
+     * \see Curve, Bezier, CatmullRom
      */
     template<template <size_t, class> class Point, size_t N, typename T>
     class BSpline : public Curve<Point, N, T> {
@@ -363,6 +365,7 @@ namespace easy3d {
      *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class CatmullRom easy3d/core/curve.h
+     * \see Curve, Bezier, BSpline
      */
     template<template <size_t, class> class Point, size_t N, typename T>
     class CatmullRom : public Curve<Point, N, T> {

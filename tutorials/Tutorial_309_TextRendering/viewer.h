@@ -31,6 +31,7 @@
 
 #include <easy3d/renderer/text_layout.h>
 
+/// \see easy3d::Viewer
 class TutorialTextRendering : public easy3d::Viewer {
 public:
     explicit TutorialTextRendering(const std::string& title);

@@ -23,7 +23,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ ******************************************************************* *
+ * \see ViewerInput, ViewerCallbacks, Viewer, MultiViewer, OffScreen
+ */
 #ifndef EASY3D_VIEWER_VIEWER_BASE_H
 #define EASY3D_VIEWER_VIEWER_BASE_H
 #include <easy3d/viewer/viewer_input.h>

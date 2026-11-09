@@ -49,6 +49,7 @@ namespace easy3d {
 		 * \tparam VT The value type, e.g., int, float, string, vec3, std::vector
 		 * \attention Current implementation uses 'float' --> loss in accuracy when handling large coordinates
 		 * \class GenericProperty easy3d/fileio/ply_reader_writer.h
+		 * \see Vec2Property, Vec3Property, FloatProperty, IntProperty
 		 */
 		template <typename VT>
         class GenericProperty : public std::vector<VT> {

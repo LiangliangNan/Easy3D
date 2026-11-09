@@ -39,6 +39,7 @@ namespace easy3d {
     /**
      * \brief Base class for a property array.
      * \class BasePropertyArray easy3d/core/property.h
+     * \see PropertyArray
      */
     class BasePropertyArray
     {
@@ -158,6 +159,7 @@ namespace easy3d {
      * \brief Implementation of a generic property array.
      * \class PropertyArray easy3d/core/property.h
      * \tparam T The type of the property.
+     * \see BasePropertyArray, Property
      */
     template <class T>
     class PropertyArray : public BasePropertyArray
@@ -321,6 +323,7 @@ namespace easy3d {
      * \brief Implementation of a generic property.
      * \class Property easy3d/core/property.h
      * \tparam T The type of the property.
+     * \see PropertyArray, PropertyContainer
      */
     template <class T>
     class Property

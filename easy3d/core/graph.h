@@ -45,6 +45,7 @@ namespace easy3d {
 	 *
 	 * This implementation is inspired by Surface_mesh
 	 * https://opensource.cit-ec.de/projects/surface_mesh
+	 * \see Model, PointCloud, PolyMesh, SurfaceMesh
 	 */
 	class Graph : public Model
 	{

@@ -135,6 +135,7 @@ namespace easy3d {
 			// and so on, with possible branches, tests, loops...
 	  }
 	  \endcode
+	  \see AxisPlaneConstraint, LocalConstraint, WorldConstraint, CameraConstraint, Frame
 	  */
 	class Constraint
 	{
@@ -195,6 +196,7 @@ namespace easy3d {
 	   Different implementations of this class are illustrated in the
 	   <a href="../examples/constrainedCamera.html">contrainedCamera</a> and
 	   <a href="../examples/constrainedFrame.html">constrainedFrame</a> examples.
+	   \see Constraint, LocalConstraint, WorldConstraint, CameraConstraint
 
 	   \attention When applied, the rotational Constraint may not intuitively follow
 	   the mouse displacement. A solution would be to directly measure the rotation
@@ -360,6 +362,7 @@ namespace easy3d {
 
 	/*! \brief An AxisPlaneConstraint defined in the Frame local coordinate system.
 	  \class LocalConstraint easy3d/renderer/constraint.h
+	  \see AxisPlaneConstraint, WorldConstraint, CameraConstraint
 
 	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in the Frame local coordinate system (see Frame::referenceFrame()).
@@ -383,6 +386,7 @@ namespace easy3d {
 
 	/*! \brief An AxisPlaneConstraint defined in the world coordinate system.
 			\class WorldConstraint easy3d/renderer/constraint.h
+			\see AxisPlaneConstraint, LocalConstraint, CameraConstraint
 
 	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in world coordinate system.
@@ -407,6 +411,7 @@ namespace easy3d {
 
 	/*! \brief An AxisPlaneConstraint defined in the camera coordinate system.
 	  \class CameraConstraint easy3d/renderer/constraint.h
+	  \see AxisPlaneConstraint, LocalConstraint, WorldConstraint
 
 	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in the associated camera() coordinate system.

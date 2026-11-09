@@ -43,6 +43,7 @@ struct ImGuiContext;
 
 namespace easy3d {
 
+    /// \see Viewer, ViewerCallbacks
     class ViewerImGui : public Viewer
 	{
 	public:

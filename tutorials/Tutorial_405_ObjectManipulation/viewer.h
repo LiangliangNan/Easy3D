@@ -36,6 +36,7 @@ namespace easy3d {
     class Model;
 }
 
+/// \see easy3d::Viewer, easy3d::ManipulatedFrame, easy3d::Manipulator
 class TutorialObjectManipulation : public easy3d::Viewer {
 public:
     explicit TutorialObjectManipulation(const std::string &title);

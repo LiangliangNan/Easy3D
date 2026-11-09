@@ -35,7 +35,7 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields.
      * \class LinesDrawable easy3d/renderer/drawable_lines.h
-     * \sa PointsDrawable, TrianglesDrawable
+     * \sa Drawable, PointsDrawable, TrianglesDrawable, LinesDrawable2D
      */
 	class LinesDrawable : public Drawable {
 	public:

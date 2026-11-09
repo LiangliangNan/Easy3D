@@ -37,6 +37,7 @@ namespace easy3d {
 }
 
 
+/// \see easy3d::Viewer, easy3d::AmbientOcclusion
 class TutorialAmbientOcclusion : public easy3d::Viewer
 {
 public:

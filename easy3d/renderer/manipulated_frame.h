@@ -52,6 +52,7 @@ namespace easy3d {
 	 *      A ManipulatedFrame is used to move an object in the scene. Combined with object selection, its MouseGrabber
 	 *      properties and a dynamic update of the scene, the ManipulatedFrame introduces great reactivity in your
 	 *      applications.
+	 * \see Frame, ManipulatedCameraFrame, Constraint
 	 */
 	class ManipulatedFrame : public Frame
 	{

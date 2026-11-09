@@ -50,6 +50,7 @@ namespace easy3d {
      * changed by mouse interaction); unproject_point() selects the cell
      * containing its logical window position. File snapshots contain the grid
      * scene and do not include the ordinary Viewer HUD.
+     * \see Viewer, ViewerBase, OffScreen
      */
     class MultiViewer : public Viewer {
     public:

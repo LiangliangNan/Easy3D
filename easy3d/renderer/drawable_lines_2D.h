@@ -38,6 +38,7 @@ namespace easy3d {
      *      Imposter, texturing, per-element color, and scalar attributes are not implemented given
      *      the limited usage cases.
      * \class LinesDrawable2D easy3d/renderer/drawable_lines_2D.h
+     * \sa Drawable, LinesDrawable
      * \sa LinesDrawable the 3D version of lines drawables.
      */
 	class LinesDrawable2D : public Drawable {

@@ -29,6 +29,7 @@
 
 #include <easy3d/viewer/viewer.h>
 
+/// \see easy3d::Viewer, easy3d::OffScreen
 class TutorialVirtualScanner : public easy3d::Viewer {
 public:
     explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner");

@@ -39,6 +39,7 @@ namespace easy3d {
     class LinesDrawable;
 }
 
+/// \see easy3d::Viewer, easy3d::Camera, easy3d::ManipulatedCameraFrame
 class TutorialRealCamera : public easy3d::Viewer
 {
 public:

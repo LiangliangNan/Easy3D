@@ -74,6 +74,7 @@ namespace easy3d {
      *
      * <h3>Derived classes</h3>
      * The ManipulatedFrame class inherits Frame and implements a mouse motion conversion, so that a Frame (and hence an object) can be manipulated in the scene with the mouse.
+     * \see ManipulatedFrame, ManipulatedCameraFrame, Constraint
      */
     class Frame {
     public:

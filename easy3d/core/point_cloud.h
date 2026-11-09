@@ -40,6 +40,7 @@ namespace easy3d {
      *
      * This implementation is inspired by Surface_mesh
      * https://opensource.cit-ec.de/projects/surface_mesh
+     * \see Model, Graph, PolyMesh, SurfaceMesh
      */
     class PointCloud : public Model
     {

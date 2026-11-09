@@ -37,6 +37,7 @@ namespace easy3d {
 	class EyeDomeLighting;
 }
 
+/// \see easy3d::Viewer, easy3d::EyeDomeLighting
 class TutorialEyeDomeLighting : public easy3d::Viewer
 {
 public:

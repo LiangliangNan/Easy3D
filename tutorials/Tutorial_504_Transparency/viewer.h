@@ -37,6 +37,8 @@ namespace easy3d {
 	class Transparency;
 }
 
+/// \see easy3d::Viewer, easy3d::Transparency, easy3d::AverageColorBlending,
+///      easy3d::DualDepthPeeling, easy3d::PerPixelLinkedListsOIT
 class TutorialTransparency : public easy3d::Viewer
 {
 public:

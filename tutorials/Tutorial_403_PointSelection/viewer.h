@@ -31,6 +31,7 @@
 
 namespace easy3d { class PointCloud; }
 
+/// \see easy3d::Viewer, easy3d::PointCloudPicker
 class TutorialPointSelection : public easy3d::Viewer {
 public:
     explicit TutorialPointSelection(const std::string& title = "PointSelection");

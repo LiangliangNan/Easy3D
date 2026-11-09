@@ -130,7 +130,7 @@ namespace easy3d {
      *      - Not suitable for real-time rendering of complex scenes; best for offline/figure
      *        generation.
      *
-     * \sa DualDepthPeeling, AverageColorBlending
+     * \sa Transparency, DualDepthPeeling, AverageColorBlending
      */
     class PerPixelLinkedListsOIT : public Transparency
     {
@@ -274,7 +274,7 @@ namespace easy3d {
      *      - Not suitable for real-time rendering of complex scenes; best for offline/figure
      *        generation.
      *
-     * \sa DualDepthPeeling, AverageColorBlending
+     * \sa Transparency, DualDepthPeeling, AverageColorBlending
      */
     class PerPixelLinkedListsOIT : public Transparency
     {

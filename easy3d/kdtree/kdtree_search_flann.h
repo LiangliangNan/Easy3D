@@ -37,7 +37,7 @@ namespace easy3d {
     /**
      * \brief KdTree implementation based on [FLANN](https://github.com/mariusmuja/flann).
      * \class KdTreeSearch_FLANN easy3d/kdtree/kdtree_search_flann.h
-     * \see KdTreeSearch_ANN, KdTreeSearch_ETH, and KdTreeSearch_NanoFLANN.
+     * \see KdTreeSearch, KdTreeSearch_ANN, KdTreeSearch_ETH, and KdTreeSearch_NanoFLANN.
      */
     class KdTreeSearch_FLANN : public KdTreeSearch {
     public:
@@ -155,5 +155,4 @@ namespace easy3d {
 } // namespace easy3d
 
 #endif  // EASY3D_KD_TREE_SEARCH_FLANN_H
-
 

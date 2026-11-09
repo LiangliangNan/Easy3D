@@ -37,6 +37,7 @@ namespace easy3d {
 	class Shadow;
 }
 
+/// \see easy3d::Viewer, easy3d::Shadow, easy3d::SoftShadow
 class TutorialSoftShadow : public easy3d::Viewer
 {
 public:

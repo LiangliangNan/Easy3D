@@ -257,6 +257,7 @@ int main(int argc, char **argv) {
 
 #else  // inherit customized drawables from Easy3D drawables, and we reimplement "void update_buffers_internal()"
 
+/// \see TrianglesDrawable, Drawable
 class MyTrianglesDrawable : public TrianglesDrawable {
 public:
     MyTrianglesDrawable(const std::string& name = "") : TrianglesDrawable(name) {}
@@ -277,6 +278,7 @@ protected:
 };
 
 
+/// \see LinesDrawable, Drawable
 class MyLinesDrawable : public LinesDrawable {
 public:
     MyLinesDrawable(const std::string& name = "") : LinesDrawable(name) {}
@@ -313,6 +315,7 @@ protected:
 };
 
 
+/// \see PointsDrawable, Drawable
 class MyPointsDrawable : public PointsDrawable {
 public:
     MyPointsDrawable(const std::string& name = "") : PointsDrawable(name) {}

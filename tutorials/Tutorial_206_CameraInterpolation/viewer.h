@@ -32,6 +32,7 @@
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
 
+/// \see easy3d::Viewer, easy3d::ManipulatedCameraFrame
 class TutorialCameraInterpolation : public easy3d::Viewer
 {
 public:

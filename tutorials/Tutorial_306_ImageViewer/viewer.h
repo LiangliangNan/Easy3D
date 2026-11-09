@@ -30,6 +30,7 @@
 #include <easy3d/viewer/viewer.h>
 
 // This class visualizes an image in screen space on either backend.
+/// \see easy3d::Viewer
 class TutorialImageViewer : public easy3d::Viewer {
 public:
     TutorialImageViewer(const std::string& title, const std::string& image_file);

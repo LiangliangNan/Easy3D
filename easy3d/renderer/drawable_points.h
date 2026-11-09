@@ -36,6 +36,7 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.
      * \class PointsDrawable easy3d/renderer/drawable_points.h
+     * \sa Drawable, LinesDrawable, TrianglesDrawable
      * \sa LinesDrawable, TrianglesDrawable
      */
 

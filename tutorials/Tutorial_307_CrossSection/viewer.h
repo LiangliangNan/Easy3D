@@ -31,6 +31,7 @@
 
 namespace easy3d {
 
+/// \see easy3d::Viewer, easy3d::SurfaceMesh
 class CrossSection : public easy3d::Viewer {
 public:
     explicit CrossSection(const std::string& title);

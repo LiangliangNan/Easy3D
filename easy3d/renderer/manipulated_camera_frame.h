@@ -57,6 +57,7 @@ namespace easy3d {
      *
      *      A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
      *      the associated Camera::pivotPoint().
+     * \see Frame, ManipulatedFrame, Camera
      */
     class ManipulatedCameraFrame : public ManipulatedFrame {
     public:

@@ -36,6 +36,7 @@ namespace easy3d {
     class SurfaceMesh;
 
     // An enhanced viewer that can handle textured meshes (now it supports the OBJ format only).
+    /// \see Viewer, easy3d::SurfaceMesh
     class TexturedViewer : public Viewer
     {
     public:

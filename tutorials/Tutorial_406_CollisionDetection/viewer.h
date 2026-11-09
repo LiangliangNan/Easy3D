@@ -38,6 +38,7 @@ namespace easy3d {
     class Collider;
 }
 
+/// \see easy3d::Viewer, easy3d::Collider
 class TutorialCollisionDetection : public easy3d::Viewer {
 public:
     explicit TutorialCollisionDetection(const std::string& title);

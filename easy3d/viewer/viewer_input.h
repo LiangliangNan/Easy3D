@@ -41,6 +41,7 @@ namespace easy3d {
      * identifiers follow the corresponding GLFW key values where applicable.
      * A key event reports a key identifier, not text input; use
      * ViewerCallbacks::char_input_event to receive entered characters.
+     * \see ViewerCallbacks, ViewerBase, Viewer
      */
         enum Key {
             /// No recognized key.

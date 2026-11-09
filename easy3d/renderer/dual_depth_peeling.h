@@ -46,7 +46,7 @@ namespace easy3d {
      *      opaque scene. The OpenGL min-max (front and back) pairing is not used;
      *      each layer is peeled front to back.
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
-     * \sa AverageColorBlending
+     * \sa Transparency, AverageColorBlending, PerPixelLinkedListsOIT
      */
     class DualDepthPeeling : public Transparency
     {
@@ -100,6 +100,7 @@ namespace easy3d {
      * \brief Transparency effect using dual depth peeling.
      *
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
+     * \sa Transparency, AverageColorBlending, PerPixelLinkedListsOIT
      *
      * \details DualDepthPeeling implements the dual depth peeling algorithm described in
      *      [Order independent transparency with dual depth peeling]
