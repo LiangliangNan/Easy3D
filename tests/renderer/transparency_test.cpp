@@ -200,6 +200,26 @@ int main(int argc,char**) {
             close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::linked_lists,8),
                        linked_stack,"eight-layer linked lists was not order independent");
         }
+        // Linked-list pool overflow is reported rather than silent. A tiny pool
+        // exhausted by stacked full-screen surfaces drops the excess fragments and
+        // counts them; a sufficient pool and non-linked-list frames report zero.
+        {
+            std::vector<DrawCommand> many;
+            for (unsigned i=0;i<4;++i) {
+                auto layer=rectangle(-1,-1,1,1,-.9f+.5f*float(i),vec4(0,0,1,.5f),true);
+                layer.object_id=200+i;
+                many.push_back(layer);
+            }
+            // 16x16 pixels x 1 fragment/pixel = 256 nodes; four full-screen surfaces
+            // attempt 4 x 256 = 1024 appends, so 768 fragments are dropped.
+            device->render(16,16,many,vec4(0),1,TransparencyMethod::linked_lists,1);
+            require(device->oit_dropped_fragments()==768,"linked lists did not report the overflowed fragment count");
+            // Capacity 4 gives 1024 nodes, exactly enough for all 1024 appends.
+            device->render(16,16,many,vec4(0),1,TransparencyMethod::linked_lists,4);
+            require(device->oit_dropped_fragments()==0,"linked lists reported overflow for a sufficient pool");
+            device->render(16,16,many,vec4(0),1,TransparencyMethod::sorted);
+            require(device->oit_dropped_fragments()==0,"a sorted frame did not clear the overflow diagnostic");
+        }
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);
         line.geometry=std::make_shared<Geometry>(std::vector<Vertex>(2),std::vector<uint32_t>{0,1},Topology::lines);
@@ -212,6 +232,6 @@ int main(int argc,char**) {
         try { device->render(65,65,{bad_alpha}); } catch (const std::invalid_argument&) { rejected=true; }
         require(rejected,"out-of-range transparent alpha was accepted");
         require(device->validation_errors()==0,"transparency validation errors");
-        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color, depth-peel and per-pixel linked lists OIT\n";
+        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color, depth-peel and per-pixel linked lists OIT with overflow diagnostics\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

@@ -526,6 +526,12 @@ namespace easy3d {
             /// Return cumulative point-position resource realizations.
             /// \return Cumulative number of point-position resource realizations.
             virtual std::uint64_t point_upload_count() const = 0;
+            /// Return transparent fragments dropped by linked-list OIT pool overflow in
+            /// the most recent frame. Zero unless that frame used
+            /// TransparencyMethod::linked_lists and exhausted its node pool; raise the
+            /// per-pixel fragment capacity (peel_layers) to reduce dropping.
+            /// \return Number of fragments dropped by linked-list OIT overflow last frame.
+            virtual std::uint32_t oit_dropped_fragments() const = 0;
         };
 
         // Implemented by the renderer Vulkan backend. Throws if devices or requested

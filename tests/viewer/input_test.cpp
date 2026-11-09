@@ -1,14 +1,18 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -43,43 +47,74 @@ struct ClipboardRestore {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
+#ifdef EASY3D_HAS_VULKAN
         TestWindow options; options.visible=false; options.width=241; options.height=181;
         options.device.validation=options.device.sync_validation=argc>1;
         InputViewer v("Input parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+#else
+        (void)argc;
+        InputViewer v("Input parity", 241, 181, 1);
+        v.hide();
+#endif
         auto key=glfwSetKeyCallback(v.window(),nullptr); glfwSetKeyCallback(v.window(),key);
         auto press=[&](int k,int mods=0){key(v.window(),k,0,GLFW_PRESS,mods);};
         auto release=[&](int k){key(v.window(),k,0,GLFW_RELEASE,0);};
-        auto* first=v.add_model(resource::directory()+"/data/bunny.ply");
-        auto* second=v.add_model(resource::directory()+"/data/bunny.ply");
+        // Two distinct in-memory meshes: the file overload deduplicates by name on OpenGL,
+        // while add_model(shared_ptr) deduplicates by pointer identity on both backends.
+        const std::string bunny=resource::directory()+"/data/bunny.ply";
+        std::shared_ptr<Model> mesh_a(SurfaceMeshIO::load(bunny));
+        std::shared_ptr<Model> mesh_b(SurfaceMeshIO::load(bunny));
+        auto* first=v.add_model(mesh_a);
+        auto* second=v.add_model(mesh_b);
         require(first && second && first!=second && v.current_model()==second,"model setup failed");
         press(InputViewer::KEY_COMMA); require(v.current_model()==first,"previous-model shortcut failed");
         press(InputViewer::KEY_PERIOD); require(v.current_model()==second,"next-model shortcut failed");
         press(InputViewer::KEY_PERIOD); require(v.current_model()==first,"model cycling did not wrap");
         v.fit_screen();
         const auto image=v.capture();
-        size_t hit=0; while (hit<image.ids.size() && image.ids[hit].object==UINT32_MAX) ++hit;
-        require(hit<image.ids.size(),"pivot test scene is empty");
+        // Choose a covered pixel nearest the image center: an interior surface point survives
+        // the logical->framebuffer quantization that legacy hooks apply on HiDPI displays.
+        size_t hit=0; double best=-1;
+        const double cx=image.width*0.5, cy=image.height*0.5;
+        for (size_t i=0;i<image.ids.size();++i) {
+            if (image.ids[i].object==UINT32_MAX) continue;
+            const double dx=double(i%image.width)-cx, dy=double(i/image.width)-cy, d=dx*dx+dy*dy;
+            if (best<0 || d<best) { best=d; hit=i; }
+        }
+        require(best>=0,"pivot test scene is empty");
         const int px=int(hit%image.width),py=int(hit/image.width);
         const auto surface=v.pick(px,py); const bool found=bool(surface); const auto picked=surface.position;
         require(found,"pivot depth pick failed");
-        v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
-        require((v.camera()->pivotPoint()-picked).norm()<1e-6f,"Shift-click selected wrong surface pivot");
-        v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
+        // Legacy mouse hooks take camera screen units: framebuffer pixels on Vulkan, logical
+        // window coordinates on OpenGL (the documented native-hook divergence). Convert the
+        // framebuffer cursor once and take the expected surface from each backend's hook query.
+        const int mx=int(double(px)*v.camera()->screenWidth()/v.framebuffer_width());
+        const int my=int(double(py)*v.camera()->screenHeight()/v.framebuffer_height());
+#ifdef EASY3D_HAS_VULKAN
+        const vec3 hook_target=picked; // Vulkan hook queries pick(mx,my)==pick(px,py)
+#else
+        bool hook_found=false;
+        const vec3 hook_target=v.point_under_pixel(mx,my,hook_found); // OpenGL hook queries point_under_pixel(mx,my)
+        require(hook_found,"logical pivot query failed");
+#endif
+        v.mouse_press_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
+        require((v.camera()->pivotPoint()-hook_target).norm()<1e-6f,"Shift-click selected wrong surface pivot");
+        v.mouse_release_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         const auto before_focus=v.camera()->position(); press(InputViewer::KEY_Z);
-        v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,0);
-        const auto expected_focus=0.1f*before_focus+0.9f*picked;
+        v.mouse_press_event(mx,my,Viewer::BUTTON_LEFT,0);
+        const auto expected_focus=0.1f*before_focus+0.9f*hook_target;
         const auto animation_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
         bool approached=false;
         while ((v.camera()->position()-expected_focus).norm()>=1e-5f &&
                std::chrono::steady_clock::now()<animation_deadline) {
             approached=approached ||
-                       (v.camera()->position()-picked).norm()<(before_focus-picked).norm();
+                       (v.camera()->position()-hook_target).norm()<(before_focus-hook_target).norm();
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             v.draw_frame();
         }
         require(approached,"Z-click did not approach picked surface");
         require((v.camera()->position()-expected_focus).norm()<1e-5f,"Z-click camera animation did not reach its target");
-        v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,0); release(InputViewer::KEY_Z); v.fit_screen();
+        v.mouse_release_event(mx,my,Viewer::BUTTON_LEFT,0); release(InputViewer::KEY_Z); v.fit_screen();
         auto* renderer=first->renderer();
         auto* faces=renderer->get_triangles_drawable("faces");
         auto* vertices=renderer->get_points_drawable("vertices");
@@ -141,6 +176,13 @@ int main(int argc,char**) {
             ClipboardRestore clipboard(v.window());
             const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
             v.camera()->setPosition(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+            // Vulkan pastes immediately; OpenGL animates to the saved view over 0.5 s. Both
+            // must restore it, so drive frames until arrival rather than assuming one timing.
+            const auto paste_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+            while ((v.camera()->position()-copied).norm()>=1e-5f && std::chrono::steady_clock::now()<paste_deadline) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                v.draw_frame();
+            }
             require((v.camera()->position()-copied).norm()<1e-5f,"clipboard camera roundtrip failed");
             glfwSetClipboardString(v.window(),"bad camera"); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
             require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
@@ -154,7 +196,7 @@ int main(int argc,char**) {
         release(InputViewer::KEY_P);
         press(InputViewer::KEY_DELETE); require(v.models().size()==1 && v.current_model()==second,"delete-current-model failed");
         v.clear_scene(); require(v.current_model()==nullptr,"clearing scene left dangling current model");
-        require(v.device().validation_errors()==0,"input validation errors");
+        require(v.validation_errors()==0,"input validation errors");
         press(InputViewer::KEY_F4,GLFW_MOD_ALT); require(v.should_close(),"Alt-F4 did not close");
         std::cout << "PASS: camera/model shortcuts, modifiers, axes, region/middle zoom, focus, bindings and dialogs\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

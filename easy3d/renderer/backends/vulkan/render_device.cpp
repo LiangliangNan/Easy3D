@@ -1325,14 +1325,15 @@ namespace easy3d {
             struct LinkedLists {
                 Context &c;
                 uint32_t width = 0, height = 0, node_count = 0;
-                Buffer head, nodes, counter, params;
+                Buffer head, nodes, counter, params, counter_readback;
                 VkRenderPass build_pass = VK_NULL_HANDLE;
                 VkFramebuffer build_framebuffer = VK_NULL_HANDLE;
                 VkPipeline build_pipeline = VK_NULL_HANDLE, resolve_pipeline = VK_NULL_HANDLE;
                 VkDescriptorSet set = VK_NULL_HANDLE;
                 VkDescriptorPool pool = VK_NULL_HANDLE;
                 explicit LinkedLists(Context &context)
-                    : c(context), head(context), nodes(context), counter(context), params(context) {}
+                    : c(context), head(context), nodes(context), counter(context), params(context),
+                      counter_readback(context) {}
                 ~LinkedLists() {
                     if (build_pipeline)
                         c.vkDestroyPipeline(c.device, build_pipeline, nullptr);
@@ -1503,6 +1504,7 @@ namespace easy3d {
                 TransparencyMethod oit_method_ = TransparencyMethod::sorted;
                 unsigned oit_layers_ = 4;
                 bool oit_active_ = false;
+                uint32_t oit_dropped_ = 0;
                 std::unique_ptr<Target> target_, pixel_target_;
                 std::unique_ptr<ShadowMap> shadow_map_;
                 uint32_t shadow_bound_size_ = 0;
@@ -1628,6 +1630,9 @@ namespace easy3d {
                 }
                 uint64_t point_upload_count() const override {
                     return point_uploads_;
+                }
+                uint32_t oit_dropped_fragments() const override {
+                    return oit_dropped_;
                 }
                 GpuPoints &point_resource(const std::shared_ptr<const PointData> &data) {
                     for (auto it = point_resources_.begin(); it != point_resources_.end();) {
@@ -3705,8 +3710,10 @@ namespace easy3d {
                     lists_->head.init(head_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                       false);
                     lists_->nodes.init(node_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, false);
-                    lists_->counter.init(4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                    lists_->counter.init(4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                          false);
+                    lists_->counter_readback.init(4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
                     lists_->params.init(16, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
                     uint32_t parameters[4] = {node_count, width, height, 0};
                     lists_->params.transfer(parameters, sizeof(parameters), true);
@@ -4056,6 +4063,20 @@ namespace easy3d {
                             c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
                         }
                         c_.vkCmdEndRenderPass(cmd);
+                        // Copy the allocation counter to host-visible memory so the host can
+                        // report pool overflow. It counts every append attempt, including
+                        // fragments dropped once the pool was full.
+                        VkMemoryBarrier counter_barrier{};
+                        counter_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                        counter_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                        counter_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &counter_barrier, 0, nullptr, 0,
+                                                nullptr);
+                        VkBufferCopy counter_copy{};
+                        counter_copy.size = 4;
+                        c_.vkCmdCopyBuffer(cmd, lists_->counter.handle, lists_->counter_readback.handle, 1,
+                                           &counter_copy);
                         // Order the linked-list writes before the resolve pass reads them.
                         VkMemoryBarrier resolve_barrier{};
                         resolve_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
@@ -4306,6 +4327,7 @@ namespace easy3d {
                             const vec4 &background,
                             bool capture = true) {
                     encode_shadow(cmd, draws);
+                    oit_dropped_ = 0;
                     // Accumulate or peel the transparent surfaces first; the scene pass then
                     // composites the result over its opaque geometry.
                     oit_active_ = oit_method_ != TransparencyMethod::sorted &&
@@ -4347,6 +4369,14 @@ namespace easy3d {
                                       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT,
                                       VK_ACCESS_TRANSFER_READ_BIT);
+                }
+                // The submission fence has already waited, so the counter copy is complete.
+                void capture_oit_overflow() {
+                    if (oit_active_ && oit_method_ == TransparencyMethod::linked_lists && lists_) {
+                        uint32_t attempts = 0;
+                        lists_->counter_readback.transfer(&attempts, sizeof(attempts), false);
+                        oit_dropped_ = attempts > lists_->node_count ? attempts - lists_->node_count : 0;
+                    }
                 }
                 FrameImage render(uint32_t width,
                                   uint32_t height,
@@ -4392,6 +4422,7 @@ namespace easy3d {
                         c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
                                                 &host, 0, nullptr, 0, nullptr);
                     });
+                    capture_oit_overflow();
                     std::vector<unsigned char> bytes(depth_offset + pixels * 4);
                     target_->readback.transfer(bytes.data(), bytes.size(), false);
                     std::memcpy(result.rgba.data(), bytes.data(), pixels * 4);
@@ -4501,6 +4532,7 @@ namespace easy3d {
                                           VK_ACCESS_TRANSFER_WRITE_BIT, 0);
                         },
                         swapchain_->acquired, swapchain_->ready[image]);
+                    capture_oit_overflow();
                     VkPresentInfoKHR info{};
                     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
                     info.waitSemaphoreCount = 1;

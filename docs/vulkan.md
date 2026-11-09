@@ -16,9 +16,10 @@ maintain a second interpolator for these actions. The updated
 validation-enabled `vulkan.input` test checks that focus animation progresses
 and reaches its target. Earlier local Vulkan and OpenGL full-suite results are
 recorded below; they predate this cleanup. Clean Release builds and installed
-package consumers for both backends also passed locally on macOS. Migration
-completion remains gated on Linux and Windows evidence, a successful run of the
-restored CI workflow, and measuring the unprofiled portable point fallback.
+package consumers for both backends also passed locally on macOS. A controlled
+OpenGL/Vulkan point-cloud benchmark now profiles the portable expanded-point
+fallback locally (batch 45). Migration completion remains gated on Linux and
+Windows evidence and a successful run of the restored CI workflow.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -441,7 +442,11 @@ The migration is **not yet validated complete**:
   in Vulkan and OpenGL Debug builds on 2026-11-09. OpenGL currently reports
   `UINT32_MAX` for the center primitive ID while Vulkan reports primitive 0;
   this known capability difference is asserted explicitly. Picking, interactive
-  behavior, and DPI parity are still outstanding.
+  behavior, and DPI parity now have shared deterministic checks too:
+  `portable_pick`, the shared `input_test.cpp` (`vulkan.input`/`opengl.input`),
+  and `viewer_query` plus the `viewer.pointbenchmark` DPI assertions all pass on
+  both backends (2026-11-09). A systematic effect/snapshot image-diff harness
+  remains optional follow-up (assessment Finding 1).
 * `vulkan.interactionoverlay` passed in that local run. Its selection-border
   assertion now accepts a solid-blue border within one pixel of the ideal edge,
   accounting for line-rasterization placement while still checking solid color.
@@ -466,8 +471,13 @@ The migration is **not yet validated complete**:
 
 The tracked Mac measurement of approximately 80 FPS for the native
 `largePoints` RealCamera path at 3200×1834, 4× MSAA, and zero validation errors
-does not profile the portable expanded-point fallback and is not a controlled
-OpenGL-versus-Vulkan comparison.
+is a HUD measurement, not a controlled comparison. A matched-scene point-cloud
+benchmark (`viewer.pointbenchmark`, 2026-11-09, Release, 3200×1834, 4× MSAA,
+479187 fountain points at 5 px, 300 timed frames) now profiles the fallback and
+the backend gap: Vulkan native ≈ 100 FPS, the portable expanded-point fallback
+(`use_native_large_points=false`) ≈ 15 FPS (~6.5–7× slower than native, identical
+ID-pass coverage), and OpenGL ≈ 310–390 FPS (figures vary run-to-run). The linked-list OIT node pool also
+exposes an overflow diagnostic, `RenderDevice::oit_dropped_fragments()`.
 
 The migration completion checklist is maintained in `ToDo.md`. It separates
 correctness and platform acceptance gates from follow-up maintainability and
@@ -7042,3 +7052,73 @@ full CTest suites are green at idle `-j2`: OpenGL 105/105 (`build-u1b-opengl`), 
 Qt/CGAL/ffmpeg Vulkan Debug 144/144 (`cmake-build-debug`). The three new tutorial smoke tests
 pass on both backends. Load-sensitive flakes under concurrent `-j2`: `opengl.imgui` (native
 OpenGL tree) and `vulkan.window`/`vulkan.imgui` (Debug tree) each pass when run alone.
+
+### 2026-11-09 — W10 batch 45: controlled point benchmark, shared interaction/DPI parity, linked-list OIT overflow diagnostics
+
+**Scope.** Locally feasible items from `docs/vulkan-migration-assessment.md` on this
+macOS/MoltenVK machine: a controlled OpenGL/Vulkan point-cloud benchmark including the
+portable expanded-point fallback (Finding 4 baseline / remaining-work item 4), shared
+deterministic interaction and DPI parity checks (Finding 1 subset), and a linked-list OIT
+overflow diagnostic (Finding 4). No change to the agreed shared API surface beyond the new
+diagnostic accessor.
+
+**Benchmark.** `tests/viewer/point_benchmark_test.cpp` (shared, registered as
+`viewer.pointbenchmark`, no validation args so layers do not skew throughput) renders the
+fountain point cloud (479187 points at 5 px) at a 1600×917 logical window (3200×1834
+framebuffer on this 2× DPI display), 4× MSAA, hidden, Release. It warms up 30 frames then
+times 300 `draw_frame()` calls; OpenGL disables vsync for the timed run. On Vulkan it builds
+two sequential viewers with `VulkanOptions::use_native_large_points` true then false.
+Measured (figures vary run-to-run on this laptop): Vulkan native ≈ 10 ms/frame (~100 FPS);
+Vulkan expanded-point fallback ≈ 65–70 ms/frame (~14–16 FPS, ~6.5–7× slower than native,
+identical ID-pass coverage 670130 px); OpenGL ≈ 2.6–3.2 ms/frame (~310–390 FPS, ~3–4× faster
+than Vulkan native). The test also asserts the DPI
+contract on both backends: logical size equals the requested 1600×917, framebuffer ≥ logical,
+and `dpi_scaling == framebuffer/logical`. Coverage caveat: OpenGL's capture ID pass
+rasterizes points smaller than the timed color pass, so its ID-pass covered-pixel count
+(141695) differs; the timed color pass renders 5 px on both backends, so the timing is fair.
+
+**Shared parity tests.** `tests/viewer/input_test.cpp` was Vulkan-only and is now shared
+(`vulkan.input` with validation args / `opengl.input` plain). It loads two distinct meshes
+(via `SurfaceMeshIO::load`, because `add_model(file)` deduplicates by filename on OpenGL),
+selects the covered pixel nearest the image center (an interior point, avoiding silhouette
+quantization), and converts cursor coordinates through `camera()->screenWidth()/
+framebuffer_width()` so the legacy mouse hooks target the same surface point on both
+backends. It covers keyboard shortcuts, modifier bindings, clipboard camera roundtrip,
+file-open/save/snapshot hooks, and Shift/Z-click pivot selection. Picking parity is covered
+by the shared `portable_pick`; DPI by `viewer_query` plus the benchmark assertions.
+
+**Linked-list OIT overflow diagnostic.** `RenderDevice::oit_dropped_fragments()` returns the
+number of transparent fragments dropped when the linked-list node pool overflowed in the
+most recent frame, and zero otherwise (including for non-linked-list frames). The build
+shader's atomic counter already counts every append attempt, including dropped fragments;
+the counter buffer gained `TRANSFER_SRC` usage and a 4-byte host-visible readback buffer,
+and the build pass copies the counter to it (fragment-write → transfer-read barrier). The
+copy is read back after the existing synchronous submission fence wait in both `render()`
+and `present()`, so it adds no extra stall. `tests/renderer/transparency_test.cpp` asserts an
+exact dropped count (16×16 target, capacity 1 → 256 nodes; four full-screen surfaces attempt
+1024 appends → 768 dropped), zero for a sufficient pool (capacity 4 → 1024 nodes), and zero
+after a sorted frame, under validation layers. This mirrors the OpenGL
+`PerPixelLinkedListsOIT` overflow warning with a precise queryable count.
+
+**Divergences recorded (parity decisions for the user, not silently aligned).**
+- *Legacy mouse hook coordinates:* the new `set_callbacks` API delivers logical coordinates
+  on both backends, but the legacy mouse virtuals differ — OpenGL delivers logical
+  coordinates (`point_under_pixel`), Vulkan delivers framebuffer pixels (`pick`). The shared
+  input test bridges them with the camera/framebuffer ratio. `Camera::screenWidth()/Height()`
+  is logical on OpenGL and framebuffer on Vulkan; the batch-36 style-guide claim that camera
+  and viewer logical sizes match on both backends overstates this and should be read with
+  that caveat.
+- *Clipboard paste:* Vulkan `paste_view` sets the camera immediately; OpenGL `paste_view`
+  animates via `interpolateTo(&frame, 0.5f)`. The shared test tolerates the animation with a
+  deadline loop. Whether to align these is a user-facing interaction decision.
+- *`add_model(file)` dedup:* OpenGL deduplicates by filename; Vulkan loads a fresh model.
+  `add_model(shared_ptr)` deduplicates by pointer identity on both.
+- *Pre-existing validation warnings:* MoltenVK prints "Blending is enabled for
+  VK_FORMAT_R32G32_UINT" advisories; these are not counted by `validation_errors()` and do
+  not fail the suites.
+
+**Validation.** Clean full build of the Vulkan Release tree (`cmake-build-release`,
+`Easy3D_ENABLE_VULKAN=ON`, `Easy3D_BUILD_TESTS=ON`) and a serial full CTest run passed
+140/140 (134 s), including the new overflow assertions and shared input/benchmark tests.
+The OpenGL Release tree (`build-opengl`) passes `opengl.input` and `viewer.pointbenchmark`.
+Linux/Mesa, Windows hardware, and the GitHub CI workflow remain separate, non-local gates.
