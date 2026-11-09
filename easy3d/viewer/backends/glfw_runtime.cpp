@@ -1,4 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
 #include "glfw_runtime.h"
 #include <easy3d/util/logging.h>
 #ifdef EASY3D_HAS_VULKAN
@@ -7,60 +32,77 @@
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <algorithm>
-namespace easy3d { namespace detail {
-GlfwRuntime::GlfwRuntime(bool require_vulkan) {
+namespace easy3d {
+    namespace detail {
+        GlfwRuntime::GlfwRuntime(bool require_vulkan) {
 #ifdef EASY3D_HAS_VULKAN
-    // GLFW snapshots this loader hint at initialization. Prepare it even when
-    // an OpenGL host opens first; missing Vulkan must still allow OpenGL use.
-    try { loader_ = graphics::internal::VulkanLoader::open(); }
-    catch (const std::runtime_error& e) { vulkan_error_ = e.what(); }
-    if (require_vulkan && !loader_) throw std::runtime_error(vulkan_error_);
-    glfwInitVulkanLoader(loader_ ? loader_->get_instance_proc_addr() : nullptr);
+            // GLFW snapshots this loader hint at initialization. Prepare it even when
+            // an OpenGL host opens first; missing Vulkan must still allow OpenGL use.
+            try {
+                loader_ = graphics::internal::VulkanLoader::open();
+            } catch (const std::runtime_error &e) {
+                vulkan_error_ = e.what();
+            }
+            if (require_vulkan && !loader_)
+                throw std::runtime_error(vulkan_error_);
+            glfwInitVulkanLoader(loader_ ? loader_->get_instance_proc_addr() : nullptr);
 #else
-    vulkan_error_ = "Vulkan window support was not built";
-    if (require_vulkan) throw std::runtime_error(vulkan_error_);
+            vulkan_error_ = "Vulkan window support was not built";
+            if (require_vulkan)
+                throw std::runtime_error(vulkan_error_);
 #endif
-    glfwSetErrorCallback([](int error, const char* description) {
-        LOG(ERROR) << "GLFW error " << error << ": " << description;
-    });
-    if (!glfwInit()) {
-        glfwTerminate();
+            glfwSetErrorCallback([](int error, const char *description) {
+                LOG(ERROR) << "GLFW error " << error << ": " << description;
+            });
+            if (!glfwInit()) {
+                glfwTerminate();
 #ifdef EASY3D_HAS_VULKAN
-        glfwInitVulkanLoader(nullptr);
+                glfwInitVulkanLoader(nullptr);
 #endif
-        throw std::runtime_error("GLFW initialization failed (a desktop display is required)");
-    }
-}
-void GlfwRuntime::poll_events() { glfwPollEvents(); }
-int GlfwRuntime::modifiers(GLFWwindow* window) {
-    int result = 0;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)) result |= GLFW_MOD_SHIFT;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL)) result |= GLFW_MOD_CONTROL;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) || glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) result |= GLFW_MOD_ALT;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SUPER) || glfwGetKey(window, GLFW_KEY_RIGHT_SUPER)) result |= GLFW_MOD_SUPER;
-    return result;
-}
-GlfwRuntime::~GlfwRuntime() {
-    glfwTerminate();
+                throw std::runtime_error("GLFW initialization failed (a desktop display is required)");
+            }
+        }
+        void GlfwRuntime::poll_events() {
+            glfwPollEvents();
+        }
+        int GlfwRuntime::modifiers(GLFWwindow *window) {
+            int result = 0;
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT))
+                result |= GLFW_MOD_SHIFT;
+            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL))
+                result |= GLFW_MOD_CONTROL;
+            if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) || glfwGetKey(window, GLFW_KEY_RIGHT_ALT))
+                result |= GLFW_MOD_ALT;
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SUPER) || glfwGetKey(window, GLFW_KEY_RIGHT_SUPER))
+                result |= GLFW_MOD_SUPER;
+            return result;
+        }
+        GlfwRuntime::~GlfwRuntime() {
+            glfwTerminate();
 #ifdef EASY3D_HAS_VULKAN
-    glfwInitVulkanLoader(nullptr);
+            glfwInitVulkanLoader(nullptr);
 #endif
-}
-std::shared_ptr<GlfwRuntime> GlfwRuntime::acquire(bool require_vulkan) {
-    static std::weak_ptr<GlfwRuntime> current;
-    auto runtime = current.lock();
-    if (!runtime) {
-        runtime = std::shared_ptr<GlfwRuntime>(new GlfwRuntime(require_vulkan));
-        current = runtime;
-    }
-    if (require_vulkan && !runtime->loader_) throw std::runtime_error(runtime->vulkan_error_);
-    return runtime;
-}
-GLFWwindow* GlfwRuntime::opengl_share_window() const {
-    return opengl_windows_.empty() ? nullptr : opengl_windows_.front();
-}
-void GlfwRuntime::attach_opengl_window(GLFWwindow* window) { opengl_windows_.push_back(window); }
-void GlfwRuntime::detach_opengl_window(GLFWwindow* window) {
-    opengl_windows_.erase(std::remove(opengl_windows_.begin(), opengl_windows_.end(), window), opengl_windows_.end());
-}
-} }
+        }
+        std::shared_ptr<GlfwRuntime> GlfwRuntime::acquire(bool require_vulkan) {
+            static std::weak_ptr<GlfwRuntime> current;
+            auto runtime = current.lock();
+            if (!runtime) {
+                runtime = std::shared_ptr<GlfwRuntime>(new GlfwRuntime(require_vulkan));
+                current = runtime;
+            }
+            if (require_vulkan && !runtime->loader_)
+                throw std::runtime_error(runtime->vulkan_error_);
+            return runtime;
+        }
+        GLFWwindow *GlfwRuntime::opengl_share_window() const {
+            return opengl_windows_.empty() ? nullptr : opengl_windows_.front();
+        }
+        void GlfwRuntime::attach_opengl_window(GLFWwindow *window) {
+            opengl_windows_.push_back(window);
+        }
+        void GlfwRuntime::detach_opengl_window(GLFWwindow *window) {
+            opengl_windows_.erase(std::remove(opengl_windows_.begin(), opengl_windows_.end(), window),
+                                  opengl_windows_.end());
+        }
+    } // namespace detail
+} // namespace easy3d

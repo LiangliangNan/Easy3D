@@ -1,9 +1,34 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
 #ifndef EASY3D_VIEWER_OFFSCREEN_H
 #define EASY3D_VIEWER_OFFSCREEN_H
 #include <easy3d/viewer/viewer.h>
 namespace easy3d {
-/**
+    /**
  * \brief Render an Easy3D scene into an image without showing a window.
  *
  * \details OffScreen exposes the scene, camera, picking, overlay, and capture
@@ -16,9 +41,9 @@ namespace easy3d {
  * resize(). File rendering is performed by render(); this class does not
  * provide an interactive run loop.
  */
-class OffScreen : protected Viewer {
-public:
-    /**
+    class OffScreen : protected Viewer {
+    public:
+        /**
      * \brief Create an offscreen rendering canvas.
      * \param width Positive canvas width in pixels.
      * \param height Positive canvas height in pixels.
@@ -26,16 +51,17 @@ public:
      * \details OpenGL construction creates a hidden context. Vulkan
      * construction creates no window or surface.
      */
-    explicit OffScreen(int width = 800, int height = 600,
+        explicit OffScreen(int width = 800,
+                           int height = 600,
 #ifdef EASY3D_HAS_VULKAN
-                       const VulkanOptions& options = {});
+                           const VulkanOptions &options = {});
 #else
-                       const OpenGLOptions& options = {});
+                           const OpenGLOptions &options = {});
 #endif
-    /// Release the offscreen canvas and its graphics resources.
-    ~OffScreen() override;
+        /// Release the offscreen canvas and its graphics resources.
+        ~OffScreen() override;
 
-    /**
+        /**
      * \brief Render the current scene to an image file.
      * \param filename Destination image path.
      * \param scaling Output-size multiplier relative to the canvas size.
@@ -48,110 +74,119 @@ public:
      * visibility, or animation state. Output dimensions are constrained by
      * available memory and backend limits.
      */
-    bool render(const std::string& filename, float scaling = 1, int samples = 4,
-                int background = 0, bool expand = true) const;
+        bool render(const std::string &filename,
+                    float scaling = 1,
+                    int samples = 4,
+                    int background = 0,
+                    bool expand = true) const;
 
-    /**
+        /**
      * \brief Resize the offscreen canvas.
      * \param width New positive canvas width in pixels.
      * \param height New positive canvas height in pixels.
      * \throws std::invalid_argument if either dimension is not positive.
      */
-    void resize(int width, int height) override;
+        void resize(int width, int height) override;
 
-    /**
+        /**
      * \brief Query the framebuffer size; for OffScreen it equals the canvas size.
      * \param width Receives the canvas width in pixels.
      * \param height Receives the canvas height in pixels.
      */
-    void framebuffer_size(int& width, int& height) const override;
+        void framebuffer_size(int &width, int &height) const override;
 
-    /**
+        /**
      * \brief Query the logical canvas size; for OffScreen it equals the pixel size.
      * \param width Receives the canvas width.
      * \param height Receives the canvas height.
      */
-    void viewer_size(int& width, int& height) const override;
+        void viewer_size(int &width, int &height) const override;
 
-    /// Offscreen canvas uses a fixed pixel scale of one.
-    /// \return Always 1.
-    float dpi_scaling() const override { return 1; } // fixed-size pixel canvas
+        /// Offscreen canvas uses a fixed pixel scale of one.
+        /// \return Always 1.
+        float dpi_scaling() const override {
+            return 1;
+        } // fixed-size pixel canvas
 
-    /// Framebuffer width in pixels; equal to width().
-    /// \return Canvas width.
-    int framebuffer_width() const override { return width(); }
+        /// Framebuffer width in pixels; equal to width().
+        /// \return Canvas width.
+        int framebuffer_width() const override {
+            return width();
+        }
 
-    /// Framebuffer height in pixels; equal to height().
-    /// \return Canvas height.
-    int framebuffer_height() const override { return height(); }
+        /// Framebuffer height in pixels; equal to height().
+        /// \return Canvas height.
+        int framebuffer_height() const override {
+            return height();
+        }
 
-    /**
+        /**
      * \brief Load and add a model file.
      * \param file Path to the model file.
      * \param create Whether to create standard rendering drawables.
      * \return The added model, or nullptr if loading or addition fails.
      */
-    Model* add_model(const std::string& file, bool create = true) override;
+        Model *add_model(const std::string &file, bool create = true) override;
 
-    /**
+        /**
      * \brief Add a shared model.
      * \param model Model to add.
      * \param create Whether to create standard rendering drawables.
      * \return The added model, or nullptr if addition fails.
      * \details The OffScreen host retains shared ownership.
      */
-    Model* add_model(std::shared_ptr<Model> model, bool create = true) override;
+        Model *add_model(std::shared_ptr<Model> model, bool create = true) override;
 
-    /**
+        /**
      * \brief Add a shared standalone drawable.
      * \param drawable Drawable to add.
      * \return The added drawable, or nullptr if addition fails.
      * \details The OffScreen host retains shared ownership.
      */
-    Drawable* add_drawable(std::shared_ptr<Drawable> drawable) override;
+        Drawable *add_drawable(std::shared_ptr<Drawable> drawable) override;
 
-    /// \name Exposed scene and rendering operations
-    /// These inherited Viewer operations are public on OffScreen.
-    //@{
-    using Viewer::camera;
-    using Viewer::width;
-    using Viewer::height;
-    using Viewer::set_background_color;
-    using Viewer::background_color;
-    using Viewer::add_model;
-    using Viewer::delete_model;
-    using Viewer::models;
-    using Viewer::current_model;
-    using Viewer::add_drawable;
-    using Viewer::delete_drawable;
-    using Viewer::drawables;
-    using Viewer::clear_scene;
-    using Viewer::fit_screen;
-    using Viewer::PickResult;
-    using Viewer::pick;
-    using Viewer::select_points;
-    using Viewer::point_resource;
-    using Viewer::unproject_pixel;
-    using Viewer::project_point;
-    using Viewer::unproject_point;
-    using Viewer::point_under_pixel;
-    using Viewer::set_overlays;
-    using Viewer::clipping_planes;
-    using Viewer::capture;
-    //@}
+        /// \name Exposed scene and rendering operations
+        /// These inherited Viewer operations are public on OffScreen.
+        //@{
+        using Viewer::add_drawable;
+        using Viewer::add_model;
+        using Viewer::background_color;
+        using Viewer::camera;
+        using Viewer::capture;
+        using Viewer::clear_scene;
+        using Viewer::clipping_planes;
+        using Viewer::current_model;
+        using Viewer::delete_drawable;
+        using Viewer::delete_model;
+        using Viewer::drawables;
+        using Viewer::fit_screen;
+        using Viewer::height;
+        using Viewer::models;
+        using Viewer::pick;
+        using Viewer::PickResult;
+        using Viewer::point_resource;
+        using Viewer::point_under_pixel;
+        using Viewer::project_point;
+        using Viewer::select_points;
+        using Viewer::set_background_color;
+        using Viewer::set_overlays;
+        using Viewer::unproject_pixel;
+        using Viewer::unproject_point;
+        using Viewer::width;
+        //@}
 #ifdef EASY3D_HAS_VULKAN
-    // Transitional native scene operations, retained until the picker migration.
-    using Viewer::scan_visible_points;
-    using Viewer::device;
-    using Viewer::set_clipping_planes;
+        // Transitional native scene operations, retained until the picker migration.
+        using Viewer::device;
+        using Viewer::scan_visible_points;
+        using Viewer::set_clipping_planes;
 #endif
-private:
+    private:
 #ifdef EASY3D_HAS_VULKAN
-    // Keep this part of code minimum
+        // Keep this part of code minimum
 #else
-    // Keep this part of code minimum
-    void activate() const;
+        // Keep this part of code minimum
+        void activate() const;
 #endif
-};
-}
+    };
+} // namespace easy3d
 #endif

@@ -1,13 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
 #ifndef EASY3D_RENDERER_BACKENDS_VULKAN_SURFACE_H
 #define EASY3D_RENDERER_BACKENDS_VULKAN_SURFACE_H
 #include <easy3d/renderer/render_device.h>
 #include <vulkan/vulkan.h>
 #include <functional>
 
-namespace easy3d { namespace graphics {
-namespace internal { class VulkanLoader; }
-/**
+namespace easy3d {
+    namespace graphics {
+        namespace internal {
+            class VulkanLoader;
+        }
+        /**
  * \brief Native-window integration data for a Vulkan render device.
  * \details This boundary lets a window toolkit provide a Vulkan surface without
  * adding a GLFW, Qt, or other toolkit dependency to the graphics API. The
@@ -16,11 +44,11 @@ namespace internal { class VulkanLoader; }
  * the VkSurfaceKHR created by the callback; the native window itself remains
  * caller-owned and must outlive the device.
  */
-struct VulkanSurface {
-    /// Instance extensions required by the callback to create the native surface.
-    /// Every name must be supported by the Vulkan loader.
-    std::vector<std::string> instance_extensions;
-    /**
+        struct VulkanSurface {
+            /// Instance extensions required by the callback to create the native surface.
+            /// Every name must be supported by the Vulkan loader.
+            std::vector<std::string> instance_extensions;
+            /**
      * \brief Create a VkSurfaceKHR for the supplied instance.
      * \param instance Vulkan instance created by Easy3D with the requested
      *        \ref instance_extensions enabled.
@@ -31,17 +59,17 @@ struct VulkanSurface {
      * VK_SUCCESS and a non-null surface. The callback and any data it captures
      * need remain valid only until the factory call returns.
      */
-    std::function<VkResult(VkInstance, VkSurfaceKHR*)> create;
-    /**
+            std::function<VkResult(VkInstance, VkSurfaceKHR *)> create;
+            /**
      * \brief Optional shared Vulkan loader.
      * \details Native hosts can pass the loader used to create their window
      * system's Vulkan surface. If empty, Easy3D opens its own Vulkan loader.
      * The selected loader is retained for the lifetime of the render device.
      */
-    std::shared_ptr<internal::VulkanLoader> loader;
-};
+            std::shared_ptr<internal::VulkanLoader> loader;
+        };
 
-/**
+        /**
  * \brief Create a Vulkan render device for an externally created native window.
  * \param surface Required surface extensions, creation callback, and optional
  *        loader. The callback is invoked synchronously.
@@ -61,8 +89,10 @@ struct VulkanSurface {
  * device owns the VkSurfaceKHR, but not the native window or other toolkit
  * resources used by the callback.
  */
-std::unique_ptr<RenderDevice> create_vulkan_window_device(
-        const VulkanSurface& surface, bool validation = false, bool sync_validation = false,
-        const std::string& device_name = {});
-} }
+        std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
+                                                                  bool validation = false,
+                                                                  bool sync_validation = false,
+                                                                  const std::string &device_name = {});
+    } // namespace graphics
+} // namespace easy3d
 #endif

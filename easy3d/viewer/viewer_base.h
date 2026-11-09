@@ -1,4 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
 #ifndef EASY3D_VIEWER_VIEWER_BASE_H
 #define EASY3D_VIEWER_VIEWER_BASE_H
 #include <easy3d/viewer/viewer_input.h>
@@ -10,10 +35,10 @@
 #include <vector>
 struct GLFWwindow;
 namespace easy3d {
-class Camera;
-class Model;
-class Drawable;
-/**
+    class Camera;
+    class Model;
+    class Drawable;
+    /**
  * \brief Common API for interactive and offscreen viewing hosts.
  *
  * \details ViewerBase defines the operations shared by Viewer, MultiViewer, and
@@ -44,19 +69,19 @@ class Drawable;
  * unified ViewerCallbacks are distinct from Viewer subclasses' legacy virtual
  * event hooks.
  */
-class ViewerBase : public ViewerInput {
-public:
-    /// Destroys the host and releases its backend resources.
-    virtual ~ViewerBase();
+    class ViewerBase : public ViewerInput {
+    public:
+        /// Destroys the host and releases its backend resources.
+        virtual ~ViewerBase();
 
-    /**
+        /**
      * \brief Dispatch pending window-system events for all Easy3D viewers.
      * \details This is a static operation and does not render a frame. Normal
      * run() and run_frames() loops poll events themselves.
      */
-    static void poll_events();
+        static void poll_events();
 
-    /**
+        /**
      * \brief Replace the set of unified event and frame callbacks.
      * \param callbacks New callbacks; empty members disable the corresponding hook.
      * \details Call on the UI thread. It is safe to replace callbacks from a
@@ -65,21 +90,21 @@ public:
      * Input callbacks returning true consume the event before legacy viewer
      * handlers and built-in controls are invoked.
      */
-    void set_callbacks(ViewerCallbacks callbacks);
+        void set_callbacks(ViewerCallbacks callbacks);
 
-    /// Returns the number of graphics validation errors observed by this host.
-    /// \return The backend's validation-error count.
-    virtual unsigned validation_errors() const = 0;
+        /// Returns the number of graphics validation errors observed by this host.
+        /// \return The backend's validation-error count.
+        virtual unsigned validation_errors() const = 0;
 
-    /**
+        /**
      * \brief Run the interactive viewer until it is closed.
      * \param see_all If true, fit the scene before entering the loop.
      * \return A status code; Viewer returns EXIT_SUCCESS on success and
      *         EXIT_FAILURE when a standard exception is reported.
      */
-    virtual int run(bool see_all = true) = 0;
+        virtual int run(bool see_all = true) = 0;
 
-    /**
+        /**
      * \brief Run the viewer loop for a bounded number of rendered frames.
      * \param max_frames Maximum number of successfully rendered frames; zero
      *        means continue until the viewer is closed.
@@ -89,9 +114,9 @@ public:
      * is intended for bounded processing and does not promise to show the
      * window or fit the scene first.
      */
-    virtual int run_frames(unsigned max_frames = 0) = 0;
+        virtual int run_frames(unsigned max_frames = 0) = 0;
 
-    /**
+        /**
      * \brief Render one frame if the host is ready to render.
      * \return True if a frame was rendered and presented; false if no frame
      *         could be rendered, for example because the host is closed or
@@ -100,118 +125,128 @@ public:
      * Concrete implementations may invoke animation and frame callbacks. A
      * rendering or callback failure may be reported by the concrete backend.
      */
-    virtual bool draw_frame() = 0;
+        virtual bool draw_frame() = 0;
 
-    /// Request termination of the concrete host's run loop.
-    virtual void exit() = 0;
+        /// Request termination of the concrete host's run loop.
+        virtual void exit() = 0;
 
-    /// Request that the window close; this does not synchronously destroy it.
-    virtual void request_close() = 0;
+        /// Request that the window close; this does not synchronously destroy it.
+        virtual void request_close() = 0;
 
-    /// Returns whether the concrete host has received a close request.
-    /// \return True when close has been requested.
-    virtual bool should_close() const = 0;
+        /// Returns whether the concrete host has received a close request.
+        /// \return True when close has been requested.
+        virtual bool should_close() const = 0;
 
-    /// Show the host window when the concrete backend has a window.
-    virtual void show() = 0;
+        /// Show the host window when the concrete backend has a window.
+        virtual void show() = 0;
 
-    /// Hide the host window when the concrete backend has a window.
-    virtual void hide() = 0;
+        /// Hide the host window when the concrete backend has a window.
+        virtual void hide() = 0;
 
-    /**
+        /**
      * \brief Set the host's logical window or canvas size.
      * \param width Requested width in logical units.
      * \param height Requested height in logical units.
      */
-    virtual void resize(int width, int height) = 0;
+        virtual void resize(int width, int height) = 0;
 
-    /**
+        /**
      * \brief Set the host window's screen position.
      * \param x Horizontal screen coordinate of the window's upper-left corner.
      * \param y Vertical screen coordinate of the window's upper-left corner.
      * \details Hosts without a visible window may not support positioning.
      */
-    virtual void set_position(int x, int y) = 0;
+        virtual void set_position(int x, int y) = 0;
 
-    /// Set the host window title; hosts without a window may not display it.
-    /// \param title New title text.
-    virtual void set_title(const std::string& title) = 0;
+        /// Set the host window title; hosts without a window may not display it.
+        /// \param title New title text.
+        virtual void set_title(const std::string &title) = 0;
 
-    /// Returns the current host window title.
-    /// \return The title string owned by the host.
-    virtual const std::string& title() const = 0;
+        /// Returns the current host window title.
+        /// \return The title string owned by the host.
+        virtual const std::string &title() const = 0;
 
-    /**
+        /**
      * \brief Query the logical window or canvas size.
      * \param width Receives the width in logical units.
      * \param height Receives the height in logical units.
      */
-    virtual void viewer_size(int& width, int& height) const = 0;
+        virtual void viewer_size(int &width, int &height) const = 0;
 
-    /// Returns the logical width; equivalent to the width output of viewer_size().
-    /// \return Width in logical units.
-    int width() const { int w, h; viewer_size(w, h); return w; }
+        /// Returns the logical width; equivalent to the width output of viewer_size().
+        /// \return Width in logical units.
+        int width() const {
+            int w, h;
+            viewer_size(w, h);
+            return w;
+        }
 
-    /// Returns the logical height; equivalent to the height output of viewer_size().
-    /// \return Height in logical units.
-    int height() const { int w, h; viewer_size(w, h); return h; }
+        /// Returns the logical height; equivalent to the height output of viewer_size().
+        /// \return Height in logical units.
+        int height() const {
+            int w, h;
+            viewer_size(w, h);
+            return h;
+        }
 
-    /**
+        /**
      * \brief Query the physical framebuffer size in pixels.
      * \param width Receives the framebuffer width.
      * \param height Receives the framebuffer height.
      */
-    virtual void framebuffer_size(int& width, int& height) const = 0;
+        virtual void framebuffer_size(int &width, int &height) const = 0;
 
-    /// Returns the framebuffer width in physical pixels.
-    /// \return Width in pixels.
-    virtual int framebuffer_width() const = 0;
+        /// Returns the framebuffer width in physical pixels.
+        /// \return Width in pixels.
+        virtual int framebuffer_width() const = 0;
 
-    /// Returns the framebuffer height in physical pixels.
-    /// \return Height in pixels.
-    virtual int framebuffer_height() const = 0;
+        /// Returns the framebuffer height in physical pixels.
+        /// \return Height in pixels.
+        virtual int framebuffer_height() const = 0;
 
-    /**
+        /**
      * \brief Return the ratio between framebuffer pixels and logical units.
      * \return The framebuffer-to-window scale.
      * \details Window systems may round framebuffer dimensions to integer
      * pixels, so multiplying a logical dimension by this value need not exactly
      * reproduce the framebuffer dimension.
      */
-    virtual float dpi_scaling() const = 0;
+        virtual float dpi_scaling() const = 0;
 
-    /// Returns the effective window multisample count; 1 means multisampling is disabled.
-    /// \return Effective sample count.
-    unsigned samples() const { return window_samples(); }
+        /// Returns the effective window multisample count; 1 means multisampling is disabled.
+        /// \return Effective sample count.
+        unsigned samples() const {
+            return window_samples();
+        }
 
-    /**
+        /**
      * \brief Return the backend's native window handle, if it has one.
      * \return A borrowed GLFW window handle, or nullptr for a host without a
      *         native window/context.
      * \details The host retains ownership. Do not destroy the returned handle.
      */
-    virtual GLFWwindow* window() const = 0; // borrowed; may have no OpenGL context
+        virtual GLFWwindow *window() const = 0; // borrowed; may have no OpenGL context
 
-    /// Request a repaint; this does not guarantee that a frame is drawn immediately.
-    virtual void update() const = 0;
+        /// Request a repaint; this does not guarantee that a frame is drawn immediately.
+        virtual void update() const = 0;
 
-    /// Returns the mutable camera owned by this host.
-    /// \return Pointer to the host-owned camera.
-    virtual Camera* camera() = 0;
+        /// Returns the mutable camera owned by this host.
+        /// \return Pointer to the host-owned camera.
+        virtual Camera *camera() = 0;
 
-    /// Returns the camera owned by this host for read-only access.
-    /// \return Pointer to the host-owned camera.
-    virtual const Camera* camera() const = 0;
+        /// Returns the camera owned by this host for read-only access.
+        /// \return Pointer to the host-owned camera.
+        virtual const Camera *camera() const = 0;
 
-    /// Set the scene background color.
-    /// \param color New background color.
-    virtual void set_background_color(const vec4& color) = 0;
+        /// Set the scene background color.
+        /// \param color New background color.
+        virtual void set_background_color(const vec4 &color) = 0;
 
-    /// Returns the scene background color.
-    /// \return Reference to the host's background color.
-    virtual const vec4& background_color() const = 0;
+        /// Returns the scene background color.
+        /// \return Reference to the host's background color.
+        virtual const vec4 &background_color() const = 0;
 
-    /**
+        /**
      * \brief Load a model from a file and add it to the host.
      * \param file_name Model file to load.
      * \param create_default_drawables Whether to create the model's standard
@@ -219,78 +254,78 @@ public:
      * \return The added model, or nullptr if loading or addition fails.
      * \details On success, the host retains shared ownership of the model.
      */
-    virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true) = 0;
+        virtual Model *add_model(const std::string &file_name, bool create_default_drawables = true) = 0;
 
-    /**
+        /**
      * \brief Add a shared model to the host.
      * \param model Shared ownership handle for the model.
      * \param create_default_drawables Whether to create standard drawables.
      * \return The added model, or nullptr if addition fails.
      * \details The host retains a shared reference to the model.
      */
-    virtual Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) = 0;
+        virtual Model *add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) = 0;
 
-    /**
+        /**
      * \brief Add a model supplied as a raw pointer.
      * \param model Pointer to the model; ownership is transferred to the host.
      * \param create_default_drawables Whether to create standard drawables.
      * \return The added model, or nullptr if addition fails.
      */
-    virtual Model* add_model(Model* model, bool create_default_drawables = true) = 0;
+        virtual Model *add_model(Model *model, bool create_default_drawables = true) = 0;
 
-    /**
+        /**
      * \brief Remove a model and its associated drawables.
      * \param model Model to remove.
      * \return True if the model was managed by this host and was removed.
      * \details Removal releases the host's ownership; other shared owners may
      * keep the model alive.
      */
-    virtual bool delete_model(Model* model) = 0;
+        virtual bool delete_model(Model *model) = 0;
 
-    /// Returns the models managed by the host; the returned vector is host-owned.
-    /// \return Reference to the host-owned model collection.
-    virtual const std::vector<std::shared_ptr<Model>>& models() const = 0;
+        /// Returns the models managed by the host; the returned vector is host-owned.
+        /// \return Reference to the host-owned model collection.
+        virtual const std::vector<std::shared_ptr<Model>> &models() const = 0;
 
-    /// Returns the active model used by the viewer's model-oriented commands, or nullptr.
-    /// \return Active model, or nullptr when none is active.
-    virtual Model* current_model() const = 0;
+        /// Returns the active model used by the viewer's model-oriented commands, or nullptr.
+        /// \return Active model, or nullptr when none is active.
+        virtual Model *current_model() const = 0;
 
-    /**
+        /**
      * \brief Add a shared drawable to the host.
      * \param drawable Drawable to add.
      * \return The added drawable, or nullptr if it could not be added.
      * \details The host retains shared ownership.
      */
-    virtual Drawable* add_drawable(std::shared_ptr<Drawable> drawable) = 0;
+        virtual Drawable *add_drawable(std::shared_ptr<Drawable> drawable) = 0;
 
-    /**
+        /**
      * \brief Add a drawable supplied as a raw pointer.
      * \param drawable Pointer to the drawable; ownership is transferred to the host.
      * \return The added drawable, or nullptr if it could not be added.
      */
-    virtual Drawable* add_drawable(Drawable* drawable) = 0;
+        virtual Drawable *add_drawable(Drawable *drawable) = 0;
 
-    /**
+        /**
      * \brief Remove a drawable managed directly by the host.
      * \param drawable Drawable to remove.
      * \return True if the drawable was removed.
      */
-    virtual bool delete_drawable(Drawable* drawable) = 0;
+        virtual bool delete_drawable(Drawable *drawable) = 0;
 
-    /// Returns the standalone drawables managed by the host.
-    /// \return Reference to the host-owned drawable collection.
-    virtual const std::vector<std::shared_ptr<Drawable>>& drawables() const = 0;
+        /// Returns the standalone drawables managed by the host.
+        /// \return Reference to the host-owned drawable collection.
+        virtual const std::vector<std::shared_ptr<Drawable>> &drawables() const = 0;
 
-    /// Remove all models and standalone drawables from the host's scene.
-    virtual void clear_scene() = 0;
+        /// Remove all models and standalone drawables from the host's scene.
+        virtual void clear_scene() = 0;
 
-    /**
+        /**
      * \brief Adjust the camera to frame a model or the complete scene.
      * \param model Model to frame; nullptr means frame the host's scene.
      */
-    virtual void fit_screen(const Model* model = nullptr) = 0;
+        virtual void fit_screen(const Model *model = nullptr) = 0;
 
-    /**
+        /**
      * \brief Project a world-space point to logical window coordinates.
      * \param world Point in world coordinates.
      * \return Continuous logical window position (top-left origin) and
@@ -300,9 +335,9 @@ public:
      * \details The result is not clipped to the view frustum; finite points
      * outside the visible region can produce coordinates outside the window.
      */
-    virtual vec3 project_point(const vec3& world) const;
+        virtual vec3 project_point(const vec3 &world) const;
 
-    /**
+        /**
      * \brief Convert logical window coordinates to world coordinates.
      * \param window Continuous logical x/y coordinates (top-left origin) and
      *        normalized depth in [0, 1].
@@ -310,9 +345,9 @@ public:
      * \throws std::invalid_argument for non-finite input, invalid window size,
      *         or a singular/invalid camera matrix.
      */
-    virtual vec3 unproject_point(const vec3& window) const;
+        virtual vec3 unproject_point(const vec3 &window) const;
 
-    /**
+        /**
      * \brief Query the visible scene point beneath a logical window pixel.
      * \param x Integer logical x coordinate from the top-left.
      * \param y Integer logical y coordinate from the top-left.
@@ -323,21 +358,21 @@ public:
      * multisampling. HUD, overlays, clipping-plane guides, and callback drawing
      * are excluded. Coordinates outside the logical window set found to false.
      */
-    virtual vec3 point_under_pixel(int x, int y, bool& found) const;
+        virtual vec3 point_under_pixel(int x, int y, bool &found) const;
 
-    /// Open a file-selection dialog and load a model.
-    /// \return True on success, false on cancellation or failure.
-    virtual bool open() = 0;
+        /// Open a file-selection dialog and load a model.
+        /// \return True on success, false on cancellation or failure.
+        virtual bool open() = 0;
 
-    /// Save the current model through a file-selection dialog.
-    /// \return True on success, false on cancellation or failure.
-    virtual bool save() const = 0;
+        /// Save the current model through a file-selection dialog.
+        /// \return True on success, false on cancellation or failure.
+        virtual bool save() const = 0;
 
-    /// Save the viewer image through a file-selection dialog.
-    /// \return True on success, false on cancellation or failure.
-    virtual bool snapshot() const = 0;
+        /// Save the viewer image through a file-selection dialog.
+        /// \return True on success, false on cancellation or failure.
+        virtual bool snapshot() const = 0;
 
-    /**
+        /**
      * \brief Render the scene to an image file.
      * \param file_name Destination image path.
      * \param scaling Output-size multiplier relative to the logical canvas size.
@@ -351,34 +386,38 @@ public:
      * File snapshots do not change the live camera, visibility, or animation
      * state.
      */
-    virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 0, bool expand = true) const = 0;
+        virtual bool snapshot(const std::string &file_name,
+                              float scaling = 1.0f,
+                              int samples = 4,
+                              int background = 0,
+                              bool expand = true) const = 0;
 
-    /**
+        /**
      * \brief Set the viewer's usage text and on-screen hint.
      * \param manual Manual text; concrete Viewer treats "default" specially to
      *        display its default shortcut list.
      * \param hint Short hint shown by concrete Viewer when supported.
      */
-    virtual void set_usage(const std::string& manual, const std::string& hint) = 0;
+        virtual void set_usage(const std::string &manual, const std::string &hint) = 0;
 
-    /// Callback invoked for each rendered frame when animation is enabled.
-    using AnimationFunction = std::function<bool(ViewerBase*)>;
+        /// Callback invoked for each rendered frame when animation is enabled.
+        using AnimationFunction = std::function<bool(ViewerBase *)>;
 
-    /// Install or clear the animation callback.
-    /// \param callback Callback to install, or an empty function to clear it.
-    virtual void set_animation_callback(const AnimationFunction& callback) = 0;
+        /// Install or clear the animation callback.
+        /// \param callback Callback to install, or an empty function to clear it.
+        virtual void set_animation_callback(const AnimationFunction &callback) = 0;
 
-    /// Enable or disable animation updates.
-    virtual void set_animation(bool) = 0;
+        /// Enable or disable animation updates.
+        virtual void set_animation(bool) = 0;
 
-    /// Returns true when animation is enabled and an animation callback is installed.
-    /// \return True if animation is currently enabled and has a callback.
-    virtual bool is_animating() const = 0;
+        /// Returns true when animation is enabled and an animation callback is installed.
+        /// \return True if animation is currently enabled and has a callback.
+        virtual bool is_animating() const = 0;
 
-    /// Function type used by bind(); return true when the operation succeeds.
-    using Function = std::function<bool(ViewerBase*, Model*)>;
+        /// Function type used by bind(); return true when the operation succeeds.
+        using Function = std::function<bool(ViewerBase *, Model *)>;
 
-    /**
+        /**
      * \brief Bind a function to a key and optional modifier.
      * \param func Function invoked when the shortcut is activated.
      * \param model Model passed to the function; may be nullptr.
@@ -387,31 +426,33 @@ public:
      * \details A concrete viewer may replace an existing binding for the same
      * key and modifier.
      */
-    void bind(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
-        bind_command(func, model, key, modifier);
-    }
-protected:
-    void notify_pre_draw();
-    void notify_post_draw();
-    void notify_resize();
-    bool dispatch_mouse_press(int, int, int, int);
-    bool dispatch_mouse_release(int, int, int, int);
-    bool dispatch_mouse_drag(int, int, int, int, int, int);
-    bool dispatch_mouse_move(int, int, int, int, int);
-    bool dispatch_mouse_scroll(int, int, int, int);
-    bool dispatch_key_press(int, int);
-    bool dispatch_key_release(int, int);
-    bool dispatch_character(unsigned int);
-    bool dispatch_drop(const std::vector<std::string>&);
-    bool dispatch_focus(bool);
-    virtual void bind_command(const Function&, Model*, Key, Modifier) = 0;
-    virtual unsigned window_samples() const = 0;
-    virtual bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const = 0;
-private:
-    std::shared_ptr<ViewerCallbacks> callbacks_;
-    int callback_button_ = -1;
-    bool callback_capture_ = false;
-    int resize_width_ = 0, resize_height_ = 0, resize_fb_width_ = 0, resize_fb_height_ = 0;
-};
-}
+        void bind(const Function &func, Model *model, Key key, Modifier modifier = MODIF_NONE) {
+            bind_command(func, model, key, modifier);
+        }
+
+    protected:
+        void notify_pre_draw();
+        void notify_post_draw();
+        void notify_resize();
+        bool dispatch_mouse_press(int, int, int, int);
+        bool dispatch_mouse_release(int, int, int, int);
+        bool dispatch_mouse_drag(int, int, int, int, int, int);
+        bool dispatch_mouse_move(int, int, int, int, int);
+        bool dispatch_mouse_scroll(int, int, int, int);
+        bool dispatch_key_press(int, int);
+        bool dispatch_key_release(int, int);
+        bool dispatch_character(unsigned int);
+        bool dispatch_drop(const std::vector<std::string> &);
+        bool dispatch_focus(bool);
+        virtual void bind_command(const Function &, Model *, Key, Modifier) = 0;
+        virtual unsigned window_samples() const = 0;
+        virtual bool read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const = 0;
+
+    private:
+        std::shared_ptr<ViewerCallbacks> callbacks_;
+        int callback_button_ = -1;
+        bool callback_capture_ = false;
+        int resize_width_ = 0, resize_height_ = 0, resize_fb_width_ = 0, resize_fb_height_ = 0;
+    };
+} // namespace easy3d
 #endif
