@@ -113,6 +113,59 @@ void exercise(Viewer& v) {
     hud->update_vertex_buffer({vec2(0,0),vec2(float(v.framebuffer_width()),float(v.framebuffer_height()))},v.framebuffer_width(),v.framebuffer_height());
     require(!hit(v,vec3(0)),"HUD produced a scene pick");v.clear_scene();
 }
+void impostor_widths(Viewer& v) {
+    auto points=std::make_shared<PointsDrawable>("size-100 sphere");
+    points->update_vertex_buffer({vec3(0)});points->set_point_size(100);
+    points->set_impostor_type(PointsDrawable::SPHERE);points->set_lighting(false);
+    points->set_uniform_coloring(vec4(1,0,0,1));v.add_drawable(points);
+    auto lines=std::make_shared<LinesDrawable>("width-100 horizontal cylinder");
+    lines->update_vertex_buffer({vec3(-1.3f,0,0),vec3(1.3f,0,0)});lines->set_line_width(100);
+    lines->set_impostor_type(LinesDrawable::CYLINDER);lines->set_lighting(false);
+    lines->set_uniform_coloring(vec4(1,0,0,1));v.add_drawable(lines);
+    auto& camera=*v.camera();
+    camera.setViewDirection(vec3(0,0,-1));camera.setUpVector(vec3(0,1,0));
+    for (auto projection:{Camera::ORTHOGRAPHIC,Camera::PERSPECTIVE}) {
+        camera.setType(projection);camera.setSceneBoundingBox(vec3(-1),vec3(1));camera.showEntireScene();
+        camera.setPivotPoint(vec3(0));
+        const float radius=100*camera.pixelGLRatio(camera.pivotPoint())*.5f;
+        const float distance=camera.position().norm();
+        const float plane_width=std::abs(v.world_to_window(vec3(0,radius,0)).y-
+                                         v.world_to_window(vec3(0,-radius,0)).y);
+        const float silhouette=projection==Camera::PERSPECTIVE?
+            plane_width/std::sqrt(1-radius*radius/(distance*distance)):plane_width;
+        for (bool sphere:{true,false}) {
+            points->set_visible(sphere);lines->set_visible(!sphere);
+            const std::string file=std::string("width100-")+(sphere?"sphere-":"cylinder-")+
+                (projection==Camera::PERSPECTIVE?"perspective-":"orthographic-")+std::to_string(v.samples())+".png";
+            require(v.snapshot(file,1.f,v.samples(),1),"width-100 snapshot failed");
+            std::vector<unsigned char> rgba;int w=0,h=0,channels=0;
+            require(ImageIO::load(file,rgba,w,h,channels,4,false),"width-100 snapshot decode failed");
+            int min_x=w,max_x=-1,min_y=h,max_y=-1,central_thickness=0;
+            for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
+                const auto* pixel=rgba.data()+4*(size_t(y)*w+x);
+                if (pixel[0]>pixel[1]+127 && pixel[0]>pixel[2]+127) {
+                    min_x=std::min(min_x,x);max_x=std::max(max_x,x);
+                    min_y=std::min(min_y,y);max_y=std::max(max_y,y);
+                    if (x==w/2) ++central_thickness;
+                }
+            }
+            const float logical_x=float(max_x-min_x+1)*v.width()/w;
+            const float logical_y=float(max_y-min_y+1)*v.height()/h;
+            const float logical_thickness=float(central_thickness)*v.height()/h;
+            std::cout << "IMPOSTOR_WIDTH " << file << " window=" << v.width() << 'x' << v.height()
+                      << " image=" << w << 'x' << h << " radius=" << radius << " distance=" << distance
+                      << " center_plane=" << plane_width << " analytic_silhouette=" << silhouette
+                      << " raster_bounds=" << max_x-min_x+1 << 'x' << max_y-min_y+1
+                      << " logical_bounds=" << logical_x << 'x' << logical_y
+                      << " central_thickness=" << logical_thickness << std::endl;
+            require(max_x>=min_x && max_y>=min_y,"width-100 impostor was not rendered");
+            require(std::abs(logical_thickness-silhouette)<=1.f,"width-100 thickness differs from analytic silhouette");
+            if (sphere) require(std::abs(logical_x-silhouette)<=1.f && std::abs(logical_y-silhouette)<=1.f,
+                                "size-100 sphere bounds differ from analytic silhouette");
+        }
+    }
+    v.clear_scene();
+}
 void sphere_snapshots(Viewer& v) {
     auto points=std::make_shared<PointsDrawable>("snapshot sphere");
     points->set_point_size(40);points->set_impostor_type(PointsDrawable::SPHERE);
@@ -225,7 +278,7 @@ int main(int argc,char**) {return test::run("portable picking depth, provenance,
     OpenGLOptions options;
 #endif
     for(int samples:{1,4}) {
-        Viewer v("Portable pick",241,181,samples,false,false,true,options);sphere_snapshots(v);exercise(v);
+        Viewer v("Portable pick",241,181,samples,false,false,true,options);impostor_widths(v);sphere_snapshots(v);exercise(v);
         require(v.validation_errors()==0,"picking validation errors");
     }
     tutorials();
