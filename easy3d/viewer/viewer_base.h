@@ -201,11 +201,19 @@ namespace easy3d {
 
         /// Returns the framebuffer width in physical pixels.
         /// \return Width in pixels.
-        virtual int framebuffer_width() const = 0;
+        int framebuffer_width() const {
+            int w, h;
+            framebuffer_size(w, h);
+            return w;
+        }
 
         /// Returns the framebuffer height in physical pixels.
         /// \return Height in pixels.
-        virtual int framebuffer_height() const = 0;
+        int framebuffer_height() const {
+            int w, h;
+            framebuffer_size(w, h);
+            return h;
+        }
 
         /**
      * \brief Return the ratio between framebuffer pixels and logical units.
@@ -471,6 +479,7 @@ namespace easy3d {
         virtual void bind_command(const Function &, Model *, Key, Modifier) = 0;
         virtual unsigned window_samples() const = 0;
         virtual bool read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const = 0;
+        bool window_pixel(int x, int y, int &px, int &py) const;
 
     private:
         std::shared_ptr<ViewerCallbacks> callbacks_;

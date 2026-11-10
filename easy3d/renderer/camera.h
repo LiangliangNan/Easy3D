@@ -719,14 +719,14 @@ namespace easy3d {
          *      When \p frame in \c NULL (default), \p src is expressed in the world coordinate system.
          * \param src The source coordinates in world space.
          * \param frame The frame to use for the conversion.
-         * \return The coordinates in screen space.
+         * \return Continuous logical coordinates (top-left origin) and normalized depth in [0, 1].
          */
         vec3 projectedCoordinatesOf(const vec3 &src, const Frame *frame = nullptr) const;
         /**
          * \brief Returns the world unprojected coordinates of a point defined in the screen coordinate system.
          *      The result is expressed in the \p frame coordinate system. When \p frame is \c NULL (default), the
          *      result is expressed in the world coordinate system.
-         * \param src The source coordinates in screen space.
+         * \param src Continuous logical x/y (top-left origin) and normalized depth; no pixel-center offset is added.
          * \param frame The frame to use for the conversion.
          * \return The unprojected coordinates.
          */
@@ -736,7 +736,7 @@ namespace easy3d {
          * \brief Returns the coefficients of a 3D half-line passing through the Camera eye and pixel (x, y).
          * \details The origin of the half line (eye position) is stored in \p orig, while \p dir contains the properly
          *      oriented and normalized direction of the half line. \p x and \p y are expressed as the origin defined
-         *      in the upper left corner. Use screenHeight() - y - 1 to convert to OpenGL units.
+         *      in the upper left corner, in continuous logical window units.
          * \param x The x coordinate of the click.
          * \param y The y coordinate of the click.
          * \param orig The origin of the line.

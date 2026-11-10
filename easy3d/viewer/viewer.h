@@ -244,23 +244,11 @@ public:
          */
         void resize(int w, int h) override;
 
-        /// Returns the logical width of the viewer window.
-        /// \return Width in logical units.
-        int width() const { return width_; }
-        /// Returns the logical height of the viewer window.
-        /// \return Height in logical units.
-        int height() const { return height_; }
         /// Query the logical window size.
         /// \param w Receives the logical width.
         /// \param h Receives the logical height.
         void viewer_size(int& w, int& h) const override;
 
-		/// Returns the framebuffer width in physical pixels.
-		/// \return Width in pixels.
-		int framebuffer_width() const override;
-		/// Returns the framebuffer height in physical pixels.
-		/// \return Height in pixels.
-		int framebuffer_height() const override;
 		/// Query the framebuffer size in physical pixels.
 		/// \param w Receives the framebuffer width.
 		/// \param h Receives the framebuffer height.
@@ -777,6 +765,14 @@ public:
         virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers);
 
         /**
+         * \brief Origin subtracted from mouse coordinates before camera manipulation.
+         * \return Logical window coordinates of the interaction region's top-left corner.
+         * \details Mouse state stays in whole-window coordinates; multi-view layouts
+         * rebase camera frame actions onto the active cell through this hook.
+         */
+        virtual ivec2 interaction_origin() const { return ivec2(0); }
+
+        /**
          * \brief Handle pointer motion when no mouse button is pressed.
          * \param x Current logical x coordinate from the top-left.
          * \param y Current logical y coordinate from the top-left.
@@ -934,7 +930,6 @@ public:
 	    std::vector<graphics::DrawCommand> frame_commands(const Camera& camera, int width, int height,
 	                                                      std::vector<DrawSource>* sources = nullptr,
 	                                                      bool include_hud = true) const;
-	    ivec2 interaction_origin_ = ivec2(0);
 	    // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
 	    Viewer(int width, int height, const VulkanOptions& options);
 	    void resize_render_target(int width, int height);
@@ -951,6 +946,7 @@ public:
 	protected:
         virtual void draw_scene(const Camera& snapshot, const DrawSource* source = nullptr, bool guides = false) const;
         // Selects the framebuffer region used by the primitive-ID picking pass.
+        // All four arguments are in framebuffer pixels (top-left origin).
         virtual void prepare_pick_view(int x, int y, int width, int height) const;
         GLFWwindow *create_window(const std::string &title,
                                   int samples,

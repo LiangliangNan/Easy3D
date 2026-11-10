@@ -196,7 +196,8 @@ needs no change.
 ## Coordinate System Conventions
 
 *Established 2026-11-07 (Batch 35); corrected and made backend-uniform in Batch 46
-(2026-11-09).* Easy3D uses three distinct coordinate systems. All code must follow these
+(2026-11-09); consolidated onto one checked projection in Batch 47 (2026-11-10).* Easy3D uses
+three distinct coordinate systems. All code must follow these
 conventions consistently. Batch 46 removed the last backend divergence: legacy mouse hooks,
 `Camera::screenWidth()/Height()`, `Viewer::pick()` and the world↔window/pixel conversion API
 are now logical/DPI-independent on **both** OpenGL and Vulkan. The Batch 36 claim that these
@@ -241,6 +242,31 @@ clean, self-describing pair of conversions on `ViewerBase` (inherited by `Viewer
 - `Viewer::pick(x, y)` — GPU picking in **logical window** coordinates on both backends (Batch 46).
 
 Depth is normalized [0,1] (near=0, far=1); OpenGL's [-1,1] window depth is remapped at the boundary.
+
+### Shared projection math (Batch 47)
+
+All window↔world conversions route through one checked implementation in `renderer/transform.h`:
+`transform::project` / `transform::unproject` (plus `unproject_inverse` for bulk queries that reuse
+a precomputed inverse, `checked_inverse`, `scale_coordinate`, `pixel_index`). `Camera::projectedCoordinatesOf`/
+`unprojectedCoordinatesOf`, `ViewerBase::world_to_window`/`window_to_world`/`world_to_pixel`/`pixel_to_world`,
+the pickers, and `MultiViewer` cell mapping all delegate to it — there are no parallel hand-written
+clip-space formulas left. Consequences:
+
+- Projection is **continuous**: `y = vp.y + (0.5 - ndc.y*0.5) * vp.h` with no `height-1` term. The old
+  one-unit split (Camera used `height-1-y`, the viewer used `height-y`) is gone; camera and viewer
+  results now agree exactly (regression-checked in `viewer_query_test.cpp`).
+- A framebuffer **pixel center** is `(x+0.5, y+0.5)`; `pixel_to_world` adds the half pixel and
+  `world_to_pixel` returns continuous physical coordinates. `point_under_pixel`/`pick()` map a logical
+  position to a pixel index with `floor` via the shared `window_pixel` helper.
+- Invalid input (non-finite coordinates/matrices, non-positive viewports, singular matrices,
+  out-of-range pixels) throws `std::invalid_argument` instead of producing NaNs.
+- The `Picker::project`/`unproject`/`picking_dir` wrappers were removed; use the camera conversions
+  directly (`picking_line` remains). `ViewerBase` owns `width()/height()/framebuffer_width()/framebuffer_height()`
+  for all viewers; the derived-class overrides are gone.
+- `MultiViewer` hit-tests cells and rebases interaction in **logical** units on both backends
+  (`interaction_origin()` hook); cell cameras carry the exact logical cell bounds, so odd window
+  sizes partition without gaps. Mouse state stays in whole-window coordinates; only camera frame
+  actions are rebased, keeping region-zoom overlays aligned.
 
 ### When to Use Which
 
@@ -7232,3 +7258,68 @@ runs encountered intermittent desktop-input failures in the ImGui menu/cross-sec
 isolated reruns and the final full runs passed. The snapshot silhouette tests passed on both
 backends, and their generated images were inspected and compared. Linux/Mesa, Windows hardware
 and GitHub CI were not run; these remain separate validation gates.
+
+### 2026-11-10 — W10 batch 47: post-unification cleanup — one checked projection, removed dead wrappers
+
+**Scope.** Follow-up to batch 46: after the coordinate unification, several wrappers and parallel
+implementations became redundant. This batch removes them and consolidates the surviving math into
+one checked implementation. No public coordinate contract changed; the one observable correction is
+the removal of the legacy one-unit y offset (see below). Net −240 lines across 17 files.
+
+**Removed (dead or duplicative).**
+- `Picker::project()`, `Picker::unproject()`, `Picker::picking_dir()` — thin forwarders to the camera;
+  callers (picker internals, `mesh_picker_test`) now use `camera()->projectedCoordinatesOf()` /
+  `unprojectedCoordinatesOf()` directly. `picking_line()` stays (it composes two unprojections).
+- `Viewer::width()/height()/framebuffer_width()/framebuffer_height()` overrides in `Viewer` and
+  `OffScreen` — `ViewerBase` now owns all four as inline accessors over `viewer_size()` /
+  `framebuffer_size()`. `OffScreen` (protected inheritance) re-exposes the framebuffer pair with
+  `using` declarations.
+- The separate-matrix `transform::project/unproject(model, proj, …)` overloads — only the MVP form
+  survives.
+- `Viewer`'s Vulkan `interaction_origin_` member and the per-call-site subtractions, the OpenGL
+  `MultiViewer` modulo-based drag/release rebasing, `view_width_/view_height_`, and the Vulkan-only
+  `configure_cell` aspect hack (cell cameras now carry the exact logical cell bounds on both
+  backends, so no projection-matrix correction is needed).
+- The non-Apple DPI multiplication in OpenGL `Viewer::resize()` — `resize()` takes logical units on
+  every platform (GLFW expects logical window sizes).
+- The hand-written clip-space math in `ViewerBase`, `Camera`, `MultiViewer`, the Vulkan scan loop,
+  and the surface-mesh region picker.
+
+**Unified.** `renderer/transform.h` is the single checked home for projection math:
+`project`, `unproject`, `unproject_inverse` (precomputed inverse for bulk scans), `checked_inverse`,
+`scale_coordinate` (double, no rounding), `pixel_index` (floor + int-range check). All validate
+finiteness, viewport positivity, and singularity, throwing `std::invalid_argument`. `Camera::convertClickToLine`
+is now derived from the inverse MVP (near-plane + mid-depth unprojection), so it also works with
+custom/calibrated projection matrices. `ViewerBase::window_pixel()` is the one logical→framebuffer
+pixel mapping shared by `point_under_pixel()` and both `pick()` implementations.
+
+**One-unit y correction.** The old `transform::project/unproject` used `height − 1 − y` for top-left
+viewports while the viewer used continuous `height − y`; `Camera` had its own variant. All now use
+the continuous mapping `y = vp.y + (0.5 − ndc.y·0.5)·vp.h`. Pixel centers are `(x+0.5, y+0.5)`;
+the GL picker maps sampled texel centers back to logical coordinates through `scale_coordinate`.
+The remaining `height − 1 − i` expressions (e.g. `Picker::screen_to_opengl`, `glReadPixels` rows)
+flip **discrete pixel indices** between top- and bottom-origin addressing, which is consistent with
+the continuous rule: `height − (i+0.5) = (height−1−i) + 0.5`. They are not the old point convention.
+Camera and viewer projections now agree exactly (new regression in `viewer_query_test.cpp`, together
+with a `convertClickToLine` ray-consistency check, both camera types, both backends).
+
+**MultiViewer interaction.** Cell hit-testing, `prepare_pick_view`, and coordinate rebasing are
+logical and shared across backends. Mouse state stays in whole-window coordinates; a new
+`Viewer::interaction_origin()` hook (default `(0,0)`, overridden by `MultiViewer`) rebases only the
+camera frame actions and region-zoom fit, so overlays remain aligned. Pressing a cell sets the
+camera to that cell's exact logical bounds; because perspective pan scales with `1/cellHeight`,
+odd-size cells pan proportionally to their size — the multiview regression now checks strict pan
+parity between equal-sized cells, height-scaled parity for the taller cell, and a cross-cell drag
+that must keep the pressed cell's origin. The OpenGL primitive-ID pass fix: `prepare_pick_view`
+takes framebuffer pixels (its documented contract), not logical coordinates.
+
+**Retained deliberately.** Camera projection capabilities (manipulation and pickers need them),
+`set_position()` (native window placement), and the depth-query vs rich-pick distinction.
+
+**Validation (2026-11-10, macOS Release).** Final serial CTest runs passed OpenGL 106/106
+(`build-opengl`, 48 s) and Vulkan 140/140 (`cmake-build-release`, 149 s), including the new
+camera/viewer agreement, click-ray, equal-size pan parity, height-scaled pan, and cross-cell drag
+regressions on both backends. An intermediate full run initially reported mass desktop aborts;
+the cause was stale executables still linked against the removed `Viewer::framebuffer_height()`
+symbol — a full relink cleared it, not a code defect. Linux/Mesa, Windows hardware and GitHub CI
+were not run; these remain separate validation gates.

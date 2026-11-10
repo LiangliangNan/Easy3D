@@ -134,45 +134,9 @@ namespace easy3d {
          *       framebuffer pixel dimensions by the DPI scaling factor.
          */
         Line3 picking_line(int x, int y) const {
-            const vec3 p_near = unproject(x, y, 0);
-            const vec3 p_far = unproject(x, y, 1);
+            const vec3 p_near = camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), 0));
+            const vec3 p_far = camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), 1));
             return Line3::from_two_points(p_near, p_far);
-        }
-
-        /**
-         * \brief The picking direction, pointing inside the screen.
-         * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
-         * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
-         * \return The normalized direction vector of the picking line.
-         * \note Same coordinate convention as picking_line().
-         */
-        vec3 picking_dir(int x, int y) const {
-            return picking_line(x, y).direction();
-        }
-
-        /**
-         * \brief Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
-         * \param p A 3D point in the world coordinate system.
-         * \return The projected point in logical window coordinates: x and y are in the range
-         *         [0, screenWidth()) x [0, screenHeight()) with top-left origin; z is the normalized
-         *         depth in [0, 1) where 0 is the near plane and 1 is the far plane.
-         * \note The returned coordinate is in logical window units, matching the coordinate system
-         *       used by mouse event callbacks and picker input parameters.
-         */
-        vec3 project(const vec3 &p) const {
-            return camera()->projectedCoordinatesOf(p);
-        }
-
-        /**
-         * \brief Compute the world coordinates of a point defined in the screen coordinate system.
-         * \param x The x-coordinate in logical window units (top-left origin, x right).
-         * \param y The y-coordinate in logical window units (top-left origin, y down).
-         * \param depth The depth value in [0, 1), where 0 is the near plane and 1 is the far plane.
-         * \return The world-space coordinates of the unprojected point.
-         * \note This is the inverse of project(). The input coordinate is in logical window units.
-         */
-        vec3 unproject(int x, int y, float depth) const {
-            return camera()->unprojectedCoordinatesOf(vec3(static_cast<float>(x), static_cast<float>(y), depth));
         }
 
         /**

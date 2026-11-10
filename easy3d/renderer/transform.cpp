@@ -27,6 +27,8 @@
 #include <easy3d/renderer/transform.h>
 
 #include <cmath>
+#include <stdexcept>
+#include <limits>
 
 
 namespace easy3d {
@@ -129,55 +131,79 @@ namespace easy3d {
             return (mat4::scale(w / 2.0f, -h / 2.0f, 1, 1) * mat4::translation(1, -1, 0));
         }
 
-        vec3 project(const vec3& obj, const mat4& mv, const mat4& proj, const int viewport[4], bool lowerleft /* = true*/) {
-            mat4 mvp = proj * mv;
-            vec3 vs = mvp * obj * 0.5f + vec3(0.5f);
-            vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
-            vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
-
-            return vec3(
-                vs.x,
-                lowerleft ? vs.y : (static_cast<float>(viewport[3]) - 1 - vs.y),
-                vs.z
-                );
+        namespace {
+            void finite_coordinates(const vec3& point) {
+                for (unsigned i = 0; i < 3; ++i)
+                    if (!std::isfinite(point[i]))
+                        throw std::invalid_argument("nonfinite coordinates");
+            }
+            void finite_matrix(const mat4& matrix) {
+                for (unsigned i = 0; i < 16; ++i)
+                    if (!std::isfinite(matrix[i]))
+                        throw std::invalid_argument("nonfinite transformation matrix");
+            }
+            void valid_viewport(const int viewport[4]) {
+                if (viewport[2] <= 0 || viewport[3] <= 0)
+                    throw std::invalid_argument("projection requires a positive viewport size");
+            }
+            vec3 homogeneous_point(const vec4& point) {
+                if (!std::isfinite(point.w) || point.w == 0)
+                    throw std::invalid_argument("invalid homogeneous coordinate");
+                const vec3 result = point.xyz() / point.w;
+                finite_coordinates(result);
+                return result;
+            }
         }
 
-        vec3 project(const vec3& obj, const mat4& mvp, const int viewport[4], bool lowerleft /* = true*/) {
-            vec3 vs = mvp * obj * 0.5f + vec3(0.5f);
-            vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
-            vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
-
-            return vec3(
-                vs.x,
-                lowerleft ? vs.y : (static_cast<float>(viewport[3]) - 1 - vs.y),
-                vs.z
-                );
+        mat4 checked_inverse(const mat4& matrix) {
+            finite_matrix(matrix);
+            const auto det = determinant(matrix);
+            if (!std::isfinite(det) || det == 0)
+                throw std::invalid_argument("singular transformation matrix");
+            const auto result = inverse(matrix);
+            finite_matrix(result);
+            return result;
         }
 
-        vec3 unproject(const vec3& win, const mat4& mv, const mat4& proj, const int viewport[4], bool lowerleft /* = true*/) {
-            vec3 vs(
-                win.x,
-                lowerleft ? win.y : (static_cast<float>(viewport[3]) - 1 - win.y),
-                win.z
-                );
-
-            vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
-            vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
-            vs.z = vs.z * 2.0f - 1.0f;
-            return inverse(proj * mv) * vs;
+        vec3 project(const vec3& obj, const mat4& mvp, const int viewport[4], bool lowerleft) {
+            finite_coordinates(obj);
+            finite_matrix(mvp);
+            valid_viewport(viewport);
+            const vec3 ndc = homogeneous_point(mvp * vec4(obj, 1));
+            const vec3 result(viewport[0] + (ndc.x * .5f + .5f) * viewport[2],
+                              viewport[1] + (.5f + (lowerleft ? .5f : -.5f) * ndc.y) * viewport[3],
+                              ndc.z * .5f + .5f);
+            finite_coordinates(result);
+            return result;
         }
 
-        vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft /* = true*/) {
-            vec3 vs(
-                win.x,
-                lowerleft ? win.y : (static_cast<float>(viewport[3]) - 1 - win.y),
-                win.z
-                );
+        vec3 unproject_inverse(const vec3& win, const mat4& inverse_mvp, const int viewport[4], bool lowerleft) {
+            finite_coordinates(win);
+            finite_matrix(inverse_mvp);
+            valid_viewport(viewport);
+            const float x = 2 * (win.x - viewport[0]) / viewport[2] - 1;
+            const float y = 2 * (win.y - viewport[1]) / viewport[3] - 1;
+            return homogeneous_point(inverse_mvp * vec4(x, lowerleft ? y : -y, 2 * win.z - 1, 1));
+        }
 
-            vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
-            vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
-            vs.z = vs.z * 2.0f - 1.0f;
-            return inverse(mvp) * vs;
+        vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft) {
+            return unproject_inverse(win, checked_inverse(mvp), viewport, lowerleft);
+        }
+
+        double scale_coordinate(double value, int source_extent, int target_extent) {
+            if (!std::isfinite(value) || source_extent <= 0 || target_extent <= 0)
+                throw std::invalid_argument("invalid coordinate or extent");
+            const double result = value * target_extent / source_extent;
+            if (!std::isfinite(result))
+                throw std::invalid_argument("coordinate scaling overflow");
+            return result;
+        }
+
+        int pixel_index(double value, int source_extent, int target_extent) {
+            const double pixel = std::floor(scale_coordinate(value, source_extent, target_extent));
+            if (pixel < std::numeric_limits<int>::min() || pixel > std::numeric_limits<int>::max())
+                throw std::out_of_range("pixel index exceeds integer range");
+            return static_cast<int>(pixel);
         }
 
         mat4 look_at(const vec3& eye, const vec3& center, const vec3& up) {

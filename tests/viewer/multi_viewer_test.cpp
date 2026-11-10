@@ -24,8 +24,8 @@ void require(bool ok,const char* message) {if(!ok) throw std::runtime_error(mess
 struct Grid : MultiViewer {
     using MultiViewer::MultiViewer;
     using MultiViewer::mouse_press_event;
-    using MultiViewer::mouse_drag_event;
-    using MultiViewer::mouse_release_event;
+    using Viewer::mouse_drag_event;
+    using Viewer::mouse_release_event;
     ivec4 bounds(int row,int col) const {
         const int w=framebuffer_width(),h=framebuffer_height();
         int x=int(int64_t(col)*w/columns()),y=int(int64_t(row)*h/rows());
@@ -155,15 +155,29 @@ int main(int argc,char**) {
         bool rejected=false;try{grid.set_layout(0,2);}catch(const std::invalid_argument&){rejected=true;}require(rejected && grid.rows()==2,"invalid layout modified the grid");
         grid.resize(317,237);frame(grid);
         auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivotPoint();vec3 delta;
-        for(int i=0;i<2;++i) {
-            grid.camera()->setPosition(position);grid.camera()->setOrientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);
-            // Legacy mouse hooks take logical window coordinates on both backends (Batch 46).
-            const int x=(i*2+1)*grid.width()/6,y=(i*2+1)*grid.height()/4,dx=10;
+        const auto reset_camera=[&](){grid.camera()->setPosition(position);grid.camera()->setOrientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);};
+        const auto pan=[&](int x,int y,int dx){
             grid.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,0);grid.mouse_drag_event(x+dx,y,dx,0,Viewer::BUTTON_RIGHT,0);grid.mouse_release_event(x+dx,y,Viewer::BUTTON_RIGHT,0);
+            return grid.camera()->position()-position;
+        };
+        // Legacy mouse hooks take logical window coordinates on both backends (Batch 46).
+        // Odd sizes split 317x237 into 105/106-px columns and 118/119-px rows; perspective
+        // pan scales with inverse cell height, so strict parity uses equal-sized cells.
+        for(int i=0;i<2;++i) {
+            reset_camera();
+            const auto moved=pan((2*i+3)*grid.width()/6,grid.height()/4,10);
             const auto projected=api.world_to_window(grid.camera()->sceneCenter());
             require((api.window_to_world(projected)-grid.camera()->sceneCenter()).norm()<1e-4f,"active-cell coordinate round trip failed");
-            if(i==0) delta=grid.camera()->position()-position;else require((grid.camera()->position()-position-delta).norm()<1e-5f,"camera pan depends on the cell's canvas offset");
+            if(i==0) delta=moved;else require((moved-delta).norm()<1e-5f,"camera pan depends on the cell's canvas offset");
         }
+        reset_camera();
+        const auto taller=pan(grid.width()/2,3*grid.height()/4,10); // cell (1,1) is one row pixel taller
+        const int h0=grid.height()/2,h1=grid.height()-h0;
+        require((taller*h1-delta*h0).norm()<1e-3f,"camera pan did not follow the active cell's size");
+        reset_camera();
+        const int reach=grid.width()/3;
+        const auto crossed=pan(3*grid.width()/6,grid.height()/4,reach); // drag from cell (0,1) into cell (0,2)
+        require((crossed-delta*float(reach)/10).norm()<1e-4f,"cross-cell drag lost the pressed cell's origin");
         require(grid.delete_model(red.get()),"model removal failed");frame(grid);grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(!found,"deleted model retained an assigned drawable");
         require(grid.delete_drawable(point.get()),"drawable removal failed");grid.set_layout(3,2);frame(grid);require(grid.models().size()==1,"layout changes altered ownership");grid.clear_scene();frame(grid);
         grid.point_under_pixel(grid.width()/4,grid.height()/6,found);require(!found && grid.models().empty() && grid.drawables().empty(),"cleared assignments rendered old geometry");

@@ -26,6 +26,7 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/logging.h>
@@ -108,7 +109,7 @@ SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh* model,SurfaceMes
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
     double closest=double(hit_resolution_)*hit_resolution_;
     for(auto vertex:model->vertices(face)) {
-        const auto p=project(transform*model->position(vertex));
+        const auto p=camera()->projectedCoordinatesOf(transform*model->position(vertex));
         if(!std::isfinite(p.x) || !std::isfinite(p.y) || p.z<0 || p.z>=1) continue;
         const double distance=distance2(vec2(p),vec2(float(x),float(y)));
         if(distance<closest) {closest=distance;result=vertex;}
@@ -124,8 +125,8 @@ SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh* model,SurfaceMes
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
     double closest=double(hit_resolution_)*hit_resolution_;
     for(auto edge:model->halfedges(face)) {
-        const auto a=project(transform*model->position(model->source(edge)));
-        const auto b=project(transform*model->position(model->target(edge)));
+        const auto a=camera()->projectedCoordinatesOf(transform*model->position(model->source(edge)));
+        const auto b=camera()->projectedCoordinatesOf(transform*model->position(model->target(edge)));
         if(!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y) ||
            a.z<0 || a.z>=1 || b.z<0 || b.z>=1 || distance2(vec2(a),vec2(b))<1e-12f) continue;
         const double distance=Segment2(vec2(a),vec2(b)).squared_distance(vec2(float(x),float(y)));
@@ -169,8 +170,8 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
             const auto world=transform*points[i];const auto d=dot(clipping->normal(),world-clipping->center());
             if(d>0 || (clipping->cross_section() && d < -clipping->cross_section_width()*clipping->scene_radius())) continue;
         }
-        const vec2 p((clip.x/clip.w+1)*.5f*camera()->screenWidth(),
-                     camera()->screenHeight()-1-(clip.y/clip.w+1)*.5f*camera()->screenHeight());
+        const int viewport[] = {0,0,camera()->screenWidth(),camera()->screenHeight()};
+        const vec2 p = vec2(transform::project(points[i],mvp,viewport,false));
         bool inside=polygon.contains(p);
         for(size_t j=0,k=polygon.size()-1;!inside && j<polygon.size();k=j++) {
             const auto edge=polygon[j]-polygon[k];const float length2=edge.length2();
@@ -232,7 +233,9 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         const int id=color::encode(c[0],c[1],c[2],c[3]);
         if(id<0) return SurfaceMesh::Face();
         const SurfaceMesh::Face face=face_from_primitive(model,std::uint32_t(id));
-        if(face.is_valid()) picked_point_=unproject(x,y,depth);
+        if(face.is_valid()) picked_point_=camera()->unprojectedCoordinatesOf(vec3(
+            float(transform::scale_coordinate(gl_x+.5, width, camera()->screenWidth())),
+            float(transform::scale_coordinate(height-gl_y-.5, height, camera()->screenHeight())), depth));
         return face;
     }
 #else
@@ -258,7 +261,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         // Source provenance is invalidated by buffer edits; the face ranges stay valid
         // for the unchanged draw order.
         if(!face.is_valid()) face=face_from_primitive(model,primitive);
-        if(face.is_valid()) picked_point_=unproject(x,y,sample.depth);
+        if(face.is_valid()) picked_point_=camera()->unprojectedCoordinatesOf(vec3(x+.5f,y+.5f,sample.depth));
         return face;
     }
 #endif

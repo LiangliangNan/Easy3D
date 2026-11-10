@@ -36,7 +36,7 @@ void math_tests() {
     const auto rear=face(mesh,{vec3(-1,-1,-.5f),vec3(1,-1,-.5f),vec3(0,1,-.5f)});
     const auto front=face(mesh,{vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0)});
     mesh.delete_face(removed);
-    const auto center=picker.project(vec3(0));const int x=int(center.x),y=int(center.y);
+    const auto center=picker.camera()->projectedCoordinatesOf(vec3(0));const int x=int(center.x),y=int(center.y);
     // Face picking needs a rendered face drawable; a detached mesh cannot be picked.
     require(!picker.pick_face(&mesh,x,y).is_valid() && !picker.picked_face().is_valid(),
             "mesh without a drawable was picked");
@@ -51,7 +51,7 @@ void math_tests() {
     SurfaceMesh other;
     face(other,{vec3(8,8,0),vec3(9,8,0),vec3(8,9,0)});face(other,{vec3(-8,-8,0),vec3(-9,-8,0),vec3(-8,-9,0)});
     const auto other_face=face(other,{vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0)});
-    Polygon2 boundary;for(auto vertex:other.vertices(other_face)) boundary.push_back(vec2(picker.project(other.position(vertex))));
+    Polygon2 boundary;for(auto vertex:other.vertices(other_face)) boundary.push_back(vec2(picker.camera()->projectedCoordinatesOf(other.position(vertex))));
     require(picker.pick_faces(&other,boundary)==std::vector<SurfaceMesh::Face>({other_face}),"polygon boundary vertices were excluded");
     require(picker.pick_faces(&mesh,Polygon2()).empty(),"empty polygon selected faces");
     Polygon2 degenerate;degenerate.push_back(vec2(0));degenerate.push_back(vec2(1));degenerate.push_back(vec2(2));
@@ -89,7 +89,7 @@ void rendered_tests() {
     require(viewer.run_frames(2)==0,"mesh picker viewer frame failed");
 
     SurfaceMeshPicker picker(camera);
-    const auto pixel=picker.project(vec3(0));
+    const auto pixel=picker.camera()->projectedCoordinatesOf(vec3(0));
     const int x=int(pixel.x),y=int(pixel.y);
     // The deleted front-most face keeps its source slot but must never be picked.
     require(picker.pick_face(mesh.get(),x,y)==front,"rasterized pick lost the nearest live face");
@@ -120,19 +120,19 @@ void rendered_tests() {
 
     // Vertex/edge snapping remains geometric on the picked face.
     const auto first=*mesh->vertices(front).begin();
-    const auto vertex_pixel=picker.project(mesh->position(first));
+    const auto vertex_pixel=picker.camera()->projectedCoordinatesOf(mesh->position(first));
     require(picker.pick_vertex(mesh.get(),front,int(vertex_pixel.x)+1,int(vertex_pixel.y)-1)==first,
             "vertex snapping differs");
     auto halfedge=mesh->halfedge(front);
     const auto midpoint=(mesh->position(mesh->source(halfedge))+mesh->position(mesh->target(halfedge)))*.5f;
-    const auto edge_pixel=picker.project(midpoint);
+    const auto edge_pixel=picker.camera()->projectedCoordinatesOf(midpoint);
     require(picker.pick_edge(mesh.get(),front,int(edge_pixel.x),int(edge_pixel.y)).is_valid(),
             "edge sensitivity failed");
 
     // The transform of the picked model is applied by the raster pass.
     mesh->set_manipulator(std::make_shared<Manipulator>(mesh.get()));
     mesh->manipulator()->frame()->translate(vec3(.4f,.25f,.3f));
-    const auto translated=picker.project(vec3(.4f,.25f,.3f));
+    const auto translated=picker.camera()->projectedCoordinatesOf(vec3(.4f,.25f,.3f));
     const int tx=int(translated.x),ty=int(translated.y);
     require(picker.pick_face(mesh.get(),tx,ty)==front,"model transform was ignored");
     require(std::abs(picker.picked_point(mesh.get(),front,tx,ty).z-.3f)<1e-4f,
@@ -150,22 +150,22 @@ void rendered_tests() {
     mesh->manipulator()->frame()->rotate(quat(vec3(0,1,0),.6f));
     camera->setType(Camera::PERSPECTIVE);camera->showEntireScene();
     const mat4 transform=mesh->manipulator()->matrix();
-    const auto rotated=picker.project(transform*vec3(0));
+    const auto rotated=picker.camera()->projectedCoordinatesOf(transform*vec3(0));
     require(picker.pick_face(mesh.get(),int(rotated.x),int(rotated.y))==front,
             "perspective/rotated mesh was missed");
-    const auto rotated_vertex=picker.project(transform*mesh->position(first));
+    const auto rotated_vertex=picker.camera()->projectedCoordinatesOf(transform*mesh->position(first));
     require(picker.pick_vertex(mesh.get(),front,int(rotated_vertex.x),int(rotated_vertex.y))==first,
             "vertex hit did not follow model rotation");
     mesh->manipulator()->frame()->setOrientation(quat());mesh->manipulator()->frame()->setPosition(vec3(0));
     camera->setType(Camera::ORTHOGRAPHIC);viewer.fit_screen();
 
     // Nonplanar and concave polygons use the same tessellation as rendering.
-    const auto corner=picker.project(vec3(.9f,-.9f,0));
+    const auto corner=picker.camera()->projectedCoordinatesOf(vec3(.9f,-.9f,0));
     require(picker.pick_face(warped.get(),int(corner.x),int(corner.y))==warped_face,
             "nonplanar polygon was missed");
     require(picker.picked_point(warped.get(),warped_face,int(corner.x),int(corner.y)).z<.12f,
             "picked point used a fitted plane instead of the tessellated surface");
-    const auto inside=picker.project(vec3(.7f,.5f,0)),notch=picker.project(vec3(0,.5f,0));
+    const auto inside=picker.camera()->projectedCoordinatesOf(vec3(.7f,.5f,0)),notch=picker.camera()->projectedCoordinatesOf(vec3(0,.5f,0));
     require(picker.pick_face(concave.get(),int(inside.x),int(inside.y))==polygon,
             "concave face interior was missed");
     require(!picker.pick_face(concave.get(),int(notch.x),int(notch.y)).is_valid(),
@@ -176,7 +176,7 @@ void rendered_tests() {
     const auto detached_face=face(detached,{vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0)});
     require(!picker.pick_face(&detached,x,y).is_valid(),"detached mesh was picked");
     Polygon2 detached_polygon;
-    for(auto vertex:detached.vertices(detached_face)) detached_polygon.push_back(vec2(picker.project(detached.position(vertex))));
+    for(auto vertex:detached.vertices(detached_face)) detached_polygon.push_back(vec2(picker.camera()->projectedCoordinatesOf(detached.position(vertex))));
     require(picker.pick_faces(&detached,detached_polygon)==std::vector<SurfaceMesh::Face>({detached_face}),
             "detached region selection failed");
 
@@ -189,7 +189,7 @@ void rendered_tests() {
     glEnable(GL_SCISSOR_TEST);glEnable(GL_BLEND);glEnable(GL_COLOR_LOGIC_OP);glLogicOp(GL_XOR);glEnable(GL_RASTERIZER_DISCARD);
     glDepthMask(GL_FALSE);glDepthFunc(GL_GREATER);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     glClearColor(.1f,.2f,.3f,.4f);glActiveTexture(GL_TEXTURE3);
-    const auto state_pixel=picker.project(vec3(0));
+    const auto state_pixel=picker.camera()->projectedCoordinatesOf(vec3(0));
     require(picker.pick_face(mesh.get(),int(state_pixel.x),int(state_pixel.y))==front,"caller render state changed mesh picking");
     GLint vp[4],bound=0,row=0,skip=0,active=0,depth=0,mode[2];GLboolean mask[4],depth_mask=GL_TRUE;GLfloat clear[4];
     glGetIntegerv(GL_VIEWPORT,vp);glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING,&bound);glGetIntegerv(GL_PACK_ROW_LENGTH,&row);
@@ -215,7 +215,7 @@ void rendered_tests() {
         require(other.run_frames(1)==0,"second picker viewer frame failed");
         SurfaceMeshPicker other_picker(other.camera());
         glfwMakeContextCurrent(other.window());
-        const auto other_pixel=other_picker.project(vec3(0));
+        const auto other_pixel=other_picker.camera()->projectedCoordinatesOf(vec3(0));
         require(other_picker.pick_face(second.get(),int(other_pixel.x),int(other_pixel.y))==second_face,
                 "picker framebuffer crossed contexts");
         glfwMakeContextCurrent(viewer.window());

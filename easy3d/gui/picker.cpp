@@ -26,6 +26,7 @@
 
 
 #include <easy3d/gui/picker.h>
+#include <easy3d/renderer/transform.h>
 
 #ifdef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/backends/vulkan/drawable.h>
@@ -92,14 +93,14 @@ namespace easy3d {
 #endif
 
     void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        if(width<=0 || height<=0 || camera()->screenWidth()<=0 || camera()->screenHeight()<=0)
-            throw std::invalid_argument("picker viewport dimensions must be positive");
-        const double fx=std::floor(double(x)*width/camera()->screenWidth());
-        const double fy=height-1-std::floor(double(y)*height/camera()->screenHeight());
-        if(fx<std::numeric_limits<int>::min() || fx>std::numeric_limits<int>::max() ||
-           fy<std::numeric_limits<int>::min() || fy>std::numeric_limits<int>::max())
+        gl_x = transform::pixel_index(x, camera()->screenWidth(), width);
+        const auto top_y = transform::pixel_index(y, camera()->screenHeight(), height);
+        // Flip a discrete row index (top row 0 <-> bottom row height-1), not a continuous
+        // coordinate: for centers, height - (i + 0.5) == (height - 1 - i) + 0.5.
+        const int64_t bottom_y = int64_t(height) - 1 - top_y;
+        if (bottom_y < std::numeric_limits<int>::min() || bottom_y > std::numeric_limits<int>::max())
             throw std::out_of_range("picker coordinate exceeds integer range");
-        gl_x = static_cast<int>(fx);gl_y = static_cast<int>(fy);
+        gl_y = static_cast<int>(bottom_y);
     }
 
 }

@@ -88,6 +88,21 @@ void check(unsigned samples, bool validation) {
             }
         }
         const int x = v->width() / 2, y = v->height() / 2;
+        // Camera and viewer share one checked projection; their conventions must agree.
+        for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f)}) {
+            require(near_enough(v->camera()->projectedCoordinatesOf(p), v->world_to_window(p), 1e-5f),
+                    "camera and viewer projection disagree");
+            const auto w = v->world_to_window(p);
+            require(near_enough(v->camera()->unprojectedCoordinatesOf(w), v->window_to_world(w), 1e-4f),
+                    "camera and viewer unprojection disagree");
+        }
+        vec3 orig, dir;
+        v->camera()->convertClickToLine(x, y, orig, dir);
+        for (float depth : {0.f, .5f}) {
+            const auto on_ray = v->camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), depth));
+            require(distance(on_ray, orig + dir * dot(on_ray - orig, dir)) < 1e-4f,
+                    "click ray does not pass through the unprojected pixel");
+        }
         const mat4 original = v->camera()->modelViewProjectionMatrix();
 #ifndef EASY3D_HAS_VULKAN
         GLuint ubo = 0, pbo = 0;

@@ -109,17 +109,8 @@ namespace easy3d {
             return 1;
         } // fixed-size pixel canvas
 
-        /// Framebuffer width in pixels; equal to width().
-        /// \return Canvas width.
-        int framebuffer_width() const override {
-            return width();
-        }
-
-        /// Framebuffer height in pixels; equal to height().
-        /// \return Canvas height.
-        int framebuffer_height() const override {
-            return height();
-        }
+        using Viewer::framebuffer_width;
+        using Viewer::framebuffer_height;
 
         /**
      * \brief Load and add a model file.

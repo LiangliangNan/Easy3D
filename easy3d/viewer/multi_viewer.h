@@ -201,6 +201,7 @@ namespace easy3d {
 #endif
 
         bool mouse_press_event(int x, int y, int button, int modifiers) override;
+        ivec2 interaction_origin() const override { return interaction_origin_; }
 #ifdef EASY3D_HAS_VULKAN
         // Keep this part of code minimum
         std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
@@ -211,10 +212,6 @@ namespace easy3d {
         // Keep this part of code minimum
         void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
         void prepare_pick_view(int x, int y, int width, int height) const override;
-        // overloaded, so mouse positions are relative to the current view
-        bool mouse_release_event(int x, int y, int button, int modifiers) override;
-        // overloaded, so mouse positions are relative to the current view
-        bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
 #endif
         void update_division();
@@ -232,8 +229,7 @@ namespace easy3d {
         };
         std::vector<std::vector<View> > views_;
 
-        int view_width_;    // the width of the views
-        int view_height_;   // the height of the views
+        ivec2 interaction_origin_ = ivec2(0);
 
         std::unique_ptr<LinesDrawable2D> drawable_division_;
     };

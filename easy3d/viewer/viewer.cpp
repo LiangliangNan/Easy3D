@@ -61,19 +61,6 @@
 #include <stdexcept>
 
 namespace easy3d {
-    namespace {
-        vec3 world_pixel(int x, int y, float depth, int width, int height, const mat4 &inverse_mvp) {
-            const vec4 ndc(2 * (x + .5f) / width - 1, 1 - 2 * (y + .5f) / height, 2 * depth - 1, 1);
-            const auto world = inverse_mvp * ndc;
-            if (!std::isfinite(world.w) || world.w == 0)
-                throw std::invalid_argument("invalid camera unprojection");
-            const vec3 point(world.x / world.w, world.y / world.w, world.z / world.w);
-            for (unsigned i = 0; i < 3; ++i)
-                if (!std::isfinite(point[i]))
-                    throw std::invalid_argument("non-finite world point");
-            return point;
-        }
-    } // namespace
     struct Viewer::Impl {
         std::unique_ptr<graphics::RenderDevice> device;
         Viewer &owner;
@@ -417,10 +404,7 @@ namespace easy3d {
         snapshot.frame()->setPivotPoint(camera()->pivotPoint()); // do not re-adjust the copied ortho coefficient
         snapshot.set_projection_matrix(camera()->projectionMatrix());
         snapshot.set_modelview_matrix(camera()->modelViewMatrix());
-        const auto inv = inverse(snapshot.modelViewProjectionMatrix());
-        for (unsigned i = 0; i < 16; ++i)
-            if (!std::isfinite(inv[i]))
-                throw std::invalid_argument("invalid scan camera inverse");
+        const auto inv = transform::checked_inverse(snapshot.modelViewProjectionMatrix());
         const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
         std::vector<vec3> points;
         points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
@@ -430,20 +414,18 @@ namespace easy3d {
                 const float d = frame.depth[pixel];
                 if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
                     continue;
-                points.push_back(world_pixel(int(x), int(y), d, int(frame.width), int(frame.height), inv));
+                const int viewport[] = {0, 0, int(frame.width), int(frame.height)};
+                points.push_back(transform::unproject_inverse(vec3(x + .5f, y + .5f, d), inv, viewport, false));
             }
         return points;
     }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
-        const int w = width(), h = height();
-        const int fw = framebuffer_width(), fh = framebuffer_height();
-        if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
+        int px, py;
+        if (!window_pixel(x, y, px, py))
             return result;
-        // The query is in logical window coordinates; map to the containing
-        // framebuffer pixel for the GPU sample (DPI-aware), as point_under_pixel does.
-        const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
-        const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
+        int fw, fh;
+        framebuffer_size(fw, fh);
         // One backend draw re-renders the visible scene with object/primitive IDs and
         // depth. Sampling the cursor pixel therefore names the nearest drawable (and
         // its triangle for meshes) without any CPU ray casting.
@@ -1017,16 +999,6 @@ namespace easy3d {
             h = camera()->screenHeight();
         }
     }
-    int Viewer::framebuffer_width() const {
-        int w, h;
-        framebuffer_size(w, h);
-        return w;
-    }
-    int Viewer::framebuffer_height() const {
-        int w, h;
-        framebuffer_size(w, h);
-        return h;
-    }
     void Viewer::viewer_size(int &w, int &h) const {
         if (window_)
             glfwGetWindowSize(window_, &w, &h);
@@ -1372,11 +1344,13 @@ namespace easy3d {
     }
     bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
         if (pressed_button_ == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != mouse_pressed_x_ &&
-            y != mouse_pressed_y_)
-            camera()->fitScreenRegion(std::min(x, mouse_pressed_x_) - interaction_origin_.x,
-                                      std::min(y, mouse_pressed_y_) - interaction_origin_.y,
-                                      std::max(x, mouse_pressed_x_) - interaction_origin_.x,
-                                      std::max(y, mouse_pressed_y_) - interaction_origin_.y);
+            y != mouse_pressed_y_) {
+            const ivec2 origin = interaction_origin();
+            camera()->fitScreenRegion(std::min(x, mouse_pressed_x_) - origin.x,
+                                      std::min(y, mouse_pressed_y_) - origin.y,
+                                      std::max(x, mouse_pressed_x_) - origin.x,
+                                      std::max(y, mouse_pressed_y_) - origin.y);
+        }
         camera()->frame()->action_end();
         ClippingPlane::instance()->manipulator()->frame()->action_end();
         pressed_button_ = -1;
@@ -1392,14 +1366,17 @@ namespace easy3d {
         // Region zoom and clipping/tool manipulation must not move the camera.
         if (modifiers == MODIF_CTRL)
             return false;
+        // Camera actions are cell-local in multi-view layouts; overlays stay absolute.
+        const ivec2 origin = interaction_origin();
+        const int cx = x - origin.x, cy = y - origin.y;
         if (modifiers == MODIF_ALT) {
             if (ClippingPlane::instance()->is_enabled()) {
                 auto *frame = ClippingPlane::instance()->manipulator()->frame();
                 if (button == BUTTON_LEFT)
-                    frame->action_rotate(x - interaction_origin_.x, y - interaction_origin_.y, dx, dy, camera(),
+                    frame->action_rotate(cx, cy, dx, dy, camera(),
                                          ManipulatedFrame::NONE);
                 else if (button == BUTTON_RIGHT)
-                    frame->action_translate(x - interaction_origin_.x, y - interaction_origin_.y, dx, dy, camera(),
+                    frame->action_translate(cx, cy, dx, dy, camera(),
                                             ManipulatedFrame::NONE);
             }
             return false;
@@ -1412,10 +1389,10 @@ namespace easy3d {
         else if (pressed_key_ == GLFW_KEY_O)
             axis = ManipulatedFrame::ORTHOGONAL;
         if (button == BUTTON_LEFT)
-            camera()->frame()->action_rotate(x - interaction_origin_.x, y - interaction_origin_.y, dx, dy, camera(),
+            camera()->frame()->action_rotate(cx, cy, dx, dy, camera(),
                                              axis);
         else if (button == BUTTON_RIGHT)
-            camera()->frame()->action_translate(x - interaction_origin_.x, y - interaction_origin_.y, dx, dy, camera(),
+            camera()->frame()->action_translate(cx, cy, dx, dy, camera(),
                                                 axis);
         else if (button == BUTTON_MIDDLE && std::abs(dy) >= 1)
             camera()->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
@@ -2388,23 +2365,7 @@ namespace easy3d {
     }
 
     void Viewer::resize(int w, int h) {
-#ifndef __APPLE__
-        w = static_cast<int>(w * dpi_scaling());
-        h = static_cast<int>(h * dpi_scaling());
-#endif
         glfwSetWindowSize(window_, w, h);
-    }
-
-    int Viewer::framebuffer_width() const {
-        int w, h;
-        glfwGetFramebufferSize(window_, &w, &h);
-        return w;
-    }
-
-    int Viewer::framebuffer_height() const {
-        int w, h;
-        glfwGetFramebufferSize(window_, &w, &h);
-        return h;
     }
 
     void Viewer::framebuffer_size(int &w, int &h) const {
@@ -2472,10 +2433,11 @@ namespace easy3d {
 
     bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == MODIF_CTRL) { // ZOOM_ON_REGION
-            int xmin = std::min(mouse_pressed_x_, x);
-            int xmax = std::max(mouse_pressed_x_, x);
-            int ymin = std::min(mouse_pressed_y_, y);
-            int ymax = std::max(mouse_pressed_y_, y);
+            const ivec2 origin = interaction_origin();
+            int xmin = std::min(mouse_pressed_x_, x) - origin.x;
+            int xmax = std::max(mouse_pressed_x_, x) - origin.x;
+            int ymin = std::min(mouse_pressed_y_, y) - origin.y;
+            int ymax = std::max(mouse_pressed_y_, y) - origin.y;
             camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
         } else
             camera_->frame()->action_end();
@@ -2489,14 +2451,17 @@ namespace easy3d {
         if (modifiers == MODIF_CTRL)
             return false;
 
+        // Camera actions are cell-local in multi-view layouts; overlays stay absolute.
+        const ivec2 origin = interaction_origin();
+        const int cx = x - origin.x, cy = y - origin.y;
         if (modifiers == MODIF_ALT) {
             // the clipping plane can be manipulated only when it is enabled
             if (ClippingPlane::instance()->is_enabled()) {
                 ManipulatedFrame *frame = ClippingPlane::instance()->manipulator()->frame();
                 if (pressed_button_ == BUTTON_LEFT)
-                    frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+                    frame->action_rotate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
                 else if (pressed_button_ == BUTTON_RIGHT)
-                    frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+                    frame->action_translate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
             }
         } else { // axis-constrained rotation of a model
             auto axis = ManipulatedFrame::NONE;
@@ -2508,10 +2473,10 @@ namespace easy3d {
                 axis = ManipulatedFrame::ORTHOGONAL;
             switch (button) {
             case GLFW_MOUSE_BUTTON_LEFT:
-                camera_->frame()->action_rotate(x, y, dx, dy, camera(), axis);
+                camera_->frame()->action_rotate(cx, cy, dx, dy, camera(), axis);
                 break;
             case GLFW_MOUSE_BUTTON_RIGHT:
-                camera_->frame()->action_translate(x, y, dx, dy, camera(), axis);
+                camera_->frame()->action_translate(cx, cy, dx, dy, camera(), axis);
                 break;
             case GLFW_MOUSE_BUTTON_MIDDLE:
                 if (std::abs(dy) >= 1)
@@ -3442,16 +3407,16 @@ namespace easy3d {
             }
             c /= count;
 
-            const vec3 p = camera()->projectedCoordinatesOf(c);
-            const float x = p.x * dpi_scaling_;
-            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
+            const vec3 p = world_to_pixel(c);
+            const float x = p.x;
+            const float y = framebuffer_height() - p.y;
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);
             easy3d_debug_log_gl_error glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT,
                                                    GL_FLOAT, &depth);
             easy3d_debug_log_gl_error if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
-                texter->draw(std::to_string(f.idx()), x, p.y * dpi_scaling_, 16, font_id, color);
+                texter->draw(std::to_string(f.idx()), x, p.y, 16, font_id, color);
         }
     }
 
@@ -3460,16 +3425,16 @@ namespace easy3d {
         const auto &points = mesh->points();
         for (std::size_t id = 0; id < points.size(); ++id) {
             const vec3 &v = points[id];
-            const vec3 p = camera()->projectedCoordinatesOf(v);
-            const float x = p.x * dpi_scaling_;
-            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
+            const vec3 p = world_to_pixel(v);
+            const float x = p.x;
+            const float y = framebuffer_height() - p.y;
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);
             easy3d_debug_log_gl_error glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT,
                                                    GL_FLOAT, &depth);
             easy3d_debug_log_gl_error if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
-                texter->draw(std::to_string(id), x, p.y * dpi_scaling_, 16, font_id, color);
+                texter->draw(std::to_string(id), x, p.y, 16, font_id, color);
         }
     }
 
@@ -3816,14 +3781,11 @@ namespace easy3d {
     }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
-        const int w = width(), h = height();
-        const int fw = framebuffer_width(), fh = framebuffer_height();
-        if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
+        int px, py;
+        if (!window_pixel(x, y, px, py))
             return result;
-        // The query is in logical window coordinates; map to the containing
-        // framebuffer pixel for the GPU sample (DPI-aware), as point_under_pixel does.
-        const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
-        const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
+        int fw, fh;
+        framebuffer_size(fw, fh);
         // Two offscreen passes share one framebuffer:
         //  1. Draw each visible drawable with its normal shaders and keep the nearest
         //     depth at the cursor. This identifies the model/drawable actually seen.

@@ -37,6 +37,7 @@
  *----------------------------------------------------------*/
 
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/transform.h>
 
 #include <algorithm>
 
@@ -1176,176 +1177,54 @@ namespace easy3d {
 	///////////////////////// Camera to world transform ///////////////////////
 
 	/*! Returns the screen projected coordinates of a 3D point \p src defined in the \p
-	 frame coordinate system.
+	 frame coordinate system (world coordinates when \p frame is \c NULL).
 
-	 When \p frame in \c NULL (default), \p src is expressed in the world coordinate
-	 system.
+	 The result is in continuous logical window coordinates with the origin at the
+	 upper-left corner; z is the normalized depth in [0,1] (near to far). The mapping
+	 is shared with the viewers through transform::project(), so it stays consistent
+	 with world_to_window() and picking on both backends.
 
-	 The x and y coordinates of the returned vec3 are expressed in pixel, (0,0) being
-	 the \e upper left corner of the window. The z coordinate ranges between 0.0
-	 (near plane) and 1.0 (excluded, far plane). See the \c gluProject man page for
-	 details.
+	 Only the intrinsic Camera matrices and screen size are used; no graphics-context
+	 state is read. For an offscreen Camera, update the matrices first with
+	 computeModelViewMatrix() and computeProjectionMatrix().
 
-	 unprojectedCoordinatesOf() performs the inverse transformation.
-
-	 See the <a href="../examples/screenCoordSystem.html">screenCoordSystem
-	 example</a>.
-
-	 This method only uses the intrinsic Camera parameters (see
-	 getModelViewMatrix(), getProjectionMatrix() and getViewport()) and is
-	 completely independent of the OpenGL \c GL_MODELVIEW, \c GL_PROJECTION and
-	 viewport matrices. You can hence define a virtual Camera and use this method to
-	 compute projections out of a classical rendering context.
-
-	 \attention However, if your Camera is not attached to a Viewer (used for
-	 offscreen computations for instance), make sure the Camera matrices are updated
-	 before calling this method. Call computeModelViewMatrix() and
-	 computeProjectionMatrix() to do so.
-
-	 If you call this method several times with no change in the matrices, consider
-	 precomputing the projection times modelview matrix to save computation time if
-	 required (\c P x \c M in the \c gluProject man page).
-
-	 Here is the code corresponding to what this method does (kindly submitted by
-	 Robert W. Kuhn) : \code vec3 project(vec3 point)
-	 {
-	  int    Viewport[4];
-	  double Projection[16], Modelview[16];
-	  double matrix[16];
-
-	  // Precomputation begin
-	  glGetIntegerv(GL_VIEWPORT         , Viewport);
-	  glGetDoublev (GL_MODELVIEW_MATRIX , Modelview);
-	  glGetDoublev (GL_PROJECTION_MATRIX, Projection);
-
-	  for (unsigned short m=0; m<4; ++m)
-	  {
-		for (unsigned short l=0; l<4; ++l)
-		{
-		  double sum = 0.0;
-		  for (unsigned short k=0; k<4; ++k)
-			sum += Projection[l+4*k]*Modelview[k+4*m];
-		  matrix[l+4*m] = sum;
-		}
-	  }
-	  // Precomputation end
-
-	  double v[4], vs[4];
-	  v[0]=point[0]; v[1]=point[1]; v[2]=point[2]; v[3]=1.0;
-
-	  vs[0]=matrix[0 ]*v[0] + matrix[4 ]*v[1] + matrix[8 ]*v[2] + matrix[12 ]*v[3];
-	  vs[1]=matrix[1 ]*v[0] + matrix[5 ]*v[1] + matrix[9 ]*v[2] + matrix[13 ]*v[3];
-	  vs[2]=matrix[2 ]*v[0] + matrix[6 ]*v[1] + matrix[10]*v[2] + matrix[14 ]*v[3];
-	  vs[3]=matrix[3 ]*v[0] + matrix[7 ]*v[1] + matrix[11]*v[2] + matrix[15 ]*v[3];
-
-	  vs[0] /= vs[3];
-	  vs[1] /= vs[3];
-	  vs[2] /= vs[3];
-
-	  vs[0] = vs[0] * 0.5 + 0.5;
-	  vs[1] = vs[1] * 0.5 + 0.5;
-	  vs[2] = vs[2] * 0.5 + 0.5;
-
-	  vs[0] = vs[0] * Viewport[2] + Viewport[0];
-	  vs[1] = vs[1] * Viewport[3] + Viewport[1];
-
-	  return vec3(vs[0], Viewport[3]-vs[1], vs[2]);
-	  }
-	 \endcode
-	 */
-	vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
-		vec3 tmp = src;
-		if (frame)
-			tmp = frame->inverseCoordinatesOf(src);
-
-		const mat4& mvp = modelViewProjectionMatrix();
-
-		// todo: dpi_scaling is not handled.
-		//       should use the actual viewpoint size; or multiply the dpi scaling factor
-		// int viewport[4];
-		// glGetIntegerv(GL_VIEWPORT, viewport);
-		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
-		vec3 vs = mvp * tmp * 0.5f + vec3(0.5f);
-		vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
-		vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
-		return vec3(vs.x, static_cast<float>(viewport[3]) - 1.0f - vs.y, vs.z);
-	}
+	 unprojectedCoordinatesOf() performs the inverse transformation. */
+    vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
+        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
+        return transform::project(frame ? frame->inverseCoordinatesOf(src) : src,
+                                  modelViewProjectionMatrix(), viewport, false);
+    }
 
 	/*! Returns the world unprojected coordinates of a point \p src defined in the
-	 screen coordinate system.
+	 screen coordinate system: continuous logical x/y with the origin at the
+	 upper-left corner and a normalized depth z in [0,1] (near to far, non-linear in
+	 distance for perspective cameras). No pixel-center offset is added; pass pixel
+	 centers (x+0.5, y+0.5) when unprojecting a sampled framebuffer pixel.
 
-	 The \p src.x and \p src.y input values are expressed in pixels, (0,0) being the
-	 \e upper left corner of the window. \p src.z is a depth value ranging in [0..1[
-	 (respectively corresponding to the near and far planes). Note that src.z is \e
-	 not a linear interpolation between zNear and zFar. /code src.z = zFar() /
-	 (zFar() - zNear()) * (1.0 - zNear() / z); /endcode Where z is the distance from
-	 the point you project to the camera, along the viewDirection(). See the \c
-	 gluUnProject man page for details.
+	 The result is expressed in the \p frame coordinate system (world coordinates
+	 when \p frame is \c NULL). The mapping is shared with the viewers through
+	 transform::unproject(). For repeated queries with unchanged matrices, reuse a
+	 precomputed inverse via transform::unproject_inverse().
 
-	 The result is expressed in the \p frame coordinate system. When \p frame is \c
-	 NULL (default), the result is expressed in the world coordinates system. The
-	 possible \p frame Frame::referenceFrame() are taken into account.
-
-	 projectedCoordinatesOf() performs the inverse transformation.
-
-	 This method only uses the intrinsic Camera parameters (see
-	 getModelViewMatrix(), getProjectionMatrix() and getViewport()) and is
-	 completely independent of the OpenGL \c GL_MODELVIEW, \c GL_PROJECTION and
-	 viewport matrices. You can hence define a virtual Camera and use this method to
-	 compute un-projections out of a classical rendering context.
-
-	 \attention However, if your Camera is not attached to a Viewer (used for
-	 offscreen computations for instance), make sure the Camera matrices are updated
-	 before calling this method (use computeModelViewMatrix(),
-	 computeProjectionMatrix()). See also setScreenWidthAndHeight().
-
-	 This method is not computationally optimized. If you call it several times with
-	 no change in the matrices, you should buffer the entire inverse projection
-	 matrix (modelview, projection and then viewport) to speed-up the queries. See
-	 the \c gluUnProject man page for details. */
-	vec3 Camera::unprojectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
-		const mat4& mvp = modelViewProjectionMatrix();
-
-		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
-		vec3 vs(src.x, static_cast<float>(viewport[3]) - 1.0f - src.y, src.z);
-		vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
-		vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
-		vs.z = vs.z * 2.0f - 1.0f;
-
-		vec3 p = inverse(mvp) * vs;
-		if (frame)
-			p = frame->coordinatesOf(p);
-		return p;
-	}
+	 projectedCoordinatesOf() performs the inverse transformation. */
+    vec3 Camera::unprojectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
+        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
+        const vec3 point = transform::unproject(src, modelViewProjectionMatrix(), viewport, false);
+        return frame ? frame->coordinatesOf(point) : point;
+    }
 
 
-	void Camera::convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const {
-		switch (type()) {
-		case PERSPECTIVE:
-			orig = position();
-                dir = vec3(
-                        ((2.0f * static_cast<float>(x) / static_cast<float>(screenWidth())) - 1.0f) * std::tan(fieldOfView() / 2.0f) * aspectRatio(),
-                        ((2.0f * static_cast<float>(screenHeight() - y) / static_cast<float>(screenHeight())) - 1.0f) * std::tan(fieldOfView() / 2.0f),
-                        -1.0f
-                );
-			dir = worldCoordinatesOf(dir) - orig;
-			dir.normalize();
-			break;
-
-		case ORTHOGRAPHIC: {
-			float w, h;
-			getOrthoWidthHeight(w, h);
-            orig = vec3(
-                    (2.0f * static_cast<float>(x) / static_cast<float>(screenWidth()) - 1.0f) * w,
-                    -(2.0f * static_cast<float>(y) / static_cast<float>(screenHeight()) - 1.0f) * h,
-                    0.0f
-            );
-			orig = worldCoordinatesOf(orig);
-			dir = viewDirection();
-			break;
-		}
-		}
-	}
+    void Camera::convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const {
+        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
+        const mat4 inv = transform::checked_inverse(modelViewProjectionMatrix());
+        const vec3 near = transform::unproject_inverse(vec3(float(x), float(y), 0), inv, viewport, false);
+        const vec3 inside = transform::unproject_inverse(vec3(float(x), float(y), .5f), inv, viewport, false);
+        dir = normalize(inside - near);
+        if (type() == PERSPECTIVE)
+            orig = position();
+        else
+            orig = near + dir * (dot(position() - near, viewDirection()) / dot(dir, viewDirection()));
+    }
 
 
 	/*! Returns the 6 plane equations of the Camera frustum.

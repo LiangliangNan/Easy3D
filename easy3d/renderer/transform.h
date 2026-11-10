@@ -145,19 +145,8 @@ namespace easy3d {
         /**
          * Maps the specified object coordinates (obj.x, obj.y, obj.z) into window coordinates. Simulating gluProject().
          * \param obj   Specifies the object coordinates.
-         * \param model Specifies the current model-view matrix.
-         * \param proj  Specifies the current projection matrix.
-         * \param viewport Specifies the current viewport.
-         * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
-         * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
-         * \return The computed window coordinates.
-         */
-        vec3 project(const vec3& obj, const mat4& model, const mat4& proj, const int viewport[4], bool lowerleft = true);
-        /**
-         * Maps the specified object coordinates (obj.x, obj.y, obj.z) into window coordinates. Simulating gluProject().
-         * \param obj   Specifies the object coordinates.
          * \param mvp   Specifies the current model-view-projection matrix, i.e., mvp = projection * model_view.
-         * \param viewport Specifies the current viewport.
+         * \param viewport Origin x/y and positive width/height in the selected coordinate system.
          * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
          * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
          * \return The computed window coordinates.
@@ -167,24 +156,22 @@ namespace easy3d {
         /**
          * Maps the specified window coordinates (win.x, win.y, win.z) into object coordinates. Simulating gluUnProject().
          * \param win   Specifies the window coordinates to be mapped.
-         * \param model Specifies the model-view matrix.
-         * \param proj  Specifies the projection matrix.
-         * \param viewport Specifies the viewport.
-         * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
-         * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
-         * \return The computed object coordinates.
-         */
-        vec3 unproject(const vec3& win, const mat4& model, const mat4& proj, const int viewport[4], bool lowerleft = true);
-        /**
-         * Maps the specified window coordinates (win.x, win.y, win.z) into object coordinates. Simulating gluUnProject().
-         * \param win   Specifies the window coordinates to be mapped.
          * \param mvp   Specifies the model-view-projection matrix, i.e., mvp = projection * model_view.
          * \param viewport Specifies the viewport.
          * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
          * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
          * \return The computed object coordinates.
          */
-        vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft = true); // mvp = proj * model;
+        vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft = true);
+
+        /// Invert a finite nonsingular matrix, throwing std::invalid_argument otherwise.
+        mat4 checked_inverse(const mat4& matrix);
+        /// Unproject continuous coordinates using a precomputed inverse, with the same viewport convention as project().
+        vec3 unproject_inverse(const vec3& win, const mat4& inverse_mvp, const int viewport[4], bool lowerleft = true);
+        /// Scale a continuous coordinate between positive extents without rounding or clipping.
+        double scale_coordinate(double value, int source_extent, int target_extent);
+        /// Scale and floor to the containing pixel index; out-of-extent coordinates are not clipped.
+        int pixel_index(double value, int source_extent, int target_extent);
 
         // --------------------------------------------------------------------------------------------------
 

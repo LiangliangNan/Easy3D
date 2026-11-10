@@ -26,6 +26,7 @@
  ********************************************************************/
 #include <easy3d/viewer/viewer_base.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <cmath>
@@ -37,35 +38,6 @@ namespace easy3d {
     void ViewerBase::poll_events() {
         detail::GlfwRuntime::poll_events();
     }
-
-    namespace {
-        void finite_coordinates(const vec3 &point) {
-            for (unsigned i = 0; i < 3; ++i)
-                if (!std::isfinite(point[i]))
-                    throw std::invalid_argument("nonfinite viewer coordinates");
-        }
-        void finite_matrix(const mat4 &matrix) {
-            for (unsigned i = 0; i < 16; ++i)
-                if (!std::isfinite(matrix[i]))
-                    throw std::invalid_argument("nonfinite viewer camera matrix");
-        }
-        mat4 checked_inverse(const mat4 &matrix) {
-            finite_matrix(matrix);
-            const auto det = determinant(matrix);
-            if (!std::isfinite(det) || det == 0)
-                throw std::invalid_argument("singular viewer camera matrix");
-            const auto result = inverse(matrix);
-            finite_matrix(result);
-            return result;
-        }
-        vec3 homogeneous_point(const vec4 &point) {
-            if (!std::isfinite(point.w) || point.w == 0)
-                throw std::invalid_argument("invalid viewer homogeneous coordinate");
-            const vec3 result(point.x / point.w, point.y / point.w, point.z / point.w);
-            finite_coordinates(result);
-            return result;
-        }
-    } // namespace
 
     // Coordinate contract, identical on the OpenGL and Vulkan backends:
     //  * World space: the scene's 3D coordinates. The camera's model-view-projection
@@ -81,28 +53,16 @@ namespace easy3d {
     // Depth is always normalized to [0,1] (near=0, far=1) in the public APIs, matching
     // Vulkan; OpenGL's native [-1,1] clip depth is remapped here so both agree.
     vec3 ViewerBase::world_to_window(const vec3 &world) const {
-        finite_coordinates(world);
-        int w, h;
-        viewer_size(w, h);
-        if (w <= 0 || h <= 0)
-            throw std::invalid_argument("viewer projection requires a positive window size");
-        const auto matrix = camera()->modelViewProjectionMatrix();
-        finite_matrix(matrix);
-        const auto ndc = homogeneous_point(matrix * vec4(world, 1));
-        const vec3 result((ndc.x * .5f + .5f) * w, (.5f - ndc.y * .5f) * h, ndc.z * .5f + .5f);
-        finite_coordinates(result);
-        return result;
+        int viewport[] = {0, 0, 0, 0};
+        viewer_size(viewport[2], viewport[3]);
+        return transform::project(world, camera()->modelViewProjectionMatrix(), viewport, false);
     }
     // Inverse of world_to_window(): window logical coordinates (top-left origin,
     // depth in [0,1]) -> world space. See the coordinate contract above.
     vec3 ViewerBase::window_to_world(const vec3 &window) const {
-        finite_coordinates(window);
-        int w, h;
-        viewer_size(w, h);
-        if (w <= 0 || h <= 0)
-            throw std::invalid_argument("viewer unprojection requires a positive window size");
-        const auto inv = checked_inverse(camera()->modelViewProjectionMatrix());
-        return homogeneous_point(inv * vec4(2 * window.x / w - 1, 1 - 2 * window.y / h, 2 * window.z - 1, 1));
+        int viewport[] = {0, 0, 0, 0};
+        viewer_size(viewport[2], viewport[3]);
+        return transform::unproject(window, camera()->modelViewProjectionMatrix(), viewport, false);
     }
     // Logical window coordinates scaled into framebuffer pixels. The depth component
     // is unchanged. See the coordinate contract above.
@@ -111,7 +71,8 @@ namespace easy3d {
         int w, h, fw, fh;
         viewer_size(w, h);
         framebuffer_size(fw, fh);
-        return vec3(window.x * fw / w, window.y * fh / h, window.z);
+        return vec3(float(transform::scale_coordinate(window.x, w, fw)),
+                    float(transform::scale_coordinate(window.y, h, fh)), window.z);
     }
     // Framebuffer pixel center (top-left origin, depth in [0,1]) -> world space.
     // Converts the pixel center to logical window coordinates and unprojects. See
@@ -123,21 +84,29 @@ namespace easy3d {
         if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= fw || y >= fh ||
             !std::isfinite(depth) || depth < 0 || depth > 1)
             throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
-        return window_to_world(vec3(float((x + .5) * w / fw), float((y + .5) * h / fh), depth));
+        return window_to_world(vec3(float(transform::scale_coordinate(x + .5, fw, w)),
+                                    float(transform::scale_coordinate(y + .5, fh, h)), depth));
     }
     // Fresh visible-surface query at a logical window pixel. Maps the logical
     // coordinate to its containing framebuffer pixel (DPI-aware), reads the scene
     // depth there, and unprojects that pixel's center back to world space. See the
     // coordinate contract above; HUD/overlays are excluded by read_scene_depth().
-    vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
-        found = false;
+    bool ViewerBase::window_pixel(int x, int y, int &px, int &py) const {
         int w, h, fw, fh;
         viewer_size(w, h);
         framebuffer_size(fw, fh);
         if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
+            return false;
+        px = transform::pixel_index(x, w, fw);
+        py = transform::pixel_index(y, h, fh);
+        return true;
+    }
+
+    vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
+        found = false;
+        int px, py;
+        if (!window_pixel(x, y, px, py))
             return vec3(0);
-        const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
-        const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
         float depth = 1;
         // The live camera carries logical screen dimensions on both backends; the
         // depth read renders into a framebuffer-sized target (see read_scene_depth).
