@@ -24,42 +24,91 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifdef EASY3D_HAS_VULKAN
-// SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+
+// Standard headers used by the backend-independent section below.
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <exception>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
+
+
+// Headers shared by both backends.
 #include <easy3d/core/model.h>
-#include <easy3d/util/setting.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
-#include <easy3d/renderer/transparency.h>
-#include <easy3d/renderer/eye_dome_lighting.h>
-#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/shadow.h>
-#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/fileio/graph_io.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/image_io.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/backends/vulkan/drawable.h>
-#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
-#include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/drawable_lines.h>
-#include <easy3d/renderer/drawable_lines_2D.h>
-#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/util/setting.h>
+#include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
-#include <algorithm>
-#include <cmath>
-#include <limits>
-#include <stdexcept>
+#include <easy3d/util/resource.h>
+#ifdef EASY3D_HAS_VULKAN
+// vulkan.h must precede glfw3.h (first pulled in by viewer_loop.h): GLFW declares
+// glfwCreateWindowSurface only when VK_VERSION_1_0 is defined.
+#include <vulkan/vulkan.h>
+#endif
+#include <easy3d/viewer/backends/glfw_runtime.h>
+#include <easy3d/viewer/backends/viewer_loop.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h> // for glfw functions
 
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/transparency.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/text_layout.h>
+#include <easy3d/renderer/backends/vulkan/drawable.h>
+#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
+#include <easy3d/renderer/backends/vulkan/surface.h>
+#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
+#else
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include <easy3d/renderer/opengl.h> // for gl functions
+#include <easy3d/renderer/backends/opengl/overlay_renderer.h>
+#include <easy3d/renderer/backends/opengl/point_selection.h>
+#include <easy3d/renderer/backends/opengl/query_state.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/opengl_util.h>
+#include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/text_renderer.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/util/timer.h>
+#include <easy3d/util/string.h>
+#include <easy3d/core/matrix.h>
+#endif
+
+
+#ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
     struct Viewer::Impl {
         std::unique_ptr<graphics::RenderDevice> device;
@@ -127,530 +176,6 @@ namespace easy3d {
                                   owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples);
         }
     };
-    std::vector<graphics::DrawCommand> Viewer::draw_commands(
-        const Camera &cam, int width, int, std::vector<DrawSource> *sources, bool include_hidden_models) const {
-        impl_->drawable_renderer.prune();
-        std::vector<graphics::DrawCommand> commands;
-        const auto &planes = impl_->active_clipping_planes();
-        // Drawable point/line sizes are logical pixels; the device rasterizes plain
-        // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
-        // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
-        // world-space and already carry the logical sizing through pixelGLRatio().
-        const float pixel_scale = cam.screenWidth() > 0 ? float(width) / float(cam.screenWidth()) : 1.0f;
-        auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
-                          bool selected, bool depth_bias = false) {
-            if (!d->is_visible())
-                return;
-            auto command = impl_->drawable_renderer.command(d, id, cam, planes, selected);
-            command.point_size *= pixel_scale;
-            command.line_width *= pixel_scale;
-            command.depth_bias = depth_bias;
-            if (sources) {
-                if (sources->size() >= UINT32_MAX)
-                    throw std::length_error("too many picking sources");
-                id = uint32_t(sources->size());
-                sources->push_back({model, d});
-                command.object_id = id;
-            }
-            commands.push_back(std::move(command));
-        };
-        for (size_t i = 0; i < models_.size(); ++i) {
-            const auto *renderer = models_[i]->renderer();
-            if (!renderer || (!include_hidden_models && !renderer->is_visible()))
-                continue;
-            // Match the OpenGL viewer: surfaces are offset only while this model
-            // also draws visible lines, so coplanar edges do not z-fight.
-            bool has_visible_lines = false;
-            for (const auto &d : renderer->lines_drawables())
-                if (d->is_visible())
-                    has_visible_lines = true;
-            for (const auto &d : renderer->triangles_drawables())
-                append(d, uint32_t(i), models_[i], renderer->is_selected(), has_visible_lines);
-            for (const auto &d : renderer->lines_drawables())
-                append(d, uint32_t(i), models_[i], renderer->is_selected());
-            for (const auto &d : renderer->points_drawables())
-                append(d, uint32_t(i), models_[i], renderer->is_selected());
-        }
-        for (size_t i = 0; i < drawables_.size(); ++i)
-            append(drawables_[i], uint32_t(models_.size() + i), nullptr, false);
-        const auto guide = impl_->clipping_plane_renderer.draw(*ClippingPlane::instance(), cam);
-        for (auto command : guide) {
-            command.object_id = UINT32_MAX;
-            commands.push_back(std::move(command));
-        }
-        return commands;
-    }
-    std::vector<graphics::DrawCommand> Viewer::frame_commands(
-        const Camera &cam, int width, int height, std::vector<DrawSource> *sources, bool include_hud) const {
-        auto commands = draw_commands(cam, width, height, sources);
-        // Recorded overlay viewports use the host framebuffer's pixels. Keep
-        // their NDC transforms and scale the clip rectangles for file output.
-        const int fw = framebuffer_width(), fh = framebuffer_height();
-        const auto append_overlays = [&](const std::vector<graphics::DrawCommand> &source) {
-            for (auto command : source) {
-                auto &v = command.viewport;
-                if (v.z > 0 && v.w > 0 && fw > 0 && fh > 0 && (width != fw || height != fh)) {
-                    const int x = int(std::lround(double(v.x) * width / fw));
-                    const int y = int(std::lround(double(v.y) * height / fh));
-                    const int right = int(std::lround(double(v.x + v.z) * width / fw));
-                    const int bottom = int(std::lround(double(v.y + v.w) * height / fh));
-                    if (right <= x || bottom <= y)
-                        continue;
-                    v = ivec4(x, y, right - x, bottom - y);
-                }
-                commands.push_back(std::move(command));
-            }
-        };
-        append_overlays(impl_->viewer_annotations);
-        if (!impl_->overlays_foreground)
-            append_overlays(impl_->overlays);
-        if (include_hud) {
-            append_overlays(impl_->viewer_3d_overlays);
-            append_overlays(impl_->viewer_overlays);
-        }
-        if (impl_->overlays_foreground)
-            append_overlays(impl_->overlays);
-        return commands;
-    }
-    Viewer::Viewer(int width, int height, const VulkanOptions &options)
-        : window_(nullptr), width_(width), height_(height), camera_(new Camera), samples_(1),
-          background_color_(setting::background_color), pressed_key_(-1), show_frame_rate_(false),
-          show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
-        resize_render_target(width, height);
-        impl_->device =
-            graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name,
-                                           options.use_native_large_points);
-        camera()->setType(Camera::PERSPECTIVE);
-        camera()->setUpVector(vec3(0, 0, 1));
-        camera()->setViewDirection(vec3(-1, 0, 0));
-        camera()->showEntireScene();
-        // Transparency effects only know the camera. Rendering and presentation stay
-        // in the viewer, as in Viewer::draw().
-        Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable *> &surfaces, int method,
-                                                          int peels) { draw_transparency(surfaces, method, peels); });
-    }
-    void Viewer::release_device() {
-        impl_->device.reset();
-    }
-    void Viewer::resize_render_target(int w, int h) {
-        if (w <= 0 || h <= 0)
-            throw std::invalid_argument("offscreen dimensions must be positive");
-        render_width_ = w;
-        render_height_ = h;
-        if (!window_) {
-            width_ = w;
-            height_ = h;
-        }
-        // The camera always carries logical window dimensions (framebuffer pixels
-        // are GPU-only). For an offscreen canvas logical units equal pixels.
-        int cw, ch;
-        viewer_size(cw, ch);
-        camera()->setScreenWidthAndHeight(cw, ch);
-    }
-    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create) {
-        return add_model(std::move(model), create, true);
-    }
-    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
-        if (!model || model->empty())
-            return nullptr;
-        for (const auto &current : models_)
-            if (model == current)
-                return current.get();
-        // Construct first: unsupported default coloring fails without replacing the model's existing renderer.
-        auto renderer = std::make_shared<Renderer>(model.get(), create);
-        model->set_renderer(renderer);
-        models_.push_back(model);
-        model_idx_ = int(models_.size()) - 1;
-        if (fit_scene)
-            fit_screen();
-        return model.get();
-    }
-    Model *Viewer::add_model(const std::string &filename, bool create) {
-        const std::string file_name = file_system::convert_to_native_style(filename);
-        for (auto m : models_) {
-            if (m->name() == file_name) {
-                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
-                return m.get();
-            }
-        }
-        const auto ext = file_system::extension(filename, true);
-        std::shared_ptr<Model> model;
-        if (ext == "ply" && io::PlyReader::num_instances(filename, "face") > 0)
-            model.reset(SurfaceMeshIO::load(filename));
-        else if (ext == "ply" && io::PlyReader::num_instances(filename, "edge") > 0)
-            model.reset(GraphIO::load(filename));
-        else if (ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist")
-            model.reset(SurfaceMeshIO::load(filename));
-        else if (ext == "plm" || ext == "pm" || ext == "mesh")
-            model.reset(PolyMeshIO::load(filename));
-        else if (ext == "ptx")
-            throw std::logic_error("multi-scan PTX loading is not yet ported to Viewer");
-        else
-            model.reset(PointCloudIO::load(filename));
-        if (model)
-            model->set_name(filename);
-        return add_model(model, create);
-    }
-    Model *Viewer::add_model(Model *model, bool create) {
-        if (!model)
-            return nullptr;
-        // Do not manufacture a second shared_ptr control block for an owned model.
-        for (const auto &current : models_)
-            if (current.get() == model)
-                return model;
-        return add_model(std::shared_ptr<Model>(model), create);
-    }
-    bool Viewer::delete_model(Model *model) {
-        auto &values = models_;
-        auto found = std::find_if(values.begin(), values.end(),
-                                  [model](const std::shared_ptr<Model> &p) { return p.get() == model; });
-        if (found == values.end())
-            return false;
-        values.erase(found);
-        model_idx_ = int(models_.size()) - 1;
-        impl_->drawable_renderer.clear();
-        return true;
-    }
-    Model *Viewer::current_model() const {
-        return model_idx_ < 0 || size_t(model_idx_) >= models_.size() ? nullptr : models_[model_idx_].get();
-    }
-    Drawable *Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
-        if (!drawable)
-            return nullptr;
-        for (const auto &d : drawables_)
-            if (d == drawable)
-                return d.get();
-        drawables_.push_back(drawable);
-        return drawable.get();
-    }
-    bool Viewer::delete_drawable(Drawable *drawable) {
-        auto &values = drawables_;
-        auto found = std::find_if(values.begin(), values.end(),
-                                  [drawable](const std::shared_ptr<Drawable> &p) { return p.get() == drawable; });
-        if (found == values.end())
-            return false;
-        values.erase(found);
-        impl_->drawable_renderer.clear();
-        return true;
-    }
-    void Viewer::clear_scene() {
-        models_.clear();
-        model_idx_ = -1;
-        drawables_.clear();
-        impl_->drawable_renderer.clear();
-        impl_->overlays.clear();
-        impl_->viewer_overlays.clear();
-        impl_->viewer_3d_overlays.clear();
-        impl_->viewer_annotations.clear();
-        if (window_) {
-            cancel_interaction();
-            update_camera_path_overlays();
-        }
-    }
-    void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground) {
-        for (auto &command : commands)
-            command.overlay = true;
-        impl_->overlays = std::move(commands);
-        impl_->overlays_foreground = foreground;
-    }
-    void Viewer::set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const {
-        for (auto &command : commands) {
-            command.overlay = true;
-            command.overlay_depth_test = command.overlay_independent_depth = false;
-        }
-        impl_->viewer_overlays = std::move(commands);
-    }
-    void Viewer::set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const {
-        for (auto &command : commands) {
-            command.overlay = command.overlay_independent_depth = true;
-            command.overlay_depth_test = false;
-        }
-        impl_->viewer_3d_overlays = std::move(commands);
-    }
-    void Viewer::set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const {
-        for (auto &command : commands) {
-            command.overlay = command.overlay_depth_test = true;
-            command.overlay_independent_depth = false;
-        }
-        impl_->viewer_annotations = std::move(commands);
-    }
-    void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
-        impl_->clipping_planes = graphics::normalize_clipping_planes(planes);
-    }
-    const std::vector<vec4> &Viewer::clipping_planes() const {
-        return impl_->active_clipping_planes();
-    }
-    void Viewer::fit_screen(const Model *selected) {
-        Box3 box;
-        if (selected)
-            box.grow(selected->bounding_box());
-        else {
-            for (const auto &model : models_)
-                box.grow(model->bounding_box());
-            for (const auto &drawable : drawables_)
-                if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                    box.grow(drawable->bounding_box());
-        }
-        if (box.is_valid()) {
-            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
-            camera()->showEntireScene();
-            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
-        }
-    }
-    std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
-        Camera snapshot(*camera());
-        // Camera's copy constructor regenerates matrices from its parameters. Keep
-        // effective matrices too, including externally calibrated/custom cameras.
-        snapshot.frame()->setPivotPoint(camera()->pivotPoint()); // do not re-adjust the copied ortho coefficient
-        snapshot.set_projection_matrix(camera()->projectionMatrix());
-        snapshot.set_modelview_matrix(camera()->modelViewMatrix());
-        const auto inv = transform::checked_inverse(snapshot.modelViewProjectionMatrix());
-        const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
-        std::vector<vec3> points;
-        points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
-        for (unsigned y = 0; y < frame.height; ++y)
-            for (unsigned x = 0; x < frame.width; ++x) {
-                const size_t pixel = size_t(y) * frame.width + x;
-                const float d = frame.depth[pixel];
-                if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
-                    continue;
-                const int viewport[] = {0, 0, int(frame.width), int(frame.height)};
-                points.push_back(transform::unproject_inverse(vec3(x + .5f, y + .5f, d), inv, viewport, false));
-            }
-        return points;
-    }
-    Viewer::PickResult Viewer::pick(int x, int y) const {
-        PickResult result;
-        int px, py;
-        if (!window_pixel(x, y, px, py))
-            return result;
-        int fw, fh;
-        framebuffer_size(fw, fh);
-        // One backend draw re-renders the visible scene with object/primitive IDs and
-        // depth. Sampling the cursor pixel therefore names the nearest drawable (and
-        // its triangle for meshes) without any CPU ray casting.
-        // Keep commands and source mapping together for this exact synchronous draw.
-        // This whole-scene query is intentionally not delegated to the Picker classes:
-        // they operate on one caller-supplied model with a borrowed camera and own
-        // their offscreen resources, while the viewer already owns every model,
-        // drawable and the device, so it can answer in a single submission.
-        std::vector<DrawSource> sources;
-        const auto commands = draw_commands(*camera(), fw, fh, &sources);
-        const auto sample = impl_->device->sample_pixel(fw, fh, commands, px, py);
-        const auto id = sample.id;
-        if (id.object >= sources.size() || sample.depth >= 1)
-            return result;
-        result.model = sources[id.object].model;
-        result.drawable = sources[id.object].drawable;
-        result.primitive = id.primitive;
-        result.depth = sample.depth;
-        result.position = pixel_to_world(px, py, result.depth);
-        const auto &faces = result.drawable->cpu_buffers().source_faces;
-        auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
-        if (mesh && id.primitive < faces.size()) {
-            const SurfaceMesh::Face f(faces[id.primitive]);
-            if (mesh->is_valid(f) && !mesh->is_deleted(f))
-                result.face_index = f.idx();
-        }
-        return result;
-    }
-    bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
-        const int width = framebuffer_width(), height = framebuffer_height();
-        const auto commands = draw_commands(snapshot, width, height);
-        const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
-        depth = sample.depth;
-        return sample.id.object != UINT32_MAX;
-    }
-    const graphics::RenderDevice &Viewer::device() const {
-        return *impl_->device;
-    }
-    std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest &request) const {
-        return impl_->device->select_points(request);
-    }
-    std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable *drawable) const {
-        if (!drawable || drawable->type() != Drawable::DT_POINTS)
-            throw std::invalid_argument("selection requires a point drawable");
-        for (const auto &model : models_)
-            if (model->renderer())
-                for (const auto &d : model->renderer()->points_drawables())
-                    if (d.get() == drawable)
-                        return impl_->drawable_renderer
-                            .command(d, 0, *camera(), impl_->clipping_planes, model->renderer()->is_selected())
-                            .geometry->point_data();
-        for (const auto &d : drawables_)
-            if (d.get() == drawable)
-                return impl_->drawable_renderer.command(d, 0, *camera(), impl_->clipping_planes).geometry->point_data();
-        throw std::invalid_argument("point drawable does not belong to this viewer");
-    }
-
-} // namespace easy3d
-
-// SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/backends/glfw_runtime.h>
-#include <easy3d/renderer/backends/vulkan/surface.h>
-#include <easy3d/viewer/backends/viewer_loop.h>
-#include <easy3d/renderer/text_layout.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/util/logging.h>
-#include <easy3d/util/dialog.h>
-#include <easy3d/util/resource.h>
-#include <easy3d/util/file_system.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/drawable_lines.h>
-#include <easy3d/renderer/drawable_lines_2D.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/fileio/graph_io.h>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <algorithm>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
-#include <cmath>
-#include <exception>
-#include <stdexcept>
-
-namespace easy3d {
-    unsigned Viewer::validation_errors() const {
-        return device().validation_errors();
-    }
-    void Viewer::init() {}
-    void Viewer::pre_draw() {}
-    void Viewer::post_draw() {}
-    void Viewer::draw() const {
-        int width = 0, height = 0;
-        impl_->frame_size(width, height);
-        Shadow::FrameData shadow;
-        Shadow *active_shadow = Shadow::active(camera());
-        const bool has_shadow = active_shadow && Shadow::frame_data(camera(), shadow);
-        std::vector<DrawSource> sources;
-        auto commands =
-            frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr, !impl_->snapshot.active);
-        if (has_shadow) {
-            const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
-            const auto &surfaces = active_shadow->surfaces();
-            for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
-                auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
-                if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
-                    continue;
-                if (!commands[i].geometry || commands[i].geometry->topology() != graphics::Topology::triangles)
-                    continue;
-                commands[i].shadow_caster = true;
-                commands[i].shadow_matrix = clip_to_shadow;
-                commands[i].shadow_map_size = shadow.shadow_map_size;
-            }
-            if (!shadow.background_corners.empty()) {
-                std::vector<graphics::Vertex> vertices(4);
-                for (unsigned i = 0; i < 4; ++i)
-                    vertices[i].position = shadow.background_corners[i];
-                graphics::DrawCommand background;
-                background.geometry =
-                    std::make_shared<graphics::Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
-                background.color = shadow.background_color;
-                background.object_id = UINT32_MAX;
-                background.model_view_projection = camera()->modelViewProjectionMatrix();
-                background.shadow_background = true;
-                background.shadow_matrix = clip_to_shadow;
-                background.shadow_map_size = shadow.shadow_map_size;
-                commands.push_back(std::move(background));
-            }
-            commands.insert(commands.begin(),
-                            graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
-                                                         shadow.darkness, shadow.softness, shadow.light_near,
-                                                         shadow.light_far, shadow.shadow_map_size));
-        }
-        float radius, bias;
-        mat4 projection;
-        if (AmbientOcclusion::frame_params(camera(), radius, bias, projection))
-            commands.insert(commands.begin(), graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height),
-                                                                                      radius, bias, projection));
-        float z_near, z_far, scene_size;
-        if (EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
-            commands.insert(commands.begin(), graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
-                                                                                      z_near, z_far, scene_size));
-        impl_->submit(std::move(commands));
-    }
-    void Viewer::draw_transparency(const std::vector<TrianglesDrawable *> &surfaces, int method, int peels) {
-        int width = 0, height = 0;
-        impl_->frame_size(width, height);
-        std::vector<DrawSource> sources;
-        auto commands = frame_commands(*camera(), width, height, &sources, !impl_->snapshot.active);
-        for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
-            auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
-            if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
-                continue;
-            if (commands[i].geometry && commands[i].geometry->topology() == graphics::Topology::triangles) {
-                commands[i].transparent = true;
-                commands[i].color.w = triangles->opacity();
-            }
-        }
-        const auto transparency = method == 1   ? graphics::TransparencyMethod::average
-                                  : method == 2 ? graphics::TransparencyMethod::peeling
-                                  : method == 3 ? graphics::TransparencyMethod::linked_lists
-                                                : graphics::TransparencyMethod::sorted;
-        impl_->submit(std::move(commands), transparency, peels > 0 ? unsigned(peels) : 0u);
-    }
-    bool Viewer::snapshot_frame(int width,
-                                int height,
-                                const mat4 &projection,
-                                const vec4 &background,
-                                unsigned samples,
-                                graphics::FrameImage &image) {
-        auto &frame = impl_->snapshot;
-        // Keep the camera's logical screen dimensions: only the projection changes
-        // for the output frustum. draw_commands() then scales plain point/line sizes
-        // by output/logical and impostors keep their relative size, as on OpenGL.
-        const mat4 source_projection = camera()->projectionMatrix();
-        struct Restore {
-            Viewer &self;
-            mat4 projection;
-            ~Restore() {
-                self.impl_->snapshot.active = false;
-                self.camera()->set_projection_matrix(projection);
-            }
-        } restore{*this, source_projection};
-        frame.width = width;
-        frame.height = height;
-        frame.samples = samples;
-        frame.background = background;
-        frame.image = graphics::FrameImage();
-        frame.active = true;
-        camera()->set_projection_matrix(projection);
-        draw();
-        if (frame.image.rgba.size() != size_t(width) * size_t(height) * 4)
-            throw std::runtime_error("the captured frame does not match the requested size");
-        image = std::move(frame.image);
-        return true;
-    }
-    bool Viewer::mouse_free_move_event(int, int, int, int, int) {
-        return false;
-    }
-    bool Viewer::char_input_event(unsigned int) {
-        return false;
-    }
-    bool Viewer::focus_event(bool) {
-        return false;
-    }
-    void Viewer::exit() {
-        request_close();
-    }
-    void Viewer::cleanup() {
-        release_device();
-    }
     namespace {
         const char *const default_manual =
             "--------------------------------------------------------------\n"
@@ -719,7 +244,6 @@ namespace easy3d {
         int button = -1;
         int last_logical_x = 0, last_logical_y = 0;
         double wheel_x = 0, wheel_y = 0;
-        std::exception_ptr error;
         Window(const std::string &text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
             : title(text), width(w), height(h), samples(sample_count ? sample_count : 1) { // 0: no MSAA, as in OpenGL
             if (w <= 0 || h <= 0)
@@ -780,7 +304,7 @@ namespace easy3d {
             try {
                 call(*viewer);
             } catch (...) {
-                viewer->window_host_->error = std::current_exception();
+                viewer->callback_error_ = std::current_exception();
                 glfwSetWindowShouldClose(handle, GLFW_TRUE);
             }
         }
@@ -896,6 +420,1257 @@ namespace easy3d {
             });
         }
     };
+} // namespace easy3d
+#endif
+
+
+//============================================================================
+// Backend-independent implementation.
+//
+// The frame loop, window/event plumbing, HUD bookkeeping, model/drawable
+// management and file IO behave identically on OpenGL and Vulkan. Only the
+// few genuinely backend-specific steps (context/device binding, presentation,
+// overlay encoding and the pivot mark) are guarded inline below. Rendering,
+// picking, capture and window creation live in the backend sections that follow.
+//============================================================================
+namespace easy3d {
+    unsigned Viewer::validation_errors() const {
+#ifdef EASY3D_HAS_VULKAN
+        return device().validation_errors();
+#else
+        return 0;
+#endif
+    }
+
+    void Viewer::poll_events() {
+        ViewerBase::poll_events();
+    }
+
+    void Viewer::request_close() {
+        if (window_)
+            glfwSetWindowShouldClose(window_, GLFW_TRUE);
+        update();
+    }
+
+    bool Viewer::should_close() const {
+        return window_ && glfwWindowShouldClose(window_) != 0;
+    }
+
+    void Viewer::show() {
+        if (window_)
+            glfwShowWindow(window_);
+    }
+
+    void Viewer::hide() {
+        if (window_)
+            glfwHideWindow(window_);
+    }
+
+    void Viewer::exit() {
+        request_close();
+    }
+
+    void Viewer::update() const {
+        glfwPostEmptyEvent();
+    }
+
+    void Viewer::resize(int w, int h) {
+        if (w <= 0 || h <= 0)
+            throw std::invalid_argument("window dimensions must be positive");
+        if (window_)
+            glfwSetWindowSize(window_, w, h);
+    }
+
+    void Viewer::framebuffer_size(int &w, int &h) const {
+        if (window_)
+            glfwGetFramebufferSize(window_, &w, &h);
+        else {
+            w = camera()->screenWidth();
+            h = camera()->screenHeight();
+        }
+    }
+
+    void Viewer::viewer_size(int &w, int &h) const {
+        if (window_)
+            glfwGetWindowSize(window_, &w, &h);
+        else {
+            w = width_;
+            h = height_;
+        }
+    }
+
+    void Viewer::set_position(int x, int y) {
+        if (window_)
+            glfwSetWindowPos(window_, x, y);
+    }
+
+    void Viewer::set_title(const std::string &text) {
+        if (text == title_)
+            return;
+        title_ = text;
+        if (window_)
+            glfwSetWindowTitle(window_, text.c_str());
+#ifdef EASY3D_HAS_VULKAN
+        if (window_host_)
+            window_host_->title = text;
+#endif
+    }
+
+    void Viewer::set_animation(bool enabled) {
+        animation_enabled_ = enabled;
+        update();
+    }
+
+    bool Viewer::is_animating() const {
+        return animation_enabled_ && bool(animation_func_);
+    }
+
+    void Viewer::set_usage(const std::string &manual, const std::string &screen_hint) {
+        if (manual != "default") {
+            manual_ = manual;
+            usage_printed_ = false;
+        }
+        hint_ = screen_hint;
+        update();
+    }
+
+    void Viewer::print_usage() {
+        if (usage_printed_)
+            return;
+        if (!manual_.empty()) {
+            std::cout << manual_ << std::endl;
+            usage_printed_ = true;
+        }
+    }
+
+    void Viewer::update_frame_rate() {
+        if (!show_frame_rate_)
+            return;
+        ++frame_rate_frames_;
+        const auto now = std::chrono::steady_clock::now();
+        const double elapsed = std::chrono::duration<double>(now - frame_rate_start_).count();
+        if (elapsed < 1.0)
+            return;
+        std::ostringstream out;
+        out << "fps: " << std::fixed << std::setprecision(0) << frame_rate_frames_ / elapsed << " ("
+            << std::setprecision(1) << 1000.0 * elapsed / frame_rate_frames_ << " ms/frame)";
+        framerate_ = out.str();
+        frame_rate_frames_ = 0;
+        frame_rate_start_ = now;
+    }
+
+    void Viewer::restore_scene_bounds() {
+        Box3 box;
+        for (const auto &model : models())
+            box.grow(model->bounding_box());
+        for (const auto &drawable : drawables())
+            if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                box.grow(drawable->bounding_box());
+        if (box.is_valid())
+            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
+    }
+
+    bool Viewer::draw_frame() {
+#ifdef EASY3D_HAS_VULKAN
+        if (!window_)
+            return false;
+#endif
+        if (callback_error_)
+            std::rethrow_exception(callback_error_);
+        if (should_close() || glfwGetWindowAttrib(window_, GLFW_ICONIFIED))
+            return false;
+        int w, h;
+        framebuffer_size(w, h);
+        if (w <= 0 || h <= 0)
+            return false;
+#ifdef EASY3D_HAS_VULKAN
+        if (framebuffer_width_ != w || framebuffer_height_ != h) {
+            resize_render_target(w, h);
+            cancel_interaction();
+            viewer_size(width_, height_);
+            post_resize(width_, height_);
+            notify_resize();
+        }
+#else
+        glfwMakeContextCurrent(window_);
+#endif
+        if (!initialized_) {
+            init();
+            initialized_ = true;
+        }
+        if (is_animating()) {
+            animation_func_(this);
+            if (callback_error_)
+                std::rethrow_exception(callback_error_);
+            if (should_close())
+                return false;
+        }
+        advance_camera_path();
+        print_usage();
+        notify_pre_draw();
+        if (callback_error_)
+            std::rethrow_exception(callback_error_);
+        if (should_close())
+            return false;
+        pre_draw();
+#ifdef EASY3D_HAS_VULKAN
+        update_camera_path_overlays();
+        update_interaction_overlays();
+#endif
+        draw();
+        update_frame_rate();
+        post_draw();
+#ifndef EASY3D_HAS_VULKAN
+        glfwSwapBuffers(window_);
+#endif
+        notify_post_draw();
+        if (callback_error_)
+            std::rethrow_exception(callback_error_);
+        return true;
+    }
+
+    int Viewer::run(bool see_all) {
+        try {
+            if (callback_error_)
+                std::rethrow_exception(callback_error_);
+            if (!initialized_) {
+                init();
+                initialized_ = true;
+            }
+            if (see_all)
+                fit_screen();
+            if (visible_)
+                show();
+            return run_frames();
+        } catch (const std::exception &e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
+            return EXIT_FAILURE;
+        }
+    }
+
+    int Viewer::run_frames(unsigned max_frames) {
+        try {
+            if (callback_error_)
+                std::rethrow_exception(callback_error_);
+            return detail::run_viewer_frames(*this, max_frames, [this] {
+                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
+            });
+        } catch (const std::exception &e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
+            return EXIT_FAILURE;
+        }
+    }
+
+    void Viewer::advance_camera_path() {
+        if (!kfi_->is_interpolation_started())
+            return;
+        const auto now = std::chrono::steady_clock::now();
+        if (now < next_camera_path_frame_)
+            return;
+        kfi_->advance_interpolation();
+        next_camera_path_frame_ = now + std::chrono::milliseconds(kfi_->interpolation_period());
+    }
+
+    //------------------------------------------------------------------------
+    // Model and drawable management
+    //------------------------------------------------------------------------
+    Model *Viewer::current_model() const {
+        return model_idx_ < 0 || size_t(model_idx_) >= models_.size() ? nullptr : models_[model_idx_].get();
+    }
+
+    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create) {
+        return add_model(std::move(model), create, true);
+    }
+
+    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
+#ifndef EASY3D_HAS_VULKAN
+        glfwMakeContextCurrent(window_);
+#endif
+        if (!model || model->empty())
+            return nullptr;
+        for (const auto &current : models_)
+            if (model == current)
+                return current.get();
+        // Construct first: unsupported default coloring fails without replacing the model's existing renderer.
+        auto renderer = std::make_shared<Renderer>(model.get(), create);
+        model->set_renderer(renderer);
+        models_.push_back(model);
+        model_idx_ = int(models_.size()) - 1;
+        if (fit_scene)
+            fit_screen();
+        return model.get();
+    }
+
+    Model *Viewer::add_model(Model *model, bool create) {
+        if (!model)
+            return nullptr;
+        // Do not manufacture a second shared_ptr control block for an owned model.
+        for (const auto &current : models_)
+            if (current.get() == model)
+                return model;
+        return add_model(std::shared_ptr<Model>(model), create);
+    }
+
+    Model *Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+#ifndef EASY3D_HAS_VULKAN
+        glfwMakeContextCurrent(window_);
+#endif
+        const std::string file_name = file_system::convert_to_native_style(file_path);
+        for (const auto &m : models_) {
+            if (m->name() == file_name) {
+                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
+                return m.get();
+            }
+        }
+        const auto ext = file_system::extension(file_name, true);
+        std::shared_ptr<Model> model;
+        if (ext == "ply" && io::PlyReader::num_instances(file_name, "face") > 0)
+            model.reset(SurfaceMeshIO::load(file_name));
+        else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0)
+            model.reset(GraphIO::load(file_name));
+        else if (ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist")
+            model.reset(SurfaceMeshIO::load(file_name));
+        else if (ext == "plm" || ext == "pm" || ext == "mesh")
+            model.reset(PolyMeshIO::load(file_name));
+        else if (ext == "ptx") {
+            // A PTX file may store several scans; each becomes its own model.
+            io::PointCloudIO_ptx serializer(file_name);
+            PointCloud *cloud = nullptr;
+            Model *last = nullptr;
+            while ((cloud = serializer.load_next())) {
+                last = add_model(std::shared_ptr<PointCloud>(cloud), create_default_drawables);
+                update();
+            }
+            return last; // the last cloud in the file
+        } else
+            model.reset(PointCloudIO::load(file_name));
+        if (model) {
+            model->set_name(file_name);
+            return add_model(model, create_default_drawables);
+        }
+        return nullptr;
+    }
+
+    bool Viewer::delete_model(Model *model) {
+#ifndef EASY3D_HAS_VULKAN
+        glfwMakeContextCurrent(window_);
+#endif
+        auto &values = models_;
+        auto found = std::find_if(values.begin(), values.end(),
+                                  [model](const std::shared_ptr<Model> &p) { return p.get() == model; });
+        if (found == values.end())
+            return false;
+        values.erase(found);
+        model_idx_ = int(models_.size()) - 1;
+#ifdef EASY3D_HAS_VULKAN
+        impl_->drawable_renderer.clear();
+#endif
+        return true;
+    }
+
+    Drawable *Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
+        if (!drawable)
+            return nullptr;
+        for (const auto &d : drawables_)
+            if (d == drawable)
+                return d.get();
+        drawables_.push_back(drawable);
+        return drawable.get();
+    }
+
+    Drawable *Viewer::add_drawable(Drawable *drawable) {
+        return add_drawable(std::shared_ptr<Drawable>(drawable));
+    }
+
+    bool Viewer::delete_drawable(Drawable *drawable) {
+#ifndef EASY3D_HAS_VULKAN
+        glfwMakeContextCurrent(window_);
+#endif
+        auto &values = drawables_;
+        auto found = std::find_if(values.begin(), values.end(),
+                                  [drawable](const std::shared_ptr<Drawable> &p) { return p.get() == drawable; });
+        if (found == values.end())
+            return false;
+        values.erase(found);
+#ifdef EASY3D_HAS_VULKAN
+        impl_->drawable_renderer.clear();
+#endif
+        return true;
+    }
+
+    void Viewer::clear_scene() {
+#ifndef EASY3D_HAS_VULKAN
+        glfwMakeContextCurrent(window_);
+#endif
+        models_.clear();
+        model_idx_ = -1;
+        drawables_.clear();
+#ifdef EASY3D_HAS_VULKAN
+        impl_->drawable_renderer.clear();
+        impl_->overlays.clear();
+        impl_->viewer_overlays.clear();
+        impl_->viewer_3d_overlays.clear();
+        impl_->viewer_annotations.clear();
+        if (window_) {
+            cancel_interaction();
+            update_camera_path_overlays();
+        }
+#else
+        if (overlay_renderer_)
+            overlay_renderer_->set({}, false);
+#endif
+    }
+
+    void Viewer::fit_screen(const Model *selected) {
+        Box3 box;
+        if (selected)
+            box.grow(selected->bounding_box());
+        else {
+            for (const auto &model : models_)
+                box.grow(model->bounding_box());
+            for (const auto &drawable : drawables_)
+                if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                    box.grow(drawable->bounding_box());
+        }
+        if (box.is_valid()) {
+            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
+            camera()->showEntireScene();
+            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // File IO
+    //------------------------------------------------------------------------
+    bool Viewer::open() {
+        const std::string title("Please choose a file");
+        const std::string &default_path = resource::directory() + "/data/";
+        const std::vector<std::string> &filters = {
+            "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)",
+            "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
+            "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
+            "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
+            "Polyhedral Mesh (*.plm *.pm *.mesh)",
+            "*.plm *.pm *.mesh",
+            "Graph (*.ply)",
+            "*.ply",
+            "All Files (*.*)",
+            "*"};
+        const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
+
+        int count = 0;
+        for (const auto &file_name : file_names) {
+            if (add_model(file_name))
+                ++count;
+        }
+
+        if (count > 0) {
+            fit_screen();
+            return true;
+        }
+        return false;
+    }
+
+    bool Viewer::save() const {
+        Model *m = current_model();
+        if (!m) {
+            LOG(ERROR) << "no model exists";
+            return false;
+        }
+
+        const std::string &title = "Please choose a file name";
+        const std::vector<std::string> &filters = {"Surface Mesh (*.obj *.ply *.off *.stl *.sm)",
+                                                   "*.obj *.ply *.off *.stl *.sm",
+                                                   "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
+                                                   "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
+                                                   "Polyhedral Mesh (*.plm *.pm *.mesh)",
+                                                   "*.plm *.pm *.mesh",
+                                                   "Graph (*.ply)",
+                                                   "*.ply",
+                                                   "All Files (*.*)",
+                                                   "*"};
+
+        std::string default_file_name = m->name();
+        if (file_system::extension(default_file_name).empty()) // no extension?
+            default_file_name += ".ply";                       // default to ply
+
+        const bool warn_overwrite = true;
+        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
+        if (file_name.empty())
+            return false;
+
+        bool saved = false;
+        if (dynamic_cast<const PointCloud *>(m))
+            saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud *>(m));
+        else if (dynamic_cast<const SurfaceMesh *>(m))
+            saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh *>(m));
+        else if (dynamic_cast<const Graph *>(m))
+            saved = GraphIO::save(file_name, dynamic_cast<const Graph *>(m));
+
+        if (saved)
+            LOG(INFO) << "file successfully saved";
+
+        return saved;
+    }
+
+    bool Viewer::snapshot() const {
+        const std::string &title = "Please choose a file name";
+        std::string default_file_name("untitled.png");
+        if (current_model())
+            default_file_name = file_system::replace_extension(current_model()->name(), "png");
+        const std::vector<std::string> &filters = {"Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
+                                                   "All Files (*.*)", "*"};
+
+        const bool warn_overwrite = true;
+        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
+        if (file_name.empty())
+            return false;
+
+        const std::string &ext = file_system::extension(file_name, true);
+        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
+            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
+            return false;
+        }
+
+        return snapshot(file_name, 1.0f, int(samples()));
+    }
+
+    void Viewer::copy_view() {
+        const auto p = camera()->position();
+        const auto q = camera()->orientation();
+        std::ostringstream out;
+        out << std::setprecision(9) << p.x << ' ' << p.y << ' ' << p.z;
+        for (unsigned i = 0; i < 4; ++i)
+            out << ' ' << q[i];
+        glfwSetClipboardString(window(), out.str().c_str());
+    }
+
+    void Viewer::paste_view() {
+        const char *text = glfwGetClipboardString(window());
+        if (!text)
+            return;
+        std::istringstream in(text);
+        vec3 p;
+        quat q;
+        for (unsigned i = 0; i < 3; ++i)
+            if (!(in >> p[i]) || !std::isfinite(p[i]))
+                return;
+        float norm = 0;
+        for (unsigned i = 0; i < 4; ++i) {
+            if (!(in >> q[i]) || !std::isfinite(q[i]))
+                return;
+            norm += q[i] * q[i];
+        }
+        std::string extra;
+        if ((in >> extra) || !std::isfinite(norm) || norm < 1e-12f)
+            return;
+        q.normalize();
+        // I prefer to animate the view change rather than snap to it.
+        Frame new_frame;
+        new_frame.setPosition(p);
+        new_frame.setOrientation(q);
+        const float duration = 0.5f;
+        camera()->interpolateTo(&new_frame, duration);
+        update();
+    }
+
+    //------------------------------------------------------------------------
+    // Event handlers (logical window coordinates on both backends)
+    //------------------------------------------------------------------------
+    bool Viewer::mouse_free_move_event(int, int, int, int, int) {
+        // highlight geometry primitives here
+        return false;
+    }
+
+    bool Viewer::char_input_event(unsigned int) {
+        //switch (codepoint) {
+        //case '-':	break;
+        //case 'c':	break;
+        //case 'C':	break;
+        //case '0':	break;
+        //default:
+        //	return false;
+        //}
+        return false;
+    }
+
+    bool Viewer::focus_event(bool) {
+        return false;
+    }
+
+    bool Viewer::mouse_scroll_event(int, int, int, int dy) {
+        camera()->frame()->action_zoom(dy, camera());
+        return false;
+    }
+
+    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
+        mouse_pressed_x_ = mouse_current_x_ = x;
+        mouse_pressed_y_ = mouse_current_y_ = y;
+        pressed_button_ = button;
+        zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
+        camera()->frame()->action_start();
+        if (modifiers == MODIF_ALT && ClippingPlane::instance()->is_enabled())
+            ClippingPlane::instance()->manipulator()->frame()->action_start();
+        if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
+            if (button == BUTTON_LEFT) {
+                bool found = false;
+                const vec3 point = point_under_pixel(x, y, found);
+                camera()->setPivotPoint(found ? point : camera()->sceneCenter());
+                show_pivot_point_ = found;
+                if (found) {
+#ifdef EASY3D_HAS_VULKAN
+                    // pivot_pixel_ is logical; the overlay expires after ten seconds.
+                    pivot_pixel_ = vec2(float(x), float(y));
+                    pivot_expires_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+#else
+                    // We draw the pivot mark in screen space (a 3D version is in
+                    // Tutorial_204_Viewer_Qt) and hide the hint after a delay.
+                    if (!drawable_pivot_)
+                        drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
+                    const float size = 10.0f; // arm in logical pixels (DPI-independent), matching the Vulkan overlay
+                    const std::vector<vec2> points = {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size),
+                                                      vec2(x, y + size)};
+                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
+                    drawable_pivot_->set_line_width(dpi_scaling());
+                    Timer<>::single_shot(10000, [&]() {
+                        show_pivot_point_ = false;
+                        update();
+                    });
+#endif
+                    if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+#if 1 // with animation  Do NOT delete!!!
+                        camera()->interpolateToLookAt(point);
+#else // without animation  Do NOT delete!!!
+                        // Apply the legacy zoom target directly on the UI thread.
+                        camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
+                        camera()->lookAt(point);
+#endif
+                    }
+                }
+            } else if (button == BUTTON_RIGHT) {
+                camera()->setPivotPoint(camera()->sceneCenter());
+                show_pivot_point_ = false;
+                if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+#if 1 // with animation  Do NOT delete!!!
+                    camera()->interpolateToFitScene();
+#else // without animation  Do NOT delete!!!
+                    camera()->showEntireScene();
+#endif
+                }
+            }
+        }
+#ifdef EASY3D_HAS_VULKAN
+        update_interaction_overlays(true);
+#endif
+        return false;
+    }
+
+    bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
+        if (pressed_button_ == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != mouse_pressed_x_ &&
+            y != mouse_pressed_y_) {
+            const ivec2 origin = interaction_origin();
+            camera()->fitScreenRegion(std::min(x, mouse_pressed_x_) - origin.x,
+                                      std::min(y, mouse_pressed_y_) - origin.y,
+                                      std::max(x, mouse_pressed_x_) - origin.x,
+                                      std::max(y, mouse_pressed_y_) - origin.y);
+        }
+        camera()->frame()->action_end();
+        ClippingPlane::instance()->manipulator()->frame()->action_end();
+        pressed_button_ = -1;
+        zoom_region_ = false;
+#ifdef EASY3D_HAS_VULKAN
+        update_interaction_overlays(true);
+#endif
+        return false;
+    }
+
+    bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+        mouse_current_x_ = x;
+        mouse_current_y_ = y;
+        zoom_region_ = pressed_button_ == BUTTON_LEFT && modifiers == MODIF_CTRL;
+#ifdef EASY3D_HAS_VULKAN
+        update_interaction_overlays(true);
+#endif
+        // Region zoom and clipping/tool manipulation must not move the camera.
+        if (modifiers == MODIF_CTRL)
+            return false;
+        // Camera actions are cell-local in multi-view layouts; overlays stay absolute.
+        const ivec2 origin = interaction_origin();
+        const int cx = x - origin.x, cy = y - origin.y;
+        if (modifiers == MODIF_ALT) {
+            // the clipping plane can be manipulated only when it is enabled
+            if (ClippingPlane::instance()->is_enabled()) {
+                auto *frame = ClippingPlane::instance()->manipulator()->frame();
+                if (button == BUTTON_LEFT)
+                    frame->action_rotate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
+                else if (button == BUTTON_RIGHT)
+                    frame->action_translate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
+            }
+            return false;
+        }
+        // axis-constrained rotation/translation of the camera
+        auto axis = ManipulatedFrame::NONE;
+        if (pressed_key_ == GLFW_KEY_X)
+            axis = ManipulatedFrame::HORIZONTAL;
+        else if (pressed_key_ == GLFW_KEY_Y)
+            axis = ManipulatedFrame::VERTICAL;
+        else if (pressed_key_ == GLFW_KEY_O)
+            axis = ManipulatedFrame::ORTHOGONAL;
+        if (button == BUTTON_LEFT)
+            camera()->frame()->action_rotate(cx, cy, dx, dy, camera(), axis);
+        else if (button == BUTTON_RIGHT)
+            camera()->frame()->action_translate(cx, cy, dx, dy, camera(), axis);
+        else if (button == BUTTON_MIDDLE && std::abs(dy) >= 1)
+            camera()->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
+        return false;
+    }
+
+    bool Viewer::key_release_event(int key, int) {
+        pressed_key_ = -1;
+        if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL || key == GLFW_KEY_LEFT_SUPER ||
+            key == GLFW_KEY_RIGHT_SUPER) {
+            zoom_region_ = false;
+#ifdef EASY3D_HAS_VULKAN
+            update_interaction_overlays(true);
+#endif
+        }
+        return false;
+    }
+
+    bool Viewer::drop_event(const std::vector<std::string> &names) {
+        unsigned count = 0;
+        for (const auto &file : names)
+            if (add_model(file))
+                ++count;
+        if (count)
+            fit_screen();
+        return count != 0;
+    }
+
+    bool Viewer::key_press_event(int key, int modifiers) {
+        const auto command = commands_.find(Key(key));
+        if (command != commands_.end()) {
+            const auto binding = command->second.find(Modifier(modifiers));
+            if (binding != command->second.end())
+                return binding->second.first(this, binding->second.second);
+        }
+        if ((key == GLFW_KEY_ESCAPE && modifiers == 0) || (key == GLFW_KEY_F4 && modifiers == MODIF_ALT))
+            exit();
+        else if (key == GLFW_KEY_F1 && modifiers == 0) {
+            if (!manual_.empty())
+                std::cout << manual_ << '\n';
+        } else if (key == GLFW_KEY_F2 && modifiers == 0)
+            set_animation(!animation_enabled_);
+        else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && modifiers == 0)
+            // turn left/right, 1 degree each step
+            camera()->frame()->action_turn((key == GLFW_KEY_LEFT ? 1.0f : -1.0f) * float(M_PI / 180.0), camera());
+        else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && modifiers == 0) {
+            // move camera forward/backward
+            const float step = .05f * camera()->sceneRadius();
+            camera()->frame()->translate(
+                camera()->frame()->inverseTransformOf(vec3(0, 0, key == GLFW_KEY_UP ? -step : step)));
+        } else if (modifiers == MODIF_CTRL && key >= GLFW_KEY_RIGHT && key <= GLFW_KEY_UP) {
+            // move camera left/right/up/down
+            const float step = .05f * camera()->sceneRadius();
+            const vec3 direction = key == GLFW_KEY_LEFT    ? vec3(-step, 0, 0)
+                                   : key == GLFW_KEY_RIGHT ? vec3(step, 0, 0)
+                                   : key == GLFW_KEY_UP    ? vec3(0, step, 0)
+                                                           : vec3(0, -step, 0);
+            camera()->frame()->translate(camera()->frame()->inverseTransformOf(direction));
+        } else if (modifiers == MODIF_CTRL && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL))
+            camera()->frame()->action_zoom(key == GLFW_KEY_EQUAL ? 1 : -1, camera());
+        else if (key == GLFW_KEY_K && modifiers == MODIF_ALT) {
+            // add key frame
+            if (kfi_->add_keyframe(*camera()->frame()))
+                LOG(INFO) << "key frame added to camera path";
+        } else if (key == GLFW_KEY_D && modifiers == MODIF_ALT) {
+            // delete path
+            kfi_->delete_path();
+#ifdef EASY3D_HAS_VULKAN
+            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
+            set_viewer_annotations({});
+#endif
+            restore_scene_bounds();
+            update();
+        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) {
+            // play the path
+            if (kfi_->is_interpolation_started())
+                kfi_->stop_interpolation();
+            else {
+                kfi_->start_manual_interpolation();
+                next_camera_path_frame_ = std::chrono::steady_clock::now();
+            }
+            update();
+        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
+            show_camera_path_ = !show_camera_path_;
+            if (show_camera_path_) {
+                float radius = camera()->sceneRadius();
+                for (size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
+                    radius = std::max(radius, distance(camera()->sceneCenter(), kfi_->keyframe_position(i)));
+                camera()->setSceneRadius(radius);
+            } else
+                restore_scene_bounds();
+            update();
+        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL)
+            copy_view(); // copy camera
+        else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL)
+            paste_view(); // paste camera
+        else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
+            open();
+        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
+            save();
+        else if (key == GLFW_KEY_S && modifiers == 0)
+            snapshot();
+        else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL) {
+            show_frame_rate_ = !show_frame_rate_;
+            if (show_frame_rate_) {
+                frame_rate_start_ = std::chrono::steady_clock::now();
+                frame_rate_frames_ = 0;
+                framerate_ = "fps: -- (-- ms/frame)";
+            }
+            update();
+        } else if (key == GLFW_KEY_F && modifiers == 0)
+            fit_screen();
+        else if (key == GLFW_KEY_C && modifiers == 0) {
+            if (current_model())
+                fit_screen(current_model());
+        } else if (key == GLFW_KEY_P && modifiers == 0)
+            camera()->setType(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
+        else if (key == GLFW_KEY_SPACE && modifiers == 0) {
+            // Aligns camera
+            Frame frame;
+            frame.setTranslation(camera()->pivotPoint());
+            camera()->frame()->alignWithFrame(&frame, true);
+        } else if (key == GLFW_KEY_M && modifiers == 0) {
+            if (auto *mesh = dynamic_cast<SurfaceMesh *>(current_model()))
+                for (const auto &d : mesh->renderer()->triangles_drawables())
+                    d->set_smooth_shading(!d->smooth_shading());
+        } else if (modifiers == 0 && (key == GLFW_KEY_LEFT_BRACKET || key == GLFW_KEY_RIGHT_BRACKET)) {
+            for (const auto &m : models())
+                if (m->renderer())
+                    for (const auto &d : m->renderer()->lines_drawables())
+                        d->set_line_width(std::max(1.0f, d->line_width() + (key == GLFW_KEY_RIGHT_BRACKET ? 1 : -1)));
+        } else if (modifiers == 0 && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL)) {
+            for (const auto &m : models())
+                if (m->renderer())
+                    for (const auto &d : m->renderer()->points_drawables())
+                        d->set_point_size(std::max(1.0f, d->point_size() + (key == GLFW_KEY_EQUAL ? 1 : -1)));
+        } else if (modifiers == 0 && (key == GLFW_KEY_COMMA || key == GLFW_KEY_PERIOD)) {
+            if (!models().empty()) {
+                auto i = std::find_if(models().begin(), models().end(),
+                                      [&](const std::shared_ptr<Model> &m) { return m.get() == current_model(); });
+                const int n = int(models().size()), index = i == models().end() ? n - 1 : int(i - models().begin());
+                model_idx_ = (index + n + (key == GLFW_KEY_PERIOD ? 1 : -1)) % n;
+                fit_screen(current_model());
+            }
+        } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
+            if (current_model())
+                delete_model(current_model());
+        } else if (modifiers == 0 && current_model() && current_model()->renderer() &&
+                   (key == GLFW_KEY_E || key == GLFW_KEY_V || key == GLFW_KEY_B || key == GLFW_KEY_L)) {
+            auto *renderer = current_model()->renderer();
+            Drawable *d = nullptr;
+            if (key == GLFW_KEY_E)
+                d = renderer->get_lines_drawable("edges");
+            else if (key == GLFW_KEY_V)
+                d = renderer->get_points_drawable("vertices");
+            else if (dynamic_cast<SurfaceMesh *>(current_model())) {
+                if (key == GLFW_KEY_B)
+                    d = renderer->get_lines_drawable("borders");
+                else
+                    d = renderer->get_points_drawable("locks"); // locked vertices
+            }
+            if (d)
+                d->set_visible(!d->is_visible());
+        } else if (key == GLFW_KEY_D && modifiers == 0) {
+            if (current_model())
+                current_model()->property_stats(std::cout);
+        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_C) {
+            // toggle clipping plane
+            auto *plane = ClippingPlane::instance();
+            plane->set_enabled(!plane->is_enabled());
+            plane->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_V) {
+            // toggle clipping plane visibility
+            auto *plane = ClippingPlane::instance();
+            if (plane->is_enabled())
+                plane->set_visible(!plane->is_visible());
+        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_X) {
+            auto *plane = ClippingPlane::instance();
+            if (plane->is_enabled())
+                plane->set_cross_section(!plane->cross_section());
+        } else if (modifiers == 0 && key == GLFW_KEY_A) {
+#ifdef EASY3D_HAS_VULKAN
+            show_corner_axes_ = !show_corner_axes_;
+#else
+            if (drawable_axes_)
+                drawable_axes_->set_visible(!drawable_axes_->is_visible());
+#endif
+        } else if (modifiers == 0 && key == GLFW_KEY_R) {
+#ifdef EASY3D_HAS_VULKAN
+            LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
+#else
+            // Reload the shader(s) - useful for writing/debugging shader code.
+            ShaderManager::reload();
+#endif
+        } else
+            pressed_key_ = key;
+        return false;
+    }
+} // namespace easy3d
+
+
+#ifdef EASY3D_HAS_VULKAN
+namespace easy3d {
+    std::vector<graphics::DrawCommand> Viewer::draw_commands(
+        const Camera &cam, int width, int, std::vector<DrawSource> *sources, bool include_hidden_models) const {
+        impl_->drawable_renderer.prune();
+        std::vector<graphics::DrawCommand> commands;
+        const auto &planes = impl_->active_clipping_planes();
+        // Drawable point/line sizes are logical pixels; the device rasterizes plain
+        // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
+        // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
+        // world-space and already carry the logical sizing through pixelGLRatio().
+        const float pixel_scale = cam.screenWidth() > 0 ? float(width) / float(cam.screenWidth()) : 1.0f;
+        auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
+                          bool selected, bool depth_bias = false) {
+            if (!d->is_visible())
+                return;
+            auto command = impl_->drawable_renderer.command(d, id, cam, planes, selected);
+            command.point_size *= pixel_scale;
+            command.line_width *= pixel_scale;
+            command.depth_bias = depth_bias;
+            if (sources) {
+                if (sources->size() >= UINT32_MAX)
+                    throw std::length_error("too many picking sources");
+                id = uint32_t(sources->size());
+                sources->push_back({model, d});
+                command.object_id = id;
+            }
+            commands.push_back(std::move(command));
+        };
+        for (size_t i = 0; i < models_.size(); ++i) {
+            const auto *renderer = models_[i]->renderer();
+            if (!renderer || (!include_hidden_models && !renderer->is_visible()))
+                continue;
+            // Match the OpenGL viewer: surfaces are offset only while this model
+            // also draws visible lines, so coplanar edges do not z-fight.
+            bool has_visible_lines = false;
+            for (const auto &d : renderer->lines_drawables())
+                if (d->is_visible())
+                    has_visible_lines = true;
+            for (const auto &d : renderer->triangles_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected(), has_visible_lines);
+            for (const auto &d : renderer->lines_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected());
+            for (const auto &d : renderer->points_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected());
+        }
+        for (size_t i = 0; i < drawables_.size(); ++i)
+            append(drawables_[i], uint32_t(models_.size() + i), nullptr, false);
+        const auto guide = impl_->clipping_plane_renderer.draw(*ClippingPlane::instance(), cam);
+        for (auto command : guide) {
+            command.object_id = UINT32_MAX;
+            commands.push_back(std::move(command));
+        }
+        return commands;
+    }
+    std::vector<graphics::DrawCommand> Viewer::frame_commands(
+        const Camera &cam, int width, int height, std::vector<DrawSource> *sources, bool include_hud) const {
+        auto commands = draw_commands(cam, width, height, sources);
+        // Recorded overlay viewports use the host framebuffer's pixels. Keep
+        // their NDC transforms and scale the clip rectangles for file output.
+        const int fw = framebuffer_width(), fh = framebuffer_height();
+        const auto append_overlays = [&](const std::vector<graphics::DrawCommand> &source) {
+            for (auto command : source) {
+                auto &v = command.viewport;
+                if (v.z > 0 && v.w > 0 && fw > 0 && fh > 0 && (width != fw || height != fh)) {
+                    const int x = int(std::lround(double(v.x) * width / fw));
+                    const int y = int(std::lround(double(v.y) * height / fh));
+                    const int right = int(std::lround(double(v.x + v.z) * width / fw));
+                    const int bottom = int(std::lround(double(v.y + v.w) * height / fh));
+                    if (right <= x || bottom <= y)
+                        continue;
+                    v = ivec4(x, y, right - x, bottom - y);
+                }
+                commands.push_back(std::move(command));
+            }
+        };
+        append_overlays(impl_->viewer_annotations);
+        if (!impl_->overlays_foreground)
+            append_overlays(impl_->overlays);
+        if (include_hud) {
+            append_overlays(impl_->viewer_3d_overlays);
+            append_overlays(impl_->viewer_overlays);
+        }
+        if (impl_->overlays_foreground)
+            append_overlays(impl_->overlays);
+        return commands;
+    }
+    Viewer::Viewer(int width, int height, const VulkanOptions &options)
+        : window_(nullptr), width_(width), height_(height), camera_(new Camera), samples_(1),
+          background_color_(setting::background_color), pressed_key_(-1), show_frame_rate_(false),
+          show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
+        resize_render_target(width, height);
+        impl_->device =
+            graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name,
+                                           options.use_native_large_points);
+        camera()->setType(Camera::PERSPECTIVE);
+        camera()->setUpVector(vec3(0, 0, 1));
+        camera()->setViewDirection(vec3(-1, 0, 0));
+        camera()->showEntireScene();
+        // Transparency effects only know the camera. Rendering and presentation stay
+        // in the viewer, as in Viewer::draw().
+        Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable *> &surfaces, int method,
+                                                          int peels) { draw_transparency(surfaces, method, peels); });
+    }
+    void Viewer::release_device() {
+        impl_->device.reset();
+    }
+    void Viewer::resize_render_target(int w, int h) {
+        if (w <= 0 || h <= 0)
+            throw std::invalid_argument("offscreen dimensions must be positive");
+        framebuffer_width_ = w;
+        framebuffer_height_ = h;
+        if (!window_) {
+            width_ = w;
+            height_ = h;
+        }
+        // The camera always carries logical window dimensions (framebuffer pixels
+        // are GPU-only). For an offscreen canvas logical units equal pixels.
+        int cw, ch;
+        viewer_size(cw, ch);
+        camera()->setScreenWidthAndHeight(cw, ch);
+    }
+    void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground) {
+        for (auto &command : commands)
+            command.overlay = true;
+        impl_->overlays = std::move(commands);
+        impl_->overlays_foreground = foreground;
+    }
+    void Viewer::set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const {
+        for (auto &command : commands) {
+            command.overlay = true;
+            command.overlay_depth_test = command.overlay_independent_depth = false;
+        }
+        impl_->viewer_overlays = std::move(commands);
+    }
+    void Viewer::set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const {
+        for (auto &command : commands) {
+            command.overlay = command.overlay_independent_depth = true;
+            command.overlay_depth_test = false;
+        }
+        impl_->viewer_3d_overlays = std::move(commands);
+    }
+    void Viewer::set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const {
+        for (auto &command : commands) {
+            command.overlay = command.overlay_depth_test = true;
+            command.overlay_independent_depth = false;
+        }
+        impl_->viewer_annotations = std::move(commands);
+    }
+    void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
+        impl_->clipping_planes = graphics::normalize_clipping_planes(planes);
+    }
+    const std::vector<vec4> &Viewer::clipping_planes() const {
+        return impl_->active_clipping_planes();
+    }
+    std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
+        Camera snapshot(*camera());
+        // Camera's copy constructor regenerates matrices from its parameters. Keep
+        // effective matrices too, including externally calibrated/custom cameras.
+        snapshot.frame()->setPivotPoint(camera()->pivotPoint()); // do not re-adjust the copied ortho coefficient
+        snapshot.set_projection_matrix(camera()->projectionMatrix());
+        snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+        const auto inv = transform::checked_inverse(snapshot.modelViewProjectionMatrix());
+        const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
+        std::vector<vec3> points;
+        points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
+        for (unsigned y = 0; y < frame.height; ++y)
+            for (unsigned x = 0; x < frame.width; ++x) {
+                const size_t pixel = size_t(y) * frame.width + x;
+                const float d = frame.depth[pixel];
+                if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
+                    continue;
+                const int viewport[] = {0, 0, int(frame.width), int(frame.height)};
+                points.push_back(transform::unproject_inverse(vec3(x + .5f, y + .5f, d), inv, viewport, false));
+            }
+        return points;
+    }
+    Viewer::PickResult Viewer::pick(int x, int y) const {
+        PickResult result;
+        int px, py;
+        if (!window_pixel(x, y, px, py))
+            return result;
+        int fw, fh;
+        framebuffer_size(fw, fh);
+        // One backend draw re-renders the visible scene with object/primitive IDs and
+        // depth. Sampling the cursor pixel therefore names the nearest drawable (and
+        // its triangle for meshes) without any CPU ray casting.
+        // Keep commands and source mapping together for this exact synchronous draw.
+        // This whole-scene query is intentionally not delegated to the Picker classes:
+        // they operate on one caller-supplied model with a borrowed camera and own
+        // their offscreen resources, while the viewer already owns every model,
+        // drawable and the device, so it can answer in a single submission.
+        std::vector<DrawSource> sources;
+        const auto commands = draw_commands(*camera(), fw, fh, &sources);
+        const auto sample = impl_->device->sample_pixel(fw, fh, commands, px, py);
+        const auto id = sample.id;
+        if (id.object >= sources.size() || sample.depth >= 1)
+            return result;
+        result.model = sources[id.object].model;
+        result.drawable = sources[id.object].drawable;
+        result.primitive = id.primitive;
+        result.depth = sample.depth;
+        result.position = pixel_to_world(px, py, result.depth);
+        const auto &faces = result.drawable->cpu_buffers().source_faces;
+        auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
+        if (mesh && id.primitive < faces.size()) {
+            const SurfaceMesh::Face f(faces[id.primitive]);
+            if (mesh->is_valid(f) && !mesh->is_deleted(f))
+                result.face_index = f.idx();
+        }
+        return result;
+    }
+    bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
+        const int width = framebuffer_width(), height = framebuffer_height();
+        const auto commands = draw_commands(snapshot, width, height);
+        const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
+        depth = sample.depth;
+        return sample.id.object != UINT32_MAX;
+    }
+    const graphics::RenderDevice &Viewer::device() const {
+        return *impl_->device;
+    }
+    std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest &request) const {
+        return impl_->device->select_points(request);
+    }
+    std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable *drawable) const {
+        if (!drawable || drawable->type() != Drawable::DT_POINTS)
+            throw std::invalid_argument("selection requires a point drawable");
+        for (const auto &model : models_)
+            if (model->renderer())
+                for (const auto &d : model->renderer()->points_drawables())
+                    if (d.get() == drawable)
+                        return impl_->drawable_renderer
+                            .command(d, 0, *camera(), impl_->clipping_planes, model->renderer()->is_selected())
+                            .geometry->point_data();
+        for (const auto &d : drawables_)
+            if (d.get() == drawable)
+                return impl_->drawable_renderer.command(d, 0, *camera(), impl_->clipping_planes).geometry->point_data();
+        throw std::invalid_argument("point drawable does not belong to this viewer");
+    }
+    void Viewer::init() {}
+    void Viewer::pre_draw() {}
+    void Viewer::post_draw() {}
+    void Viewer::draw() const {
+        int width = 0, height = 0;
+        impl_->frame_size(width, height);
+        Shadow::FrameData shadow;
+        Shadow *active_shadow = Shadow::active(camera());
+        const bool has_shadow = active_shadow && Shadow::frame_data(camera(), shadow);
+        std::vector<DrawSource> sources;
+        auto commands =
+            frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr, !impl_->snapshot.active);
+        if (has_shadow) {
+            const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
+            const auto &surfaces = active_shadow->surfaces();
+            for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
+                auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
+                if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
+                    continue;
+                if (!commands[i].geometry || commands[i].geometry->topology() != graphics::Topology::triangles)
+                    continue;
+                commands[i].shadow_caster = true;
+                commands[i].shadow_matrix = clip_to_shadow;
+                commands[i].shadow_map_size = shadow.shadow_map_size;
+            }
+            if (!shadow.background_corners.empty()) {
+                std::vector<graphics::Vertex> vertices(4);
+                for (unsigned i = 0; i < 4; ++i)
+                    vertices[i].position = shadow.background_corners[i];
+                graphics::DrawCommand background;
+                background.geometry =
+                    std::make_shared<graphics::Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+                background.color = shadow.background_color;
+                background.object_id = UINT32_MAX;
+                background.model_view_projection = camera()->modelViewProjectionMatrix();
+                background.shadow_background = true;
+                background.shadow_matrix = clip_to_shadow;
+                background.shadow_map_size = shadow.shadow_map_size;
+                commands.push_back(std::move(background));
+            }
+            commands.insert(commands.begin(),
+                            graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
+                                                         shadow.darkness, shadow.softness, shadow.light_near,
+                                                         shadow.light_far, shadow.shadow_map_size));
+        }
+        float radius, bias;
+        mat4 projection;
+        if (AmbientOcclusion::frame_params(camera(), radius, bias, projection))
+            commands.insert(commands.begin(), graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height),
+                                                                                      radius, bias, projection));
+        float z_near, z_far, scene_size;
+        if (EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
+            commands.insert(commands.begin(), graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
+                                                                                      z_near, z_far, scene_size));
+        impl_->submit(std::move(commands));
+    }
+    void Viewer::draw_transparency(const std::vector<TrianglesDrawable *> &surfaces, int method, int peels) {
+        int width = 0, height = 0;
+        impl_->frame_size(width, height);
+        std::vector<DrawSource> sources;
+        auto commands = frame_commands(*camera(), width, height, &sources, !impl_->snapshot.active);
+        for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
+            auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
+            if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
+                continue;
+            if (commands[i].geometry && commands[i].geometry->topology() == graphics::Topology::triangles) {
+                commands[i].transparent = true;
+                commands[i].color.w = triangles->opacity();
+            }
+        }
+        const auto transparency = method == 1   ? graphics::TransparencyMethod::average
+                                  : method == 2 ? graphics::TransparencyMethod::peeling
+                                  : method == 3 ? graphics::TransparencyMethod::linked_lists
+                                                : graphics::TransparencyMethod::sorted;
+        impl_->submit(std::move(commands), transparency, peels > 0 ? unsigned(peels) : 0u);
+    }
+    bool Viewer::snapshot_frame(int width,
+                                int height,
+                                const mat4 &projection,
+                                const vec4 &background,
+                                unsigned samples,
+                                graphics::FrameImage &image) {
+        auto &frame = impl_->snapshot;
+        // Keep the camera's logical screen dimensions: only the projection changes
+        // for the output frustum. draw_commands() then scales plain point/line sizes
+        // by output/logical and impostors keep their relative size, as on OpenGL.
+        const mat4 source_projection = camera()->projectionMatrix();
+        struct Restore {
+            Viewer &self;
+            mat4 projection;
+            ~Restore() {
+                self.impl_->snapshot.active = false;
+                self.camera()->set_projection_matrix(projection);
+            }
+        } restore{*this, source_projection};
+        frame.width = width;
+        frame.height = height;
+        frame.samples = samples;
+        frame.background = background;
+        frame.image = graphics::FrameImage();
+        frame.active = true;
+        camera()->set_projection_matrix(projection);
+        draw();
+        if (frame.image.rgba.size() != size_t(width) * size_t(height) * 4)
+            throw std::runtime_error("the captured frame does not match the requested size");
+        image = std::move(frame.image);
+        return true;
+    }
+    void Viewer::cleanup() {
+        release_device();
+    }
     Viewer::Viewer(const std::string &title,
                    int width,
                    int height,
@@ -971,45 +1746,6 @@ namespace easy3d {
         Transparency::set_frame_renderer(camera(), nullptr);
         release_device();
     }
-    void Viewer::poll_events() {
-        ViewerBase::poll_events();
-    }
-    void Viewer::request_close() {
-        glfwSetWindowShouldClose(window_host_->handle, GLFW_TRUE);
-    }
-    bool Viewer::should_close() const {
-        return glfwWindowShouldClose(window_host_->handle) != 0;
-    }
-    void Viewer::show() {
-        glfwShowWindow(window_host_->handle);
-    }
-    void Viewer::hide() {
-        glfwHideWindow(window_host_->handle);
-    }
-    void Viewer::resize(int w, int h) {
-        if (w <= 0 || h <= 0)
-            throw std::invalid_argument("window dimensions must be positive");
-        glfwSetWindowSize(window_host_->handle, w, h);
-    }
-    void Viewer::framebuffer_size(int &w, int &h) const {
-        if (window_)
-            glfwGetFramebufferSize(window_, &w, &h);
-        else {
-            w = camera()->screenWidth();
-            h = camera()->screenHeight();
-        }
-    }
-    void Viewer::viewer_size(int &w, int &h) const {
-        if (window_)
-            glfwGetWindowSize(window_, &w, &h);
-        else {
-            w = width_;
-            h = height_;
-        }
-    }
-    void Viewer::set_position(int x, int y) {
-        glfwSetWindowPos(window_host_->handle, x, y);
-    }
     float Viewer::dpi_scaling() const {
         if (!window_)
             return 1.0f;
@@ -1017,75 +1753,12 @@ namespace easy3d {
         glfwGetWindowSize(window(), &w, &h);
         return w > 0 ? float(framebuffer_width()) / w : 1.0f;
     }
-    void Viewer::set_title(const std::string &text) {
-        title_ = text;
-        window_host_->title = text;
-        glfwSetWindowTitle(window_host_->handle, text.c_str());
-    }
-    void Viewer::update() const {
-        glfwPostEmptyEvent();
-    }
-    void Viewer::set_animation(bool enabled) {
-        animation_enabled_ = enabled;
-        update();
-    }
-    bool Viewer::is_animating() const {
-        return animation_enabled_ && bool(animation_func_);
-    }
     void Viewer::set_samples(unsigned samples) {
         if (!samples || samples > 64 || (samples & (samples - 1)) || !(device().supported_sample_counts() & samples))
             throw std::invalid_argument("unsupported Vulkan viewer sample count");
         window_host_->samples = samples;
         samples_ = int(samples);
     }
-    bool Viewer::draw_frame() {
-        if (!window_)
-            return false;
-        if (window_host_->error)
-            std::rethrow_exception(window_host_->error);
-        if (should_close() || glfwGetWindowAttrib(window_host_->handle, GLFW_ICONIFIED))
-            return false;
-        int w, h;
-        framebuffer_size(w, h);
-        if (w <= 0 || h <= 0)
-            return false;
-        if (render_width_ != w || render_height_ != h) {
-            resize_render_target(w, h);
-            cancel_interaction();
-            viewer_size(width_, height_);
-            post_resize(width_, height_);
-            notify_resize();
-        }
-        if (!initialized_) {
-            init();
-            initialized_ = true;
-        }
-        if (is_animating()) {
-            animation_func_(this);
-            if (window_host_->error)
-                std::rethrow_exception(window_host_->error);
-            if (should_close())
-                return false;
-        }
-        advance_camera_path();
-        print_usage();
-        notify_pre_draw();
-        if (window_host_->error)
-            std::rethrow_exception(window_host_->error);
-        if (should_close())
-            return false;
-        pre_draw();
-        update_camera_path_overlays();
-        update_interaction_overlays();
-        draw();
-        update_frame_rate();
-        post_draw();
-        notify_post_draw();
-        if (window_host_->error)
-            std::rethrow_exception(window_host_->error);
-        return true;
-    }
-
     void Viewer::update_camera_path_overlays() const {
         std::vector<graphics::DrawCommand> commands;
         if (show_camera_path_ && !kfi_->is_interpolation_started()) {
@@ -1097,31 +1770,6 @@ namespace easy3d {
                 commands.push_back(cameras);
         }
         set_viewer_annotations(std::move(commands));
-    }
-    void Viewer::restore_scene_bounds() {
-        Box3 box;
-        for (const auto &model : models())
-            box.grow(model->bounding_box());
-        for (const auto &drawable : drawables())
-            if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                box.grow(drawable->bounding_box());
-        if (box.is_valid())
-            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
-    }
-    void Viewer::update_frame_rate() {
-        if (!show_frame_rate_)
-            return;
-        ++frame_rate_frames_;
-        const auto now = std::chrono::steady_clock::now();
-        const double elapsed = std::chrono::duration<double>(now - frame_rate_start_).count();
-        if (elapsed < 1.0)
-            return;
-        std::ostringstream out;
-        out << "fps: " << std::fixed << std::setprecision(0) << frame_rate_frames_ / elapsed << " ("
-            << std::setprecision(1) << 1000.0 * elapsed / frame_rate_frames_ << " ms/frame)";
-        framerate_ = out.str();
-        frame_rate_frames_ = 0;
-        frame_rate_start_ = now;
     }
     void Viewer::ensure_text_renderer() const {
         if (fonts_tried_)
@@ -1252,9 +1900,6 @@ namespace easy3d {
         ClippingPlane::instance()->manipulator()->frame()->action_end();
         update_interaction_overlays(true);
     }
-    Drawable *Viewer::add_drawable(Drawable *drawable) {
-        return add_drawable(std::shared_ptr<Drawable>(drawable));
-    }
     graphics::FrameImage Viewer::capture() const {
         return capture(samples());
     }
@@ -1271,529 +1916,12 @@ namespace easy3d {
         return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height(),
                               snapshot_hud_);
     }
-    int Viewer::run(bool see_all) {
-        try {
-            if (!initialized_) {
-                init();
-                initialized_ = true;
-            }
-            if (see_all)
-                fit_screen();
-            show();
-            return run_frames();
-        } catch (const std::exception &e) {
-            LOG(ERROR) << "Vulkan viewer failed: " << e.what();
-            return 1;
-        }
-    }
-    int Viewer::run_frames(unsigned max_frames) {
-        try {
-            if (window_host_->error)
-                std::rethrow_exception(window_host_->error);
-            return detail::run_viewer_frames(*this, max_frames, [this] {
-                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
-            });
-        } catch (const std::exception &e) {
-            LOG(ERROR) << "Vulkan viewer failed: " << e.what();
-            return 1;
-        }
-    }
-    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-        mouse_pressed_x_ = mouse_current_x_ = x;
-        mouse_pressed_y_ = mouse_current_y_ = y;
-        pressed_button_ = button;
-        zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
-        camera()->frame()->action_start();
-        if (modifiers == MODIF_ALT && ClippingPlane::instance()->is_enabled())
-            ClippingPlane::instance()->manipulator()->frame()->action_start();
-        if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
-            if (button == BUTTON_LEFT) {
-                bool found = false;
-                const auto hit = pick(x, y);
-                found = bool(hit);
-                const auto point = hit.position;
-                camera()->setPivotPoint(found ? point : camera()->sceneCenter());
-                show_pivot_point_ = found;
-                if (found) {
-                    pivot_pixel_ = vec2(float(x), float(y));
-                    pivot_expires_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-                }
-                if (found && pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation  Do NOT delete!!!
-                    camera()->interpolateToLookAt(point);
-#else // without animation  Do NOT delete!!!
-                    // Apply the legacy zoom target directly on the UI thread.
-                    camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
-                    camera()->lookAt(point);
-#endif
-                }
-            } else if (button == BUTTON_RIGHT) {
-                camera()->setPivotPoint(camera()->sceneCenter());
-                show_pivot_point_ = false;
-                if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation  Do NOT delete!!!
-                    camera()->interpolateToFitScene();
-#else // without animation  Do NOT delete!!!
-                    camera()->showEntireScene();
-#endif
-                }
-            }
-        }
-        update_interaction_overlays(true);
-        return false;
-    }
-    bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-        if (pressed_button_ == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != mouse_pressed_x_ &&
-            y != mouse_pressed_y_) {
-            const ivec2 origin = interaction_origin();
-            camera()->fitScreenRegion(std::min(x, mouse_pressed_x_) - origin.x,
-                                      std::min(y, mouse_pressed_y_) - origin.y,
-                                      std::max(x, mouse_pressed_x_) - origin.x,
-                                      std::max(y, mouse_pressed_y_) - origin.y);
-        }
-        camera()->frame()->action_end();
-        ClippingPlane::instance()->manipulator()->frame()->action_end();
-        pressed_button_ = -1;
-        zoom_region_ = false;
-        update_interaction_overlays(true);
-        return false;
-    }
-    bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-        mouse_current_x_ = x;
-        mouse_current_y_ = y;
-        zoom_region_ = pressed_button_ == BUTTON_LEFT && modifiers == MODIF_CTRL;
-        update_interaction_overlays(true);
-        // Region zoom and clipping/tool manipulation must not move the camera.
-        if (modifiers == MODIF_CTRL)
-            return false;
-        // Camera actions are cell-local in multi-view layouts; overlays stay absolute.
-        const ivec2 origin = interaction_origin();
-        const int cx = x - origin.x, cy = y - origin.y;
-        if (modifiers == MODIF_ALT) {
-            if (ClippingPlane::instance()->is_enabled()) {
-                auto *frame = ClippingPlane::instance()->manipulator()->frame();
-                if (button == BUTTON_LEFT)
-                    frame->action_rotate(cx, cy, dx, dy, camera(),
-                                         ManipulatedFrame::NONE);
-                else if (button == BUTTON_RIGHT)
-                    frame->action_translate(cx, cy, dx, dy, camera(),
-                                            ManipulatedFrame::NONE);
-            }
-            return false;
-        }
-        auto axis = ManipulatedFrame::NONE;
-        if (pressed_key_ == GLFW_KEY_X)
-            axis = ManipulatedFrame::HORIZONTAL;
-        else if (pressed_key_ == GLFW_KEY_Y)
-            axis = ManipulatedFrame::VERTICAL;
-        else if (pressed_key_ == GLFW_KEY_O)
-            axis = ManipulatedFrame::ORTHOGONAL;
-        if (button == BUTTON_LEFT)
-            camera()->frame()->action_rotate(cx, cy, dx, dy, camera(),
-                                             axis);
-        else if (button == BUTTON_RIGHT)
-            camera()->frame()->action_translate(cx, cy, dx, dy, camera(),
-                                                axis);
-        else if (button == BUTTON_MIDDLE && std::abs(dy) >= 1)
-            camera()->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
-        return false;
-    }
-    bool Viewer::mouse_scroll_event(int, int, int, int dy) {
-        camera()->frame()->action_zoom(dy, camera());
-        return false;
-    }
-    bool Viewer::key_press_event(int key, int modifiers) {
-        const auto command = commands_.find(Key(key));
-        if (command != commands_.end()) {
-            const auto binding = command->second.find(Modifier(modifiers));
-            if (binding != command->second.end())
-                return binding->second.first(this, binding->second.second);
-        }
-        if ((key == GLFW_KEY_ESCAPE && modifiers == 0) || (key == GLFW_KEY_F4 && modifiers == MODIF_ALT))
-            exit();
-        else if (key == GLFW_KEY_F1 && modifiers == 0) {
-            if (!manual_.empty())
-                std::cout << manual_ << '\n';
-        } else if (key == GLFW_KEY_F2 && modifiers == 0)
-            set_animation(!animation_enabled_);
-        else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && modifiers == 0)
-            camera()->frame()->action_turn((key == GLFW_KEY_LEFT ? 1.0f : -1.0f) * float(M_PI / 180.0), camera());
-        else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && modifiers == 0) {
-            const float step = .05f * camera()->sceneRadius();
-            camera()->frame()->translate(
-                camera()->frame()->inverseTransformOf(vec3(0, 0, key == GLFW_KEY_UP ? -step : step)));
-        } else if (modifiers == MODIF_CTRL && key >= GLFW_KEY_RIGHT && key <= GLFW_KEY_UP) {
-            const float step = .05f * camera()->sceneRadius();
-            const vec3 direction = key == GLFW_KEY_LEFT    ? vec3(-step, 0, 0)
-                                   : key == GLFW_KEY_RIGHT ? vec3(step, 0, 0)
-                                   : key == GLFW_KEY_UP    ? vec3(0, step, 0)
-                                                           : vec3(0, -step, 0);
-            camera()->frame()->translate(camera()->frame()->inverseTransformOf(direction));
-        } else if (modifiers == MODIF_CTRL && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL))
-            camera()->frame()->action_zoom(key == GLFW_KEY_EQUAL ? 1 : -1, camera());
-        else if (key == GLFW_KEY_K && modifiers == MODIF_ALT) {
-            if (kfi_->add_keyframe(*camera()->frame()))
-                LOG(INFO) << "key frame added to camera path";
-        } else if (key == GLFW_KEY_D && modifiers == MODIF_ALT) {
-            kfi_->delete_path();
-            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
-            set_viewer_annotations({});
-            restore_scene_bounds();
-            update();
-        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) {
-            if (kfi_->is_interpolation_started())
-                kfi_->stop_interpolation();
-            else {
-                kfi_->start_manual_interpolation();
-                next_camera_path_frame_ = std::chrono::steady_clock::now();
-            }
-            update();
-        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
-            show_camera_path_ = !show_camera_path_;
-            if (show_camera_path_) {
-                float radius = camera()->sceneRadius();
-                for (size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
-                    radius = std::max(radius, distance(camera()->sceneCenter(), kfi_->keyframe_position(i)));
-                camera()->setSceneRadius(radius);
-            } else
-                restore_scene_bounds();
-            update();
-        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL)
-            copy_view();
-        else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL)
-            paste_view();
-        else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
-            open();
-        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
-            save();
-        else if (key == GLFW_KEY_S && modifiers == 0)
-            snapshot();
-        else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL) {
-            show_frame_rate_ = !show_frame_rate_;
-            if (show_frame_rate_) {
-                frame_rate_start_ = std::chrono::steady_clock::now();
-                frame_rate_frames_ = 0;
-                framerate_ = "fps: -- (-- ms/frame)";
-            }
-            update();
-        } else if (key == GLFW_KEY_F && modifiers == 0)
-            fit_screen();
-        else if (key == GLFW_KEY_C && modifiers == 0) {
-            if (current_model())
-                fit_screen(current_model());
-        } else if (key == GLFW_KEY_P && modifiers == 0)
-            camera()->setType(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
-        else if (key == GLFW_KEY_SPACE && modifiers == 0) {
-            Frame frame;
-            frame.setTranslation(camera()->pivotPoint());
-            camera()->frame()->alignWithFrame(&frame, true);
-        } else if (key == GLFW_KEY_M && modifiers == 0) {
-            if (auto *mesh = dynamic_cast<SurfaceMesh *>(current_model()))
-                for (const auto &d : mesh->renderer()->triangles_drawables())
-                    d->set_smooth_shading(!d->smooth_shading());
-        } else if (modifiers == 0 && (key == GLFW_KEY_LEFT_BRACKET || key == GLFW_KEY_RIGHT_BRACKET)) {
-            for (const auto &m : models())
-                if (m->renderer())
-                    for (const auto &d : m->renderer()->lines_drawables())
-                        d->set_line_width(std::max(1.0f, d->line_width() + (key == GLFW_KEY_RIGHT_BRACKET ? 1 : -1)));
-        } else if (modifiers == 0 && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL)) {
-            for (const auto &m : models())
-                if (m->renderer())
-                    for (const auto &d : m->renderer()->points_drawables())
-                        d->set_point_size(std::max(1.0f, d->point_size() + (key == GLFW_KEY_EQUAL ? 1 : -1)));
-        } else if (modifiers == 0 && (key == GLFW_KEY_COMMA || key == GLFW_KEY_PERIOD)) {
-            if (!models().empty()) {
-                auto i = std::find_if(models().begin(), models().end(),
-                                      [&](const std::shared_ptr<Model> &m) { return m.get() == current_model(); });
-                const int n = int(models().size()), index = i == models().end() ? n - 1 : int(i - models().begin());
-                model_idx_ = (index + n + (key == GLFW_KEY_PERIOD ? 1 : -1)) % n;
-                fit_screen(current_model());
-            }
-        } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
-            if (current_model())
-                delete_model(current_model());
-        } else if (modifiers == 0 && current_model() && current_model()->renderer() &&
-                   (key == GLFW_KEY_E || key == GLFW_KEY_V || key == GLFW_KEY_B || key == GLFW_KEY_L)) {
-            auto *renderer = current_model()->renderer();
-            Drawable *d = nullptr;
-            if (key == GLFW_KEY_E)
-                d = renderer->get_lines_drawable("edges");
-            else if (key == GLFW_KEY_V)
-                d = renderer->get_points_drawable("vertices");
-            else if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                if (key == GLFW_KEY_B)
-                    d = renderer->get_lines_drawable("borders");
-                else
-                    d = renderer->get_points_drawable("locks");
-            }
-            if (d)
-                d->set_visible(!d->is_visible());
-        } else if (key == GLFW_KEY_D && modifiers == 0) {
-            if (current_model())
-                current_model()->property_stats(std::cout);
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_C) {
-            auto *plane = ClippingPlane::instance();
-            plane->set_enabled(!plane->is_enabled());
-            plane->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_V) {
-            auto *plane = ClippingPlane::instance();
-            if (plane->is_enabled())
-                plane->set_visible(!plane->is_visible());
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_X) {
-            auto *plane = ClippingPlane::instance();
-            if (plane->is_enabled())
-                plane->set_cross_section(!plane->cross_section());
-        } else if (modifiers == 0 && key == GLFW_KEY_A) {
-            show_corner_axes_ = !show_corner_axes_;
-        } else if (modifiers == 0 && key == GLFW_KEY_R) {
-            LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
-        } else
-            pressed_key_ = key;
-        return false;
-    }
-    bool Viewer::key_release_event(int key, int) {
-        pressed_key_ = -1;
-        if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL || key == GLFW_KEY_LEFT_SUPER ||
-            key == GLFW_KEY_RIGHT_SUPER) {
-            zoom_region_ = false;
-            update_interaction_overlays(true);
-        }
-        return false;
-    }
-    void Viewer::set_usage(const std::string &manual, const std::string &screen_hint) {
-        if (manual != "default")
-            manual_ = manual;
-        hint_ = screen_hint;
-        update();
-    }
-    void Viewer::print_usage() {
-        if (usage_printed_)
-            return;
-        if (!manual_.empty()) {
-            std::cout << manual_ << std::endl;
-            usage_printed_ = true;
-        }
-    }
-    void Viewer::copy_view() {
-        const auto p = camera()->position();
-        const auto q = camera()->orientation();
-        std::ostringstream out;
-        out << std::setprecision(9) << p.x << ' ' << p.y << ' ' << p.z;
-        for (unsigned i = 0; i < 4; ++i)
-            out << ' ' << q[i];
-        glfwSetClipboardString(window(), out.str().c_str());
-    }
-    void Viewer::paste_view() {
-        const char *text = glfwGetClipboardString(window());
-        if (!text)
-            return;
-        std::istringstream in(text);
-        vec3 p;
-        quat q;
-        for (unsigned i = 0; i < 3; ++i)
-            if (!(in >> p[i]) || !std::isfinite(p[i]))
-                return;
-        float norm = 0;
-        for (unsigned i = 0; i < 4; ++i) {
-            if (!(in >> q[i]) || !std::isfinite(q[i]))
-                return;
-            norm += q[i] * q[i];
-        }
-        std::string extra;
-        if ((in >> extra) || !std::isfinite(norm) || norm < 1e-12f)
-            return;
-        q.normalize();
-        // change view directly
-        // camera()->setPosition(p);
-        // camera()->setOrientation(q);
-        // I prefer to make animation
-        Frame new_frame;
-        new_frame.setPosition(p);
-        new_frame.setOrientation(q);
-        const float duration = 0.5f;
-        camera()->interpolateTo(&new_frame, duration);
-
-        update();
-    }
-    bool Viewer::open() {
-        const std::string title("Please choose a file");
-        const std::string &default_path = resource::directory() + "/data/";
-        const std::vector<std::string> &filters = {
-            "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)",
-            "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
-            "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
-            "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-            "Polyhedral Mesh (*.plm *.pm *.mesh)",
-            "*.plm *.pm *.mesh",
-            "Graph (*.ply)",
-            "*.ply",
-            "All Files (*.*)",
-            "*"};
-        const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
-
-        int count = 0;
-        for (const auto &file_name : file_names) {
-            if (add_model(file_name))
-                ++count;
-        }
-
-        if (count > 0) {
-            fit_screen();
-            return true;
-        }
-        return false;
-    }
-
-    bool Viewer::save() const {
-        Model *m = current_model();
-        if (!m) {
-            LOG(ERROR) << "no model exists";
-            return false;
-        }
-
-        const std::string &title = "Please choose a file name";
-        const std::vector<std::string> &filters = {"Surface Mesh (*.obj *.ply *.off *.stl *.sm)",
-                                                   "*.obj *.ply *.off *.stl *.sm",
-                                                   "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
-                                                   "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                                                   "Polyhedral Mesh (*.plm *.pm *.mesh)",
-                                                   "*.plm *.pm *.mesh",
-                                                   "Graph (*.ply)",
-                                                   "*.ply",
-                                                   "All Files (*.*)",
-                                                   "*"};
-
-        std::string default_file_name = m->name();
-        if (file_system::extension(default_file_name).empty()) // no extension?
-            default_file_name += ".ply";                       // default to ply
-
-        const bool warn_overwrite = true;
-        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
-        if (file_name.empty())
-            return false;
-
-        bool saved = false;
-        if (dynamic_cast<const PointCloud *>(m))
-            saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud *>(m));
-        else if (dynamic_cast<const SurfaceMesh *>(m))
-            saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh *>(m));
-        else if (dynamic_cast<const Graph *>(m))
-            saved = GraphIO::save(file_name, dynamic_cast<const Graph *>(m));
-
-        if (saved)
-            LOG(INFO) << "file successfully saved";
-
-        return saved;
-    }
-
-    bool Viewer::snapshot() const {
-        const std::string &title = "Please choose a file name";
-        std::string default_file_name("untitled.png");
-        if (current_model())
-            default_file_name = file_system::replace_extension(current_model()->name(), "png");
-        const std::vector<std::string> &filters = {"Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
-                                                   "All Files (*.*)", "*"};
-
-        const bool warn_overwrite = true;
-        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
-        if (file_name.empty())
-            return false;
-
-        const std::string &ext = file_system::extension(file_name, true);
-        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
-            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
-            return false;
-        }
-
-        return snapshot(file_name, 1.0f, int(samples()));
-    }
-
-    bool Viewer::drop_event(const std::vector<std::string> &names) {
-        unsigned count = 0;
-        for (const auto &file : names)
-            if (add_model(file))
-                ++count;
-        if (count)
-            fit_screen();
-        return count != 0;
-    }
 } // namespace easy3d
-
 #else // OpenGL
-
-#include <easy3d/renderer/backends/opengl/overlay_renderer.h>
-#include <easy3d/renderer/backends/opengl/point_selection.h>
-#include <easy3d/renderer/backends/opengl/query_state.h>
-
-#include <cmath>
-#include <limits>
-
-#include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/backends/glfw_runtime.h>
-#include <easy3d/viewer/backends/viewer_loop.h>
-
-#include <iostream>
-
-#include <easy3d/renderer/opengl.h> // for gl functions
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h> // for glfw functions
-
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/poly_mesh.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/drawable_lines.h>
-#include <easy3d/renderer/drawable_lines_2D.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/opengl_util.h>
-#include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/renderer/shadow.h>
-#include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/fileio/graph_io.h>
-#include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/poly_mesh_io.h>
-#include <easy3d/fileio/ply_reader_writer.h>
-#include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/util/dialog.h>
-#include <easy3d/util/file_system.h>
-#include <easy3d/util/logging.h>
-#include <easy3d/util/timer.h>
-#include <easy3d/util/string.h>
-#include <easy3d/util/resource.h>
-#include <easy3d/util/setting.h>
-
-#include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/core/model.h>
-#include <stdexcept>
-
-#include <easy3d/core/matrix.h>
-#include <easy3d/fileio/image_io.h>
-
 namespace easy3d {
-    unsigned Viewer::validation_errors() const {
-        return 0;
-    }
-    void Viewer::viewer_size(int &w, int &h) const {
-        w = width_;
-        h = height_;
-    }
     float Viewer::dpi_scaling() const {
         return dpi_scaling_;
     }
-
     Viewer::Viewer(const std::string &title /* = "Easy3D Viewer" */,
                    int width /* = 800 */,
                    int height /* = 600 */,
@@ -1803,8 +1931,8 @@ namespace easy3d {
                    bool resizable /* = true */,
                    const OpenGLOptions &gl_options /* = {} */
                    )
-        : window_(nullptr), should_exit_(false), dpi_scaling_(1.0), title_(title), is_animating_(false), samples_(0),
-          full_screen_(full_screen), visible_(visible), background_color_(setting::background_color),
+        : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0),
+          visible_(visible), background_color_(setting::background_color),
           process_events_(true), show_easy3d_logo_(true), pressed_button_(-1), modifiers_(-1), drag_active_(false),
           mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
           show_pivot_point_(false), show_frame_rate_(false), show_camera_path_(false), model_idx_(-1) {
@@ -1845,7 +1973,6 @@ namespace easy3d {
             kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
             easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
 
-            snprintf(framerate_, sizeof(framerate_), "fps: ?? (?? ms/frame)");
 
             /* Poll for events once before starting a potentially lengthy loading process.*/
             glfwPollEvents();
@@ -1905,7 +2032,6 @@ namespace easy3d {
             throw;
         }
     }
-
     GLFWwindow *Viewer::create_window(const std::string &title,
                                       int samples,
                                       int gl_major,
@@ -2035,7 +2161,6 @@ namespace easy3d {
         runtime_->attach_opengl_window(window);
         return guard.release();
     }
-
     template <class Callback> void Viewer::dispatch_callback(GLFWwindow *window, const Callback &callback) noexcept {
         auto *viewer = static_cast<Viewer *>(glfwGetWindowUserPointer(window));
         if (!viewer)
@@ -2051,7 +2176,6 @@ namespace easy3d {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         }
     }
-
     void Viewer::setup_callbacks(GLFWwindow *window) {
         glfwSetWindowRefreshCallback(window,
                                      [](GLFWwindow *win) { dispatch_callback(win, [](Viewer &v) { v.update(); }); });
@@ -2152,7 +2276,6 @@ namespace easy3d {
         glfwSetWindowCloseCallback(
             window, [](GLFWwindow *win) { dispatch_callback(win, [](Viewer &v) { v.request_close(); }); });
     }
-
     bool Viewer::callback_event_cursor_pos(double x, double y) {
         int px = static_cast<int>(x);
         int py = static_cast<int>(y);
@@ -2172,7 +2295,6 @@ namespace easy3d {
             return false;
         }
     }
-
     bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
         try {
             if (action == GLFW_PRESS) {
@@ -2205,7 +2327,6 @@ namespace easy3d {
             return false;
         }
     }
-
     bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
         try {
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
@@ -2226,7 +2347,6 @@ namespace easy3d {
             return false;
         }
     }
-
     bool Viewer::callback_event_character(unsigned int codepoint) {
         try {
             if (dispatch_character(codepoint))
@@ -2239,7 +2359,6 @@ namespace easy3d {
             return false;
         }
     }
-
     bool Viewer::callback_event_drop(int count, const char **filenames) {
         try {
             std::vector<std::string> arg(count);
@@ -2255,7 +2374,6 @@ namespace easy3d {
             return false;
         }
     }
-
     bool Viewer::callback_event_scroll(double dx, double dy) {
         try {
             scroll_remainder_x_ += dx;
@@ -2275,7 +2393,6 @@ namespace easy3d {
             return false;
         }
     }
-
     void Viewer::callback_event_resize(int w, int h) {
         try {
             int fw, fh;
@@ -2297,28 +2414,11 @@ namespace easy3d {
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
         }
     }
-
-    bool Viewer::focus_event(bool focused) {
-        if (focused) {
-            // ...
-        }
-        return false;
-    }
-
     Viewer::~Viewer() {
         cleanup();
 
         LOG(INFO) << "viewer terminated. Bye!";
     }
-
-    void Viewer::clear_scene() {
-        glfwMakeContextCurrent(window_);
-        models_.clear();
-        drawables_.clear();
-        if (overlay_renderer_)
-            overlay_renderer_->set({}, false);
-    }
-
     void Viewer::cleanup() {
         // viewer may have already been destroyed by the user
         if (!window_)
@@ -2352,593 +2452,6 @@ namespace easy3d {
             glfwMakeContextCurrent(previous_context);
         runtime_.reset();
     }
-
-    void Viewer::set_title(const std::string &title) {
-        if (title != title_) {
-            glfwSetWindowTitle(window_, title.c_str());
-            title_ = title;
-        }
-    }
-
-    void Viewer::set_position(int xpos, int ypos) {
-        glfwSetWindowPos(window_, xpos, ypos);
-    }
-
-    void Viewer::resize(int w, int h) {
-        glfwSetWindowSize(window_, w, h);
-    }
-
-    void Viewer::framebuffer_size(int &w, int &h) const {
-        glfwGetFramebufferSize(window_, &w, &h);
-    }
-
-    void Viewer::update() const {
-        glfwPostEmptyEvent();
-    }
-
-    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-        camera_->frame()->action_start();
-
-        if (pressed_key_ == GLFW_KEY_Z || modifiers == GLFW_MOD_SHIFT) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                bool found = false;
-                const vec3 &point = point_under_pixel(x, y, found);
-                if (found) {
-                    camera_->setPivotPoint(point);
-                    // We draw the pivot mark in the screen space.
-                    // A 3D version is implemented in Tutorial_204_Viewer_Qt
-                    if (!drawable_pivot_)
-                        drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
-                    const float size = 10.0f; // arm in logical pixels (DPI-independent), matching the Vulkan overlay
-                    const std::vector<vec2> points = {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size),
-                                                      vec2(x, y + size)};
-                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
-                    drawable_pivot_->set_line_width(dpi_scaling());
-
-                    // show, but hide the visual hint of pivot point after \p delay milliseconds.
-                    show_pivot_point_ = true;
-                    Timer<>::single_shot(10000, [&]() {
-                        show_pivot_point_ = false;
-                        update();
-                    });
-
-                    if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation  Do NOT delete!!!
-                        camera()->interpolateToLookAt(point);
-#else // without animation  Do NOT delete!!!
-                        // Apply the legacy zoom target directly on the UI thread.
-                        camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
-                        camera()->lookAt(point);
-#endif
-                    }
-                } else {
-                    camera_->setPivotPoint(camera_->sceneCenter());
-                    show_pivot_point_ = false;
-                }
-            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                camera_->setPivotPoint(camera_->sceneCenter());
-                show_pivot_point_ = false;
-                if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
-#if 1 // with animation  Do NOT delete!!!
-                    camera()->interpolateToFitScene();
-#else // without animation  Do NOT delete!!!
-                    camera()->showEntireScene();
-#endif
-                }
-            }
-        }
-
-        return false;
-    }
-
-    bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == MODIF_CTRL) { // ZOOM_ON_REGION
-            const ivec2 origin = interaction_origin();
-            int xmin = std::min(mouse_pressed_x_, x) - origin.x;
-            int xmax = std::max(mouse_pressed_x_, x) - origin.x;
-            int ymin = std::min(mouse_pressed_y_, y) - origin.y;
-            int ymax = std::max(mouse_pressed_y_, y) - origin.y;
-            camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
-        } else
-            camera_->frame()->action_end();
-
-        pressed_button_ = -1;
-        return false;
-    }
-
-    bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-        // control modifier is reserved for zooming on region
-        if (modifiers == MODIF_CTRL)
-            return false;
-
-        // Camera actions are cell-local in multi-view layouts; overlays stay absolute.
-        const ivec2 origin = interaction_origin();
-        const int cx = x - origin.x, cy = y - origin.y;
-        if (modifiers == MODIF_ALT) {
-            // the clipping plane can be manipulated only when it is enabled
-            if (ClippingPlane::instance()->is_enabled()) {
-                ManipulatedFrame *frame = ClippingPlane::instance()->manipulator()->frame();
-                if (pressed_button_ == BUTTON_LEFT)
-                    frame->action_rotate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
-                else if (pressed_button_ == BUTTON_RIGHT)
-                    frame->action_translate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
-            }
-        } else { // axis-constrained rotation of a model
-            auto axis = ManipulatedFrame::NONE;
-            if (pressed_key_ == GLFW_KEY_X)
-                axis = ManipulatedFrame::HORIZONTAL;
-            else if (pressed_key_ == GLFW_KEY_Y)
-                axis = ManipulatedFrame::VERTICAL;
-            else if (pressed_key_ == GLFW_KEY_O)
-                axis = ManipulatedFrame::ORTHOGONAL;
-            switch (button) {
-            case GLFW_MOUSE_BUTTON_LEFT:
-                camera_->frame()->action_rotate(cx, cy, dx, dy, camera(), axis);
-                break;
-            case GLFW_MOUSE_BUTTON_RIGHT:
-                camera_->frame()->action_translate(cx, cy, dx, dy, camera(), axis);
-                break;
-            case GLFW_MOUSE_BUTTON_MIDDLE:
-                if (std::abs(dy) >= 1)
-                    camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
-                break;
-            default:
-                break;
-            }
-        }
-
-        return false;
-    }
-
-    bool Viewer::mouse_free_move_event(int, int, int, int, int) {
-        // highlight geometry primitives here
-        return false;
-    }
-
-    bool Viewer::mouse_scroll_event(int, int, int, int dy) {
-        camera_->frame()->action_zoom(dy, camera());
-        return false;
-    }
-
-    Model *Viewer::current_model() const {
-        if (models_.empty())
-            return nullptr;
-        if (model_idx_ < models_.size())
-            return models_[model_idx_].get();
-        return nullptr;
-    }
-
-    bool Viewer::key_press_event(int key, int modifiers) {
-        auto mod_funcs = commands_.find(Key(key));
-        if (mod_funcs != commands_.end()) {
-            auto func_model = mod_funcs->second.find(Modifier(modifiers));
-            if (func_model != mod_funcs->second.end()) {
-                auto func = func_model->second.first;
-                auto model = func_model->second.second;
-                return func(this, model);
-            }
-        }
-
-        if (key == GLFW_KEY_F1 && modifiers == 0)
-            std::cout << manual_ << std::endl;
-        else if (key == GLFW_KEY_F2 && modifiers == 0) {
-            is_animating_ = !is_animating_;
-            if (is_animating_ && !animation_func_)
-                LOG(WARNING) << "animation is enabled but the animation function (i.e., animation_func_) is missing";
-        } else if (key == GLFW_KEY_LEFT && modifiers == 0) {
-            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
-            camera_->frame()->action_turn(angle, camera());
-        } else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
-            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
-            camera_->frame()->action_turn(-angle, camera());
-        } else if (key == GLFW_KEY_UP && modifiers == 0) { // move camera forward
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
-        } else if (key == GLFW_KEY_DOWN && modifiers == 0) { // move camera backward
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
-        } else if (key == GLFW_KEY_LEFT && modifiers == MODIF_CTRL) { // move camera left
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
-        } else if (key == GLFW_KEY_RIGHT && modifiers == MODIF_CTRL) { // move camera right
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
-        } else if (key == GLFW_KEY_UP && modifiers == MODIF_CTRL) { // move camera up
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
-        } else if (key == GLFW_KEY_DOWN && modifiers == MODIF_CTRL) { // move camera down
-            float step = 0.05f * camera_->sceneRadius();
-            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
-        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL) { // copy camera
-            copy_view();
-        } else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL) { // copy camera
-            paste_view();
-        } else if (key == GLFW_KEY_C && modifiers == MODIF_ALT) { // toggle clipping plane
-            ClippingPlane::instance()->set_enabled(!ClippingPlane::instance()->is_enabled());
-            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
-        } else if (key == GLFW_KEY_V && modifiers == MODIF_ALT) { // toggle clipping plane visibility
-            if (ClippingPlane::instance()->is_enabled())
-                ClippingPlane::instance()->set_visible(!ClippingPlane::instance()->is_visible());
-        } else if (key == GLFW_KEY_X && modifiers == MODIF_ALT) {
-            if (ClippingPlane::instance()->is_enabled())
-                ClippingPlane::instance()->set_cross_section(!ClippingPlane::instance()->cross_section());
-        } else if (key == GLFW_KEY_A && modifiers == 0) {
-            if (drawable_axes_)
-                drawable_axes_->set_visible(!drawable_axes_->is_visible());
-        } else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL)
-            show_frame_rate_ = !show_frame_rate_;
-        else if (key == GLFW_KEY_C && modifiers == 0) {
-            if (current_model())
-                fit_screen(current_model());
-        } else if (key == GLFW_KEY_F && modifiers == 0) {
-            fit_screen();
-        } else if (key == GLFW_KEY_M && modifiers == 0) {
-#if 0
-            // NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL
-            //       is a state machine. For multi-window applications, you have to call
-            //		 glDisable()/glEnable() before the individual draw functions.
-            if (samples_ > 0) {
-                if (glIsEnabled(GL_MULTISAMPLE)) {
-                    glDisable(GL_MULTISAMPLE);
-                    LOG(INFO) << title_ + ": MSAA disabled";
-                }
-                else {
-                    glEnable(GL_MULTISAMPLE);
-                    LOG(INFO) << title_ + ": MSAA enabled";
-                }
-            }
-#else
-            if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                auto drawables = current_model()->renderer()->triangles_drawables();
-                for (auto d : drawables)
-                    d->set_smooth_shading(!d->smooth_shading());
-            }
-#endif
-        } else if (key == GLFW_KEY_P && modifiers == 0) {
-            if (camera_->type() == Camera::PERSPECTIVE)
-                camera_->setType(Camera::ORTHOGRAPHIC);
-            else
-                camera_->setType(Camera::PERSPECTIVE);
-        } else if (key == GLFW_KEY_SPACE && modifiers == 0) {
-            // Aligns camera
-            Frame frame;
-            frame.setTranslation(camera_->pivotPoint());
-            camera_->frame()->alignWithFrame(&frame, true);
-
-            // Aligns frame
-            //if (manipulatedFrame())
-            //	manipulatedFrame()->alignWithFrame(camera_->frame());
-        } else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
-            open();
-        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
-            save();
-
-        else if (key == GLFW_KEY_MINUS && modifiers == MODIF_CTRL)
-            camera_->frame()->action_zoom(-1, camera());
-        else if (key == GLFW_KEY_EQUAL && modifiers == MODIF_CTRL)
-            camera_->frame()->action_zoom(1, camera());
-
-        else if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
-            easy3d::Frame *frame = camera()->frame();
-            kfi_->add_keyframe(*frame);
-            LOG(INFO) << "key frame added to camera path";
-        } else if (key == GLFW_KEY_D && modifiers == GLFW_MOD_ALT) { // delete path
-            kfi_->delete_path();
-            // update scene bounding box
-            Box3 box;
-            for (auto m : models_)
-                box.grow(m->bounding_box());
-            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
-            LOG(INFO) << "camera path deleted";
-        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) { // play the path
-            if (kfi_->is_interpolation_started())
-                kfi_->stop_interpolation();
-            else {
-                kfi_->start_manual_interpolation();
-                next_camera_path_frame_ = std::chrono::steady_clock::now();
-            }
-        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
-            show_camera_path_ = !show_camera_path_;
-            if (show_camera_path_) {
-                const std::size_t count = kfi_->number_of_keyframes();
-                float radius = camera_->sceneRadius();
-                for (std::size_t i = 0; i < count; ++i) {
-                    radius = std::max(radius, distance(camera_->sceneCenter(), kfi_->keyframe(i).position()));
-                }
-                camera_->setSceneRadius(radius);
-            } else {
-                Box3 box;
-                for (auto m : models_)
-                    box.grow(m->bounding_box());
-                camera_->setSceneBoundingBox(box.min_point(), box.max_point());
-            }
-        } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
-            for (auto m : models_) {
-                for (auto d : m->renderer()->lines_drawables()) {
-                    float size = d->line_width() - 1.0f;
-                    if (size < 1)
-                        size = 1;
-                    d->set_line_width(size);
-                }
-            }
-        } else if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
-            for (auto m : models_) {
-                for (auto d : m->renderer()->lines_drawables()) {
-                    float size = d->line_width() + 1.0f;
-                    d->set_line_width(size);
-                }
-            }
-        } else if (key == GLFW_KEY_MINUS && modifiers == 0) {
-            for (auto m : models_) {
-                for (auto d : m->renderer()->points_drawables()) {
-                    float size = d->point_size() - 1.0f;
-                    if (size < 1)
-                        size = 1;
-                    d->set_point_size(size);
-                }
-            }
-        } else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
-            for (auto m : models_) {
-                for (auto d : m->renderer()->points_drawables()) {
-                    float size = d->point_size() + 1.0f;
-                    d->set_point_size(size);
-                }
-            }
-        } else if (key == GLFW_KEY_COMMA && modifiers == 0) {
-            if (models_.empty())
-                model_idx_ = -1;
-            else
-                model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
-            if (model_idx_ >= 0) {
-                fit_screen(models_[model_idx_].get());
-                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
-            }
-        } else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
-            if (models_.empty())
-                model_idx_ = -1;
-            else
-                model_idx_ = int((model_idx_ + 1) % models_.size());
-            if (model_idx_ >= 0) {
-                fit_screen(models_[model_idx_].get());
-                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
-            }
-        } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
-            if (current_model())
-                delete_model(current_model());
-        } else if (key == GLFW_KEY_E && modifiers == 0) {
-            if (current_model()) {
-                auto drawable = current_model()->renderer()->get_lines_drawable("edges");
-                if (drawable)
-                    drawable->set_visible(!drawable->is_visible());
-            }
-        } else if (key == GLFW_KEY_V && modifiers == 0) {
-            if (current_model()) {
-                auto drawable = current_model()->renderer()->get_points_drawable("vertices");
-                if (drawable)
-                    drawable->set_visible(!drawable->is_visible());
-            }
-        } else if (key == GLFW_KEY_B && modifiers == 0) {
-            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
-            if (mesh) {
-                auto drawable = mesh->renderer()->get_lines_drawable("borders");
-                if (drawable)
-                    drawable->set_visible(!drawable->is_visible());
-            }
-        } else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
-            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
-            if (mesh) {
-                auto drawable = mesh->renderer()->get_points_drawable("locks");
-                if (drawable)
-                    drawable->set_visible(!drawable->is_visible());
-            }
-        } else if (key == GLFW_KEY_D && modifiers == 0) {
-            if (current_model()) {
-                auto &output = std::cout;
-
-                output << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
-                if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                    auto model = dynamic_cast<SurfaceMesh *>(current_model());
-                    output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
-                           << ", #vertex: " + std::to_string(model->n_vertices())
-                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
-                } else if (dynamic_cast<PointCloud *>(current_model())) {
-                    auto model = dynamic_cast<PointCloud *>(current_model());
-                    output << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
-                } else if (dynamic_cast<Graph *>(current_model())) {
-                    auto model = dynamic_cast<Graph *>(current_model());
-                    output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
-                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
-                }
-
-                if (!current_model()->renderer()->points_drawables().empty()) {
-                    output << "points drawables:\n";
-                    for (auto d : current_model()->renderer()->points_drawables())
-                        d->buffer_stats(output);
-                }
-                if (!current_model()->renderer()->lines_drawables().empty()) {
-                    output << "lines drawables:\n";
-                    for (auto d : current_model()->renderer()->lines_drawables())
-                        d->buffer_stats(output);
-                }
-                if (!current_model()->renderer()->triangles_drawables().empty()) {
-                    output << "triangles drawables:\n";
-                    for (auto d : current_model()->renderer()->triangles_drawables())
-                        d->buffer_stats(output);
-                }
-
-                current_model()->property_stats(output);
-            }
-        } else if (key == GLFW_KEY_R && modifiers == 0) {
-            // Reload the shader(s) - useful for writing/debugging shader code.
-            ShaderManager::reload();
-        } else if (key == GLFW_KEY_S && modifiers == 0) {
-            snapshot();
-        } else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {
-            glfwSetWindowShouldClose(window_, true);
-        } else
-            pressed_key_ = key;
-
-        return false;
-    }
-
-    bool Viewer::key_release_event(int, int) {
-        pressed_key_ = -1;
-        return false;
-    }
-
-    bool Viewer::char_input_event(unsigned int) {
-        //switch (codepoint) {
-        //case '-':	break;
-        //case 'c':	break;
-        //case 'C':	break;
-        //case '0':	break;
-        //default:
-        //	return false;
-        //}
-
-        return false;
-    }
-
-    bool Viewer::drop_event(const std::vector<std::string> &filenames) {
-        int count = 0;
-        for (auto &name : filenames) {
-            if (add_model(name))
-                ++count;
-        }
-
-        if (count > 0) {
-            model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-            fit_screen();
-            return true;
-        }
-        return false;
-    }
-
-    void Viewer::set_usage(const std::string &manual, const std::string &screen_hint) {
-        if (manual != "default") {
-            manual_ = manual;
-            usage_printed_ = false;
-        }
-        hint_ = screen_hint;
-    }
-
-    void Viewer::poll_events() {
-        ViewerBase::poll_events();
-    }
-    void Viewer::request_close() {
-        glfwSetWindowShouldClose(window_, GLFW_TRUE);
-        update();
-    }
-    bool Viewer::should_close() const {
-        return should_exit_ || glfwWindowShouldClose(window_) != 0;
-    }
-    void Viewer::show() {
-        glfwShowWindow(window_);
-    }
-    void Viewer::hide() {
-        glfwHideWindow(window_);
-    }
-
-    void Viewer::print_usage() {
-        if (usage_printed_)
-            return;
-        if (!manual_.empty()) {
-            std::cout << manual_ << std::endl;
-            usage_printed_ = true;
-        }
-    }
-
-    void Viewer::update_frame_rate() {
-        if (!show_frame_rate_)
-            return;
-        const double now = glfwGetTime();
-        if (!frame_rate_start_)
-            frame_rate_start_ = now;
-        ++frame_rate_frames_;
-        const double elapsed = now - frame_rate_start_;
-        if (elapsed >= 1.0) {
-            snprintf(framerate_, sizeof(framerate_), "fps: %2.0f (%4.1f ms/frame)",
-                     double(frame_rate_frames_) / elapsed, 1000.0 * elapsed / frame_rate_frames_);
-            frame_rate_frames_ = 0;
-            frame_rate_start_ = now;
-        }
-    }
-
-    bool Viewer::draw_frame() {
-        if (callback_error_)
-            std::rethrow_exception(callback_error_);
-        if (should_close() || glfwGetWindowAttrib(window_, GLFW_ICONIFIED))
-            return false;
-        int w = 0, h = 0;
-        framebuffer_size(w, h);
-        if (w <= 0 || h <= 0)
-            return false;
-        glfwMakeContextCurrent(window_);
-        if (!initialized_) {
-            init();
-            initialized_ = true;
-        }
-        print_usage();
-        if (is_animating()) {
-            animation_func_(this);
-            if (callback_error_)
-                std::rethrow_exception(callback_error_);
-            if (should_close())
-                return false;
-        }
-        advance_camera_path();
-        notify_pre_draw();
-        if (callback_error_)
-            std::rethrow_exception(callback_error_);
-        if (should_close())
-            return false;
-        pre_draw();
-        draw();
-        update_frame_rate();
-        post_draw();
-        glfwSwapBuffers(window_);
-        notify_post_draw();
-        if (callback_error_)
-            std::rethrow_exception(callback_error_);
-        return true;
-    }
-
-    int Viewer::run(bool see_all) {
-        try {
-            if (callback_error_)
-                std::rethrow_exception(callback_error_);
-            if (!initialized_) {
-                init();
-                initialized_ = true;
-            }
-            if (see_all)
-                fit_screen();
-            if (visible_)
-                show();
-            return run_frames();
-        } catch (const std::exception &e) {
-            LOG(ERROR) << "Viewer failed: " << e.what();
-            return EXIT_FAILURE;
-        }
-    }
-
-    int Viewer::run_frames(unsigned max_frames) {
-        try {
-            if (callback_error_)
-                std::rethrow_exception(callback_error_);
-            return detail::run_viewer_frames(*this, max_frames, [this] {
-                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
-            });
-        } catch (const std::exception &e) {
-            LOG(ERROR) << "Viewer failed: " << e.what();
-            return EXIT_FAILURE;
-        }
-    }
-
-    void Viewer::exit() {
-        request_close();
-    }
-
     void Viewer::init() {
         glfwMakeContextCurrent(window_);
         //// back face culling?
@@ -2967,284 +2480,6 @@ namespace easy3d {
         initialized_ = true;
         print_usage();
     }
-
-    void Viewer::set_animation(bool b) {
-        is_animating_ = b;
-        update();
-    }
-
-    bool Viewer::is_animating() const {
-        return is_animating_ && animation_func_;
-    }
-
-    Model *Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
-        glfwMakeContextCurrent(window_);
-        const std::string file_name = file_system::convert_to_native_style(file_path);
-        for (auto m : models_) {
-            if (m->name() == file_name) {
-                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
-                return m.get();
-            }
-        }
-
-        const std::string &ext = file_system::extension(file_name, true);
-        bool is_ply_mesh = false;
-        if (ext == "ply")
-            is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
-
-        Model *model = nullptr;
-        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" ||
-            ext == "geojson" || ext == "trilist") { // mesh
-            model = SurfaceMeshIO::load(file_name);
-        } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
-            model = GraphIO::load(file_name);
-        } else if (ext == "plm" || ext == "pm" || ext == "mesh") {
-            model = PolyMeshIO::load(file_name);
-        } else { // point cloud
-            if (ext == "ptx") {
-                io::PointCloudIO_ptx serializer(file_name);
-                PointCloud *cloud = nullptr;
-                while ((cloud = serializer.load_next())) {
-                    model = add_model(std::shared_ptr<PointCloud>(cloud), create_default_drawables);
-                    update();
-                }
-                return model; // returns the last cloud in the file.
-            } else
-                model = PointCloudIO::load(file_name);
-        }
-
-        if (model) {
-            model->set_name(file_name);
-            add_model(std::shared_ptr<Model>(model), create_default_drawables);
-        }
-        return model;
-    }
-
-    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create) {
-        glfwMakeContextCurrent(window_);
-        if (!model) {
-            LOG(WARNING) << "model is nullptr";
-            return nullptr;
-        }
-        for (auto m : models_) {
-            if (model == m) {
-                LOG(WARNING) << "model has already been added to the viewer: " << m->name();
-                return nullptr;
-            }
-        }
-
-        model->set_renderer(std::make_shared<Renderer>(model.get(), create));
-
-        int pre_idx = model_idx_;
-        models_.push_back(model);
-        model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-
-        if (model_idx_ != pre_idx) {
-            if (model_idx_ >= 0)
-                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-        }
-        return model.get();
-    }
-
-    Model *Viewer::add_model(Model *model, bool create_default_drawables) {
-        return add_model(std::shared_ptr<Model>(model), create_default_drawables);
-    }
-
-    bool Viewer::delete_model(Model *model) {
-        glfwMakeContextCurrent(window_);
-        if (!model) {
-            LOG(WARNING) << "model is nullptr";
-            return false;
-        }
-
-        for (auto it = models_.begin(); it != models_.end(); ++it) {
-            if (it->get() == model) {
-                int pre_idx = model_idx_;
-                const std::string name = model->name();
-                models_.erase(it);
-                model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-                LOG(INFO) << "model deleted: " << name;
-
-                if (model_idx_ != pre_idx) {
-                    if (model_idx_ >= 0)
-                        LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-                }
-                return true;
-            }
-        }
-
-        // if the model was not found
-        LOG(WARNING) << "no such model: " << model->name();
-        return false;
-    }
-
-    Drawable *Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
-        if (!drawable) {
-            LOG(WARNING) << "drawable is nullptr.";
-            return nullptr;
-        }
-        for (auto d : drawables_) {
-            if (drawable == d) {
-                LOG(WARNING) << "drawable has already been added to the viewer.";
-                return drawable.get();
-            }
-        }
-
-        drawables_.push_back(drawable);
-        return drawable.get();
-    }
-
-    Drawable *Viewer::add_drawable(Drawable *drawable) {
-        return add_drawable(std::shared_ptr<Drawable>(drawable));
-    }
-
-    bool Viewer::delete_drawable(Drawable *drawable) {
-        glfwMakeContextCurrent(window_);
-        if (!drawable) {
-            LOG(WARNING) << "drawable is nullptr";
-            return false;
-        }
-
-        for (auto it = drawables_.begin(); it != drawables_.end(); ++it) {
-            if (it->get() == drawable) {
-                drawables_.erase(it);
-                return true;
-            }
-        }
-
-        // if the drawable was not found
-        LOG(WARNING) << "no such drawable: " << drawable->name();
-        return false;
-    }
-
-    void Viewer::fit_screen(const easy3d::Model *model) {
-        if (!model && models_.empty() && drawables_.empty()) {
-            camera_->showEntireScene();
-            return;
-        }
-
-        auto visual_box = [](const Model *m) -> Box3 {
-            Box3 box = m->bounding_box();
-            for (auto d : m->renderer()->points_drawables())
-                box.grow(d->bounding_box());
-            for (auto d : m->renderer()->lines_drawables())
-                box.grow(d->bounding_box());
-            for (auto d : m->renderer()->triangles_drawables())
-                box.grow(d->bounding_box());
-            return box;
-        };
-
-        Box3 box;
-        if (model)
-            box = visual_box(model);
-        else {
-            for (auto m : models_)
-                box.grow(visual_box(m.get()));
-            for (auto d : drawables_)
-                box.grow(d->bounding_box());
-        }
-
-        if (box.is_valid()) {
-            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
-            camera_->showEntireScene();
-            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
-            update();
-        }
-    }
-
-    bool Viewer::open() {
-        const std::string title("Please choose a file");
-        const std::string &default_path = resource::directory() + "/data/";
-        const std::vector<std::string> &filters = {
-            "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)",
-            "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
-            "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
-            "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-            "Polyhedral Mesh (*.plm *.pm *.mesh)",
-            "*.plm *.pm *.mesh",
-            "Graph (*.ply)",
-            "*.ply",
-            "All Files (*.*)",
-            "*"};
-        const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
-
-        int count = 0;
-        for (const auto &file_name : file_names) {
-            if (add_model(file_name))
-                ++count;
-        }
-
-        if (count > 0) {
-            fit_screen();
-            return true;
-        }
-        return false;
-    }
-
-    bool Viewer::save() const {
-        Model *m = current_model();
-        if (!m) {
-            LOG(ERROR) << "no model exists";
-            return false;
-        }
-
-        const std::string &title = "Please choose a file name";
-        const std::vector<std::string> &filters = {"Surface Mesh (*.obj *.ply *.off *.stl *.sm)",
-                                                   "*.obj *.ply *.off *.stl *.sm",
-                                                   "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
-                                                   "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                                                   "Polyhedral Mesh (*.plm *.pm *.mesh)",
-                                                   "*.plm *.pm *.mesh",
-                                                   "Graph (*.ply)",
-                                                   "*.ply",
-                                                   "All Files (*.*)",
-                                                   "*"};
-
-        std::string default_file_name = m->name();
-        if (file_system::extension(default_file_name).empty()) // no extension?
-            default_file_name += ".ply";                       // default to ply
-
-        const bool warn_overwrite = true;
-        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
-        if (file_name.empty())
-            return false;
-
-        bool saved = false;
-        if (dynamic_cast<const PointCloud *>(m))
-            saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud *>(m));
-        else if (dynamic_cast<const SurfaceMesh *>(m))
-            saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh *>(m));
-        else if (dynamic_cast<const Graph *>(m))
-            saved = GraphIO::save(file_name, dynamic_cast<const Graph *>(m));
-
-        if (saved)
-            LOG(INFO) << "file successfully saved";
-
-        return saved;
-    }
-
-    bool Viewer::snapshot() const {
-        const std::string &title = "Please choose a file name";
-        std::string default_file_name("untitled.png");
-        if (current_model())
-            default_file_name = file_system::replace_extension(current_model()->name(), "png");
-        const std::vector<std::string> &filters = {"Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
-                                                   "All Files (*.*)", "*"};
-
-        const bool warn_overwrite = true;
-        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
-        if (file_name.empty())
-            return false;
-
-        const std::string &ext = file_system::extension(file_name, true);
-        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
-            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
-            return false;
-        }
-
-        return snapshot(file_name, 1.0f, samples_);
-    }
-
     void Viewer::draw_corner_axes() const {
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
@@ -3332,14 +2567,12 @@ namespace easy3d {
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
         glDepthRange(0.0f, 1.0f);
     }
-
     void Viewer::pre_draw() {
         glfwMakeContextCurrent(window_);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
         glClearDepth(1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
-
     void Viewer::post_draw() {
         if (texter_ && texter_->num_fonts() >= 2) {
             const float font_size = 15.0f;
@@ -3394,7 +2627,6 @@ namespace easy3d {
         draw_corner_axes();
         draw_overlays(true);
     }
-
     void Viewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         const auto &points = mesh->points();
@@ -3419,7 +2651,6 @@ namespace easy3d {
                 texter->draw(std::to_string(f.idx()), x, p.y, 16, font_id, color);
         }
     }
-
     void Viewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         const auto &points = mesh->points();
@@ -3437,47 +2668,6 @@ namespace easy3d {
                 texter->draw(std::to_string(id), x, p.y, 16, font_id, color);
         }
     }
-
-    void Viewer::copy_view() {
-        const vec3 pos = camera()->position();
-        const quat q = camera()->orientation();
-
-        std::stringstream stream;
-        stream << pos[0] << ' ' << pos[1] << ' ' << pos[2] << ' ' << q[0] << ' ' << q[1] << ' ' << q[2] << ' ' << q[3];
-        glfwSetClipboardString(window_, stream.str().c_str());
-    }
-
-    void Viewer::paste_view() {
-        // get the camera parameters from clipboard string
-        const std::string str = glfwGetClipboardString(window_);
-        std::vector<std::string> list;
-        string::split(str, ' ', list, true);
-        if (list.size() != 7) {
-            LOG(WARNING) << "camera not available in clipboard";
-            return;
-        }
-
-        vec3 pos;
-        for (int i = 0; i < 3; ++i)
-            pos[i] = std::stof(list[i]);
-        quat orient;
-        for (int i = 0; i < 4; ++i)
-            orient[i] = std::stof(list[i + 3]);
-
-        //////////////////////////////////////////////////////////////////////////
-        // change view directly
-        // 	camera()->setPosition(pos);
-        // 	camera()->setOrientation(orient);
-        // I prefer to make animation
-        Frame new_frame;
-        new_frame.setPosition(pos);
-        new_frame.setOrientation(orient);
-        const float duration = 0.5f;
-        camera()->interpolateTo(&new_frame, duration);
-
-        update();
-    }
-
     void Viewer::draw() const {
 #if 0
         // Example code: split the view to have different rendering styles for the same object/scene.
@@ -3557,10 +2747,6 @@ namespace easy3d {
         ClippingPlane::instance()->draw(camera());
         easy3d_debug_log_gl_error draw_overlays(false);
     }
-
-} // namespace easy3d
-
-namespace easy3d {
     namespace {
         struct QueryContext {
             GLFWwindow *previous;
@@ -3940,17 +3126,4 @@ namespace easy3d {
         }
     }
 } // namespace easy3d
-
 #endif // !EASY3D_HAS_VULKAN
-
-namespace easy3d {
-    void Viewer::advance_camera_path() {
-        if (!kfi_->is_interpolation_started())
-            return;
-        const auto now = std::chrono::steady_clock::now();
-        if (now < next_camera_path_frame_)
-            return;
-        kfi_->advance_interpolation();
-        next_camera_path_frame_ = now + std::chrono::milliseconds(kfi_->interpolation_period());
-    }
-} // namespace easy3d

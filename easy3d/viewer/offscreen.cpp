@@ -24,9 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
-#ifdef EASY3D_HAS_VULKAN
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/camera.h>
+
+#ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
     OffScreen::OffScreen(int w, int h, const VulkanOptions &options) : Viewer(w, h, options) {
         snapshot_hud_ = false;
@@ -34,10 +35,6 @@ namespace easy3d {
     OffScreen::~OffScreen() = default;
     void OffScreen::resize(int w, int h) {
         resize_render_target(w, h);
-    }
-    void OffScreen::framebuffer_size(int &w, int &h) const {
-        w = width();
-        h = height();
     }
     bool OffScreen::render(const std::string &file, float scale, int samples, int bg, bool expand) const {
         return Viewer::snapshot(file, scale, samples, bg, expand);
@@ -54,8 +51,6 @@ namespace easy3d {
 } // namespace easy3d
 #else
 
-#include <easy3d/viewer/offscreen.h>
-#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -86,10 +81,6 @@ namespace easy3d {
     void OffScreen::activate() const {
         glfwMakeContextCurrent(window_);
         glViewport(0, 0, width_, height_);
-    }
-    void OffScreen::framebuffer_size(int &w, int &h) const {
-        w = width_;
-        h = height_;
     }
     void OffScreen::resize(int w, int h) {
         if (w <= 0 || h <= 0)
@@ -130,6 +121,10 @@ namespace easy3d {
 #endif // !EASY3D_HAS_VULKAN
 
 namespace easy3d {
+    void OffScreen::framebuffer_size(int &w, int &h) const {
+        w = width_;
+        h = height_;
+    }
     void OffScreen::viewer_size(int &w, int &h) const {
         w = width_;
         h = height_;

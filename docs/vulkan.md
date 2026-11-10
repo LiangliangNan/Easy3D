@@ -7323,3 +7323,74 @@ regressions on both backends. An intermediate full run initially reported mass d
 the cause was stale executables still linked against the removed `Viewer::framebuffer_height()`
 symbol — a full relink cleared it, not a code defect. Linux/Mesa, Windows hardware and GitHub CI
 were not run; these remain separate validation gates.
+
+### 2026-11-10 — W10 batch 48: deduplicate the `#ifdef EASY3D_HAS_VULKAN` split — shared functions first
+
+**Scope.** With the migration nearly complete, many `.cpp` files still carried the same function
+twice — once under `#ifdef EASY3D_HAS_VULKAN`, once under `#else` — even when the logic was identical
+or differed only in backend detail. This batch restructures those files so the backend-independent
+functions live in one shared section and only genuinely backend-specific code stays gated. The target
+layout is: shared functions, then `#ifdef EASY3D_HAS_VULKAN` (Vulkan-only) `#else` (OpenGL-only)
+`#endif`. Guiding rule: maximize shared functions and minimize the per-backend count, without adding
+unnecessary members or helpers. Original explanatory comments were preserved or improved, never
+stripped. The same rule was applied to `#include` blocks: headers needed by both backends sit in a
+shared block before the `#ifdef`, leaving only backend-specific headers gated. Net −962 lines across
+8 files. No public contract changed.
+
+**`viewer/viewer.cpp` (−827).** Restructured into a single shared `namespace easy3d` block (the frame
+loop `draw_frame`/`run`/`run_frames`, all mouse/key/char/scroll/drag/free-move event handlers, HUD and
+model management, clipboard view copy/paste, camera-path playback) followed by one `#ifdef`/`#else`
+split holding only what truly differs: the Vulkan command-submission path (`draw_commands`, the `Impl`
+pimpl, window host, overlay builders) versus the OpenGL state-machine path (GL `init`/`draw`, FBO
+snapshot tiling, GL object lifetime). Small backend differences inside an otherwise-shared function
+are expressed as inline `#ifdef` rather than a second copy of the whole function. The keyboard-shortcut
+and event-handler documentation comments from the old OpenGL branch were restored into the shared code.
+
+**`viewer/viewer.h` (−9).** The members duplicated across the two backend blocks were hoisted into one
+shared protected block: `animation_enabled_`, `visible_`, `zoom_region_`, `callback_error_`,
+`framebuffer_width_/height_`, `frame_rate_start_` (now `steady_clock::time_point`), `frame_rate_frames_`,
+`usage_printed_`, `framerate_` (now `std::string`), and the `update_frame_rate`/`print_usage`/
+`restore_scene_bounds` declarations. The redundant OpenGL-only `is_animating_`, `should_exit_`,
+`full_screen_`, `char framerate_[48]` and `double frame_rate_start_` were removed. The
+`add_model(shared_ptr<Model>, …, fit_scene)` declaration moved out of the Vulkan-only block to shared
+public (both backends implement it).
+
+**`renderer/shadow.cpp` (−105).** `set_light_distance`, `set_darkness`, `compute_camera_frustum` and
+`compute_light_frustum` are now defined once in a shared section. `compute_light_frustum` takes the
+cleaner Vulkan logic and keeps the OpenGL branch's richer section comments (light view matrix, Z-range
+precision note, X/Y range); a dead, broken `#if 0` block was dropped. `begin`/`end`/ctor/dtor stay
+backend-specific because the two paradigms genuinely differ (Vulkan publishes frame params into a
+per-camera registry; OpenGL renders into FBOs).
+
+**`renderer/soft_shadow.cpp` (−11).** The shared constructor was hoisted to the top; since Vulkan adds
+no dedicated functions, the `#ifdef`/`#else` collapsed to a single `#ifndef EASY3D_HAS_VULKAN` block
+holding the OpenGL-only FBO passes.
+
+**`viewer/offscreen.cpp` (−5).** `framebuffer_size` was identical in both branches (`width_`/`height_`);
+it now lives once in the trailing shared section beside `viewer_size`. The shared `offscreen.h` and
+`camera.h` includes were hoisted above the `#ifdef`.
+
+**Shared includes.** Headers included by both backends were moved out of the `#ifdef` into a shared
+block: in `viewer.cpp` the common core/renderer/fileio/util headers (plus `camera.h`,
+`point_cloud_io_ptx.h` — needed by the now-shared PTX loading — and the GLFW include); in
+`eye_dome_lighting.cpp` (`camera.h`, −1) and `ambient_occlusion.cpp` (`<algorithm>`, `model.h`,
+`camera.h`, −3); and a redundant `logging.h` removed from `snapshot.cpp`'s OpenGL branch (−1). One
+ordering constraint is documented in `viewer.cpp`: `vulkan.h` must precede `glfw3.h` (first pulled in by
+`viewer_loop.h`), because GLFW declares `glfwCreateWindowSurface` only when `VK_VERSION_1_0` is defined.
+The pickers, `multi_viewer.cpp`, `shadow.cpp` and `soft_shadow.cpp` already kept shared includes outside
+the `#ifdef` and needed no include change.
+
+**Deliberately left as-is (functions).** `eye_dome_lighting.cpp`, `ambient_occlusion.cpp` and
+`snapshot.cpp` overlap only in embedded sub-expressions (the z-range formula, the radius clamp,
+frustum/alpha math) inside otherwise-divergent bodies — merging the functions would require new helpers,
+against the minimize-new-functions guideline (their shared includes were still hoisted, above). The
+pickers (`picker_model/point_cloud/surface_mesh.cpp`) and `multi_viewer.cpp` were already consolidated in
+earlier batches (one definition with inline `#ifdef` and shared anonymous-namespace helpers), so they
+needed no change.
+
+**Validation (2026-11-10, macOS Release).** Serial CTest runs passed OpenGL 106/106 (`build-opengl`)
+and Vulkan 140/140 (`cmake-build-release`, tests temporarily enabled then restored to OFF). An
+intermediate full OpenGL run flagged `opengl.counterparts` ("multi-view layout API changed"); the cause
+was a stale test executable predating the relink — running the rebuilt test directly and re-running the
+suite cleared it, not a code defect. Linux/Mesa, Windows hardware and GitHub CI were not run; these
+remain separate validation gates.

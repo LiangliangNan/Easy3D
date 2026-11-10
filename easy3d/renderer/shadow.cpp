@@ -26,9 +26,8 @@
 
 #include <easy3d/renderer/shadow.h>
 
-#ifdef EASY3D_HAS_VULKAN
-
 #include <algorithm>
+#include <cfloat>
 #include <map>
 
 #include <easy3d/renderer/camera.h>
@@ -36,6 +35,111 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/util/setting.h>
 
+
+namespace easy3d {
+
+    void Shadow::set_light_distance(float dist) {
+        // 1.0 corresponds to degenerated light frustum
+        light_distance_ = std::max(1.1f, dist);
+    }
+
+
+    void Shadow::set_darkness(float darkness) {
+        darkness_ = darkness;
+        if (darkness_ < 0.0f)
+            darkness_ = 0.0f;
+        if (darkness_ > 1.0f)
+            darkness_ = 1.0f;
+    }
+
+
+    void Shadow::compute_camera_frustum() {
+        if (!camera_frustum_)
+            camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
+        // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
+        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
+        auto ar = static_cast<float>(camera_->aspectRatio());
+        auto znear = static_cast<float>(camera_->zNear());
+        auto zfar = static_cast<float>(camera_->zFar());
+        camera_frustum_->set_perspective(fov, ar, znear, zfar);
+        const vec3& pos = camera_->position();
+        const vec3& at = camera_->position() + camera_->viewDirection();
+        const vec3& up = camera_->upVector();
+        camera_frustum_->orient(pos, at, up);
+    }
+
+
+    void Shadow::compute_light_frustum() {
+        //--------- the light's view matrix ---------------------------
+
+        if (!light_frustum_)
+            light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
+
+        const vec3& at = camera_->sceneCenter();
+        vec3 dir = -setting::light_position.xyz();
+        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        dir = normalize(trans * dir); // the light's direction in WC.
+        float radius = camera_->sceneRadius();
+        light_pos_ = at - dir * radius * light_distance_;
+        const vec3& up = trans * vec3(0, 1, 0);
+        light_frustum_->orient(light_pos_, at, up);
+
+        //----------- determine the Z range --------------------------
+
+        float maxZ = -FLT_MAX;
+        float minZ = FLT_MAX;
+        const mat4& light_view = light_frustum_->view_matrix();
+
+        // make sure all relevant shadow casters are included
+        vec3 p = light_view * at;
+        if (p.z + radius > maxZ)
+            maxZ = p.z + radius;  // maxZ is related to near plane
+        if (p.z - radius < minZ)
+            minZ = p.z - radius;  // not necessary for including the camera frustum
+
+        if (!virtual_background_) {
+            // The light frustum at its far end should contain the camera's frustum, and
+            // at its near end should contain all relevant shadow casters. This makes
+            // sure that all visible regions in the camera view will get right shadows.
+            const std::vector<vec3>& points = camera_frustum_->vertices();
+            for (int i = 0; i < 8; i++) {
+                const vec4& q = light_view * vec4(points[i], 1.0f);
+                if (q.z < minZ) minZ = q.z;  // minZ is related to far plane
+            }
+        }
+
+        // note the inversion because the light looks at the neg. z axis
+        float zNear = -maxZ;
+        float zFar = -minZ;
+
+        // Liangliang: Limit the Z range to improve the z-buffer precision
+        //      (maybe slightly, but I didn't notice the difference).
+        zFar = std::min(zFar, zNear + radius * 10.0f);
+
+        //----------- determine the X and Y range --------------------------
+
+        float xMax, yMax;
+        xMax = yMax = -FLT_MAX;
+
+        // set the projection matrix with the new z-bounds
+        light_frustum_->set_ortho(-1.0, 1.0, -1.0, 1.0, zNear, zFar);
+        const mat4& shade_mvp = light_frustum_->projection_matrix() * light_view;
+
+        // find the extends of all shadow casters' bbox as projected in light's homogeneous coordinates
+        p = shade_mvp * at;
+        if (p.x + radius > xMax) xMax = p.x + radius;
+        if (p.y + radius > yMax) yMax = p.y + radius;
+
+        // make sure zNear is positive
+        zNear = zNear > 0.001 ? zNear : 0.001f;
+        // The light frustum needs to enclose the whole range in X and Y directions.
+        light_frustum_->set_frustum(xMax*2.0f, yMax*2.0f, zNear, zFar);
+    }
+
+} // namespace easy3d
+
+
+#ifdef EASY3D_HAS_VULKAN
 
 namespace easy3d {
 
@@ -71,21 +175,6 @@ namespace easy3d {
         }
         delete camera_frustum_;
         delete light_frustum_;
-    }
-
-
-    void Shadow::set_light_distance(float dist) {
-        // 1.0 corresponds to degenerated light frustum
-        light_distance_ = std::max(1.1f, dist);
-    }
-
-
-    void Shadow::set_darkness(float darkness) {
-        darkness_ = darkness;
-        if (darkness_ < 0.0f)
-            darkness_ = 0.0f;
-        if (darkness_ > 1.0f)
-            darkness_ = 1.0f;
     }
 
 
@@ -151,74 +240,6 @@ namespace easy3d {
     }
 
 
-    void Shadow::compute_camera_frustum() {
-        if (!camera_frustum_)
-            camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
-        // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
-        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
-        auto ar = static_cast<float>(camera_->aspectRatio());
-        auto znear = static_cast<float>(camera_->zNear());
-        auto zfar = static_cast<float>(camera_->zFar());
-        camera_frustum_->set_perspective(fov, ar, znear, zfar);
-        const vec3& pos = camera_->position();
-        const vec3& at = camera_->position() + camera_->viewDirection();
-        const vec3& up = camera_->upVector();
-        camera_frustum_->orient(pos, at, up);
-    }
-
-
-    void Shadow::compute_light_frustum() {
-        if (!light_frustum_)
-            light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
-
-        const vec3& at = camera_->sceneCenter();
-        vec3 dir = -setting::light_position.xyz();
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
-        dir = normalize(trans * dir); // the light's direction in WC.
-        float radius = camera_->sceneRadius();
-        light_pos_ = at - dir * radius * light_distance_;
-        const vec3& up = trans * vec3(0, 1, 0);
-        light_frustum_->orient(light_pos_, at, up);
-
-        float maxZ = -FLT_MAX;
-        float minZ = FLT_MAX;
-        const mat4& light_view = light_frustum_->view_matrix();
-
-        vec3 p = light_view * at;
-        if (p.z + radius > maxZ)
-            maxZ = p.z + radius;  // maxZ is related to near plane
-        if (p.z - radius < minZ)
-            minZ = p.z - radius;  // not necessary for including the camera frustum
-
-        if (!virtual_background_) {
-            // The light frustum at its far end should contain the camera's
-            // frustum and at its near end all relevant shadow casters.
-            const std::vector<vec3>& points = camera_frustum_->vertices();
-            for (int i = 0; i < 8; i++) {
-                const vec4& q = light_view * vec4(points[i], 1.0f);
-                if (q.z < minZ) minZ = q.z;
-            }
-        }
-
-        // note the inversion because the light looks at the neg. z axis
-        float zNear = -maxZ;
-        float zFar = -minZ;
-        zFar = std::min(zFar, zNear + radius * 10.0f);
-
-        float xMax, yMax;
-        xMax = yMax = -FLT_MAX;
-        light_frustum_->set_ortho(-1.0, 1.0, -1.0, 1.0, zNear, zFar);
-        const mat4& shade_mvp = light_frustum_->projection_matrix() * light_view;
-
-        p = shade_mvp * at;
-        if (p.x + radius > xMax) xMax = p.x + radius;
-        if (p.y + radius > yMax) yMax = p.y + radius;
-
-        zNear = zNear > 0.001 ? zNear : 0.001f;
-        light_frustum_->set_frustum(xMax*2.0f, yMax*2.0f, zNear, zFar);
-    }
-
-
     void Shadow::update_virtual_background() {
         vec3 normal = vec3(setting::light_position); // the background's normal in VC.
         const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
@@ -242,16 +263,10 @@ namespace easy3d {
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/frustum.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/util/setting.h>
-
-#include <map>
 
 // for debugging
 //#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
@@ -327,21 +342,6 @@ namespace easy3d {
 
         delete virtual_background_drawable_;
         virtual_background_drawable_ = nullptr;
-    }
-
-
-    void Shadow::set_light_distance(float dist) {
-        // 1.0 corresponds to degenerated light frustum
-        light_distance_ = std::max(1.1f, dist);
-    }
-
-
-    void Shadow::set_darkness(float darkness) {
-        darkness_ = darkness;
-        if (darkness_ < 0.0f)
-            darkness_ = 0.0f;
-        if (darkness_ > 1.0f)
-            darkness_ = 1.0f;
     }
 
 
@@ -513,111 +513,6 @@ namespace easy3d {
         program->release();
 
         // draw ground plane here...
-    }
-
-
-    void Shadow::compute_camera_frustum() {
-        if (!camera_frustum_)
-            camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
-        // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
-        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
-        auto ar = static_cast<float>(camera_->aspectRatio());
-        auto znear = static_cast<float>(camera_->zNear());
-        auto zfar = static_cast<float>(camera_->zFar());
-        camera_frustum_->set_perspective(fov, ar, znear, zfar);
-        const vec3& pos = camera_->position();
-        const vec3& at = camera_->position() + camera_->viewDirection();
-        const vec3& up = camera_->upVector();
-        camera_frustum_->orient(pos, at, up);
-    }
-
-
-    void Shadow::compute_light_frustum() {
-        //--------- the light's view matrix ---------------------------
-
-        if (!light_frustum_)
-            light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
-
-		const vec3& at = camera_->sceneCenter();
-        vec3 dir = -setting::light_position.xyz();
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
-        dir = normalize(trans * dir); // the light's direction in WC.
-        float radius = camera_->sceneRadius();
-        light_pos_ = at - dir * radius * light_distance_;
-        const vec3& up = trans * vec3(0, 1, 0);
-        light_frustum_->orient(light_pos_, at, up);
-
-        //----------- determine the Z range --------------------------
-
-        float maxZ = -FLT_MAX;
-        float minZ = FLT_MAX;
-        const mat4& light_view = light_frustum_->view_matrix();
-
-        // make sure all relevant shadow casters are included
-        vec3 p = light_view * at;
-        if (p.z + radius > maxZ)
-            maxZ = p.z + radius;  // maxZ is related to near plane
-        if (p.z - radius < minZ)
-            minZ = p.z - radius;  // not necessary for including the camera frustum
-
-        if (!virtual_background_) {
-            // The light frustum at its far end should contain the camera's frustum, and
-            // at its near end should contain all relevant shadow casters. This makes
-            // sure that all visible regions in the camera view will get right shadows.
-            const std::vector<vec3>& points = camera_frustum_->vertices();
-
-            // note that only the z-component is need and thus the multiplication can be simplified
-            //p.z = view[2] * points[0].x + view[6] * points[0].y + view[10] * points[0].z + view[14];
-            for (int i = 0; i < 8; i++) {
-                const vec4& q = light_view * vec4(points[i], 1.0f);
-                //if (q.z > maxZ) maxZ = q.z;  // not necessary for including the camera frustum
-                if (q.z < minZ) minZ = q.z;  // minZ is related to far plane
-            }
-        }
-
-         // note the inversion because the light looks at the neg. z axis
-        float zNear = -maxZ;
-        float zFar = -minZ;
-
-        // Liangliang: Limit the Z range to improve the z-buffer precision
-        //      (maybe slightly, but I didn't notice the difference).
-        zFar = std::min(zFar, zNear + radius * 10.0f);
-
-        //----------- determine the X and Y range --------------------------
-
-        float xMax, yMax;
-        xMax = yMax = -FLT_MAX;
-
-        // set the projection matrix with the new z-bounds
-        // gluPerspective(LIGHT_FOV, 1.0, maxZ, minZ); // for point lights
-        light_frustum_->set_ortho(-1.0, 1.0, -1.0, 1.0, zNear, zFar);
-        const mat4& shade_mvp = light_frustum_->projection_matrix() * light_view;
-
-    #if 0
-        // Liangliang: To determine the X and Y range, including the entire camera frustum will result in
-        //			   large views (i.e. low shadow map resolution). I want the minimum affected region
-        //			   to ensure the best resolution for the shadow map. Other regions in the camera frustum
-        //             will have their projections out of the shadow map and thus cannot be in the shadow
-        //             (this can be very easily checked in fragment shader).
-        const std::vector<vec3>& points = camera_frustum_->vertices();
-        for (int i = 0; i < 8; i++) {
-            p = shade_mvp * points[i];
-            if (p.x > xMax) xMax = p.x;
-            if (p.x < xMin) xMin = p.x;
-            if (p.y > yMax) yMax = p.y;
-            if (p.y < yMin) yMin = p.y;
-        }
-    #endif
-
-        // find the extends of all shadow casters' bbox as projected in light's homogeneous coordinates
-        p = shade_mvp * at;
-        if (p.x + radius > xMax) xMax = p.x + radius;
-        if (p.y + radius > yMax) yMax = p.y + radius;
-
-        // make sure zNear is positive
-        zNear = zNear > 0.001 ? zNear : 0.001f;
-        // The light frustum needs to enclose the whole range in X and Y directions.
-        light_frustum_->set_frustum(xMax*2.0f, yMax*2.0f, zNear, zFar);
     }
 
 

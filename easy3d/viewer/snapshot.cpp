@@ -98,7 +98,6 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
-#include <easy3d/util/logging.h>
 namespace easy3d {
 
 

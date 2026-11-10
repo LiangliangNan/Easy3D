@@ -26,10 +26,10 @@
 
 #include <easy3d/renderer/eye_dome_lighting.h>
 
+#include <easy3d/renderer/camera.h>
+
 #ifdef EASY3D_HAS_VULKAN
 #include <map>
-
-#include <easy3d/renderer/camera.h>
 
 
 namespace easy3d {
@@ -95,7 +95,6 @@ namespace easy3d {
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/camera.h>
 
 
 namespace easy3d {

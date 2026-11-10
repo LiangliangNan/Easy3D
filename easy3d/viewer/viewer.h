@@ -355,6 +355,15 @@ public:
         Model* add_model(Model* model, bool create_default_drawables = true) override;
 
         /**
+         * \brief Add a shared model and optionally fit the scene.
+         * \param model Model to add.
+         * \param create_default_drawables Whether to create standard drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition.
+         * \return The added model, or nullptr if addition fails.
+         */
+        Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
+
+        /**
          * \brief Delete a model. The memory of the model will be released and its existing drawables
          *        also be deleted.
          * \param model The pointer to the model.
@@ -670,15 +679,6 @@ public:
          * \throws std::invalid_argument if the device does not support the count.
          */
 	    void set_samples(unsigned samples);
-
-        /**
-         * \brief Add a shared model and optionally fit the scene.
-         * \param model Model to add.
-         * \param create_default_drawables Whether to create standard drawables.
-         * \param fit_scene If true, fit the camera to the scene after addition.
-         * \return The added model, or nullptr if addition fails.
-         */
-	    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
 #endif
 
 	protected:
@@ -874,6 +874,21 @@ public:
 	    bool snapshot_hud_ = true; // Capture HUD policy; OffScreen/MultiViewer are scene-only.
 	                               // File snapshots never carry the Viewer HUD, on either backend.
 	    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
+
+	    // State shared by both backends (the frame loop, events, HUD and model management
+	    // are backend-independent; only rendering and window creation differ).
+	    bool animation_enabled_ = false;
+	    bool visible_ = true;
+	    bool zoom_region_ = false;
+	    std::exception_ptr callback_error_;
+	    int framebuffer_width_ = 0, framebuffer_height_ = 0; // cached physical pixels
+	    std::string framerate_ = "fps: -- (-- ms/frame)";
+	    std::chrono::steady_clock::time_point frame_rate_start_;
+	    unsigned frame_rate_frames_ = 0;
+	    bool usage_printed_ = false;
+	    void update_frame_rate();
+	    void print_usage();
+	    void restore_scene_bounds();
 #ifdef EASY3D_HAS_VULKAN
 	    // Keep this part of code minimum
 	private:
@@ -881,18 +896,13 @@ public:
 	    std::shared_ptr<Window> window_host_;
 	    struct Impl;
 	    std::unique_ptr<Impl> impl_;
-	    int render_width_ = 0, render_height_ = 0;
-	    bool animation_enabled_ = false;
 	    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 	    void update_camera_path_overlays() const;
-	    void restore_scene_bounds();
-	    bool zoom_region_ = false;
 	    vec2 pivot_pixel_ = vec2(0);
 	    std::chrono::steady_clock::time_point pivot_expires_;
 	    mutable bool pivot_hint_visible_ = false;
 	    mutable int hint_width_ = 0, hint_height_ = 0;
 	    void update_interaction_overlays(bool force = false) const;
-	    void update_frame_rate();
 	    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels);
 	    // Renders one file-snapshot frame through the virtual draw() into an
 	    // offscreen image of the requested size, clear color and sample count,
@@ -904,8 +914,6 @@ public:
 	                        const vec4& background, unsigned samples,
 	                        graphics::FrameImage& image);
 	    void ensure_text_renderer() const;
-	    std::chrono::steady_clock::time_point frame_rate_start_;
-	    unsigned frame_rate_frames_ = 0;
 	    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
 	    mutable std::vector<graphics::DrawCommand> logo_commands_;
 	    mutable std::string rendered_frame_rate_;
@@ -917,8 +925,6 @@ public:
 	    mutable std::string rendered_hint_;
 	    mutable float hint_dpi_ = 0;
 	    mutable std::vector<graphics::DrawCommand> hint_commands_;
-	    bool usage_printed_ = false;
-	    void print_usage();
 	    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
 	protected:
 	    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
@@ -938,7 +944,6 @@ public:
 	    void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
 	    void release_device();
 	    bool show_corner_axes_ = true;
-	    std::string framerate_ = "fps: -- (-- ms/frame)";
 
 #else
     // Keep this part of code minimum
@@ -975,30 +980,16 @@ public:
 
     private:
         std::shared_ptr<detail::GlfwRuntime> runtime_;
-        bool usage_printed_ = false;
-        double frame_rate_start_ = 0;
-        unsigned frame_rate_frames_ = 0;
-        std::exception_ptr callback_error_;
         int callback_mouse_x_ = 0, callback_mouse_y_ = 0;
-        int framebuffer_width_ = 0, framebuffer_height_ = 0;
         double scroll_remainder_x_ = 0, scroll_remainder_y_ = 0;
-        void print_usage();
-        void update_frame_rate();
         template<class Callback> static void dispatch_callback(GLFWwindow*, const Callback&) noexcept;
 
     protected:
 
-		bool        should_exit_;
         float       dpi_scaling_;
-
-        bool    is_animating_;
-
-		bool	full_screen_;
-		bool	visible_;
 
 		// enable/disable event processing
 		bool	process_events_;
-		char    framerate_[48];       // show the frame rate
 
         std::unique_ptr<TextRenderer> texter_;
 

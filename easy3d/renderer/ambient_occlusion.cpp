@@ -26,13 +26,14 @@
 
 #include <easy3d/renderer/ambient_occlusion.h>
 
-#ifdef EASY3D_HAS_VULKAN
-
 #include <algorithm>
-#include <map>
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
+
+#ifdef EASY3D_HAS_VULKAN
+
+#include <map>
 
 
 namespace easy3d {
@@ -91,10 +92,6 @@ namespace easy3d {
 
 #else
 
-#include <algorithm>
-
-#include <easy3d/core/model.h>
-#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>

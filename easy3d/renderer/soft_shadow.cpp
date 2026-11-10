@@ -26,8 +26,6 @@
 
 #include <easy3d/renderer/soft_shadow.h>
 
-#ifdef EASY3D_HAS_VULKAN
-
 #include <easy3d/util/setting.h>
 
 
@@ -42,7 +40,7 @@ namespace easy3d {
 
 }
 
-#else
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -53,18 +51,9 @@ namespace easy3d {
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
-
-    SoftShadow::SoftShadow(Camera* cam)
-        : Shadow(cam)
-        , softness_(setting::effect_shadow_softness)
-        , sample_pattern_(SP_Poisson_64_128)
-    {
-    }
-
 
     void SoftShadow::ensure_fbo() {
         if (!fbo_) {
