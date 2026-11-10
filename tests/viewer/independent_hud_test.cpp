@@ -36,13 +36,13 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
     scene->update_vertex_buffer({vec3(-10,-10,0),vec3(10,-10,0),vec3(0,10,0)});
     scene->set_uniform_coloring(vec4(0,0,1,1));scene->set_lighting(false);v.add_drawable(scene);
     const int w=v.framebuffer_width(),h=v.framebuffer_height();
-    const auto before=v.pick(w/2,h/2);require(bool(before),"missing source scene");
+    const auto before=v.pick(v.width()/2,v.height()/2);require(bool(before),"missing source scene");
     auto front=quad(-.5f,vec4(1,0,0,.5f)),back=quad(.5f,vec4(0,1,0,1));
     auto flat=quad(0,vec4(0,1,0,.25f));flat.overlay_independent_depth=false;
     // The rear opaque quad is submitted last, but must fail HUD depth testing.
     // The flat overlay is submitted first, but must composite after the 3D HUD.
     v.set_overlays({flat,front,back});require(v.run_frames(2)==0,"HUD frame failed");
-    const auto after=v.pick(w/2,h/2);
+    const auto after=v.pick(v.width()/2,v.height()/2);
     require(after.drawable==before.drawable && std::abs(after.depth-before.depth)<1e-6f && distance(after.position,before.position)<1e-5f,"HUD changed scene picking/depth");
     for(int samples:{1,4}) for(float scale:{1.f,1.5f,2.f}){
         require(v.snapshot("hud.png",scale,samples,1,true),"HUD snapshot failed");Pixels image("hud.png");
@@ -119,7 +119,7 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
             grid.set_overlays({front,back},foreground);require(grid.run_frames(2)==0,"grid HUD frame failed");
             require(grid.snapshot("grid.png",1.5f,4,1,true),"grid HUD snapshot failed");Pixels image("grid.png");
             near_color(image.at(image.w/2,image.h/2),255,128,128,255,"grid HUD depth/alpha composition differs");
-            require(!grid.pick(grid.framebuffer_width()/2,grid.framebuffer_height()/2),"grid HUD produced a scene source");
+            require(!grid.pick(grid.width()/2,grid.height()/2),"grid HUD produced a scene source");
         }
         require(grid.validation_errors()==0,"grid HUD validation errors");
     }

@@ -31,6 +31,11 @@ struct Grid : MultiViewer {
         int x=int(int64_t(col)*w/columns()),y=int(int64_t(row)*h/rows());
         return ivec4(x,y,int(int64_t(col+1)*w/columns())-x,int(int64_t(row+1)*h/rows())-y);
     }
+    // pick() takes logical window coordinates; bounds() is in framebuffer pixels.
+    Viewer::PickResult pick_cell(const ivec4& vp) const {
+        return pick(int(double(vp.x+vp.z/2)*width()/framebuffer_width()),
+                    int(double(vp.y+vp.w/2)*height()/framebuffer_height()));
+    }
 };
 std::shared_ptr<SurfaceMesh> triangle(const char* name) {
     auto m=std::make_shared<SurfaceMesh>();m->set_name(name);
@@ -87,17 +92,20 @@ int main(int argc,char**) {
         require(edges>0,"transparent snapshot did not exercise multisample edges");
         require(grid.models().size()==2 && grid.drawables().size()==2,"assignment duplicated ownership");
         ViewerBase& api=grid;
-        require((api.unproject_point(api.project_point(vec3(0)))-vec3(0)).norm()<1e-4f,"shared multi-view coordinate round trip failed");
+        require((api.window_to_world(api.world_to_window(vec3(0)))-vec3(0)).norm()<1e-4f,"shared multi-view coordinate round trip failed");
         for(int row=0;row<2;++row) for(int col=0;col<3;++col) {
             const auto vp=grid.bounds(row,col);int x=int(double(vp.x+vp.z/2)*grid.width()/grid.framebuffer_width()),y=int(double(vp.y+vp.w/2)*grid.height()/grid.framebuffer_height());
             bool found=false;const auto p=api.point_under_pixel(x,y,found);
             require(found!=(row==0 && col==2),"portable query included an unassigned cell or missed assigned geometry");
             if(found && !(row==1 && col>=1)) require(std::abs(p.x)<1e-4f,"portable cell query unprojected through the whole canvas");
             bool direct=false;const auto q=grid.point_under_pixel(x,y,direct);require(direct==found && (!found || (p-q).norm()<1e-3f),"direct and portable cell queries disagree");
-            auto hit=grid.pick(vp.x+vp.z/2,vp.y+vp.w/2);require(bool(hit)==found,"cell picking lost the source ID");
+            auto hit=grid.pick_cell(vp);require(bool(hit)==found,"cell picking lost the source ID");
             if(hit) {
                 require(hit.drawable && (hit.position-p).norm()<.03f,"pixel picking used another cell's inverse projection");
-                const auto exact=grid.unproject_pixel(vp.x+vp.z/2,vp.y+vp.w/2,hit.depth);
+                // pick_cell() routes through logical coordinates (x,y); compare against the
+                // exact framebuffer pixel that logical pick samples, not the raw cell center.
+                const auto exact=grid.pixel_to_world(int(std::floor(double(x)*grid.framebuffer_width()/grid.width())),
+                                                     int(std::floor(double(y)*grid.framebuffer_height()/grid.height())),hit.depth);
                 require((exact-hit.position).norm()<1e-5f,"pixel unprojection and picking diverged");
                 if(row==0) require(hit.model.get()==(col==0?red.get():blue.get()) && hit.face_index==0,"cell source ownership/provenance is wrong");
                 if(row==1 && col>0) require(hit.drawable.get()==(col==1?static_cast<Drawable*>(point.get()):static_cast<Drawable*>(line.get())),"impostor source escaped its assigned cell");
@@ -106,19 +114,19 @@ int main(int argc,char**) {
         const auto projection=grid.camera()->projectionMatrix(),view=grid.camera()->modelViewMatrix();
         auto custom=projection;custom(0,2)+=.12f;grid.camera()->set_projection_matrix(custom);
         auto shifted=view;shifted(0,3)+=.1f;grid.camera()->set_modelview_matrix(shifted);
-        const auto custom_point=api.unproject_point(api.project_point(vec3(0)));
+        const auto custom_point=api.window_to_world(api.world_to_window(vec3(0)));
         require(custom_point.norm()<1e-4f,"custom multi-view matrices were lost in coordinate conversion");
         bool custom_hit=false;const auto custom_surface=api.point_under_pixel(grid.width()/6,grid.height()/4,custom_hit);
         require(custom_hit && std::abs(custom_surface.x)<1e-4f,"cell depth query ignored custom camera matrices");
-        const auto custom_pick=grid.pick(grid.framebuffer_width()/6,grid.framebuffer_height()/4);
+        const auto custom_pick=grid.pick(grid.width()/6,grid.height()/4);
         require(custom_pick.model==red && std::abs(custom_pick.position.x)<1e-4f,"cell source picking ignored custom matrices");
         grid.camera()->set_projection_matrix(projection);grid.camera()->set_modelview_matrix(view);
         red->renderer()->set_visible(false);frame(grid);
         bool found=false;grid.point_under_pixel(grid.width()/6,grid.height()/4,found);require(!found,"hidden model rendered in its assigned cell");
         grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(found,"explicit drawable assignment inherited parent-model visibility");
         auto hidden_cell=grid.bounds(0,0),explicit_cell=grid.bounds(1,0);
-        require(!grid.pick(hidden_cell.x+hidden_cell.z/2,hidden_cell.y+hidden_cell.w/2),"hidden model remained pickable in its model-assigned cell");
-        const auto explicit_hit=grid.pick(explicit_cell.x+explicit_cell.z/2,explicit_cell.y+explicit_cell.w/2);
+        require(!grid.pick_cell(hidden_cell),"hidden model remained pickable in its model-assigned cell");
+        const auto explicit_hit=grid.pick_cell(explicit_cell);
         require(explicit_hit.model==red && explicit_hit.face_index==0,"explicit assignment lost a hidden parent's source ownership");
         red->renderer()->set_visible(true);
         auto before=grid.capture(1);
@@ -141,7 +149,7 @@ int main(int argc,char**) {
         const auto vacant=grid.bounds(0,2);
 #ifndef EASY3D_HAS_VULKAN
         // The Vulkan-specific sharing check above assigns this cell explicitly.
-        require(!grid.pick(vacant.x+vacant.z/2,vacant.y+vacant.w/2),"large point query escaped its cell scissor");
+        require(!grid.pick_cell(vacant),"large point query escaped its cell scissor");
 #endif
         point->set_point_size(23);
         bool rejected=false;try{grid.set_layout(0,2);}catch(const std::invalid_argument&){rejected=true;}require(rejected && grid.rows()==2,"invalid layout modified the grid");
@@ -149,14 +157,11 @@ int main(int argc,char**) {
         auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivotPoint();vec3 delta;
         for(int i=0;i<2;++i) {
             grid.camera()->setPosition(position);grid.camera()->setOrientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);
-#ifdef EASY3D_HAS_VULKAN
-            auto vp=grid.bounds(i,i);const int x=vp.x+vp.z/2,y=vp.y+vp.w/2,dx=10;
-#else
+            // Legacy mouse hooks take logical window coordinates on both backends (Batch 46).
             const int x=(i*2+1)*grid.width()/6,y=(i*2+1)*grid.height()/4,dx=10;
-#endif
             grid.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,0);grid.mouse_drag_event(x+dx,y,dx,0,Viewer::BUTTON_RIGHT,0);grid.mouse_release_event(x+dx,y,Viewer::BUTTON_RIGHT,0);
-            const auto projected=api.project_point(grid.camera()->sceneCenter());
-            require((api.unproject_point(projected)-grid.camera()->sceneCenter()).norm()<1e-4f,"active-cell coordinate round trip failed");
+            const auto projected=api.world_to_window(grid.camera()->sceneCenter());
+            require((api.window_to_world(projected)-grid.camera()->sceneCenter()).norm()<1e-4f,"active-cell coordinate round trip failed");
             if(i==0) delta=grid.camera()->position()-position;else require((grid.camera()->position()-position-delta).norm()<1e-5f,"camera pan depends on the cell's canvas offset");
         }
         require(grid.delete_model(red.get()),"model removal failed");frame(grid);grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(!found,"deleted model retained an assigned drawable");

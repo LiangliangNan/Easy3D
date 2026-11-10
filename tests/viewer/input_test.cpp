@@ -83,20 +83,13 @@ int main(int argc,char**) {
         }
         require(best>=0,"pivot test scene is empty");
         const int px=int(hit%image.width),py=int(hit/image.width);
-        const auto surface=v.pick(px,py); const bool found=bool(surface); const auto picked=surface.position;
+        // pick() and the legacy mouse hooks both use logical window coordinates on
+        // both backends. Map the framebuffer hit pixel to its logical cursor once.
+        const int mx=int(double(px)*v.width()/v.framebuffer_width());
+        const int my=int(double(py)*v.height()/v.framebuffer_height());
+        const auto surface=v.pick(mx,my); const bool found=bool(surface); const auto picked=surface.position;
         require(found,"pivot depth pick failed");
-        // Legacy mouse hooks take camera screen units: framebuffer pixels on Vulkan, logical
-        // window coordinates on OpenGL (the documented native-hook divergence). Convert the
-        // framebuffer cursor once and take the expected surface from each backend's hook query.
-        const int mx=int(double(px)*v.camera()->screenWidth()/v.framebuffer_width());
-        const int my=int(double(py)*v.camera()->screenHeight()/v.framebuffer_height());
-#ifdef EASY3D_HAS_VULKAN
-        const vec3 hook_target=picked; // Vulkan hook queries pick(mx,my)==pick(px,py)
-#else
-        bool hook_found=false;
-        const vec3 hook_target=v.point_under_pixel(mx,my,hook_found); // OpenGL hook queries point_under_pixel(mx,my)
-        require(hook_found,"logical pivot query failed");
-#endif
+        const vec3 hook_target=picked;
         v.mouse_press_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         require((v.camera()->pivotPoint()-hook_target).norm()<1e-6f,"Shift-click selected wrong surface pivot");
         v.mouse_release_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);

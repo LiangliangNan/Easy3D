@@ -65,10 +65,7 @@ void main()
 	*	http://alfonse.bitbucket.org/oldtut/Illumination/Tut13%20Correct%20Chicanery.html
 	**/
 	if (perspective) {
-		//vec2 tex = DataIn.tex;
-		vec2 tex = DataIn.tex * 1.5; // 1.5 times larger ensuring the quad is big enought in perspective view
-
-		vec3 planePos = vec3(tex * sphere_radius, 0.0) + DataIn.position.xyz;
+		vec3 planePos = vec3(DataIn.tex * sphere_radius, 0.0) + DataIn.position.xyz;
 		vec3 view_dir = normalize(planePos);
 		float B = 2.0 * dot(view_dir, -DataIn.position.xyz);
 		float C = dot(DataIn.position.xyz, DataIn.position.xyz) - (sphere_radius * sphere_radius);

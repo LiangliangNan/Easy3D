@@ -14,6 +14,8 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/fileio/image_io.h>
 #include <cmath>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
@@ -35,8 +37,8 @@ void view(Viewer& v) {
     v.camera()->setViewDirection(vec3(0,0,-1));v.fit_screen();
 }
 Viewer::PickResult hit(Viewer& v,const vec3& point) {
-    const auto p=v.project_point(point);
-    return v.pick(int(p.x*v.framebuffer_width()/v.width()),int(p.y*v.framebuffer_height()/v.height()));
+    const auto p=v.world_to_window(point);
+    return v.pick(int(p.x),int(p.y));
 }
 void exercise(Viewer& v) {
     auto distant=quad(0),close=quad(.5f);v.add_model(distant);v.add_model(close);
@@ -65,23 +67,22 @@ void exercise(Viewer& v) {
     require(result.depth>=0 && result.depth<1 && std::abs(result.position.z-.5f)<2e-4f,"picked depth/world point differs");
     require(result.face_index==0 && result.primitive<2,"polygon triangle provenance missing");
     {
-        const auto logical=v.project_point(vec3(-.6f,.2f,.5f));
+        const auto logical=v.world_to_window(vec3(-.6f,.2f,.5f));
         const int qx=int(logical.x),qy=int(logical.y);
         bool direct_found=false,base_found=false;
         const auto direct=v.point_under_pixel(qx,qy,direct_found);
         const ViewerBase& base=v;
         const auto inherited=base.point_under_pixel(qx,qy,base_found);
-        const auto query_pick=v.pick(int(double(qx)*v.framebuffer_width()/v.width()),
-                                int(double(qy)*v.framebuffer_height()/v.height()));
+        const auto query_pick=v.pick(qx,qy);
         require(direct_found && base_found && query_pick && (direct-inherited).length()<1e-6f &&
-                (direct-query_pick.position).length()<2e-4f,"inherited logical surface query differs from framebuffer pick");
+                (direct-query_pick.position).length()<2e-4f,"inherited logical surface query differs from logical pick");
         bool outside=true;v.point_under_pixel(v.width(),0,outside);
         require(!outside,"logical outside pixel was accepted");
     }
-    const auto projected=v.project_point(result.position);
+    const auto projected=v.world_to_window(result.position);
     require(std::abs(projected.z-result.depth)<2e-5f,"returned world point does not reproduce depth");
     for(unsigned i=0;i<16;++i) require(std::abs(matrix[i]-v.camera()->modelViewProjectionMatrix()[i])<1e-6f,"picking changed camera");
-    require(!v.pick(-1,0) && !v.pick(v.framebuffer_width(),0),"out-of-bounds pick succeeded");
+    require(!v.pick(-1,0) && !v.pick(v.width(),0),"out-of-bounds pick succeeded");
     close->renderer()->set_visible(false);require(hit(v,vec3(-.6f,.2f,0)).model==distant,"hidden model occluded picking");
     auto* plane=ClippingPlane::instance();plane->fit_scene(vec3(0,0,-.25f),2);plane->set_enabled(true);
     require(!hit(v,vec3(-.6f,.2f,0)),"clipped surface was picked");plane->set_enabled(false);
@@ -103,14 +104,63 @@ void exercise(Viewer& v) {
     v.clear_scene();result={};points.reset();
     auto lines=std::make_shared<LinesDrawable>("standalone line");v.add_drawable(lines);
     lines->update_vertex_buffer({vec3(-.8f,0,0),vec3(.8f,0,0)});lines->set_lighting(false);
-    const auto pixel=v.project_point(vec3(0));
-    const int lx=int(pixel.x*v.framebuffer_width()/v.width()),ly=int(pixel.y*v.framebuffer_height()/v.height());
+    const auto pixel=v.world_to_window(vec3(0));
+    const int lx=int(pixel.x),ly=int(pixel.y);
     for(int dy=-1;dy<=1 && !result;++dy) result=v.pick(lx,ly+dy);
     require(result && result.drawable==lines && !result.model,"standalone line was not picked");
     v.clear_scene();result={};lines.reset();
     auto hud=std::make_shared<LinesDrawable2D>("HUD");v.add_drawable(hud);
     hud->update_vertex_buffer({vec2(0,0),vec2(float(v.framebuffer_width()),float(v.framebuffer_height()))},v.framebuffer_width(),v.framebuffer_height());
     require(!hit(v,vec3(0)),"HUD produced a scene pick");v.clear_scene();
+}
+void sphere_snapshots(Viewer& v) {
+    auto points=std::make_shared<PointsDrawable>("snapshot sphere");
+    points->set_point_size(40);points->set_impostor_type(PointsDrawable::SPHERE);
+    points->set_lighting(false);points->update_texcoord_buffer({vec2(.5f)});v.add_drawable(points);
+    std::unique_ptr<Texture> texture(Texture::create({255,0,0,255},1,1,4));
+    require(bool(texture),"sphere texture creation failed");
+    for (auto projection:{Camera::PERSPECTIVE,Camera::ORTHOGRAPHIC}) {
+        v.camera()->setType(projection);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+        for (bool textured:{false,true}) {
+            const vec3 center=textured?vec3(.7f,.3f,0):vec3(0);
+            points->update_vertex_buffer({center});
+            if (textured) points->set_texture_coloring(State::VERTEX,"v:texcoord",texture.get());
+            else points->set_uniform_coloring(vec4(1,0,0,1));
+            const float radius=points->point_size()*v.camera()->pixelGLRatio(v.camera()->pivotPoint())*.5f;
+            const auto inv=inverse(v.camera()->modelViewProjectionMatrix());
+            for (float scale:{1.f,1.5f}) {
+                const std::string file="sphere-"+std::to_string(int(projection))+"-"+std::to_string(textured)+
+                    "-"+std::to_string(v.samples())+"-"+std::to_string(scale)+".png";
+                require(v.snapshot(file,scale,v.samples(),1),"sphere snapshot failed");
+                std::vector<unsigned char> rgba;int w=0,h=0,channels=0;
+                require(ImageIO::load(file,rgba,w,h,channels,4,false),"sphere snapshot could not be decoded");
+                unsigned interior=0,mismatches=0;
+                for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
+                    const vec4 near=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,-1,1);
+                    const vec4 far=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,1,1);
+                    const vec3 origin=near.xyz()/near.w,direction=normalize(far.xyz()/far.w-origin);
+                    const vec3 offset=center-origin,perpendicular=cross(offset,direction);
+                    const float discriminant=radius*radius-dot(perpendicular,perpendicular);
+                    if (std::abs(discriminant)<radius*radius*.05f) continue;
+                    const bool expected=dot(offset,direction)>0 && discriminant>0;
+                    const auto* pixel=rgba.data()+4*(size_t(y)*w+x);
+                    const bool observed=pixel[0]>pixel[1]+32 && pixel[0]>pixel[2]+32;
+                    interior+=expected;mismatches+=expected!=observed;
+                }
+                if (interior<=100 || mismatches>5)
+                    throw std::runtime_error(file+": sphere silhouette differs from ray/sphere oracle (interior="+
+                                             std::to_string(interior)+", mismatches="+std::to_string(mismatches)+")");
+            }
+            const auto window=v.world_to_window(center);
+            const int x=int(window.x),y=int(window.y);
+            const auto picked=v.pick(x,y);const auto captured=v.capture();
+            const int px=int(double(x)*captured.width/v.width()),py=int(double(y)*captured.height/v.height());
+            require(picked && std::abs(picked.depth-captured.depth[size_t(py)*captured.width+px])<1e-5f,
+                    "sphere capture and logical picking use different radii");
+            require(std::abs((picked.position-center).norm()-radius)<1e-3f,"sphere pick depth disagrees with its world radius");
+        }
+    }
+    v.clear_scene();
 }
 struct ModelPickerView:TutorialModelPicker {using TutorialModelPicker::TutorialModelPicker;using TutorialModelPicker::mouse_press_event;};
 struct FacePickerView:TutorialFacePicker {using TutorialFacePicker::TutorialFacePicker;using TutorialFacePicker::mouse_press_event;};
@@ -175,7 +225,7 @@ int main(int argc,char**) {return test::run("portable picking depth, provenance,
     OpenGLOptions options;
 #endif
     for(int samples:{1,4}) {
-        Viewer v("Portable pick",241,181,samples,false,false,true,options);exercise(v);
+        Viewer v("Portable pick",241,181,samples,false,false,true,options);sphere_snapshots(v);exercise(v);
         require(v.validation_errors()==0,"picking validation errors");
     }
     tutorials();

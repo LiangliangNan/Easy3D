@@ -137,8 +137,9 @@ int main(int argc,char**) {
         require(plain[corner]==255 && plain[corner+1]==255 && plain[corner+2]==255,
                 "the explicit white background was ignored");
 
-        // The snapshot borrows the camera and the frame path; both are back.
-        require(v.camera()->screenWidth()==fw && v.camera()->screenHeight()==fh,
+        // The snapshot borrows the camera and the frame path; both are back. The camera
+        // carries logical window dimensions on both backends (Batch 46), not the framebuffer.
+        require(v.camera()->screenWidth()==v.width() && v.camera()->screenHeight()==v.height(),
                 "the snapshot left the camera at the output size");
         const mat4 after = v.camera()->modelViewProjectionMatrix();
         for (unsigned i=0;i<16;++i) require(after[i]==before[i],"the snapshot left the projection overridden");

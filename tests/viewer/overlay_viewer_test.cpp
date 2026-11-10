@@ -41,7 +41,7 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     // Clip to the right half; its local MVP covers the viewport, not the complete canvas.
     d.viewport=ivec4(w/2,0,w-w/2,h);v.set_overlays({d});frame(v);
     bool found=true;v.point_under_pixel(v.width()*3/4,v.height()/2,found);require(!found,"annotation wrote scene depth");
-    require(!v.pick(w*3/4,h/2),"annotation produced a picking source");
+    require(!v.pick(v.width()*3/4,v.height()/2),"annotation produced a picking source");
     for(float scale:{.5f,1.0f,1.5f,2.0f}) {
         require(v.snapshot("annotation.png",scale,4,1,true),"annotation snapshot failed");Pixels image("annotation.png");
         require(image.w==int(std::ceil(w*scale)) && image.h==int(std::ceil(h*scale)),"annotation snapshot dimensions differ");

@@ -38,7 +38,7 @@ int main() {
         camera->setType(Camera::ORTHOGRAPHIC);
         auto* drawable = cloud->renderer()->get_points_drawable("vertices");
         drawable->set_impostor_type(PointsDrawable::SPHERE);
-        drawable->set_point_size(25);
+        drawable->set_point_size(10);
         require(viewer.run_frames(2) == 0, "cannot initialize scene pickers");
 
         ModelPicker model_picker(camera);

@@ -314,18 +314,18 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
         return false;
     }
 
-    x = int(double(x) * framebuffer_width() / camera()->screenWidth());
-    y = int(double(y) * framebuffer_height() / camera()->screenHeight());
+    const float pixel_x = float(x) * framebuffer_width() / width();
+    const float pixel_y = float(y) * framebuffer_height() / height();
     const CameraPara &cam = views_[current_view_];
     const Rect image_rect = calculate_image_rect();
     cross_visible_ = false;
     // cursor is inside the image rectangle
-    if (static_cast<float>(x) >= image_rect.x_min() && static_cast<float>(x) <= image_rect.x_max() &&
-        static_cast<float>(y) >= image_rect.y_min() && static_cast<float>(y) <= image_rect.y_max()) {
+    if (pixel_x >= image_rect.x_min() && pixel_x <= image_rect.x_max() &&
+        pixel_y >= image_rect.y_min() && pixel_y <= image_rect.y_max()) {
         const float image_x =
-            (static_cast<float>(x) - image_rect.x_min()) / image_rect.width() * static_cast<float>(cam.w);
+            (pixel_x - image_rect.x_min()) / image_rect.width() * static_cast<float>(cam.w);
         const float image_y =
-            (static_cast<float>(y) - image_rect.y_min()) / image_rect.height() * static_cast<float>(cam.h);
+            (pixel_y - image_rect.y_min()) / image_rect.height() * static_cast<float>(cam.h);
         if (!ray_drawable_) {
             ray_drawable_ = new LinesDrawable("ray");
             add_drawable(std::shared_ptr<LinesDrawable>(ray_drawable_)); // add the ray drawable to the viewer
@@ -345,8 +345,7 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
             ray_drawable_->set_visible(false);
 
         bool found(false);
-        const vec3 p = point_under_pixel(int(double(x) * width() / framebuffer_width()),
-                                         int(double(y) * height() / framebuffer_height()), found);
+        const vec3 p = point_under_pixel(x, y, found);
         if (found) {
             const vec2 q = point_to_pixel(p, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t);
 

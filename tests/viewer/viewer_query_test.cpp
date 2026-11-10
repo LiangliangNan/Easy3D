@@ -73,9 +73,20 @@ void check(unsigned samples, bool validation) {
     for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
         v->camera()->setType(type);
         for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f), vec3(10, 10, 0)})
-            require(near_enough(v->unproject_point(v->project_point(p)), p, 2e-3f), "projection round trip failed");
+            require(near_enough(v->window_to_world(v->world_to_window(p)), p, 2e-3f), "projection round trip failed");
         int fw, fh;
         v->framebuffer_size(fw, fh);
+        for (int px : {0, fw / 2, fw - 1}) for (int py : {0, fh / 2, fh - 1}) {
+            for (float depth : {0.f, .5f, 1.f}) {
+                const auto world = v->pixel_to_world(px, py, depth);
+                require(near_enough(v->world_to_pixel(world), vec3(px + .5f, py + .5f, depth), 2e-3f),
+                        "framebuffer conversion lost the pixel center");
+                const auto window = v->world_to_window(world);
+                require(near_enough(window, vec3((px + .5f) * v->width() / fw,
+                                                (py + .5f) * v->height() / fh, depth), 2e-3f),
+                        "window and framebuffer conversions disagree on DPI");
+            }
+        }
         const int x = v->width() / 2, y = v->height() / 2;
         const mat4 original = v->camera()->modelViewProjectionMatrix();
 #ifndef EASY3D_HAS_VULKAN
@@ -105,7 +116,7 @@ void check(unsigned samples, bool validation) {
         bool found = false;
         const auto hit = v->point_under_pixel(x, y, found);
         require(found && std::abs(hit.z - .2f) < 2e-4f, "fresh query lost foreground depth");
-        const auto projected = v->project_point(hit);
+        const auto projected = v->world_to_window(hit);
         const float expected_x = float((std::floor(double(x) * fw / v->width()) + .5) * v->width() / fw);
         const float expected_y = float((std::floor(double(y) * fh / v->height()) + .5) * v->height() / fh);
         require(std::abs(projected.x - expected_x) < 1e-3f && std::abs(projected.y - expected_y) < 1e-3f,
@@ -181,13 +192,13 @@ void check(unsigned samples, bool validation) {
     bool custom_found = false;
     const auto custom_hit = v->point_under_pixel(v->width() / 2, v->height() / 2, custom_found);
     require(custom_found && std::abs(custom_hit.z - .2f) < 2e-4f, "query discarded custom camera matrices");
-    const auto custom_window = v->project_point(custom_hit);
+    const auto custom_window = v->world_to_window(custom_hit);
     require(std::abs(custom_window.x - v->width() / 2) < 1 && std::abs(custom_window.y - v->height() / 2) < 1,
             "query unprojected a different projection");
     v->camera()->set_projection_matrix(mat4(0.0f));
     bool singular = false;
     try {
-        v->unproject_point(vec3(0));
+        v->window_to_world(vec3(0));
     } catch (const std::invalid_argument &) {
         singular = true;
     }
@@ -220,7 +231,7 @@ void check(unsigned samples, bool validation) {
     require(frames == 0 && v->draw_frame() && frames == 2, "query advanced frame state or broke later rendering");
     bool rejected = false;
     try {
-        v->project_point(vec3(std::numeric_limits<float>::quiet_NaN(), 0, 0));
+        v->world_to_window(vec3(std::numeric_limits<float>::quiet_NaN(), 0, 0));
     } catch (const std::invalid_argument &) {
         rejected = true;
     }

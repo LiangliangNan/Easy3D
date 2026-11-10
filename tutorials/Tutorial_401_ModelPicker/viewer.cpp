@@ -50,13 +50,11 @@ TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(titl
 // A left click without modifiers is interpreted as a pick; every other event (including
 // modifier-clicks and drags) is forwarded to the base Viewer so navigation still works.
 bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
-    // Legacy mouse hooks use camera screen units; pick() uses framebuffer pixels.
-    // On HiDPI displays the two differ by the DPI scaling factor, so we convert here.
-    const int px = int(double(x) * framebuffer_width() / camera()->screenWidth());
-    const int py = int(double(y) * framebuffer_height() / camera()->screenHeight());
+    // Mouse hooks and pick() both use logical window coordinates on both backends
+    // (DPI-independent), so the cursor can be passed straight through.
     // pick() re-rasterizes the scene off screen with primitive IDs and reads back the pixel
     // under the cursor. hit.model is null when the click landed on the background.
-    const auto hit = (button == BUTTON_LEFT && modifiers == 0) ? pick(px, py) : PickResult{};
+    const auto hit = (button == BUTTON_LEFT && modifiers == 0) ? pick(x, y) : PickResult{};
     auto *model = hit.model.get();
     if (model)
         mark(model);

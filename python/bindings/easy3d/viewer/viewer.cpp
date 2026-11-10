@@ -462,8 +462,10 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("run", (int (easy3d::Viewer::*)(bool)) &easy3d::Viewer::run, "Run the viewer.\n \n\n See all contents within the screen? If true, the entire scene (i.e., all models) will be\n      centered on the screen at a proper scale.\n\nC++: easy3d::Viewer::run(bool) --> int", pybind11::arg("see_all"));
         cl.def("run_frames", &easy3d::Viewer::run_frames, pybind11::arg("frames"));
         cl.def("fit_screen", &easy3d::Viewer::fit_screen, pybind11::arg("model") = nullptr);
-        cl.def("project_point", &easy3d::Viewer::project_point);
-        cl.def("unproject_point", &easy3d::Viewer::unproject_point);
+        cl.def("world_to_window", &easy3d::Viewer::world_to_window);
+        cl.def("window_to_world", &easy3d::Viewer::window_to_world);
+        cl.def("world_to_pixel", &easy3d::Viewer::world_to_pixel);
+        cl.def("pixel_to_world", &easy3d::Viewer::pixel_to_world);
         cl.def("samples", &easy3d::Viewer::samples);
 		cl.def("exit", (void (easy3d::Viewer::*)()) &easy3d::Viewer::exit, "Terminate the viewer.\n\nC++: easy3d::Viewer::exit() --> void");
 		cl.def("set_title", (void (easy3d::Viewer::*)(const std::string &)) &easy3d::Viewer::set_title, "Set the window title of the viewer.\n \n\n The string of the title.\n\nC++: easy3d::Viewer::set_title(const std::string &) --> void", pybind11::arg("title"));

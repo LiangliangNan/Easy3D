@@ -35,6 +35,7 @@ layout(triangle_strip, max_vertices = 4) out;
 uniform mat4 MV;
 uniform mat4 PROJ;
 uniform float	sphere_radius;
+uniform bool perspective;
 
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;
@@ -62,7 +63,8 @@ void main()
 	// Vertex 1
 	DataOut.tex = vec2(-1.0, -1.0);
 	gl_Position = DataOut.position;
-	gl_Position.xy += vec2(-sphere_radius, -sphere_radius);
+	DataOut.tex *= perspective ? 1.5 : 1.0;
+	gl_Position.xy += DataOut.tex * sphere_radius;
 	gl_Position = PROJ  * gl_Position;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(gl_in[0].gl_Position, clippingPlane0);
@@ -74,7 +76,8 @@ void main()
 	// Vertex 2
 	DataOut.tex = vec2(-1.0, 1.0);
 	gl_Position = DataOut.position;
-	gl_Position.xy += vec2(-sphere_radius, sphere_radius);
+	DataOut.tex *= perspective ? 1.5 : 1.0;
+	gl_Position.xy += DataOut.tex * sphere_radius;
 	gl_Position = PROJ  * gl_Position;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(gl_in[0].gl_Position, clippingPlane0);
@@ -86,7 +89,8 @@ void main()
 	// Vertex 3
 	DataOut.tex = vec2(1.0, -1.0);
 	gl_Position = DataOut.position;
-	gl_Position.xy += vec2(sphere_radius, -sphere_radius);
+	DataOut.tex *= perspective ? 1.5 : 1.0;
+	gl_Position.xy += DataOut.tex * sphere_radius;
 	gl_Position = PROJ  * gl_Position;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(gl_in[0].gl_Position, clippingPlane0);
@@ -98,7 +102,8 @@ void main()
 	// Vertex 4
 	DataOut.tex = vec2(1.0, 1.0);
 	gl_Position = DataOut.position;
-	gl_Position.xy += vec2(sphere_radius, sphere_radius);
+	DataOut.tex *= perspective ? 1.5 : 1.0;
+	gl_Position.xy += DataOut.tex * sphere_radius;
 	gl_Position = PROJ  * gl_Position;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(gl_in[0].gl_Position, clippingPlane0);

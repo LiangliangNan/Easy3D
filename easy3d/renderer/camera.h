@@ -108,7 +108,9 @@ namespace easy3d {
      * - Use Camera::screenWidth()/screenHeight() for camera operations, projection matrices, and coordinate conversions
      * - Use Viewer::width()/height() when working with UI, window events, or when you need the same logical size
      * - Use Viewer::framebuffer_width()/height() only for GPU operations that require physical pixel dimensions
-     * - All three (Camera::screenWidth, Viewer::width, and logical window size) return the same value and are kept in sync
+     * - Camera screen dimensions are logical on both the OpenGL and Vulkan backends. For a single-view
+     *   Viewer they equal Viewer::width()/height(); a MultiViewer's camera instead describes one cell,
+     *   so its screen dimensions are the cell's logical size rather than the whole window.
      *
      * To use the camera, you need to do the following:
      *  - Create and (if necessary) setup camera in the constructor of your viewer.
@@ -445,9 +447,13 @@ namespace easy3d {
         int screenHeight() const { return screenHeight_; }
 
         /**
-         * \brief Get the pixel GL ratio at a position.
-         * \param position The position.
-         * \return The pixel GL ratio.
+         * \brief World-space length that projects to one logical pixel at a position.
+         * \param position The world-space position at which to evaluate the ratio.
+         * \return World units per logical screen pixel (DPI-independent), derived
+         *      from screenHeight(). A segment of length n * pixelGLRatio() at
+         *      \p position projects to n logical pixels, so impostor radii computed
+         *      as size * pixelGLRatio() * 0.5 keep a constant logical size on both
+         *      backends regardless of the framebuffer's physical pixel density.
          */
         float pixelGLRatio(const vec3 &position) const;
 
@@ -747,7 +753,7 @@ namespace easy3d {
         ManipulatedCameraFrame *frame_;
 
         // Camera parameters
-        int screenWidth_, screenHeight_; // size of the window, in pixels
+        int screenWidth_, screenHeight_; // logical window (or cell) size, DPI-independent
         float fieldOfView_;              // in radians
         vec3 sceneCenter_;
         float sceneRadius_; // OpenGL units

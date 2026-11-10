@@ -76,13 +76,13 @@ namespace easy3d {
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
 		/**
-		 * \brief Returns the size of the points.
-		 * \return The size of the points.
+		 * \brief Returns the point size in logical pixels (DPI-independent).
+		 * \return The point diameter in logical pixels, identical on both backends.
 		 */
         float point_size() const { return point_size_; }
 		/**
-		 * \brief Sets the size of the points.
-		 * \param s The new size of the points.
+		 * \brief Sets the point size in logical pixels (DPI-independent).
+		 * \param s The new point diameter in logical pixels.
 		 */
         void set_point_size(float s) { point_size_ = s; }
 

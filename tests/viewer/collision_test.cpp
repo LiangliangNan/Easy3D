@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
+#include <algorithm>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
 bool same(const mat4& a,const mat4& b) {for (unsigned i=0;i<16;++i) if (a[i]!=b[i]) return false;return true;}
@@ -74,11 +75,16 @@ int main(int argc,char**) {
                 require(plain.rgba!=marked.rgba,"collision face colors did not reach GPU rendering");
                 check_colors(*first,*second,reference,true);
                 bool checked=false;
-                for (size_t i=0;i<marked.ids.size();++i) if (marked.ids[i].object==0 && marked.ids[i].primitive==0) {
-                    const auto pick=v.pick(int(i%marked.width),int(i/marked.width));
-                    require(pick.model==first && pick.face_index==0 && pick.depth==marked.depth[i],
-                            "collision view lost source face/depth provenance");checked=true;break;
-                }
+                for (int ly=0; ly<v.height() && !checked; ++ly)
+                    for (int lx=0; lx<v.width() && !checked; ++lx) {
+                        const int sx=std::min(int(marked.width)-1,int(double(lx)*marked.width/v.width()));
+                        const int sy=std::min(int(marked.height)-1,int(double(ly)*marked.height/v.height()));
+                        const size_t si=size_t(sy)*marked.width+sx;
+                        if (marked.ids[si].object!=0 || marked.ids[si].primitive!=0) continue;
+                        const auto pick=v.pick(lx,ly);
+                        require(pick.model==first && pick.face_index==0 && pick.depth==marked.depth[si],
+                                "collision view lost source face/depth provenance");checked=true;
+                    }
                 require(checked,"collision fixture has no visible first face to pick");
             }
             const auto initial=first->manipulator()->frame()->matrix();

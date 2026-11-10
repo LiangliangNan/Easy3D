@@ -64,7 +64,7 @@ def check_mesh_states(directory):
         scale_x, scale_y = w / viewer.width(), h / viewer.height()
 
         def probe(model_y, model_z):
-            screen = viewer.project_point(easy3d.vec3(0, model_y, model_z))
+            screen = viewer.world_to_window(easy3d.vec3(0, model_y, model_z))
             x, y = int(round(screen.x)), int(round(screen.y))
             point, found = viewer.point_under_pixel(x, y)
             assert found == visible and (not found or abs(point.x) < 1e-4)
@@ -558,8 +558,8 @@ with tempfile.TemporaryDirectory(prefix="easy3d-python-") as directory:
     before, after = viewer.before, viewer.after
     point, found = viewer.point_under_pixel(viewer.width() // 2, viewer.height() // 2)
     assert found and abs(point.x) < 1e-4
-    projected = viewer.project_point(point)
-    restored = viewer.unproject_point(projected)
+    projected = viewer.world_to_window(point)
+    restored = viewer.window_to_world(projected)
     assert sum((getattr(restored, c) - getattr(point, c)) ** 2 for c in "xyz") < 1e-8
     image = root / "viewer.bmp"
     assert viewer.snapshot(str(image), 1, 4, 1, True)

@@ -77,7 +77,11 @@ against the former unsigned constructor signatures.
 
 `viewer.run_frames(n)` runs a bounded viewer loop, and
 `point, found = viewer.point_under_pixel(x, y)` queries logical window coordinates.
-`models()` and `drawables()` expose the viewer's shared scene objects.
+`world_to_window(world)` / `window_to_world(window)` convert between world space and
+logical window coordinates; `world_to_pixel(world)` / `pixel_to_world(pixel)` convert
+between world space and framebuffer pixels (these replaced the old `project_point` /
+`unproject_point` / `unproject_pixel` names). `models()` and `drawables()` expose the
+viewer's shared scene objects.
 
 When `Easy3D_BUILD_TESTS=ON` and Python bindings are built, `ctest --test-dir BUILD -R python.rendering
 --output-on-failure` checks the deployed package's import, viewer callbacks,

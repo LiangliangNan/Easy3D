@@ -19,7 +19,9 @@ struct TestWindow {
 };
 
 // Single-view tests need both the framebuffer callback and camera resize to settle
-// before a capture. Logical window-size acknowledgement alone is asynchronous.
+// before a capture. Logical window-size acknowledgement alone is asynchronous. The
+// camera carries logical window dimensions on both backends (Batch 46); the framebuffer
+// is the physical target, so the two are checked against their respective sizes.
 inline void set_size(Viewer& v, const TestWindow& w) {
     int old_width, old_height, old_fw, old_fh;
     v.viewer_size(old_width, old_height); v.framebuffer_size(old_fw, old_fh);
@@ -33,7 +35,7 @@ inline void set_size(Viewer& v, const TestWindow& w) {
         int width, height, fw, fh;
         v.viewer_size(width, height); v.framebuffer_size(fw, fh);
         if (width==w.width && height==w.height && std::abs(fw-expected_fw)<=1 && std::abs(fh-expected_fh)<=1 &&
-            v.camera()->screenWidth()==fw && v.camera()->screenHeight()==fh) return;
+            v.camera()->screenWidth()==width && v.camera()->screenHeight()==height) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("test window/framebuffer/camera resize did not settle");

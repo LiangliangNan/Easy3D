@@ -85,7 +85,10 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines(const Camera *camera) const {
-        if (line_width() <= 1) {
+        // Native GL lines rasterize in framebuffer pixels and are often limited to a
+        // single physical pixel wide. Use the geometry shader whenever the logical
+        // width maps to more than one physical pixel so the result stays DPI-independent.
+        if (line_width() * viewport_pixel_scale(*camera) <= 1) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
@@ -138,8 +141,7 @@ namespace easy3d {
                     ->set_uniform("PROJ", camera->projectionMatrix())
                     ->set_uniform("MANIP", manipulated_matrix());
 
-            float ratio = camera->pixelGLRatio(camera->pivotPoint());
-            program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
+            program->set_uniform("radius", impostor_radius(*camera, line_width()))
                     ->set_uniform("default_color", color())
                     ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
 
@@ -177,8 +179,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
+        program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("default_color", color())
                 ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -221,8 +222,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width() * ratio * 0.5f)  // 0.5f from width -> radius
+        program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("default_color", color())
                 ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -246,7 +246,10 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines_with_texture(const Camera *camera) const {
-        if (line_width() <= 1) {
+        // Native GL lines rasterize in framebuffer pixels and are often limited to a
+        // single physical pixel wide. Use the geometry shader whenever the logical
+        // width maps to more than one physical pixel so the result stays DPI-independent.
+        if (line_width() * viewport_pixel_scale(*camera) <= 1) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_texture");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
@@ -298,8 +301,7 @@ namespace easy3d {
                     ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
                     ->set_uniform("PROJ", camera->projectionMatrix())
                     ->set_uniform("MANIP", manipulated_matrix());
-            float ratio = camera->pixelGLRatio(camera->pivotPoint());
-            program->set_uniform("radius", line_width() * ratio * 0.5f);  // 0.5f from width -> radius
+            program->set_uniform("radius", impostor_radius(*camera, line_width()));
 
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)
@@ -338,8 +340,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
+        program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting());
 
@@ -383,8 +384,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
+        program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting());
 

@@ -56,7 +56,7 @@ int main(int argc, char**) {
             const unsigned count=viewer.updates;
             const auto a=viewer.capture();
             require(viewer.updates==count,"capture advanced animation");
-            const int x=a.width/2,y=a.height/2;
+            const int x=viewer.width()/2,y=viewer.height()/2;
             const auto hit=viewer.pick(x,y);
             require(bool(hit),"animated triangle not pickable");
             require(hit.drawable==surface && hit.primitive==0,"animation changed drawable/primitive identity");

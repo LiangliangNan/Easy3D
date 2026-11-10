@@ -5,6 +5,7 @@
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -22,6 +23,21 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
     for (size_t i=0;i<a.ids.size();++i)
         require(a.depth[i]==b.depth[i] && a.ids[i].object==b.ids[i].object &&
                 a.ids[i].primitive==b.ids[i].primitive,"hint changed depth or picking IDs");
+}
+// Mouse hooks and pick() take logical window coordinates. Find the first logical pixel
+// that picks the scene and report the framebuffer texel the GPU samples (where the
+// viewer draws the pivot cross), so overlay pixel checks stay in framebuffer space.
+bool first_pick(const Viewer& v,int fw,int fh,int& px,int& py,size_t& texel) {
+    for (int ly=0; ly<v.height(); ++ly)
+        for (int lx=0; lx<v.width(); ++lx) {
+            if (!v.pick(lx,ly)) continue;
+            px=lx;py=ly;
+            const int sx=std::min(fw-1,int(std::floor(double(lx)*fw/v.width())));
+            const int sy=std::min(fh-1,int(std::floor(double(ly)*fh/v.height())));
+            texel=size_t(sy)*fw+sx;
+            return true;
+        }
+    return false;
 }
 int main(int argc,char**) {
     try {
@@ -45,7 +61,9 @@ int main(int argc,char**) {
             v.set_samples(samples);
             const auto baseline=v.capture();
             const auto camera=v.camera()->modelViewProjectionMatrix();
-            const int x0=w/4,y0=h/4,x1=3*w/4,y1=3*h/4;
+            // Mouse hooks take logical window coordinates; the viewer renders the region
+            // hint in framebuffer space at logical*dpi, i.e. still w/4..3w/4 on screen.
+            const int x0=v.width()/4,y0=v.height()/4,x1=3*v.width()/4,y1=3*v.height()/4;
             v.mouse_press_event(x0,y0,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
             v.mouse_drag_event(x1,y1,x1-x0,y1-y0,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
             const auto region=v.capture(); same_picking(baseline,region);
@@ -57,7 +75,7 @@ int main(int argc,char**) {
             }
             bool solid_boundary = false;
             for (int dx = -1; dx <= 1; ++dx) {
-                const int edge_x = x0 + dx;
+                const int edge_x = w/4 + dx;
                 if (edge_x < 0 || edge_x >= w)
                     continue;
                 const size_t edge = 4 * (size_t(h / 2) * w + edge_x);
@@ -83,9 +101,8 @@ int main(int argc,char**) {
             focus(v.window(),GLFW_FALSE);
             v.mouse_release_event(x1,y1,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
             require(v.capture().rgba==baseline.rgba,"stale release zoomed after focus cancellation");
-            size_t hit=0;while (hit<baseline.ids.size() && baseline.ids[hit].object==UINT32_MAX) ++hit;
-            require(hit<baseline.ids.size(),"scene has no pivot hit");
-            const int px=int(hit%w),py=int(hit/w);
+            int px=0,py=0;size_t hit=0;
+            require(first_pick(v,w,h,px,py,hit),"scene has no pivot hit");
             const auto picked=v.pick(px,py);
             v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
             v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
@@ -107,15 +124,15 @@ int main(int argc,char**) {
         }
         // Expiration also applies to explicit captures when no frames were drawn.
         const auto baseline=v.capture();
-        size_t hit=0;while (hit<baseline.ids.size() && baseline.ids[hit].object==UINT32_MAX) ++hit;
-        const int px=int(hit%w),py=int(hit/w);
+        int px=0,py=0;size_t hit=0;
+        require(first_pick(v,w,h,px,py,hit),"scene has no pivot hit for expiry");
         v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         require(v.capture().rgba!=baseline.rgba,"expiry test cross missing");
         std::this_thread::sleep_for(std::chrono::milliseconds(10020));
         require(v.capture().rgba==baseline.rgba,"pivot cross did not expire without frame callbacks");
-        v.mouse_press_event(w/4,h/4,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
-        v.mouse_drag_event(w/2,h/2,w/4,h/4,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
+        v.mouse_press_event(v.width()/4,v.height()/4,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
+        v.mouse_drag_event(v.width()/2,v.height()/2,v.width()/4,v.height()/4,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
         v.resize(257,211);Viewer::poll_events();v.draw_frame();
         const auto resized=v.capture(); focus(v.window(),GLFW_FALSE);
         require(v.capture().rgba==resized.rgba,"resize did not cancel stale pixel-coordinate hint");

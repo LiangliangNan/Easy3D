@@ -52,14 +52,15 @@ namespace easy3d {
  * Window dimensions and input positions use logical window coordinates: x
  * increases rightward, y increases downward, and the origin is at the top-left.
  * These coordinates are DPI-independent and are the units for width(),
- * height(), mouse events, project_point(), and unproject_point().
+ * height(), mouse events, world_to_window(), and window_to_world().
  *
  * Framebuffer dimensions are physical pixels and are intended for GPU work,
  * render targets, and pixel readback. On a high-DPI window they are related to
  * logical dimensions by the DPI scale, subject to integer rounding. OffScreen
- * uses a fixed-size pixel canvas, so its DPI scale is 1.
+ * uses a fixed-size pixel canvas, so its DPI scale is 1. The *_pixel conversions
+ * (world_to_pixel(), pixel_to_world()) use these framebuffer pixels.
  *
- * project_point() and unproject_point() use continuous logical coordinates;
+ * world_to_window() and window_to_world() use continuous logical coordinates;
  * their depth component is normalized to [0, 1], with 0 at the near plane and
  * 1 at the far plane. point_under_pixel() instead accepts integer logical
  * coordinates and queries the visible scene at the corresponding framebuffer
@@ -328,7 +329,7 @@ namespace easy3d {
         virtual void fit_screen(const Model *model = nullptr) = 0;
 
         /**
-     * \brief Project a world-space point to logical window coordinates.
+     * \brief Convert a world-space point to logical window coordinates.
      * \param world Point in world coordinates.
      * \return Continuous logical window position (top-left origin) and
      *         normalized depth in [0, 1].
@@ -337,7 +338,7 @@ namespace easy3d {
      * \details The result is not clipped to the view frustum; finite points
      * outside the visible region can produce coordinates outside the window.
      */
-        virtual vec3 project_point(const vec3 &world) const;
+        virtual vec3 world_to_window(const vec3 &world) const;
 
         /**
      * \brief Convert logical window coordinates to world coordinates.
@@ -347,7 +348,28 @@ namespace easy3d {
      * \throws std::invalid_argument for non-finite input, invalid window size,
      *         or a singular/invalid camera matrix.
      */
-        virtual vec3 unproject_point(const vec3 &window) const;
+        virtual vec3 window_to_world(const vec3 &window) const;
+
+        /**
+     * \brief Convert a world-space point to framebuffer pixel coordinates.
+     * \param world Point in world coordinates.
+     * \return Continuous framebuffer x/y (top-left origin, physical pixels) and
+     *         normalized depth in [0, 1].
+     * \details Equivalent to world_to_window() scaled by the framebuffer-to-window
+     * ratio. Floor the x/y components to obtain a pixel index.
+     */
+        virtual vec3 world_to_pixel(const vec3 &world) const;
+
+        /**
+     * \brief Convert a framebuffer pixel and normalized depth to world space.
+     * \param x Framebuffer x coordinate, with the origin at top-left.
+     * \param y Framebuffer y coordinate, with the origin at top-left.
+     * \param depth Normalized depth in [0, 1].
+     * \return The world-space position at the center of the given pixel.
+     * \throws std::invalid_argument for an out-of-range pixel, invalid depth, or a
+     *         singular/invalid camera matrix.
+     */
+        virtual vec3 pixel_to_world(int x, int y, float depth) const;
 
         /**
      * \brief Query the visible scene point beneath a logical window pixel.

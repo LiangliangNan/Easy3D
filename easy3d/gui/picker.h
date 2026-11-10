@@ -94,7 +94,7 @@ namespace easy3d {
      *
      *      **Coordinate systems.** All picker methods accept screen coordinates
      *      expressed in logical window units (top-left origin, x right, y down),
-     *      matching ViewerBase::project_point() and mouse event callbacks. The
+     *      matching ViewerBase::world_to_window() and mouse event callbacks. The
      *      camera's screenWidth()/screenHeight() define the logical extent; on HiDPI
      *      displays this is smaller than the framebuffer pixel dimensions by the
      *      DPI scaling factor. Internally, single-element picks convert the logical

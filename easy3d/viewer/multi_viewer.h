@@ -46,8 +46,8 @@ namespace easy3d {
      * Adding an item alone does not make it visible in a cell. Inherited
      * scene-management methods still manage the viewer-wide collection.
      *
-     * project_point() uses the active cell (initially the top-left cell and
-     * changed by mouse interaction); unproject_point() selects the cell
+     * world_to_window() uses the active cell (initially the top-left cell and
+     * changed by mouse interaction); window_to_world() selects the cell
      * containing its logical window position. File snapshots contain the grid
      * scene and do not include the ordinary Viewer HUD.
      * \see Viewer, ViewerBase, OffScreen
@@ -160,21 +160,21 @@ namespace easy3d {
                       int background = 0, bool expand = true) const override;
 
         /**
-         * \brief Project a world point using the active cell's camera viewport.
+         * \brief Convert a world point to logical window coordinates via the active cell.
          * \param world World-space point.
          * \return Continuous logical window coordinates and normalized depth.
          * \details The active cell starts at the top-left and changes when a
          * cell is pressed. Points are not clipped to the selected cell.
          */
-        vec3 project_point(const vec3& world) const override;
+        vec3 world_to_window(const vec3& world) const override;
 
         /**
-         * \brief Unproject a logical window position using its grid cell.
+         * \brief Convert a logical window position to world coordinates via its grid cell.
          * \param window Logical x/y position from the top-left and normalized
          *        depth in [0, 1].
          * \return Corresponding world-space point.
          */
-        vec3 unproject_point(const vec3& window) const override;
+        vec3 window_to_world(const vec3& window) const override;
 
         /**
          * \brief Remove a model and its assignments from every cell.

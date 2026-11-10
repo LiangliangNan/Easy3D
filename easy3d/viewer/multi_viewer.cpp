@@ -67,6 +67,10 @@ ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
     return ivec4(x,y,int(int64_t(col+1)*width/cols)-x,int(int64_t(row+1)*height/rows)-y);
 }
 #ifdef EASY3D_HAS_VULKAN
+// width/height are the cell's logical dimensions; the cell camera stays logical so
+// impostor radii (world-space via pixelGLRatio) carry DPI-independent sizing. The
+// caller passes the framebuffer cell width to Viewer::draw_commands for plain-size
+// scaling, and sets the GPU viewport to the framebuffer cell bounds.
 void configure_cell(Camera& cell,const Camera& source,int width,int height,float aspect) {
     cell.setScreenWidthAndHeight(width,height);
     mat4 projection=source.projectionMatrix();
@@ -125,11 +129,11 @@ void MultiViewer::update_division() {
     }
     view_width_=std::max(1,width()/num_cols_);view_height_=std::max(1,height()/num_rows_);
     const int fw=framebuffer_width(),fh=framebuffer_height();
-#ifdef EASY3D_HAS_VULKAN
-    camera()->setScreenWidthAndHeight(std::max(1,fw/num_cols_),std::max(1,fh/num_rows_));
-    division_commands_.clear();
-#else
+    // The shared cell camera carries logical dimensions on both backends; GPU cell
+    // viewports below stay in framebuffer pixels.
     camera()->setScreenWidthAndHeight(view_width_,view_height_);
+#ifdef EASY3D_HAS_VULKAN
+    division_commands_.clear();
 #endif
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         auto bounds=cell_bounds(r,c,num_rows_,num_cols_,fw,fh);
@@ -171,13 +175,14 @@ void MultiViewer::clear_scene() {
     for(auto& row:views_) for(auto& view:row) {view.models.clear();view.drawables.clear();}
     Viewer::clear_scene();
 }
-vec3 MultiViewer::project_point(const vec3& world) const {
+vec3 MultiViewer::world_to_window(const vec3& world) const {
     const int fw=framebuffer_width(),fh=framebuffer_height();
     const auto vp=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,fw,fh);
     if(vp.z<=0 || vp.w<=0) throw std::invalid_argument("multi-view cell has zero area");
     Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivotPoint());
 #ifdef EASY3D_HAS_VULKAN
-    configure_cell(cell,*camera(),vp.z,vp.w,camera()->aspectRatio());
+    const auto lv=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
+    configure_cell(cell,*camera(),lv.z,lv.w,camera()->aspectRatio());
 #else
     cell.set_projection_matrix(camera()->projectionMatrix());cell.set_modelview_matrix(camera()->modelViewMatrix());
 #endif
@@ -187,7 +192,7 @@ vec3 MultiViewer::project_point(const vec3& world) const {
     return vec3(float((vp.x+(p.x/p.w*.5+.5)*vp.z)*width()/fw),
                 float((vp.y+(.5-p.y/p.w*.5)*vp.w)*height()/fh),p.z/p.w*.5f+.5f);
 }
-vec3 MultiViewer::unproject_point(const vec3& window) const {
+vec3 MultiViewer::window_to_world(const vec3& window) const {
     const int fw=framebuffer_width(),fh=framebuffer_height();
     if(!std::isfinite(window.x) || !std::isfinite(window.y) || !std::isfinite(window.z) || fw<=0 || fh<=0)
         throw std::invalid_argument("invalid multi-view unprojection");
@@ -199,7 +204,8 @@ vec3 MultiViewer::unproject_point(const vec3& window) const {
     if(vp.z<=0 || vp.w<=0) throw std::invalid_argument("multi-view cell has zero area");
     Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivotPoint());
 #ifdef EASY3D_HAS_VULKAN
-    configure_cell(cell,*camera(),vp.z,vp.w,camera()->aspectRatio());
+    const auto lv=cell_bounds(row,col,num_rows_,num_cols_,width(),height());
+    configure_cell(cell,*camera(),lv.z,lv.w,camera()->aspectRatio());
 #else
     cell.set_projection_matrix(camera()->projectionMatrix());cell.set_modelview_matrix(camera()->modelViewMatrix());
 #endif
@@ -220,11 +226,14 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         const auto vp=cell_bounds(r,c,num_rows_,num_cols_,width,height);
         if(vp.z<=0 || vp.w<=0) continue;
+        // Logical cell bounds drive the cell camera (DPI-independent impostor sizing);
+        // the framebuffer cell width drives plain point/line scaling in draw_commands.
+        const auto lv=cell_bounds(r,c,num_rows_,num_cols_,Viewer::width(),Viewer::height());
         Camera cell(cam);cell.frame()->setPivotPoint(cam.pivotPoint());
         const float aspect=snapshot_active_?float(double(width)*num_rows_/(double(height)*num_cols_)):camera()->aspectRatio();
-        configure_cell(cell,snapshot_active_?*camera():cam,vp.z,vp.w,aspect);
+        configure_cell(cell,snapshot_active_?*camera():cam,lv.z,lv.w,aspect);
         std::vector<DrawSource> local;
-        const auto commands=Viewer::draw_commands(cell,width,height,&local,true);
+        const auto commands=Viewer::draw_commands(cell,vp.z,vp.w,&local,true);
         const auto& view=views_[r][c];
         for(auto command:commands) {
             if(command.object_id!=UINT32_MAX) {
@@ -254,10 +263,12 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     return result;
 }
 bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
+    // x/y are logical window coordinates; hit-test and record the origin in logical
+    // cell bounds so the camera frame actions stay DPI-independent.
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
-        const auto& vp=views_[r][c].viewport;
-        if(x>=vp.x && y>=vp.y && x<vp.x+vp.z && y<vp.y+vp.w) {
-            active_row_=r;active_col_=c;interaction_origin_=ivec2(vp.x,vp.y);
+        const auto lv=cell_bounds(r,c,num_rows_,num_cols_,width(),height());
+        if(x>=lv.x && y>=lv.y && x<lv.x+lv.z && y<lv.y+lv.w) {
+            active_row_=r;active_col_=c;interaction_origin_=ivec2(lv.x,lv.y);
             return Viewer::mouse_press_event(x,y,button,modifiers);
         }
     }
@@ -347,6 +358,13 @@ void MultiViewer::prepare_pick_view(int x,int y,int width,int height) const {
 }
 void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,bool guides) const {
     CellScissor clip;
+    // Partition the caller's render target (the current GL viewport) into physical cell
+    // viewports. Offscreen queries render into a framebuffer-sized target, while the
+    // overlay-depth callback renders into a snapshot-output-sized target; querying the
+    // viewport keeps cells aligned with either. The cell camera stays logical (camera()
+    // dims) so world-space impostor radii carry DPI-independent sizing.
+    GLint target[4];glGetIntegerv(GL_VIEWPORT,target);
+    const int fw=target[2],fh=target[3];
     Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());
     cell.setScreenWidthAndHeight(camera()->screenWidth(),camera()->screenHeight());
     cell.set_projection_matrix(snapshot.projectionMatrix());cell.set_modelview_matrix(snapshot.modelViewMatrix());
@@ -358,8 +376,8 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
     };
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         const auto& view=views_[r][c];
-        auto vp=cell_bounds(r,c,num_rows_,num_cols_,snapshot.screenWidth(),snapshot.screenHeight());
-        if(vp.z<=0 || vp.w<=0) continue;vp.y=snapshot.screenHeight()-vp.y-vp.w;
+        auto vp=cell_bounds(r,c,num_rows_,num_cols_,fw,fh);
+        if(vp.z<=0 || vp.w<=0) continue;vp.y=fh-vp.y-vp.w;
         glViewport(vp.x,vp.y,vp.z,vp.w);glScissor(vp.x,vp.y,vp.z,vp.w);
         for(const auto& model:models_) if(model->renderer() && (!source || source->model==model)) {
             const bool assigned=model->renderer()->is_visible() && std::find(view.models.begin(),view.models.end(),model.get())!=view.models.end();
@@ -383,7 +401,7 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
         }
     }
     if(guides && division_visible()) {
-        glViewport(0,0,snapshot.screenWidth(),snapshot.screenHeight());glScissor(0,0,snapshot.screenWidth(),snapshot.screenHeight());
+        glViewport(0,0,fw,fh);glScissor(0,0,fw,fh);
         glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);drawable_division_->draw(&snapshot);
         glEnable(GL_DEPTH_TEST);glDepthMask(GL_TRUE);
     }

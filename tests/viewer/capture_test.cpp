@@ -82,7 +82,7 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     auto cloud=std::dynamic_pointer_cast<PointCloud>(scanner.models().back());
     size_t count=0;for(unsigned y=0;y<expected.height;++y)for(unsigned x=0;x<expected.width;++x) {
         const auto p=size_t(y)*expected.width+x;if(expected.ids[p].object==UINT32_MAX)continue;
-        require(cloud && count<cloud->points().size() && distance(cloud->points()[count++],scanner.unproject_pixel(x,y,expected.depth[p]))<1e-4f,"tutorial scan lost framebuffer pixel centers");
+        require(cloud && count<cloud->points().size() && distance(cloud->points()[count++],scanner.pixel_to_world(x,y,expected.depth[p]))<1e-4f,"tutorial scan lost framebuffer pixel centers");
     }
     require(count>100 && cloud->n_vertices()==count,"tutorial scan omitted/added scene samples");
     require(scanner.camera()->pivotPoint()==pivot,"tutorial scan changed pivot");

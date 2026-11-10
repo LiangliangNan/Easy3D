@@ -138,11 +138,11 @@ int main(int argc,char**) {
         auto* mesh=dynamic_cast<SurfaceMesh*>(v.current_model());require(mesh && mesh->n_faces()>100,"Poisson reconstruction produced no surface");
         render(v,"cloud-reconstructed-surface");
 #ifdef EASY3D_HAS_VULKAN
-        const auto image=v.capture();bool picked=false;
-        for(unsigned y=0;y<image.height && !picked;y+=3) for(unsigned x=0;x<image.width && !picked;x+=3) {
-            if(image.ids[size_t(y)*image.width+x].object==UINT32_MAX) continue;
-            const auto hit=v.pick(int(x),int(y));
-            require(hit && hit.model.get()==mesh && hit.face_index>=0,"reconstructed surface lost face provenance");picked=true;
+        bool picked=false;
+        for(int ly=0; ly<v.height() && !picked; ++ly) for(int lx=0; lx<v.width() && !picked; ++lx) {
+            const auto hit=v.pick(lx,ly);
+            if(!hit) continue;
+            require(hit.model.get()==mesh && hit.face_index>=0,"reconstructed surface lost face provenance");picked=true;
         }
         require(picked,"reconstructed mesh did not produce picking IDs");
         require(v.device().validation_errors()==0,"cloud tutorial validation errors");

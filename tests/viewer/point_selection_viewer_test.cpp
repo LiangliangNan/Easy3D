@@ -25,7 +25,7 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
     for (size_t i=0;i<a.ids.size();++i)
         require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,"selection changed picking IDs");
 }
-// Deterministic framebuffer-coordinate events. macOS cursor warps/focus are
+// Deterministic logical-window events. macOS cursor warps/focus are
 // asynchronous; native callback routing is covered by vulkan.window.
 struct SelectionHost : TutorialPointSelection {
     using TutorialPointSelection::TutorialPointSelection;
@@ -54,8 +54,8 @@ struct Input {
     void shortcut(int code) { key(viewer.window(),code,0,GLFW_PRESS,0); }
 };
 vec2 project(Viewer& viewer,vec3 p) {
-    const auto q=viewer.camera()->modelViewProjectionMatrix()*vec4(p,1);
-    return vec2((q.x/q.w+1)*.5f*viewer.framebuffer_width(),(1-q.y/q.w)*.5f*viewer.framebuffer_height());
+    const auto q=viewer.world_to_window(p);
+    return vec2(q.x,q.y);
 }
 int main(int argc,char**) {
     try {
@@ -98,7 +98,9 @@ int main(int argc,char**) {
             input.move(c+vec2(20,-20)); input.move(c+vec2(20)); input.move(c+vec2(-20,20));
             frame(viewer); const auto guide=viewer.capture();
             require(guide.rgba!=baseline.rgba,"native translucent selection guide was not rendered"); same_picking(baseline,guide);
-            const size_t interior=4*(size_t(c.y)*guide.width+size_t(c.x+10));
+            const int ix=int((c.x+10)*guide.width/viewer.width());
+            const int iy=int(c.y*guide.height/viewer.height());
+            const size_t interior=4*(size_t(iy)*guide.width+ix);
             require(guide.rgba[interior]>250 && std::abs(int(guide.rgba[interior+1])-204)<=1 &&
                     std::abs(int(guide.rgba[interior+2])-204)<=1,"lasso interior did not contain the transparent fill");
             input.shortcut(GLFW_KEY_ESCAPE); input.release(GLFW_MOUSE_BUTTON_LEFT); frame(viewer);

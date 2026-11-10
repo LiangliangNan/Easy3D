@@ -27,6 +27,28 @@ void frame(Viewer& viewer) {
     }
     throw std::runtime_error("no frame was presented within bounded retries");
 }
+// pick() consumes logical window coordinates; the GPU samples the framebuffer pixel
+// floor(logical * framebuffer / logical). Map a logical pixel to that capture texel so
+// a pick depth can be compared against the matching capture sample.
+size_t sampled_texel(const Viewer& v, int lx, int ly, int fw, int fh) {
+    const int sx = std::min(fw - 1, int(std::floor(double(lx) * fw / v.width())));
+    const int sy = std::min(fh - 1, int(std::floor(double(ly) * fh / v.height())));
+    return size_t(sy) * fw + sx;
+}
+// Find the first logical pixel that picks the scene and verify its depth matches the
+// capture texel the query samples (pick is logical; capture is framebuffer-sized).
+void require_pick_depth(const Viewer& v, const graphics::FrameImage& cap, const char* msg) {
+    for (int ly = 0; ly < v.height(); ++ly)
+        for (int lx = 0; lx < v.width(); ++lx) {
+            const size_t si = sampled_texel(v, lx, ly, cap.width, cap.height);
+            if (cap.ids[si].object == UINT32_MAX) continue;
+            const auto hit = v.pick(lx, ly);
+            if (!hit) continue;
+            require(std::abs(v.camera()->projectedCoordinatesOf(hit.position).z - cap.depth[si]) < 1e-4f, msg);
+            return;
+        }
+    require(false, msg);
+}
 struct ThrowingViewer : Viewer {
     using Viewer::Viewer;
     bool key_press_event(int, int) override { throw std::runtime_error("expected callback failure"); }
@@ -71,20 +93,24 @@ int main(int argc, char**) {
         unsigned hit = 0;
         for (auto id : captured.ids) hit += id.object != UINT32_MAX;
         require(hit > 200, "presented scene is empty");
-        for (size_t i = 0; i < captured.ids.size(); ++i) {
-            if (captured.ids[i].object == UINT32_MAX) continue;
-            bool found = false;
-            const auto hit = viewer.pick(int(i % captured.width), int(i / captured.width));
-            auto point = hit.position; found = bool(hit);
-            const auto projected = viewer.camera()->projectedCoordinatesOf(point);
-            require(found && std::abs(projected.z - captured.depth[i]) < 1e-4f, "depth picking/unprojection mismatch");
-            const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(point,1);
-            const float px=(clip.x/clip.w+1)*.5f*captured.width;
-            const float py=(1-clip.y/clip.w)*.5f*captured.height;
-            require(std::abs(px-float(i%captured.width)-.5f)<1e-3f &&
-                    std::abs(py-float(i/captured.width)-.5f)<1e-3f,"world-point picking is offset from framebuffer pixel center");
-            break;
-        }
+        bool picked = false;
+        for (int ly = 0; ly < viewer.height() && !picked; ++ly)
+            for (int lx = 0; lx < viewer.width() && !picked; ++lx) {
+                const auto result = viewer.pick(lx, ly);
+                if (!result) continue;
+                const size_t si = sampled_texel(viewer, lx, ly, captured.width, captured.height);
+                const auto point = result.position;
+                const auto projected = viewer.camera()->projectedCoordinatesOf(point);
+                require(std::abs(projected.z - captured.depth[si]) < 1e-4f, "depth picking/unprojection mismatch");
+                const auto clip = viewer.camera()->modelViewProjectionMatrix() * vec4(point, 1);
+                const float px = (clip.x / clip.w + 1) * .5f * captured.width;
+                const float py = (1 - clip.y / clip.w) * .5f * captured.height;
+                require(std::abs(px - float(si % captured.width) - .5f) < 1e-3f &&
+                        std::abs(py - float(si / captured.width) - .5f) < 1e-3f,
+                        "world-point picking is offset from framebuffer pixel center");
+                picked = true;
+            }
+        require(picked, "no logical window pixel produced a scene pick");
         bool found = true; viewer.point_under_pixel(-1, 0, found);
         require(!found, "out-of-range depth picking returned a hit");
         // Camera controls travel through the registered native callbacks, including
@@ -130,33 +156,17 @@ int main(int argc, char**) {
         frame(viewer);
         auto spheres = viewer.capture();
         unsigned sphere_hits=0;
-        for (size_t i=0;i<spheres.ids.size();++i) {
-            if (spheres.ids[i].object==UINT32_MAX) continue;
-            if (sphere_hits++ == 0) {
-                bool found=false;
-                const auto hit = viewer.pick(int(i%spheres.width),int(i/spheres.width));
-                const auto p = hit.position; found = bool(hit);
-                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-spheres.depth[i])<1e-4f,
-                        "sphere window depth picking mismatch");
-            }
-        }
+        for (size_t i=0;i<spheres.ids.size();++i) if (spheres.ids[i].object!=UINT32_MAX) ++sphere_hits;
         require(sphere_hits>100,"sphere presentation/capture is empty");
+        require_pick_depth(viewer, spheres, "sphere window depth picking mismatch");
         points->set_impostor_type(PointsDrawable::SURFEL);
         viewer.set_samples(viewer.device().supported_sample_counts(graphics::PointStyle::surfel) & 4 ? 4 : 1);
         frame(viewer);
         auto discs = viewer.capture();
         unsigned disc_hits = 0;
-        for (size_t i = 0; i < discs.ids.size(); ++i) {
-            if (discs.ids[i].object == UINT32_MAX) continue;
-            if (disc_hits++ == 0) {
-                bool found = false;
-                const auto hit = viewer.pick(int(i%discs.width), int(i/discs.width));
-                const auto p = hit.position; found = bool(hit);
-                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-discs.depth[i]) < 1e-4f,
-                        "surfel window depth picking mismatch");
-            }
-        }
+        for (size_t i = 0; i < discs.ids.size(); ++i) if (discs.ids[i].object != UINT32_MAX) ++disc_hits;
         require(disc_hits > 100, "surfel presentation/capture is empty");
+        require_pick_depth(viewer, discs, "surfel window depth picking mismatch");
         points->set_impostor_type(PointsDrawable::PLAIN);
         frame(viewer); // same cached geometry, different point style
         points->set_visible(false);
@@ -174,17 +184,9 @@ int main(int argc, char**) {
             frame(viewer);
             const auto solid = viewer.capture();
             unsigned count = 0;
-            for (size_t i = 0; i < solid.ids.size(); ++i) {
-                if (solid.ids[i].object != 1) continue;
-                if (count++ == 0) {
-                    bool found = false;
-                    const auto hit = viewer.pick(int(i%solid.width), int(i/solid.width));
-                    const auto p = hit.position; found = bool(hit);
-                    require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-solid.depth[i]) < 1e-4f,
-                            "line impostor window depth picking mismatch");
-                }
-            }
+            for (size_t i = 0; i < solid.ids.size(); ++i) if (solid.ids[i].object == 1) ++count;
             require(count > 20, "line impostor presentation/capture is empty");
+            require_pick_depth(viewer, solid, "line impostor window depth picking mismatch");
         }
         segment->set_visible(false); faces->set_visible(true);
         viewer.hide(); Viewer::poll_events(); viewer.show(); frame(viewer);
@@ -233,17 +235,10 @@ int main(int argc, char**) {
         faces->set_scalar_coloring(State::VERTEX,"v:window_scalar",nullptr,0,0);
         model->renderer()->update(); frame(viewer);
         const auto textured = viewer.capture();
-        bool scalar_hit = false;
-        for (size_t i = 0; i < textured.ids.size(); ++i) {
-            if (textured.ids[i].object == UINT32_MAX) continue;
-            bool found = false;
-            const auto hit = viewer.pick(int(i%textured.width),int(i/textured.width));
-            const auto point = hit.position; found = bool(hit);
-            require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-textured.depth[i]) < 1e-4f,
-                    "scalar-textured window depth picking mismatch");
-            scalar_hit = true; break;
-        }
-        require(scalar_hit,"scalar-textured window is empty");
+        unsigned scalar_hits = 0;
+        for (size_t i = 0; i < textured.ids.size(); ++i) if (textured.ids[i].object != UINT32_MAX) ++scalar_hits;
+        require(scalar_hits > 0,"scalar-textured window is empty");
+        require_pick_depth(viewer, textured, "scalar-textured window depth picking mismatch");
         std::vector<graphics::Vertex> overlay_vertices(4);
         overlay_vertices[0].position=vec3(-1,-1,0); overlay_vertices[1].position=vec3(1,-1,0);
         overlay_vertices[2].position=vec3(1,1,0); overlay_vertices[3].position=vec3(-1,1,0);
@@ -253,20 +248,10 @@ int main(int argc, char**) {
         viewer.set_overlays({overlay}); frame(viewer);
         const auto composed=viewer.capture();
         require(composed.rgba!=textured.rgba,"native window overlay did not composite color");
-        bool overlay_pick_checked=false;
-        for (size_t i=0;i<composed.ids.size();++i) {
+        for (size_t i=0;i<composed.ids.size();++i)
             require(composed.ids[i].object==textured.ids[i].object && composed.ids[i].primitive==textured.ids[i].primitive &&
                     composed.depth[i]==textured.depth[i],"native overlay modified picking IDs/depth");
-            if (!overlay_pick_checked && composed.ids[i].object!=UINT32_MAX) {
-                bool found=false;
-                const auto hit = viewer.pick(int(i%composed.width),int(i/composed.width));
-                const auto point = hit.position; found = bool(hit);
-                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-composed.depth[i])<1e-4f,
-                        "overlay obscured native world-point picking");
-                overlay_pick_checked=true;
-            }
-        }
-        require(overlay_pick_checked,"native overlay picking test had no scene hit");
+        require_pick_depth(viewer, composed, "overlay obscured native world-point picking");
         viewer.set_overlays({}); frame(viewer);
         require(viewer.capture().rgba==textured.rgba,"clearing overlays retained stale color");
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");

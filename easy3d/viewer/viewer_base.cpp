@@ -72,14 +72,15 @@ namespace easy3d {
     //    matrix maps world -> clip; these helpers hide that matrix from callers.
     //  * Window (viewer) logical coordinates: top-left origin, x right, y down, in
     //    logical point units spanning [0,width) x [0,height) from viewer_size().
-    //    Mouse events and project_point()/unproject_point() use these, so client
+    //    Mouse events and world_to_window()/window_to_world() use these, so client
     //    code is independent of the display's pixel density.
     //  * Framebuffer pixels: physical device pixels spanning [0,fw) x [0,fh) from
-    //    framebuffer_size(). On a HiDPI display fw = width * dpi_scaling(). Only the
-    //    internal depth read in point_under_pixel() works in these units.
+    //    framebuffer_size(). On a HiDPI display fw = width * dpi_scaling(). The
+    //    world_to_pixel()/pixel_to_world() pair and the internal depth read in
+    //    point_under_pixel() work in these units.
     // Depth is always normalized to [0,1] (near=0, far=1) in the public APIs, matching
     // Vulkan; OpenGL's native [-1,1] clip depth is remapped here so both agree.
-    vec3 ViewerBase::project_point(const vec3 &world) const {
+    vec3 ViewerBase::world_to_window(const vec3 &world) const {
         finite_coordinates(world);
         int w, h;
         viewer_size(w, h);
@@ -92,9 +93,9 @@ namespace easy3d {
         finite_coordinates(result);
         return result;
     }
-    // Inverse of project_point(): window logical coordinates (top-left origin,
+    // Inverse of world_to_window(): window logical coordinates (top-left origin,
     // depth in [0,1]) -> world space. See the coordinate contract above.
-    vec3 ViewerBase::unproject_point(const vec3 &window) const {
+    vec3 ViewerBase::window_to_world(const vec3 &window) const {
         finite_coordinates(window);
         int w, h;
         viewer_size(w, h);
@@ -102,6 +103,27 @@ namespace easy3d {
             throw std::invalid_argument("viewer unprojection requires a positive window size");
         const auto inv = checked_inverse(camera()->modelViewProjectionMatrix());
         return homogeneous_point(inv * vec4(2 * window.x / w - 1, 1 - 2 * window.y / h, 2 * window.z - 1, 1));
+    }
+    // Logical window coordinates scaled into framebuffer pixels. The depth component
+    // is unchanged. See the coordinate contract above.
+    vec3 ViewerBase::world_to_pixel(const vec3 &world) const {
+        const vec3 window = world_to_window(world);
+        int w, h, fw, fh;
+        viewer_size(w, h);
+        framebuffer_size(fw, fh);
+        return vec3(window.x * fw / w, window.y * fh / h, window.z);
+    }
+    // Framebuffer pixel center (top-left origin, depth in [0,1]) -> world space.
+    // Converts the pixel center to logical window coordinates and unprojects. See
+    // the coordinate contract above.
+    vec3 ViewerBase::pixel_to_world(int x, int y, float depth) const {
+        int w, h, fw, fh;
+        viewer_size(w, h);
+        framebuffer_size(fw, fh);
+        if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= fw || y >= fh ||
+            !std::isfinite(depth) || depth < 0 || depth > 1)
+            throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
+        return window_to_world(vec3(float((x + .5) * w / fw), float((y + .5) * h / fh), depth));
     }
     // Fresh visible-surface query at a logical window pixel. Maps the logical
     // coordinate to its containing framebuffer pixel (DPI-aware), reads the scene
@@ -116,20 +138,12 @@ namespace easy3d {
             return vec3(0);
         const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
         const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
-        const mat4 projection = camera()->projectionMatrix(), view = camera()->modelViewMatrix();
-        checked_inverse(projection * view);
-        // Camera's copy/resize recomputes projection lazily. Prime its caches before
-        // installing the exact live matrices, including temporary custom matrices.
-        Camera snapshot(*camera());
-        snapshot.setScreenWidthAndHeight(fw, fh);
-        snapshot.projectionMatrix();
-        snapshot.modelViewMatrix();
-        snapshot.set_projection_matrix(projection);
-        snapshot.set_modelview_matrix(view);
         float depth = 1;
-        if (!read_scene_depth(px, py, snapshot, depth) || !std::isfinite(depth) || depth < 0 || depth >= 1)
+        // The live camera carries logical screen dimensions on both backends; the
+        // depth read renders into a framebuffer-sized target (see read_scene_depth).
+        if (!read_scene_depth(px, py, *camera(), depth) || !std::isfinite(depth) || depth < 0 || depth >= 1)
             return vec3(0);
-        const auto world = unproject_point(vec3(float((px + .5) * w / fw), float((py + .5) * h / fh), depth));
+        const auto world = pixel_to_world(px, py, depth);
         found = true;
         return world;
     }

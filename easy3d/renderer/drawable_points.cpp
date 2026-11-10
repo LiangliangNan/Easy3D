@@ -122,7 +122,7 @@ namespace easy3d {
         // needs be padded when using uniform blocks
         const mat3 NORMAL = transform::normal_matrix(MANIP);
 
-        glPointSize(point_size());
+        glPointSize(point_size() * viewport_pixel_scale(*camera));
 
         program->bind();
         program->set_uniform("MANIP", MANIP)
@@ -175,10 +175,9 @@ namespace easy3d {
                 ->set_uniform("MV", camera->modelViewMatrix())
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix())
-                ->set_uniform("screen_width", camera->screenWidth());
+                ->set_uniform("screen_width", camera->screenWidth() * viewport_pixel_scale(*camera));
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("sphere_radius", point_size() * ratio * 0.5f)  // 0.5f from size -> radius
+        program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("default_color",color())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -224,8 +223,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("sphere_radius", point_size() * ratio * 0.5f)  // 0.5f from size -> radius
+        program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("default_color",color())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -277,7 +275,7 @@ namespace easy3d {
         // needs be padded when using uniform blocks
         const mat3 NORMAL = transform::normal_matrix(MANIP);
 
-        glPointSize(point_size());
+        glPointSize(point_size() * viewport_pixel_scale(*camera));
 
         program->bind();
         program->set_uniform("MANIP", MANIP)
@@ -337,8 +335,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("sphere_radius", point_size() * ratio * 0.5f)  // 0.5f from size -> radius
+        program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting",lighting());
 
@@ -395,8 +392,7 @@ namespace easy3d {
                 ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("default_color",color());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", point_size() * ratio * 0.5f)  // 0.5f from size -> radius
+        program->set_uniform("radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("lighting",lighting())
@@ -452,8 +448,7 @@ namespace easy3d {
                 ->set_uniform("MANIP", MANIP)
                 ->set_uniform( "NORMAL", NORMAL);
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", point_size() * ratio * 0.5f)  // 0.5f from size -> radius
+        program->set_uniform("radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("lighting",lighting())

@@ -49,9 +49,9 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
         require(hit.model==expected && hit.face_index==0 && hit.drawable==expected->renderer()->triangles_drawables().front(),"offscreen source ownership/provenance is wrong");
         require(std::abs(hit.position.z-z)<1e-5f,"offscreen world hit is wrong");
         bool found=false;const auto p=v.point_under_pixel(x,y,found);
-        require(found && distance(p,hit.position)<1e-4f && distance(v.unproject_pixel(x,y,hit.depth),hit.position)<1e-5f,"offscreen query/unprojection contracts diverged");
-        const auto q=v.project_point(hit.position);require(std::abs(q.x-x-.5f)<1e-3f && std::abs(q.y-y-.5f)<1e-3f,"offscreen projection lost the exact pixel center");
-        require(distance(v.unproject_point(q),hit.position)<1e-4f,"offscreen coordinate round trip failed");
+        require(found && distance(p,hit.position)<1e-4f && distance(v.pixel_to_world(x,y,hit.depth),hit.position)<1e-5f,"offscreen query/unprojection contracts diverged");
+        const auto q=v.world_to_window(hit.position);require(std::abs(q.x-x-.5f)<1e-3f && std::abs(q.y-y-.5f)<1e-3f,"offscreen projection lost the exact pixel center");
+        require(distance(v.window_to_world(q),hit.position)<1e-4f,"offscreen coordinate round trip failed");
         require(!v.pick(-1,y) && !v.pick(v.width(),y),"outside offscreen query returned a source");
         for(unsigned i=0;i<16;++i)require(std::abs(v.camera()->modelViewProjectionMatrix()[i]-camera_matrix[i])<1e-6f,"offscreen query changed camera matrices");
         require(v.camera()->pivotPoint()==saved_pivot,"offscreen query changed camera pivot");
@@ -84,7 +84,7 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
     require(a.width()==173 && a.height()==133 && a.framebuffer_width()==173 && a.dpi_scaling()==1,"offscreen fixed pixel canvas changed after native callbacks");
     a.set_overlays({});verify(a,mesh,0);
     for(unsigned i=0;i<16;++i) require(std::isfinite(a.camera()->modelViewProjectionMatrix()[i]),"offscreen resize produced invalid matrices");
-    bool rejected=false;try{a.unproject_pixel(0,0,std::numeric_limits<float>::quiet_NaN());}catch(const std::invalid_argument&){rejected=true;}
+    bool rejected=false;try{a.pixel_to_world(0,0,std::numeric_limits<float>::quiet_NaN());}catch(const std::invalid_argument&){rejected=true;}
     require(rejected,"offscreen unprojection accepted nonfinite depth");
     a.set_overlays({overlay});a.clear_scene();
     require(!a.pick(86,66) && a.select_points(request)==std::vector<uint32_t>{1},"clear_scene retained geometry or invalidated a retained GPU point snapshot");

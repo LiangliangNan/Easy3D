@@ -31,13 +31,30 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/buffer.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/setting.h>
 #include <easy3d/util/stop_watch.h>
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
+#endif
 
 
 namespace easy3d {
+
+    float impostor_radius(const Camera& camera, float size) {
+        return size * camera.pixelGLRatio(camera.pivotPoint()) * 0.5f;
+    }
+
+#ifndef EASY3D_HAS_VULKAN
+    float viewport_pixel_scale(const Camera& camera) {
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        const int w = camera.screenWidth();
+        return w > 0 ? float(viewport[2]) / float(w) : 1.0f;
+    }
+#endif
 
     void Drawable::set_source_faces(const std::vector<int>& faces) {
         if (!cpu_buffers_ || type()!=DT_TRIANGLES) throw std::logic_error("face provenance requires CPU triangle buffers");

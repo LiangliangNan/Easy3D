@@ -545,7 +545,7 @@ public:
         //@{
         /**
          * \brief Outcome of a synchronous visible-surface pick.
-         * \details Coordinates are in top-left framebuffer pixels; the world point is
+         * \details The query uses logical window coordinates; the world point is
          *      resolved through the camera of this host. Standalone drawables have a
          *      model of null. Face indices describe the picked surface at query time and
          *      are not updated by later topology edits.
@@ -568,16 +568,17 @@ public:
         };
 
         /**
-         * \brief Pick the nearest visible scene primitive at a framebuffer pixel.
-         * \param x Framebuffer x coordinate, with the origin at top-left.
-         * \param y Framebuffer y coordinate, with the origin at top-left.
+         * \brief Pick the nearest visible scene primitive at a logical window pixel.
+         * \param x Logical window x coordinate, with the origin at top-left.
+         * \param y Logical window y coordinate, with the origin at top-left.
          * \return PickResult with the hit drawable and available provenance;
-         *         an empty result when the pixel is outside the framebuffer or
+         *         an empty result when the pixel is outside the logical window or
          *         shows only the background.
          * \details This synchronous whole-scene query retains shared ownership
          * of the hit model and drawable. A returned face index describes the
          * mesh at query time and is not updated after topology edits. HUD and
-         * overlay content is not pickable.
+         * overlay content is not pickable. Coordinates are DPI-independent and
+         * identical on the OpenGL and Vulkan backends.
          */
         PickResult pick(int x, int y) const;
         //@}
@@ -627,15 +628,6 @@ public:
          * \return Reference to the effective world-space plane equations.
          */
 	    const std::vector<vec4>& clipping_planes() const;
-
-        /**
-         * \brief Unproject a framebuffer pixel and normalized depth to world space.
-         * \param x Framebuffer x coordinate, with the origin at top-left.
-         * \param y Framebuffer y coordinate, with the origin at top-left.
-         * \param depth Normalized depth in [0, 1].
-         * \return World-space position at the pixel center.
-         */
-	    virtual vec3 unproject_pixel(int x, int y, float depth) const;
 
         /**
          * \brief Capture the current viewer image and scene attachments.
@@ -756,6 +748,9 @@ public:
          * \param button ViewerInput::Button identifier.
          * \param modifiers ViewerInput::Modifier bit mask.
          * \return True to consume the event before built-in controls.
+         * \details All mouse hooks use DPI-independent logical window coordinates
+         * on both the OpenGL and Vulkan backends, matching ViewerCallbacks and
+         * world_to_window()/window_to_world().
          */
         virtual bool mouse_press_event(int x, int y, int button, int modifiers);
 

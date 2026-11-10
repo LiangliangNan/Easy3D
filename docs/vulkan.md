@@ -195,7 +195,12 @@ needs no change.
 
 ## Coordinate System Conventions
 
-*Established 2026-11-07 (Batch 35).* Easy3D uses three distinct coordinate systems. All code must follow these conventions consistently.
+*Established 2026-11-07 (Batch 35); corrected and made backend-uniform in Batch 46
+(2026-11-09).* Easy3D uses three distinct coordinate systems. All code must follow these
+conventions consistently. Batch 46 removed the last backend divergence: legacy mouse hooks,
+`Camera::screenWidth()/Height()`, `Viewer::pick()` and the world↔window/pixel conversion API
+are now logical/DPI-independent on **both** OpenGL and Vulkan. The Batch 36 claim that these
+already matched was aspirational; Batch 46 is what makes it true.
 
 ### Three Coordinate Systems
 
@@ -203,7 +208,10 @@ needs no change.
    - **Methods**: `Viewer::width()`, `Viewer::height()`, `ViewerBase::viewer_size(w, h)`, `Camera::screenWidth()`, `Camera::screenHeight()`
    - **Purpose**: UI layout, window events, mouse coordinates, camera operations, projection calculations
    - **Characteristics**: Represents the logical window size as the user perceives it; same on all DPI displays
-   - **Key relationship**: `Camera::screenWidth()/Height()` == `Viewer::width()/height()` (kept in sync automatically)
+   - **Key relationship**: `Camera::screenWidth()/Height()` == `Viewer::width()/height()` for a single-view
+     `Viewer` (kept in sync automatically). A `MultiViewer`'s `camera()` instead describes one cell, so its
+     screen dimensions are the logical cell size, not the whole window. These dimensions are logical on
+     **both** backends (Batch 46); no framebuffer-size members were added to `Camera`.
 
 2. **Framebuffer Coordinates** (physical pixels, DPI-dependent)
    - **Methods**: `Viewer::framebuffer_width()`, `Viewer::framebuffer_height()`, `ViewerBase::framebuffer_size(w, h)`
@@ -212,10 +220,27 @@ needs no change.
    - **Key relationship**: `framebuffer_width = width * dpi_scaling()`
 
 3. **Mouse/Event Coordinates**
-   - **Methods**: Parameters passed to mouse callbacks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.)
+   - **Methods**: Parameters passed to mouse callbacks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.) and the portable `set_callbacks` hooks
    - **Purpose**: User interaction, picking, hover detection
-   - **Characteristics**: Always in logical window coordinates with top-left origin (0,0)
+   - **Characteristics**: Always in logical window coordinates with top-left origin (0,0), on **both** backends (Batch 46 unified the legacy hooks; Vulkan previously delivered framebuffer pixels)
    - **Usage**: Use directly with `width()`/`height()` for bounds checking; pass to camera methods like `projectedCoordinatesOf()`
+
+### World ↔ Window/Pixel Conversion API (Batch 46)
+
+The old confusing names (`project_point`, `unproject_point`, `unproject_pixel`) were replaced by a
+clean, self-describing pair of conversions on `ViewerBase` (inherited by `Viewer`/`MultiViewer`/`OffScreen`):
+
+- `world_to_window(vec3 world)` / `window_to_world(vec3 window)` — between world space and **logical window**
+  coordinates (`vec3(x, y, depth)`, top-left origin, depth normalized [0,1]).
+- `world_to_pixel(vec3 world)` / `pixel_to_world(int x, int y, float depth)` — between world space and
+  **framebuffer pixels** (GPU-only physical pixels, top-left origin). `world_to_pixel` returns the framebuffer
+  pixel position plus normalized depth; `pixel_to_world` validates the pixel against the framebuffer bounds and
+  the depth against [0,1].
+- `point_under_pixel(x, y, found)` — convenience that reads fresh scene-only depth at a **logical window**
+  position and returns the world point; it maps logical→framebuffer internally and delegates to `pixel_to_world`.
+- `Viewer::pick(x, y)` — GPU picking in **logical window** coordinates on both backends (Batch 46).
+
+Depth is normalized [0,1] (near=0, far=1); OpenGL's [-1,1] window depth is remapped at the boundary.
 
 ### When to Use Which
 
@@ -249,6 +274,14 @@ needs no change.
 
 5. **Default to logical**: When in doubt, use logical window coordinates. They work for most operations and are DPI-independent.
 
+6. **Drawable sizes are logical pixels**: `PointsDrawable::point_size()` and `LinesDrawable::line_width()`
+   are expressed in **logical pixels** (DPI-independent) on both backends (Batch 46; the OpenGL-imposter
+   behavior won). Impostor radii are computed once via the shared `impostor_radius(camera, size)` helper
+   (`size * camera.pixelGLRatio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
+   points/lines rasterize in framebuffer pixels and are scaled from logical size by the viewport-to-camera
+   ratio (`viewport_pixel_scale(camera)` on OpenGL; the target/camera ratio in Vulkan `draw_commands`).
+   `Camera::pixelGLRatio()` therefore returns world-units-per-**logical**-pixel on both backends.
+
 ### Example: Correct Coordinate Usage
 
 ```cpp
@@ -281,6 +314,9 @@ void MyViewer::setup_viewport() {
 - **Don't use `width()` for texture allocation** - textures need physical pixel dimensions
 - **Don't assume logical == framebuffer** - they differ on high-DPI displays
 - **Don't manually convert between systems** - use `dpi_scaling()` when needed: `framebuffer = logical * dpi_scaling()`
+- **Don't use the old conversion names** - `project_point`/`unproject_point`/`unproject_pixel` are gone (Batch 46);
+  use `world_to_window`/`window_to_world` (logical) and `world_to_pixel`/`pixel_to_world` (framebuffer)
+- **Don't pass framebuffer pixels to `pick()`/`point_under_pixel()`** - both take logical window coordinates now
 
 ## Migration goal and backend policy
 
@@ -1826,7 +1862,7 @@ hit to its source. `VulkanViewer` inherits this API; its input callbacks already
 convert logical cursor positions to framebuffer pixels, including HiDPI.
 
 ```cpp
-const auto hit = viewer.pick(x, y); // top-left framebuffer pixels
+const auto hit = viewer.pick(x, y); // logical window coordinates (Batch 46; was framebuffer pixels)
 if (hit) {
     // hit.model is null for a standalone drawable; hit.drawable owns its source.
     const auto point = hit.position; // world-space surface position at pixel center
@@ -7122,3 +7158,77 @@ after a sorted frame, under validation layers. This mirrors the OpenGL
 140/140 (134 s), including the new overflow assertions and shared input/benchmark tests.
 The OpenGL Release tree (`build-opengl`) passes `opengl.input` and `viewer.pointbenchmark`.
 Linux/Mesa, Windows hardware, and the GitHub CI workflow remain separate, non-local gates.
+
+### 2026-11-09 — W10 batch 46: unified coordinate API and backend parity (resolves batch-45 divergences)
+
+**Scope.** Resolves the two coordinate issues raised after batch 45, together with the
+point-imposter size divergence. The batch-45 "divergences recorded" note on legacy mouse hooks
+and `Camera::screenWidth()/Height()` is superseded: those are now uniform. No framebuffer-size
+members or functions were added to `Camera` (it remains purely camera/view manipulation).
+
+**Issue 1 — backend parity (logical everywhere).**
+- *Legacy mouse hooks* now deliver **logical window coordinates on both backends**. The Vulkan
+  callbacks keep GLFW's logical cursor coordinates and dispatch the same
+  logical values to both the portable `dispatch_*` hooks and the legacy `mouse_*_event` virtuals
+  (previously Vulkan delivered framebuffer pixels to the legacy hooks). The shared
+  `tests/viewer/input_test.cpp` no longer needs the `#ifdef` camera/framebuffer bridge:
+  `pick(mx,my)` and the hook target use the same logical coordinates on both backends.
+- *`Camera::screenWidth()/Height()`* are **logical on both backends**. Vulkan no longer resizes
+  the camera to framebuffer dimensions; the logical camera plus a physical viewport is the
+  single source of truth (matching the OpenGL normal-draw path). For a single-view `Viewer` the
+  camera dimensions equal `width()/height()`; a `MultiViewer` camera describes one logical cell.
+- *`Viewer::pick(x,y)`* takes **logical window coordinates** on both backends (was framebuffer on
+  Vulkan). OpenGL maps logical→framebuffer internally (`floor(x*fw/w)`, clamped) and reads depth
+  from a full-framebuffer FBO while keeping the snapshot camera logical (the previous fb resize
+  was the bug). Vulkan maps through the same logical contract.
+- The normative *Coordinate System Conventions* style guide above was corrected: the batch-36
+  claim that camera/viewer logical sizes and mouse hooks already matched was aspirational; batch
+  46 is what makes it true.
+
+**Issue 2 — clean conversion rename (no deprecated aliases).**
+`project_point`→`world_to_window`, `unproject_point`→`window_to_world`,
+`unproject_pixel`→`pixel_to_world`, plus the new `world_to_pixel`. `point_under_pixel`
+remains a convenience (logical input, reads fresh scene depth, delegates to `pixel_to_world`);
+the duplicative `Viewer::unproject_pixel` was removed in favor of `ViewerBase::pixel_to_world`.
+The new names state their coordinate systems explicitly: `*_to_window`/`window_to_*` are logical,
+`*_to_pixel`/`pixel_to_*` are framebuffer. Updated across `ViewerBase`/`Viewer`/`MultiViewer`/
+`OffScreen`, the picker docs, the Python bindings (`world_to_window`, `window_to_world`,
+`world_to_pixel`, `pixel_to_world`), all viewer tests, `tests/python/rendering.py`, and the
+installed-package test. A migration note is recorded here; client code must rename calls.
+
+**Point-imposter / plain-size contract (OpenGL behavior adopted).**
+`PointsDrawable::point_size()` and `LinesDrawable::line_width()` are **logical pixels**
+(DPI-independent) on both backends — the OpenGL-imposter behavior won as the more user-friendly
+contract (the OpenGL imposters previously looked ~2× the Vulkan ones because Vulkan sized in
+framebuffer pixels). A shared `impostor_radius(camera, size)` helper in `renderer/drawable.cpp`
+computes `size * camera.pixelGLRatio(pivot) * 0.5f` (world-space) and is used by both the OpenGL
+drawables (`drawable_points.cpp`, `drawable_lines.cpp`) and the Vulkan backend
+(`backends/vulkan/drawable.cpp`), removing the repeated `ratio * 0.5f` code. Plain points/lines
+rasterize in framebuffer pixels and are scaled from logical size by the viewport-to-camera ratio:
+`viewport_pixel_scale(camera)` (OpenGL, `GL_VIEWPORT/camera.screenWidth`) and the target/camera
+ratio in Vulkan `draw_commands`. Because every Vulkan render path funnels through
+`draw_commands`/`frame_commands`, the scaling is uniform across draw, transparency, pick,
+snapshot and capture. `Camera::pixelGLRatio()` now returns world-units-per-logical-pixel on both
+backends. `LinesDrawable` uses native GL lines only when the logical width maps to ≤1 physical
+pixel; otherwise the geometry-shader impostor path keeps DPI-independent thickness.
+
+**Snapshot sphere parity.** The supplied Tutorial 302 snapshots exposed a separate OpenGL
+perspective-sphere error: the fragment shaders multiplied local ray coordinates by 1.5 while
+the geometry shaders still emitted a unit quad, shrinking spheres to roughly two-thirds of
+their intended diameter. Both color and texture paths now expand the proxy quad and its ray
+coordinates together; the world radius is unchanged. Orthographic sizing is unchanged.
+OpenGL capture and depth-preview rendering also retain the logical camera rather than resizing
+it to the physical target. The shared `portablepick` regression checks snapshot silhouettes
+against an independent ray/sphere oracle for perspective/orthographic cameras, color/textured
+spheres, 1×/1.5× output scaling and 1×/4× MSAA, plus capture/pick depth agreement.
+Direct image comparisons on macOS found identical single-sample perspective silhouettes;
+MSAA and orthographic rasterization can differ at the one-pixel boundary.
+
+**Validation (2026-11-10, macOS).** Both Release builds completed. Final serial CTest runs
+passed OpenGL 106/106 (`build-opengl`, 28 s) and Vulkan 140/140 (`cmake-build-release`, 165 s).
+Additional framebuffer-pixel-center and logical-window round-trip assertions passed on both
+backends (included in the final OpenGL suite and rerun separately as `vulkan.query`). Earlier
+runs encountered intermittent desktop-input failures in the ImGui menu/cross-section tests;
+isolated reruns and the final full runs passed. The snapshot silhouette tests passed on both
+backends, and their generated images were inspected and compared. Linux/Mesa, Windows hardware
+and GitHub CI were not run; these remain separate validation gates.

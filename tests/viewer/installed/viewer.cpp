@@ -49,7 +49,7 @@ int main() {
         bool found=false;
         const auto hit=viewer->point_under_pixel(viewer->width()/2,viewer->height()/2,found);
         require(found && std::abs(hit.x)<1e-4f, "installed viewer surface query failed");
-        require(distance(viewer->unproject_point(viewer->project_point(hit)),hit)<1e-4f,
+        require(distance(viewer->window_to_world(viewer->world_to_window(hit)),hit)<1e-4f,
                 "installed viewer coordinate conversion failed");
         require(before==0 && after==0, "installed viewer query invoked frame callbacks");
         viewer->set_animation_callback([&](ViewerBase* host) { ++ticks; host->set_animation(false); return true; });

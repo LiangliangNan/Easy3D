@@ -72,13 +72,13 @@ namespace easy3d {
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
 	    /**
-         * \brief Returns the width of the lines.
-         * \return The width of the lines.
+         * \brief Returns the line width in logical pixels (DPI-independent).
+         * \return The line width in logical pixels, identical on both backends.
          */
         float line_width() const { return line_width_; }
 		/**
-		 * \brief Sets the width of the lines.
-		 * \param w The new width of the lines.
+		 * \brief Sets the line width in logical pixels (DPI-independent).
+		 * \param w The new line width in logical pixels.
 		 */
         void set_line_width(float w) { line_width_ = w; }
 

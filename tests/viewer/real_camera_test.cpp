@@ -21,8 +21,8 @@ void frame(Viewer& v) {
     for (unsigned i=0;i<100;++i) {Viewer::poll_events();if (v.draw_frame()) return;glfwWaitEventsTimeout(.01);}
     throw std::runtime_error("real-camera frame did not present");
 }
-void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
-    require(a.depth==b.depth && a.ids.size()==b.ids.size(),"image/cross/MSAA changed scene depth");
+void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b,const char* message) {
+    require(a.depth==b.depth && a.ids.size()==b.ids.size(),message);
     for (size_t i=0;i<a.ids.size();++i)
         require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,"image/cross/MSAA changed source IDs");
 }
@@ -72,22 +72,23 @@ int main(int argc,char**) {
         RealCameraViewer v("Native real camera",root+"bundle.out",root+"pointcloud.ply"); set_size(v, options);
         block_navigation_input(v);
         require(v.models().size()==1 && v.hint().find("corresponding 3D ray")!=std::string::npos,"scene/usage hint missing");
-        const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);
+        const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial,"image overlay changed scene depth");
         // Window callbacks can populate annotations while resize events settle.
         // Validate actual source pixels, independent of the first capture's timing.
         image_pixels(v,initial,root+"images/0000.jpg");
-        if (v.device().supported_sample_counts()&4) {v.set_samples(4);frame(v);same_picking(initial,v.capture());}
+        if (v.device().supported_sample_counts()&4) {v.set_samples(4);frame(v);same_picking(initial,v.capture(),"MSAA changed scene depth");}
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code) {key(v.window(),code,0,GLFW_PRESS,0);frame(v);};
         auto cursor=glfwSetCursorPosCallback(v.window(),nullptr);glfwSetCursorPosCallback(v.window(),cursor);
         auto hover=[&](int x,int y) {
-            cursor(v.window(),x/v.dpi_scaling(),y/v.dpi_scaling());
+            cursor(v.window(),x,y);
             // Render the injected event before polling unrelated native cursor events.
             require(v.draw_frame(),"synthetic hover frame did not present");
         };
         const auto rect=v.image_rect();
         require(std::abs(rect.x_min()-20*v.dpi_scaling())<1e-4f && std::abs(rect.y_min()-120*v.dpi_scaling())<1e-4f,"inset margins ignored DPI");
-        const auto clean=v.capture();hover(int(rect.center().x),int(rect.center().y));
+        const auto clean=v.capture();
+        hover(int(rect.center().x*v.width()/v.framebuffer_width()),int(rect.center().y*v.height()/v.framebuffer_height()));
         LinesDrawable* ray=nullptr;LinesDrawable* cameras=nullptr;
         for (const auto& d:v.drawables()) {
             if (d->name()=="ray") ray=dynamic_cast<LinesDrawable*>(d.get());
@@ -96,16 +97,17 @@ int main(int argc,char**) {
         require(ray && ray->is_visible() && cameras,"image hover did not create visible 3D ray/camera guides");
         require(ray->cpu_buffers().vertices.size()==2 &&
                 (ray->cpu_buffers().vertices[0]-TutorialRealCamera::camera_pos(views[0].R,views[0].t)).norm()<1e-4f,"ray origin differs from source camera");
-        hover(-10,-10);require(!ray->is_visible(),"leaving inset retained ray");same_picking(clean,v.capture());
+        hover(-10,-10);require(!ray->is_visible(),"leaving inset retained ray");same_picking(clean,v.capture(),"hidden ray changed scene depth");
         const auto scene=v.capture();bool marked=false;
-        for (size_t i=0;i<scene.ids.size();i+=7) {
+        for (int y=0;y<v.height() && !marked;++y) for (int x=0;x<v.width() && !marked;++x) {
+            const int px=int(double(x)*scene.width/v.width()),py=int(double(y)*scene.height/v.height());
+            const size_t i=size_t(py)*scene.width+px;
             if (scene.ids[i].object!=0) continue;
-            const int x=int(i%scene.width),y=int(i/scene.width);
-            if (x>=rect.x_min() && x<=rect.x_max() && y>=rect.y_min() && y<=rect.y_max()) continue;
-            const auto p=v.unproject_pixel(x,y,scene.depth[i]);
+            if (px>=rect.x_min() && px<=rect.x_max() && py>=rect.y_min() && py<=rect.y_max()) continue;
+            const auto p=v.pixel_to_world(px,py,scene.depth[i]);
             const auto q=TutorialRealCamera::point_to_pixel(p,views[0].focal,views[0].focal,0,1520.69f,1006.81f,views[0].R,views[0].t);
             if (!(q.x>310 && q.x<2760 && q.y>210 && q.y<1840)) continue;
-            hover(x,y);const auto cross=v.capture();same_picking(scene,cross);
+            hover(x,y);const auto cross=v.capture();same_picking(scene,cross,"correspondence cross changed scene depth");
             const int cx=int(rect.x_min()+q.x/3072*rect.width()),cy=int(rect.y_min()+q.y/2048*rect.height());
             const auto offset=(size_t(cy)*cross.width+cx)*4;
             require(cross.rgba[offset]<10 && cross.rgba[offset+1]>240 && cross.rgba[offset+2]<10,"scene hover did not mark corresponding image point");

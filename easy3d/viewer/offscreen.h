@@ -167,13 +167,14 @@ namespace easy3d {
         using Viewer::PickResult;
         using Viewer::point_resource;
         using Viewer::point_under_pixel;
-        using Viewer::project_point;
+        using Viewer::pixel_to_world;
         using Viewer::select_points;
         using Viewer::set_background_color;
         using Viewer::set_overlays;
-        using Viewer::unproject_pixel;
-        using Viewer::unproject_point;
+        using Viewer::window_to_world;
         using Viewer::width;
+        using Viewer::world_to_pixel;
+        using Viewer::world_to_window;
         //@}
 #ifdef EASY3D_HAS_VULKAN
         // Transitional native scene operations, retained until the picker migration.

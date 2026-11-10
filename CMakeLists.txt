@@ -22,7 +22,7 @@ option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)" 
 option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"    OFF)
 # Build the video encoding module that requires ffmpeg
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
-# A build contains exactly one renderer, ether Vulkan or OpenGL
+# A build contains exactly one renderer: ON for Vulkan, OFF for OpenGL
 option(Easy3D_ENABLE_VULKAN "Build the viewers/renderers with Vulkan"                         ON)
 
 ################################################################################

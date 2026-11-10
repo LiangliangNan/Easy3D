@@ -573,15 +573,15 @@ namespace easy3d {
 		projectionMatrixIsUpToDate_ = false;
 	}
 
-	/*! Returns the ratio between pixel and OpenGL units at \p position.
+	/*! Returns the ratio between logical pixels and OpenGL (world) units at \p position.
 
 	 A line of \c n * pixelGLRatio() OpenGL units, located at \p position in the
-	 world coordinates system, will be projected with a length of \c n pixels on
-	 screen.
+	 world coordinates system, will be projected with a length of \c n logical
+	 pixels on screen (DPI-independent; screenHeight() is logical on both backends).
 
-	 Use this method to scale objects so that they have a constant pixel size on
-	 screen. The following code will draw a 20 pixel line, starting at sceneCenter()
-	 and always directed along the screen vertical direction: \code
+	 Use this method to scale objects so that they have a constant logical pixel size
+	 on screen. The following code will draw a 20 logical pixel line, starting at
+	 sceneCenter() and always directed along the screen vertical direction: \code
 	 glBegin(GL_LINES);
 	 glVertex3fv(sceneCenter());
 	 glVertex3fv(sceneCenter() + 20 * pixelGLRatio(sceneCenter()) *

@@ -88,11 +88,10 @@ bool TutorialObjectManipulation::mouse_press_event(int x, int y, int button, int
         return true;
     }
     if (modifiers == 0 && button == BUTTON_LEFT) {
-        // GPU pick at the cursor (convert logical screen units to framebuffer pixels for
-        // HiDPI displays). hit.model is null when the click landed on the background.
-        const int px = int(double(x) * framebuffer_width() / camera()->screenWidth());
-        const int py = int(double(y) * framebuffer_height() / camera()->screenHeight());
-        const auto hit = pick(px, py);
+        // GPU pick at the cursor. Mouse hooks and pick() both use logical window
+        // coordinates on both backends (DPI-independent). hit.model is null when the
+        // click landed on the background.
+        const auto hit = pick(x, y);
         mark(hit.model.get());
     }
     return Viewer::mouse_press_event(x, y, button, modifiers);

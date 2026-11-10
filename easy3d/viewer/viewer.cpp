@@ -141,15 +141,22 @@ namespace easy3d {
         }
     };
     std::vector<graphics::DrawCommand> Viewer::draw_commands(
-        const Camera &cam, int, int, std::vector<DrawSource> *sources, bool include_hidden_models) const {
+        const Camera &cam, int width, int, std::vector<DrawSource> *sources, bool include_hidden_models) const {
         impl_->drawable_renderer.prune();
         std::vector<graphics::DrawCommand> commands;
         const auto &planes = impl_->active_clipping_planes();
+        // Drawable point/line sizes are logical pixels; the device rasterizes plain
+        // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
+        // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
+        // world-space and already carry the logical sizing through pixelGLRatio().
+        const float pixel_scale = cam.screenWidth() > 0 ? float(width) / float(cam.screenWidth()) : 1.0f;
         auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
                           bool selected, bool depth_bias = false) {
             if (!d->is_visible())
                 return;
             auto command = impl_->drawable_renderer.command(d, id, cam, planes, selected);
+            command.point_size *= pixel_scale;
+            command.line_width *= pixel_scale;
             command.depth_bias = depth_bias;
             if (sources) {
                 if (sources->size() >= UINT32_MAX)
@@ -243,11 +250,15 @@ namespace easy3d {
             throw std::invalid_argument("offscreen dimensions must be positive");
         render_width_ = w;
         render_height_ = h;
-        camera()->setScreenWidthAndHeight(w, h);
         if (!window_) {
             width_ = w;
             height_ = h;
         }
+        // The camera always carries logical window dimensions (framebuffer pixels
+        // are GPU-only). For an offscreen canvas logical units equal pixels.
+        int cw, ch;
+        viewer_size(cw, ch);
+        camera()->setScreenWidthAndHeight(cw, ch);
     }
     Model *Viewer::add_model(std::shared_ptr<Model> model, bool create) {
         return add_model(std::move(model), create, true);
@@ -410,7 +421,7 @@ namespace easy3d {
         for (unsigned i = 0; i < 16; ++i)
             if (!std::isfinite(inv[i]))
                 throw std::invalid_argument("invalid scan camera inverse");
-        const auto frame = impl_->capture(snapshot, background_color(), samples);
+        const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
         std::vector<vec3> points;
         points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
         for (unsigned y = 0; y < frame.height; ++y)
@@ -425,8 +436,14 @@ namespace easy3d {
     }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
-        if (x < 0 || y < 0 || x >= framebuffer_width() || y >= framebuffer_height())
+        const int w = width(), h = height();
+        const int fw = framebuffer_width(), fh = framebuffer_height();
+        if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
             return result;
+        // The query is in logical window coordinates; map to the containing
+        // framebuffer pixel for the GPU sample (DPI-aware), as point_under_pixel does.
+        const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
+        const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
         // One backend draw re-renders the visible scene with object/primitive IDs and
         // depth. Sampling the cursor pixel therefore names the nearest drawable (and
         // its triangle for meshes) without any CPU ray casting.
@@ -436,9 +453,8 @@ namespace easy3d {
         // their offscreen resources, while the viewer already owns every model,
         // drawable and the device, so it can answer in a single submission.
         std::vector<DrawSource> sources;
-        const int width = framebuffer_width(), height = framebuffer_height();
-        const auto commands = draw_commands(*camera(), width, height, &sources);
-        const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
+        const auto commands = draw_commands(*camera(), fw, fh, &sources);
+        const auto sample = impl_->device->sample_pixel(fw, fh, commands, px, py);
         const auto id = sample.id;
         if (id.object >= sources.size() || sample.depth >= 1)
             return result;
@@ -446,7 +462,7 @@ namespace easy3d {
         result.drawable = sources[id.object].drawable;
         result.primitive = id.primitive;
         result.depth = sample.depth;
-        result.position = unproject_pixel(x, y, result.depth);
+        result.position = pixel_to_world(px, py, result.depth);
         const auto &faces = result.drawable->cpu_buffers().source_faces;
         auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
         if (mesh && id.primitive < faces.size()) {
@@ -457,7 +473,7 @@ namespace easy3d {
         return result;
     }
     bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
-        const int width = snapshot.screenWidth(), height = snapshot.screenHeight();
+        const int width = framebuffer_width(), height = framebuffer_height();
         const auto commands = draw_commands(snapshot, width, height);
         const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
         depth = sample.depth;
@@ -613,27 +629,24 @@ namespace easy3d {
                                 unsigned samples,
                                 graphics::FrameImage &image) {
         auto &frame = impl_->snapshot;
-        const int source_w = camera()->screenWidth(), source_h = camera()->screenHeight();
+        // Keep the camera's logical screen dimensions: only the projection changes
+        // for the output frustum. draw_commands() then scales plain point/line sizes
+        // by output/logical and impostors keep their relative size, as on OpenGL.
         const mat4 source_projection = camera()->projectionMatrix();
         struct Restore {
             Viewer &self;
-            int width, height;
             mat4 projection;
             ~Restore() {
                 self.impl_->snapshot.active = false;
-                self.camera()->setScreenWidthAndHeight(width, height);
-                self.camera()->projectionMatrix(); // resolve resize invalidation
                 self.camera()->set_projection_matrix(projection);
             }
-        } restore{*this, source_w, source_h, source_projection};
+        } restore{*this, source_projection};
         frame.width = width;
         frame.height = height;
         frame.samples = samples;
         frame.background = background;
         frame.image = graphics::FrameImage();
         frame.active = true;
-        camera()->setScreenWidthAndHeight(width, height);
-        camera()->projectionMatrix(); // resolve resize invalidation before overriding
         camera()->set_projection_matrix(projection);
         draw();
         if (frame.image.rgba.size() != size_t(width) * size_t(height) * 4)
@@ -721,7 +734,7 @@ namespace easy3d {
         std::string title;
         int width, height;
         unsigned samples;
-        int button = -1, last_x = 0, last_y = 0;
+        int button = -1;
         int last_logical_x = 0, last_logical_y = 0;
         double wheel_x = 0, wheel_y = 0;
         std::exception_ptr error;
@@ -775,18 +788,6 @@ namespace easy3d {
             return graphics::create_vulkan_window_device(surface, options.validation, options.sync_validation,
                                                          options.device_name, options.use_native_large_points);
         }
-        void position(double px, double py, int &x, int &y) const {
-            int ww = 0, wh = 0, fw = 0, fh = 0;
-            glfwGetWindowSize(handle, &ww, &wh);
-            glfwGetFramebufferSize(handle, &fw, &fh);
-            x = ww > 0 ? int(std::lround(px * fw / ww)) : 0;
-            y = wh > 0 ? int(std::lround(py * fh / wh)) : 0;
-        }
-        void position(int &x, int &y) const {
-            double px = 0, py = 0;
-            glfwGetCursorPos(handle, &px, &py);
-            position(px, py, x, y);
-        }
         int modifiers() const {
             return detail::GlfwRuntime::modifiers(handle);
         }
@@ -806,41 +807,35 @@ namespace easy3d {
             glfwSetWindowRefreshCallback(handle, [](GLFWwindow *w) { dispatch(w, [](Viewer &v) { v.update(); }); });
             glfwSetCursorPosCallback(handle, [](GLFWwindow *w, double px, double py) {
                 dispatch(w, [&](Viewer &v) {
-                    int x, y;
                     auto &host = *v.window_host_;
-                    host.position(px, py, x, y);
-                    const int dx = x - host.last_x, dy = y - host.last_y;
-                    host.last_x = x;
-                    host.last_y = y;
-                    const int wx = int(px), wy = int(py), ldx = wx - host.last_logical_x,
-                              ldy = wy - host.last_logical_y;
-                    host.last_logical_x = wx;
-                    host.last_logical_y = wy;
+                    // Legacy hooks and unified callbacks both receive logical window
+                    // coordinates, identical to the OpenGL backend.
+                    const int x = int(px), y = int(py);
+                    const int dx = x - host.last_logical_x, dy = y - host.last_logical_y;
+                    host.last_logical_x = x;
+                    host.last_logical_y = y;
                     const int mods = host.modifiers();
                     if (host.button >= 0) {
-                        if (!v.dispatch_mouse_drag(wx, wy, ldx, ldy, host.button, mods))
+                        if (!v.dispatch_mouse_drag(x, y, dx, dy, host.button, mods))
                             v.mouse_drag_event(x, y, dx, dy, host.button, mods);
-                    } else if (!v.dispatch_mouse_move(wx, wy, ldx, ldy, mods))
+                    } else if (!v.dispatch_mouse_move(x, y, dx, dy, mods))
                         v.mouse_free_move_event(x, y, dx, dy, mods);
                 });
             });
             glfwSetMouseButtonCallback(handle, [](GLFWwindow *w, int button, int action, int mods) {
                 dispatch(w, [&](Viewer &v) {
-                    int x, y;
                     auto &host = *v.window_host_;
                     double px, py;
                     glfwGetCursorPos(w, &px, &py);
-                    host.position(px, py, x, y);
-                    host.last_x = x;
-                    host.last_y = y;
-                    host.last_logical_x = int(px);
-                    host.last_logical_y = int(py);
+                    const int x = int(px), y = int(py);
+                    host.last_logical_x = x;
+                    host.last_logical_y = y;
                     if (action == GLFW_PRESS) {
                         host.button = button;
-                        if (!v.dispatch_mouse_press(int(px), int(py), button, mods))
+                        if (!v.dispatch_mouse_press(x, y, button, mods))
                             v.mouse_press_event(x, y, button, mods);
                     } else {
-                        if (!v.dispatch_mouse_release(int(px), int(py), button, mods))
+                        if (!v.dispatch_mouse_release(x, y, button, mods))
                             v.mouse_release_event(x, y, button, mods);
                         else {
                             v.pressed_button_ = -1;
@@ -862,11 +857,10 @@ namespace easy3d {
                     const int sx = int(host.wheel_x), sy = int(host.wheel_y);
                     host.wheel_x -= sx;
                     host.wheel_y -= sy;
-                    int x, y;
                     double px, py;
                     glfwGetCursorPos(w, &px, &py);
-                    host.position(px, py, x, y);
-                    if ((sx || sy) && !v.dispatch_mouse_scroll(int(px), int(py), sx, sy))
+                    const int x = int(px), y = int(py);
+                    if ((sx || sy) && !v.dispatch_mouse_scroll(x, y, sx, sy))
                         v.mouse_scroll_event(x, y, sx, sy);
                 });
             });
@@ -1259,14 +1253,16 @@ namespace easy3d {
         commands.insert(commands.end(), frame_rate_commands_.begin(), frame_rate_commands_.end());
         commands.insert(commands.end(), hint_commands_.begin(), hint_commands_.end());
         if (pivot) {
-            const float x = pivot_pixel_.x, y = pivot_pixel_.y, size = 10 * dpi;
+            // pivot_pixel_ is logical; the overlay is recorded in framebuffer pixels.
+            const float x = pivot_pixel_.x * dpi, y = pivot_pixel_.y * dpi, size = 10 * dpi;
             commands.push_back(graphics::shape::draw_lines_2d(
                 {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size), vec2(x, y + size)}, vec4(0, 0, 0, 1),
                 framebuffer_width(), framebuffer_height(), dpi));
         }
         if (zoom_region_ && (mouse_current_x_ != mouse_pressed_x_ || mouse_current_y_ != mouse_pressed_y_)) {
-            const Rect rect{float(mouse_pressed_x_), float(mouse_current_x_), float(mouse_pressed_y_),
-                            float(mouse_current_y_)};
+            // Mouse coordinates are logical; scale into the framebuffer overlay space.
+            const Rect rect{mouse_pressed_x_ * dpi, mouse_current_x_ * dpi, mouse_pressed_y_ * dpi,
+                            mouse_current_y_ * dpi};
             commands.push_back(
                 graphics::shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f), framebuffer_width(), framebuffer_height()));
             commands.push_back(graphics::shape::draw_quad_wire(rect, vec4(0, 0, 1, 1), framebuffer_width(),
@@ -2529,20 +2525,12 @@ namespace easy3d {
         return false;
     }
 
-    bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
-        (void) x;
-        (void) y;
-        (void) dx;
-        (void) dy;
-        (void) modifiers;
+    bool Viewer::mouse_free_move_event(int, int, int, int, int) {
         // highlight geometry primitives here
         return false;
     }
 
-    bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
-        (void) x;
-        (void) y;
-        (void) dx;
+    bool Viewer::mouse_scroll_event(int, int, int, int dy) {
         camera_->frame()->action_zoom(dy, camera());
         return false;
     }
@@ -2828,15 +2816,12 @@ namespace easy3d {
         return false;
     }
 
-    bool Viewer::key_release_event(int key, int modifiers) {
-        (void) key;
-        (void) modifiers;
+    bool Viewer::key_release_event(int, int) {
         pressed_key_ = -1;
         return false;
     }
 
-    bool Viewer::char_input_event(unsigned int codepoint) {
-        (void) codepoint;
+    bool Viewer::char_input_event(unsigned int) {
         //switch (codepoint) {
         //case '-':	break;
         //case 'c':	break;
@@ -3714,7 +3699,6 @@ namespace easy3d {
                                     depth_state.prepare(width, height);
                                     Camera snapshot(*camera());
                                     snapshot.frame()->setPivotPoint(camera()->pivotPoint());
-                                    snapshot.setScreenWidthAndHeight(width, height);
                                     snapshot.projectionMatrix();
                                     snapshot.modelViewMatrix();
                                     mat4 projection = camera()->projectionMatrix();
@@ -3753,7 +3737,6 @@ namespace easy3d {
         }
         Camera snapshot(*camera());
         snapshot.frame()->setPivotPoint(camera()->pivotPoint());
-        snapshot.setScreenWidthAndHeight(w, h);
         snapshot.projectionMatrix();
         snapshot.modelViewMatrix();
         snapshot.set_projection_matrix(camera()->projectionMatrix());
@@ -3833,9 +3816,14 @@ namespace easy3d {
     }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
+        const int w = width(), h = height();
         const int fw = framebuffer_width(), fh = framebuffer_height();
-        if (x < 0 || y < 0 || x >= fw || y >= fh)
+        if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
             return result;
+        // The query is in logical window coordinates; map to the containing
+        // framebuffer pixel for the GPU sample (DPI-aware), as point_under_pixel does.
+        const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
+        const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
         // Two offscreen passes share one framebuffer:
         //  1. Draw each visible drawable with its normal shaders and keep the nearest
         //     depth at the cursor. This identifies the model/drawable actually seen.
@@ -3848,8 +3836,9 @@ namespace easy3d {
         // drawable and the context, so it can resolve the hit here directly.
         QueryContext context(window_);
         QueryState state;
+        // Keep the camera logical (as in the on-screen draw); the framebuffer target is
+        // physical, so world-space impostor radii project to the same size as the scene.
         Camera snapshot(*camera());
-        snapshot.setScreenWidthAndHeight(fw, fh);
         snapshot.projectionMatrix();
         snapshot.modelViewMatrix();
         snapshot.set_projection_matrix(camera()->projectionMatrix());
@@ -3869,7 +3858,7 @@ namespace easy3d {
             DrawSource source{model, drawable};
             draw_scene(snapshot, &source);
             float depth = 1;
-            glReadPixels(x, fh - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+            glReadPixels(px, fh - 1 - py, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
             if (depth >= 0 && depth < result.depth) {
                 result.model = model;
                 result.drawable = drawable;
@@ -3891,7 +3880,7 @@ namespace easy3d {
             sample(d, nullptr);
         if (!result)
             return result;
-        const auto world = [&](float depth) { return unproject_pixel(x, y, depth); };
+        const auto world = [&](float depth) { return pixel_to_world(px, py, depth); };
         result.position = world(result.depth);
         if (result.drawable->type() == Drawable::DT_TRIANGLES) {
             // Recover the primitive from the same rasterized surface: the selection
@@ -3904,7 +3893,7 @@ namespace easy3d {
             if (!program)
                 throw std::runtime_error("picking requires the selection shader '" + name + "'");
             state.prepare(fw, fh);
-            prepare_pick_view(x, y, fw, fh);
+            prepare_pick_view(px, py, fw, fh);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -3917,7 +3906,7 @@ namespace easy3d {
             result.drawable->gl_draw();
             program->release();
             unsigned char rgba[4] = {255, 255, 255, 255};
-            glReadPixels(x, fh - 1 - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+            glReadPixels(px, fh - 1 - py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
             const int id = color::encode(rgba[0], rgba[1], rgba[2], rgba[3]);
             if (id >= 0) {
                 result.primitive = uint32_t(id);
@@ -3939,17 +3928,21 @@ namespace easy3d {
         return result;
     }
     bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
+        // x/y are framebuffer pixels; the camera carries logical screen dimensions.
+        // Render into a framebuffer-sized target so impostor radii (world-space, from
+        // the logical camera) project to the same physical size as the on-screen scene.
+        const int fw = framebuffer_width(), fh = framebuffer_height();
         QueryContext context(window_);
         QueryState state;
-        state.prepare(snapshot.screenWidth(), snapshot.screenHeight());
-        FramebufferObject target(snapshot.screenWidth(), snapshot.screenHeight(), 0);
+        state.prepare(fw, fh);
+        FramebufferObject target(fw, fh, 0);
         if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid())
             throw std::runtime_error("cannot create single-sample scene depth framebuffer");
         if (!target.bind())
             throw std::runtime_error("cannot bind scene depth framebuffer");
         glClear(GL_DEPTH_BUFFER_BIT);
         draw_scene(snapshot);
-        glReadPixels(x, snapshot.screenHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        glReadPixels(x, fh - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         return true;
     }
     void Viewer::draw_scene(const Camera &snapshot, const DrawSource *source, bool guides) const {
@@ -3989,12 +3982,6 @@ namespace easy3d {
 #endif // !EASY3D_HAS_VULKAN
 
 namespace easy3d {
-    vec3 Viewer::unproject_pixel(int x, int y, float depth) const {
-        const int fw = framebuffer_width(), fh = framebuffer_height();
-        if (x < 0 || y < 0 || x >= fw || y >= fh || !std::isfinite(depth) || depth < 0 || depth > 1)
-            throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
-        return unproject_point(vec3(float((x + .5) * width() / fw), float((y + .5) * height() / fh), depth));
-    }
     void Viewer::advance_camera_path() {
         if (!kfi_->is_interpolation_started())
             return;

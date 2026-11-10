@@ -48,18 +48,20 @@ void verify_depth(DepthView& v,float depth,float scale,int samples) {
 void depth_preview() {
     DepthView v("Shared depth preview");v.resize(320,280);frame(v);front(v);
     auto faces=std::make_shared<TrianglesDrawable>("plane");faces->update_vertex_buffer(plane(0));faces->set_lighting(false);v.add_drawable(faces);frame(v);
-    auto hit=v.pick(v.framebuffer_width()/2,v.framebuffer_height()/2);require(bool(hit),"depth fixture missed");
+    auto hit=v.pick(v.width()/2,v.height()/2);require(bool(hit),"depth fixture missed");
     const auto camera=v.camera()->modelViewProjectionMatrix();
     for(float scale:{1.0f,1.5f,2.0f}) for(int samples:{1,4}) verify_depth(v,hit.depth,scale,samples);
     for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->modelViewProjectionMatrix()[i],"depth preview changed camera");
-    const auto again=v.pick(v.framebuffer_width()/2,v.framebuffer_height()/2);
+    const auto again=v.pick(v.width()/2,v.height()/2);
     require(again.drawable==faces && std::abs(again.depth-hit.depth)<1e-6f,"depth preview changed picking");
-    faces->update_vertex_buffer(plane(.4f));frame(v);hit=v.pick(v.framebuffer_width()/2,v.framebuffer_height()/2);
+    faces->update_vertex_buffer(plane(.4f));frame(v);hit=v.pick(v.width()/2,v.height()/2);
     require(hit && std::abs(hit.position.z-.4f)<1e-3f,"updated geometry was not picked");verify_depth(v,hit.depth,1.5f,4);
     faces->set_visible(false);frame(v);verify_depth(v,1,1.5f,4);
     auto sphere=std::make_shared<PointsDrawable>("sphere");sphere->update_vertex_buffer({vec3(0)});sphere->set_point_size(50);sphere->set_impostor_type(PointsDrawable::SPHERE);v.add_drawable(sphere);frame(v);
-    hit=v.pick(v.framebuffer_width()/2,v.framebuffer_height()/2);require(hit && hit.position.z>0,"sphere depth fixture missed");verify_depth(v,hit.depth,1,4);
-    v.resize(360,300);frame(v);hit=v.pick(v.framebuffer_width()/2,v.framebuffer_height()/2);verify_depth(v,hit.depth,1.5f,4);
+    hit=v.pick(v.width()/2,v.height()/2);require(hit && hit.position.z>0,"sphere depth fixture missed");
+    verify_depth(v,hit.depth,1,4);
+    v.resize(360,300);frame(v);hit=v.pick(v.width()/2,v.height()/2);require(hit && hit.position.z>0,"resized sphere depth fixture missed");
+    verify_depth(v,hit.depth,1.5f,4);
     v.clear_scene();frame(v);verify_depth(v,1,1,1);require(v.validation_errors()==0,"depth preview validation errors");
 }
 void multi_depth_preview() {
@@ -67,7 +69,7 @@ void multi_depth_preview() {
     auto faces=std::make_shared<TrianglesDrawable>("left cell");faces->update_vertex_buffer(plane(0));faces->set_lighting(false);
     v.add_drawable(faces);v.assign(0,0,faces.get());front(v);frame(v);
     bool found=false;const auto point=v.point_under_pixel(v.width()/4,v.height()/2,found);require(found,"multi-view depth fixture missed");
-    const float depth=v.project_point(point).z;
+    const float depth=v.world_to_window(point).z;
     const float left=20*v.dpi_scaling(),top=40*v.dpi_scaling(),width=v.framebuffer_width()/4.0f,height=v.framebuffer_height()/4.0f;
     v.set_overlays({graphics::shape::draw_depth_texture(Rect(left,left+width,top,top+height),v.framebuffer_width(),v.framebuffer_height())});frame(v);
     require(v.snapshot("multi-depth-preview.png",1.5f,4,1,true),"multi-view depth snapshot failed");Pixels image("multi-depth-preview.png");

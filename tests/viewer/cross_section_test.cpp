@@ -26,16 +26,27 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 }
 void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
     const auto inverse_mvp=inverse(viewer.camera()->modelViewProjectionMatrix());
-    bool checked_pick=false;
-    for (unsigned y=0;y<image.height;++y) for (unsigned x=0;x<image.width;++x) {
-        const auto i=size_t(y)*image.width+x; if (image.ids[i].object==UINT32_MAX) continue;
+    const auto world_at=[&](unsigned x,unsigned y) {
+        const auto i=size_t(y)*image.width+x;
         const auto world=inverse_mvp*vec4(2*(x+.5f)/image.width-1,1-2*(y+.5f)/image.height,2*image.depth[i]-1,1);
-        const vec3 point(world.x/world.w,world.y/world.w,world.z/world.w);
-        if (!checked_pick) {
-            const auto hit=viewer.pick(x,y);
-            require(hit && (hit.position-point).norm()<1e-4f,"picked world point is offset from framebuffer pixel center");
+        return vec3(world.x/world.w,world.y/world.w,world.z/world.w);
+    };
+    // pick() takes logical window coords; compare against the framebuffer texel it samples.
+    bool checked_pick=false;
+    for (int ly=0; ly<viewer.height() && !checked_pick; ++ly)
+        for (int lx=0; lx<viewer.width() && !checked_pick; ++lx) {
+            const int sx=std::min(int(image.width)-1,int(std::floor(double(lx)*image.width/viewer.width())));
+            const int sy=std::min(int(image.height)-1,int(std::floor(double(ly)*image.height/viewer.height())));
+            if (image.ids[size_t(sy)*image.width+sx].object==UINT32_MAX) continue;
+            const auto hit=viewer.pick(lx,ly);
+            if (!hit) continue;
+            require((hit.position-world_at(unsigned(sx),unsigned(sy))).norm()<1e-4f,"picked world point is offset from framebuffer pixel center");
             checked_pick=true;
         }
+    require(checked_pick,"cross-section fixture produced no scene pick");
+    for (unsigned y=0;y<image.height;++y) for (unsigned x=0;x<image.width;++x) {
+        const auto i=size_t(y)*image.width+x; if (image.ids[i].object==UINT32_MAX) continue;
+        const vec3 point=world_at(x,y);
         for (const auto& plane:viewer.clipping_planes()) require(dot(plane,vec4(point,1))>=-1e-3f,"cross-section depth lies outside world clip volume");
     }
 }
@@ -73,7 +84,7 @@ int main(int argc,char**) {
         require(bx>=0 && by>=0 && bx<int(behind.width) && by<int(behind.height),"occlusion probe outside viewport");
         const auto bi=size_t(by)*behind.width+bx;
         require(reference.ids[bi].object!=UINT32_MAX,"occlusion probe missed the cube");
-        const auto a=viewer.unproject_pixel(bx,by,0),b=viewer.unproject_pixel(bx,by,1);
+        const auto a=viewer.pixel_to_world(bx,by,0),b=viewer.pixel_to_world(bx,by,1);
         const auto plane_point=a+(b-a)*(-a.z/(b.z-a.z));
         require(std::abs(plane_point.x)<viewer.camera()->sceneRadius()*.95f &&
                 std::abs(plane_point.y)<viewer.camera()->sceneRadius()*.95f,"occlusion probe missed guide interior");
@@ -108,7 +119,7 @@ int main(int argc,char**) {
         require(hidden.ids[pixel].object==UINT32_MAX && initial.rgba[4*pixel]>250 &&
                 std::abs(int(initial.rgba[4*pixel+1])-191)<=1 && std::abs(int(initial.rgba[4*pixel+2])-191)<=1,
                 "native clipping plane interior was not filled transparently");
-        require(!viewer.pick(x,y),"filled clipping guide became a picking surface");
+        require(!viewer.pick(int(double(x)*viewer.width()/initial.width),int(double(y)*viewer.height()/initial.height)),"filled clipping guide became a picking surface");
         press(GLFW_KEY_V); require(viewer.capture().rgba==initial.rgba,"showing guide did not restore image");
         press(GLFW_KEY_C); const auto full=viewer.capture();
         require(viewer.clipping_planes().empty() && hits(full)>hits(initial),"disabling clipping did not restore full model");

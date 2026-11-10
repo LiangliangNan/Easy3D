@@ -51,12 +51,10 @@ TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title)
 // Viewer so camera navigation still works.
 bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifiers) {
     if (button == BUTTON_LEFT && modifiers == 0) {
-        // Mouse events arrive in logical screen units; pick() wants framebuffer pixels.
-        // On HiDPI displays the two differ by the DPI scaling factor, so we convert here.
-        const int px = int(double(x) * framebuffer_width() / camera()->screenWidth());
-        const int py = int(double(y) * framebuffer_height() / camera()->screenHeight());
+        // Mouse hooks and pick() both use logical window coordinates on both backends
+        // (DPI-independent), so the cursor can be passed straight through.
         // GPU primitive-ID pick: returns the nearest model/drawable and the hit face index.
-        const auto hit = pick(px, py);
+        const auto hit = pick(x, y);
         // Clear any previous highlight so only the newly picked face stays lit.
         for (const auto &m : models())
             for (const auto &d : m->renderer()->triangles_drawables())

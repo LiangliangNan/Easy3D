@@ -45,6 +45,28 @@ namespace easy3d {
     namespace opengl { class PointSelector; }
 
     /**
+     * \brief World-space impostor radius for a DPI-independent logical size.
+     * \param camera Camera whose logical screen dimensions define pixelGLRatio().
+     * \param size Full impostor diameter in logical pixels (point_size()/line_width()).
+     * \return World-space radius, size * pixelGLRatio(pivotPoint()) * 0.5, that
+     *      projects to \p size logical pixels on both backends. Impostor radii are
+     *      world-space quantities; the framebuffer viewport handles physical sizing.
+     */
+    float impostor_radius(const Camera& camera, float size);
+
+#ifndef EASY3D_HAS_VULKAN
+    /**
+     * \brief Framebuffer-to-logical pixel scale of the current OpenGL viewport.
+     * \param camera Camera carrying logical screen dimensions.
+     * \return GL viewport width / camera.screenWidth(): the DPI scale for a window,
+     *      the cell scale for a MultiViewer, or the output scale for a snapshot.
+     *      Plain points/lines rasterize in framebuffer pixels, so their logical
+     *      sizes are multiplied by this factor before glPointSize()/glLineWidth().
+     */
+    float viewport_pixel_scale(const Camera& camera);
+#endif
+
+    /**
      * \brief Base class for objects drawn as points, line segments, or triangles.
      * \class Drawable easy3d/renderer/drawable.h
      * \details A Drawable is an abstraction for "something that can be drawn", e.g., a point cloud, the surface
