@@ -72,7 +72,10 @@ TutorialRealCamera::TutorialRealCamera(const std::string &title,
 
     // hint_ is shown in the viewer HUD; it lists the interactive controls.
     hint_ =
-        "Press 'Space' to switch views                         \n" "Press 'h' to show/hide the cameras                    \n" "Move cursor on image to show corresponding 3D ray     \n" "Move cursor on scene to show corresponding image point";
+        "Press 'Space' to switch views                         \n"
+        "Press 'h' to show/hide the cameras                    \n"
+        "Move cursor on image to show corresponding 3D ray     \n"
+        "Move cursor on scene to show corresponding image point";
 }
 
 bool TutorialRealCamera::key_press_event(int key, int modifiers) {
@@ -239,8 +242,12 @@ Rect TutorialRealCamera::calculate_image_rect() const {
         tex_h = static_cast<int>(static_cast<float>(tex_w) / image_as);
     }
 
-    const float x = 20 * dpi_scaling(), y = 120 * dpi_scaling();
-    return Rect(x, x + static_cast<float>(tex_w), y, y + static_cast<float>(tex_h));
+    const float xmax = static_cast<float>(framebuffer_width()) - 20 * dpi_scaling();
+    const float ymin = 22.5f * dpi_scaling(); // aligned with Easy3D logo
+    return Rect(
+        xmax - static_cast<float>(tex_w), xmax,
+        ymin, ymin + static_cast<float>(tex_h)
+        );
 }
 
 void TutorialRealCamera::post_resize(int, int) {
