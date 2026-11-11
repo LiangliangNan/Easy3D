@@ -1326,9 +1326,12 @@ performance or image-comparison result yet.
 
 The archived Vulkan/OpenGL workflow is restored at
 `.github/workflows/vulkan.yml`. Run `42612100874` was not started because
-GitHub reported an account billing lock; it provides no Linux/Mesa, SPIR-V, or
-CI package-consumer evidence. The workflow must complete successfully before
-those checks count as validated. Mapple is intentionally OpenGL-only, Qt/wx
+GitHub reported an account billing lock. The first run that executed,
+`43074459422`, failed in both jobs for Linux-only reasons: the Vulkan job could
+not compile PyEasy3D without GLU headers, and the OpenGL job's Python test
+assumed a multisample window visual that llvmpipe under Xvfb does not provide.
+Both causes are fixed (batch 57); the workflow must complete successfully before
+Linux/Mesa, SPIR-V, or CI package-consumer checks count as validated. Mapple is intentionally OpenGL-only, Qt/wx
 viewer tutorials were retired, and backend-internal Python bindings are outside
 the agreed scope.
 
@@ -7756,3 +7759,32 @@ passed 140/140, including `vulkan.events`, `vulkan.input`, `vulkan.imgui` and `v
 OpenGL (`build-opengl`, tests enabled): full build succeeded and the serial suite passed 106/106.
 The Python binding source and tutorials were updated but not rebuilt or run. Linux/Mesa, Windows
 hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 57: Linux-only CI failures (GLU headers, MSAA visual)
+
+**Scope.** GitHub Actions run `43074459422` executed the restored workflow for the first time and both
+matrix jobs failed on Ubuntu 24.04 for reasons that do not reproduce on macOS.
+
+- Vulkan job build failure: `PyEasy3D` compiles `python/bindings/easy3d/renderer/drawables.cpp`,
+  which includes shared renderer headers such as `vertex_array_object.h` and therefore
+  `easy3d/renderer/opengl.h` and the bundled `3rd_party/glew/include/GL/glew.h`. GLEW includes
+  `<GL/glu.h>` unless `GLEW_NO_GLU` is defined, and Ubuntu's default graphics packages ship GL but
+  not GLU. `easy3d/renderer/CMakeLists.txt` defined `GLEW_NO_GLU` only in the OpenGL branch, so the
+  Vulkan configuration exposed the Vulkan backend to a GLU header it never uses. The Vulkan branch
+  now adds `GLEW_NO_GLU` to the PUBLIC `easy3d_renderer` definitions alongside `EASY3D_HAS_VULKAN`,
+  which reaches PyEasy3D and every installed Vulkan consumer. No GLU dependency was added to the
+  workflow; all GLU mentions in the tree are comments.
+- OpenGL job `python.rendering` failure: the test asserted `viewer.samples() == 4` for a viewer
+  created with `samples=4`. GLFW under Xvfb with llvmpipe gets no multisample window visual, so
+  `glGetIntegerv(GL_SAMPLES, ...)` returns 0 and `Viewer::samples()` correctly reports the single
+  sample the default framebuffer actually has (the viewer logs the "MSAA is not available"
+  warning). The assertion now accepts 1 or 4 and still requires two successful frames; snapshot
+  calls in the same test request 4 samples explicitly and remain strict because they render into
+  multisample renderbuffers bounded by `GL_MAX_SAMPLES`, not the window visual.
+
+**Validation (2026-11-11, macOS Release).** Both local trees were rebuilt after the change: Vulkan
+`cmake-build-release` full build and OpenGL `build-opengl` full build succeeded, and
+`GLEW_NO_GLU` was confirmed in the `flags.make` files of `easy3d_renderer` and `PyEasy3D`. macOS
+behaviour is unchanged (GLU was available before and is still not used). The Linux fixes were not
+executed locally; the workflow rerun is the remaining gate, and the later Vulkan steps (lavapipe
+headless suite, xvfb desktop suite, installed package consumer) have still not completed on CI.

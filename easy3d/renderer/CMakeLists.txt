@@ -230,7 +230,9 @@ list(APPEND renderer_headers ${backend_headers})
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 
 if(Easy3D_ENABLE_VULKAN)
-    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN)
+    # Shared headers still include GLEW through opengl.h (e.g. VertexArrayObject), so suppress
+    # its optional GLU include here too; Easy3D does not use GLU and Linux installs omit it.
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN GLEW_NO_GLU)
     target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan" ${Vulkan_INCLUDE_DIRS})
     if(UNIX)
         # Optional last-resort lookup hint, never a load-time dependency or rpath.
