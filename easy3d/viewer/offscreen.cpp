@@ -39,11 +39,11 @@ namespace easy3d {
     bool OffScreen::render(const std::string &file, float scale, int samples, int bg, bool expand) const {
         return Viewer::snapshot(file, scale, samples, bg, expand);
     }
-    Model *OffScreen::add_model(const std::string &file, bool create) {
-        return Viewer::add_model(file, create);
+    Model *OffScreen::add_model(const std::string &file, bool create, bool fit_scene) {
+        return Viewer::add_model(file, create, fit_scene);
     }
-    Model *OffScreen::add_model(std::shared_ptr<Model> model, bool create) {
-        return Viewer::add_model(std::move(model), create);
+    Model *OffScreen::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
+        return Viewer::add_model(std::move(model), create, fit_scene);
     }
     Drawable *OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) {
         return Viewer::add_drawable(std::move(drawable));
@@ -100,17 +100,11 @@ namespace easy3d {
         activate();
         return snapshot(file, scale, samples == 1 ? 0 : samples, bg, expand);
     }
-    Model *OffScreen::add_model(const std::string &file, bool create) {
-        auto *model = Viewer::add_model(file, create);
-        if (model)
-            fit_screen();
-        return model;
+    Model *OffScreen::add_model(const std::string &file, bool create, bool fit_scene) {
+        return Viewer::add_model(file, create, fit_scene);
     }
-    Model *OffScreen::add_model(std::shared_ptr<Model> model, bool create) {
-        auto *result = Viewer::add_model(std::move(model), create);
-        if (result)
-            fit_screen();
-        return result;
+    Model *OffScreen::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
+        return Viewer::add_model(std::move(model), create, fit_scene);
     }
     Drawable *OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) {
         activate();

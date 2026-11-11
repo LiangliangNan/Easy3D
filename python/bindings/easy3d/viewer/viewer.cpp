@@ -485,14 +485,14 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("open", (bool (easy3d::Viewer::*)()) &easy3d::Viewer::open, "Open a model (PointCloud/SurfaceMesh/Graph) from a file into the viewer. On\n        success, the viewer will be in charge of the memory management of the model.\n \n\n This method loads a model into the viewer. Internally, it will pop up a file\n          dialog for the user to navigate to the file. After loading the model, the\n          necessary drawables (e.g., \"vertices\" for point clouds, \"faces\" for surface\n          meshes, and \"edges\" and \"vertices\" for graphs) will be created for visualization.\n \n\n true on success and false otherwise.\n\nC++: easy3d::Viewer::open() --> bool");
 		cl.def("save", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::save, "Save the active model (if exists) to a file.\n \n\n This method saves the active model to a file. Internally, it will pop up a file\n          dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::Viewer::save() const --> bool");
 
-        cl.def("add_model", [](easy3d::Viewer& self, const std::string& file_name, bool create_default_drawables = true)
+        cl.def("add_model", [](easy3d::Viewer& self, const std::string& file_name, bool create_drawables = true)
                {
-                   auto* added = self.add_model(file_name, create_default_drawables);
+                   auto* added = self.add_model(file_name, create_drawables);
                    for (const auto& model : self.models())
                        if (model.get() == added) return model;
                    return std::shared_ptr<easy3d::Model>();
                },
-               pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
+               pybind11::arg("file_name"), pybind11::arg("create_drawables") = true,
                "Add a model from a file to the viewer.");
 
         cl.def("add_model", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Model> model) {

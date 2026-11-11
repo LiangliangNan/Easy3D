@@ -38,7 +38,8 @@ namespace easy3d {
         FigureMaker(int rows, int cols, const std::string &title);
 
 	protected:
-        Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+        Model* add_model(const std::string& file_name, bool create_drawables = true,
+                         bool fit_scene = true) override;
 
         bool delete_model(Model* model) override;
 

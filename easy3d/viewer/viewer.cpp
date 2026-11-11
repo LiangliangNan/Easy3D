@@ -678,10 +678,6 @@ namespace easy3d {
         return model_idx_ < 0 || size_t(model_idx_) >= models_.size() ? nullptr : models_[model_idx_].get();
     }
 
-    Model *Viewer::add_model(std::shared_ptr<Model> model, bool create) {
-        return add_model(std::move(model), create, true);
-    }
-
     Model *Viewer::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
 #ifndef EASY3D_HAS_VULKAN
         glfwMakeContextCurrent(window_);
@@ -701,17 +697,17 @@ namespace easy3d {
         return model.get();
     }
 
-    Model *Viewer::add_model(Model *model, bool create) {
+    Model *Viewer::add_model(Model *model, bool create, bool fit_scene) {
         if (!model)
             return nullptr;
         // Do not manufacture a second shared_ptr control block for an owned model.
         for (const auto &current : models_)
             if (current.get() == model)
                 return model;
-        return add_model(std::shared_ptr<Model>(model), create);
+        return add_model(std::shared_ptr<Model>(model), create, fit_scene);
     }
 
-    Model *Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+    Model *Viewer::add_model(const std::string &file_path, bool create_drawables, bool fit_scene) {
 #ifndef EASY3D_HAS_VULKAN
         glfwMakeContextCurrent(window_);
 #endif
@@ -738,7 +734,7 @@ namespace easy3d {
             PointCloud *cloud = nullptr;
             Model *last = nullptr;
             while ((cloud = serializer.load_next())) {
-                last = add_model(std::shared_ptr<PointCloud>(cloud), create_default_drawables);
+                last = add_model(std::shared_ptr<PointCloud>(cloud), create_drawables, fit_scene);
                 update();
             }
             return last; // the last cloud in the file
@@ -746,7 +742,7 @@ namespace easy3d {
             model.reset(PointCloudIO::load(file_name));
         if (model) {
             model->set_name(file_name);
-            return add_model(model, create_default_drawables);
+            return add_model(model, create_drawables, fit_scene);
         }
         return nullptr;
     }

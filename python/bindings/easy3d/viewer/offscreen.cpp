@@ -9,8 +9,8 @@ namespace py = pybind11;
 namespace {
 struct PyOffScreen : easy3d::OffScreen {
     using easy3d::OffScreen::OffScreen;
-    easy3d::Model* add_model(const std::string& file,bool create) override {
-        PYBIND11_OVERRIDE(easy3d::Model*,easy3d::OffScreen,add_model,file,create);
+    easy3d::Model* add_model(const std::string& file,bool create,bool fit_scene) override {
+        PYBIND11_OVERRIDE(easy3d::Model*,easy3d::OffScreen,add_model,file,create,fit_scene);
     }
 };
 }
@@ -27,8 +27,8 @@ void bind_easy3d_viewer_offscreen(py::module_& m) {
             auto* added = self.add_model(file, create);
             for (const auto& model : self.models()) if (model.get() == added) return model;
             return std::shared_ptr<Model>();
-        },py::arg("file_name"),py::arg("create_default_drawables")=true,py::return_value_policy::reference_internal)
-        .def("add_model",[](OffScreen& self, std::shared_ptr<Model> model, bool create) { return self.add_model(model, create) ? model : nullptr; },py::arg("model"),py::arg("create_default_drawables")=true,py::return_value_policy::reference_internal)
+        },py::arg("file_name"),py::arg("create_drawables")=true,py::return_value_policy::reference_internal)
+        .def("add_model",[](OffScreen& self, std::shared_ptr<Model> model, bool create) { return self.add_model(model, create) ? model : nullptr; },py::arg("model"),py::arg("create_drawables")=true,py::return_value_policy::reference_internal)
         .def("delete_model",[](OffScreen& self, Model* model) { return self.delete_model(model); })
         .def("models",[](const OffScreen& self) -> const std::vector<std::shared_ptr<Model>>& { return self.models(); },py::return_value_policy::reference_internal)
         .def("current_model",[](const OffScreen& self) { return self.current_model(); },py::return_value_policy::reference_internal)

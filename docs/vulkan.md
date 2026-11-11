@@ -1354,7 +1354,7 @@ an advisory heuristic and does not reject tiny windows. `OpenGLOptions` and
 
 The following `Viewer` extensions are Vulkan-only, guarded by
 `EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,
-`device()`, `set_samples()`, and the three-argument `add_model()` overload.
+`device()`, and `set_samples()`.
 They are native extensions, not part of the cross-backend API; use the shared
 clipping-plane, visible-surface query, and model APIs where portability is
 required. Installed-package consumer sources compile the common surface under
@@ -2413,8 +2413,8 @@ Tutorial 404 now builds with the native Vulkan host. **Space** acquires the visi
 scene and adds a new PointCloud; **N** toggles the shared Gaussian-noise algorithm.
 Native noise sigma is `0.0001 * camera.sceneRadius()` in world units. Scanned clouds
 remain visible and participate in later scans, as other visible scene models do.
-Acquisition uses the additive `add_model(cloud, true, false)` overload to attach
-results without refitting, keeping the complete camera state and custom matrices.
+Acquisition attaches results with `add_model(cloud, true, false)` (`fit_scene = false`)
+without refitting, keeping the complete camera state and custom matrices.
 It synchronizes framebuffer dimensions if a resize
 arrived before the next draw. Empty acquisitions add no model. The retained OpenGL
 tutorial keeps its existing FBO implementation.
@@ -4387,9 +4387,10 @@ OpenGL spelling wherever the two branches were equivalent apart from whitespace.
   as in the original tutorial, on both backends. The framebuffer/DPI calculation
   was redundant with the native viewer's logical size. Existing adjustable line
   widths and screen hints remain.
-- Tutorial 402 declares one `add_model(file, create_default_drawables)` override,
+- Tutorial 402 declares one `add_model(file, create_drawables, fit_scene)` override
+  (`fit_scene` became a defaulted parameter in batch 50),
   matching Viewer for both builds. OpenGL's old one-argument overload hid the base
-  virtual file loader. The shared implementation forwards the flag and enables
+  virtual file loader. The shared implementation forwards the flags and enables
   edges only when an edges drawable exists, so suppressing default drawables does
   not dereference a null drawable.
 - Constructor branches are also removed from Tutorials 206, 207, 306, 309, 401,
@@ -7420,10 +7421,10 @@ from it (which would free it twice); new code should prefer the `std::shared_ptr
 draft described only ownership; the docs now also state the behavior users actually hit: every non-null
 successful call returns a **non-owning observer** (never delete it); `add_model` installs a **new
 Renderer**, discarding any renderer/drawables the model already had (custom drawables must be added after
-adding); the file/shared/raw forms **fit the camera** (the 3-argument overload takes `fit_scene = false` to
-keep the current view); a null/empty model yields `nullptr`; and re-adding the same model (by object
-identity, or by file name in the file form) returns the existing entry unchanged — no second renderer, no
-re-fit — while `add_drawable` de-duplicates by object identity, creates no renderer and does not fit.
+adding); `add_model` takes `fit_scene` (default `true`); a null/empty model yields `nullptr`; and
+re-adding the same model (by object identity, or by file name in the file form) returns the existing
+entry unchanged — no second renderer, no re-fit — while `add_drawable` de-duplicates by object identity,
+creates no renderer and does not fit.
 Each form names the other in `\sa`. This is in `viewer.h` (the concrete overloads), `viewer_base.h` (the
 abstract declarations external users read) and `offscreen.h` (the allowed public surface). Documentation
 only; no signature or behavior changed.
@@ -7490,3 +7491,37 @@ delete!!!`. `tutorials/Tutorial_202_Viewer_imgui/viewer.h` documents the two men
 (`build-opengl` OpenGL, `cmake-build-release` Vulkan). Serial CTest passed OpenGL 106/106 and Vulkan
 140/140 (Vulkan tests temporarily enabled then restored to `Easy3D_BUILD_TESTS=OFF`). Linux/Mesa,
 Windows hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 50: `fit_scene` is a defaulted parameter on every `add_model` overload
+
+**Scope.** `Viewer::add_model(std::shared_ptr<Model>, bool)` existed only to forward to
+`add_model(shared_ptr, bool, bool)` with `fit_scene = true`; it is gone. `ViewerBase` now declares
+exactly three pure-virtual overloads, and `fit_scene` is a defaulted trailing parameter on each:
+
+```cpp
+virtual Model* add_model(const std::string& file_name, bool create_drawables = true, bool fit_scene = true) = 0;
+virtual Model* add_model(std::shared_ptr<Model> model, bool create_drawables = true, bool fit_scene = true) = 0;
+virtual Model* add_model(Model* model, bool create_drawables = true, bool fit_scene = true) = 0;   // legacy transfer form
+```
+
+`Viewer` implements all three (the raw form still forwards to the shared form after its own null and
+identity de-duplication; the file form threads `fit_scene` into both the PTX multi-scan loop and the
+final attach). Existing call sites are source-compatible: any 1- or 2-argument call keeps its old
+meaning, and a 3-argument call now means "do not fit" on every overload instead of selecting a separate
+shared-pointer overload.
+
+**Derived overrides updated to the new signature.** `OffScreen` (both backends; the Vulkan branch only
+forwards, and the OpenGL branch lost its redundant second `fit_screen()` because `Viewer::add_model`
+already fits when asked — same end state), `TexturedViewer` (Tutorial 308; its internal attaches pass
+`fit_scene = false` and it fits once at the end, after the previous models are dropped, so the parameter
+is honored with a single fit), `TutorialFacePicker` (Tutorial 402), `FigureMaker`, and the Python
+`PyOffScreen` trampoline. `viewer.h`, `viewer_base.h` and `offscreen.h` document `fit_scene` on every
+overload. The migration section no longer lists a "three-argument `add_model()` overload" as a
+Vulkan-only extension (it became shared in batch 48 and is now just a default argument).
+
+**Validation (2026-11-11, macOS Release).** Both trees build with zero warnings. Serial CTest passed
+OpenGL 106/106 and Vulkan 140/140 (Vulkan tests temporarily enabled then restored to
+`Easy3D_BUILD_TESTS=OFF`). One full Vulkan run first failed the desktop `vulkan.imageviewer` window
+test, which passed both in isolation and in a full re-run (focus/desktop flake, not a regression).
+Python bindings are disabled in both trees, so the `PyOffScreen` trampoline change was not compiled
+here. Linux/Mesa, Windows hardware and GitHub CI were not run.

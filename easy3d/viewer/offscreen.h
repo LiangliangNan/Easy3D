@@ -118,18 +118,22 @@ namespace easy3d {
      * \brief Load and add a model file.
      * \param file Path to the model file.
      * \param create Whether to create standard rendering drawables.
+     * \param fit_scene If true, fit the camera to the scene after addition; false
+     *        keeps the current view.
      * \return The added model, or nullptr if loading or addition fails. The returned
      *         pointer is a non-owning observer; do not delete it.
      * \details The OffScreen host owns the loaded model (held internally by a
      *      shared_ptr). A model with the same file name already present is returned
-     *      unchanged. The camera is fitted to the added model.
+     *      unchanged.
      */
-        Model *add_model(const std::string &file, bool create = true) override;
+        Model *add_model(const std::string &file, bool create = true, bool fit_scene = true) override;
 
         /**
      * \brief Add a shared model.
      * \param model Model to add.
      * \param create Whether to create standard rendering drawables.
+     * \param fit_scene If true, fit the camera to the scene after addition; false
+     *        keeps the current view.
      * \return The added model, or nullptr if the model is null or empty, or if
      *         addition fails. The returned pointer is a non-owning observer; do not
      *         delete it.
@@ -138,13 +142,12 @@ namespace easy3d {
      *      Do not delete it manually. Use this form when your code keeps using the
      *      model after adding it. As in Viewer, adding installs a *new* Renderer
      *      (replacing any existing renderer and drawables, so add custom drawables
-     *      afterwards), fits the camera to the scene, and returns the existing entry
-     *      unchanged if the same model is added again. The legacy raw-pointer form
-     *      (exposed via Viewer::add_model) instead transfers ownership to the host;
-     *      after passing a raw Model* you must not delete it or wrap it in another
-     *      shared_ptr.
+     *      afterwards) and returns the existing entry unchanged if the same model is
+     *      added again. The legacy raw-pointer form (exposed via Viewer::add_model)
+     *      instead transfers ownership to the host; after passing a raw Model* you must
+     *      not delete it or wrap it in another shared_ptr.
      */
-        Model *add_model(std::shared_ptr<Model> model, bool create = true) override;
+        Model *add_model(std::shared_ptr<Model> model, bool create = true, bool fit_scene = true) override;
 
         /**
      * \brief Add a shared standalone drawable.

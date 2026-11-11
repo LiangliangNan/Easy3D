@@ -318,24 +318,28 @@ public:
         /**
          * \brief Add a model loaded from a file.
          * \param file_name Path to the model file.
-         * \param create_default_drawables If true, create the model's standard
+         * \param create_drawables If true, create the model's standard
          *        rendering drawables. Pass false when you will add custom drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition; false
+         *        keeps the current view.
          * \return The added model, or nullptr if loading or addition fails. The
          *        returned pointer is a non-owning observer owned by the viewer; do
          *        not delete it.
          * \details The viewer owns the loaded model (held internally by a shared_ptr).
-         *        On success the camera is fitted to the scene, as if fit_scene were
-         *        true; use add_model(std::shared_ptr<Model>, bool, bool) to control
-         *        that. If a model with the same file name is already present, that
-         *        model is returned unchanged and a warning is logged.
+         *        If a model with the same file name is already present, that model is
+         *        returned unchanged, without re-fitting the camera, and a warning is
+         *        logged.
          */
-        Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+        Model* add_model(const std::string& file_name, bool create_drawables = true,
+                         bool fit_scene = true) override;
 
         /**
          * \brief Add an existing model, sharing ownership with the caller.
          * \param model Shared pointer to the model.
-         * \param create_default_drawables If true, create the model's standard
+         * \param create_drawables If true, create the model's standard
          *        rendering drawables. Pass false when you will add custom drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition; false
+         *        keeps the current view (e.g. when attaching a helper/foreground model).
          * \return The added model, or nullptr if the model is null or empty, or if
          *        addition fails. The returned pointer is a non-owning observer owned
          *        by the viewer; do not delete it.
@@ -346,52 +350,36 @@ public:
          *
          *        On success, adding installs a *new* Renderer on the model, replacing any
          *        renderer and drawables it already had. Create custom drawables after
-         *        adding (or pass create_default_drawables = false and then add them to
+         *        adding (or pass create_drawables = false and then add them to
          *        model->renderer()).
          *
-         *        On success the camera is fitted to the scene; use the
-         *        add_model(std::shared_ptr<Model>, bool, bool) overload to skip that.
          *        Adding the same model again returns the existing entry unchanged (no
          *        new renderer, no re-fit).
-         * \sa add_model(Model*, bool) for the legacy ownership-transferring raw-pointer form.
+         * \sa add_model(Model*, bool, bool) for the legacy ownership-transferring raw-pointer form.
          */
-        Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) override;
+        Model* add_model(std::shared_ptr<Model> model, bool create_drawables = true,
+                         bool fit_scene = true) override;
 		/**
 		 * \brief Add a model supplied as a raw pointer, transferring ownership (legacy).
 		 * \param model Pointer to a heap-allocated model; ownership is transferred to the viewer.
-		 * \param create_default_drawables If true, create the model's standard
+		 * \param create_drawables If true, create the model's standard
 		 *        rendering drawables.
+		 * \param fit_scene If true, fit the camera to the scene after addition; false
+		 *        keeps the current view.
 		 * \return The added model, or nullptr if the model is null or empty, or if
 		 *        addition fails. The returned pointer is a non-owning observer owned by
 		 *        the viewer; do not delete it.
 		 * \details Legacy convenience equivalent to
-		 *        add_model(std::shared_ptr<Model>(model), create_default_drawables). The
-		 *        viewer takes sole ownership and deletes the model when it is removed or
+		 *        add_model(std::shared_ptr<Model>(model), create_drawables, fit_scene).
+		 *        The viewer takes sole ownership and deletes the model when it is removed or
 		 *        the viewer is destroyed. After this call the caller must neither delete
 		 *        the model nor wrap it in another shared_ptr (either would free it twice).
-		 *        Ownership, renderer replacement, camera fitting (it auto-fits) and
-		 *        de-duplication behave exactly as in add_model(std::shared_ptr<Model>, bool).
-		 *        Prefer the shared_ptr overload for new code.
-		 * \sa add_model(std::shared_ptr<Model>, bool) for the shared-ownership form.
+		 *        Ownership, renderer replacement, camera fitting and de-duplication behave
+		 *        exactly as in the shared_ptr overload. Prefer the shared_ptr overload for
+		 *        new code.
+		 * \sa add_model(std::shared_ptr<Model>, bool, bool) for the shared-ownership form.
 		 */
-        Model* add_model(Model* model, bool create_default_drawables = true) override;
-
-        /**
-         * \brief Add a shared model and optionally fit the camera to the scene.
-         * \param model Model to add.
-         * \param create_default_drawables Whether to create standard drawables.
-         * \param fit_scene If true, fit the camera to the scene after addition; false
-         *        keeps the current view (e.g. when attaching a helper/foreground model).
-         * \return The added model, or nullptr if the model is null or empty, or if
-         *        addition fails. The returned pointer is a non-owning observer owned by
-         *        the viewer; do not delete it.
-         * \details This is the implementation behind the other add_model overloads.
-         *        Ownership and renderer behavior match
-         *        add_model(std::shared_ptr<Model>, bool): a copy of the shared pointer is
-         *        stored (shared ownership), and a new Renderer replaces any existing one.
-         *        Adding the same model again returns the existing entry unchanged.
-         */
-        Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
+        Model* add_model(Model* model, bool create_drawables = true, bool fit_scene = true) override;
 
         /**
          * \brief Delete a model. The memory of the model will be released and its existing drawables

@@ -81,8 +81,8 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
 }
 
 // Load the model through the base class, then tweak its appearance for face picking.
-Model *TutorialFacePicker::add_model(const std::string &file_name, bool create) {
-    auto model = Viewer::add_model(file_name, create);
+Model *TutorialFacePicker::add_model(const std::string &file_name, bool create, bool fit_scene) {
+    auto model = Viewer::add_model(file_name, create, fit_scene);
     if (!model)
         return nullptr;
 

@@ -40,8 +40,8 @@ namespace easy3d {
     {
     }
 
-    Model* FigureMaker::add_model(const std::string& file_name, bool create_default_drawables) {
-        auto model = Viewer::add_model(file_name, create_default_drawables);
+    Model* FigureMaker::add_model(const std::string& file_name, bool create_drawables, bool fit_scene) {
+        auto model = Viewer::add_model(file_name, create_drawables, fit_scene);
         if (model) {
             if (views_[0][0].models.empty())
                 assign(0, 0, model);

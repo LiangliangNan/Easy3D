@@ -50,7 +50,8 @@ public:
     explicit TutorialFacePicker(const std::string &title);
 
     // Loads a model via the base class, then makes its "edges" drawable visible.
-    easy3d::Model *add_model(const std::string &file_name, bool create_default_drawables = true) override;
+    easy3d::Model *add_model(const std::string &file_name, bool create_drawables = true,
+                             bool fit_scene = true) override;
 
 protected:
     // Intercepts plain left clicks to pick and highlight a face; forwards the rest to Viewer.

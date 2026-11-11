@@ -41,7 +41,7 @@ TexturedViewer::TexturedViewer(const std::string &title) : Viewer(title) {
 
 // The texture-aware loading pipeline. The contract of add_model() is: on success the new
 // model becomes the current one; on failure nothing is lost and nullptr is returned.
-Model *TexturedViewer::add_model(const std::string &file, bool create) {
+Model *TexturedViewer::add_model(const std::string &file, bool create, bool fit_scene) {
     try {
         // Parse before replacing the scene, so read failures retain the current model.
         Model *model = nullptr;
@@ -51,7 +51,8 @@ Model *TexturedViewer::add_model(const std::string &file, bool create) {
             auto asset = load_obj_materials(file);
             // Attach the mesh WITHOUT default drawables: create_drawables() below will
             // add one textured drawable per material part instead of a single plain one.
-            model = Viewer::add_model(asset.mesh, false);
+            // Skip the fit here: it is done below, once the previous models are gone.
+            model = Viewer::add_model(asset.mesh, false, false);
             if (!model)
                 return nullptr;
             try {
@@ -64,7 +65,7 @@ Model *TexturedViewer::add_model(const std::string &file, bool create) {
             }
         } else {
             // Not an OBJ: keep the standard loading behavior for all other formats.
-            model = Viewer::add_model(file, create);
+            model = Viewer::add_model(file, create, false);
             if (!model)
                 return nullptr;
         }
@@ -74,7 +75,8 @@ Model *TexturedViewer::add_model(const std::string &file, bool create) {
             if (old.get() != model)
                 delete_model(old.get());
         // Center and scale the camera so the whole model is visible.
-        fit_screen();
+        if (fit_scene)
+            fit_screen();
         return model;
     } catch (const std::exception &e) {
         // Parsing errors (bad file, invalid indices, ...) are reported, not propagated,

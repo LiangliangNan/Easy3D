@@ -242,7 +242,7 @@ namespace easy3d {
          *              - Graph: "vertices", "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
-         *          override this function or set 'create_default_drawables' to false and create the
+         *          override this function or set 'create_drawables' to false and create the
          *          drawables by calling Model::add_[type]_drawable().
          */
         void create_default_drawables();

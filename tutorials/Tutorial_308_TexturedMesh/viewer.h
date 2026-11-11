@@ -49,7 +49,8 @@ public:
 
     // Texture-aware loading: OBJ files are parsed with load_obj_materials() and their
     // material parts become textured drawables; other formats use Viewer::add_model().
-    easy3d::Model *add_model(const std::string &file_name, bool create_default_drawables = true) override;
+    easy3d::Model *add_model(const std::string &file_name, bool create_drawables = true,
+                             bool fit_scene = true) override;
 };
 
 

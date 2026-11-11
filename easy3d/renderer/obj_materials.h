@@ -63,7 +63,7 @@ namespace easy3d {
         std::vector<Part> parts;
         /**
      * \brief Create one renderer drawable per imported material part.
-     * \details Attach the mesh to a host with create_default_drawables=false
+     * \details Attach the mesh to a host with create_drawables=false
      * first. Texture representation follows the host renderer backend. Existing
      * drawables with matching names cause std::logic_error; they are not replaced.
      * \throws std::logic_error if the mesh has no attached renderer or a part
