@@ -48,10 +48,30 @@ namespace easy3d {
 		 * \param name The name of the drawable.
 		 */
         explicit LinesDrawable2D(const std::string& name = "");
+        /**
+         * \brief Destructor.
+         */
         ~LinesDrawable2D() override;
 
-        /// Width in framebuffer pixels (default 1). Must be positive and finite.
-        /// \return Current line width.
+        /**
+         * \brief Returns the type of the drawable.
+         * \return The type of the drawable, which is DT_LINES.
+         */
+        Type type() const override { return DT_LINES; }
+
+        /**
+         * \brief Draws the drawable.
+         * \param camera The camera used for rendering.
+         */
+        void draw(const Camera* camera) const override;
+
+        /// \name Screen-space line width
+        ///@{
+
+        /**
+         * \brief Get the line width in framebuffer pixels.
+         * \return Current line width (default 1). Must be positive and finite.
+         */
         float line_width() const { return line_width_; }
 
         /**
@@ -59,18 +79,10 @@ namespace easy3d {
          * \param width Positive finite width in pixels.
          */
         void set_line_width(float width);
+        ///@}
 
-		/**
-		 * \brief Returns the type of the drawable.
-		 * \return The type of the drawable, which is DT_LINES.
-		 */
-        Type type() const override { return DT_LINES; }
-
-		/**
-		 * \brief Draws the drawable.
-		 * \param camera The camera used for rendering.
-		 */
-        void draw(const Camera* camera) const override;
+        /// \name Buffer access and management
+        ///@{
 
         /**
          * \brief Creates/Updates the vertex buffer.
@@ -88,13 +100,25 @@ namespace easy3d {
          *      For a more memory efficient implementation, an element buffer should be used.
          */
         void update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic = false);
+        ///@}
+
     private:
-        float line_width_ = 1.0f;
 #ifndef EASY3D_HAS_VULKAN
+        // Uploads the already normalized device coordinates into the position
+        // buffer bound to the shared vertex array object and refreshes num_vertices_.
         void opengl_update_vertex_buffer(const std::vector<vec2>& ndc, bool dynamic);
+
+        // Deletes the texel buffers and the extra vertex array object used by the
+        // variable-width path, and zeroes the cached OpenGL names.
         void opengl_release_line_resources();
+
+        // OpenGL names backing the variable-width line path: position and index
+        // texel buffers plus the extra vertex array object that binds them.
         mutable unsigned int position_texture_ = 0, index_texture_ = 0, line_vao_ = 0;
 #endif
+
+        // Framebuffer-pixel line width (see line_width()).
+        float line_width_ = 1.0f;
     };
 
 }

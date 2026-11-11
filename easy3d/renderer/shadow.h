@@ -149,24 +149,37 @@ namespace easy3d {
         // SoftShadow overrides this with its penumbra softness.
         virtual float frame_softness() const { return 0.0f; }
 
+        // Build a perspective frustum from the camera (FOV widened by 0.2 rad to
+        // avoid screen-border artifacts); it bounds the light frustum.
         void compute_camera_frustum();
+        // Fit the light's view/projection frustum around the camera frustum and
+        // derive the world->shadow-texture matrix.
         void compute_light_frustum();
+        // Recompute the virtual background receiver corners at the light far plane.
         void update_virtual_background();
 
-    protected:
+        // The camera whose scene is shadowed.
         Camera* camera_;
+        // Camera and light frustums (owned; created on first use).
         Frustum* camera_frustum_;
         Frustum* light_frustum_;
+        // Light position derived from the scene center and the light distance.
         vec3    light_pos_;
+        // Square shadow-map side length in pixels.
         int     shadow_map_size_;
+        // Virtual background receiver state and color (directional lights only).
         bool    virtual_background_;
         vec4    virtual_background_color_;
+        // Light distance factor (relative to the scene radius) and shadow darkness.
         float   light_distance_;
         float   darkness_;
+        // Light matrices; shadow_matrix_ also contains the clip->texture transform.
         mat4    shadow_matrix_;        // clip to texture transformation is contained
         mat4    light_view_matrix_;
         mat4    light_projection_matrix_;
+        // World-space corners of the virtual background receiver.
         std::vector<vec3> background_corners_;
+        // Shadow-caster drawables registered by begin().
         std::vector<TrianglesDrawable*> surfaces_;
 
     private:
@@ -249,17 +262,21 @@ namespace easy3d {
         const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
 
     protected:
+        // Create/resize the shadow-map framebuffer to shadow_map_size_.
         virtual void ensure_fbo();
+        // Render the shadow casters into the shadow map (depth only) from the light frustum.
         virtual void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces);
+        // Render the scene with shadow comparison (PCF; PCSS in SoftShadow).
         virtual void render_pass(const std::vector<TrianglesDrawable*>& surfaces);
 
-        void clear();
+        // Load the shadow shaders and allocate resources.
         void init();
+        // Release framebuffer objects and shaders.
+        void clear();
 
-        // visualize the frustum (useful for debugging)
-        void draw_light_frustum();
-
+        // Build a perspective frustum from the camera (FOV widened by 0.2 rad).
         void compute_camera_frustum();
+        // Fit the light's view/projection frustum around the camera frustum.
         void compute_light_frustum();
 
         // A background plane perpendicular to the light direction and
@@ -268,36 +285,39 @@ namespace easy3d {
         // have a *real* ground, i.e. up right, contacting the object.
         virtual void update_virtual_background();
 
-    protected:
+        // visualize the frustum (useful for debugging)
+        void draw_light_frustum();
+
+        // The camera whose scene is shadowed.
         Camera*	camera_;
-
+        // Shadow-map framebuffer (depth texture).
         FramebufferObject*	fbo_;
-
+        // Camera and light frustums (owned; created on first use).
         Frustum* camera_frustum_;
         Frustum* light_frustum_;
-
+        // Light position derived from the scene center and the light distance.
         vec3    light_pos_;
-
+        // Square shadow-map side length in pixels.
         int		shadow_map_size_;
-
         // the shadow is cast onto a minimum plane orthogonal to the light direction.
         bool	virtual_background_;
         vec4    virtual_background_color_;
+        // Drawable rendering the virtual background receiver plane.
         TrianglesDrawable* virtual_background_drawable_;
-
         float	light_distance_;	// for perspective light frustum only
         float	darkness_;
-
+        // Light matrices; shadow_matrix_ also contains the clip->texture transform.
         mat4	shadow_matrix_;		// clip to texture transformation is contained
         mat4	light_view_matrix_;
         mat4	light_projection_matrix_;
 
     private:
-        std::vector<TrianglesDrawable*> surfaces_;
-
         //copying disabled
         Shadow(const Shadow&);
         Shadow& operator=(const Shadow&);
+
+        // Shadow-caster drawables registered by begin().
+        std::vector<TrianglesDrawable*> surfaces_;
     };
 
 }

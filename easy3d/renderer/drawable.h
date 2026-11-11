@@ -45,28 +45,6 @@ namespace easy3d {
     namespace opengl { class PointSelector; }
 
     /**
-     * \brief World-space impostor radius for a DPI-independent logical size.
-     * \param camera Camera whose logical screen dimensions define pixelGLRatio().
-     * \param size Full impostor diameter in logical pixels (point_size()/line_width()).
-     * \return World-space radius, size * pixelGLRatio(pivotPoint()) * 0.5, that
-     *      projects to \p size logical pixels on both backends. Impostor radii are
-     *      world-space quantities; the framebuffer viewport handles physical sizing.
-     */
-    float impostor_radius(const Camera& camera, float size);
-
-#ifndef EASY3D_HAS_VULKAN
-    /**
-     * \brief Framebuffer-to-logical pixel scale of the current OpenGL viewport.
-     * \param camera Camera carrying logical screen dimensions.
-     * \return GL viewport width / camera.screenWidth(): the DPI scale for a window,
-     *      the cell scale for a MultiViewer, or the output scale for a snapshot.
-     *      Plain points/lines rasterize in framebuffer pixels, so their logical
-     *      sizes are multiplied by this factor before glPointSize()/glLineWidth().
-     */
-    float viewport_pixel_scale(const Camera& camera);
-#endif
-
-    /**
      * \brief Base class for objects drawn as points, line segments, or triangles.
      * \class Drawable easy3d/renderer/drawable.h
      * \details A Drawable is an abstraction for "something that can be drawn", e.g., a point cloud, the surface
@@ -106,33 +84,7 @@ namespace easy3d {
             std::size_t revision = 0;
         };
 
-        /**
-         * \brief Query whether CPU-side buffer data is available.
-         * \return True when this drawable has CPU buffers.
-         */
-        bool has_cpu_buffers() const { return bool(cpu_buffers_); }
-
-        /**
-         * \brief Access the current CPU-side buffer snapshot.
-         * \return Current buffer data, refreshing it first when an update is pending.
-         * \throws std::logic_error when CPU buffers are not enabled for this drawable.
-         */
-        const BufferData& cpu_buffers();
-
-        /**
-         * \brief Associate rendered triangles with source SurfaceMesh faces.
-         * \param faces One source face index per rendered triangle, or an empty
-         *        vector to clear the mapping. Use -1 for unknown provenance.
-         * \throws std::logic_error unless CPU buffers are available and this is
-         *        a triangle drawable.
-         * \throws std::invalid_argument if the count or an index is invalid.
-         * \details Set this after uploading triangle geometry; geometry uploads
-         * invalidate the mapping.
-         */
-        void set_source_faces(const std::vector<int>& faces);
-        /**
-         * \brief The type of the drawable.
-         */
+        /// \brief The type of the drawable.
         enum Type {
             DT_POINTS = 0x0000,     //!< Points drawable (GL_POINTS).
             DT_LINES = 0x0001,      //!< Lines drawable (GL_LINES).
@@ -207,14 +159,40 @@ namespace easy3d {
          */
         void set_state(const State& s) { state() = s; }
 
+        /// \name Buffer access and management
+        /// @{
+
+        /**
+         * \brief Query whether CPU-side buffer data is available.
+         * \return True when this drawable has CPU buffers.
+         */
+        bool has_cpu_buffers() const { return bool(cpu_buffers_); }
+
+        /**
+         * \brief Access the current CPU-side buffer snapshot.
+         * \return Current buffer data, refreshing it first when an update is pending.
+         * \throws std::logic_error when CPU buffers are not enabled for this drawable.
+         */
+        const BufferData& cpu_buffers();
+
+        /**
+         * \brief Associate rendered triangles with source SurfaceMesh faces.
+         * \param faces One source face index per rendered triangle, or an empty
+         *        vector to clear the mapping. Use -1 for unknown provenance.
+         * \throws std::logic_error unless CPU buffers are available and this is
+         *        a triangle drawable.
+         * \throws std::invalid_argument if the count or an index is invalid.
+         * \details Set this after uploading triangle geometry; geometry uploads
+         * invalidate the mapping.
+         */
+        void set_source_faces(const std::vector<int>& faces);
+
         /**
          * \brief Prints statistics of the buffers to an output stream.
          * \param output The output stream (e.g., std::cout).
          */
         void buffer_stats(std::ostream &output) const;
 
-        /// \name Buffer access and management
-        /// @{
         /**
          * \brief Returns the vertex buffer ID.
          * \return The vertex buffer ID.
@@ -290,7 +268,6 @@ namespace easy3d {
          */
         void disable_element_buffer();
 
-        ///@}
         /**
          * \brief Returns the number of vertices.
          * \return The number of vertices.
@@ -301,6 +278,24 @@ namespace easy3d {
          * \return Index count; zero when no element buffer is used.
          */
         std::size_t num_indices() const { return num_indices_; }
+
+        /**
+         * \brief Returns the vertex array object of this drawable.
+         * \return The vertex array object.
+         */
+        VertexArrayObject *vao() {
+            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            return vao_.get();
+        }
+        /**
+         * \brief Returns the vertex array object of this drawable (const version).
+         * \return The vertex array object.
+         */
+        const VertexArrayObject *vao() const {
+            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            return vao_.get();
+        }
+        ///@}
 
         /// \name Rendering
         ///@{
@@ -346,6 +341,24 @@ namespace easy3d {
 
         ///@}
 
+        /// \name Impostor sizing
+        ///@{
+
+        /**
+         * \brief Computes the world-space radius of an impostor primitive.
+         * \param camera Camera whose logical screen dimensions define pixelGLRatio().
+         * \param size Full impostor diameter in logical pixels (point_size()/line_width()).
+         * \return World-space radius, size * pixelGLRatio(pivotPoint()) * 0.5, that
+         *      projects to \p size logical pixels on both backends. Impostor radii are
+         *      world-space quantities; the framebuffer viewport handles physical sizing.
+         * \details Both backends derive their impostor size from this single formula:
+         *      OpenGL uploads it as the \c sphere_radius/\c radius shader uniform, while
+         *      Vulkan stores it in the draw command's point/line radius.
+         * \sa PointsDrawable, LinesDrawable.
+         */
+        static float impostor_radius(const Camera& camera, float size);
+        ///@}
+
         /// \name Manipulation
         ///@{
         /**
@@ -377,46 +390,58 @@ namespace easy3d {
         mat4 manipulated_matrix() const;
         ///@}
 
-        /**
-         * \brief Returns the vertex array object of this drawable.
-         * \return The vertex array object.
-         */
-        VertexArrayObject *vao() {
-            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
-            return vao_.get();
-        }
-        /**
-         * \brief Returns the vertex array object of this drawable (const version).
-         * \return The vertex array object.
-         */
-        const VertexArrayObject *vao() const {
-            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
-            return vao_.get();
-        }
-
     private:
         friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
         // Selection aliases the rendering VBO directly, so it must be able to
         // refresh and version that storage without a dispatch through Viewer.
         friend class opengl::PointSelector;
-        unsigned long long point_revision_ = 0;
+
+        // OpenGL buffer back ends called from the backend-neutral public and
+        // protected entry points above; each keeps the cached GL names and the
+        // vertex/index counts in sync with what is actually uploaded.
+        // Creates the vertex array object that owns all of this drawable's buffers.
         void opengl_initialize();
+        // Deletes every attribute buffer and resets the cached buffer names.
         void opengl_release_buffers();
+        // Releases only the element buffer, so geometry is drawn from the vertex arrays.
         void opengl_disable_element_buffer();
+        // Uploads positions into the position buffer bound to the vertex array object.
         void opengl_update_vertex_buffer(const std::vector<vec3>&, bool);
+        // Uploads per-vertex colors into the color buffer.
         void opengl_update_color_buffer(const std::vector<vec3>&, bool);
+        // Uploads per-vertex normals into the normal buffer.
         void opengl_update_normal_buffer(const std::vector<vec3>&, bool);
+        // Uploads per-vertex texture coordinates into the texcoord buffer.
         void opengl_update_texcoord_buffer(const std::vector<vec2>&, bool);
+        // Uploads the index array into the element buffer.
         void opengl_update_element_buffer(const std::vector<unsigned int>&);
+
+        // Version of the position storage, bumped on every buffer change so that
+        // point selection can tell that its cached snapshot is stale.
+        unsigned long long point_revision_ = 0;
 #endif
 
     protected:
-        // actual update of the rendering buffers are here
+        // actual update of the rendering buffers are here: refreshes the CPU
+        // snapshot or the OpenGL buffers from the model (or the user update
+        // function) and recomputes the bounding box and element counts.
         virtual void update_buffers_internal();
 
-        // clears all buffers
+        // clears all buffers: releases the CPU snapshot or the OpenGL buffers and
+        // resets the vertex/index counts and the bounding box.
         void clear();
+
+#ifndef EASY3D_HAS_VULKAN
+        // Framebuffer-to-logical pixel scale of the currently bound OpenGL viewport:
+        // queries GL_VIEWPORT and divides its width by camera.screenWidth(), which is
+        // the DPI scale for a window, the cell scale for a MultiViewer, or the output
+        // scale for a snapshot (1 when the camera reports no width). Plain points and
+        // lines rasterize in framebuffer pixels, so their logical sizes are multiplied
+        // by this factor before glPointSize()/glLineWidth(); impostor radii are
+        // world-space and need no such scaling.
+        static float viewport_pixel_scale(const Camera& camera);
+#endif
 
     protected:
         std::string name_;  //!< The name of the drawable.

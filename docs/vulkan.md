@@ -7394,3 +7394,99 @@ intermediate full OpenGL run flagged `opengl.counterparts` ("multi-view layout A
 was a stale test executable predating the relink — running the rebuilt test directly and re-running the
 suite cleared it, not a code defect. Linux/Mesa, Windows hardware and GitHub CI were not run; these
 remain separate validation gates.
+
+### 2026-11-11 — W10 batch 49: reorganize and document the `#ifdef EASY3D_HAS_VULKAN` headers
+
+**Scope.** Every library header that carries `#ifdef EASY3D_HAS_VULKAN` (renderer effects, viewer
+classes, pickers) is now laid out in one predictable order so a reader can find things without
+searching: **public functions grouped by purpose, then public data; protected functions, then
+protected data; private functions, then private data.** Functions were reordered freely; data-member
+order was preserved wherever possible, and the constructors' init lists were checked so that
+declaration/initialization order stays consistent. Closely related declarations that were split
+across the two backend branches (or across duplicate `protected:`/`private:` labels) were pulled
+together under one label. Every public function and variable is documented; protected and private
+functions gained a one-line note on what they do and how they are implemented; original comments were
+kept or improved, never dropped. No behavior changed. One deliberate API relocation (below) moves the
+impostor helpers into `Drawable`.
+
+**Shared pointer vs. raw pointer (documentation corrected to match behavior).** The `add_model` and
+`add_drawable` overload pairs are documented for readers who are not fluent in C++ ownership. The
+`std::shared_ptr` form *shares* ownership (the viewer copies the handle; the object lives until both the
+caller and the viewer release it; do not delete it manually). The raw-pointer form *transfers* ownership
+and is now labelled **legacy**: it is exactly `add_model(std::shared_ptr<Model>(model), …)` /
+`add_drawable(std::shared_ptr<Drawable>(drawable))` — the viewer wraps the pointer in its own
+`shared_ptr` and becomes the sole owner, so the caller must not delete it or build a second `shared_ptr`
+from it (which would free it twice); new code should prefer the `std::shared_ptr` overload. The earlier
+draft described only ownership; the docs now also state the behavior users actually hit: every non-null
+successful call returns a **non-owning observer** (never delete it); `add_model` installs a **new
+Renderer**, discarding any renderer/drawables the model already had (custom drawables must be added after
+adding); the file/shared/raw forms **fit the camera** (the 3-argument overload takes `fit_scene = false` to
+keep the current view); a null/empty model yields `nullptr`; and re-adding the same model (by object
+identity, or by file name in the file form) returns the existing entry unchanged — no second renderer, no
+re-fit — while `add_drawable` de-duplicates by object identity, creates no renderer and does not fit.
+Each form names the other in `\sa`. This is in `viewer.h` (the concrete overloads), `viewer_base.h` (the
+abstract declarations external users read) and `offscreen.h` (the allowed public surface). Documentation
+only; no signature or behavior changed.
+
+**`viewer/viewer.h` (largest change).** Public API regrouped into Model management, Drawable
+management, Animation, Overlays and clipping, Point selection, Image capture, Vulkan render device and
+Public data groups. `animation_func_` (the public callback state) moved into the Public data group next
+to `set_animation_callback()`, which installs/clears it; Vulkan-only `set_samples` and
+`set_clipping_planes` moved into their logical public groups instead of sitting apart. Every
+private/protected helper and cached field is annotated: frame-loop helpers (`update_frame_rate`,
+`print_usage`, `restore_scene_bounds`), event handlers and GLFW trampolines, the Vulkan command
+assembly (`draw_commands`, `frame_commands`, overlay-slot setters), the Vulkan overlay caches
+(`window_host_`, `impl_`, the rendered-HUD state, `texter_`) and the OpenGL state (`runtime_`,
+`overlay_renderer_`, `point_selector_`, `selection_planes_`, `overlay_tile_`). No member changed access.
+
+**`viewer/viewer_base.h`.** The abstract `add_model`/`add_drawable` declarations carry the same
+ownership explanation and cross-references as the concrete overrides, since this is the header most
+external code reads first.
+
+**`viewer/offscreen.h`.** The duplicated `// Keep this part of code minimum` note in both backend
+branches was collapsed to one; `activate()` (make the hidden OpenGL context current) is documented;
+the shared-pointer `add_model`/`add_drawable` docs now contrast the ownership-transferring forms
+exposed via `using Viewer::...`.
+
+**`viewer/multi_viewer.h`.** Protected grid hooks (`init`, `post_resize`, `mouse_press_event`,
+`interaction_origin`, `update_division`) and the per-backend draw paths (`draw`/`draw_scene`/
+`prepare_pick_view` on OpenGL, `draw_commands` on Vulkan) are grouped ahead of the cell state; the
+Vulkan division-command cache moved down into the data group while keeping its declaration order.
+Each hook and field is documented.
+
+**`gui/picker.h`.** The two protected sections were merged (functions, then the borrowed `camera_`).
+The Vulkan `render_device()` (lazy device, stale-drawable pruning) and `draw_command()` (packages the
+drawable, camera and active clipping planes) are documented beside the OpenGL `setup_framebuffer()`.
+
+**`renderer/shadow.h`, `renderer/soft_shadow.h`.** Each backend class now has a single protected
+block: frustum/background/FBO/init/clear helpers first, then data, each with a purpose plus a short
+implementation note. `SoftShadow::frame_softness()` documents that it publishes the penumbra softness
+into the base class's Vulkan frame data.
+
+**`renderer/ambient_occlusion.h`, `eye_dome_lighting.h`, `transparency.h`, `dual_depth_peeling.h`,
+`per_pixel_linked_lists_oit.h`, `average_color_blending.h`.** Functions grouped before data in every
+class; each pass (`ssao_pass`/`blur_pass`/`compose`, EDL `shade_high`/`shade_low`/`blur_low`/`compose`,
+DDP `init_depth_buffers`/`peel`/`blend_final_image`/occlusion-query helpers, PPLL `build_lists`/
+`resolve`) gained a how-it-works note, and cached resources are labelled. In `dual_depth_peeling.h`
+one pass had widened the peeling state from `private` to `protected`; that was restored to `private`
+(original encapsulation), with the copy-block declarations kept first.
+
+**`renderer/drawable.h` + `drawable.cpp` + `renderer/backends/vulkan/drawable.cpp`.** The namespace-scope
+helpers `impostor_radius()` and `viewport_pixel_scale()` became `Drawable` static members
+(`impostor_radius` public, under a new *Impostor sizing* group; `viewport_pixel_scale` protected, it is
+an OpenGL-only detail). This is the one deliberate API relocation: the free `easy3d::impostor_radius`
+symbol now lives as `Drawable::impostor_radius`. It was introduced in batch 46 as an internal shared
+formula; all in-tree callers are updated (unqualified calls in the point/line drawables resolve to the
+inherited static). Buffer access/management and `vao()` were regrouped, and the OpenGL `opengl_*`
+buffer back ends are documented.
+
+**`renderer/drawable_lines_2D.h`.** Type/draw, screen-space line width and buffer update grouped;
+the OpenGL variable-width resources (`position_texture_`, `index_texture_`, `line_vao_`) documented.
+
+**Minor.** `gui/picker_point_cloud.cpp` marks the archived CPU region-selection block `#if 0 // Do NOT
+delete!!!`. `tutorials/Tutorial_202_Viewer_imgui/viewer.h` documents the two menu helpers.
+
+**Validation (2026-11-11, macOS Release).** Both trees build with zero warnings
+(`build-opengl` OpenGL, `cmake-build-release` Vulkan). Serial CTest passed OpenGL 106/106 and Vulkan
+140/140 (Vulkan tests temporarily enabled then restored to `Easy3D_BUILD_TESTS=OFF`). Linux/Mesa,
+Windows hardware and GitHub CI were not run.

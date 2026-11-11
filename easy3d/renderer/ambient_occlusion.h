@@ -100,12 +100,21 @@ namespace easy3d {
          */
         void end();
 
-        // Frame parameters published by begin() for the registered camera.
+        /**
+         * \brief Returns the frame parameters published by begin() for the registered camera.
+         * \param camera The camera whose frame parameters are requested.
+         * \param radius Receives the sample radius (already scaled by the scene radius).
+         * \param bias Receives the bias value.
+         * \param projection Receives the camera projection matrix.
+         * \return True if parameters were published for the camera; false otherwise.
+         */
         static bool frame_params(const Camera* camera, float& radius, float& bias, mat4& projection);
 
     protected:
+        // The camera whose scene is shaded with ambient occlusion.
         Camera* camera_;
 
+        // Effect parameters: sample radius (scaled by the scene radius) and depth bias.
         float	radius_;
         float	bias_;
 
@@ -197,29 +206,39 @@ namespace easy3d {
     protected:
         /**
          * \brief Initializes the ambient occlusion with the given width and height
+         * \details Creates/resizes the projection FBO (color + depth texture) and the
+         *      SSAO FBO (two R32F textures for the raw and blurred occlusion term).
          * \param w The width
          * \param h The height
          */
         void init(int w, int h);
         /**
          * \brief Performs the SSAO pass
+         * \details Runs the horizon-based ssao/ssao shader on a full-screen quad, reading the
+         *      projection depth, and writes the raw occlusion term to the first SSAO attachment.
          */
         void ssao_pass();
         /**
          * \brief Performs the blur pass
+         * \details Filters the raw occlusion texture with the depth-aware ssao/blur shader
+         *      into the second SSAO color attachment.
          */
         void blur_pass();
         /**
          * \brief Composites the shaded projection buffer into the framebuffer.
+         * \details Multiplies the projection color by the blurred occlusion term using the
+         *      shared edl/edl_compose shader, without modifying the destination depth.
          */
         void compose();
 
-    protected:
+        // The camera whose scene is shaded with ambient occlusion.
         Camera* camera_;
 
+        // Effect parameters: sample radius (scaled by the scene radius) and depth bias.
         float	radius_;
         float	bias_;
 
+        // Offscreen render targets.
         FramebufferObject*	projection_fbo_; ///< The framebuffer object for the projected scene
         FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
 

@@ -244,7 +244,7 @@ namespace {
         LOG(INFO) << "current selection: " << count << " points";
     }
 
-#if 0
+#if 0 // Do NOT delete!!!
     // Archived CPU implementations of the region-selection overloads above. They
     // projected every point on the CPU and are kept here only for reference. GPU
     // selection (transform feedback on OpenGL, a compute shader on Vulkan) produces

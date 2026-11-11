@@ -72,16 +72,23 @@ namespace easy3d {
          */
         void end();
 
-        // Frame parameters published by begin() for the registered camera.
+        /**
+         * \brief Returns the frame parameters published by begin() for the registered camera.
+         * \param camera The camera whose frame parameters are requested.
+         * \param z_near Receives the near depth used for depth linearization.
+         * \param z_far Receives the far depth used for depth linearization.
+         * \param scene_size Receives the scene size (diagonal of the scene bounding box).
+         * \return True if parameters were published for the camera; false otherwise.
+         */
         static bool frame_params(const Camera* camera, float& z_near, float& z_far, float& scene_size);
-
-    private:
-        Camera* camera_;
 
     private:
         //copying disabled
         EyeDomeLighting(const EyeDomeLighting&);
         EyeDomeLighting& operator=(const EyeDomeLighting&);
+
+        // The camera whose scene is shaded with EDL.
+        Camera* camera_;
     };
 
 }
@@ -140,28 +147,35 @@ namespace easy3d {
 
     protected:
 
-        // Initialization of required framebuffer objects
+        // Create/resize the required framebuffer objects: projection (color + depth),
+        // full-res shading, and low-res shading/blur (size / low_res_factor_).
         void init_frame_buffers(int w, int h);
 
-        // Initialization of required GLSL shaders
+        // Load (or fetch cached) GLSL shaders for EDL shading, composition, and bilateral blur.
         void init_shader_programs();
 
-        // Render EDL in full resolution buffer
+        // Render EDL in full resolution buffer: shade from the projection depth into high_fbo_.
         void shade_high(float scene_radius);
 
-        // Render EDL in middle resolution buffer
+        // Render EDL in middle resolution buffer (size / low_res_factor_) into low_fbo_.
         void shade_low();
 
-        // Render EDL in middle resolution buffer
+        // Bilaterally filter the low-res shading (depth-aware kernel) into low_fbo_'s second attachment.
         void blur_low();
 
-        // Compose color and shaded images
+        // Compose color and shaded images: multiply the projection color by the mixed
+        // full/low-res shading, propagating depth to the destination.
         void compose();
 
-        // Release graphics resources
+        // Release graphics resources: delete the three FBOs (shaders are owned by ShaderManager).
         void clear();
 
     private:
+        //copying disabled
+        EyeDomeLighting(const EyeDomeLighting&);
+        EyeDomeLighting& operator=(const EyeDomeLighting&);
+
+        // The camera whose scene is shaded with EDL.
         Camera* camera_;
 
         // Framebuffer object for initial projection
@@ -186,21 +200,19 @@ namespace easy3d {
         ShaderProgram* compose_program_;
         ShaderProgram* blur_program_;
 
+        // EDL sampling: unit offsets of the 8 image-space neighbours and the low-res downscale factor.
         float neighbours_[8][4];
         float low_res_factor_; // basically 4
 
         //////////////////////////////////////////////////////////////////////////
 
+        // Depth range used for depth linearization.
         float z_near_;  // near clipping plane
         float z_far_;	// far clipping plane
 
+        // Current viewport size.
         int width_;
         int height_;
-
-    private:
-        //copying disabled
-        EyeDomeLighting(const EyeDomeLighting&);
-        EyeDomeLighting& operator=(const EyeDomeLighting&);
     };
 
 }

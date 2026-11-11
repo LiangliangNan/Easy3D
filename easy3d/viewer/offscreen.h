@@ -90,18 +90,23 @@ namespace easy3d {
         void resize(int width, int height) override;
 
         /**
+     * \brief Query the logical canvas size; for OffScreen it equals the pixel size.
+     * \param width Receives the canvas width.
+     * \param height Receives the canvas height.
+     */
+        void viewer_size(int &width, int &height) const override;
+
+        /**
      * \brief Query the framebuffer size; for OffScreen it equals the canvas size.
      * \param width Receives the canvas width in pixels.
      * \param height Receives the canvas height in pixels.
      */
         void framebuffer_size(int &width, int &height) const override;
 
-        /**
-     * \brief Query the logical canvas size; for OffScreen it equals the pixel size.
-     * \param width Receives the canvas width.
-     * \param height Receives the canvas height.
-     */
-        void viewer_size(int &width, int &height) const override;
+        // Convenience single-value forms of framebuffer_size() above; the canvas
+        // has no separate logical/DPI extent, so these return canvas pixels.
+        using Viewer::framebuffer_width;
+        using Viewer::framebuffer_height;
 
         /// Offscreen canvas uses a fixed pixel scale of one.
         /// \return Always 1.
@@ -109,14 +114,15 @@ namespace easy3d {
             return 1;
         } // fixed-size pixel canvas
 
-        using Viewer::framebuffer_width;
-        using Viewer::framebuffer_height;
-
         /**
      * \brief Load and add a model file.
      * \param file Path to the model file.
      * \param create Whether to create standard rendering drawables.
-     * \return The added model, or nullptr if loading or addition fails.
+     * \return The added model, or nullptr if loading or addition fails. The returned
+     *         pointer is a non-owning observer; do not delete it.
+     * \details The OffScreen host owns the loaded model (held internally by a
+     *      shared_ptr). A model with the same file name already present is returned
+     *      unchanged. The camera is fitted to the added model.
      */
         Model *add_model(const std::string &file, bool create = true) override;
 
@@ -124,16 +130,34 @@ namespace easy3d {
      * \brief Add a shared model.
      * \param model Model to add.
      * \param create Whether to create standard rendering drawables.
-     * \return The added model, or nullptr if addition fails.
-     * \details The OffScreen host retains shared ownership.
+     * \return The added model, or nullptr if the model is null or empty, or if
+     *         addition fails. The returned pointer is a non-owning observer; do not
+     *         delete it.
+     * \details The OffScreen host retains shared ownership: it stores a copy of the
+     *      shared_ptr, so the model survives until both you and the host release it.
+     *      Do not delete it manually. Use this form when your code keeps using the
+     *      model after adding it. As in Viewer, adding installs a *new* Renderer
+     *      (replacing any existing renderer and drawables, so add custom drawables
+     *      afterwards), fits the camera to the scene, and returns the existing entry
+     *      unchanged if the same model is added again. The legacy raw-pointer form
+     *      (exposed via Viewer::add_model) instead transfers ownership to the host;
+     *      after passing a raw Model* you must not delete it or wrap it in another
+     *      shared_ptr.
      */
         Model *add_model(std::shared_ptr<Model> model, bool create = true) override;
 
         /**
      * \brief Add a shared standalone drawable.
      * \param drawable Drawable to add.
-     * \return The added drawable, or nullptr if addition fails.
-     * \details The OffScreen host retains shared ownership.
+     * \return The added drawable, or nullptr if the pointer is null. The returned
+     *         pointer is a non-owning observer; do not delete it.
+     * \details The OffScreen host retains shared ownership: it stores a copy of the
+     *      shared_ptr, so the drawable stays alive until both you and the host release
+     *      it. Use this form to keep the drawable alive independently in your own
+     *      code. Unlike add_model, this creates no renderer and does not fit the
+     *      camera; an already-managed drawable is returned unchanged. The legacy
+     *      raw-pointer form (exposed via Viewer::add_drawable) transfers ownership to
+     *      the host, so the caller must not delete it afterwards.
      */
         Drawable *add_drawable(std::shared_ptr<Drawable> drawable) override;
 
@@ -166,18 +190,21 @@ namespace easy3d {
         using Viewer::width;
         using Viewer::world_to_pixel;
         using Viewer::world_to_window;
-        //@}
 #ifdef EASY3D_HAS_VULKAN
         // Transitional native scene operations, retained until the picker migration.
         using Viewer::device;
         using Viewer::scan_visible_points;
         using Viewer::set_clipping_planes;
 #endif
+        //@}
     private:
-#ifdef EASY3D_HAS_VULKAN
         // Keep this part of code minimum
-#else
-        // Keep this part of code minimum
+#ifndef EASY3D_HAS_VULKAN
+        /**
+         * \brief Make the hidden OpenGL context current for the calling thread.
+         * \details Required before any GL resource use or capture; Vulkan builds
+         *      manage the device explicitly and need no context activation.
+         */
         void activate() const;
 #endif
     };

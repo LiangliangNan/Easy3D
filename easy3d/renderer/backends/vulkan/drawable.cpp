@@ -312,7 +312,7 @@ namespace easy3d {
                     result.point_style = p->impostor_type() == PointsDrawable::SPHERE   ? graphics::PointStyle::sphere
                                          : p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel
                                                                                         : graphics::PointStyle::plain;
-                    result.sphere_radius = impostor_radius(cam, p->point_size());
+                    result.sphere_radius = Drawable::impostor_radius(cam, p->point_size());
                     result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
                     result.projection = cam.projectionMatrix();
                     result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
@@ -322,7 +322,7 @@ namespace easy3d {
                                         : l->impostor_type() == LinesDrawable::CONE   ? graphics::LineStyle::cone
                                                                                       : graphics::LineStyle::plain;
                     result.line_width = l->line_width();
-                    result.line_radius = impostor_radius(cam, l->line_width());
+                    result.line_radius = Drawable::impostor_radius(cam, l->line_width());
                     result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
                     result.projection = cam.projectionMatrix();
                     result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);

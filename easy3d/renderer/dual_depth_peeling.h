@@ -51,9 +51,16 @@ namespace easy3d {
     class DualDepthPeeling : public Transparency
     {
     public:
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
         explicit DualDepthPeeling(Camera* cam) : camera_(cam) {
             LOG(INFO) << "maximum number of peeling layers: " << max_peels_;
         }
+        /**
+         * \brief Destructor
+         */
         ~DualDepthPeeling() override = default;
 
         /**
@@ -73,12 +80,20 @@ namespace easy3d {
          */
         int max_peels() const { return max_peels_; }
 
+        /**
+         * \brief Renders the scene (a set of surfaces) with transparency effect
+         * \details Routes to the viewer's registered frame renderer (method 2), passing
+         *      max_peels_ as the bound on the peeled layers.
+         * \param surfaces The surfaces to be rendered
+         */
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
             render_frame(camera_, surfaces, 2, max_peels_);
         }
 
     private:
+        // The camera whose scene is rendered.
         Camera* camera_;
+        // Maximum number of peeling layers (0 means no maximum limit).
         int max_peels_ = 4;
     };
 
@@ -176,43 +191,69 @@ namespace easy3d {
 
     protected:
 
-        // Allocate and configure FBOs, initialize variables, query, etc.
+        // Allocate and configure FBOs, initialize variables, query, etc.:
+        // creates/resizes the multi-target peeling FBO, saves the background color,
+        // and resets the occlusion query and peel counters.
         void init(int w, int h);
 
-        // Initialize Min - Max Depth Buffer
+        // Initialize Min - Max Depth Buffer: clears the accumulation targets and runs
+        // the depth-init geometry pass with MAX blending.
         void init_depth_buffers(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Render the opaque pass geometry.
+        // Render the pass geometry: draws the surfaces with the stage-specific shader
+        // (depth initialization or peel rendering).
         void geometry_pass(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Render the scene to produce the next set of peels.
+        // Render the scene to produce the next set of peels: MAX-blends the nearest and
+        // farthest fragments, then alpha-blends the back temp texture under an occlusion query.
         void peel(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Blends the final image.
+        // Blends the final image: composites the front and back accumulation textures
+        // over the opaque color buffer with a full-screen pass.
         void blend_final_image();
 
-        // Swap the src/dest render targets:
+        // Swap the src/dest render targets: exchanges the front and depth texture
+        // indices (std::swap) for the next peel.
         void swap_targets();
 
-        // Checks if the peeling is done.
+        // Checks if the peeling is done: max_peels_ reached or the occlusion query
+        // reports no more fragments than the threshold.
         bool peeling_done() const;
 
-        // Initializes the occlusion query.
+        // Initializes the occlusion query: generates the GL query object and resets
+        // the threshold / written-pixel counters.
         void init_occlusion_query();
-        // Deletes the occlusion query ID.
+        // Deletes the occlusion query ID (glDeleteQueries).
         void delete_occlusion_query_id();
 
-        // Starts the occlusion query.
+        // Starts the occlusion query: begins a samples-passed query (any-samples on ES 3.0)
+        // counting fragments written during back blending.
         void start_occlusion_query() const;
-        // Ends the occlusion query.
+        // Ends the occlusion query and reads the result into num_written_pixels_.
         void end_occlusion_query();
 
-        // Release all FBOs, shader programs.
+        // Release all FBOs, shader programs: deletes the peeling FBO (shaders are owned
+        // by ShaderManager).
         void clear();
 
     private:
+        /* Methods to block default compiler methods.
+         * The compiler automatically generates the following methods.
+         *  Since the default compiler implementation is generally not what
+         *  you want (for all but the most simple classes), we usually
+         *  put the declarations of these methods in the private section
+         *  and never implement them. This prevents the compiler from
+         *  implementing an incorrect "default" behavior without us
+         *  knowing. (See Scott Meyers book, "Effective C++")
+         */
+        //copying disabled
+        DualDepthPeeling(const DualDepthPeeling&);
+        DualDepthPeeling& operator=(const DualDepthPeeling&);
+
+        // The camera whose scene is rendered.
         Camera* camera_;
 
+        // Current viewport size.
         int width_;
         int height_;
 
@@ -227,8 +268,12 @@ namespace easy3d {
             DDP_Blend,
             DDP_Inactive = -1,
         };
+        // Current stage of the peel loop. draw() advances InitDepth -> Peel -> Blend
+        // within one call and leaves DDP_Inactive; the per-pass helpers below read it
+        // to choose the shader bindings and framebuffer attachments of the stage.
         DualDepthPeelingStage stage_;
 
+        // The multi-target peeling framebuffer; its attachments follow TextureName below.
         FramebufferObject* fbo_;
 
         // Name the textures used by this render pass. These are indexes into this->Textures
@@ -245,30 +290,18 @@ namespace easy3d {
         TextureName depth_source_;		// The current depth source buffer
         TextureName depth_destination_; // The current depth destination buffer
 
+        // Peel progress and debug pass counter.
         int current_peel_;
         int num_geom_passes_; // Debug info, counts number of geometry passes.
 
+        // Occlusion-query state used for early termination of the peeling loop.
         bool use_occlusion_query_;
         unsigned int occlusion_query_Id_;
         unsigned int num_written_pixels_;
         unsigned int occlusion_threshold_;
 
+        // Saved background (clear) color, restored after the final blend.
         float bkg_color_[4];
-
-    private:
-
-        /* Methods to block default compiler methods.
-         * The compiler automatically generates the following methods.
-         *  Since the default compiler implementation is generally not what
-         *  you want (for all but the most simple classes), we usually
-         *  put the declarations of these methods in the private section
-         *  and never implement them. This prevents the compiler from
-         *  implementing an incorrect "default" behavior without us
-         *  knowing. (See Scott Meyers book, "Effective C++")
-         */
-        //copying disabled
-        DualDepthPeeling(const DualDepthPeeling&);
-        DualDepthPeeling& operator=(const DualDepthPeeling&);
     };
 
 }

@@ -91,8 +91,11 @@ protected:
 
     // Override to add widgets, then call ViewerImGui::draw_gui() to finish the frame.
     virtual void draw_gui();
+
     // The individual top-level menus emitted by draw_gui().
+    // "File": open/save/quit items, dispatched to open()/save()/request_close().
     void draw_menu_file();
+    // "View": the snapshot item, dispatched to snapshot().
     void draw_menu_view();
 
 protected:

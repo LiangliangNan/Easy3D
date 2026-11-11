@@ -262,8 +262,12 @@ namespace easy3d {
      * \param file_name Model file to load.
      * \param create_default_drawables Whether to create the model's standard
      *        rendering drawables.
-     * \return The added model, or nullptr if loading or addition fails.
-     * \details On success, the host retains shared ownership of the model.
+     * \return The added model, or nullptr if loading or addition fails. The returned
+     *         pointer is a non-owning observer; do not delete it.
+     * \details On success, the host retains ownership of the model (held internally by
+     *      a shared_ptr). If a model with the same file name is already present, that
+     *      model is returned unchanged. The standard viewer implementation fits the
+     *      camera to the added model.
      */
         virtual Model *add_model(const std::string &file_name, bool create_default_drawables = true) = 0;
 
@@ -271,16 +275,38 @@ namespace easy3d {
      * \brief Add a shared model to the host.
      * \param model Shared ownership handle for the model.
      * \param create_default_drawables Whether to create standard drawables.
-     * \return The added model, or nullptr if addition fails.
-     * \details The host retains a shared reference to the model.
+     * \return The added model, or nullptr if the model is null or empty, or if
+     *         addition fails. The returned pointer is a non-owning observer; do not
+     *         delete it.
+     * \details Ownership is shared: the host stores a copy of the shared_ptr, so the
+     *      model stays alive while either the caller or the host still references it.
+     *      Do not delete it manually. Prefer this form when your code keeps using the
+     *      model after adding it.
+     *
+     *      The standard viewer implementation installs a *new* Renderer on the model,
+     *      replacing any renderer and drawables it already had (add custom drawables
+     *      afterwards), fits the camera to the scene, and returns the existing entry
+     *      unchanged if the same model is added again.
+     * \sa add_model(Model*, bool) for the legacy ownership-transferring raw-pointer form.
      */
         virtual Model *add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) = 0;
 
         /**
-     * \brief Add a model supplied as a raw pointer.
-     * \param model Pointer to the model; ownership is transferred to the host.
+     * \brief Add a model supplied as a raw pointer, transferring ownership to the host
+     *        (legacy).
+     * \param model Pointer to a heap-allocated model; ownership is transferred to the host.
      * \param create_default_drawables Whether to create standard drawables.
-     * \return The added model, or nullptr if addition fails.
+     * \return The added model, or nullptr if the model is null or empty, or if
+     *         addition fails. The returned pointer is a non-owning observer; do not
+     *         delete it.
+     * \details Legacy convenience equivalent to
+     *      add_model(std::shared_ptr<Model>(model), create_default_drawables). The host
+     *      takes sole ownership and deletes the model later. After the call the caller
+     *      must not delete the model or create another shared_ptr from it, or it would
+     *      be freed twice. Ownership, renderer replacement, camera fitting and
+     *      de-duplication behave exactly as in add_model(std::shared_ptr<Model>, bool).
+     *      Prefer the shared_ptr overload for new code.
+     * \sa add_model(std::shared_ptr<Model>, bool) for the shared-ownership form.
      */
         virtual Model *add_model(Model *model, bool create_default_drawables = true) = 0;
 
@@ -304,15 +330,29 @@ namespace easy3d {
         /**
      * \brief Add a shared drawable to the host.
      * \param drawable Drawable to add.
-     * \return The added drawable, or nullptr if it could not be added.
-     * \details The host retains shared ownership.
+     * \return The added drawable, or nullptr if the pointer is null. The returned
+     *         pointer is a non-owning observer; do not delete it.
+     * \details Ownership is shared: the host stores a copy of the shared_ptr and the
+     *      drawable stays alive while either side still references it. Do not delete
+     *      it manually. If the same drawable is already managed by the host, the
+     *      existing entry is returned unchanged.
+     * \sa add_drawable(Drawable*) for the legacy ownership-transferring raw-pointer form.
      */
         virtual Drawable *add_drawable(std::shared_ptr<Drawable> drawable) = 0;
 
         /**
-     * \brief Add a drawable supplied as a raw pointer.
+     * \brief Add a drawable supplied as a raw pointer, transferring ownership to the host
+     *        (legacy).
      * \param drawable Pointer to the drawable; ownership is transferred to the host.
-     * \return The added drawable, or nullptr if it could not be added.
+     * \return The added drawable, or nullptr if the pointer is null. The returned
+     *         pointer is a non-owning observer; do not delete it.
+     * \details Legacy convenience equivalent to
+     *      add_drawable(std::shared_ptr<Drawable>(drawable)). The host takes sole
+     *      ownership. After the call the caller must not delete the drawable or create
+     *      another shared_ptr from it. Ownership and de-duplication behave exactly as
+     *      in add_drawable(std::shared_ptr<Drawable>). Prefer the shared_ptr overload
+     *      for new code.
+     * \sa add_drawable(std::shared_ptr<Drawable>) for the shared-ownership form.
      */
         virtual Drawable *add_drawable(Drawable *drawable) = 0;
 

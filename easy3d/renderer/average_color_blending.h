@@ -49,14 +49,27 @@ namespace easy3d {
     class AverageColorBlending : public Transparency
     {
     public:
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
         explicit AverageColorBlending(Camera* cam) : camera_(cam) {}
+        /**
+         * \brief Destructor
+         */
         ~AverageColorBlending() override = default;
 
+        /**
+         * \brief Renders the scene (a set of surfaces) with transparency effect
+         * \details Routes to the viewer's registered frame renderer (method 1).
+         * \param surfaces The surfaces to be rendered
+         */
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
             render_frame(camera_, surfaces, 1, 0);
         }
 
     private:
+        // The camera whose scene is rendered.
         Camera* camera_;
     };
 
@@ -112,15 +125,18 @@ namespace easy3d {
         void clear();
 
     private:
-        Camera*	camera_;
-        float   bkg_color_[4];
-
-        FramebufferObject* fbo_;
-
-    private:
         //copying disabled
         AverageColorBlending(const AverageColorBlending&);
         AverageColorBlending& operator=(const AverageColorBlending&);
+
+        // The camera whose scene is rendered.
+        Camera*	camera_;
+
+        // Background (clear) color saved on init and restored after compositing.
+        float   bkg_color_[4];
+
+        // Multisampled color + accumulated-alpha target for the blending pass.
+        FramebufferObject* fbo_;
     };
 
 }

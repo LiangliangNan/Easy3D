@@ -115,12 +115,12 @@ namespace easy3d {
         void set_sample_pattern(SamplePattern pattern) { sample_pattern_ = pattern; }
 
     protected:
+        // Publish this frame's penumbra softness to the base Shadow's Vulkan frame data.
         float frame_softness() const override { return softness_; }
 
-    protected:
         // The softness of the shadow, in [0, 1] (w.r.t. 10% of the light's size)
         float softness_;
-
+        // Sample pattern used for the blocker search and PCF filtering.
         SamplePattern sample_pattern_;
 
     private:
@@ -177,14 +177,16 @@ namespace easy3d {
         void set_sample_pattern(SamplePattern pattern) { sample_pattern_ = pattern; }
 
     protected:
+        // Create/resize the shadow-map framebuffer used by the soft-shadow passes.
         void ensure_fbo() override;
+        // Render the casters into the shadow map from the light frustum.
         void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
+        // Render the scene with PCSS: a variable-size PCF kernel from the blocker search.
         void render_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
 
-    protected:
         // The softness of the shadow, in [0, 1] (w.r.t. 10% of the light's size)
         float softness_;
-
+        // Sample pattern used for the blocker search and PCF filtering.
         SamplePattern sample_pattern_;
 
     private:

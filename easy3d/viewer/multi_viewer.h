@@ -194,32 +194,65 @@ namespace easy3d {
         void clear_scene() override;
 
     protected:
+        /// \name View hooks reimplemented for a grid
+        //@{
+
+        // Builds the grid cell viewports and the division lines once the backend
+        // is ready; delegates to Viewer::init() first.
         void init() override;
+
+        // Re-creates the grid cell viewports and division lines after the window
+        // size changed.
         void post_resize(int w, int h) override;
-#ifndef EASY3D_HAS_VULKAN
-        void draw() const override;
-#endif
 
+        // Records the pressed cell as the active one, then lets Viewer handle the
+        // camera interaction relative to that cell.
         bool mouse_press_event(int x, int y, int button, int modifiers) override;
-        ivec2 interaction_origin() const override { return interaction_origin_; }
-#ifdef EASY3D_HAS_VULKAN
-        // Keep this part of code minimum
-        std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
-                                                       std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
-        mutable std::vector<graphics::DrawCommand> division_commands_;
-        mutable int division_width_ = 0, division_height_ = 0;
-#else
-        // Keep this part of code minimum
-        void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
-        void prepare_pick_view(int x, int y, int width, int height) const override;
 
-#endif
+        // Top-left corner of the active cell in logical window coordinates, so
+        // Viewer rebases camera manipulation onto that cell.
+        ivec2 interaction_origin() const override { return interaction_origin_; }
+
+        // Rebuilds the grid division lines (Vulkan: cached draw commands; OpenGL:
+        // the division drawable's geometry) after layout or size changes.
         void update_division();
 
-    protected:
+#ifndef EASY3D_HAS_VULKAN
+        // Draws every cell: binds the shared scene once per cell viewport using the
+        // division drawable for the grid lines.
+        void draw() const override;
+
+        // Renders one cell's content into the currently bound framebuffer, then
+        // overlays the grid lines when requested.
+        void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
+
+        // Restricts the primitive-ID pick pass to the active cell's viewport, so a
+        // cursor position resolves against that cell only.
+        void prepare_pick_view(int x, int y, int width, int height) const override;
+#else
+        // Assembles one cell's scene commands for the requested output size,
+        // appending the cached division lines; Viewer::draw_frame() repeats this
+        // per cell instead of issuing a single scene pass.
+        std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
+                                                       std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
+#endif
+        //@}
+
+#ifdef EASY3D_HAS_VULKAN
+        // Cell-division lines cached as screen-space draw commands (the Vulkan backend
+        // has no GL drawable for them); cleared whenever the division changes.
+        mutable std::vector<graphics::DrawCommand> division_commands_;
+        // Output size the cached division commands were built for, so a resize rebuilds
+        // them; zero after a clear forces that rebuild on the next frame.
+        mutable int division_width_ = 0, division_height_ = 0;
+#endif
+        // Cell that currently receives keyboard input and camera drags; clamped to the
+        // grid when the division changes and updated when the cursor enters another cell.
         int active_row_ = 0, active_col_ = 0;
+        // True while a snapshot renders: the cells then share the viewer's global camera
+        // (whose projection is temporarily overridden) instead of their own.
         mutable bool snapshot_active_ = false;
-        int num_rows_;
+        int num_rows_;    // grid size given to set_division()
         int num_cols_;
         // A sub-view of the multi-view viewer.
         struct View {
@@ -227,10 +260,15 @@ namespace easy3d {
             std::vector<const Drawable *> drawables;  // the drawables to show in this view
             ivec4 viewport; // Vulkan: top-left pixels; OpenGL: bottom-left pixels.
         };
+        // Cell contents, row-major: views_[row][col].
         std::vector<std::vector<View> > views_;
 
+        // Origin of the cell where the ongoing drag started, so pointer coordinates are
+        // translated into that cell's local space for picking and camera motion.
         ivec2 interaction_origin_ = ivec2(0);
 
+        // OpenGL cell-division lines, rebuilt on resize; Vulkan keeps them as cached
+        // draw commands (division_commands_) instead of a drawable.
         std::unique_ptr<LinesDrawable2D> drawable_division_;
     };
 

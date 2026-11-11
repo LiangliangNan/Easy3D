@@ -135,7 +135,14 @@ namespace easy3d {
     class PerPixelLinkedListsOIT : public Transparency
     {
     public:
+        /**
+         * \brief Constructor.
+         * \param cam The camera used for rendering.
+         */
         explicit PerPixelLinkedListsOIT(Camera* cam) : camera_(cam) {}
+        /**
+         * \brief Destructor.
+         */
         ~PerPixelLinkedListsOIT() override = default;
 
         /**
@@ -164,6 +171,7 @@ namespace easy3d {
         }
 
     private:
+        // The camera whose scene is rendered.
         Camera* camera_;
         int max_fragments_ = 8;  ///< Maximum fragments per pixel (controls node pool size).
     };
@@ -311,6 +319,37 @@ namespace easy3d {
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
 
     private:
+        /**
+         * \brief Initializes GPU resources for the given viewport size.
+         * \details (Re)creates the head/node/counter buffers and the build-pass FBO,
+         *      sizing the node pool to w x h x max_fragments_ nodes.
+         * \param w Viewport width in pixels.
+         * \param h Viewport height in pixels.
+         */
+        void init(int w, int h);
+
+        /**
+         * \brief Build pass: renders all transparent fragments into per-pixel linked lists.
+         * \details Clears the head buffer and atomic counter, then draws the surfaces with
+         *      the build shader, which atomically appends each fragment to its pixel's SSBO list.
+         * \param surfaces The transparent surfaces to render.
+         */
+        void build_lists(const std::vector<TrianglesDrawable*>& surfaces);
+
+        /**
+         * \brief Resolve pass: sorts and blends the linked lists, writing to the output.
+         * \details Full-screen pass whose shader traverses each pixel's list, insertion-sorts
+         *      the fragments by depth, and composites them front-to-back.
+         */
+        void resolve();
+
+        /**
+         * \brief Releases all GPU resources.
+         * \details Deletes the three GL buffers and the FBO, and resets the size counters.
+         */
+        void clear();
+
+        // The camera whose scene is rendered.
         Camera* camera_;
         int max_fragments_;  ///< Maximum fragments per pixel (controls node pool size).
 
@@ -322,29 +361,6 @@ namespace easy3d {
         int width_;                     ///< Current viewport width.
         int height_;                    ///< Current viewport height.
         int node_count_;                ///< Current number of allocated nodes.
-
-        /**
-         * \brief Initializes GPU resources for the given viewport size.
-         * \param w Viewport width in pixels.
-         * \param h Viewport height in pixels.
-         */
-        void init(int w, int h);
-
-        /**
-         * \brief Build pass: renders all transparent fragments into per-pixel linked lists.
-         * \param surfaces The transparent surfaces to render.
-         */
-        void build_lists(const std::vector<TrianglesDrawable*>& surfaces);
-
-        /**
-         * \brief Resolve pass: sorts and blends the linked lists, writing to the output.
-         */
-        void resolve();
-
-        /**
-         * \brief Releases all GPU resources.
-         */
-        void clear();
     };
 
 }

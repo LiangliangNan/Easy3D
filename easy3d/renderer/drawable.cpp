@@ -43,12 +43,12 @@
 
 namespace easy3d {
 
-    float impostor_radius(const Camera& camera, float size) {
+    float Drawable::impostor_radius(const Camera& camera, float size) {
         return size * camera.pixelGLRatio(camera.pivotPoint()) * 0.5f;
     }
 
 #ifndef EASY3D_HAS_VULKAN
-    float viewport_pixel_scale(const Camera& camera) {
+    float Drawable::viewport_pixel_scale(const Camera& camera) {
         GLint viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int w = camera.screenWidth();

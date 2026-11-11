@@ -50,7 +50,13 @@ namespace easy3d {
     class Transparency
     {
     public:
+        /**
+         * \brief Default constructor for Transparency.
+         */
         Transparency() = default;
+        /**
+         * \brief Virtual destructor for Transparency.
+         */
         virtual ~Transparency() = default;
 
         /**
@@ -66,12 +72,20 @@ namespace easy3d {
         // lists; the last argument bounds the peel layers (zero means no explicit
         // bound) or, for linked lists, sets the per-pixel fragment capacity.
         using FrameRenderer = std::function<void(const std::vector<TrianglesDrawable*>&, int, int)>;
+        /**
+         * \brief Registers (or removes) the frame renderer used by a camera's viewer.
+         * \param camera The camera whose frame renderer is set.
+         * \param renderer The callback invoked to render a transparency frame;
+         *      a null callback unregisters the camera.
+         */
         static void set_frame_renderer(const Camera* camera, FrameRenderer renderer) {
             if (renderer) renderers()[camera] = std::move(renderer);
             else renderers().erase(camera);
         }
 
     protected:
+        // Dispatch a transparency frame to the renderer registered for the camera
+        // (looked up in renderers()); throws std::logic_error if none is registered.
         static void render_frame(const Camera* camera, const std::vector<TrianglesDrawable*>& surfaces,
                                  int method, int peels) {
             auto it = renderers().find(camera);
@@ -81,6 +95,7 @@ namespace easy3d {
         }
 
     private:
+        // The per-camera registry of frame renderers (a function-local static map).
         static std::map<const Camera*, FrameRenderer>& renderers() {
             static std::map<const Camera*, FrameRenderer> value;
             return value;
