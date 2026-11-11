@@ -96,7 +96,7 @@ struct OpenGLOptions {
  * Subclasses may customize the protected drawing and event hooks. Backend
  * resources must be created and released only while the appropriate graphics
  * context/device is valid; see init() and cleanup().
- * \see ViewerBase, ViewerInput, ViewerCallbacks, MultiViewer, OffScreen
+ * \see ViewerBase, ViewerInput, MultiViewer, OffScreen
  */
 class Viewer : public ViewerBase {
 public:
@@ -164,9 +164,8 @@ public:
          * \return True if the frame was rendered and presented; false if the
          *         window is closed, minimized, or has no drawable framebuffer.
          * \details Does not poll events, show the window, or fit the scene.
-         * Runs an enabled animation callback before pre_draw(), then invokes
-         * the installed ViewerCallbacks and legacy drawing hooks in frame order.
-         * Exceptions from rendering or callbacks are rethrown.
+         * Runs an enabled animation callback, pre_draw(), the scene draw and
+         * post_draw(). Exceptions from rendering or hooks are rethrown.
          */
         bool draw_frame() override;
 
@@ -538,6 +537,9 @@ public:
          */
         using Function = std::function<bool(Viewer* viewer, Model* model)>;
 
+        /// Function type for a model-free action bound to a keyboard shortcut.
+        using Action = std::function<bool(Viewer* viewer)>;
+
         /**
          * \brief Bind a function that will be triggered by the shortcut 'modifier + key'.
          * \details This operation will overwrite the previous function (if exist) bound to the same key-modifier shortcut.
@@ -549,6 +551,18 @@ public:
          */
         void bind(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
             commands_[key][modifier] = std::make_pair(func, model);
+        }
+
+        /**
+         * \brief Bind a model-free action that will be triggered by the shortcut 'modifier + key'.
+         * \details This operation will overwrite the previous function (if exist) bound to the same key-modifier shortcut.
+         * \param action The action to be executed, which will be triggered by the shortcut.
+         * \param key The shortcut key.
+         * \param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MODIF_NONE.
+         * \sa Action
+         */
+        void bind(const Action& action, Key key, Modifier modifier = MODIF_NONE) {
+            bind([action](Viewer* viewer, Model*) { return action(viewer); }, nullptr, key, modifier);
         }
         //@}
 
@@ -779,14 +793,13 @@ public:
 
         /**
          * \brief Hook called before scene drawing on each rendered frame.
-         * \details Runs after the installed ViewerCallbacks::pre_draw callback.
+         * \details Runs after an enabled animation callback.
          */
         virtual void pre_draw();
 
         /**
          * \brief Hook called after scene drawing on each rendered frame.
-         * \details The default implementation draws the viewer HUD. It runs
-         * before the installed ViewerCallbacks::post_draw callback.
+         * \details The default implementation draws the viewer HUD.
          */
         virtual void post_draw();
 
@@ -798,9 +811,9 @@ public:
          */
         virtual void post_resize(int w, int h) { (void)w, (void)h; }
 
-        // Legacy event hooks (documented in ViewerBase). Viewer implements the built-in
-        // camera, picking, zoom-region and clipping-plane controls here; subclasses
-        // extend them by overriding and calling the base implementation.
+        // Event hooks documented in ViewerBase. Viewer implements the built-in
+        // camera, picking, zoom-region and clipping-plane controls here;
+        // subclasses extend them by overriding and calling the base version.
         bool mouse_press_event(int x, int y, int button, int modifiers) override;
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
@@ -845,11 +858,6 @@ public:
         // assigning position and orientation.
         void paste_view();
     protected:
-        // Adapts a backend-neutral ViewerBase::Function to the Viewer-internal bind()
-        // overload, which also receives the target model.
-        void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
-            bind(Function([func](Viewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
-        }
 
         // Reads the scene depth of one framebuffer pixel (x, y, top-left origin): renders
         // the whole scene with the snapshot camera into a framebuffer-sized, single-sample
@@ -922,7 +930,12 @@ public:
 	    std::string framerate_ = "fps: -- (-- ms/frame)";
 	    std::chrono::steady_clock::time_point frame_rate_start_;
 	    unsigned frame_rate_frames_ = 0;
-	    bool usage_printed_ = false;
+		    bool usage_printed_ = false;
+	    // Calls post_resize() when the logical or framebuffer size differs from the last
+	    // notification, so a duplicate window/framebuffer event is coalesced.
+	    void notify_resize();
+	    int resize_width_ = -1, resize_height_ = -1;
+	    int resize_fb_width_ = -1, resize_fb_height_ = -1;
 #ifdef EASY3D_HAS_VULKAN
 	    // Keep this part of code minimum
 	private:
@@ -1068,8 +1081,7 @@ public:
         void setup_callbacks(GLFWwindow*);
 
         // Window resize in logical units: refreshes the cached logical and framebuffer
-        // sizes, updates the camera extent and the GL viewport, then calls post_resize()
-        // and notify_resize() when the size actually changed.
+        // sizes, updates the camera extent and the GL viewport, then calls notify_resize().
         virtual void callback_event_resize(int w, int h);
 
         // Draws one text label per mesh face at its projected pixel position, reading

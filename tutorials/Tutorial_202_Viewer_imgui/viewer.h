@@ -42,7 +42,7 @@ struct ImGuiContext;
  * This is the standard pattern for putting an immediate-mode GUI into Easy3D: derive from
  * Viewer, own an ImGuiContext, and hook the frame at init() (create the context/backend),
  * pre_draw() (start the ImGui frame, emit widgets, convert them to overlays), and
- * post_resize() (keep the display size in sync). Input callbacks forward mouse/keyboard
+ * post_resize() (keep the display size in sync). Input hooks forward mouse/keyboard
  * events to ImGui first so that GUI clicks do not also navigate the 3D scene. Subclass
  * draw_gui() to add your own windows and controls.
  */
@@ -80,7 +80,7 @@ public:
     ~ViewerImGui() override;
 
 protected:
-    // Creates the ImGui context, GLFW backend, input callbacks, and font atlas.
+    // Creates the ImGui context, GLFW backend, and font atlas.
     void init() override;
 
     // Starts an ImGui frame, draws the widgets, and converts them to viewer overlays.
@@ -88,6 +88,17 @@ protected:
 
     // Keeps ImGui's display size in sync when the window is resized.
     void post_resize(int w, int h) override;
+
+    // Input hooks: return true while ImGui owns the mouse/keyboard, so the gesture
+    // does not also navigate the 3D scene.
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_release_event(int x, int y, int button, int modifiers) override;
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+    bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) override;
+    bool mouse_scroll_event(int x, int y, int dx, int dy) override;
+    bool key_press_event(int key, int modifiers) override;
+    bool key_release_event(int key, int modifiers) override;
+    bool char_input_event(unsigned int codepoint) override;
 
     // Override to add widgets, then call ViewerImGui::draw_gui() to finish the frame.
     virtual void draw_gui();

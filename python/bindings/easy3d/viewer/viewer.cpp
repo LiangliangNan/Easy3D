@@ -485,6 +485,13 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                pybind11::arg("model"),
                pybind11::arg("key"),
                pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
+        cl.def("bind", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *)> &action,
+                          easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
+                   self.bind(action, key, modifier);
+               },
+               pybind11::arg("action"),
+               pybind11::arg("key"),
+               pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
 
     }
 }

@@ -139,11 +139,9 @@ void create_curves_drawables(Viewer &viewer) {
         return true;
     };
     // Bind the helper to keys. The Model* argument is unused here (these are viewer-wide drawables).
-    viewer.bind([adjust_width](Viewer *host, Model *) { return adjust_width(host, -1, false); }, nullptr,
-                Viewer::KEY_LEFT_BRACKET);
-    viewer.bind([adjust_width](Viewer *host, Model *) { return adjust_width(host, 1, false); }, nullptr,
-                Viewer::KEY_RIGHT_BRACKET);
-    viewer.bind([adjust_width](Viewer *host, Model *) { return adjust_width(host, 0, true); }, nullptr, Viewer::KEY_0);
+    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, -1, false); }, Viewer::KEY_LEFT_BRACKET);
+    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, 1, false); }, Viewer::KEY_RIGHT_BRACKET);
+    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, 0, true); }, Viewer::KEY_0);
     // the control points
     // Six points in pixel coordinates forming a zig-zag; every curve below is built from these.
     std::vector<vec2> points = {

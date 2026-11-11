@@ -2,7 +2,7 @@ set(module viewer)
 set(private_dependencies)
 set(public_dependencies easy3d::renderer)
 list(APPEND private_dependencies 3rd_glfw)
-set(viewer_headers viewer.h multi_viewer.h offscreen.h viewer_input.h viewer_callbacks.h viewer_base.h)
+set(viewer_headers viewer.h multi_viewer.h offscreen.h viewer_input.h viewer_base.h)
 set(viewer_sources viewer.cpp snapshot.cpp multi_viewer.cpp offscreen.cpp viewer_base.cpp backends/glfw_runtime.cpp)
 
 if(Easy3D_ENABLE_VULKAN)

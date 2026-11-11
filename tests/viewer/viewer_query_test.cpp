@@ -26,7 +26,13 @@ void require(bool value, const char *message) {
         throw std::runtime_error(message);
 }
 bool near_enough(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
-std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
+struct QueryViewer : Viewer {
+    using Viewer::Viewer;
+    unsigned frames = 0;
+    void pre_draw() override { ++frames; }
+    void post_draw() override { ++frames; }
+};
+std::shared_ptr<QueryViewer> make_host(unsigned samples, bool validation) {
 #ifdef EASY3D_HAS_VULKAN
     {
         TestWindow o;
@@ -36,14 +42,14 @@ std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
         o.samples = samples;
         o.device.validation = validation;
         o.device.sync_validation = validation;
-        auto v = std::make_shared<Viewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
+        auto v = std::make_shared<QueryViewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
         v->camera()->setViewDirection(vec3(0, 0, -1));
         v->camera()->setUpVector(vec3(0, 1, 0));
         return v;
     }
 #else
-    auto v = std::make_shared<Viewer>("Portable camera queries", 181, 151, int(samples));
+    auto v = std::make_shared<QueryViewer>("Portable camera queries", 181, 151, int(samples));
     v->hide();
     v->set_usage("");
     v->camera()->setViewDirection(vec3(0, 0, -1));
@@ -65,11 +71,6 @@ void check(unsigned samples, bool validation) {
     back->set_lighting(false);
     back->set_uniform_coloring(vec4(0, 0, 1, 1));
     v->fit_screen();
-    unsigned frames = 0;
-    ViewerCallbacks callbacks;
-    callbacks.pre_draw = [&](ViewerBase *) { ++frames; };
-    callbacks.post_draw = [&](ViewerBase *) { ++frames; };
-    v->set_callbacks(callbacks);
     for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
         v->camera()->setType(type);
         for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f), vec3(10, 10, 0)})
@@ -136,7 +137,7 @@ void check(unsigned samples, bool validation) {
         const float expected_y = float((std::floor(double(y) * fh / v->height()) + .5) * v->height() / fh);
         require(std::abs(projected.x - expected_x) < 1e-3f && std::abs(projected.y - expected_y) < 1e-3f,
                 "query missed HiDPI framebuffer pixel center");
-        require(frames == 0, "query ran frame callbacks");
+        require(v->frames == 0, "query ran frame callbacks");
         for (unsigned i = 0; i < 16; ++i)
             require(original[i] == v->camera()->modelViewProjectionMatrix()[i], "query changed camera matrices");
 #ifndef EASY3D_HAS_VULKAN
@@ -243,7 +244,7 @@ void check(unsigned samples, bool validation) {
     const size_t center = (size_t(h / 2) * w + w / 2) * 4;
     require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center + 1]) - 51) <= 2,
             "query damaged subsequent shader bindings/depth");
-    require(frames == 0 && v->draw_frame() && frames == 2, "query advanced frame state or broke later rendering");
+    require(v->frames == 0 && v->draw_frame() && v->frames == 2, "query advanced frame state or broke later rendering");
     bool rejected = false;
     try {
         v->world_to_window(vec3(std::numeric_limits<float>::quiet_NaN(), 0, 0));

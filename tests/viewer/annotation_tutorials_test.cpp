@@ -23,8 +23,13 @@ struct Pixels {
 struct DepthView:TutorialDepthMap {using TutorialDepthMap::TutorialDepthMap;};
 struct RealView:TutorialRealCamera {
     using TutorialRealCamera::TutorialRealCamera;
-    using TutorialRealCamera::mouse_free_move_event;
     using TutorialRealCamera::key_press_event;
+    // OS hover must not disturb the pixel baselines; the test enables it for its
+    // synthetic hover call.
+    bool hover_enabled=false;
+    bool mouse_free_move_event(int x,int y,int dx,int dy,int modifiers) override {
+        return hover_enabled ? TutorialRealCamera::mouse_free_move_event(x,y,dx,dy,modifiers) : true;
+    }
     Rect image_rect() const {return calculate_image_rect();}
 };
 struct ManipulationView:TutorialObjectManipulation {
@@ -82,8 +87,9 @@ void multi_depth_preview() {
 void real_camera() {
     const auto root=resource::directory()+"/data/fountain/";
     RealView v("Shared calibrated camera",root+"bundle.out",root+"pointcloud.ply");
-    ViewerCallbacks inputs;inputs.mouse_free_move_event=[](ViewerBase*,int,int,int,int,int){return true;};v.set_callbacks(std::move(inputs));frame(v);
+    frame(v);
     const auto rect=v.image_rect();require(rect.width()>0 && rect.height()>0,"calibrated image missing");
+    v.hover_enabled=true;
     v.mouse_free_move_event(int((rect.x_min()+rect.width()*.5)*v.camera()->screenWidth()/v.framebuffer_width()),
                            int((rect.y_min()+rect.height()*.5)*v.camera()->screenHeight()/v.framebuffer_height()),0,0,0);
     require(v.draw_frame(),"synthetic hover frame failed");bool ray=false;for(const auto& d:v.drawables()) if(d->name()=="ray" && d->is_visible()) ray=true;

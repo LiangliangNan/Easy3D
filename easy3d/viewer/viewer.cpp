@@ -352,7 +352,6 @@ namespace easy3d {
                     if (width > 0 && height > 0) {
                         v.resize_render_target(width, height);
                         v.cancel_interaction();
-                        v.post_resize(v.width_, v.height_);
                     }
                     v.notify_resize();
                 });
@@ -436,6 +435,19 @@ namespace easy3d {
             w = width_;
             h = height_;
         }
+    }
+
+    void Viewer::notify_resize() {
+        int w, h, fw, fh;
+        viewer_size(w, h);
+        framebuffer_size(fw, fh);
+        if (w == resize_width_ && h == resize_height_ && fw == resize_fb_width_ && fh == resize_fb_height_)
+            return;
+        resize_width_ = w;
+        resize_height_ = h;
+        resize_fb_width_ = fw;
+        resize_fb_height_ = fh;
+        post_resize(w, h);
     }
 
     void Viewer::set_position(int x, int y) {
@@ -527,7 +539,6 @@ namespace easy3d {
             resize_render_target(w, h);
             cancel_interaction();
             viewer_size(width_, height_);
-            post_resize(width_, height_);
             notify_resize();
         }
 #else
@@ -546,7 +557,6 @@ namespace easy3d {
         }
         advance_camera_path();
         print_usage();
-        notify_pre_draw();
         if (callback_error_)
             std::rethrow_exception(callback_error_);
         if (should_close())
@@ -562,7 +572,6 @@ namespace easy3d {
 #ifndef EASY3D_HAS_VULKAN
         glfwSwapBuffers(window_);
 #endif
-        notify_post_draw();
         if (callback_error_)
             std::rethrow_exception(callback_error_);
         return true;
@@ -2174,7 +2183,6 @@ namespace easy3d {
         try {
             int fw, fh;
             glfwGetFramebufferSize(window_, &fw, &fh);
-            const bool changed = w != width_ || h != height_ || fw != framebuffer_width_ || fh != framebuffer_height_;
             width_ = w;
             height_ = h;
             framebuffer_width_ = fw;
@@ -2182,8 +2190,6 @@ namespace easy3d {
             if (w > 0 && h > 0 && (camera_->screenWidth() != w || camera_->screenHeight() != h))
                 camera_->setScreenWidthAndHeight(w, h);
             glViewport(0, 0, fw, fh);
-            if (changed)
-                post_resize(w, h);
             notify_resize();
         } catch (const std::exception &e) {
             if (!callback_error_)

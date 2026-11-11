@@ -133,19 +133,11 @@ namespace easy3d {
         return world;
     }
 
-    void ViewerBase::set_callbacks(ViewerCallbacks callbacks) {
-        auto replacement = std::make_shared<ViewerCallbacks>(std::move(callbacks));
-        viewer_size(resize_width_, resize_height_);
-        framebuffer_size(resize_fb_width_, resize_fb_height_);
-        callbacks_ = std::move(replacement);
-    }
-
     void ViewerBase::InputState::reset() {
         button = -1;
         press_modifiers = 0;
         key = -1;
         scroll_x = scroll_y = 0;
-        capture_button = -1;
     }
 
     //------------------------------------------------------------------------
@@ -156,23 +148,16 @@ namespace easy3d {
         const int dy = y - input_.y;
         input_.x = x;
         input_.y = y;
-        const bool dragging = input_.button >= 0;
-        // Drags keep the modifiers latched at press on both backends, so pressing a
-        // modifier mid-gesture cannot switch the interaction mode.
-        const int drag_modifiers = dragging ? input_.press_modifiers : modifiers;
-        const bool handled = dragging
-                                 ? dispatch_mouse_drag(x, y, dx, dy, input_.button, drag_modifiers)
-                                 : dispatch_mouse_move(x, y, dx, dy, modifiers);
-        if (handled)
-            return;
-        if (!dragging) {
+        if (input_.button < 0) {
             mouse_free_move_event(x, y, dx, dy, modifiers);
             return;
         }
+        // Drags keep the modifiers latched at press on both backends, so pressing a
+        // modifier mid-gesture cannot switch the interaction mode.
+        mouse_drag_event(x, y, dx, dy, input_.button, input_.press_modifiers);
         // Outside positions still reach the hook, so subclasses can clear hover
         // highlights there; the cursor is then pinned to the edge so an in-flight
         // drag cannot run away.
-        mouse_drag_event(x, y, dx, dy, input_.button, drag_modifiers);
         const int w = width(), h = height();
         if (window() && (x < 0 || x > w || y < 0 || y > h))
             glfwSetCursorPos(window(), std::max(0.0, std::min(double(w), double(x))),
@@ -187,23 +172,16 @@ namespace easy3d {
             input_.press_x = x;
             input_.press_y = y;
             input_.press_modifiers = modifiers;
-            if (dispatch_mouse_press(x, y, button, modifiers))
-                return;
             mouse_press_event(x, y, button, modifiers);
         } else if (action == GLFW_RELEASE) {
             const bool held = input_.button == button;
-            if (dispatch_mouse_release(x, y, button, modifiers)) {
-                if (held) {
-                    input_.button = -1;
-                    input_.press_modifiers = 0;
-                }
-                end_gesture();
-                return;
-            }
-            mouse_release_event(x, y, button, modifiers);
+            const bool consumed = mouse_release_event(x, y, button, modifiers);
             if (held) {
                 input_.button = -1;
                 input_.press_modifiers = 0;
+                // A subclass that consumed the release skipped the built-in cleanup.
+                if (consumed)
+                    end_gesture();
             }
         }
     }
@@ -218,33 +196,23 @@ namespace easy3d {
         input_.scroll_y -= sy;
         if (!sx && !sy)
             return;
-        if (dispatch_mouse_scroll(x, y, sx, sy))
-            return;
         mouse_scroll_event(x, y, sx, sy);
     }
 
     void ViewerBase::handle_key(int key, int action, int modifiers) {
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-            if (dispatch_key_press(key, modifiers))
-                return;
             key_press_event(key, modifiers);
         } else {
             input_.key = -1;
-            if (dispatch_key_release(key, modifiers))
-                return;
             key_release_event(key, modifiers);
         }
     }
 
     void ViewerBase::handle_character(unsigned int codepoint) {
-        if (dispatch_character(codepoint))
-            return;
         char_input_event(codepoint);
     }
 
     void ViewerBase::handle_drop(const std::vector<std::string> &files) {
-        if (dispatch_drop(files))
-            return;
         drop_event(files);
     }
 
@@ -253,84 +221,7 @@ namespace easy3d {
             input_.reset();
             cancel_interaction();
         }
-        if (!dispatch_focus(focused))
-            focus_event(focused);
-    }
-
-    void ViewerBase::notify_pre_draw() {
-        const auto callbacks = callbacks_;
-        if (callbacks && callbacks->pre_draw)
-            callbacks->pre_draw(this);
-    }
-    void ViewerBase::notify_post_draw() {
-        const auto callbacks = callbacks_;
-        if (callbacks && callbacks->post_draw)
-            callbacks->post_draw(this);
-    }
-    void ViewerBase::notify_resize() {
-        int w, h, fw, fh;
-        viewer_size(w, h);
-        framebuffer_size(fw, fh);
-        if (w == resize_width_ && h == resize_height_ && fw == resize_fb_width_ && fh == resize_fb_height_)
-            return;
-        resize_width_ = w;
-        resize_height_ = h;
-        resize_fb_width_ = fw;
-        resize_fb_height_ = fh;
-        const auto callbacks = callbacks_;
-        if (callbacks && callbacks->post_resize)
-            callbacks->post_resize(this, w, h);
-    }
-    bool ViewerBase::dispatch_mouse_press(int x, int y, int button, int modifiers) {
-        const auto callbacks = callbacks_;
-        const bool handled =
-            callbacks && callbacks->mouse_press_event && callbacks->mouse_press_event(this, x, y, button, modifiers);
-        input_.capture_button = handled ? button : -1;
-        return handled;
-    }
-    bool ViewerBase::dispatch_mouse_release(int x, int y, int button, int modifiers) {
-        const bool captured = input_.capture_button == button;
-        if (captured)
-            input_.capture_button = -1;
-        const auto callbacks = callbacks_;
-        const bool handled = callbacks && callbacks->mouse_release_event &&
-                             callbacks->mouse_release_event(this, x, y, button, modifiers);
-        return handled || captured;
-    }
-    bool ViewerBase::dispatch_mouse_drag(int x, int y, int dx, int dy, int button, int modifiers) {
-        const auto callbacks = callbacks_;
-        const bool handled = callbacks && callbacks->mouse_drag_event &&
-                             callbacks->mouse_drag_event(this, x, y, dx, dy, button, modifiers);
-        return handled || input_.capture_button == button;
-    }
-    bool ViewerBase::dispatch_mouse_move(int x, int y, int dx, int dy, int modifiers) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->mouse_free_move_event &&
-               callbacks->mouse_free_move_event(this, x, y, dx, dy, modifiers);
-    }
-    bool ViewerBase::dispatch_mouse_scroll(int x, int y, int dx, int dy) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->mouse_scroll_event && callbacks->mouse_scroll_event(this, x, y, dx, dy);
-    }
-    bool ViewerBase::dispatch_key_press(int key, int modifiers) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->key_press_event && callbacks->key_press_event(this, key, modifiers);
-    }
-    bool ViewerBase::dispatch_key_release(int key, int modifiers) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->key_release_event && callbacks->key_release_event(this, key, modifiers);
-    }
-    bool ViewerBase::dispatch_character(unsigned int code) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->char_input_event && callbacks->char_input_event(this, code);
-    }
-    bool ViewerBase::dispatch_drop(const std::vector<std::string> &files) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->drop_event && callbacks->drop_event(this, files);
-    }
-    bool ViewerBase::dispatch_focus(bool focused) {
-        const auto callbacks = callbacks_;
-        return callbacks && callbacks->focus_event && callbacks->focus_event(this, focused);
+        focus_event(focused);
     }
 
 } // namespace easy3d

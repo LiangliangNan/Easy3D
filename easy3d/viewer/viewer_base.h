@@ -24,12 +24,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************* *
- * \see ViewerInput, ViewerCallbacks, Viewer, MultiViewer, OffScreen
+ * \see ViewerInput, Viewer, MultiViewer, OffScreen
  */
 #ifndef EASY3D_VIEWER_VIEWER_BASE_H
 #define EASY3D_VIEWER_VIEWER_BASE_H
 #include <easy3d/viewer/viewer_input.h>
-#include <easy3d/viewer/viewer_callbacks.h>
 #include <easy3d/core/types.h>
 #include <functional>
 #include <memory>
@@ -68,9 +67,8 @@ namespace easy3d {
  *
  * \par Frame lifecycle
  * draw_frame() renders at most one frame; it does not itself run an interactive
- * event loop. run() and run_frames() provide the concrete host's loop. The
- * unified ViewerCallbacks are distinct from Viewer subclasses' legacy virtual
- * event hooks.
+ * event loop. run() and run_frames() provide the concrete host's loop. Subclasses
+ * customize interaction by overriding the event and drawing hooks below.
  */
     class ViewerBase : public ViewerInput {
     public:
@@ -83,17 +81,6 @@ namespace easy3d {
      * run() and run_frames() loops poll events themselves.
      */
         static void poll_events();
-
-        /**
-     * \brief Replace the set of unified event and frame callbacks.
-     * \param callbacks New callbacks; empty members disable the corresponding hook.
-     * \details Call on the UI thread. It is safe to replace callbacks from a
-     * callback. A callback already in progress remains alive until it returns,
-     * and state held by a callable is retained while that callable is installed.
-     * Input callbacks returning true consume the event before legacy viewer
-     * handlers and built-in controls are invoked.
-     */
-        void set_callbacks(ViewerCallbacks callbacks);
 
         /// Returns the number of graphics validation errors observed by this host.
         /// \return The backend's validation-error count.
@@ -493,27 +480,12 @@ namespace easy3d {
         /// \return True if animation is currently enabled and has a callback.
         virtual bool is_animating() const = 0;
 
-        /// Function type used by bind(); return true when the operation succeeds.
-        using Function = std::function<bool(ViewerBase *, Model *)>;
-
-        /**
-     * \brief Bind a function to a key and optional modifier.
-     * \param func Function invoked when the shortcut is activated.
-     * \param model Model passed to the function; may be nullptr.
-     * \param key Key identifier from ViewerInput.
-     * \param modifier Modifier identifier from ViewerInput.
-     * \details A concrete viewer may replace an existing binding for the same
-     * key and modifier.
-     */
-        void bind(const Function &func, Model *model, Key key, Modifier modifier = MODIF_NONE) {
-            bind_command(func, model, key, modifier);
-        }
-
     protected:
-        /// \name Legacy event hooks
-        /// Subclasses override these to react to input after the installed
-        /// ViewerCallbacks have been offered the event. Coordinates are logical
+        /// \name Event hooks
+        /// Subclasses override these to react to input. Coordinates are logical
         /// window units (DPI-independent, top-left origin) on both backends.
+        /// Returning true consumes the event and skips the built-in controls;
+        /// override and call the base implementation to extend them.
         //@{
 
         /**
@@ -613,8 +585,7 @@ namespace easy3d {
 
         /// \name Event routing
         /// The backend GLFW trampolines forward native events here. Each router
-        /// updates the shared input state, offers the event to the installed
-        /// ViewerCallbacks, and only then calls the corresponding legacy hook.
+        /// updates the shared input state and calls the corresponding event hook.
         //@{
         // Pointer, wheel and key bookkeeping shared by both backends. Logical
         // window units; sentinel values (-1 / 0) replace booleans.
@@ -625,7 +596,6 @@ namespace easy3d {
             int press_modifiers = 0;            // modifiers latched when it went down
             int key = -1;                       // held key not consumed by a shortcut
             double scroll_x = 0, scroll_y = 0;  // fractional wheel remainder
-            int capture_button = -1;            // button whose gesture a consumed press captured
 
             // Clears the gesture state on focus loss; keeps the cursor position.
             void reset();
@@ -650,27 +620,9 @@ namespace easy3d {
         virtual void cancel_interaction() {}
         //@}
 
-        void notify_pre_draw();
-        void notify_post_draw();
-        void notify_resize();
-        bool dispatch_mouse_press(int, int, int, int);
-        bool dispatch_mouse_release(int, int, int, int);
-        bool dispatch_mouse_drag(int, int, int, int, int, int);
-        bool dispatch_mouse_move(int, int, int, int, int);
-        bool dispatch_mouse_scroll(int, int, int, int);
-        bool dispatch_key_press(int, int);
-        bool dispatch_key_release(int, int);
-        bool dispatch_character(unsigned int);
-        bool dispatch_drop(const std::vector<std::string> &);
-        bool dispatch_focus(bool);
-        virtual void bind_command(const Function &, Model *, Key, Modifier) = 0;
         virtual unsigned window_samples() const = 0;
         virtual bool read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const = 0;
         bool window_pixel(int x, int y, int &px, int &py) const;
-
-    private:
-        std::shared_ptr<ViewerCallbacks> callbacks_;
-        int resize_width_ = 0, resize_height_ = 0, resize_fb_width_ = 0, resize_fb_height_ = 0;
     };
 } // namespace easy3d
 #endif

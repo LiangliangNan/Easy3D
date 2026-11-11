@@ -26,6 +26,13 @@ int main() {
     using namespace easy3d;
     initialize(false, false, false);
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
+    // Counts frames through the event hooks, using only the public Viewer API.
+    struct FrameCounter : Viewer {
+        using Viewer::Viewer;
+        unsigned before = 0, after = 0;
+        void pre_draw() override { ++before; }
+        void post_draw() override { ++after; }
+    };
     try {
 #ifdef EASY3D_HAS_VULKAN
         VulkanOptions options;
@@ -33,32 +40,29 @@ int main() {
 #else
         const OpenGLOptions options{};
 #endif
-        std::shared_ptr<ViewerBase> viewer = std::make_shared<Viewer>(
+        std::shared_ptr<ViewerBase> viewer = std::make_shared<FrameCounter>(
             "Installed Viewer", 181, 151, 1, false, false, true, options);
+        auto& counter = static_cast<FrameCounter&>(*viewer);
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));
         const auto c = mesh->add_vertex(vec3(0, 0, 1)); mesh->add_triangle(a, b, c); viewer->add_model(mesh);
         auto faces = mesh->renderer()->get_triangles_drawable("faces");
         faces->set_uniform_coloring(vec4(.8f, .2f, .1f, 1)); faces->set_lighting(false);
         viewer->set_usage("", ""); viewer->fit_screen();
-        unsigned ticks = 0, before = 0, after = 0;
-        ViewerCallbacks callbacks;
-        callbacks.pre_draw = [&](ViewerBase* host) { require(host == viewer.get(), "callback received another viewer"); ++before; };
-        callbacks.post_draw = [&](ViewerBase*) { ++after; };
-        viewer->set_callbacks(std::move(callbacks));
+        unsigned ticks = 0;
         bool found=false;
         const auto hit=viewer->point_under_pixel(viewer->width()/2,viewer->height()/2,found);
         require(found && std::abs(hit.x)<1e-4f, "installed viewer surface query failed");
         require(distance(viewer->window_to_world(viewer->world_to_window(hit)),hit)<1e-4f,
                 "installed viewer coordinate conversion failed");
-        require(before==0 && after==0, "installed viewer query invoked frame callbacks");
+        require(counter.before==0 && counter.after==0, "installed viewer query invoked frame callbacks");
         viewer->set_animation_callback([&](ViewerBase* host) { ++ticks; host->set_animation(false); return true; });
         viewer->set_animation(true);
-        require(viewer->run_frames(2) == 0 && ticks == 1 && viewer->width() == 181 && viewer->height() == 151 && viewer->samples() == 1 && before >= 2 && after == 2,
+        require(viewer->run_frames(2) == 0 && ticks == 1 && viewer->width() == 181 && viewer->height() == 151 && viewer->samples() == 1 && counter.before >= 2 && counter.after == 2,
                 "installed viewer loop/dimensions/animation/callbacks failed");
-        const auto frame_callbacks = before + after;
+        const auto frame_callbacks = counter.before + counter.after;
         require(viewer->snapshot("installed-viewer.png", 1, 4, 1), "installed viewer snapshot failed");
-        require(before + after == frame_callbacks, "installed viewer snapshot invoked frame callbacks");
+        require(counter.before + counter.after == frame_callbacks, "installed viewer snapshot invoked frame callbacks");
         int w, h, channels; std::vector<unsigned char> rgba;
         require(ImageIO::load("installed-viewer.png", rgba, w, h, channels, 4, false) &&
                 w == viewer->framebuffer_width() && h == viewer->framebuffer_height(), "installed viewer output dimensions differ");

@@ -221,9 +221,9 @@ already matched was aspirational; Batch 46 is what makes it true.
    - **Key relationship**: `framebuffer_width = width * dpi_scaling()`
 
 3. **Mouse/Event Coordinates**
-   - **Methods**: Parameters passed to mouse callbacks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.) and the portable `set_callbacks` hooks
+   - **Methods**: Parameters passed to the viewer event hooks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.)
    - **Purpose**: User interaction, picking, hover detection
-   - **Characteristics**: Always in logical window coordinates with top-left origin (0,0), on **both** backends (Batch 46 unified the legacy hooks; Vulkan previously delivered framebuffer pixels)
+   - **Characteristics**: Always in logical window coordinates with top-left origin (0,0), on **both** backends (Batch 46 unified the hooks; Vulkan previously delivered framebuffer pixels)
    - **Usage**: Use directly with `width()`/`height()` for bounds checking; pass to camera methods like `projectedCoordinatesOf()`
 
 ### World ↔ Window/Pixel Conversion API (Batch 46)
@@ -3804,46 +3804,47 @@ downstream clients on this experimental branch. Existing source constructors and
 subclass hooks are retained, rather than treating this as binary compatibility.
 
 
-## Portable viewer input and frame callbacks
-
-> **Superseded (2026-10-30):** the callbacks were designed for the runtime-created `ViewerBase` pointer. They stay, but will be attached to the concrete `Viewer` class when `ViewerBase` is removed.
-
-Factory-created viewers now accept ViewerCallbacks through set_callbacks().
-The public header viewer_callbacks.h mirrors the existing viewer hook names:
-pre_draw, post_draw, post_resize, mouse press/release/drag/free-move/scroll,
-key press/release, character input, file drop and focus. Callbacks receive a
-ViewerBase* and run on the UI/main thread. They can update ordinary models and
-drawables without naming a Vulkan/OpenGL viewer or issuing backend calls.
-
-```cpp
-easy3d::ViewerCallbacks callbacks;
-callbacks.key_press_event = [](easy3d::ViewerBase* viewer, int key, int modifiers) {
-    if (key == easy3d::ViewerBase::KEY_Q && modifiers == 0) {
-        viewer->request_close();
-        return true;
-    }
-    return false; // retain existing bindings, shortcuts and camera controls
-};
-viewer->set_callbacks(std::move(callbacks));
-```
+## Portable viewer input and frame hooks
 
 Both hosts feed one shared router in ViewerBase (`handle_cursor_pos`,
 `handle_mouse_button`, `handle_scroll`, `handle_key`, `handle_character`,
 `handle_drop`, `handle_focus`); the GLFW callbacks only translate raw events.
-Input callbacks run before legacy subclass hooks and built-in actions. Returning
-true consumes the event. A consumed mouse press captures its gesture through the
-matching release, even if subsequent drag/release handlers return false or are
-cleared. Consuming release of a builtin gesture ends it instead of applying a
-region zoom. Focus loss resets the tracked button, key, latched modifiers and
+Customization uses the virtual event and frame hooks instead: `ViewerBase`
+declares `mouse_press_event`, `mouse_release_event`, `mouse_drag_event`,
+`mouse_free_move_event`, `mouse_scroll_event`, `key_press_event`,
+`key_release_event`, `char_input_event`, `drop_event` and `focus_event`, and
+`Viewer` declares `pre_draw`, `post_draw` and `post_resize`. The former
+`ViewerCallbacks` struct and `set_callbacks()` were removed in batch 55: they
+duplicated these hooks, while virtual overrides compose through `Base::` calls
+and subclasses already existed.
+
+```cpp
+struct MyViewer : easy3d::Viewer {
+    using Viewer::Viewer;
+    bool key_press_event(int key, int modifiers) override {
+        if (key == KEY_Q && modifiers == 0) { request_close(); return true; }
+        return Viewer::key_press_event(key, modifiers); // bindings, shortcuts, camera
+    }
+    void pre_draw() override { /* per-frame state before rendering */ }
+};
+```
+
+Returning true consumes the event and skips the built-in controls; the default
+implementations provide dragging/zoom/keys, picking and model loading, so a
+subclass calls the base hook to extend them. Shortcuts remain the non-subclass
+route: `bind(func, model, key, modifier)` targets a model, and the model-free
+`bind(action, key, modifier)` overload takes `std::function<bool(Viewer*)>`;
+both run before the built-in shortcuts.
+
+The router records the held button before invoking a press hook, so a subclass
+that consumes a press must also consume its drags. Consuming the release of a
+held gesture ends it without applying the built-in action (for example a region
+zoom). Focus loss resets the tracked button, key, latched modifiers and
 fractional scrolling, then cancels the in-flight camera/clipping-plane gesture,
-on both hosts. Legacy hooks retain their original coordinate conventions and
-receive unhandled events. Explicit subclasses continue to work; they are not
-created by this factory API.
+on both hosts.
 
 Common mouse positions and deltas are integer logical window coordinates with
-an upper-left origin, including on HiDPI displays. Button/scroll callbacks query
-the actual cursor position, and consumed movement updates tracking so later
-default controls do not accumulate skipped deltas. Modifier lookup is shared in
+an upper-left origin, including on HiDPI displays. Modifier lookup is shared in
 the GLFW backend; drags keep the modifiers latched at press, so pressing a
 modifier mid-gesture cannot switch the interaction mode. Cursor positions
 outside the window still reach the free-move/drag hooks (subclasses can clear
@@ -3852,50 +3853,32 @@ to the window edge so the gesture cannot run away. One shared double
 accumulator carries fractional wheel deltas, so trackpad movement is not lost
 by truncating each individual event.
 
-post_resize receives logical window dimensions after host camera/viewport state
-has been updated. A framebuffer-only change also notifies it, so a callback can
-query the new pixel dimensions. Identical logical/framebuffer tuples are
-coalesced; registration records the current size rather than sending an initial
-notification. OpenGL now listens for framebuffer changes as well as window-size
-changes, and avoids resetting an unchanged camera viewport.
+`Viewer::notify_resize()` queries the logical and framebuffer sizes, records
+them and calls `post_resize(w, h)` with logical dimensions after the host
+camera/viewport state has been updated. Repeated window/framebuffer events for
+the same tuple are coalesced. OpenGL listens for framebuffer changes as well as
+window-size changes, and avoids resetting an unchanged camera viewport.
 
-pre_draw runs after animation and before the existing scene hooks/encoding;
-post_draw runs after a completed frame. Vulkan swapchain retries may require
-more pre_draw attempts than completed frames. Snapshots do not run these hooks
-or animation. The regression also found that an OpenGL snapshot through the
-common API before draw_frame() had not initialized depth testing. That path now
-initializes the host once, without invoking frame callbacks; overlapping
-foreground/background surfaces verify correct depth with MSAA file output.
+pre_draw runs after animation and before scene encoding; post_draw runs after a
+completed frame. Vulkan swapchain retries may require more pre_draw attempts
+than completed frames. Snapshots do not run these hooks or animation; the host
+is initialized once before a snapshot without invoking frame hooks.
 
-Callback registration can be replaced or cleared from within a callback. The
-active registration is retained until dispatch returns; mutable callable state
-is preserved between events and captured resources are released afterward.
-Each GLFW trampoline is now the single exception boundary; the shared handlers
-no longer wrap individual events. An escaping handler exception stays inside
-GLFW's C boundary, requests close and is reported at the frame boundary. Frame
-callback exceptions propagate through the existing frame/run error contract.
-None of these errors cause backend changes.
+Each GLFW trampoline is the single exception boundary. An escaping hook
+exception stays inside GLFW's C boundary, requests close and is reported at the
+frame boundary; frame-hook exceptions propagate through the existing frame/run
+error contract. Neither causes backend changes.
 
-The same public-API callback test runs against both hosts. It checks rendered
-pre_draw updates, frame counts/state, snapshot isolation and initial depth,
-logical coordinates/deltas, key consumption and builtin/bound actions, Unicode,
-gesture capture/cancel, focus cleanup, fractional scroll, consumed/default file
-drops, logical/framebuffer resize notifications, reentrant registration lifetime,
-and retained hosts after exceptions. The SDK-independent package client now
-registers frame callbacks too. Tutorial sources and shaders remain unchanged.
-Unified Viewer constructors/subclass storage, camera projection/input helpers,
-common capture/picking/selection, GUI effects/toolkits and Python remain future
-migration work.
-
-Verified on this Mac with MoltenVK: 74/74 native tests, 54/54 combined-backend
-tests and 16/16 headless tests pass. The callback regression also compiles and
-passes against the OpenGL-only library. The public callback client builds with
-Vulkan SDK discovery disabled and renders through MoltenVK and the OpenGL-only
-library; the installed headless client builds and reports unavailable
-window hosts. Headless binary inspection finds no GL/GLEW/GLFW imports. No new
-Vulkan validation/synchronization errors were reported; previously documented
-platform warnings remain. Changes are confined to viewer infrastructure, tests
-and migration notes, with no tutorial or shader edits.
+The shared `vulkan.events`/`opengl.events` test drives the host callbacks and
+checks rendered pre_draw updates, frame counts/state, snapshot isolation and
+initial depth, logical coordinates/deltas, key consumption, builtin and
+model-bound/model-free actions, Unicode, default controls after consumed
+gestures, focus cleanup, fractional scroll, consumed/default file drops,
+logical/framebuffer resize coalescing and exceptions. The SDK-independent
+package client overrides the frame hooks too. Tutorial sources and shaders
+remain unchanged. Unified Viewer constructors/subclass storage, camera
+projection/input helpers, common capture/picking/selection, GUI
+effects/toolkits and Python remain future migration work.
 
 ## Portable camera coordinates and surface queries
 
@@ -7691,3 +7674,41 @@ including `vulkan.input`, the real-camera suite and the callback/window tests. O
 (`build-opengl`, tests enabled): full build succeeded and the serial suite passed 106/106, including
 `opengl.input`. The Python bindings sources were updated (removed now-nonexistent overrides) but not
 rebuilt. Linux/Mesa, Windows hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 55: event hooks are the single customization surface
+
+**Scope.** `ViewerCallbacks` duplicated the virtual event hooks while the viewer factory that
+motivated it is gone, and a callback slot cannot chain to the base behaviour the way `Base::hook()`
+can. The callback struct is removed; subclasses are again the only event extension surface.
+
+- Deleted `easy3d/viewer/viewer_callbacks.h`, `ViewerBase::set_callbacks()` and the ten
+  `dispatch_*` helpers, together with `notify_pre_draw()`/`notify_post_draw()` and the
+  `ViewerBase` resize-notification cache. `draw_frame()` calls `pre_draw()`/`post_draw()` directly,
+  and the routers call the virtual event hooks directly.
+- The routers still record the input state first, so a consumed press keeps its button held: a
+  subclass that consumes a press must also consume its drags, and consuming the held-button release
+  calls `end_gesture()` so the built-in action (for example a region zoom) is not applied. This
+  replaces the old `capture_button` dispatch state.
+- Added model-free shortcut overloads: `Viewer::Action` (`std::function<bool(Viewer*)>`) and 
+  `bind(action, key, modifier)` on Viewer, stored with a null model and checked before the built-in 
+   shortcuts. The Python binding exposes the new overload.
+- `Viewer::notify_resize()` now owns resize notification: it queries the logical and framebuffer
+  sizes, caches the tuple, and calls `post_resize(w, h)` once per change. The Vulkan framebuffer
+  callback, the Vulkan in-frame resize path and the OpenGL `callback_event_resize()` (which keeps
+  its guarded body) are its only callers.
+- Migration: Tutorial 202 overrides the eight input hooks instead of installing callbacks;
+  `tests/viewer/test_window.h` blocks navigation with window-level no-op mouse-button/scroll
+  callbacks; the query and installed-viewer tests count frames with subclass overrides; the
+  real-camera annotation test filters hover in a subclass; the callback regression became
+  `tests/viewer/viewer_events_test.cpp` and the CTests `vulkan.events`/`opengl.events`.
+
+`pre_draw()`, `post_draw()` and `post_resize()` keep their signatures and order. `dpi_scaling_`
+consolidation remains deferred.
+
+**Validation (2026-11-11, macOS Release).** Vulkan (`cmake-build-release`, tests temporarily enabled
+then restored to `Easy3D_BUILD_TESTS=OFF`): full build succeeded and the serial suite passed 140/140,
+including `vulkan.events`, `vulkan.query`, `vulkan.imgui`, `vulkan.pickerviewer`, `vulkan.depthmap`,
+`vulkan.textviewer`, `vulkan.realcamera` and `vulkan.annotationtutorials`. OpenGL (`build-opengl`,
+tests enabled): full build succeeded and the serial suite passed 106/106, including `opengl.events`.
+The Python binding source was updated but not rebuilt or run. Linux/Mesa, Windows hardware and
+GitHub CI were not run.

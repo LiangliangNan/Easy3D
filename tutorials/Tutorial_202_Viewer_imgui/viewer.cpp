@@ -71,9 +71,8 @@ ViewerImGui::ViewerImGui(const std::string &title,
 ViewerImGui::~ViewerImGui() {
     if (!context_)
         return;
-    // Tear down ImGui in reverse order of setup: detach input callbacks, shut down the
-    // GLFW backend, then destroy the context. The base Viewer handles the rest.
-    set_callbacks({});
+    // Tear down ImGui in reverse order of setup: shut down the GLFW backend, then
+    // destroy the context. The base Viewer handles the rest.
     ImGui::SetCurrentContext(context_);
     if (ImGui::GetIO().BackendPlatformUserData)
         ImGui_ImplGlfw_Shutdown();
@@ -99,38 +98,6 @@ void ViewerImGui::init() {
             throw std::runtime_error("could not initialize ImGui GLFW backend");
         ImGui::GetIO().BackendRendererName = "Easy3D annotations";
         ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-        // Route input through ImGui first: if ImGui wants the mouse/keyboard (e.g. a menu
-        // or popup is open), the callbacks return true so the viewer does NOT also act on it.
-        ViewerCallbacks inputs;
-        const auto mouse = [this]() {
-            ImGui::SetCurrentContext(context_);
-            return ImGui::GetIO().WantCaptureMouse;
-        };
-        const auto keyboard = [this]() {
-            ImGui::SetCurrentContext(context_);
-            return ImGui::GetIO().WantCaptureKeyboard || ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
-        };
-        inputs.mouse_press_event = [mouse](ViewerBase *, int, int, int, int) {
-            return mouse();
-        };
-        inputs.mouse_release_event = inputs.mouse_press_event;
-        inputs.mouse_drag_event = [mouse](ViewerBase *, int, int, int, int, int, int) {
-            return mouse();
-        };
-        inputs.mouse_free_move_event = [mouse](ViewerBase *, int, int, int, int, int) {
-            return mouse();
-        };
-        inputs.mouse_scroll_event = [mouse](ViewerBase *, int, int, int, int) {
-            return mouse();
-        };
-        inputs.key_press_event = [keyboard](ViewerBase *, int, int) {
-            return keyboard();
-        };
-        inputs.key_release_event = inputs.key_press_event;
-        inputs.char_input_event = [keyboard](ViewerBase *, unsigned) {
-            return keyboard();
-        };
-        set_callbacks(std::move(inputs));
         ImGuiIO &io = ImGui::GetIO();
         io.WantCaptureKeyboard = true;
         io.WantTextInput = true;
@@ -142,6 +109,53 @@ void ViewerImGui::init() {
         // load font
         reload_font();
     }
+}
+
+// Routes input through ImGui first: while a menu, popup or text field owns the
+// mouse/keyboard, the hook returns true so the viewer skips its built-in controls.
+namespace {
+bool imgui_wants_mouse(ImGuiContext *context) {
+    ImGui::SetCurrentContext(context);
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool imgui_wants_keyboard(ImGuiContext *context) {
+    ImGui::SetCurrentContext(context);
+    return ImGui::GetIO().WantCaptureKeyboard ||
+           ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+}
+} // namespace
+
+bool ViewerImGui::mouse_press_event(int x, int y, int button, int modifiers) {
+    return imgui_wants_mouse(context_) || Viewer::mouse_press_event(x, y, button, modifiers);
+}
+
+bool ViewerImGui::mouse_release_event(int x, int y, int button, int modifiers) {
+    return imgui_wants_mouse(context_) || Viewer::mouse_release_event(x, y, button, modifiers);
+}
+
+bool ViewerImGui::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    return imgui_wants_mouse(context_) || Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+}
+
+bool ViewerImGui::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+    return imgui_wants_mouse(context_) || Viewer::mouse_free_move_event(x, y, dx, dy, modifiers);
+}
+
+bool ViewerImGui::mouse_scroll_event(int x, int y, int dx, int dy) {
+    return imgui_wants_mouse(context_) || Viewer::mouse_scroll_event(x, y, dx, dy);
+}
+
+bool ViewerImGui::key_press_event(int key, int modifiers) {
+    return imgui_wants_keyboard(context_) || Viewer::key_press_event(key, modifiers);
+}
+
+bool ViewerImGui::key_release_event(int key, int modifiers) {
+    return imgui_wants_keyboard(context_) || Viewer::key_release_event(key, modifiers);
+}
+
+bool ViewerImGui::char_input_event(unsigned int codepoint) {
+    return imgui_wants_keyboard(context_) || Viewer::char_input_event(codepoint);
 }
 
 // Framebuffer pixels per window pixel; >1 on high-DPI (e.g. Retina) displays.

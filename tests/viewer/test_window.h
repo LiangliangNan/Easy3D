@@ -42,13 +42,15 @@ inline void set_size(Viewer& v, const TestWindow& w) {
 }
 
 // Pixel comparisons control their camera explicitly. Keep the original visible
-// tutorial and its synthetic hover/keys, but consume unrelated desktop navigation.
+// tutorial and its synthetic hover/keys, but ignore OS mouse-button and wheel
+// events at the window level so unrelated desktop navigation cannot move the
+// camera. Hover is unaffected, and tests still inject events through the saved
+// host callbacks.
 inline void block_navigation_input(Viewer& v) {
-    ViewerCallbacks inputs;
-    inputs.mouse_press_event=[](ViewerBase*,int,int,int,int) { return true; };
-    inputs.mouse_drag_event=[](ViewerBase*,int,int,int,int,int,int) { return true; };
-    inputs.mouse_scroll_event=[](ViewerBase*,int,int,int,int) { return true; };
-    v.set_callbacks(std::move(inputs));
+    if (GLFWwindow* window = v.window()) {
+        glfwSetMouseButtonCallback(window, [](GLFWwindow*, int, int, int) {});
+        glfwSetScrollCallback(window, [](GLFWwindow*, double, double) {});
+    }
 }
 }
 #endif   // EASY3D_HAS_VULKAN
