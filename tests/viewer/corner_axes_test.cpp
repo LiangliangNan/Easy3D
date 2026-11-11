@@ -82,7 +82,7 @@ int main(int argc,char**) {
         AxesViewer independent("Independent corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         toggle();require(!viewer.visible() && independent.visible(),"axes visibility leaked across viewers");
         bool bound=false;
-        viewer.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);
+        viewer.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);
         toggle();require(bound && !viewer.visible(),"custom axes binding did not take precedence");
         require(viewer.device().validation_errors()==0 && independent.device().validation_errors()==0,"axes validation errors");
         std::cout<<"PASS: corner axes, visibility/modifiers, orientation-only transform, DPI, MSAA, overlays, independent viewers and preserved depth/IDs\n";

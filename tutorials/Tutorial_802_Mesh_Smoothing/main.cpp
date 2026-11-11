@@ -65,7 +65,7 @@
  * - GaussianNoise::apply(): perturbs vertex positions along their normals with a given standard
  *   deviation, used here to synthesize a noisy input.
  * - Renderer::update(): re-extracts the rendering buffers after the vertex positions change.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
  * The model starts noisy. Press Ctrl+e for explicit smoothing (10 iterations), Ctrl+i for implicit
@@ -144,9 +144,9 @@ int main(int argc, char **argv) {
     add_noise(mesh);
 
     // Register the smoothing/noise shortcuts and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return smooth_explicit(v, m); }, mesh, Viewer::KEY_E, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return smooth_implicit(v, m); }, mesh, Viewer::KEY_I, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return noise(v, m); }, mesh, Viewer::KEY_N, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return smooth_explicit(v, m); }, mesh, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return smooth_implicit(v, m); }, mesh, Viewer::KEY_I, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return noise(v, m); }, mesh, Viewer::KEY_N, Viewer::MODIF_CTRL);
     viewer.set_usage(
         "default",
         "Ctrl + e: explicit Laplacian smoothing (10 iterations)\n" "Ctrl + i: implicit Laplacian smoothing\n" "Ctrl + n: add Gaussian noise again");

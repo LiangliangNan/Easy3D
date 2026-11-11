@@ -74,7 +74,7 @@ int main(int argc,char**) {
         press(GLFW_KEY_K,Viewer::MODIF_CTRL);v.draw_frame();
         require(v.camera()->position()!=paused && animated==3,"shared path resume failed");
         press(GLFW_KEY_K,GLFW_MOD_ALT);require(!v.path().is_interpolation_started() && v.path().number_of_keyframes()==4,"recording did not stop playback");
-        v.bind([](Viewer*,Model*){return true;},nullptr,Viewer::KEY_D,Viewer::MODIF_ALT);
+        v.bind_shortcut([](Viewer*,Model*){return true;},nullptr,Viewer::KEY_D,Viewer::MODIF_ALT);
         press(GLFW_KEY_D,GLFW_MOD_ALT);require(v.path().number_of_keyframes()==4,"custom binding did not override default path key");
         v.path().delete_path();v.set_animation(false);v.animation_func_={};
         v.camera()->setPosition(poses.front());press(GLFW_KEY_K,GLFW_MOD_ALT);

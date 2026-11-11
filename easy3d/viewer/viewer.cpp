@@ -704,6 +704,8 @@ namespace easy3d {
                                   [model](const std::shared_ptr<Model> &p) { return p.get() == model; });
         if (found == values.end())
             return false;
+        // Shortcuts carry a borrowed model pointer: drop them before the model can be destroyed.
+        unbind_shortcut(model);
         values.erase(found);
         model_idx_ = int(models_.size()) - 1;
 #ifdef EASY3D_HAS_VULKAN
@@ -746,6 +748,9 @@ namespace easy3d {
 #ifndef EASY3D_HAS_VULKAN
         glfwMakeContextCurrent(window_);
 #endif
+        // Model-bound shortcuts would dangle once the models are gone; model-free actions survive.
+        for (const auto& model : models_)
+            unbind_shortcut(model.get());
         models_.clear();
         model_idx_ = -1;
         drawables_.clear();
@@ -1109,8 +1114,12 @@ namespace easy3d {
         const auto command = commands_.find(Key(key));
         if (command != commands_.end()) {
             const auto binding = command->second.find(Modifier(modifiers));
-            if (binding != command->second.end())
-                return binding->second.first(this, binding->second.second);
+            if (binding != command->second.end()) {
+                // The callable may unbind itself or delete its model (which prunes the binding),
+                // so copies the bound callable to keep it alive for the duration of the call.
+                const Function func = binding->second.first; // copies the bound callable
+                return func(this, binding->second.second);
+            }
         }
         if ((key == GLFW_KEY_ESCAPE && modifiers == 0) || (key == GLFW_KEY_F4 && modifiers == MODIF_ALT))
             exit();

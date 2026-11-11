@@ -543,13 +543,14 @@ public:
         /**
          * \brief Bind a function that will be triggered by the shortcut 'modifier + key'.
          * \details This operation will overwrite the previous function (if exist) bound to the same key-modifier shortcut.
+         *      The model pointer is borrowed: delete_model() and clear_scene() remove the bindings that target it.
          * \param func The function to be executed, which will be triggered by the shortcut.
          * \param model The model to be processed.
          * \param key The shortcut key.
          * \param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MODIF_NONE.
          * \sa Function
          */
-        void bind(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
+        void bind_shortcut(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
             commands_[key][modifier] = std::make_pair(func, model);
         }
 
@@ -561,8 +562,47 @@ public:
          * \param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MODIF_NONE.
          * \sa Action
          */
-        void bind(const Action& action, Key key, Modifier modifier = MODIF_NONE) {
-            bind([action](Viewer* viewer, Model*) { return action(viewer); }, nullptr, key, modifier);
+        void bind_shortcut(const Action& action, Key key, Modifier modifier = MODIF_NONE) {
+            bind_shortcut([action](Viewer* viewer, Model*) { return action(viewer); }, nullptr, key, modifier);
+        }
+
+        /**
+         * \brief Remove every binding that targets a model.
+         * \param model The model whose bindings are removed; model-free actions are unaffected.
+         * \details Bindings are compared by the model pointer they were bound with, so bindings
+         *      that captured a model inside a lambda are not affected. delete_model() calls this
+         *      automatically, and clear_scene() calls it for every model in the scene.
+         */
+        void unbind_shortcut(Model* model) {
+            for (auto command = commands_.begin(); command != commands_.end(); ) {
+                auto& by_modifier = command->second;
+                for (auto binding = by_modifier.begin(); binding != by_modifier.end(); ) {
+                    if (binding->second.second == model)
+                        binding = by_modifier.erase(binding);
+                    else
+                        ++binding;
+                }
+                if (by_modifier.empty())
+                    command = commands_.erase(command);
+                else
+                    ++command;
+            }
+        }
+
+        /**
+         * \brief Remove the binding triggered by the shortcut 'modifier + key'.
+         * \param key The shortcut key.
+         * \param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MODIF_NONE.
+         * \details Does nothing if no binding exists at that shortcut. After unbinding, the
+         *      shortcut falls through to the viewer's built-in handling again.
+         */
+        void unbind_shortcut(Key key, Modifier modifier = MODIF_NONE) {
+            const auto command = commands_.find(key);
+            if (command == commands_.end())
+                return;
+            command->second.erase(modifier);
+            if (command->second.empty())
+                commands_.erase(command);
         }
         //@}
 

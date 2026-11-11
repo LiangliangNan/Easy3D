@@ -2592,7 +2592,7 @@ The native controls now include:
 - Ctrl/Command-O/S open/save and S snapshot dispatch through matching virtual
   `open()`, `save()` and `snapshot()` hooks, using the shared native file dialogs.
   Exact modifier matching prevents a modified key from invoking a plain shortcut.
-- The same `bind(Function, Model*, Key, Modifier)` mechanism for custom shortcuts,
+- The same `bind_shortcut(Function, Model*, Key, Modifier)` mechanism for custom shortcuts,
   checked before default actions, and `set_usage()` for the F1 manual. Bound
   model pointers remain borrowed, as in the original viewer.
 
@@ -3832,9 +3832,15 @@ struct MyViewer : easy3d::Viewer {
 Returning true consumes the event and skips the built-in controls; the default
 implementations provide dragging/zoom/keys, picking and model loading, so a
 subclass calls the base hook to extend them. Shortcuts remain the non-subclass
-route: `bind(func, model, key, modifier)` targets a model, and the model-free
-`bind(action, key, modifier)` overload takes `std::function<bool(Viewer*)>`;
-both run before the built-in shortcuts.
+route: `bind_shortcut(func, model, key, modifier)` targets a model, and the
+model-free `bind_shortcut(action, key, modifier)` overload takes
+`std::function<bool(Viewer*)>`; both run before the built-in shortcuts.
+`unbind_shortcut(key, modifier)` removes one shortcut and restores its built-in
+handling; `unbind_shortcut(model)` removes every shortcut that carries that
+model. The model pointers are borrowed, so `delete_model()` and `clear_scene()`
+call `unbind_shortcut(model)` automatically — a deleted model can no longer
+reach a bound function. Model-free actions are kept, and a model captured
+inside a lambda is not tracked.
 
 The router records the held button before invoking a press hook, so a subclass
 that consumes a press must also consume its drags. Consuming the release of a
@@ -3872,9 +3878,10 @@ error contract. Neither causes backend changes.
 The shared `vulkan.events`/`opengl.events` test drives the host callbacks and
 checks rendered pre_draw updates, frame counts/state, snapshot isolation and
 initial depth, logical coordinates/deltas, key consumption, builtin and
-model-bound/model-free actions, Unicode, default controls after consumed
-gestures, focus cleanup, fractional scroll, consumed/default file drops,
-logical/framebuffer resize coalescing and exceptions. The SDK-independent
+model-bound/model-free actions, shortcut unbinding and model-pruned commands,
+Unicode, default controls after consumed gestures, focus cleanup, fractional
+scroll, consumed/default file drops, logical/framebuffer resize coalescing and
+exceptions. The SDK-independent
 package client overrides the frame hooks too. Tutorial sources and shaders
 remain unchanged. Unified Viewer constructors/subclass storage, camera
 projection/input helpers, common capture/picking/selection, GUI
@@ -7712,3 +7719,40 @@ including `vulkan.events`, `vulkan.query`, `vulkan.imgui`, `vulkan.pickerviewer`
 tests enabled): full build succeeded and the serial suite passed 106/106, including `opengl.events`.
 The Python binding source was updated but not rebuilt or run. Linux/Mesa, Windows hardware and
 GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 56: unbinding shortcuts and pruning deleted models
+
+**Scope.** `Viewer::commands_` stored each shortcut's model as a borrowed pointer, so deleting a
+model left bindings that could call into it. The shortcuts now have a matching removal API and are
+pruned when their model leaves the scene. The previously added `bind()`/`unbind()` names became
+`bind_shortcut()`/`unbind_shortcut()`, so the large `Viewer` API names the key+modifier concept
+explicitly; `Viewer` is the only owner of shortcut storage and dispatch.
+
+- Renamed `Viewer::bind(...)` to `Viewer::bind_shortcut(...)` (both overloads) and updated the
+  tutorials, tests, Python binding and current-state docs.
+- Added `Viewer::unbind_shortcut(Key, Modifier)` (default `MODIF_NONE`): removes the binding at that
+  exact shortcut and lets the key fall through to the viewer's built-in handling again.
+- Added `Viewer::unbind_shortcut(Model*)`: removes every shortcut bound with that model pointer while
+  keeping model-free actions and bindings to other models. Bindings that capture a model inside a
+  lambda are not tracked, matching the borrowed-pointer contract documented on `bind_shortcut()`.
+- `delete_model()` calls `unbind_shortcut(model)` before erasing it, and `clear_scene()` unbinds
+  every model in the scene before clearing the list; model-free actions survive both operations.
+- `key_press_event()` copies the bound callable before invoking it, so a function that deletes its
+  model or unbinds its own shortcut stays alive for the duration of the call.
+- Tutorial 202 now tolerates window events that arrive before its lazy `init()` created the ImGui
+  context (or after the destructor destroyed it): the hooks delegate to the base viewer while
+  `context_` is null, and the destructor clears the pointer after `ImGui::DestroyContext()`. This
+  removes the intermittent crash in ImGui tests when `set_size()` pumped events before the first
+  `draw_frame()`.
+- The Python binding exposes the renamed calls (`bind_shortcut(...)`, `unbind_shortcut(key,
+  modifier=MODIF_NONE)` and `unbind_shortcut(model)`).
+- `tests/viewer/input_test.cpp` covers shortcut removal and fall-through, model-scoped removal with a
+  surviving model-free action, self-unbinding, deletion pruning and `clear_scene()` pruning.
+- Current-state docs describe the ownership contract and the automatic pruning.
+
+**Validation (2026-11-11, macOS Release).** Vulkan (`cmake-build-release`, tests temporarily enabled
+then restored to `Easy3D_BUILD_TESTS=OFF`): full build succeeded and two consecutive serial runs
+passed 140/140, including `vulkan.events`, `vulkan.input`, `vulkan.imgui` and `vulkan.tutorial202`.
+OpenGL (`build-opengl`, tests enabled): full build succeeded and the serial suite passed 106/106.
+The Python binding source and tutorials were updated but not rebuilt or run. Linux/Mesa, Windows
+hardware and GitHub CI were not run.

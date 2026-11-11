@@ -104,7 +104,7 @@ int main(int argc,char**) {
         require(viewer.clipping_planes()==std::vector<vec4>{vec4(1,0,0,0)},"disabled shared plane lost explicit planes");
         viewer.set_clipping_planes({});
         bool bound=false;
-        viewer.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_C,ViewerInput::MODIF_ALT);
+        viewer.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_C,ViewerInput::MODIF_ALT);
         press(GLFW_KEY_C);require(bound && !plane->is_enabled(),"custom binding did not override clipping control");
         plane->set_enabled(true);
         const auto with_app=viewer.capture();viewer.set_overlays({});const auto without_app=viewer.capture();

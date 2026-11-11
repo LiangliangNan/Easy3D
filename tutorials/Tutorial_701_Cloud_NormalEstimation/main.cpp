@@ -61,7 +61,7 @@
  *   vertex property. PointCloudNormals::reorient(cloud, k): makes the orientations consistent.
  * - PointCloud::get_vertex_property<vec3>("v:normal"): retrieves the computed normals.
  * - PointsDrawable::update_normal_buffer(...): uploads the normals to the GPU for shading.
- * - Viewer::bind(func, model, key, modifier): registers a callback on a keyboard shortcut.
+ * - Viewer::bind_shortcut(func, model, key, modifier): registers a callback on a keyboard shortcut.
  *
  * <b>Running it</b>
  * Press Ctrl+E to estimate normals, then Ctrl+R to reorient them. Points use a distinct back color,
@@ -142,8 +142,8 @@ int main(int argc, char **argv) {
     drawable->set_distinct_back_color(true);
 
     // Register the two processing steps on Ctrl+E and Ctrl+R, each bound to this model.
-    viewer.bind(estimate, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
-    viewer.bind(reorient, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut(estimate, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut(reorient, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
     // Show the shortcuts in the on-screen help overlay.
     viewer.set_usage("default", "Ctrl + e: estimate normals\n" "Ctrl + r: reorient normals");
 

@@ -64,7 +64,7 @@
  * - GaussianNoise::apply(mesh, sigma, true): adds noise while preserving the boundary, so the patch
  *   still meets its (fixed) rim after perturbation.
  * - Renderer::update(): re-extracts the rendering buffers after the vertex positions change.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
  * The hemisphere starts noisy. Press Ctrl+a to minimize surface area (degree 1), Ctrl+c to minimize
@@ -146,9 +146,9 @@ int main(int argc, char **argv) {
     mesh->renderer()->update(); // show the noisy surface before any fairing
 
     // Register the fairing/noise shortcuts and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return fair_area(v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return fair_curvature(v, m); }, mesh, Viewer::KEY_C, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return noise(v, m); }, mesh, Viewer::KEY_N, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return fair_area(v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return fair_curvature(v, m); }, mesh, Viewer::KEY_C, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return noise(v, m); }, mesh, Viewer::KEY_N, Viewer::MODIF_CTRL);
     viewer.set_usage(
         "default",
         "Ctrl + a: minimize surface area (fairing degree 1)\n" "Ctrl + c: minimize surface curvature (fairing degree 2)\n" "Ctrl + n: add Gaussian noise again");

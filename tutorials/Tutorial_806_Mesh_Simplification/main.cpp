@@ -64,7 +64,7 @@
  *   collapses edges until roughly n_vertices remain.
  * - DrawableLines ("edges"): made visible to reveal the coarsening triangulation.
  * - Renderer::update(): re-extracts the rendering buffers after the connectivity changes.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcut and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcut and the help text.
  *
  * <b>Running it</b>
  * Press Ctrl+d to simplify to half of the current vertices; repeat to decimate further. The console
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // Register the simplify shortcut and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return simplify(v, m); }, mesh, Viewer::KEY_D, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return simplify(v, m); }, mesh, Viewer::KEY_D, Viewer::MODIF_CTRL);
     viewer.set_usage("default", "Ctrl + d: simplify to half of the current vertices");
 
     // Enter the interactive loop (returns when the window is closed).

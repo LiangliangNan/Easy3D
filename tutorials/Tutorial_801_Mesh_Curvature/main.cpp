@@ -68,7 +68,7 @@
  *   "v:curv-mean", "v:curv-gauss", "v:curv-max_abs".
  * - DrawableTriangles::set_scalar_coloring(): maps a per-vertex scalar property to a colormap so the
  *   field becomes visible on the surface.
- * - Viewer::bind() / set_usage(): register the Ctrl-key shortcuts and the on-screen help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl-key shortcuts and the on-screen help text.
  * - Renderer::update(): re-extracts rendering buffers after the property used for coloring changes.
  *
  * <b>Running it</b>
@@ -143,9 +143,9 @@ int main(int argc, char **argv) {
 
     // Bind one shortcut per curvature field; each lambda forwards to apply_curvature() with the
     // matching type. set_usage() documents the keys in the viewer's help overlay.
-    viewer.bind([](Viewer *v, Model *m) { return apply_curvature(0, v, m); }, mesh, Viewer::KEY_E, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return apply_curvature(1, v, m); }, mesh, Viewer::KEY_G, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return apply_curvature(2, v, m); }, mesh, Viewer::KEY_K, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return apply_curvature(0, v, m); }, mesh, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return apply_curvature(1, v, m); }, mesh, Viewer::KEY_G, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return apply_curvature(2, v, m); }, mesh, Viewer::KEY_K, Viewer::MODIF_CTRL);
     viewer.set_usage(
         "default",
         "Ctrl + e: mean curvature\n" "Ctrl + g: Gaussian curvature\n" "Ctrl + k: maximum absolute curvature");

@@ -67,7 +67,7 @@
  * - DrawableTriangles::set_texture_coloring(): samples a texture using the per-vertex "v:texcoord"
  *   coordinates to paint the checkerboard onto the surface.
  * - Renderer::update(): re-extracts the rendering buffers after the texture coordinates change.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
  * The harmonic parameterization is shown first. Press Ctrl+a for harmonic parameterization and Ctrl+l for
@@ -120,8 +120,8 @@ int main(int argc, char **argv) {
     // Show the harmonic parameterization initially.
     parameterize(0, &viewer, mesh);
 
-    viewer.bind([](Viewer *v, Model *m) { return parameterize(0, v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return parameterize(1, v, m); }, mesh, Viewer::KEY_L, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return parameterize(0, v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return parameterize(1, v, m); }, mesh, Viewer::KEY_L, Viewer::MODIF_CTRL);
     viewer.set_usage("default",
                      "Ctrl + a: harmonic parameterization\n" "Ctrl + l: least squares conformal mapping (LSCM)");
 

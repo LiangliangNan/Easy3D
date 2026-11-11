@@ -65,7 +65,7 @@
  *   bounding-box diagonal so they scale with the model).
  * - DrawableLines ("edges"): made visible to reveal the triangulation.
  * - Renderer::update(): re-extracts the rendering buffers after the connectivity changes.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
  * Press Ctrl+u for uniform remeshing (target = 1.5 x the current average edge length) and Ctrl+a for
@@ -140,8 +140,8 @@ int main(int argc, char **argv) {
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // Register the remeshing shortcuts and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return uniform_remesh(v, m); }, mesh, Viewer::KEY_U, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return adaptive_remesh(v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return uniform_remesh(v, m); }, mesh, Viewer::KEY_U, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return adaptive_remesh(v, m); }, mesh, Viewer::KEY_A, Viewer::MODIF_CTRL);
     viewer.set_usage(
         "default",
         "Ctrl + u: uniform remeshing (target = 1.5 x average edge length)\n" "Ctrl + a: adaptive remeshing (curvature-driven)");

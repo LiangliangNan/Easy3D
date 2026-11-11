@@ -70,7 +70,7 @@
  *   curve at parameter t in [0,1].
  * - LinesDrawable2D: a drawable whose vertices are 2D pixel coordinates; update_vertex_buffer() takes the
  *   viewport width/height, update_element_buffer() the line-segment indices.
- * - Viewer::bind(): attaches lambdas to keys to adjust the line width interactively.
+ * - Viewer::bind_shortcut(): attaches lambdas to keys to adjust the line width interactively.
  *
  * <b>Running it</b>
  * A window opens with the black control polygon and the five colored curves overlaid: red Bezier, green
@@ -139,9 +139,9 @@ void create_curves_drawables(Viewer &viewer) {
         return true;
     };
     // Bind the helper to keys. The Model* argument is unused here (these are viewer-wide drawables).
-    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, -1, false); }, Viewer::KEY_LEFT_BRACKET);
-    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, 1, false); }, Viewer::KEY_RIGHT_BRACKET);
-    viewer.bind([adjust_width](Viewer *host) { return adjust_width(host, 0, true); }, Viewer::KEY_0);
+    viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, -1, false); }, Viewer::KEY_LEFT_BRACKET);
+    viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, 1, false); }, Viewer::KEY_RIGHT_BRACKET);
+    viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, 0, true); }, Viewer::KEY_0);
     // the control points
     // Six points in pixel coordinates forming a zig-zag; every curve below is built from these.
     std::vector<vec2> points = {

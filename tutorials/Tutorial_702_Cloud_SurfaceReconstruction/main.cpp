@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     }
 
     // Register the reconstruction step on Ctrl+R, bound to this model.
-    viewer.bind(reconstruction, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut(reconstruction, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
     // Show the shortcut in the on-screen help overlay.
     viewer.set_usage("default", "Ctrl + r: run reconstruction");
 

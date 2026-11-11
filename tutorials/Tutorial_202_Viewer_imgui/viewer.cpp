@@ -77,6 +77,7 @@ ViewerImGui::~ViewerImGui() {
     if (ImGui::GetIO().BackendPlatformUserData)
         ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext(context_);
+    context_ = nullptr; // input hooks may still run while the window is being torn down
 
     // Not needed: it will be called in the destructor of the base class
     //Viewer::cleanup();
@@ -114,16 +115,22 @@ void ViewerImGui::init() {
 // Routes input through ImGui first: while a menu, popup or text field owns the
 // mouse/keyboard, the hook returns true so the viewer skips its built-in controls.
 namespace {
-bool imgui_wants_mouse(ImGuiContext *context) {
-    ImGui::SetCurrentContext(context);
-    return ImGui::GetIO().WantCaptureMouse;
-}
+    // The viewer window exists before the lazy init() creates the ImGui context, so window
+    // events can reach the hooks with no context (or after teardown destroyed it).
+    bool imgui_wants_mouse(ImGuiContext *context) {
+        if (!context)
+            return false;
+        ImGui::SetCurrentContext(context);
+        return ImGui::GetIO().WantCaptureMouse;
+    }
 
-bool imgui_wants_keyboard(ImGuiContext *context) {
-    ImGui::SetCurrentContext(context);
-    return ImGui::GetIO().WantCaptureKeyboard ||
-           ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
-}
+    bool imgui_wants_keyboard(ImGuiContext *context) {
+        if (!context)
+            return false;
+        ImGui::SetCurrentContext(context);
+        return ImGui::GetIO().WantCaptureKeyboard ||
+               ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+    }
 } // namespace
 
 bool ViewerImGui::mouse_press_event(int x, int y, int button, int modifiers) {

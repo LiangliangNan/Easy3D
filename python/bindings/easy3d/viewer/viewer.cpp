@@ -476,22 +476,34 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("is_animating", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::is_animating, "Is animation currently being performed.\n\nC++: easy3d::Viewer::is_animating() const --> bool");
 //		cl.def("assign", (class easy3d::Viewer & (easy3d::Viewer::*)(const class easy3d::Viewer &)) &easy3d::Viewer::operator=, "C++: easy3d::Viewer::operator=(const class easy3d::Viewer &) --> class easy3d::Viewer &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 
-        // Expose the bind function
-        cl.def("bind", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *, easy3d::Model *)> &func,
-                          easy3d::Model *model, easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
-                   self.bind(func, model, key, modifier);
+        // Expose the shortcut binding functions
+        cl.def("bind_shortcut", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *, easy3d::Model *)> &func,
+                                   easy3d::Model *model, easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
+                   self.bind_shortcut(func, model, key, modifier);
                },
                pybind11::arg("func"),
                pybind11::arg("model"),
                pybind11::arg("key"),
                pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
-        cl.def("bind", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *)> &action,
-                          easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
-                   self.bind(action, key, modifier);
+        cl.def("bind_shortcut", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *)> &action,
+                                   easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
+                   self.bind_shortcut(action, key, modifier);
                },
                pybind11::arg("action"),
                pybind11::arg("key"),
                pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
+
+        // Expose the shortcut unbinding functions
+        cl.def("unbind_shortcut", [](easy3d::Viewer &self, easy3d::Viewer::Key key,
+                                     easy3d::Viewer::Modifier modifier) {
+                   self.unbind_shortcut(key, modifier);
+               },
+               pybind11::arg("key"),
+               pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
+        cl.def("unbind_shortcut", [](easy3d::Viewer &self, easy3d::Model *model) {
+                   self.unbind_shortcut(model);
+               },
+               pybind11::arg("model"));
 
     }
 }

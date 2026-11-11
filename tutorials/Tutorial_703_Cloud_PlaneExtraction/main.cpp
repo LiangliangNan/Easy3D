@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
 
     // Register the plane-extraction step on Ctrl+E, bound to this model.
-    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
     // Show the shortcut in the on-screen help overlay.
     viewer.set_usage("default", "Ctrl + e: extract planes");
 

@@ -65,7 +65,7 @@
  * - SurfaceMesh::triangulate(): converts polygons to triangles before Loop/sqrt(3).
  * - DrawableLines ("edges"): made visible to reveal the refined connectivity.
  * - Renderer::update(): re-extracts the rendering buffers after the connectivity changes.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcuts and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
  * Press Ctrl+c for Catmull-Clark, Ctrl+l for Loop, and Ctrl+t for sqrt(3) subdivision; press repeatedly
@@ -126,9 +126,9 @@ int main(int argc, char **argv) {
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // Register one shortcut per subdivision scheme and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return subdivide(0, v, m); }, mesh, Viewer::KEY_C, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return subdivide(1, v, m); }, mesh, Viewer::KEY_L, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return subdivide(2, v, m); }, mesh, Viewer::KEY_T, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return subdivide(0, v, m); }, mesh, Viewer::KEY_C, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return subdivide(1, v, m); }, mesh, Viewer::KEY_L, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return subdivide(2, v, m); }, mesh, Viewer::KEY_T, Viewer::MODIF_CTRL);
     viewer.set_usage(
         "default",
         "Ctrl + c: Catmull-Clark subdivision\n" "Ctrl + l: Loop subdivision\n" "Ctrl + t: sqrt(3) subdivision");

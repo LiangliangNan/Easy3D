@@ -157,8 +157,8 @@ void frames_and_input(bool validation) {
     require(v->before==old_before && v->after==old_after,"snapshot invoked interactive frame hooks");
 
     unsigned bound=0,actions=0;
-    v->bind([&](Viewer*,Model*) { ++bound;return true; },mesh.get(),ViewerBase::KEY_J);
-    v->bind([&](Viewer*) { ++actions;return true; },ViewerBase::KEY_K);
+    v->bind_shortcut([&](Viewer*,Model*) { ++bound;return true; },mesh.get(),ViewerBase::KEY_J);
+    v->bind_shortcut([&](Viewer*) { ++actions;return true; },ViewerBase::KEY_K);
     const auto projection=v->camera()->type();
     e.key(e.window,GLFW_KEY_P,0,GLFW_PRESS,0); e.key(e.window,GLFW_KEY_P,0,GLFW_RELEASE,0);
     require(v->keys==1 && v->releases==1 && v->camera()->type()==projection,"consumed key reached builtin controls");

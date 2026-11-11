@@ -62,7 +62,7 @@
  * - DrawableLines ("borders"): the renderer's boundary-loop drawable; set_visible(), set_uniform_coloring(),
  *   and set_line_width() make the holes easy to spot before filling.
  * - Renderer::update(): re-extracts the rendering buffers after the connectivity and positions change.
- * - Viewer::bind() / set_usage(): register the Ctrl shortcut and the help text.
+ * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcut and the help text.
  *
  * <b>Running it</b>
  * The boundary loops are drawn in red. Press Ctrl+f to fill the holes; the console reports how many
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     borders->set_line_width(3.0f);
 
     // Register the fill shortcut and the on-screen help text.
-    viewer.bind([](Viewer *v, Model *m) { return fill_holes(v, m); }, mesh, Viewer::KEY_F, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return fill_holes(v, m); }, mesh, Viewer::KEY_F, Viewer::MODIF_CTRL);
     viewer.set_usage("default", "Ctrl + f: fill the holes");
 
     // Enter the interactive loop (returns when the window is closed).

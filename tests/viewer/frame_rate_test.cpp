@@ -71,7 +71,7 @@ int main(int argc,char**) {
         require(independent.shown(),"resize reset rate visibility");
         independent.clear_scene();require(independent.capture().rgba!=std::vector<unsigned char>(independent.framebuffer_width()*independent.framebuffer_height()*4,255),
                                           "scene clearing erased persistent rate HUD");
-        bool bound=false;v.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,RateViewer::KEY_F,RateViewer::MODIF_CTRL);
+        bool bound=false;v.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,RateViewer::KEY_F,RateViewer::MODIF_CTRL);
         toggle();require(bound && !v.shown(),"custom binding did not override rate shortcut");
         require(v.device().validation_errors()==0 && independent.device().validation_errors()==0,"frame-rate validation errors");
         std::cout<<"PASS: frame-rate shortcut, per-viewer sampling, capture purity, HUD layering/layout, MSAA and depth/IDs\n";

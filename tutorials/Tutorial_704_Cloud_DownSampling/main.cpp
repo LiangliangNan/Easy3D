@@ -62,7 +62,7 @@
  *   ::average_space(cloud): estimates the mean point spacing used to size the grid.
  * - PointCloud::delete_vertex(v) / collect_garbage(): remove points and compact the data structure.
  * - Renderer::update(): re-extract rendering buffers after the cloud changes.
- * - Viewer::bind(...): registers the two callbacks on Ctrl+U and Ctrl+G.
+ * - Viewer::bind_shortcut(...): registers the two callbacks on Ctrl+U and Ctrl+G.
  *
  * <b>Running it</b>
  * Press Ctrl+U to uniformly downsample to half the current points (never fewer than 100), or
@@ -137,8 +137,8 @@ int main(int argc, char **argv) {
 
     // Register the two strategies on Ctrl+U and Ctrl+G. The lambdas adapt the (Viewer*, Model*)
     // callback signature expected by bind() to our helper functions.
-    viewer.bind([](Viewer *v, Model *m) { return uniform_downsample(v, m); }, cloud, Viewer::KEY_U, Viewer::MODIF_CTRL);
-    viewer.bind([](Viewer *v, Model *m) { return grid_downsample(v, m); }, cloud, Viewer::KEY_G, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return uniform_downsample(v, m); }, cloud, Viewer::KEY_U, Viewer::MODIF_CTRL);
+    viewer.bind_shortcut([](Viewer *v, Model *m) { return grid_downsample(v, m); }, cloud, Viewer::KEY_G, Viewer::MODIF_CTRL);
     // Show the shortcuts in the on-screen help overlay.
     viewer.set_usage(
         "default",
