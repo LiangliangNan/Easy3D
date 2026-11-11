@@ -241,9 +241,6 @@ namespace easy3d {
         std::string title;
         int width, height;
         unsigned samples;
-        int button = -1;
-        int last_logical_x = 0, last_logical_y = 0;
-        double wheel_x = 0, wheel_y = 0;
         Window(const std::string &text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
             : title(text), width(w), height(h), samples(sample_count ? sample_count : 1) { // 0: no MSAA, as in OpenGL
             if (w <= 0 || h <= 0)
@@ -311,101 +308,43 @@ namespace easy3d {
         void callbacks(Viewer *viewer) {
             glfwSetWindowUserPointer(handle, viewer);
             glfwSetWindowRefreshCallback(handle, [](GLFWwindow *w) { dispatch(w, [](Viewer &v) { v.update(); }); });
+            // Native events use logical window coordinates, identical to OpenGL; the
+            // shared ViewerBase routers own all input state and event ordering.
             glfwSetCursorPosCallback(handle, [](GLFWwindow *w, double px, double py) {
                 dispatch(w, [&](Viewer &v) {
-                    auto &host = *v.window_host_;
-                    // Legacy hooks and unified callbacks both receive logical window
-                    // coordinates, identical to the OpenGL backend.
-                    const int x = int(px), y = int(py);
-                    const int dx = x - host.last_logical_x, dy = y - host.last_logical_y;
-                    host.last_logical_x = x;
-                    host.last_logical_y = y;
-                    const int mods = host.modifiers();
-                    if (host.button >= 0) {
-                        if (!v.dispatch_mouse_drag(x, y, dx, dy, host.button, mods))
-                            v.mouse_drag_event(x, y, dx, dy, host.button, mods);
-                    } else if (!v.dispatch_mouse_move(x, y, dx, dy, mods))
-                        v.mouse_free_move_event(x, y, dx, dy, mods);
+                    v.handle_cursor_pos(int(px), int(py), detail::GlfwRuntime::modifiers(w));
                 });
             });
             glfwSetMouseButtonCallback(handle, [](GLFWwindow *w, int button, int action, int mods) {
                 dispatch(w, [&](Viewer &v) {
-                    auto &host = *v.window_host_;
                     double px, py;
                     glfwGetCursorPos(w, &px, &py);
-                    const int x = int(px), y = int(py);
-                    host.last_logical_x = x;
-                    host.last_logical_y = y;
-                    if (action == GLFW_PRESS) {
-                        host.button = button;
-                        if (!v.dispatch_mouse_press(x, y, button, mods))
-                            v.mouse_press_event(x, y, button, mods);
-                    } else {
-                        if (!v.dispatch_mouse_release(x, y, button, mods))
-                            v.mouse_release_event(x, y, button, mods);
-                        else {
-                            v.pressed_button_ = -1;
-                            v.zoom_region_ = false;
-                            v.camera()->frame()->action_end();
-                            ClippingPlane::instance()->manipulator()->frame()->action_end();
-                            v.update_interaction_overlays(true);
-                        }
-                        if (host.button == button)
-                            host.button = -1;
-                    }
+                    v.handle_mouse_button(int(px), int(py), button, action, mods);
                 });
             });
             glfwSetScrollCallback(handle, [](GLFWwindow *w, double dx, double dy) {
                 dispatch(w, [&](Viewer &v) {
-                    auto &host = *v.window_host_;
-                    host.wheel_x += dx;
-                    host.wheel_y += dy;
-                    const int sx = int(host.wheel_x), sy = int(host.wheel_y);
-                    host.wheel_x -= sx;
-                    host.wheel_y -= sy;
                     double px, py;
                     glfwGetCursorPos(w, &px, &py);
-                    const int x = int(px), y = int(py);
-                    if ((sx || sy) && !v.dispatch_mouse_scroll(x, y, sx, sy))
-                        v.mouse_scroll_event(x, y, sx, sy);
+                    v.handle_scroll(int(px), int(py), dx, dy);
                 });
             });
             glfwSetKeyCallback(handle, [](GLFWwindow *w, int key, int, int action, int mods) {
-                dispatch(w, [&](Viewer &v) {
-                    if (action == GLFW_RELEASE) {
-                        if (!v.dispatch_key_release(key, mods))
-                            v.key_release_event(key, mods);
-                        else
-                            v.pressed_key_ = -1;
-                    } else if (!v.dispatch_key_press(key, mods))
-                        v.key_press_event(key, mods);
-                });
+                dispatch(w, [&](Viewer &v) { v.handle_key(key, action, mods); });
             });
             glfwSetCharCallback(handle, [](GLFWwindow *w, unsigned int code) {
-                dispatch(w, [&](Viewer &v) {
-                    if (!v.dispatch_character(code))
-                        v.char_input_event(code);
-                });
+                dispatch(w, [&](Viewer &v) { v.handle_character(code); });
             });
             glfwSetDropCallback(handle, [](GLFWwindow *w, int count, const char **files) {
                 dispatch(w, [&](Viewer &v) {
                     std::vector<std::string> names;
                     for (int i = 0; i < count; ++i)
                         names.emplace_back(files[i]);
-                    if (!v.dispatch_drop(names))
-                        v.drop_event(names);
+                    v.handle_drop(names);
                 });
             });
             glfwSetWindowFocusCallback(handle, [](GLFWwindow *w, int focused) {
-                dispatch(w, [&](Viewer &v) {
-                    if (!focused) {
-                        v.window_host_->button = -1;
-                        v.window_host_->wheel_x = v.window_host_->wheel_y = 0;
-                        v.cancel_interaction();
-                    }
-                    if (!v.dispatch_focus(focused != 0))
-                        v.focus_event(focused != 0);
-                });
+                dispatch(w, [&](Viewer &v) { v.handle_focus(focused != 0); });
             });
             glfwSetFramebufferSizeCallback(handle, [](GLFWwindow *w, int width, int height) {
                 dispatch(w, [&](Viewer &v) {
@@ -994,20 +933,38 @@ namespace easy3d {
         return false;
     }
 
+    void Viewer::end_gesture() {
+        zoom_region_ = false;
+        camera()->frame()->action_end();
+        ClippingPlane::instance()->manipulator()->frame()->action_end();
+#ifdef EASY3D_HAS_VULKAN
+        update_interaction_overlays(true);
+#endif
+    }
+
+    void Viewer::cancel_interaction() {
+        input_.reset();
+        show_pivot_point_ = false;
+        end_gesture();
+    }
+
     bool Viewer::mouse_scroll_event(int, int, int, int dy) {
         camera()->frame()->action_zoom(dy, camera());
         return false;
     }
 
     bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-        mouse_pressed_x_ = mouse_current_x_ = x;
-        mouse_pressed_y_ = mouse_current_y_ = y;
-        pressed_button_ = button;
+        // The router already recorded these; assigning again keeps direct calls (for
+        // example from tests or subclasses) consistent.
+        input_.press_x = input_.x = x;
+        input_.press_y = input_.y = y;
+        input_.button = button;
+        input_.press_modifiers = modifiers;
         zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
         camera()->frame()->action_start();
         if (modifiers == MODIF_ALT && ClippingPlane::instance()->is_enabled())
             ClippingPlane::instance()->manipulator()->frame()->action_start();
-        if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
+        if (input_.key == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
             if (button == BUTTON_LEFT) {
                 bool found = false;
                 const vec3 point = point_under_pixel(x, y, found);
@@ -1033,7 +990,7 @@ namespace easy3d {
                         update();
                     });
 #endif
-                    if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+                    if (input_.key == GLFW_KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
                         camera()->interpolateToLookAt(point);
 #else // without animation  Do NOT delete!!!
@@ -1046,7 +1003,7 @@ namespace easy3d {
             } else if (button == BUTTON_RIGHT) {
                 camera()->setPivotPoint(camera()->sceneCenter());
                 show_pivot_point_ = false;
-                if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
+                if (input_.key == GLFW_KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
                     camera()->interpolateToFitScene();
 #else // without animation  Do NOT delete!!!
@@ -1062,28 +1019,24 @@ namespace easy3d {
     }
 
     bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-        if (pressed_button_ == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != mouse_pressed_x_ &&
-            y != mouse_pressed_y_) {
+        if (input_.button == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != input_.press_x &&
+            y != input_.press_y) {
             const ivec2 origin = interaction_origin();
-            camera()->fitScreenRegion(std::min(x, mouse_pressed_x_) - origin.x,
-                                      std::min(y, mouse_pressed_y_) - origin.y,
-                                      std::max(x, mouse_pressed_x_) - origin.x,
-                                      std::max(y, mouse_pressed_y_) - origin.y);
+            camera()->fitScreenRegion(std::min(x, input_.press_x) - origin.x,
+                                      std::min(y, input_.press_y) - origin.y,
+                                      std::max(x, input_.press_x) - origin.x,
+                                      std::max(y, input_.press_y) - origin.y);
         }
-        camera()->frame()->action_end();
-        ClippingPlane::instance()->manipulator()->frame()->action_end();
-        pressed_button_ = -1;
-        zoom_region_ = false;
-#ifdef EASY3D_HAS_VULKAN
-        update_interaction_overlays(true);
-#endif
+        input_.button = -1;
+        input_.press_modifiers = 0;
+        end_gesture();
         return false;
     }
 
     bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-        mouse_current_x_ = x;
-        mouse_current_y_ = y;
-        zoom_region_ = pressed_button_ == BUTTON_LEFT && modifiers == MODIF_CTRL;
+        input_.x = x;
+        input_.y = y;
+        zoom_region_ = input_.button == BUTTON_LEFT && modifiers == MODIF_CTRL;
 #ifdef EASY3D_HAS_VULKAN
         update_interaction_overlays(true);
 #endif
@@ -1106,11 +1059,11 @@ namespace easy3d {
         }
         // axis-constrained rotation/translation of the camera
         auto axis = ManipulatedFrame::NONE;
-        if (pressed_key_ == GLFW_KEY_X)
+        if (input_.key == GLFW_KEY_X)
             axis = ManipulatedFrame::HORIZONTAL;
-        else if (pressed_key_ == GLFW_KEY_Y)
+        else if (input_.key == GLFW_KEY_Y)
             axis = ManipulatedFrame::VERTICAL;
-        else if (pressed_key_ == GLFW_KEY_O)
+        else if (input_.key == GLFW_KEY_O)
             axis = ManipulatedFrame::ORTHOGONAL;
         if (button == BUTTON_LEFT)
             camera()->frame()->action_rotate(cx, cy, dx, dy, camera(), axis);
@@ -1122,7 +1075,7 @@ namespace easy3d {
     }
 
     bool Viewer::key_release_event(int key, int) {
-        pressed_key_ = -1;
+        input_.key = -1;
         if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL || key == GLFW_KEY_LEFT_SUPER ||
             key == GLFW_KEY_RIGHT_SUPER) {
             zoom_region_ = false;
@@ -1310,7 +1263,7 @@ namespace easy3d {
             ShaderManager::reload();
 #endif
         } else
-            pressed_key_ = key;
+            input_.key = key;
         return false;
     }
 } // namespace easy3d
@@ -1405,7 +1358,7 @@ namespace easy3d {
     }
     Viewer::Viewer(int width, int height, const VulkanOptions &options)
         : window_(nullptr), width_(width), height_(height), camera_(new Camera), samples_(1),
-          background_color_(setting::background_color), pressed_key_(-1), show_frame_rate_(false),
+          background_color_(setting::background_color), show_frame_rate_(false),
           show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
         resize_render_target(width, height);
         impl_->device =
@@ -1683,7 +1636,7 @@ namespace easy3d {
     }
     Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions &options)
         : window_(host->handle), width_(host->width), height_(host->height), title_(host->title), camera_(new Camera),
-          samples_(1), background_color_(setting::background_color), pressed_key_(-1), show_frame_rate_(false),
+          samples_(1), background_color_(setting::background_color), show_frame_rate_(false),
           show_camera_path_(false), show_easy3d_logo_(true), model_idx_(-1), window_host_(std::move(host)),
           impl_(new Impl(*this)) {
         try {
@@ -1875,10 +1828,9 @@ namespace easy3d {
                 {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size), vec2(x, y + size)}, vec4(0, 0, 0, 1),
                 framebuffer_width(), framebuffer_height(), dpi));
         }
-        if (zoom_region_ && (mouse_current_x_ != mouse_pressed_x_ || mouse_current_y_ != mouse_pressed_y_)) {
+        if (zoom_region_ && (input_.x != input_.press_x || input_.y != input_.press_y)) {
             // Mouse coordinates are logical; scale into the framebuffer overlay space.
-            const Rect rect{mouse_pressed_x_ * dpi, mouse_current_x_ * dpi, mouse_pressed_y_ * dpi,
-                            mouse_current_y_ * dpi};
+            const Rect rect{input_.press_x * dpi, input_.x * dpi, input_.press_y * dpi, input_.y * dpi};
             commands.push_back(
                 graphics::shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f), framebuffer_width(), framebuffer_height()));
             commands.push_back(graphics::shape::draw_quad_wire(rect, vec4(0, 0, 1, 1), framebuffer_width(),
@@ -1888,13 +1840,6 @@ namespace easy3d {
         pivot_hint_visible_ = pivot;
         hint_width_ = framebuffer_width();
         hint_height_ = framebuffer_height();
-    }
-    void Viewer::cancel_interaction() {
-        pressed_key_ = pressed_button_ = -1;
-        show_pivot_point_ = zoom_region_ = false;
-        camera()->frame()->action_end();
-        ClippingPlane::instance()->manipulator()->frame()->action_end();
-        update_interaction_overlays(true);
     }
     graphics::FrameImage Viewer::capture() const {
         return capture(samples());
@@ -1929,9 +1874,8 @@ namespace easy3d {
                    )
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0),
           visible_(visible), background_color_(setting::background_color),
-          process_events_(true), show_easy3d_logo_(true), pressed_button_(-1), modifiers_(-1), drag_active_(false),
-          mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
-          show_pivot_point_(false), show_frame_rate_(false), show_camera_path_(false), model_idx_(-1) {
+          show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
+          show_camera_path_(false), model_idx_(-1) {
         if (width <= 0 || height <= 0)
             throw std::invalid_argument("window dimensions must be positive");
         if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1))))
@@ -2175,219 +2119,56 @@ namespace easy3d {
     void Viewer::setup_callbacks(GLFWwindow *window) {
         glfwSetWindowRefreshCallback(window,
                                      [](GLFWwindow *win) { dispatch_callback(win, [](Viewer &v) { v.update(); }); });
+        // Camera/input coordinates are logical window units; the shared ViewerBase
+        // routers own all input state and event ordering on both backends.
         glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (!v.process_events_)
-                    return;
-                const int wx = int(x), wy = int(y);
-                const int dx = wx - v.callback_mouse_x_, dy = wy - v.callback_mouse_y_;
-                v.callback_mouse_x_ = wx;
-                v.callback_mouse_y_ = wy;
-                const int modifiers = detail::GlfwRuntime::modifiers(win);
-                const bool handled = v.drag_active_
-                                         ? v.dispatch_mouse_drag(wx, wy, dx, dy, v.pressed_button_, modifiers)
-                                         : v.dispatch_mouse_move(wx, wy, dx, dy, modifiers);
-                if (handled) {
-                    v.mouse_current_x_ = wx;
-                    v.mouse_current_y_ = wy;
-                    return;
-                }
-                const int w = v.width(), h = v.height();
-                if (x >= 0 && x <= w && y >= 0 && y <= h)
-                    v.callback_event_cursor_pos(x, y);
-                else if (v.drag_active_)
-                    glfwSetCursorPos(win, std::max(0.0, std::min(double(w), x)), std::max(0.0, std::min(double(h), y)));
+            dispatch_callback(win, [&](Viewer &v) {
+                v.handle_cursor_pos(int(x), int(y), detail::GlfwRuntime::modifiers(win));
             });
         });
         glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int modifiers) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (!v.process_events_)
-                    return;
+            dispatch_callback(win, [&](Viewer &v) {
                 double x, y;
                 glfwGetCursorPos(win, &x, &y);
-                v.mouse_current_x_ = v.callback_mouse_x_ = int(x);
-                v.mouse_current_y_ = v.callback_mouse_y_ = int(y);
-                v.callback_event_mouse_button(button, action, modifiers);
+                v.handle_mouse_button(int(x), int(y), button, action, modifiers);
             });
         });
         glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int, int action, int mods) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (v.process_events_)
-                    v.callback_event_keyboard(key, action, mods);
-            });
+            dispatch_callback(win, [&](Viewer &v) { v.handle_key(key, action, mods); });
         });
         glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (v.process_events_)
-                    v.callback_event_character(codepoint);
-            });
+            dispatch_callback(win, [&](Viewer &v) { v.handle_character(codepoint); });
         });
         glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char **filenames) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (v.process_events_)
-                    v.callback_event_drop(count, filenames);
+            dispatch_callback(win, [&](Viewer &v) {
+                std::vector<std::string> names(count);
+                for (int i = 0; i < count; ++i)
+                    names[i] = filenames[i];
+                v.handle_drop(names);
             });
         });
         glfwSetScrollCallback(window, [](GLFWwindow *win, double dx, double dy) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (!v.process_events_)
-                    return;
+            dispatch_callback(win, [&](Viewer &v) {
                 double x, y;
                 glfwGetCursorPos(win, &x, &y);
-                v.mouse_current_x_ = int(x);
-                v.mouse_current_y_ = int(y);
-                v.callback_event_scroll(dx, dy);
+                v.handle_scroll(int(x), int(y), dx, dy);
             });
         });
-        // Camera/input coordinates are logical window units in this OpenGL host.
         glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int w, int h) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (v.process_events_)
-                    v.callback_event_resize(w, h);
-            });
+            dispatch_callback(win, [&](Viewer &v) { v.callback_event_resize(w, h); });
         });
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int, int) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (!v.process_events_)
-                    return;
+            dispatch_callback(win, [&](Viewer &v) {
                 int w, h;
                 glfwGetWindowSize(win, &w, &h);
                 v.callback_event_resize(w, h);
             });
         });
         glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
-            dispatch_callback(win, [=](Viewer &v) {
-                if (!focused) {
-                    v.drag_active_ = false;
-                    v.pressed_button_ = v.pressed_key_ = -1;
-                    v.modifiers_ = 0;
-                    v.scroll_remainder_x_ = v.scroll_remainder_y_ = 0;
-                    v.camera_->frame()->action_end();
-                    ClippingPlane::instance()->manipulator()->frame()->action_end();
-                }
-                if (!v.dispatch_focus(focused != 0))
-                    v.focus_event(focused != 0);
-            });
+            dispatch_callback(win, [&](Viewer &v) { v.handle_focus(focused != 0); });
         });
         glfwSetWindowCloseCallback(
             window, [](GLFWwindow *win) { dispatch_callback(win, [](Viewer &v) { v.request_close(); }); });
-    }
-    bool Viewer::callback_event_cursor_pos(double x, double y) {
-        int px = static_cast<int>(x);
-        int py = static_cast<int>(y);
-        try {
-            int dx = px - mouse_current_x_;
-            int dy = py - mouse_current_y_;
-            mouse_current_x_ = px;
-            mouse_current_y_ = py;
-            if (drag_active_)
-                return mouse_drag_event(px, py, dx, dy, pressed_button_, modifiers_);
-            else
-                return mouse_free_move_event(px, py, dx, dy, modifiers_);
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
-    }
-    bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
-        try {
-            if (action == GLFW_PRESS) {
-                drag_active_ = true;
-                pressed_button_ = button;
-                modifiers_ = modifiers;
-                mouse_pressed_x_ = mouse_current_x_;
-                mouse_pressed_y_ = mouse_current_y_;
-                if (dispatch_mouse_press(mouse_current_x_, mouse_current_y_, button, modifiers))
-                    return true;
-                return mouse_press_event(mouse_current_x_, mouse_current_y_, button, modifiers);
-            } else if (action == GLFW_RELEASE) {
-                drag_active_ = false;
-                if (dispatch_mouse_release(mouse_current_x_, mouse_current_y_, button, modifiers)) {
-                    pressed_button_ = -1;
-                    camera_->frame()->action_end();
-                    ClippingPlane::instance()->manipulator()->frame()->action_end();
-                    return true;
-                }
-                return mouse_release_event(mouse_current_x_, mouse_current_y_, button, modifiers);
-            } else {
-                drag_active_ = false;
-                LOG(INFO) << "GLFW_REPEAT? Seems never happen";
-                return false;
-            }
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
-    }
-    bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
-        try {
-            if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                if (dispatch_key_press(key, modifiers))
-                    return true;
-                return key_press_event(key, modifiers);
-            } else {
-                if (dispatch_key_release(key, modifiers)) {
-                    pressed_key_ = -1;
-                    return true;
-                }
-                return key_release_event(key, modifiers);
-            }
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
-    }
-    bool Viewer::callback_event_character(unsigned int codepoint) {
-        try {
-            if (dispatch_character(codepoint))
-                return true;
-            return char_input_event(codepoint);
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
-    }
-    bool Viewer::callback_event_drop(int count, const char **filenames) {
-        try {
-            std::vector<std::string> arg(count);
-            for (int i = 0; i < count; ++i)
-                arg[i] = filenames[i];
-            if (dispatch_drop(arg))
-                return true;
-            return drop_event(arg);
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
-    }
-    bool Viewer::callback_event_scroll(double dx, double dy) {
-        try {
-            scroll_remainder_x_ += dx;
-            scroll_remainder_y_ += dy;
-            const int sx = int(scroll_remainder_x_), sy = int(scroll_remainder_y_);
-            scroll_remainder_x_ -= sx;
-            scroll_remainder_y_ -= sy;
-            if (!sx && !sy)
-                return false;
-            if (dispatch_mouse_scroll(mouse_current_x_, mouse_current_y_, sx, sy))
-                return true;
-            return mouse_scroll_event(mouse_current_x_, mouse_current_y_, sx, sy);
-        } catch (const std::exception &e) {
-            if (!callback_error_)
-                callback_error_ = std::current_exception();
-            LOG(ERROR) << "Caught exception in event handler: " << e.what();
-            return false;
-        }
     }
     void Viewer::callback_event_resize(int w, int h) {
         try {
@@ -2604,9 +2385,9 @@ namespace easy3d {
 
         // ------------- draw the picking region with transparency  ---------------
 
-        if (pressed_button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == MODIF_CTRL) {
-            const Rect rect(static_cast<float>(mouse_pressed_x_), static_cast<float>(mouse_current_x_),
-                            static_cast<float>(mouse_pressed_y_), static_cast<float>(mouse_current_y_));
+        if (zoom_region_ && (input_.x != input_.press_x || input_.y != input_.press_y)) {
+            const Rect rect(static_cast<float>(input_.press_x), static_cast<float>(input_.x),
+                            static_cast<float>(input_.press_y), static_cast<float>(input_.y));
             if (rect.width() > 0 || rect.height() > 0) {
                 // draw the boundary of the rect
                 shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);

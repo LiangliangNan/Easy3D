@@ -29,11 +29,27 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
 #include <algorithm>
 #include <limits>
 namespace easy3d {
     ViewerBase::~ViewerBase() = default;
+
+    //------------------------------------------------------------------------
+    // Legacy event hooks: no-ops unless an interactive host overrides them.
+    //------------------------------------------------------------------------
+    bool ViewerBase::mouse_press_event(int, int, int, int) { return false; }
+    bool ViewerBase::mouse_release_event(int, int, int, int) { return false; }
+    bool ViewerBase::mouse_drag_event(int, int, int, int, int, int) { return false; }
+    bool ViewerBase::mouse_free_move_event(int, int, int, int, int) { return false; }
+    bool ViewerBase::mouse_scroll_event(int, int, int, int) { return false; }
+    bool ViewerBase::char_input_event(unsigned int) { return false; }
+    bool ViewerBase::key_press_event(int, int) { return false; }
+    bool ViewerBase::key_release_event(int, int) { return false; }
+    bool ViewerBase::drop_event(const std::vector<std::string> &) { return false; }
+    bool ViewerBase::focus_event(bool) { return false; }
 
     void ViewerBase::poll_events() {
         detail::GlfwRuntime::poll_events();
@@ -123,6 +139,124 @@ namespace easy3d {
         framebuffer_size(resize_fb_width_, resize_fb_height_);
         callbacks_ = std::move(replacement);
     }
+
+    void ViewerBase::InputState::reset() {
+        button = -1;
+        press_modifiers = 0;
+        key = -1;
+        scroll_x = scroll_y = 0;
+        capture_button = -1;
+    }
+
+    //------------------------------------------------------------------------
+    // Event routing: shared by the OpenGL and Vulkan GLFW trampolines.
+    //------------------------------------------------------------------------
+    void ViewerBase::handle_cursor_pos(int x, int y, int modifiers) {
+        const int dx = x - input_.x;
+        const int dy = y - input_.y;
+        input_.x = x;
+        input_.y = y;
+        const bool dragging = input_.button >= 0;
+        // Drags keep the modifiers latched at press on both backends, so pressing a
+        // modifier mid-gesture cannot switch the interaction mode.
+        const int drag_modifiers = dragging ? input_.press_modifiers : modifiers;
+        const bool handled = dragging
+                                 ? dispatch_mouse_drag(x, y, dx, dy, input_.button, drag_modifiers)
+                                 : dispatch_mouse_move(x, y, dx, dy, modifiers);
+        if (handled)
+            return;
+        if (!dragging) {
+            mouse_free_move_event(x, y, dx, dy, modifiers);
+            return;
+        }
+        // Outside positions still reach the hook, so subclasses can clear hover
+        // highlights there; the cursor is then pinned to the edge so an in-flight
+        // drag cannot run away.
+        mouse_drag_event(x, y, dx, dy, input_.button, drag_modifiers);
+        const int w = width(), h = height();
+        if (window() && (x < 0 || x > w || y < 0 || y > h))
+            glfwSetCursorPos(window(), std::max(0.0, std::min(double(w), double(x))),
+                             std::max(0.0, std::min(double(h), double(y))));
+    }
+
+    void ViewerBase::handle_mouse_button(int x, int y, int button, int action, int modifiers) {
+        input_.x = x;
+        input_.y = y;
+        if (action == GLFW_PRESS) {
+            input_.button = button;
+            input_.press_x = x;
+            input_.press_y = y;
+            input_.press_modifiers = modifiers;
+            if (dispatch_mouse_press(x, y, button, modifiers))
+                return;
+            mouse_press_event(x, y, button, modifiers);
+        } else if (action == GLFW_RELEASE) {
+            const bool held = input_.button == button;
+            if (dispatch_mouse_release(x, y, button, modifiers)) {
+                if (held) {
+                    input_.button = -1;
+                    input_.press_modifiers = 0;
+                }
+                end_gesture();
+                return;
+            }
+            mouse_release_event(x, y, button, modifiers);
+            if (held) {
+                input_.button = -1;
+                input_.press_modifiers = 0;
+            }
+        }
+    }
+
+    void ViewerBase::handle_scroll(int x, int y, double dx, double dy) {
+        input_.x = x;
+        input_.y = y;
+        input_.scroll_x += dx;
+        input_.scroll_y += dy;
+        const int sx = int(input_.scroll_x), sy = int(input_.scroll_y);
+        input_.scroll_x -= sx;
+        input_.scroll_y -= sy;
+        if (!sx && !sy)
+            return;
+        if (dispatch_mouse_scroll(x, y, sx, sy))
+            return;
+        mouse_scroll_event(x, y, sx, sy);
+    }
+
+    void ViewerBase::handle_key(int key, int action, int modifiers) {
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+            if (dispatch_key_press(key, modifiers))
+                return;
+            key_press_event(key, modifiers);
+        } else {
+            input_.key = -1;
+            if (dispatch_key_release(key, modifiers))
+                return;
+            key_release_event(key, modifiers);
+        }
+    }
+
+    void ViewerBase::handle_character(unsigned int codepoint) {
+        if (dispatch_character(codepoint))
+            return;
+        char_input_event(codepoint);
+    }
+
+    void ViewerBase::handle_drop(const std::vector<std::string> &files) {
+        if (dispatch_drop(files))
+            return;
+        drop_event(files);
+    }
+
+    void ViewerBase::handle_focus(bool focused) {
+        if (!focused) {
+            input_.reset();
+            cancel_interaction();
+        }
+        if (!dispatch_focus(focused))
+            focus_event(focused);
+    }
+
     void ViewerBase::notify_pre_draw() {
         const auto callbacks = callbacks_;
         if (callbacks && callbacks->pre_draw)
@@ -151,16 +285,13 @@ namespace easy3d {
         const auto callbacks = callbacks_;
         const bool handled =
             callbacks && callbacks->mouse_press_event && callbacks->mouse_press_event(this, x, y, button, modifiers);
-        callback_button_ = button;
-        callback_capture_ = handled;
+        input_.capture_button = handled ? button : -1;
         return handled;
     }
     bool ViewerBase::dispatch_mouse_release(int x, int y, int button, int modifiers) {
-        const bool captured = callback_capture_ && callback_button_ == button;
-        if (callback_button_ == button) {
-            callback_button_ = -1;
-            callback_capture_ = false;
-        }
+        const bool captured = input_.capture_button == button;
+        if (captured)
+            input_.capture_button = -1;
         const auto callbacks = callbacks_;
         const bool handled = callbacks && callbacks->mouse_release_event &&
                              callbacks->mouse_release_event(this, x, y, button, modifiers);
@@ -170,7 +301,7 @@ namespace easy3d {
         const auto callbacks = callbacks_;
         const bool handled = callbacks && callbacks->mouse_drag_event &&
                              callbacks->mouse_drag_event(this, x, y, dx, dy, button, modifiers);
-        return handled || (callback_capture_ && callback_button_ == button);
+        return handled || input_.capture_button == button;
     }
     bool ViewerBase::dispatch_mouse_move(int x, int y, int dx, int dy, int modifiers) {
         const auto callbacks = callbacks_;
@@ -198,10 +329,6 @@ namespace easy3d {
         return callbacks && callbacks->drop_event && callbacks->drop_event(this, files);
     }
     bool ViewerBase::dispatch_focus(bool focused) {
-        if (!focused) {
-            callback_button_ = -1;
-            callback_capture_ = false;
-        }
         const auto callbacks = callbacks_;
         return callbacks && callbacks->focus_event && callbacks->focus_event(this, focused);
     }

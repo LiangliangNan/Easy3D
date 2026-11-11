@@ -94,7 +94,7 @@ void MultiViewer::set_layout(int rows,int cols) {
 #ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
 #endif
-    pressed_button_=-1; camera()->frame()->action_end();
+    cancel_interaction();
     update_division();
 }
 void MultiViewer::assign(int row,int col,const Model* model) {

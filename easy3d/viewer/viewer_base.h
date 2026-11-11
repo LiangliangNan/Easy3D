@@ -510,6 +510,146 @@ namespace easy3d {
         }
 
     protected:
+        /// \name Legacy event hooks
+        /// Subclasses override these to react to input after the installed
+        /// ViewerCallbacks have been offered the event. Coordinates are logical
+        /// window units (DPI-independent, top-left origin) on both backends.
+        //@{
+
+        /**
+         * \brief Handle a mouse-button press.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_press_event(int x, int y, int button, int modifiers);
+
+        /**
+         * \brief Handle a mouse-button release.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_release_event(int x, int y, int button, int modifiers);
+
+        /**
+         * \brief Handle pointer motion while a mouse button is pressed.
+         * \param x Current logical x coordinate from the top-left.
+         * \param y Current logical y coordinate from the top-left.
+         * \param dx Horizontal logical displacement since the previous event.
+         * \param dy Vertical logical displacement since the previous event.
+         * \param button ViewerInput::Button identifier.
+         * \param modifiers ViewerInput::Modifier bit mask latched when the button went down.
+         * \return True to consume the event before built-in controls.
+         */
+        virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers);
+
+        /**
+         * \brief Handle pointer motion when no mouse button is pressed.
+         * \param x Current logical x coordinate from the top-left.
+         * \param y Current logical y coordinate from the top-left.
+         * \param dx Horizontal logical displacement since the previous event.
+         * \param dy Vertical logical displacement since the previous event.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event.
+         */
+        virtual bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers);
+
+        /**
+         * \brief Handle a mouse-wheel event.
+         * \param x Logical x coordinate from the top-left.
+         * \param y Logical y coordinate from the top-left.
+         * \param dx Horizontal scroll offset in whole wheel notches.
+         * \param dy Vertical scroll offset in whole wheel notches.
+         * \return True to consume the event before built-in controls.
+         * \details Fractional wheel deltas are accumulated by the event router, so
+         *      a hook only sees whole notches and slow scrolling still steps once.
+         */
+        virtual bool mouse_scroll_event(int x, int y, int dx, int dy);
+
+        /**
+         * \brief Handle text input as a Unicode code point.
+         * \param codepoint Native-endian UTF-32 code point.
+         * \return True to consume the event.
+         */
+        virtual bool char_input_event(unsigned int codepoint);
+
+        /**
+         * \brief Handle a physical key press.
+         * \param key ViewerInput::Key identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event before built-in shortcut handling.
+         * \details This reports a key identifier, not the entered text; use
+         * char_input_event() for text.
+         */
+        virtual bool key_press_event(int key, int modifiers);
+
+        /**
+         * \brief Handle a physical key release.
+         * \param key ViewerInput::Key identifier.
+         * \param modifiers ViewerInput::Modifier bit mask.
+         * \return True to consume the event.
+         */
+        virtual bool key_release_event(int key, int modifiers);
+
+        /**
+         * \brief Handle files dropped onto the viewer.
+         * \param filenames Dropped file paths.
+         * \return True to consume the event.
+         */
+        virtual bool drop_event(const std::vector<std::string> &filenames);
+
+        /**
+         * \brief Handle a viewer focus change.
+         * \param focused True if focus was gained, false if lost.
+         * \return True to consume the event.
+         */
+        virtual bool focus_event(bool focused);
+        //@}
+
+        /// \name Event routing
+        /// The backend GLFW trampolines forward native events here. Each router
+        /// updates the shared input state, offers the event to the installed
+        /// ViewerCallbacks, and only then calls the corresponding legacy hook.
+        //@{
+        // Pointer, wheel and key bookkeeping shared by both backends. Logical
+        // window units; sentinel values (-1 / 0) replace booleans.
+        struct InputState {
+            int x = 0, y = 0;                   // last cursor position
+            int press_x = 0, press_y = 0;       // where the held button went down
+            int button = -1;                    // held button, -1 when none
+            int press_modifiers = 0;            // modifiers latched when it went down
+            int key = -1;                       // held key not consumed by a shortcut
+            double scroll_x = 0, scroll_y = 0;  // fractional wheel remainder
+            int capture_button = -1;            // button whose gesture a consumed press captured
+
+            // Clears the gesture state on focus loss; keeps the cursor position.
+            void reset();
+        };
+        InputState input_;
+
+        void handle_cursor_pos(int x, int y, int modifiers);
+        /// \param action GLFW_PRESS or GLFW_RELEASE.
+        void handle_mouse_button(int x, int y, int button, int action, int modifiers);
+        void handle_scroll(int x, int y, double dx, double dy);
+        /// \param action GLFW_PRESS, GLFW_REPEAT, or GLFW_RELEASE.
+        void handle_key(int key, int action, int modifiers);
+        void handle_character(unsigned int codepoint);
+        void handle_drop(const std::vector<std::string> &files);
+        void handle_focus(bool focused);
+
+        /// Ends transient manipulation state after a consumed release or a lost
+        /// focus. The default does nothing; interactive hosts stop camera frames.
+        virtual void end_gesture() {}
+        /// Cancels the current interaction completely, for example when the
+        /// window loses focus or a multi-view layout changes.
+        virtual void cancel_interaction() {}
+        //@}
+
         void notify_pre_draw();
         void notify_post_draw();
         void notify_resize();
@@ -530,8 +670,6 @@ namespace easy3d {
 
     private:
         std::shared_ptr<ViewerCallbacks> callbacks_;
-        int callback_button_ = -1;
-        bool callback_capture_ = false;
         int resize_width_ = 0, resize_height_ = 0, resize_fb_width_ = 0, resize_fb_height_ = 0;
     };
 } // namespace easy3d

@@ -3827,23 +3827,30 @@ callbacks.key_press_event = [](easy3d::ViewerBase* viewer, int key, int modifier
 viewer->set_callbacks(std::move(callbacks));
 ```
 
+Both hosts feed one shared router in ViewerBase (`handle_cursor_pos`,
+`handle_mouse_button`, `handle_scroll`, `handle_key`, `handle_character`,
+`handle_drop`, `handle_focus`); the GLFW callbacks only translate raw events.
 Input callbacks run before legacy subclass hooks and built-in actions. Returning
 true consumes the event. A consumed mouse press captures its gesture through the
 matching release, even if subsequent drag/release handlers return false or are
-cleared. Consuming release of a builtin gesture cancels it instead of applying a
-region zoom. Physical input tracking and camera action cleanup still complete.
-Focus loss clears drag/capture and fractional scrolling state on both hosts.
-Legacy hooks retain their original coordinate conventions and receive unhandled
-events. Explicit subclasses continue to work; they are not created by this
-factory API.
+cleared. Consuming release of a builtin gesture ends it instead of applying a
+region zoom. Focus loss resets the tracked button, key, latched modifiers and
+fractional scrolling, then cancels the in-flight camera/clipping-plane gesture,
+on both hosts. Legacy hooks retain their original coordinate conventions and
+receive unhandled events. Explicit subclasses continue to work; they are not
+created by this factory API.
 
 Common mouse positions and deltas are integer logical window coordinates with
 an upper-left origin, including on HiDPI displays. Button/scroll callbacks query
 the actual cursor position, and consumed movement updates tracking so later
-default controls do not accumulate skipped deltas. Native framebuffer-coordinate
-hooks remain unchanged. Modifier lookup is shared in the GLFW backend. OpenGL
-now accumulates fractional wheel deltas as Vulkan already did, so trackpad
-movement is not lost by truncating each individual event.
+default controls do not accumulate skipped deltas. Modifier lookup is shared in
+the GLFW backend; drags keep the modifiers latched at press, so pressing a
+modifier mid-gesture cannot switch the interaction mode. Cursor positions
+outside the window still reach the free-move/drag hooks (subclasses can clear
+hover state there); an unconsumed drag outside the window then pins the cursor
+to the window edge so the gesture cannot run away. One shared double
+accumulator carries fractional wheel deltas, so trackpad movement is not lost
+by truncating each individual event.
 
 post_resize receives logical window dimensions after host camera/viewport state
 has been updated. A framebuffer-only change also notifies it, so a callback can
@@ -3863,9 +3870,11 @@ foreground/background surfaces verify correct depth with MSAA file output.
 Callback registration can be replaced or cleared from within a callback. The
 active registration is retained until dispatch returns; mutable callable state
 is preserved between events and captured resources are released afterward.
-Event exceptions stay inside GLFW's C boundary, request close and are reported
-at the frame boundary. Frame callback exceptions propagate through the existing
-frame/run error contract. None of these errors cause backend changes.
+Each GLFW trampoline is now the single exception boundary; the shared handlers
+no longer wrap individual events. An escaping handler exception stays inside
+GLFW's C boundary, requests close and is reported at the frame boundary. Frame
+callback exceptions propagate through the existing frame/run error contract.
+None of these errors cause backend changes.
 
 The same public-API callback test runs against both hosts. It checks rendered
 pre_draw updates, frame counts/state, snapshot isolation and initial depth,
@@ -7627,3 +7636,58 @@ OpenGL (`build-opengl`, tests enabled): full build succeeded and the serial suit
 rendering output changed: the renamed API is exercised by the impostor, pick, scan, snapshot and
 interaction suites. The Python bindings source was updated but not rebuilt or run. Linux/Mesa, Windows
 hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 54: one shared input router for both backends
+
+**Scope.** Event handling no longer has a parallel implementation per backend. `ViewerBase` owns
+one `InputState input_` (cursor and press position, held button and key, modifiers latched at press,
+one double wheel remainder, and the button whose gesture a consumed press captured) plus the seven
+routers the GLFW trampolines call: `handle_cursor_pos`, `handle_mouse_button`, `handle_scroll`,
+`handle_key`, `handle_character`, `handle_drop` and `handle_focus`. Each router updates the shared
+state, offers the event to the installed `ViewerCallbacks` (`dispatch_*`), and only then calls the
+corresponding legacy hook; the public hook signatures are unchanged. Two new protected virtuals
+express what the backends used to do privately: `end_gesture()` (stop the camera and clipping-plane
+manipulation frames and leave zoom-region mode) and `cancel_interaction()` (reset the input state,
+hide the pivot, then end the gesture). `Viewer` overrides both; `MultiViewer::set_layout` and focus
+loss use `cancel_interaction()`.
+
+Removed duplicated state and code:
+
+- `Viewer`: `pressed_key_`, `pressed_button_`, `mouse_current_x_/y_`, `mouse_pressed_x_/y_`,
+  `process_events_`, `modifiers_`, `drag_active_`, `callback_mouse_x_/y_` and
+  `scroll_remainder_x_/y_`. Subclasses that read the old protected members use `input_` instead
+  (e.g. Tutorial 404's axis constraint reads `input_.key`); the built-in hooks keep working when a
+  subclass calls them directly, because they read and write `input_`.
+- `Viewer`: all six OpenGL `callback_event_cursor_pos/mouse_button/keyboard/character/drop/scroll`
+  handlers (and their declarations and the Python trampoline overrides). Only
+  `callback_event_resize` remains backend-specific, since it updates the framebuffer-size cache and
+  calls `glViewport`. The Vulkan host's `Window` no longer keeps its own `button`,
+  `last_logical_x/y` or `wheel_x/y`. Both `setup_callbacks` implementations are now thin forwarders
+  of raw GLFW events into the shared routers.
+- The `ViewerBase` no-op hook definitions and `notify_*`/`dispatch_*` API are unchanged.
+
+Divergences unified onto one behavior (previously each backend picked one):
+
+- Drag modifiers are latched at press on both backends, so pressing a modifier mid-drag cannot
+  switch the interaction mode.
+- Cursor positions outside the window reach the free-move/drag hooks on both backends, so hover
+  highlights can clear there; an unconsumed drag outside the window then pins the cursor to the
+  window edge. (This keeps the Tutorial 205 real-camera inset behavior, which the first
+  suppression attempt broke and `vulkan.realcamera` caught.)
+- One shared `double` wheel accumulator serves both hosts.
+- Focus loss performs a full reset (button, key, latched modifiers, wheel remainder) and cancels
+  the in-flight gesture on both hosts.
+- Only the GLFW trampoline guards input exceptions; the per-event try/catch blocks in the OpenGL
+  input handlers are gone (`callback_event_resize` keeps its own guarded body and log message). An
+  escaping exception still requests close and is rethrown at the frame boundary.
+
+`dpi_scaling_` consolidation was deliberately deferred to a later batch. No rendering, navigation
+or callback-ordering behavior changed; the current-state input section in this document was
+updated to describe the router.
+
+**Validation (2026-11-11, macOS Release).** Vulkan (`cmake-build-release`, tests temporarily enabled
+then restored to `Easy3D_BUILD_TESTS=OFF`): full build succeeded and the serial suite passed 140/140,
+including `vulkan.input`, the real-camera suite and the callback/window tests. OpenGL
+(`build-opengl`, tests enabled): full build succeeded and the serial suite passed 106/106, including
+`opengl.input`. The Python bindings sources were updated (removed now-nonexistent overrides) but not
+rebuilt. Linux/Mesa, Windows hardware and GitHub CI were not run.

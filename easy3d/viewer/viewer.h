@@ -798,40 +798,12 @@ public:
          */
         virtual void post_resize(int w, int h) { (void)w, (void)h; }
 
-        /**
-         * \brief Handle a mouse-button press.
-         * \param x Logical x coordinate from the top-left.
-         * \param y Logical y coordinate from the top-left.
-         * \param button ViewerInput::Button identifier.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event before built-in controls.
-         * \details All mouse hooks use DPI-independent logical window coordinates
-         * on both the OpenGL and Vulkan backends, matching ViewerCallbacks and
-         * world_to_window()/window_to_world().
-         */
-        virtual bool mouse_press_event(int x, int y, int button, int modifiers);
-
-        /**
-         * \brief Handle a mouse-button release.
-         * \param x Logical x coordinate from the top-left.
-         * \param y Logical y coordinate from the top-left.
-         * \param button ViewerInput::Button identifier.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event before built-in controls.
-         */
-        virtual bool mouse_release_event(int x, int y, int button, int modifiers);
-
-        /**
-         * \brief Handle pointer motion while a mouse button is pressed.
-         * \param x Current logical x coordinate from the top-left.
-         * \param y Current logical y coordinate from the top-left.
-         * \param dx Horizontal logical displacement since the previous event.
-         * \param dy Vertical logical displacement since the previous event.
-         * \param button ViewerInput::Button identifier.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event before built-in controls.
-         */
-        virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers);
+        // Legacy event hooks (documented in ViewerBase). Viewer implements the built-in
+        // camera, picking, zoom-region and clipping-plane controls here; subclasses
+        // extend them by overriding and calling the base implementation.
+        bool mouse_press_event(int x, int y, int button, int modifiers) override;
+        bool mouse_release_event(int x, int y, int button, int modifiers) override;
+        bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
         /**
          * \brief Origin subtracted from mouse coordinates before camera manipulation.
@@ -841,65 +813,22 @@ public:
          */
         virtual ivec2 interaction_origin() const { return ivec2(0); }
 
-        /**
-         * \brief Handle pointer motion when no mouse button is pressed.
-         * \param x Current logical x coordinate from the top-left.
-         * \param y Current logical y coordinate from the top-left.
-         * \param dx Horizontal logical displacement since the previous event.
-         * \param dy Vertical logical displacement since the previous event.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event.
-         */
-        virtual bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers);
+        bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) override;
+        bool mouse_scroll_event(int x, int y, int dx, int dy) override;
+        bool char_input_event(unsigned int codepoint) override;
+        bool key_press_event(int key, int modifiers) override;
+        bool key_release_event(int key, int modifiers) override;
+        bool drop_event(const std::vector<std::string> & filenames) override;
+        bool focus_event(bool focused) override;
 
-        /**
-         * \brief Handle a mouse-wheel event.
-         * \param x Logical x coordinate from the top-left.
-         * \param y Logical y coordinate from the top-left.
-         * \param dx Horizontal scroll offset.
-         * \param dy Vertical scroll offset.
-         * \return True to consume the event before built-in controls.
-         */
-        virtual bool mouse_scroll_event(int x, int y, int dx, int dy);
+        // Stops the in-flight camera and clipping-plane manipulation frames and
+        // hides the zoom region; consumed releases and a lost focus come here.
+        void end_gesture() override;
 
-        /**
-         * \brief Handle text input as a Unicode code point.
-         * \param codepoint Native-endian UTF-32 code point.
-         * \return True to consume the event.
-         */
-        virtual bool char_input_event(unsigned int codepoint);
-
-        /**
-         * \brief Handle a physical key press.
-         * \param key ViewerInput::Key identifier.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event before built-in shortcut handling.
-         * \details This reports a key identifier, not the entered text; use
-         * char_input_event() for text.
-         */
-        virtual bool key_press_event(int key, int modifiers);
-
-        /**
-         * \brief Handle a physical key release.
-         * \param key ViewerInput::Key identifier.
-         * \param modifiers ViewerInput::Modifier bit mask.
-         * \return True to consume the event.
-         */
-        virtual bool key_release_event(int key, int modifiers);
-
-        /**
-         * \brief Handle files dropped onto the viewer.
-         * \param filenames Dropped file paths.
-         * \return True to consume the event.
-         */
-        virtual bool drop_event(const std::vector<std::string> & filenames);
-
-        /**
-         * \brief Handle a viewer focus change.
-         * \param focused True if focus was gained, false if lost.
-         * \return True to consume the event.
-         */
-        virtual bool focus_event(bool focused);
+        // Ends any gesture and restores the default input state (held button and
+        // key, latched modifiers, wheel remainder); used on focus loss and layout
+        // changes.
+        void cancel_interaction() override;
 
         // Publishes the RGB corner axes as a 3D HUD overlay. Vulkan builds the cylinder/
         // cone/sphere geometry once and caches it in corner_axes_geometry_, skipping the
@@ -944,7 +873,6 @@ public:
 	    std::string hint_; // shown in the top-left corner of the screen
 	    int		samples_;	// the actual samples
 	    vec4	background_color_;  // clear color of the color/depth pass
-	    int     pressed_key_;       // key held down (-1 none): Z selects dolly/pivot, X-Y-O axis-locked moves
 	    bool    show_frame_rate_;   // HUD toggle: show the frame-rate readout
 	    bool	show_camera_path_;  // HUD toggle: show the camera path and its keyframe cameras
 	    bool    show_easy3d_logo_;  // HUD toggle: show the Easy3D logo text
@@ -952,9 +880,6 @@ public:
 	    int model_idx_;             // model addressed by the model-bound commands, -1 when there is none
 	    std::vector< std::shared_ptr<Drawable> > drawables_;  // standalone drawables, not owned by any model
 	    bool initialized_ = false;  // latch ensuring init() runs exactly once before the first frame
-	    int pressed_button_ = -1;   // mouse button currently held, -1 when none
-	    int mouse_current_x_ = 0, mouse_current_y_ = 0;   // cursor position in logical window pixels
-	    int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;   // cursor position where the ongoing drag started
 	    bool show_pivot_point_ = false;  // HUD toggle: pivot mark, auto-hidden after a few seconds
 	    typedef std::pair<Function, Model*> FunctionModel;
 	    std::map<Key, std::map<Modifier, FunctionModel> >  commands_; // key+modifier -> bound action and its model
@@ -1034,10 +959,6 @@ public:
 	    // latched in fonts_tried_ so the HUD simply draws no text.
 	    void ensure_text_renderer() const;
 
-	    // Ends in-flight camera and clipping-plane manipulation and hides the
-	    // transient interaction overlays (pivot mark, zoom region).
-	    void cancel_interaction();
-
 	    // Window-backed construction: adopts an already created GLFW window host and
 	    // builds the render device for it. The public constructor delegates here.
 	    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
@@ -1045,8 +966,8 @@ public:
 
 	    /// \name Vulkan handles and cached overlay state
 	    //@{
-	    // Owns the surface, device and swapchain, and queues the raw GLFW input state
-	    // that the window callbacks forward to this viewer.
+	    // Owns the surface, device and swapchain, and forwards raw GLFW input to the
+	    // shared ViewerBase::handle_* routers.
 	    std::shared_ptr<Window> window_host_;
 	    // Render device plus the cached scene/overlay command sets and pick resources;
 	    // defined in viewer.cpp so this header does not pull in the device headers.
@@ -1143,33 +1064,9 @@ public:
 
         // Installs the GLFW callback trampolines on the window; each one resolves the
         // user pointer back to this Viewer through dispatch_callback() and forwards to
-        // the matching callback_event_* below.
+        // the shared ViewerBase::handle_* routers.
         void setup_callbacks(GLFWwindow*);
 
-		/* Event handlers. Client code should not touch these */
-        // Each handler first offers the event to the commands bound through bind(), and
-        // only then to the corresponding virtual event hook; returning true consumes the
-        // event. An escaping exception is recorded in callback_error_ instead of
-        // propagating through GLFW.
-        // Cursor movement in logical window coordinates: caches the position, derives
-        // the delta and dispatches a drag or free-move event depending on drag_active_.
-        virtual bool callback_event_cursor_pos(double x, double y);
-        // Mouse press/release: latches the drag state and press position, then
-        // dispatches the press/release hooks; release also ends the active camera and
-        // clipping-plane manipulation frames.
-        virtual bool callback_event_mouse_button(int button, int action, int modifiers);
-        // Key press/repeat/release: dispatches the bound shortcut first, then the
-        // key_press_event()/key_release_event() hooks, and clears pressed_key_ on release.
-        virtual bool callback_event_keyboard(int key, int action, int mods);
-        // A text character was typed: bound handlers first, then char_input_event().
-        virtual bool callback_event_character(unsigned int codepoint);
-        // Files dropped onto the window: bound handlers first, then drop_event(), which
-        // loads them as models by default.
-        virtual bool callback_event_drop(int count, const char **filenames);
-        // Mouse-wheel scroll: accumulates fractional deltas in scroll_remainder_x_/y_ and
-        // forwards whole-notch amounts to the scroll handlers, so slow scrolling still
-        // steps exactly once per notch.
-        virtual bool callback_event_scroll(double dx, double dy);
         // Window resize in logical units: refreshes the cached logical and framebuffer
         // sizes, updates the camera extent and the GL viewport, then calls post_resize()
         // and notify_resize() when the size actually changed.
@@ -1192,9 +1089,6 @@ public:
         // Keeps GLFW initialized while any viewer window lives, and supplies the
         // hidden window used as the share context for new GL windows.
         std::shared_ptr<detail::GlfwRuntime> runtime_;
-        int callback_mouse_x_ = 0, callback_mouse_y_ = 0;   // cursor as last seen by a GLFW callback, so
-                                                            // absolute positions can be turned into deltas
-        double scroll_remainder_x_ = 0, scroll_remainder_y_ = 0; // fractional wheel ticks carried over
 
     protected:
 
@@ -1204,14 +1098,7 @@ public:
 
         float       dpi_scaling_;   // window content scale (framebuffer pixels / logical pixels)
 
-		// enable/disable event processing
-		bool	process_events_;
-
         std::unique_ptr<TextRenderer> texter_;    // HUD text renderer, created with the current dpi_scaling_
-
-		// mouse
-		int		modifiers_;		    // for mouse drag
-		bool	drag_active_;	    // for mouse drag
 
 
 		//----------------- viewer data -------------------

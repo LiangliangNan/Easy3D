@@ -104,11 +104,11 @@ bool TutorialObjectManipulation::mouse_drag_event(int x, int y, int dx, int dy, 
         // Optional axis constraint: holding 'X', 'Y', or 'O' during the drag restricts the
         // motion to a horizontal, vertical, or view-orthogonal screen axis.
         auto axis = ManipulatedFrame::NONE;
-        if (pressed_key_ == KEY_X)
+        if (input_.key == KEY_X)
             axis = ManipulatedFrame::HORIZONTAL;
-        else if (pressed_key_ == KEY_Y)
+        else if (input_.key == KEY_Y)
             axis = ManipulatedFrame::VERTICAL;
-        else if (pressed_key_ == KEY_O)
+        else if (input_.key == KEY_O)
             axis = ManipulatedFrame::ORTHOGONAL;
         auto *frame = model->manipulator()->frame();
         if (button == BUTTON_LEFT)
