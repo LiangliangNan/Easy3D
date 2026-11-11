@@ -18,7 +18,11 @@ layout(location=1) in vec2 uv;
 layout(location=3) flat in vec4 selection_tint;
 layout(location=4) in vec3 world_position;
 layout(location=5) in vec4 world_normal_out;
+// The build target keeps the pass non-empty (see the OpenGL build FBO); its
+// contents are never read, so every fragment discards the same dummy value.
+layout(location=0) out vec4 out_color;
 void main() {
+    out_color = vec4(0.0);
     vec4 color = vertex_color * texture(image_texture, uv);
     if (material.shading.x != 0 && world_normal_out.w != 0)
         color = shade_material(color, world_normal_out.xyz, world_position, !gl_FrontFacing);

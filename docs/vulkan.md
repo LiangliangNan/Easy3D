@@ -7889,4 +7889,40 @@ were test assumptions that only hold on some drivers; neither needed a renderer 
 **Validation (2026-11-11, macOS Release).** OpenGL `build-opengl` full build and serial CTest
 106/106; Vulkan `cmake-build-release` full build and serial CTest 140/140 (tests temporarily
 enabled, then restored to `Easy3D_BUILD_TESTS=OFF`); `vulkan.transparency` also passed ten
-repeated runs with sync validation. The Linux/Mesa CI rerun remains the gate.
+repeated runs with sync validation. The Linux/Mesa CI rerun remains the gate. (That rerun showed
+the shared-edge ownership was not the only lavapipe cause: linked-list frames also lost their
+transparent picking IDs to an unrelated renderer bug, fixed in batch 61.)
+
+### 2026-11-11 — W10 batch 61: give the linked-list build pass a real attachment
+
+**Scope.** The CI rerun after batch 60 passed OpenGL but still failed
+`vulkan.transparency` ("linked lists changed picking IDs") on lavapipe. The failure was not a
+test assumption: a frame that used per-pixel linked lists returned `UINT32_MAX` (the picking
+clear value) for every transparent surface's object ID while the depth attachment held the
+correct nearest-surface depth, the color attachment held the correct blended result, and the
+other OIT methods in the same process returned correct IDs. Reproduced locally with Homebrew
+Mesa lavapipe and bisected inside the renderer: the same `oit_id_pipeline` produces correct IDs
+when the earlier OIT work is average accumulation or depth peeling, but loses its
+color-attachment-1 writes when the earlier command in the frame is a draw inside the
+attachmentless linked-list build render pass. Skipping only those build draws (keeping the fills,
+the pass instance and the resolve pass) restored the IDs, so the trigger was the attachmentless
+pass itself rather than the storage-buffer clears or the resolve.
+
+The build pass now carries one dummy `R8G8B8A8_UNORM` color attachment (load/store
+`DONT_CARE`, final layout `COLOR_ATTACHMENT_OPTIMAL`) and the build pipeline declares that
+attachment with a full write mask; `oit_linked_lists_build.frag` writes a discarded
+`out_color = vec4(0.0)` before appending its node. This mirrors the OpenGL build FBO, which
+already allocates a color buffer because "the build shader writes fragment data to SSBOs; the
+color attachment receives a dummy output to keep the FBO complete". The render-pass dependencies
+now also cover `COLOR_ATTACHMENT_OUTPUT` so the dummy write and the layout transition sit inside
+the pass's external dependencies. No other behavior changes: the build shader still appends one
+node per fragment with `atomicAdd`/`atomicCompSwap`, the resolve pass, composite and overflow
+counter are untouched, and the picking pipeline still masks attachment 0 so the scene color
+stays unblended.
+
+**Validation (2026-11-11, macOS Release).** Vulkan `cmake-build-release` full build and serial
+CTest 140/140 on MoltenVK, plus the CI-matching headless subset (`ctest -LE desktop`) 53/53 under
+lavapipe, which includes `vulkan.transparency`; that test also passed five repeated lavapipe runs
+and a run with validation plus sync validation enabled. OpenGL `build-opengl` full build and
+serial CTest 106/106 (tests temporarily enabled, then restored to `Easy3D_BUILD_TESTS=OFF` in both
+trees). The CI rerun remains the Linux gate.

@@ -1326,6 +1326,7 @@ namespace easy3d {
                 Context &c;
                 uint32_t width = 0, height = 0, node_count = 0;
                 Buffer head, nodes, counter, params, counter_readback;
+                GpuImage build_target;
                 VkRenderPass build_pass = VK_NULL_HANDLE;
                 VkFramebuffer build_framebuffer = VK_NULL_HANDLE;
                 VkPipeline build_pipeline = VK_NULL_HANDLE, resolve_pipeline = VK_NULL_HANDLE;
@@ -1333,7 +1334,7 @@ namespace easy3d {
                 VkDescriptorPool pool = VK_NULL_HANDLE;
                 explicit LinkedLists(Context &context)
                     : c(context), head(context), nodes(context), counter(context), params(context),
-                      counter_readback(context) {}
+                      counter_readback(context), build_target(context) {}
                 ~LinkedLists() {
                     if (build_pipeline)
                         c.vkDestroyPipeline(c.device, build_pipeline, nullptr);
@@ -3721,25 +3722,49 @@ namespace easy3d {
                     lists_->params.transfer(parameters, sizeof(parameters), true);
 
                     {
-                        // Attachmentless pass: the build fragment shader writes only to storage
-                        // buffers, so no color or depth attachment is needed.
+                        // The build fragment shader appends its fragments to storage buffers and
+                        // discards its color output. The dummy attachment keeps the pass equal to
+                        // the OpenGL build FBO (which also allocates a color buffer): a pass with
+                        // no attachments at all makes lavapipe drop the masked color-attachment
+                        // writes of the picking draws that follow it.
+                        lists_->build_target.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+                                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+                        VkAttachmentDescription attachment{};
+                        attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+                        attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                        attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                        attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                        attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                        attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                        attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                        VkAttachmentReference build_color = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
                         VkSubpassDescription subpass{};
                         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+                        subpass.colorAttachmentCount = 1;
+                        subpass.pColorAttachments = &build_color;
                         VkSubpassDependency dependencies[2] = {};
                         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
                         dependencies[0].dstSubpass = 0;
-                        dependencies[0].srcStageMask =
-                            VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                        dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+                        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT |
+                                                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT |
+                                                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                         dependencies[1].srcSubpass = 0;
                         dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-                        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                         dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                        dependencies[1].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                        dependencies[1].srcAccessMask =
+                            VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                         dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
                         VkRenderPassCreateInfo info{};
                         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+                        info.attachmentCount = 1;
+                        info.pAttachments = &attachment;
                         info.subpassCount = 1;
                         info.pSubpasses = &subpass;
                         info.dependencyCount = 2;
@@ -3749,6 +3774,8 @@ namespace easy3d {
                         VkFramebufferCreateInfo fi{};
                         fi.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
                         fi.renderPass = lists_->build_pass;
+                        fi.attachmentCount = 1;
+                        fi.pAttachments = &lists_->build_target.view;
                         fi.width = width;
                         fi.height = height;
                         fi.layers = 1;
@@ -3859,11 +3886,14 @@ namespace easy3d {
                         info.pColorBlendState = &blending;
                         info.pDynamicState = &dynamic;
 
-                        // Build: scene geometry, no attachments, every fragment appends a node.
+                        // Build: scene geometry, every fragment appends a node. The color
+                        // attachment only receives the shader's discarded dummy output.
                         stages[0].module = modules[0];
                         stages[1].module = modules[1];
-                        blending.attachmentCount = 0;
-                        blending.pAttachments = nullptr;
+                        VkPipelineColorBlendAttachmentState build_attachment{};
+                        build_attachment.colorWriteMask = 0xf;
+                        blending.attachmentCount = 1;
+                        blending.pAttachments = &build_attachment;
                         info.renderPass = lists_->build_pass;
                         info.layout = oit_lists_layout_;
                         check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
@@ -4051,12 +4081,12 @@ namespace easy3d {
                         c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_HOST_BIT,
                                                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &build_barrier, 0, nullptr,
                                                 0, nullptr);
-                        VkRenderPassBeginInfo begin{};
-                        begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                        begin.renderPass = lists_->build_pass;
-                        begin.framebuffer = lists_->build_framebuffer;
-                        begin.renderArea = {{0, 0}, {width, height}};
-                        c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                        VkRenderPassBeginInfo build{};
+                        build.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                        build.renderPass = lists_->build_pass;
+                        build.framebuffer = lists_->build_framebuffer;
+                        build.renderArea = {{0, 0}, {width, height}};
+                        c_.vkCmdBeginRenderPass(cmd, &build, VK_SUBPASS_CONTENTS_INLINE);
                         full_view();
                         for (const Prepared *draw : transparent) {
                             bind_draw(*draw, lists_->build_pipeline, oit_lists_layout_, draw->texture->set);
