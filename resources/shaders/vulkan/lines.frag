@@ -37,7 +37,7 @@ void main() {
     vec3 offset = origin-base;
     float oz = dot(offset,axis), dz = dot(direction,axis);
     vec3 radial_origin = offset-oz*axis, radial_direction = direction-dz*axis;
-    float radius = shape.dimensions.w;
+    float radius = shape.dimensions.w; // world-space radius of the cylinder/cone
     bool cone = shape.light.w == 4;
     float slope = cone ? radius/length_axis : 0;
     float k = slope*slope, h = length_axis-oz;

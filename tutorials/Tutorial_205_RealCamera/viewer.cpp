@@ -329,7 +329,7 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
         if (!ray_drawable_) {
             ray_drawable_ = new LinesDrawable("ray");
             add_drawable(std::shared_ptr<LinesDrawable>(ray_drawable_)); // add the ray drawable to the viewer
-            ray_drawable_->set_uniform_coloring(vec4(0, 1, 0, 1.0f));
+            ray_drawable_->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
             ray_drawable_->set_line_width(3.0f);
             ray_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
         }

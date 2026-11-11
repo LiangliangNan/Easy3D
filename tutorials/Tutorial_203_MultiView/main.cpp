@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     auto sphere_wireframe = sphere->renderer()->get_lines_drawable("edges");
     // Render the edges as thick cylinders (impostors) rather than thin GL lines.
     sphere_wireframe->set_impostor_type(LinesDrawable::CYLINDER);
-    sphere_wireframe->set_line_width(5);
+    sphere_wireframe->set_line_width(6);
     sphere_wireframe->set_uniform_coloring(vec4(0.7f, 0.7f, 1.0f, 1.0f));
     viewer.assign(1, 0, sphere_wireframe);
 
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
     auto sphere_vertices = sphere->renderer()->get_points_drawable("vertices");
     // Render each vertex as a shaded sphere impostor, sized in pixels.
     sphere_vertices->set_impostor_type(PointsDrawable::SPHERE);
-    sphere_vertices->set_point_size(15);
+    sphere_vertices->set_point_size(16);
     viewer.assign(1, 1, sphere_vertices);
 
     // Enter the interactive render loop; returns only when the window is closed.

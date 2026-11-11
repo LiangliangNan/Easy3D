@@ -452,7 +452,7 @@ namespace easy3d {
          * \return World units per logical screen pixel (DPI-independent), derived
          *      from screenHeight(). A segment of length n * pixelGLRatio() at
          *      \p position projects to n logical pixels, so impostor radii computed
-         *      as size * pixelGLRatio() * 0.5 keep a constant logical size on both
+         *      as diameter * pixelGLRatio() * 0.5 keep a constant logical size on both
          *      backends regardless of the framebuffer's physical pixel density.
          */
         float pixelGLRatio(const vec3 &position) const;

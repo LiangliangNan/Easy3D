@@ -61,9 +61,9 @@
  *
  * <b>Easy3D API</b>
  * - PointsDrawable: set_impostor_type() chooses PLAIN, SPHERE, or SURFEL; set_point_size()
- *   sets the diameter in pixels; set_uniform_coloring() sets one RGBA color.
+ *   sets the diameter in logical pixels (DPI-independent); set_uniform_coloring() sets one RGBA color.
  * - LinesDrawable: set_impostor_type() chooses PLAIN, CYLINDER, or CONE; set_line_width()
- *   sets the thickness in pixels.
+ *   sets the diameter in logical pixels (DPI-independent).
  * - Renderer: each model owns one; add_points_drawable()/add_lines_drawable() create extra
  *   drawables attached to the model (here "vertices", "edges", "normals").
  * - SurfaceMesh: update_vertex_normals() computes per-vertex normals; the "v:point" and
@@ -86,7 +86,7 @@ void create_spheres(SurfaceMesh *mesh) {
     // Create (or fetch) the "vertices" points drawable attached to the mesh's renderer.
     PointsDrawable *drawable = mesh->renderer()->add_points_drawable("vertices");
     drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f)); // opaque red
-    drawable->set_point_size(24.0f);                              // diameter in pixels
+    drawable->set_point_size(16.0f); // diameter in logical pixels (DPI-independent)
     // SPHERE: each point is shaded as a lit sphere imposter instead of a flat square.
     drawable->set_impostor_type(PointsDrawable::SPHERE);
 }
@@ -96,7 +96,7 @@ void create_cylinders(SurfaceMesh *mesh) {
     LinesDrawable *drawable = mesh->renderer()->add_lines_drawable("edges");
     drawable->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f)); // light orange
     drawable->set_impostor_type(LinesDrawable::CYLINDER);
-    drawable->set_line_width(6); // tube diameter in pixels
+    drawable->set_line_width(6); // tube diameter in logical pixels (DPI-independent)
 }
 
 // Render the vertex normals as cones: a tapering imposter that reads as an arrow/direction.
@@ -132,7 +132,7 @@ void create_cones(SurfaceMesh *mesh) {
     drawable->update_vertex_buffer(normal_points);
     drawable->set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f)); // opaque green
     drawable->set_impostor_type(LinesDrawable::CONE);
-    drawable->set_line_width(8); // base diameter in pixels
+    drawable->set_line_width(8); // base diameter in logical pixels (DPI-independent)
 }
 
 // Render mesh vertices as surfels: oriented disks that lie in the local tangent plane.
@@ -141,7 +141,7 @@ void create_cones(SurfaceMesh *mesh) {
 void create_surfels(SurfaceMesh *mesh) {
     PointsDrawable *drawable = mesh->renderer()->add_points_drawable("vertices");
     drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
-    drawable->set_point_size(24.0f);
+    drawable->set_point_size(16.0f);
     drawable->set_impostor_type(PointsDrawable::SURFEL);
 }
 

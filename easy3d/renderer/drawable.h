@@ -347,16 +347,16 @@ namespace easy3d {
         /**
          * \brief Computes the world-space radius of an impostor primitive.
          * \param camera Camera whose logical screen dimensions define pixelGLRatio().
-         * \param size Full impostor diameter in logical pixels (point_size()/line_width()).
-         * \return World-space radius, size * pixelGLRatio(pivotPoint()) * 0.5, that
-         *      projects to \p size logical pixels on both backends. Impostor radii are
+         * \param diameter Full impostor diameter in logical pixels (point_size()/line_width()).
+         * \return World-space radius, diameter * pixelGLRatio(pivotPoint()) * 0.5, that
+         *      projects to \p diameter logical pixels on both backends. Impostor radii are
          *      world-space quantities; the framebuffer viewport handles physical sizing.
          * \details Both backends derive their impostor size from this single formula:
          *      OpenGL uploads it as the \c sphere_radius/\c radius shader uniform, while
          *      Vulkan stores it in the draw command's point/line radius.
          * \sa PointsDrawable, LinesDrawable.
          */
-        static float impostor_radius(const Camera& camera, float size);
+        static float impostor_radius(const Camera& camera, float diameter);
         ///@}
 
         /// \name Manipulation

@@ -13,7 +13,7 @@ layout(push_constant) uniform Draw {
 } draw;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 viewport_origin; // viewport width, height, unused, view-space radius
+    vec4 dimensions; vec4 viewport_origin; // viewport width, height, unused, world-space radius
     vec4 light; // view-space direction; w = 3 cylinder, 4 cone
     vec4 clip_planes[2]; vec4 clip_info;
 } shape;

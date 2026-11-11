@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     // show the vertices (as sphere impostors, so they stay round at any zoom level)
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
     mesh->renderer()->get_points_drawable("vertices")->set_impostor_type(easy3d::PointsDrawable::SPHERE);
-    mesh->renderer()->get_points_drawable("vertices")->set_point_size(12);
+    mesh->renderer()->get_points_drawable("vertices")->set_point_size(8);
     // show the edges (including the diagonals added by the partition)
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
     // also show the borders (the outer boundary and the hole boundaries)

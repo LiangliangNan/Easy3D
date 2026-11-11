@@ -302,8 +302,8 @@ clip-space formulas left. Consequences:
 
 6. **Drawable sizes are logical pixels**: `PointsDrawable::point_size()` and `LinesDrawable::line_width()`
    are expressed in **logical pixels** (DPI-independent) on both backends (Batch 46; the OpenGL-imposter
-   behavior won). Impostor radii are computed once via the shared `impostor_radius(camera, size)` helper
-   (`size * camera.pixelGLRatio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
+   behavior won). Impostor radii are computed once via the shared `impostor_radius(camera, diameter)` helper
+   (`diameter * camera.pixelGLRatio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
    points/lines rasterize in framebuffer pixels and are scaled from logical size by the viewport-to-camera
    ratio (`viewport_pixel_scale(camera)` on OpenGL; the target/camera ratio in Vulkan `draw_commands`).
    `Camera::pixelGLRatio()` therefore returns world-units-per-**logical**-pixel on both backends.

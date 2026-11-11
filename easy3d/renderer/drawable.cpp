@@ -43,8 +43,8 @@
 
 namespace easy3d {
 
-    float Drawable::impostor_radius(const Camera& camera, float size) {
-        return size * camera.pixelGLRatio(camera.pivotPoint()) * 0.5f;
+    float Drawable::impostor_radius(const Camera& camera, float diameter) {
+        return diameter * camera.pixelGLRatio(camera.pivotPoint()) * 0.5f;
     }
 
 #ifndef EASY3D_HAS_VULKAN

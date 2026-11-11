@@ -31,6 +31,7 @@ void main() {
     vec3 origin = a.xyz/a.w;
     vec3 direction = normalize(b.xyz - origin*b.w);
     vec3 hit, surface_normal;
+    // material.dimensions.w is the world-space sphere/surfel radius.
     if (material.light.w == 2) {
         float denominator = dot(surfel_normal, direction);
         // Edge-on discs have no area. Avoid an unstable ray/plane division.

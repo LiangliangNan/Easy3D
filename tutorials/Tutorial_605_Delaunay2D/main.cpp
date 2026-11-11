@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
     // show the vertices
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
     mesh->renderer()->get_points_drawable("vertices")->set_impostor_type(easy3d::PointsDrawable::SPHERE);
-    mesh->renderer()->get_points_drawable("vertices")->set_point_size(10);
+    mesh->renderer()->get_points_drawable("vertices")->set_point_size(8);
     // show the edges (the Delaunay triangulation)
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
     // also show the borders (the convex hull of the point set)

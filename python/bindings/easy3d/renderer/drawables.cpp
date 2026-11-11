@@ -293,7 +293,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 		cl.def("impostor_type", (enum easy3d::LinesDrawable::ImposterType (easy3d::LinesDrawable::*)() const) &easy3d::LinesDrawable::impostor_type, "C++: easy3d::LinesDrawable::impostor_type() const --> enum easy3d::LinesDrawable::ImposterType");
 		cl.def("set_impostor_type", (void (easy3d::LinesDrawable::*)(enum easy3d::LinesDrawable::ImposterType)) &easy3d::LinesDrawable::set_impostor_type, "C++: easy3d::LinesDrawable::set_impostor_type(enum easy3d::LinesDrawable::ImposterType) --> void", pybind11::arg("t"));
 		cl.def("line_width", (float (easy3d::LinesDrawable::*)() const) &easy3d::LinesDrawable::line_width, "C++: easy3d::LinesDrawable::line_width() const --> float");
-		cl.def("set_line_width", (void (easy3d::LinesDrawable::*)(float)) &easy3d::LinesDrawable::set_line_width, "C++: easy3d::LinesDrawable::set_line_width(float) --> void", pybind11::arg("w"));
+		cl.def("set_line_width", (void (easy3d::LinesDrawable::*)(float)) &easy3d::LinesDrawable::set_line_width, "C++: easy3d::LinesDrawable::set_line_width(float) --> void", pybind11::arg("width"));
 	}
 	{ // easy3d::PointsDrawable file:easy3d/renderer/drawable_points.h line:42
 		pybind11::class_<easy3d::PointsDrawable, std::shared_ptr<easy3d::PointsDrawable>, PyCallBack_easy3d_PointsDrawable, easy3d::Drawable> cl(m, "PointsDrawable", "The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.\n \n\n\n \n LinesDrawable, TrianglesDrawable");
@@ -310,7 +310,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 		cl.def("impostor_type", (enum easy3d::PointsDrawable::ImposterType (easy3d::PointsDrawable::*)() const) &easy3d::PointsDrawable::impostor_type, "Get/Set impostor type. \n\nC++: easy3d::PointsDrawable::impostor_type() const --> enum easy3d::PointsDrawable::ImposterType");
 		cl.def("set_impostor_type", (void (easy3d::PointsDrawable::*)(enum easy3d::PointsDrawable::ImposterType)) &easy3d::PointsDrawable::set_impostor_type, "C++: easy3d::PointsDrawable::set_impostor_type(enum easy3d::PointsDrawable::ImposterType) --> void", pybind11::arg("t"));
 		cl.def("point_size", (float (easy3d::PointsDrawable::*)() const) &easy3d::PointsDrawable::point_size, "Get/Set point size. \n\nC++: easy3d::PointsDrawable::point_size() const --> float");
-		cl.def("set_point_size", (void (easy3d::PointsDrawable::*)(float)) &easy3d::PointsDrawable::set_point_size, "C++: easy3d::PointsDrawable::set_point_size(float) --> void", pybind11::arg("s"));
+		cl.def("set_point_size", (void (easy3d::PointsDrawable::*)(float)) &easy3d::PointsDrawable::set_point_size, "C++: easy3d::PointsDrawable::set_point_size(float) --> void", pybind11::arg("diameter"));
 	}
 	{ // easy3d::TrianglesDrawable file:easy3d/renderer/drawable_triangles.h line:46
 		pybind11::class_<easy3d::TrianglesDrawable, std::shared_ptr<easy3d::TrianglesDrawable>, PyCallBack_easy3d_TrianglesDrawable, easy3d::Drawable> cl(m, "TrianglesDrawable", "The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.\n \n\n\n \n LinesDrawable, PointsDrawable\n\n \n TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating\n the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and properties\n (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to GPU.\n See Drawable::update_vertex_buffer().");

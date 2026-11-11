@@ -2949,6 +2949,8 @@ namespace easy3d {
                             u.dimensions[1] = float(command.viewport.w ? command.viewport.w : height);
                             u.viewport_origin[0] = float(command.viewport.x);
                             u.viewport_origin[1] = float(command.viewport.y);
+                            // z = logical pixel size for plain styles; w = world-space
+                            // impostor radius (diameter * pixelGLRatio * 0.5).
                             u.dimensions[2] = expanded_lines(command) ? command.line_width : command.point_size;
                             u.dimensions[3] = expanded_lines(command) ? command.line_radius : command.sphere_radius;
                             for (unsigned i = 0; i < 3; ++i) {

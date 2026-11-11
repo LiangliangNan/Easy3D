@@ -78,9 +78,10 @@ namespace easy3d {
         float line_width() const { return line_width_; }
 		/**
 		 * \brief Sets the line width in logical pixels (DPI-independent).
-		 * \param w The new line width in logical pixels.
+		 * \param width The new line width in logical pixels.
+		 * \note On a 2× DPI display, a 1-pixel line width is 2 physical framebuffer pixels wide.
 		 */
-        void set_line_width(float w) { line_width_ = w; }
+        void set_line_width(float width) { line_width_ = width; }
 
 		/**
 		 * \brief Draws the drawable.

@@ -82,9 +82,10 @@ namespace easy3d {
         float point_size() const { return point_size_; }
 		/**
 		 * \brief Sets the point size in logical pixels (DPI-independent).
-		 * \param s The new point diameter in logical pixels.
+		 * \param diameter The new point diameter in logical pixels.
+		 * \note On a 2× DPI display, a 1-pixel point is 2 physical framebuffer pixels wide.
 		 */
-        void set_point_size(float s) { point_size_ = s; }
+        void set_point_size(float diameter) { point_size_ = diameter; }
 
 		/**
 		 * \brief Draws the drawable.
