@@ -195,6 +195,35 @@ int main(int argc, char**) {
                 }
             }
         }
+        // Impostor lighting is view-space: viewed perpendicular to its axis, the
+        // silhouette center always faces the camera, so its brightness cannot
+        // depend on which side of the world the camera is on.
+        segments->set_impostor_type(LinesDrawable::CYLINDER);
+        segments->set_lighting(true);
+        segments->set_uniform_coloring(vec4(1, 1, 1, 1));
+        renderer.camera()->setType(Camera::ORTHOGRAPHIC);
+        unsigned front = 0;
+        const vec3 directions[] = {vec3(0, 0, -1), vec3(0, -1, 0)};
+        const vec3 ups[] = {vec3(0, 1, 0), vec3(0, 0, -1)};
+        for (int i = 0; i < 2; ++i) {
+            renderer.camera()->setUpVector(ups[i]);
+            renderer.camera()->setViewDirection(directions[i]);
+            renderer.fit_screen();
+            const auto frame = renderer.capture();
+            const auto at = renderer.camera()->projectedCoordinatesOf(vec3(0));
+            const size_t pixel = size_t(at.y) * frame.width + size_t(at.x);
+            require(frame.ids[pixel].object != UINT32_MAX, "line impostor lighting sample missed the silhouette");
+            if (front == 0)
+                front = frame.rgba[4 * pixel];
+            else
+                require(std::abs(int(frame.rgba[4 * pixel]) - int(front)) <= 2,
+                        "line impostor lighting depends on camera orientation");
+        }
+        require(front > 180, "camera-facing line impostor surface is unlit");
+        renderer.camera()->setUpVector(vec3(0, 1, 0));
+        renderer.camera()->setViewDirection(vec3(0, 0, -1));
+        renderer.fit_screen();
+        segments->set_lighting(false);
         segments->set_impostor_type(LinesDrawable::PLAIN);
         for (auto projection : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
             renderer.camera()->setType(projection);

@@ -2,7 +2,7 @@
 #include <tests/test.h>
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
-#include <tutorials/Tutorial_405_ObjectManipulation/viewer.h>
+#include <tutorials/Tutorial_404_ObjectManipulation/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/camera.h>

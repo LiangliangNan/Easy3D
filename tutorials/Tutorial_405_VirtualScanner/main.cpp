@@ -32,7 +32,7 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_404_VirtualScanner/main.cpp
+ * \example{lineno} Tutorial_405_VirtualScanner/main.cpp
  *
  * \brief Simulating a 3D scanner: capturing the currently visible surface of a model as a point cloud.
  *
@@ -72,9 +72,9 @@
  * captured points. Scan from several viewpoints to build up multi-view coverage.
  *
  * The header file of the viewer class:
- * \include{lineno} Tutorial_404_VirtualScanner/viewer.h
+ * \include{lineno} Tutorial_405_VirtualScanner/viewer.h
  * The source file of the viewer class:
- * \include{lineno} Tutorial_404_VirtualScanner/viewer.cpp
+ * \include{lineno} Tutorial_405_VirtualScanner/viewer.cpp
  *
  * \see Viewer, PointCloud, Camera, GaussianNoise, Tutorial_403_PointSelection
  */

@@ -1,6 +1,6 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/Tutorial_405_ObjectManipulation/viewer.h>
+#include <tutorials/Tutorial_404_ObjectManipulation/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>

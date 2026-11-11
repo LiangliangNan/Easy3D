@@ -60,8 +60,8 @@ add_subdirectory(Tutorial_312_MultiThread)
 add_subdirectory(Tutorial_401_ModelPicker)
 add_subdirectory(Tutorial_402_FacePicker)
 add_subdirectory(Tutorial_403_PointSelection)
-add_subdirectory(Tutorial_404_VirtualScanner)
-add_subdirectory(Tutorial_405_ObjectManipulation)
+add_subdirectory(Tutorial_404_ObjectManipulation)
+add_subdirectory(Tutorial_405_VirtualScanner)
 add_subdirectory(Tutorial_406_CollisionDetection)
 
 # rendering techniques

@@ -35,7 +35,7 @@
  * <b>Overview</b>
  * This tutorial loads two meshes (a bunny and a mannequin), animates the bunny, and
  * continuously reports which faces of the two meshes intersect, painting them red. Pausing
- * the animation lets the user drag the bunny around (as in Tutorial_405_ObjectManipulation)
+ * the animation lets the user drag the bunny around (as in Tutorial_404_ObjectManipulation)
  * and watch the contact regions update in real time. Unlike the other 4xx tutorials, all
  * scene setup happens in the viewer's constructor, so main() only creates the viewer and
  * runs it.
@@ -72,7 +72,7 @@
  * The source file of the viewer class:
  * \include{lineno} Tutorial_406_CollisionDetection/viewer.cpp
  *
- * \see Collider, SurfaceMesh, Manipulator, Tutorial_405_ObjectManipulation
+ * \see Collider, SurfaceMesh, Manipulator, Tutorial_404_ObjectManipulation
  */
 
 using namespace easy3d;

@@ -2387,7 +2387,7 @@ SPIR-V validation. The previously documented MoltenVK integer-attachment
 blending warning remains.
 
 
-## Visible-surface scanning and Tutorial 404
+## Visible-surface scanning and Tutorial 405
 
 `VulkanOffScreen::scan_visible_points(samples)` returns a position-only virtual
 scan of the currently visible scene in world coordinates. Each non-background
@@ -2409,7 +2409,7 @@ framebuffer dimensions on HiDPI displays, with no legacy logical-pixel stride or
 height-minus-one conversion. The API does not change the camera/scene or advance
 animation, and an empty scene returns an empty vector.
 
-Tutorial 404 now builds with the native Vulkan host. **Space** acquires the visible
+Tutorial 405 now builds with the native Vulkan host. **Space** acquires the visible
 scene and adds a new PointCloud; **N** toggles the shared Gaussian-noise algorithm.
 Native noise sigma is `0.0001 * camera.sceneRadius()` in world units. Scanned clouds
 remain visible and participate in later scans, as other visible scene models do.
@@ -2424,7 +2424,7 @@ auto world_points = viewer.scan_visible_points(); // synchronous, one center hit
 ```
 
 ```sh
-./cmake-build-debug/bin/Tutorial_404_VirtualScanner_test --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_405_VirtualScanner_test --frames 3 --samples 4 --validation
 ```
 
 `vulkan.scan` tests pixel-center reprojection, perspective/orthographic/custom
@@ -2432,13 +2432,13 @@ camera matrices, tilted transformed surfaces, occlusion/background rejection,
 transparent overlays, clipping, resize, MSAA invariance, analytic point/line
 impostor surfaces and invalid sample counts. `vulkan.scanviewer` drives the
 registered scanner shortcuts, checking exact acquired clouds, noise toggling,
-camera preservation, resize/HiDPI, MSAA and empty/cleared scenes. Tutorial 404 joins
+camera preservation, resize/HiDPI, MSAA and empty/cleared scenes. Tutorial 405 joins
 the bounded native tutorial tests.
 
 Verified on Apple M4 Pro / MoltenVK 1.4.2: all 36 native CTests and all
 12 dual-backend CTests pass. The headless scan and native scanner regressions
 pass with Khronos/synchronization validation enabled and zero validation errors,
-including custom matrices and non-default pivots. Tutorial 404 passes bounded
+including custom matrices and non-default pivots. Tutorial 405 passes bounded
 four-sample execution with validation. Both retained OpenGL tutorial sources
 pass a C++11 compilation check. The existing MoltenVK integer-attachment
 blending warning remains.
@@ -2447,7 +2447,7 @@ blending warning remains.
 ## Tutorial source-layout alignment
 
 Tutorials 306 (image viewer), 307 (cross-section), 309 (text), 403 (point selection)
-and 404 (virtual scanner) now use their original `viewer.h` / `viewer.cpp` pairs
+and 405 (virtual scanner) now use their original `viewer.h` / `viewer.cpp` pairs
 for both backends. Each header contains one tutorial class declaration and its
 state. All method definitions live out of line in `viewer.cpp`; backend-specific
 includes and implementations stay in that same source file. The five parallel,
@@ -2712,9 +2712,9 @@ custom usage configurations preserve the original OpenGL text exactly, and the
 rendered usage HUD was visually inspected.
 
 
-## Tutorial 405: object manipulation
+## Tutorial 404: object manipulation
 
-Tutorial 405 now builds on the native Vulkan host using its original `main.cpp`,
+Tutorial 404 now builds on the native Vulkan host using its original `main.cpp`,
 `viewer.h` and `viewer.cpp` structure. Its manual and hint strings are shared
 between the OpenGL and Vulkan constructors. The hint refers to "the model"
 rather than "bunny", since this example loads the Easy3D letters. Plain left-click selects/unselects a
@@ -2750,13 +2750,13 @@ It also checks finite near/eye-crossing guide vertices and fully clipped boxes,
 and saves a manipulation snapshot. Synthetic mouse gestures use framebuffer coordinates directly, with registered
 key/focus callbacks, so the test does not depend on desktop cursor warping. Native
 mouse callback routing remains covered by the existing window/picker tests.
-Tutorial 405 joins the bounded native tutorial CTests; its source also remains
+Tutorial 404 joins the bounded native tutorial CTests; its source also remains
 compilable with the original OpenGL host.
 
 Verified on MoltenVK on this Mac: the final sequential runs pass all 41 native
 CTests and all 21 combined OpenGL/Vulkan CTests. The combined suite enables
 Khronos/synchronization validation, and the focused native manipulation test also
-passed explicitly with validation. Tutorial 405 passed a three-frame four-sample
+passed explicitly with validation. Tutorial 404 passed a three-frame four-sample
 validation run. The OpenGL-only viewer target builds, and the tutorial's OpenGL
 main/viewer sources pass C++11 compilation checks. No validation errors were
 reported; the existing MoltenVK integer-attachment warning remains. A manipulation
@@ -7525,3 +7525,66 @@ OpenGL 106/106 and Vulkan 140/140 (Vulkan tests temporarily enabled then restore
 test, which passed both in isolation and in a full re-run (focus/desktop flake, not a regression).
 Python bindings are disabled in both trees, so the `PyOffScreen` trampoline change was not compiled
 here. Linux/Mesa, Windows hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 51: view-space light for point/line impostors
+
+**Scope.** The Vulkan command builder fed every impostor a light direction of
+`mat3(camera.modelViewMatrix()) * vec3(0.3f, 0.5f, 1)` — a fixed world direction rotated into view
+space — although `graphics::DrawCommand::sphere_light` is documented as a *view-space* directional
+light and `resources/shaders/vulkan/lines.frag` dots it against camera-space ray-traced normals
+(`0.2 + 0.8*abs(dot(normal, normalize(shape.light.xyz)))`). The effective light therefore rotated
+with the camera: viewing a lit cylinder/cone perpendicular to that world direction left the
+camera-facing surface with `|dot| ≈ 0`, i.e. ambient only, which is the reported "front is not lit".
+The OpenGL path passes the view-space `setting::light_position` straight through in
+`DrawableLines::_draw_cylinders`/`_draw_cones`, so only Vulkan diverged. Point impostors looked
+correct because they shade through `material.material_light`, which was already view-space; their
+now-corrected value was simply unused.
+
+**Fix.** Both impostor branches in `easy3d/renderer/backends/vulkan/drawable.cpp` set
+`result.sphere_light = vec3(setting::light_position)`, matching the documented contract and the
+OpenGL shaders. The impostor uniform layout, the shaders, and the public API are unchanged.
+
+**Regression test.** `vulkan.scene` now renders a lit white cylinder in two orthographic views
+perpendicular to its axis (front and top). In both views the silhouette-center normal is `(0,0,1)`
+in view space, so a view-space light must give identical brightness (tolerance 2/255) and the
+camera-facing surface must be bright (> 180). With the previous camera-rotated light the two views
+measured 226 vs 138 and the test fails with "line impostor lighting depends on camera orientation";
+with the fix both read 239.
+
+**Validation (2026-11-11, macOS Release).** The Vulkan tree rebuilt warning-free and the full serial
+suite passed 140/140 (`ctest --test-dir cmake-build-release -j 1`; tests temporarily enabled, then
+restored to `Easy3D_BUILD_TESTS=OFF`). The OpenGL backend is untouched by the change. Linux/Mesa,
+Windows hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 52: interaction tutorials 404/405 exchanged numbers
+
+**Scope.** `Tutorial_404_VirtualScanner` and `Tutorial_405_ObjectManipulation` exchanged numbers:
+the scanner is now `Tutorial_405_VirtualScanner` and object manipulation is now
+`Tutorial_404_ObjectManipulation`. Git records the four files in each directory as renames, so file
+history follows each tutorial. Every reference was updated:
+
+- Build registration: `tutorials/CMakeLists.txt` and `tests/native_tutorials/test_sources.cmake`
+  list the new directory names in numeric order (`403`, `404_ObjectManipulation`,
+  `405_VirtualScanner`, `406`).
+- Test harness: `tests/viewer/CMakeLists.txt` (`vulkan.scanviewer`, `vulkan.manipulation`,
+  `vulkan.usage`, `vulkan.portablepick`, the annotation suites and `easy3d_capture_test`) and the
+  includes in `scan_viewer_test.cpp`, `manipulation_test.cpp`, `portable_pick_test.cpp`,
+  `annotation_tutorials_test.cpp`, `capture_test.cpp` and `usage_test.cpp`.
+- Doxygen cross-references in the tutorial `main.cpp` files (`\example`, `\include`, `\see`),
+  including Tutorial 401's "reused in ..." note and Tutorial 406's "as in ..." note.
+- `docs/vulkan.md` current-state sections: "Visible-surface scanning and Tutorial 405" (including
+  the `Tutorial_405_VirtualScanner_test` command) and "Tutorial 404: object manipulation". Dated
+  batch entries and earlier batch-referenced status summaries keep the pre-swap numbers, matching
+  how the batch-42 viewer tutorial renumbering is recorded; readers should map them through this
+  entry.
+
+No source behavior changes: only directory names, include paths, target registrations and
+documentation were touched.
+
+**Validation (2026-11-11, macOS Release).** Vulkan (`cmake-build-release`, tests temporarily
+enabled then restored to `Easy3D_BUILD_TESTS=OFF`): full build succeeded and the serial suite passed
+140/140. OpenGL (`build-opengl`, tests already enabled): full build succeeded and the serial suite
+passed 106/106. The renamed scanner and manipulation targets rebuild and pass inside those runs
+(`vulkan.scanviewer`, `vulkan.scan`, `vulkan.manipulation`, `vulkan.usage`, `vulkan.capture`,
+`vulkan.portablepick`, the annotation suites, the native tutorial CTests, and their OpenGL
+counterparts). Linux/Mesa, Windows hardware and GitHub CI were not run.

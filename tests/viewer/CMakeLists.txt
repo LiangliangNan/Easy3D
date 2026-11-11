@@ -94,9 +94,9 @@ if(Easy3D_ENABLE_VULKAN)
         set_tests_properties(vulkan.animation PROPERTIES TIMEOUT 120 LABELS desktop)
 
         add_executable(easy3d_vulkan_scan_viewer_test scan_viewer_test.cpp
-                "${Easy3D_ROOT}/tutorials/Tutorial_404_VirtualScanner/viewer.cpp")
+                "${Easy3D_ROOT}/tutorials/Tutorial_405_VirtualScanner/viewer.cpp")
         target_include_directories(easy3d_vulkan_scan_viewer_test PRIVATE
-                "${Easy3D_ROOT}/tutorials/Tutorial_404_VirtualScanner")
+                "${Easy3D_ROOT}/tutorials/Tutorial_405_VirtualScanner")
         target_link_libraries(easy3d_vulkan_scan_viewer_test PRIVATE easy3d::viewer)
 
         add_test(NAME vulkan.scanviewer COMMAND easy3d_vulkan_scan_viewer_test ${validation_args})
@@ -187,7 +187,7 @@ if(Easy3D_ENABLE_VULKAN)
         add_test(NAME vulkan.collision COMMAND easy3d_vulkan_collision_test ${validation_args})
         set_tests_properties(vulkan.collision PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_manipulation_test manipulation_test.cpp
-                ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp)
+                ../../tutorials/Tutorial_404_ObjectManipulation/viewer.cpp)
         target_link_libraries(easy3d_vulkan_manipulation_test PRIVATE easy3d::viewer)
 
         add_test(NAME vulkan.manipulation COMMAND easy3d_vulkan_manipulation_test ${validation_args})
@@ -199,9 +199,9 @@ if(Easy3D_ENABLE_VULKAN)
                 ../../tutorials/Tutorial_401_ModelPicker/viewer.cpp
                 ../../tutorials/Tutorial_402_FacePicker/viewer.cpp
                 ../../tutorials/Tutorial_403_PointSelection/viewer.cpp
-                ../../tutorials/Tutorial_404_VirtualScanner/viewer.cpp)
+                ../../tutorials/Tutorial_405_VirtualScanner/viewer.cpp)
         target_include_directories(easy3d_vulkan_usage_test PRIVATE
-                "${Easy3D_ROOT}/tutorials/Tutorial_404_VirtualScanner")
+                "${Easy3D_ROOT}/tutorials/Tutorial_405_VirtualScanner")
         target_link_libraries(easy3d_vulkan_usage_test PRIVATE easy3d::viewer)
 
         add_test(NAME vulkan.usage COMMAND easy3d_vulkan_usage_test ${validation_args})
@@ -299,7 +299,7 @@ endif()
 
 add_executable(easy3d_portable_pick_test portable_pick_test.cpp
     ../../tutorials/Tutorial_401_ModelPicker/viewer.cpp ../../tutorials/Tutorial_402_FacePicker/viewer.cpp
-    ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp)
+    ../../tutorials/Tutorial_404_ObjectManipulation/viewer.cpp)
 target_link_libraries(easy3d_portable_pick_test PRIVATE easy3d::viewer)
 if(Easy3D_ENABLE_VULKAN)
     add_test(NAME vulkan.portablepick COMMAND easy3d_portable_pick_test --validation)
@@ -339,7 +339,7 @@ endif()
 add_executable(easy3d_annotation_tutorials_test annotation_tutorials_test.cpp
     ../../tutorials/Tutorial_205_RealCamera/viewer.cpp
     ../../tutorials/Tutorial_205_RealCamera/read_bundler_file.cpp
-    ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp
+    ../../tutorials/Tutorial_404_ObjectManipulation/viewer.cpp
     ../../tutorials/Tutorial_506_DepthMap/viewer.cpp)
 target_link_libraries(easy3d_annotation_tutorials_test PRIVATE easy3d::viewer)
 if(Easy3D_ENABLE_VULKAN)
@@ -382,7 +382,7 @@ else()
     set_tests_properties(opengl.offscreenqueries PROPERTIES LABELS desktop TIMEOUT 120)
 endif()
 
-add_executable(easy3d_capture_test capture_test.cpp ../../tutorials/Tutorial_404_VirtualScanner/viewer.cpp)
+add_executable(easy3d_capture_test capture_test.cpp ../../tutorials/Tutorial_405_VirtualScanner/viewer.cpp)
 target_link_libraries(easy3d_capture_test PRIVATE easy3d::viewer 3rd_glfw)
 if(Easy3D_ENABLE_VULKAN)
     add_test(NAME vulkan.capture COMMAND easy3d_capture_test --validation)

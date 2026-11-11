@@ -38,7 +38,7 @@
  * to toggle its selection, shown by coloring it red. It is the first of the interaction
  * tutorials: the pattern is to subclass Viewer, override a mouse event handler, and ask the
  * viewer what lies under the cursor. The same pattern is refined in Tutorial_402_FacePicker
- * (picking a single face) and reused in Tutorial_405_ObjectManipulation (picking, then moving
+ * (picking a single face) and reused in Tutorial_404_ObjectManipulation (picking, then moving
  * the picked model).
  *
  * <b>The technique</b>
@@ -77,7 +77,7 @@
  * The source file of the viewer class:
  * \include{lineno} Tutorial_401_ModelPicker/viewer.cpp
  *
- * \see Viewer, Renderer, Tutorial_402_FacePicker, Tutorial_405_ObjectManipulation
+ * \see Viewer, Renderer, Tutorial_402_FacePicker, Tutorial_404_ObjectManipulation
  */
 
 using namespace easy3d;

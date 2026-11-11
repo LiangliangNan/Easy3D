@@ -6,7 +6,7 @@
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
 #include <tutorials/Tutorial_403_PointSelection/viewer.h>
-#include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
+#include <tutorials/Tutorial_405_VirtualScanner/viewer.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/initializer.h>

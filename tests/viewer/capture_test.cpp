@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
-#include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
+#include <tutorials/Tutorial_405_VirtualScanner/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>

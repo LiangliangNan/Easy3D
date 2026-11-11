@@ -29,7 +29,7 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_405_ObjectManipulation/main.cpp
+ * \example{lineno} Tutorial_404_ObjectManipulation/main.cpp
  *
  * \brief Moving and rotating an individual model in 3D with the mouse, using the Manipulator class.
  *
@@ -70,9 +70,9 @@
  * as usual.
  *
  * The header file of the viewer class:
- * \include{lineno} Tutorial_405_ObjectManipulation/viewer.h
+ * \include{lineno} Tutorial_404_ObjectManipulation/viewer.h
  * The source file of the viewer class:
- * \include{lineno} Tutorial_405_ObjectManipulation/viewer.cpp
+ * \include{lineno} Tutorial_404_ObjectManipulation/viewer.cpp
  *
  * \see Manipulator, ManipulatedFrame, Viewer, Tutorial_401_ModelPicker, Tutorial_406_CollisionDetection
  */

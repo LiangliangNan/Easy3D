@@ -46,8 +46,8 @@ set(tutorial_scenes
         Tutorial_401_ModelPicker
         Tutorial_402_FacePicker
         Tutorial_403_PointSelection
-        Tutorial_404_VirtualScanner
-        Tutorial_405_ObjectManipulation
+        Tutorial_404_ObjectManipulation
+        Tutorial_405_VirtualScanner
         Tutorial_406_CollisionDetection
         Tutorial_501_AmbientOcclusion
         Tutorial_502_HardShadow

@@ -315,7 +315,9 @@ namespace easy3d {
                     result.sphere_radius = Drawable::impostor_radius(cam, p->point_size());
                     result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
                     result.projection = cam.projectionMatrix();
-                    result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
+                    // setting::light_position is already a view-space direction; the
+                    // impostor shaders dot it against camera-space ray normals.
+                    result.sphere_light = vec3(setting::light_position);
                 }
                 if (auto *l = dynamic_cast<LinesDrawable *>(&d)) {
                     result.line_style = l->impostor_type() == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder
@@ -325,7 +327,7 @@ namespace easy3d {
                     result.line_radius = Drawable::impostor_radius(cam, l->line_width());
                     result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
                     result.projection = cam.projectionMatrix();
-                    result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
+                    result.sphere_light = vec3(setting::light_position);
                 }
                 result.model_view_projection = cam.modelViewProjectionMatrix() * d.manipulated_matrix();
                 if (!clipping_planes.empty()) {
