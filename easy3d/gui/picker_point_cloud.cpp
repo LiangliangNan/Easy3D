@@ -152,7 +152,7 @@ namespace {
                ->set_uniform("PROJ", camera()->projectionMatrix())
                ->set_uniform("MANIP", drawable->manipulated_matrix())
                ->set_uniform("point_size", drawable->point_size())
-               ->set_uniform("sphere_radius", drawable->point_size() * camera()->pixelGLRatio(camera()->pivotPoint()) * 0.5f)
+               ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivotPoint()) * 0.5f)
                ->set_uniform("screen_width", w);
         ClippingPlane::instance()->set_program(program);
         drawable->gl_draw();

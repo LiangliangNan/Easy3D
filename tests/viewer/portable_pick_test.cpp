@@ -127,7 +127,7 @@ void impostor_widths(Viewer& v) {
     for (auto projection:{Camera::ORTHOGRAPHIC,Camera::PERSPECTIVE}) {
         camera.setType(projection);camera.setSceneBoundingBox(vec3(-1),vec3(1));camera.showEntireScene();
         camera.setPivotPoint(vec3(0));
-        const float radius=100*camera.pixelGLRatio(camera.pivotPoint())*.5f;
+        const float radius=100*camera.world_pixel_ratio(camera.pivotPoint())*.5f;
         const float distance=camera.position().norm();
         const float plane_width=std::abs(v.world_to_window(vec3(0,radius,0)).y-
                                          v.world_to_window(vec3(0,-radius,0)).y);
@@ -179,7 +179,7 @@ void sphere_snapshots(Viewer& v) {
             points->update_vertex_buffer({center});
             if (textured) points->set_texture_coloring(State::VERTEX,"v:texcoord",texture.get());
             else points->set_uniform_coloring(vec4(1,0,0,1));
-            const float radius=points->point_size()*v.camera()->pixelGLRatio(v.camera()->pivotPoint())*.5f;
+            const float radius=points->point_size()*v.camera()->world_pixel_ratio(v.camera()->pivotPoint())*.5f;
             const auto inv=inverse(v.camera()->modelViewProjectionMatrix());
             for (float scale:{1.f,1.5f}) {
                 const std::string file="sphere-"+std::to_string(int(projection))+"-"+std::to_string(textured)+

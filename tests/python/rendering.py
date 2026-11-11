@@ -313,7 +313,7 @@ def check_point_line_states(directory):
     assert viewer.delete_drawable(points)
 
     # Sphere impostors: the orthographic radius is point_size/2 pixels on both
-    # backends (sphere_radius = point_size * pixelGLRatio / 2).
+    # backends (sphere_radius = point_size * world_pixel_ratio / 2).
     spheres = easy3d.PointsDrawable("sphere points")
     spheres.update_vertex_buffer([left, right])
     spheres.set_impostor_type(easy3d.PointsDrawable.SPHERE)

@@ -303,10 +303,10 @@ clip-space formulas left. Consequences:
 6. **Drawable sizes are logical pixels**: `PointsDrawable::point_size()` and `LinesDrawable::line_width()`
    are expressed in **logical pixels** (DPI-independent) on both backends (Batch 46; the OpenGL-imposter
    behavior won). Impostor radii are computed once via the shared `impostor_radius(camera, diameter)` helper
-   (`diameter * camera.pixelGLRatio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
+   (`diameter * camera.world_pixel_ratio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
    points/lines rasterize in framebuffer pixels and are scaled from logical size by the viewport-to-camera
    ratio (`viewport_pixel_scale(camera)` on OpenGL; the target/camera ratio in Vulkan `draw_commands`).
-   `Camera::pixelGLRatio()` therefore returns world-units-per-**logical**-pixel on both backends.
+   `Camera::world_pixel_ratio()` therefore returns world-units-per-**logical**-pixel on both backends.
 
 ### Example: Correct Coordinate Usage
 
@@ -1366,7 +1366,7 @@ package.
 `PointsDrawable::PLAIN` accepts positive finite framebuffer-pixel sizes; sizes
 other than one use instanced triangle quads and never request `largePoints`.
 `PointsDrawable::SPHERE` uses a view-space radius of
-`point_size() * camera.pixelGLRatio(camera.pivotPoint()) / 2`, matching the legacy
+`point_size() * camera.world_pixel_ratio(camera.pivotPoint()) / 2`, matching the legacy
 radius convention. Manipulation transforms the center; radius is independent of
 model scale. Model/default drawable styling remains plain one-pixel points until
 explicitly changed. `PointsDrawable::SURFEL` now renders oriented circular discs
@@ -1456,7 +1456,7 @@ and the other roadmap gates remain outstanding.
 ## Cylinder/cone line impostors and Tutorial 302
 
 `LinesDrawable::CYLINDER` and `LinesDrawable::CONE` are now supported by the native
-scene adapter. Radius is `line_width() * camera.pixelGLRatio(camera.pivotPoint()) / 2`,
+scene adapter. Radius is `line_width() * camera.world_pixel_ratio(camera.pivotPoint()) / 2`,
 matching the existing radius convention. Cylinders have two flat caps; cones have
 a base cap at the first endpoint and taper to the second endpoint. Model/view
 transforms move the endpoints, while radius remains in view-space units. A
@@ -7588,3 +7588,42 @@ passed 106/106. The renamed scanner and manipulation targets rebuild and pass in
 (`vulkan.scanviewer`, `vulkan.scan`, `vulkan.manipulation`, `vulkan.usage`, `vulkan.capture`,
 `vulkan.portablepick`, the annotation suites, the native tutorial CTests, and their OpenGL
 counterparts). Linux/Mesa, Windows hardware and GitHub CI were not run.
+
+### 2026-11-11 — W10 batch 53: quantity names in the pixel-sizing API
+
+**Scope.** The pixel-sizing API now states the measured quantity and its unit explicitly, with no
+behavior, layout or numerical change:
+
+- `Drawable::impostor_radius(camera, size)` → `impostor_radius(camera, diameter)`. The parameter is
+  the full impostor diameter in logical pixels (the value of `point_size()`/`line_width()`), and the
+  helper returns the world-space radius `diameter * camera.world_pixel_ratio(pivot) * 0.5`. This
+  remains the single diameter-to-radius conversion point shared by both backends.
+- `PointsDrawable::set_point_size(float s)` → `set_point_size(float diameter)` and
+  `LinesDrawable::set_line_width(float w)` → `set_line_width(float width)`. Their Doxygen now carries
+  the high-DPI note: on a 2× DPI display one logical pixel covers two physical framebuffer pixels.
+- Python bindings keyword names follow the C++ parameters: `s` → `diameter`, `w` → `width`.
+  Positional calls are unchanged; keyword calls using the old names (for example
+  `set_point_size(s=5)`) no longer bind.
+- `Camera::pixelGLRatio(position)` → `Camera::world_pixel_ratio(position)`. This is a clean rename
+  without a deprecated alias, matching the batch-46 conversion renames. The name now states both
+  coordinate systems — the return value is world units per **logical** screen pixel — and the legacy
+  "GL" wording was misleading now that the Vulkan backend uses the same ratio. Semantics are
+  unchanged: the perspective ratio grows with the view-space depth of the argument, the orthographic
+  ratio is constant, and both derive from logical `screenHeight()`.
+- Vulkan uniform comments corrected: `MaterialState`/`ImpostorUniform::dimensions` now document
+  `z` as the plain pixel size and `w` as the world-space impostor radius. `lines.vert` previously
+  described `dimensions.w` as a "view-space radius"; it is world-space, like every other impostor
+  radius consumed by the shaders.
+
+**References.** Updated call sites (`drawable.cpp`, `picker_point_cloud.cpp`, Mapple
+`paint_canvas.cpp`), the Python binding registration and its `Camera::Type` doc string, the
+`portable_pick` and `scan` tests, the Python rendering test comment, and this document's current-state
+sections plus style-guide item 6. Dated batch entries keep the pre-rename `pixelGLRatio` spelling, as
+with earlier renamed APIs.
+
+**Validation (2026-11-11, macOS Release).** Vulkan (`cmake-build-release`, tests temporarily enabled
+then restored to `Easy3D_BUILD_TESTS=OFF`): full build succeeded and the serial suite passed 140/140.
+OpenGL (`build-opengl`, tests enabled): full build succeeded and the serial suite passed 106/106. No
+rendering output changed: the renamed API is exercised by the impostor, pick, scan, snapshot and
+interaction suites. The Python bindings source was updated but not rebuilt or run. Linux/Mesa, Windows
+hardware and GitHub CI were not run.

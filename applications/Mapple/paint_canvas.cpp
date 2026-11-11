@@ -1410,7 +1410,7 @@ void PaintCanvas::postDraw() {
             drawable_manip_sphere_ = new LinesDrawable;
 
         const int radius = 150; // pixels
-        float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
+        float ratio = camera_->world_pixel_ratio(camera_->pivotPoint());
         auto manip = mat4::translation(camera_->pivotPoint()) * mat4::scale(radius * ratio) ;
         shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
     }

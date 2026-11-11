@@ -346,9 +346,9 @@ namespace easy3d {
 
         /**
          * \brief Computes the world-space radius of an impostor primitive.
-         * \param camera Camera whose logical screen dimensions define pixelGLRatio().
+         * \param camera Camera whose logical screen dimensions define world_pixel_ratio().
          * \param diameter Full impostor diameter in logical pixels (point_size()/line_width()).
-         * \return World-space radius, diameter * pixelGLRatio(pivotPoint()) * 0.5, that
+         * \return World-space radius, diameter * world_pixel_ratio(pivotPoint()) * 0.5, that
          *      projects to \p diameter logical pixels on both backends. Impostor radii are
          *      world-space quantities; the framebuffer viewport handles physical sizing.
          * \details Both backends derive their impostor size from this single formula:

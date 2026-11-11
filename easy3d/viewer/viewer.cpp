@@ -1326,7 +1326,7 @@ namespace easy3d {
         // Drawable point/line sizes are logical pixels; the device rasterizes plain
         // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
         // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
-        // world-space and already carry the logical sizing through pixelGLRatio().
+        // world-space and already carry the logical sizing through world_pixel_ratio().
         const float pixel_scale = cam.screenWidth() > 0 ? float(width) / float(cam.screenWidth()) : 1.0f;
         auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
                           bool selected, bool depth_bias = false) {

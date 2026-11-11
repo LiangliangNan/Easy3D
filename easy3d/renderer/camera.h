@@ -164,7 +164,7 @@ namespace easy3d {
          * \brief Enumerates the two possible types of Camera.
          * \details See type() and setType(). This type mainly defines different Camera projection matrix (see
          *      loadProjectionMatrix()). Many other methods (convertClickToLine(), projectedCoordinatesOf(),
-         *      pixelGLRatio()...) are affected by this Type.
+         *      world_pixel_ratio()...) are affected by this Type.
          */
         enum Type {
             PERSPECTIVE,    ///< Perspective camera.
@@ -447,15 +447,17 @@ namespace easy3d {
         int screenHeight() const { return screenHeight_; }
 
         /**
-         * \brief World-space length that projects to one logical pixel at a position.
+         * \brief Returns the world length that projects to one logical pixel at a position.
          * \param position The world-space position at which to evaluate the ratio.
          * \return World units per logical screen pixel (DPI-independent), derived
-         *      from screenHeight(). A segment of length n * pixelGLRatio() at
+         *      from screenHeight(). A segment of length n * world_pixel_ratio() at
          *      \p position projects to n logical pixels, so impostor radii computed
-         *      as diameter * pixelGLRatio() * 0.5 keep a constant logical size on both
+         *      as diameter * world_pixel_ratio() * 0.5 keep a constant logical size on both
          *      backends regardless of the framebuffer's physical pixel density.
+         * \details The ratio depends on the camera type: for PERSPECTIVE it grows with the
+         *      view-space depth of \p position, while for ORTHOGRAPHIC it is constant.
          */
-        float pixelGLRatio(const vec3 &position) const;
+        float world_pixel_ratio(const vec3 &position) const;
 
         /**
          * \brief Returns the coefficient which is used to set zNear() when the Camera is inside the sphere defined by

@@ -86,7 +86,7 @@ int main(int argc,char**) {
         for (auto style:{PointsDrawable::PLAIN,PointsDrawable::SPHERE,PointsDrawable::SURFEL}) {
             points->set_impostor_type(style);
             const auto scan=check_scan(viewer,1); require(scan.size()>20,"point-style scan is empty");
-            const float radius=points->point_size()*viewer.camera()->pixelGLRatio(viewer.camera()->pivotPoint())*.5f;
+            const float radius=points->point_size()*viewer.camera()->world_pixel_ratio(viewer.camera()->pivotPoint())*.5f;
             for (const auto& p:scan) {
                 if (style==PointsDrawable::SPHERE) {
                     const float distance=std::min((p-vec3(-.3f,0,0)).length(),(p-vec3(.3f,0,0)).length());
@@ -103,7 +103,7 @@ int main(int argc,char**) {
         for (auto style:{LinesDrawable::CYLINDER,LinesDrawable::CONE}) {
             line->set_impostor_type(style);
             const auto scan=check_scan(viewer,1); require(scan.size()>20,"line impostor scan is empty");
-            const float radius=24*viewer.camera()->pixelGLRatio(viewer.camera()->pivotPoint())*.5f;
+            const float radius=24*viewer.camera()->world_pixel_ratio(viewer.camera()->pivotPoint())*.5f;
             for (const auto& p:scan) {
                 const float r=style==LinesDrawable::CONE?radius*(.4f-p.x)/.8f:radius;
                 require(p.x>=-.4001f && p.x<=.4001f,"line scan is outside segment caps");

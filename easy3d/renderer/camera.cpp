@@ -574,9 +574,9 @@ namespace easy3d {
 		projectionMatrixIsUpToDate_ = false;
 	}
 
-	/*! Returns the ratio between logical pixels and OpenGL (world) units at \p position.
+	/*! Returns the world length that projects to one logical screen pixel at \p position.
 
-	 A line of \c n * pixelGLRatio() OpenGL units, located at \p position in the
+	 A line of \c n * world_pixel_ratio() world units, located at \p position in the
 	 world coordinates system, will be projected with a length of \c n logical
 	 pixels on screen (DPI-independent; screenHeight() is logical on both backends).
 
@@ -585,9 +585,9 @@ namespace easy3d {
 	 sceneCenter() and always directed along the screen vertical direction: \code
 	 glBegin(GL_LINES);
 	 glVertex3fv(sceneCenter());
-	 glVertex3fv(sceneCenter() + 20 * pixelGLRatio(sceneCenter()) *
+	 glVertex3fv(sceneCenter() + 20 * world_pixel_ratio(sceneCenter()) *
 	 camera()->upVector()); glEnd(); \endcode */
-	float Camera::pixelGLRatio(const vec3 &position) const {
+	float Camera::world_pixel_ratio(const vec3 &position) const {
 		switch (type()) {
 		case PERSPECTIVE:
 			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
