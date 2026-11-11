@@ -13,10 +13,19 @@ struct Pixels {
     explicit Pixels(const std::string& path){require(ImageIO::load(path,rgba,w,h,c,4,false),"cannot load HUD capture");}
     const unsigned char* at(int x,int y)const{return rgba.data()+4*(size_t(y)*w+x);}
 };
+// Rotated so the silhouette stays diagonal at any framebuffer size. Axis-aligned
+// edges can land between the 4x sample positions, yielding no partially covered
+// pixels at all and making the coverage checks depend on the window resolution.
+// The radius keeps the horizontal reach at the quad's center close to the
+// previously axis-aligned 0.8 while its corners stay inside the viewport.
 graphics::DrawCommand quad(float z,const vec4& color) {
     std::vector<graphics::Vertex> vertices(4);
-    const vec3 positions[]={vec3(-.8f,-.8f,z),vec3(.8f,-.8f,z),vec3(.8f,.8f,z),vec3(-.8f,.8f,z)};
-    for(unsigned i=0;i<4;++i){vertices[i].position=positions[i];vertices[i].normal=vec3(0,0,1);}
+    const float radius=.75f,angle=.35f,c=std::cos(angle),s=std::sin(angle);
+    const float corners[4][2]={{-1,-1},{1,-1},{1,1},{-1,1}};
+    for(unsigned i=0;i<4;++i) {
+        const float x=radius*corners[i][0],y=radius*corners[i][1];
+        vertices[i].position=vec3(x*c-y*s,x*s+y*c,z);vertices[i].normal=vec3(0,0,1);
+    }
     graphics::DrawCommand d;d.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
     d.color=color;d.overlay_independent_depth=true;return d;
 }

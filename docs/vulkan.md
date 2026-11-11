@@ -7858,3 +7858,35 @@ drivers, but each fix is portable and keeps macOS behavior unchanged.
 enabled, then restored to `Easy3D_BUILD_TESTS=OFF`). The five previously failing Vulkan tests
 pass with sync validation enabled. Linux/Mesa behavior is inferred from the drivers' documented
 and observed queries; the CI rerun is the remaining gate.
+
+### 2026-11-11 — W10 batch 60: portable HUD coverage and transparent picking probes
+
+**Scope.** The next CI run reported one remaining OpenGL failure and one new Vulkan failure. Both
+were test assumptions that only hold on some drivers; neither needed a renderer change.
+
+- `opengl.independenthud` ("HUD MSAA silhouette coverage was lost during composition", logged
+  alongside `MSAA is not available (4 samples requested)`): CI provides no 4x visual, so the
+  independent HUD target is single-sample and the axis-aligned quad's edges fall exactly on
+  pixel boundaries. Which edge pixels are partially covered then depends on the rasterizer's
+  fill rule, and with no MSAA there are no partial samples at all, so the coverage comparison
+  was resolution and driver dependent. The HUD quad in `tests/viewer/independent_hud_test.cpp`
+  is now a rotated square (radius 0.75, angle 0.35 rad): its edges stay diagonal at every
+  framebuffer size, so partially covered pixels exist regardless of the sample count and the
+  existing coverage assertions no longer depend on edge placement. The radius keeps the
+  horizontal reach near the quad center close to the old 0.8 while its corners remain inside
+  the viewport.
+- `vulkan.transparency` ("linked lists changed picking IDs"): the target is 65x65 and the test
+  quads are split along a diagonal through pixel (32,32), so that pixel's center lies exactly
+  on the shared edge of two coplanar triangles at equal depth. The specification does not say
+  which triangle owns a sample on a shared edge, and lavapipe attributes it differently from
+  MoltenVK. The test now checks the object ID at the center (identical over the whole quad)
+  and probes each triangle's primitive ID well inside its interior: (56,56) reports primitive 0
+  and (8,8) primitive 1. The helpers report the pixel and the actual/expected pair on failure,
+  and the linked-list path additionally checks both primitives (previously only primitive 0 was
+  checked). The pixel query also moved to the interior pixel. This strengthens coverage rather
+  than relaxing it, and removes the only portable-contract violation.
+
+**Validation (2026-11-11, macOS Release).** OpenGL `build-opengl` full build and serial CTest
+106/106; Vulkan `cmake-build-release` full build and serial CTest 140/140 (tests temporarily
+enabled, then restored to `Easy3D_BUILD_TESTS=OFF`); `vulkan.transparency` also passed ten
+repeated runs with sync validation. The Linux/Mesa CI rerun remains the gate.
