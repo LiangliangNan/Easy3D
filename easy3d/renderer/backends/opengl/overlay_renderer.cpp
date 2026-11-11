@@ -156,7 +156,23 @@ void main() {
             GLint draw_fbo = 0, read_fbo = 0, samples = 0;
             glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_fbo);
             glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_fbo);
-            glGetIntegerv(GL_SAMPLES, &samples);
+            // GL_SAMPLES reports the window visual on some drivers (e.g., Mesa llvmpipe)
+            // even with a multisample framebuffer bound, so ask the attached renderbuffer.
+            if (draw_fbo) {
+                GLint type = 0, buffer = 0, bound = 0;
+                glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                                      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type);
+                glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                                      GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &buffer);
+                if (type == GL_RENDERBUFFER) {
+                    glGetIntegerv(GL_RENDERBUFFER_BINDING, &bound);
+                    glBindRenderbuffer(GL_RENDERBUFFER, buffer);
+                    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples);
+                    glBindRenderbuffer(GL_RENDERBUFFER, bound);
+                }
+            }
+            else
+                glGetIntegerv(GL_SAMPLES, &samples);
             bool independent = false;
             for (const auto &d : draws_)
                 independent |= d.command.geometry && d.command.overlay_independent_depth;

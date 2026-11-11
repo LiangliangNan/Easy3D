@@ -7819,3 +7819,42 @@ identifiers and remain native; the shared router still compares them directly.
 CTest 140/140; OpenGL `build-opengl` full build and serial CTest 106/106. A repository-wide grep
 outside `3rd_party/` finds `GLFW_KEY_*`/`GLFW_MOD_*`/`GLFW_MOUSE_BUTTON_*` only in
 `easy3d/viewer/backends/glfw_runtime.cpp`. Python bindings and tutorials were rebuilt but not run.
+
+### 2026-11-11 — W10 batch 59: Linux-only resize, HUD MSAA and depth-store hazards
+
+**Scope.** The second CI run reported two OpenGL failures under Xvfb/llvmpipe and five Vulkan
+headless failures with sync-validation errors. All three causes reproduce only on the Linux
+drivers, but each fix is portable and keeps macOS behavior unchanged.
+
+- `opengl.events` ("logical resize notification missing"): the OpenGL `draw_frame()` path relied
+  entirely on GLFW size callbacks, but X11 never sends `ConfigureNotify` for an unmapped (hidden)
+  window, so an Xvfb viewer that is resized while hidden never learned its new size. The OpenGL
+  branch now polls the logical and framebuffer sizes at frame start, exactly like the Vulkan
+  branch already did, and calls the existing `callback_event_resize()` when either differs from
+  the cached values. No callback or state path was added.
+- `opengl.independenthud` ("HUD MSAA silhouette coverage was lost during composition"): the
+  independent-HUD target is allocated with the destination framebuffer's sample count, which the
+  overlay renderer read with `glGetIntegerv(GL_SAMPLES, ...)`. Mesa (llvmpipe) reports the
+  *window visual's* samples there even when a multisample FBO is bound, so a 4x window-less
+  snapshot got a single-sample HUD target and its edges lost coverage. When a framebuffer object
+  is bound, the sample count now comes from its color attachment: query the attachment object
+  and its `GL_RENDERBUFFER_SAMPLES` (snapshot and MultiViewer FBOs are renderbuffer-backed). The
+  default framebuffer keeps the `GL_SAMPLES` query.
+- Vulkan `SYNC-HAZARD-WRITE-AFTER-READ` in `vulkan.depthtexture`, `vulkan.eyedomelighting`,
+  `vulkan.ambientocclusion`, `vulkan.transparency` and `vulkan.shadow`: when a command samples
+  scene depth (EDL, AO, shadows, depth textures), the flat overlay subpass also referenced that
+  depth image as a read-only depth attachment. The implicit attachment store at the end of the
+  subpass is a depth write, and the subpass had no ordering between its sampled reads and that
+  store. The subpass no longer references scene depth at all: the read-only layout established
+  by the annotation subpass is kept, the attachment is listed in `pPreserveAttachments`, and the
+  store now happens at the end of the annotation subpass, where the existing
+  source-to-flat dependency already orders it before the fragment-shader samples. A self
+  dependency was rejected by `VUID-VkSubpassDependency-srcSubpass-02243` (both scopes are
+  framebuffer-space, so `VK_DEPENDENCY_BY_REGION_BIT` would be mandatory), but a per-region
+  barrier cannot order samples taken at arbitrary texture coordinates.
+
+**Validation (2026-11-11, macOS Release).** OpenGL `build-opengl` full build and serial CTest
+106/106; Vulkan `cmake-build-release` full build and serial CTest 140/140 (tests temporarily
+enabled, then restored to `Easy3D_BUILD_TESTS=OFF`). The five previously failing Vulkan tests
+pass with sync validation enabled. Linux/Mesa behavior is inferred from the drivers' documented
+and observed queries; the CI rerun is the remaining gate.

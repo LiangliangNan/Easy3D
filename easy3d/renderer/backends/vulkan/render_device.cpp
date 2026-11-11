@@ -854,12 +854,12 @@ namespace easy3d {
                     if (msaa)
                         overlay.pResolveAttachments = resolves;
                     else {
-                        overlay.preserveAttachmentCount = depth_preview ? 1 : 2;
+                        // Scene depth is sampled here by commands such as EDL, AO, shadows
+                        // and depth textures. Referencing it would make the implicit
+                        // attachment store a write racing with those samples, so keep the
+                        // read-only layout from the annotation subpass and preserve it.
+                        overlay.preserveAttachmentCount = 2;
                         overlay.pPreserveAttachments = preserve;
-                        // Read-only attachment + sampled image is supported without a
-                        // feedback-loop extension: this subpass never writes scene depth.
-                        if (depth_preview)
-                            overlay.pDepthStencilAttachment = &read_depth;
                     }
                     VkSubpassDependency dependencies[12] = {};
                     const auto color_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

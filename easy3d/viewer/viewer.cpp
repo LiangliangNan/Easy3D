@@ -543,6 +543,12 @@ namespace easy3d {
         }
 #else
         glfwMakeContextCurrent(window_);
+        // Hidden windows may not receive size callbacks (e.g., X11 never reports
+        // ConfigureNotify for unmapped windows), so poll like the Vulkan path.
+        int lw = 0, lh = 0;
+        viewer_size(lw, lh);
+        if (lw != width_ || lh != height_ || w != framebuffer_width_ || h != framebuffer_height_)
+            callback_event_resize(lw, lh);
 #endif
         if (!initialized_) {
             init();

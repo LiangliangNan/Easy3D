@@ -54,7 +54,7 @@ TutorialRealCamera::TutorialRealCamera(const std::string &title,
     if (add_model(cloud_file)) {
         // Make the reconstructed points large enough to see.
         auto drawable = current_model()->renderer()->get_points_drawable("vertices");
-        drawable->set_point_size(5.0f);
+        drawable->set_point_size(2.0f);
 
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
