@@ -1,5 +1,4 @@
 /********************************************************************
-* \see Shadow
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -65,6 +64,8 @@ namespace easy3d {
      *
      * Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same
      * geometry pass.
+     *
+     * \see Shadow
      */
 
 #ifdef EASY3D_HAS_VULKAN

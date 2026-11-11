@@ -41,21 +41,21 @@ namespace easy3d {
         enum class Topology { triangles, lines, points };
 
         /**
- * \brief Immutable point positions in draw order, mapped to original source slots.
- * \details Native OpenGL snapshots may contain GPU-only storage (empty CPU
- * vectors) and are valid only for selection on their owning viewer. The source
- * count remains available. Devices realize CPU snapshots once as a shared
- * vertex/storage buffer, reusable when attributes or transforms change.
- */
+         * \brief Immutable point positions in draw order, mapped to original source slots.
+         * \details Native OpenGL snapshots may contain GPU-only storage (empty CPU
+         * vectors) and are valid only for selection on their owning viewer. The source
+         * count remains available. Devices realize CPU snapshots once as a shared
+         * vertex/storage buffer, reusable when attributes or transforms change.
+         */
         class PointData {
         public:
             /**
-     * \brief Create a point-data snapshot.
-     * \param positions Point centers in draw/instance order.
-     * \param source_ids Original source slots corresponding to each point.
-     *        An empty vector indicates identity ordering.
-     * \param source_count Number of original source slots, including absent slots.
-     */
+             * \brief Create a point-data snapshot.
+             * \param positions Point centers in draw/instance order.
+             * \param source_ids Original source slots corresponding to each point.
+             *        An empty vector indicates identity ordering.
+             * \param source_count Number of original source slots, including absent slots.
+             */
             explicit PointData(std::vector<vec3> positions,
                                std::vector<std::uint32_t> source_ids = {},
                                std::uint32_t source_count = 0);
@@ -101,20 +101,20 @@ namespace easy3d {
         };
 
         /**
- * \brief Immutable geometry snapshot submitted to a RenderDevice.
- * \details Constructor inputs are copied, so temporaries and subsequent model
- * edits are safe. Updating geometry creates a new snapshot.
- */
+         * \brief Immutable geometry snapshot submitted to a RenderDevice.
+         * \details Constructor inputs are copied, so temporaries and subsequent model
+         * edits are safe. Updating geometry creates a new snapshot.
+         */
         class Geometry {
         public:
             /**
-     * \brief Create a geometry snapshot.
-     * \param vertices Per-vertex positions and attributes.
-     * \param indices Optional indices into vertices.
-     * \param topology Primitive topology.
-     * \param primitive_ids Optional per-primitive picking IDs.
-     * \param point_data Optional point positions and source-slot mapping.
-     */
+             * \brief Create a geometry snapshot.
+             * \param vertices Per-vertex positions and attributes.
+             * \param indices Optional indices into vertices.
+             * \param topology Primitive topology.
+             * \param primitive_ids Optional per-primitive picking IDs.
+             * \param point_data Optional point positions and source-slot mapping.
+             */
             Geometry(std::vector<Vertex> vertices,
                      std::vector<std::uint32_t> indices = {},
                      Topology topology = Topology::triangles,
@@ -169,13 +169,13 @@ namespace easy3d {
         class Image {
         public:
             /**
-     * \brief Create an RGBA8 image snapshot.
-     * \param width Image width in pixels.
-     * \param height Image height in pixels.
-     * \param rgba Tightly packed pixels, with the top row first.
-     * \param sampler Texture addressing and filtering options.
-     * \details No implicit global image-loader flip state is used.
-     */
+             * \brief Create an RGBA8 image snapshot.
+             * \param width Image width in pixels.
+             * \param height Image height in pixels.
+             * \param rgba Tightly packed pixels, with the top row first.
+             * \param sampler Texture addressing and filtering options.
+             * \details No implicit global image-loader flip state is used.
+             */
             Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba, Sampler sampler = {});
             /// Return image width in pixels.
             /// \return Image width in pixels.
@@ -208,10 +208,10 @@ namespace easy3d {
         enum class LineStyle { plain, cylinder, cone };
 
         /**
- * \brief Complete backend-independent description of a draw operation.
- * \details Draw commands carry immutable geometry and explicit rendering state.
- * Backends interpret matrices using the documented Easy3D/OpenGL convention.
- */
+         * \brief Complete backend-independent description of a draw operation.
+         * \details Draw commands carry immutable geometry and explicit rendering state.
+         * Backends interpret matrices using the documented Easy3D/OpenGL convention.
+         */
         struct DrawCommand {
             std::shared_ptr<const Geometry> geometry; ///< Geometry snapshot to draw.
             std::shared_ptr<const Image> texture;     ///< Optional texture; null selects white.
@@ -338,8 +338,8 @@ namespace easy3d {
         mat4 screen_space_projection(std::uint32_t width, std::uint32_t height);
 
         /**
- * \brief CPU-readable color, depth, and picking data captured from a frame.
- */
+         * \brief CPU-readable color, depth, and picking data captured from a frame.
+         */
         struct FrameImage {
             /// Captured framebuffer dimensions in pixels.
             std::uint32_t width = 0;
@@ -397,11 +397,11 @@ namespace easy3d {
         // points are skipped (usable for deleted vertex slots). Camera MVP uses [-w,w]
         // depth; centers outside its frustum or local halfspaces are skipped.
         /**
- * \brief Inputs for GPU selection of point centers inside a screen polygon.
- * \details The polygon uses the even-odd crossing rule with its boundary
- * included. Selection is independent of rasterization, occlusion, point style,
- * MSAA, and scene readback. Nonfinite point positions are skipped.
- */
+         * \brief Inputs for GPU selection of point centers inside a screen polygon.
+         * \details The polygon uses the even-odd crossing rule with its boundary
+         * included. Selection is independent of rasterization, occlusion, point style,
+         * MSAA, and scene readback. Nonfinite point positions are skipped.
+         */
         struct PointSelectionRequest {
             /// Immutable point positions and source-slot mapping.
             std::shared_ptr<const PointData> points;
@@ -422,10 +422,10 @@ namespace easy3d {
         };
 
         /**
- * \brief Backend-independent rendering, capture, and selection interface.
- * \details Operations that synchronously access a device require external
- * synchronization per instance. Separate instances are independent.
- */
+         * \brief Backend-independent rendering, capture, and selection interface.
+         * \details Operations that synchronously access a device require external
+         * synchronization per instance. Separate instances are independent.
+         */
         class RenderDevice {
         public:
             /// Destroy the backend device.
@@ -438,33 +438,33 @@ namespace easy3d {
             // Sphere/surfel MSAA additionally requires sampleRateShading. Query by style before
             // offering multisampled impostors on devices without that optional feature.
             /**
-     * \brief Query supported MSAA sample counts for a point style.
-     * \param style Point style whose shader requirements are checked.
-     * \return Bit mask containing supported numeric sample counts.
-     */
+             * \brief Query supported MSAA sample counts for a point style.
+             * \param style Point style whose shader requirements are checked.
+             * \return Bit mask containing supported numeric sample counts.
+             */
             virtual std::uint32_t supported_sample_counts(PointStyle style = PointStyle::plain) const = 0;
             // Cylinder/cone MSAA has the same sampleRateShading requirement.
             /**
-     * \brief Query supported MSAA sample counts for a line style.
-     * \param style Line style whose shader requirements are checked.
-     * \return Bit mask containing supported numeric sample counts.
-     */
+             * \brief Query supported MSAA sample counts for a line style.
+             * \param style Line style whose shader requirements are checked.
+             * \return Bit mask containing supported numeric sample counts.
+             */
             virtual std::uint32_t supported_sample_counts(LineStyle style) const = 0;
             // Synchronous offscreen capture. No window, GL context, surface or swapchain.
             // Instances are externally synchronized; separate instances are independent.
             // peel_layers bounds the front-to-back layers of TransparencyMethod::peeling;
             // zero asks for all layers, capped by the backend.
             /**
-     * \brief Render commands into an offscreen framebuffer and read back results.
-     * \param width Target width in pixels.
-     * \param height Target height in pixels.
-     * \param commands Draw commands for this frame.
-     * \param background RGBA clear color.
-     * \param samples Requested MSAA sample count.
-     * \param transparency Method for transparent commands.
-     * \param peel_layers Layer limit for depth peeling; zero requests all layers.
-     * \return Color, depth, and picking buffers for the rendered frame.
-     */
+             * \brief Render commands into an offscreen framebuffer and read back results.
+             * \param width Target width in pixels.
+             * \param height Target height in pixels.
+             * \param commands Draw commands for this frame.
+             * \param background RGBA clear color.
+             * \param samples Requested MSAA sample count.
+             * \param transparency Method for transparent commands.
+             * \param peel_layers Layer limit for depth peeling; zero requests all layers.
+             * \return Color, depth, and picking buffers for the rendered frame.
+             */
             virtual FrameImage render(std::uint32_t width,
                                       std::uint32_t height,
                                       const std::vector<DrawCommand> &commands,
@@ -475,14 +475,14 @@ namespace easy3d {
             // Render scene IDs and depth at one top-left framebuffer pixel center.
             // The full viewport and draw order are preserved. Overlays are excluded.
             /**
-     * \brief Sample scene depth and IDs at a top-left framebuffer pixel.
-     * \param width Full render-target width in pixels.
-     * \param height Full render-target height in pixels.
-     * \param commands Draw commands for the frame.
-     * \param x Pixel column.
-     * \param y Pixel row from the top.
-     * \return Scene ID and depth at the pixel center.
-     */
+             * \brief Sample scene depth and IDs at a top-left framebuffer pixel.
+             * \param width Full render-target width in pixels.
+             * \param height Full render-target height in pixels.
+             * \param commands Draw commands for the frame.
+             * \param x Pixel column.
+             * \param y Pixel row from the top.
+             * \return Scene ID and depth at the pixel center.
+             */
             virtual ScenePixel sample_pixel(std::uint32_t width,
                                             std::uint32_t height,
                                             const std::vector<DrawCommand> &commands,
@@ -492,17 +492,17 @@ namespace easy3d {
             // False means zero extent/out-of-date surface; the host should retry after events.
             // Headless devices report an unsupported operation explicitly.
             /**
-     * \brief Queue commands for presentation to a configured surface.
-     * \param width Surface width in pixels.
-     * \param height Surface height in pixels.
-     * \param commands Draw commands for the frame.
-     * \param background RGBA clear color.
-     * \param samples Requested MSAA sample count.
-     * \param transparency Method for transparent commands.
-     * \param peel_layers Layer limit for depth peeling; zero requests all layers.
-     * \return False for a zero extent or out-of-date surface; unsupported
-     *         headless presentation reports an error.
-     */
+             * \brief Queue commands for presentation to a configured surface.
+             * \param width Surface width in pixels.
+             * \param height Surface height in pixels.
+             * \param commands Draw commands for the frame.
+             * \param background RGBA clear color.
+             * \param samples Requested MSAA sample count.
+             * \param transparency Method for transparent commands.
+             * \param peel_layers Layer limit for depth peeling; zero requests all layers.
+             * \return False for a zero extent or out-of-date surface; unsupported
+             *         headless presentation reports an error.
+             */
             virtual bool present(std::uint32_t width,
                                  std::uint32_t height,
                                  const std::vector<DrawCommand> &commands,
@@ -516,10 +516,10 @@ namespace easy3d {
             // Synchronous GPU polygon upload, compute dispatch and selection readback.
             // Externally synchronized like render(); no render targets are modified.
             /**
-     * \brief Select point source slots inside a framebuffer polygon.
-     * \param request Point data, polygon, bitset, and transform for selection.
-     * \return Updated selection bitset.
-     */
+             * \brief Select point source slots inside a framebuffer polygon.
+             * \param request Point data, polygon, bitset, and transform for selection.
+             * \return Updated selection bitset.
+             */
             virtual std::vector<std::uint32_t> select_points(const PointSelectionRequest &request) = 0;
             // Cumulative position-resource realizations, useful for transfer diagnostics.
             // Rendering and selection share these uploads; attribute uploads are separate.
