@@ -7926,3 +7926,31 @@ lavapipe, which includes `vulkan.transparency`; that test also passed five repea
 and a run with validation plus sync validation enabled. OpenGL `build-opengl` full build and
 serial CTest 106/106 (tests temporarily enabled, then restored to `Easy3D_BUILD_TESTS=OFF` in both
 trees). The CI rerun remains the Linux gate.
+
+### 2026-11-12 — W10 batch 62: Tutorial 205 inset-margin regression assertions
+
+**Scope.** The latest full Vulkan Debug CTest run reported four failures; the follow-up
+diagnosis and fix closed all of them without further code changes beyond the regression test.
+
+- `vulkan.realcamera` ("inset margins ignored DPI") failed deterministically when run in
+  isolation, and was the only failure that reproduced without load. Root cause: commit
+  `4f256482` ("better viewer layout for Tutorial_205_RealCamera") moved the source-photo overlay
+  from left/top-anchored insets (`x = 20 * dpi_scaling()`, `y = 120 * dpi_scaling()`) to a
+  right-anchored rect (`xmax = framebuffer_width() - 20 * dpi_scaling()`, `ymin = 22.5 * dpi_scaling()`,
+  the top inset aligned with the Easy3D logo). The regression still asserted the old insets
+  (`rect.x_min() == 20 * dpi_scaling()`, `rect.y_min() == 120 * dpi_scaling()`), so it failed
+  against the intentional new layout. The assertions now check the new contract: the right inset
+  (`20 * dpi_scaling()` from the framebuffer right edge) and the top inset (`22.5 * dpi_scaling()`).
+  The overlay, ray and crosshair consumers already read the rect dynamically, so no viewer or
+  renderer change was required.
+- `vulkan.tutorial704`, `vulkan.interactionoverlay` and `viewer.pointbenchmark` also failed in
+  the same full run, but each passed in isolation or in the follow-up full run, so they were
+  recorded as load-sensitive rather than as code regressions in this batch.
+
+**Validation (2026-11-12, macOS Debug).** Vulkan `cmake-build-debug` full serial CTest 146/146
+passed, including the fixed `vulkan.realcamera` and the previously reported
+`vulkan.tutorial704`, `vulkan.interactionoverlay` and `viewer.pointbenchmark`. The OpenGL tree is
+unaffected by the batch (the real-camera regression lives in the Vulkan-only test target).
+
+The remaining migration gates (Linux/Mesa CI rerun, Windows hardware, cross-platform validation)
+are unchanged.

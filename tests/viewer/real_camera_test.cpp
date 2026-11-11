@@ -86,7 +86,7 @@ int main(int argc,char**) {
             require(v.draw_frame(),"synthetic hover frame did not present");
         };
         const auto rect=v.image_rect();
-        require(std::abs(rect.x_min()-20*v.dpi_scaling())<1e-4f && std::abs(rect.y_min()-120*v.dpi_scaling())<1e-4f,"inset margins ignored DPI");
+        require(std::abs(rect.x_max()-(v.framebuffer_width()-20*v.dpi_scaling()))<1e-4f && std::abs(rect.y_min()-22.5f*v.dpi_scaling())<1e-4f,"inset margins ignored DPI");
         const auto clean=v.capture();
         hover(int(rect.center().x*v.width()/v.framebuffer_width()),int(rect.center().y*v.height()/v.framebuffer_height()));
         LinesDrawable* ray=nullptr;LinesDrawable* cameras=nullptr;
