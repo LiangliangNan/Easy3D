@@ -46,7 +46,7 @@ struct Input {
         if (button>=0) viewer.mouse_drag_event(int(p.x),int(p.y),int(delta.x),int(delta.y),button,0);
     }
     void press(int code) {
-        button=code; viewer.mouse_press_event(int(position.x),int(position.y),code,GLFW_MOD_SHIFT);
+        button=code; viewer.mouse_press_event(int(position.x),int(position.y),code,Viewer::MODIF_SHIFT);
     }
     void release(int code) {
         viewer.mouse_release_event(int(position.x),int(position.y),code,0); button=-1;
@@ -94,7 +94,7 @@ int main(int argc,char**) {
             const auto baseline=viewer.capture();
             // Active guide changes color only; cancelling clears it without selecting.
             const auto c=project(viewer,vec3(-.5f,0,0));
-            input.move(c-vec2(20)); input.press(GLFW_MOUSE_BUTTON_LEFT);
+            input.move(c-vec2(20)); input.press(Viewer::BUTTON_LEFT);
             input.move(c+vec2(20,-20)); input.move(c+vec2(20)); input.move(c+vec2(-20,20));
             frame(viewer); const auto guide=viewer.capture();
             require(guide.rgba!=baseline.rgba,"native translucent selection guide was not rendered"); same_picking(baseline,guide);
@@ -103,30 +103,30 @@ int main(int argc,char**) {
             const size_t interior=4*(size_t(iy)*guide.width+ix);
             require(guide.rgba[interior]>250 && std::abs(int(guide.rgba[interior+1])-204)<=1 &&
                     std::abs(int(guide.rgba[interior+2])-204)<=1,"lasso interior did not contain the transparent fill");
-            input.shortcut(GLFW_KEY_ESCAPE); input.release(GLFW_MOUSE_BUTTON_LEFT); frame(viewer);
+            input.shortcut(Viewer::KEY_ESCAPE); input.release(Viewer::BUTTON_LEFT); frame(viewer);
             require(!viewer.should_close() && !selected[left],"Escape did not cancel gesture");
             require(viewer.capture().rgba==baseline.rgba,"cancelled guide remained visible");
-            gesture(vec3(-.5f,0,0),GLFW_MOUSE_BUTTON_LEFT);
+            gesture(vec3(-.5f,0,0),Viewer::BUTTON_LEFT);
             if (!(selected[left] && selected[back] && !selected[right] && !selected[deleted]))
                 std::cerr << "selection flags " << selected[left] << " " << selected[back] << " " << selected[right] << " " << selected[deleted] << std::endl;
             require(selected[left] && selected[back] && !selected[right] && !selected[deleted],
                     "lasso did not through-select original live point slots");
             const auto colored=viewer.capture(); require(colored.rgba!=baseline.rgba,"selection color did not update"); same_picking(baseline,colored);
-            gesture(vec3(-.5f,0,0),GLFW_MOUSE_BUTTON_RIGHT);
+            gesture(vec3(-.5f,0,0),Viewer::BUTTON_RIGHT);
             require(!selected[left] && !selected[back],"right lasso did not deselect"); same_picking(baseline,viewer.capture());
-            input.shortcut(GLFW_KEY_R); gesture(vec3(.5f,0,0),GLFW_MOUSE_BUTTON_LEFT,true);
+            input.shortcut(Viewer::KEY_R); gesture(vec3(.5f,0,0),Viewer::BUTTON_LEFT,true);
             require(selected[right] && !selected[left],"rectangle did not select correct point");
-            gesture(vec3(.5f,0,0),GLFW_MOUSE_BUTTON_RIGHT,true); input.shortcut(GLFW_KEY_L);
+            gesture(vec3(.5f,0,0),Viewer::BUTTON_RIGHT,true); input.shortcut(Viewer::KEY_L);
         }
         // Camera, HiDPI/resize and manipulated-model transforms feed the GPU MVP.
         viewer.resize(470,310); frame(viewer);
         cloud->set_manipulator(std::make_shared<Manipulator>(cloud.get()));
         cloud->manipulator()->frame()->translate(vec3(.2f,.2f,0)); frame(viewer);
-        gesture(vec3(-.3f,.2f,0),GLFW_MOUSE_BUTTON_LEFT);
+        gesture(vec3(-.3f,.2f,0),Viewer::BUTTON_LEFT);
         require(selected[left] && selected[back],"resized/transformed lasso missed source points");
-        gesture(vec3(-.3f,.2f,0),GLFW_MOUSE_BUTTON_RIGHT);
+        gesture(vec3(-.3f,.2f,0),Viewer::BUTTON_RIGHT);
         viewer.set_clipping_planes({vec4(0,0,1,.1f)}); frame(viewer);
-        gesture(vec3(-.3f,.2f,0),GLFW_MOUSE_BUTTON_LEFT);
+        gesture(vec3(-.3f,.2f,0),Viewer::BUTTON_LEFT);
         require(selected[left] && !selected[back],"GPU region selection ignored world-space clipping");
         require(viewer.point_resource(points)==original && viewer.device().point_upload_count()==uploads,
                 "selection colors/transforms/MSAA/resize/clipping replaced the shared point buffer");

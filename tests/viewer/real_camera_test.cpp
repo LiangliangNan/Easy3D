@@ -115,13 +115,13 @@ int main(int argc,char**) {
         }
         require(marked,"no source point available for correspondence check");
         hover(-10,-10);require(v.capture().rgba==scene.rgba,"background hover left stale correspondence cross");
-        press(GLFW_KEY_H);require(!cameras->is_visible(),"H did not hide cameras");press(GLFW_KEY_H);require(cameras->is_visible(),"H did not show cameras");
-        press(GLFW_KEY_SPACE);require(v.title().find("View_1")!=std::string::npos,"Space did not switch view");
+        press(Viewer::KEY_H);require(!cameras->is_visible(),"H did not hide cameras");press(Viewer::KEY_H);require(cameras->is_visible(),"H did not show cameras");
+        press(Viewer::KEY_SPACE);require(v.title().find("View_1")!=std::string::npos,"Space did not switch view");
         const auto expected=TutorialRealCamera::camera_pos(views[1].R,views[1].t);
         require((v.camera()->position()-expected).norm()<1e-3f,"ground truth camera pose mismatch");
         image_pixels(v,v.capture(),root+"images/0001.jpg");
-        press(GLFW_KEY_1);require((v.camera()->position()-expected).norm()<1e-3f,"calibration camera pose mismatch");
-        press(GLFW_KEY_2);require((v.camera()->position()-expected).norm()<1e-3f,"ground-truth mode did not restore pose");
+        press(Viewer::KEY_1);require((v.camera()->position()-expected).norm()<1e-3f,"calibration camera pose mismatch");
+        press(Viewer::KEY_2);require((v.camera()->position()-expected).norm()<1e-3f,"ground-truth mode did not restore pose");
         v.resize(520,380);frame(v);image_pixels(v,v.capture(),root+"images/0001.jpg");
         require(v.snapshot("vulkan-real-camera.png",1, int(v.samples()),1),"real camera snapshot failed");
         require(v.device().validation_errors()==0,"real camera validation errors");

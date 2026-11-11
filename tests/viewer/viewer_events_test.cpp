@@ -160,14 +160,14 @@ void frames_and_input(bool validation) {
     v->bind_shortcut([&](Viewer*,Model*) { ++bound;return true; },mesh.get(),ViewerBase::KEY_J);
     v->bind_shortcut([&](Viewer*) { ++actions;return true; },ViewerBase::KEY_K);
     const auto projection=v->camera()->type();
-    e.key(e.window,GLFW_KEY_P,0,GLFW_PRESS,0); e.key(e.window,GLFW_KEY_P,0,GLFW_RELEASE,0);
+    e.key(e.window,Viewer::KEY_P,0,GLFW_PRESS,0); e.key(e.window,Viewer::KEY_P,0,GLFW_RELEASE,0);
     require(v->keys==1 && v->releases==1 && v->camera()->type()==projection,"consumed key reached builtin controls");
-    e.key(e.window,GLFW_KEY_J,0,GLFW_PRESS,0); require(bound==0,"consumed key reached bound command");
-    e.key(e.window,GLFW_KEY_K,0,GLFW_PRESS,0); require(actions==0,"consumed key reached model-free action");
+    e.key(e.window,Viewer::KEY_J,0,GLFW_PRESS,0); require(bound==0,"consumed key reached bound command");
+    e.key(e.window,Viewer::KEY_K,0,GLFW_PRESS,0); require(actions==0,"consumed key reached model-free action");
     v->consume=false;
-    e.key(e.window,GLFW_KEY_P,0,GLFW_PRESS,0); require(v->camera()->type()!=projection,"unhandled key did not reach builtin controls");
-    e.key(e.window,GLFW_KEY_J,0,GLFW_PRESS,0); require(bound==1,"unhandled key missed bound command");
-    e.key(e.window,GLFW_KEY_K,0,GLFW_PRESS,0); require(actions==1,"unhandled key missed model-free action");
+    e.key(e.window,Viewer::KEY_P,0,GLFW_PRESS,0); require(v->camera()->type()!=projection,"unhandled key did not reach builtin controls");
+    e.key(e.window,Viewer::KEY_J,0,GLFW_PRESS,0); require(bound==1,"unhandled key missed bound command");
+    e.key(e.window,Viewer::KEY_K,0,GLFW_PRESS,0); require(actions==1,"unhandled key missed model-free action");
     e.character(e.window,0x20ac); require(v->chars==1,"character hook missing");
     e.cursor(e.window,21.75,31.25); e.cursor(e.window,24.75,36.25);
     require(v->mx==24 && v->my==36 && v->dx==3 && v->dy==5 && v->moves>=2,"mouse movement was not in logical window units");
@@ -175,28 +175,28 @@ void frames_and_input(bool validation) {
     v->consume=true;
     double px,py; glfwGetCursorPos(e.window,&px,&py);
     const auto camera=v->camera()->modelViewProjectionMatrix();
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,GLFW_MOD_SHIFT);
-    require(v->mx==int(px) && v->my==int(py) && v->button_mods==GLFW_MOD_SHIFT,"button event lost actual logical cursor/modifiers");
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,Viewer::MODIF_SHIFT);
+    require(v->mx==int(px) && v->my==int(py) && v->button_mods==Viewer::MODIF_SHIFT,"button event lost actual logical cursor/modifiers");
     e.cursor(e.window,30.75,40.25); e.cursor(e.window,33.75,44.25);
     require(v->mx==33 && v->my==44 && v->dx==3 && v->dy==4 && v->drags==2,"consumed drag coordinates/deltas changed");
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,0);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,0);
     require(v->buttons==2 && same(camera,v->camera()->modelViewProjectionMatrix()),"consumed gesture moved builtin camera");
     // Cancel a builtin region zoom by consuming its release.
     v->consume=false; v->consume_release=true;
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,ViewerBase::MODIF_CTRL);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,ViewerBase::MODIF_CTRL);
     e.cursor(e.window,70,80);
     const auto zoom_camera=v->camera()->modelViewProjectionMatrix();
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,ViewerBase::MODIF_CTRL);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,ViewerBase::MODIF_CTRL);
     require(same(zoom_camera,v->camera()->modelViewProjectionMatrix()),"consumed release performed builtin zoom");
     v->consume_release=false;
     const auto rotating=v->camera()->modelViewProjectionMatrix();
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,0);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,0);
     e.cursor(e.window,80,80);bool moved=!same(rotating,v->camera()->modelViewProjectionMatrix());
     e.cursor(e.window,86,84);moved=moved || !same(rotating,v->camera()->modelViewProjectionMatrix());
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,0);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,0);
     require(moved,"default drag did not resume after a consumed release");
     v->consume=true;
-    e.button(e.window,GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,0);
+    e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,0);
     const auto drag_count=v->drags;
     e.focus(e.window,GLFW_FALSE); e.cursor(e.window,40,40);
     require(v->focus>=1 && v->drags==drag_count,"focus loss retained a drag");
@@ -224,7 +224,7 @@ void failures(bool validation) {
     v->throw_in_pre_draw=false;
     require(v->run_frames(1)==0,"cleared frame hook error did not restore rendering");
     v->throw_on_key=true;
-    e.key(e.window,GLFW_KEY_J,0,GLFW_PRESS,0); // must not unwind through C callback
+    e.key(e.window,Viewer::KEY_J,0,GLFW_PRESS,0); // must not unwind through C callback
     require(v->should_close() && v->run_frames(1)!=0 && v->window()==window,"input hook failure was hidden or switched hosts");
 }
 }

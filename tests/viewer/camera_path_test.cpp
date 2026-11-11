@@ -60,9 +60,9 @@ int main(int argc,char**) {
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code,int mods=0){key(v.window(),code,0,GLFW_PRESS,mods);};
         const std::vector<vec3> keys={vec3(0,0,100),vec3(60,0,100),vec3(60,60,80)};
-        for (const auto& p:keys) {v.camera()->setPosition(p);v.camera()->lookAt(vec3(0));press(GLFW_KEY_K);}
+        for (const auto& p:keys) {v.camera()->setPosition(p);v.camera()->lookAt(vec3(0));press(Viewer::KEY_K);}
         require(v.path().number_of_keyframes()==3,"K did not record camera keyframes");
-        press(GLFW_KEY_K,GLFW_MOD_SHIFT);require(v.path().number_of_keyframes()==3,"modified K recorded a keyframe");
+        press(Viewer::KEY_K,Viewer::MODIF_SHIFT);require(v.path().number_of_keyframes()==3,"modified K recorded a keyframe");
         v.camera()->setPosition(vec3(160,120,240));v.camera()->lookAt(vec3(20,20,0));v.camera()->setSceneRadius(160);v.camera()->showEntireScene();
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);
@@ -77,17 +77,17 @@ int main(int argc,char**) {
         const auto glyph=renderer.draw_cameras(v.path(),*v.camera(),.4f);
         require(glyph.geometry==renderer.draw_cameras(v.path(),*v.camera(),.4f).geometry,"stationary camera markers re-created geometry");
         require(v.snapshot("vulkan-camera-path.png",1,1),"camera path snapshot failed");
-        press(GLFW_KEY_SPACE);require(v.path().is_interpolation_started(),"Space did not start path");
+        press(Viewer::KEY_SPACE);require(v.path().is_interpolation_started(),"Space did not start path");
         const auto observer=v.camera()->position();v.capture();require(v.camera()->position()==observer,"capture advanced path");
         require(v.draw_frame() && v.camera()->position()==keys.front(),"UI frame did not apply first path sample");
-        press(GLFW_KEY_SPACE);require(!v.path().is_interpolation_started(),"Space did not pause path");
+        press(Viewer::KEY_SPACE);require(!v.path().is_interpolation_started(),"Space did not pause path");
         const auto paused=v.camera()->position();std::this_thread::sleep_for(std::chrono::milliseconds(45));v.draw_frame();
         require(v.camera()->position()==paused,"paused path changed camera");
-        press(GLFW_KEY_SPACE);v.draw_frame();require(v.camera()->position()!=paused,"resume did not apply next sample");
-        press(GLFW_KEY_K);require(!v.path().is_interpolation_started() && v.path().number_of_keyframes()==4,"path edit did not stop playback");
-        press(GLFW_KEY_D);require(v.path().number_of_keyframes()==0 && !v.path().is_interpolation_started(),"D did not delete path");
+        press(Viewer::KEY_SPACE);v.draw_frame();require(v.camera()->position()!=paused,"resume did not apply next sample");
+        press(Viewer::KEY_K);require(!v.path().is_interpolation_started() && v.path().number_of_keyframes()==4,"path edit did not stop playback");
+        press(Viewer::KEY_D);require(v.path().number_of_keyframes()==0 && !v.path().is_interpolation_started(),"D did not delete path");
         v.draw_frame();const auto cleared=v.capture();v.guides(false);v.draw_frame();require(v.capture().rgba==cleared.rgba,"deleted path left stale markers");
-        press(GLFW_KEY_SPACE);require(!v.path().is_interpolation_started(),"empty tutorial path started");
+        press(Viewer::KEY_SPACE);require(!v.path().is_interpolation_started(),"empty tutorial path started");
         v.resize(610,440);Viewer::poll_events();v.draw_frame();
         require(v.device().validation_errors()==0,"camera path validation errors");
         std::cout<<"PASS: shared manual interpolation, resume/endpoints, native paths/cameras, depth/IDs/MSAA, controls and lifetime\n";

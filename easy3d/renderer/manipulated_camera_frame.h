@@ -161,27 +161,27 @@ namespace easy3d {
         // more movement of the camera
         //---------------------------------------------------------------
 
-//		if (key == GLFW_KEY_UP && modifiers == 0) {	// move camera forward
+//		if (key == ViewerInput::KEY_UP && modifiers == 0) {	// move camera forward
 //			float step = 0.02f * camera_->sceneRadius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
 //		}
-//		else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
+//		else if (key == ViewerInput::KEY_DOWN && modifiers == 0) {// move camera backward
 //			float step = 0.02f * camera_->sceneRadius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
 //		}
-//        else if (key == GLFW_KEY_LEFT && modifiers == GLFW_MOD_CONTROL) {	// move camera left
+//        else if (key == ViewerInput::KEY_LEFT && modifiers == ViewerInput::MODIF_CTRL) {	// move camera left
 //            float step = 0.02f * camera_->sceneRadius();
 //            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
 //        }
-//        else if (key == GLFW_KEY_RIGHT && modifiers == GLFW_MOD_CONTROL) {	// move camera right
+//        else if (key == ViewerInput::KEY_RIGHT && modifiers == ViewerInput::MODIF_CTRL) {	// move camera right
 //            float step = 0.02f * camera_->sceneRadius();
 //            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
 //        }
-//		else if (key == GLFW_KEY_UP && modifiers == GLFW_MOD_CONTROL) {	// move camera up
+//		else if (key == ViewerInput::KEY_UP && modifiers == ViewerInput::MODIF_CTRL) {	// move camera up
 //			float step = 0.02f * camera_->sceneRadius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
 //		}
-//		else if (key == GLFW_KEY_DOWN && modifiers == GLFW_MOD_CONTROL) {	// move camera down
+//		else if (key == ViewerInput::KEY_DOWN && modifiers == ViewerInput::MODIF_CTRL) {	// move camera down
 //			float step = 0.02f * camera_->sceneRadius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 //		}

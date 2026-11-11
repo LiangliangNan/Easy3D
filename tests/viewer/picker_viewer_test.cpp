@@ -25,7 +25,7 @@ template<class Tutorial> struct PickerHost:Tutorial {
     using Tutorial::mouse_release_event;
 };
 template<class Host>
-void click(Host& viewer,const vec3& world,int button=GLFW_MOUSE_BUTTON_LEFT,int modifiers=0) {
+void click(Host& viewer,const vec3& world,int button=Viewer::BUTTON_LEFT,int modifiers=0) {
     const auto p=viewer.camera()->projectedCoordinatesOf(world);
     viewer.mouse_press_event(int(p.x),int(p.y),button,modifiers);
     viewer.mouse_release_event(int(p.x),int(p.y),button,modifiers);
@@ -55,7 +55,7 @@ int main(int argc,char**) {
             require(model->renderer()->is_selected(),"tutorial click did not select model");
             auto selected=viewer.capture(); require(selected.rgba!=baseline.rgba,"model selection was not displayed");
             same_picking(baseline,selected);
-            click(viewer,vec3(-1.4f,.3f,0),GLFW_MOUSE_BUTTON_RIGHT);
+            click(viewer,vec3(-1.4f,.3f,0),Viewer::BUTTON_RIGHT);
             require(model->renderer()->is_selected(),"right click toggled model selection");
             click(viewer,vec3(-1.4f,.3f,0));
             require(!model->renderer()->is_selected(),"second tutorial click did not unselect model");
@@ -83,8 +83,8 @@ int main(int argc,char**) {
             viewer.set_samples(1); frame(viewer);
             click(viewer,vec3(1.6f,.3f,0));
             require(faces->highlight_range()==std::make_pair(2,3),"sample count changed face picking");
-            viewer.mouse_press_event(0,0,GLFW_MOUSE_BUTTON_LEFT,0);
-            viewer.mouse_release_event(0,0,GLFW_MOUSE_BUTTON_LEFT,0);frame(viewer);
+            viewer.mouse_press_event(0,0,Viewer::BUTTON_LEFT,0);
+            viewer.mouse_release_event(0,0,Viewer::BUTTON_LEFT,0);frame(viewer);
             require(!faces->highlight(),"background click did not clear highlight");
             require(viewer.device().validation_errors()==0,"face picker validation errors");
         }

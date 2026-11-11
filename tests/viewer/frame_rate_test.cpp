@@ -36,11 +36,11 @@ int main(int argc,char**) {
         v.application={app};Viewer::poll_events();v.draw_frame();v.draw_frame();
         require(!v.shown(),"frame rate is not disabled by default");
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
-        auto toggle=[&]{key(v.window(),GLFW_KEY_F,0,GLFW_PRESS,Viewer::MODIF_CTRL);};
+        auto toggle=[&]{key(v.window(),Viewer::KEY_F,0,GLFW_PRESS,Viewer::MODIF_CTRL);};
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);v.draw_frame();
             const auto baseline=v.capture();const auto camera=v.camera()->modelViewProjectionMatrix();
-            key(v.window(),GLFW_KEY_F,0,GLFW_PRESS,GLFW_MOD_SHIFT);
+            key(v.window(),Viewer::KEY_F,0,GLFW_PRESS,Viewer::MODIF_SHIFT);
             require(!v.shown(),"Shift-F toggled frame rate");
             toggle();require(v.shown() && v.rate().find("--")!=std::string::npos,"Ctrl/Command-F did not start fresh sampling");
             const auto shown=v.capture();same_picking(baseline,shown);
@@ -64,7 +64,7 @@ int main(int argc,char**) {
         }
         RateViewer independent("Independent rate", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);independent.set_usage("","");
         auto key2=glfwSetKeyCallback(independent.window(),nullptr);glfwSetKeyCallback(independent.window(),key2);
-        const auto plain=independent.capture();key2(independent.window(),GLFW_KEY_F,0,GLFW_PRESS,RateViewer::MODIF_CTRL);
+        const auto plain=independent.capture();key2(independent.window(),Viewer::KEY_F,0,GLFW_PRESS,RateViewer::MODIF_CTRL);
         require(independent.shown() && independent.rate().find("--")!=std::string::npos,"viewers shared frame-rate state");
         require(independent.capture().rgba!=plain.rgba,"rate without usage hint did not load font/render");
         independent.resize(610,440);Viewer::poll_events();independent.draw_frame();

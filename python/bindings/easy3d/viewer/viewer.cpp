@@ -375,6 +375,14 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 			.value("KEY_LEFT_BRACKET", easy3d::Viewer::KEY_LEFT_BRACKET)
 			.value("KEY_BACKSLASH", easy3d::Viewer::KEY_BACKSLASH)
 			.value("KEY_RIGHT_BRACKET", easy3d::Viewer::KEY_RIGHT_BRACKET)
+			.value("KEY_LEFT_SHIFT", easy3d::Viewer::KEY_LEFT_SHIFT)
+			.value("KEY_LEFT_CONTROL", easy3d::Viewer::KEY_LEFT_CONTROL)
+			.value("KEY_LEFT_ALT", easy3d::Viewer::KEY_LEFT_ALT)
+			.value("KEY_LEFT_SUPER", easy3d::Viewer::KEY_LEFT_SUPER)
+			.value("KEY_RIGHT_SHIFT", easy3d::Viewer::KEY_RIGHT_SHIFT)
+			.value("KEY_RIGHT_CONTROL", easy3d::Viewer::KEY_RIGHT_CONTROL)
+			.value("KEY_RIGHT_ALT", easy3d::Viewer::KEY_RIGHT_ALT)
+			.value("KEY_RIGHT_SUPER", easy3d::Viewer::KEY_RIGHT_SUPER)
 			.export_values();
 
 

@@ -24,7 +24,7 @@ int main(int argc,char**) {
         options.device.validation=options.device.sync_validation=argc>1;
         AxesViewer viewer("Corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
-        auto toggle=[&]{key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,0);};
+        auto toggle=[&]{key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,0);};
         require(viewer.visible(),"axes not visible by default");
         for (unsigned count:{1u,4u}) {
             if (!(viewer.device().supported_sample_counts()&count)) continue;
@@ -41,7 +41,7 @@ int main(int argc,char**) {
             }
             require(pixels>100,"axes did not render");
             if (count==4) require(partial>20,"axes edges lack MSAA coverage");
-            key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,GLFW_MOD_SHIFT);
+            key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,Viewer::MODIF_SHIFT);
             require(viewer.visible(),"Shift-A toggled axes");
             toggle();require(!viewer.visible(),"A did not hide axes");const auto hidden=viewer.capture();same_picking(shown,hidden);
             for (auto value:hidden.rgba) require(value==0,"hidden axes left stale pixels");

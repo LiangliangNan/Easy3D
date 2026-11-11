@@ -71,9 +71,9 @@ int main(int argc,char**) {
             require(v.run_frames(1)==0,"usage startup frame failed");
             require(console.text.str()=="Custom manual\n","startup manual was not printed once");
             require(v.run_frames(1)==0 && console.text.str()=="Custom manual\n","startup manual repeated");
-            key(v.window(),GLFW_KEY_F1,0,GLFW_PRESS,0);
+            key(v.window(),Viewer::KEY_F1,0,GLFW_PRESS,0);
             require(console.text.str()=="Custom manual\nCustom manual\n","F1 did not show current manual");
-            v.set_usage("","");key(v.window(),GLFW_KEY_F1,0,GLFW_PRESS,0);
+            v.set_usage("","");key(v.window(),Viewer::KEY_F1,0,GLFW_PRESS,0);
             require(console.text.str()=="Custom manual\nCustom manual\n","empty manual showed fallback help");
         }
         v.set_usage("Resized","resize-aware hint");const auto before=v.capture();

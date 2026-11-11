@@ -123,18 +123,18 @@ int main(int argc, char**) {
         auto key = glfwSetKeyCallback(viewer.window(), nullptr);
         glfwSetKeyCallback(viewer.window(), key);
         const auto projection = viewer.camera()->type();
-        key(viewer.window(), GLFW_KEY_P, 0, GLFW_PRESS, 0);
+        key(viewer.window(), Viewer::KEY_P, 0, GLFW_PRESS, 0);
         require(viewer.camera()->type() != projection, "key callback did not change projection");
-        key(viewer.window(), GLFW_KEY_F, 0, GLFW_PRESS, 0);
+        key(viewer.window(), Viewer::KEY_F, 0, GLFW_PRESS, 0);
         auto cursor = glfwSetCursorPosCallback(viewer.window(), nullptr);
         glfwSetCursorPosCallback(viewer.window(), cursor);
         auto mouse = glfwSetMouseButtonCallback(viewer.window(), nullptr);
         glfwSetMouseButtonCallback(viewer.window(), mouse);
         glfwSetCursorPos(viewer.window(), 60, 50);
         const auto direction = viewer.camera()->viewDirection();
-        mouse(viewer.window(), GLFW_MOUSE_BUTTON_LEFT, GLFW_PRESS, 0);
+        mouse(viewer.window(), Viewer::BUTTON_LEFT, GLFW_PRESS, 0);
         cursor(viewer.window(), 90, 75);
-        mouse(viewer.window(), GLFW_MOUSE_BUTTON_LEFT, GLFW_RELEASE, 0);
+        mouse(viewer.window(), Viewer::BUTTON_LEFT, GLFW_RELEASE, 0);
         require((viewer.camera()->viewDirection() - direction).norm() > 0, "mouse callback did not rotate");
         std::set<std::pair<int, int>> extents;
         for (unsigned i = 0; i < 8; ++i) {
@@ -215,7 +215,7 @@ int main(int argc, char**) {
             ThrowingViewer bad("Callback error containment", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             auto callback = glfwSetKeyCallback(bad.window(), nullptr);
             glfwSetKeyCallback(bad.window(), callback);
-            callback(bad.window(), GLFW_KEY_A, 0, GLFW_PRESS, 0);
+            callback(bad.window(), Viewer::KEY_A, 0, GLFW_PRESS, 0);
             bool reported = false;
             try { bad.draw_frame(); }
             catch (const std::runtime_error& e) { reported = std::string(e.what()) == "expected callback failure"; }
@@ -283,7 +283,7 @@ int main(int argc, char**) {
             require(run_viewer.device().validation_errors()==0, "run parity validation errors");
         }
         require(viewer.device().validation_errors() == 0, "presentation validation errors");
-        key(viewer.window(), GLFW_KEY_ESCAPE, 0, GLFW_PRESS, 0);
+        key(viewer.window(), Viewer::KEY_ESCAPE, 0, GLFW_PRESS, 0);
         require(viewer.should_close(), "close callback failed");
         std::cout << "PASS: native WSI, scene, capture, callbacks, resize, hide/show, multiple devices/windows, close\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

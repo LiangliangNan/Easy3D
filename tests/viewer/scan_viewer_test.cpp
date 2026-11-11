@@ -35,7 +35,7 @@ int main(int argc,char**) {
         TutorialVirtualScanner viewer("Native virtual scanner test"); set_size(viewer, options);
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code,int mods=0) { key(viewer.window(),code,0,GLFW_PRESS,mods); };
-        frame(viewer); press(GLFW_KEY_SPACE);
+        frame(viewer); press(Viewer::KEY_SPACE);
         require(viewer.models().empty(),"empty scan added a model");
         auto mesh=std::make_shared<SurfaceMesh>();
         auto a=mesh->add_vertex(vec3(-1,-1,0)),b=mesh->add_vertex(vec3(1,-1,0));
@@ -53,15 +53,15 @@ int main(int argc,char**) {
             camera.set_projection_matrix(viewer.camera()->projectionMatrix());
             camera.set_modelview_matrix(viewer.camera()->modelViewMatrix());
             const auto before=viewer.models().size();
-            press(GLFW_KEY_SPACE,GLFW_MOD_CONTROL);
+            press(Viewer::KEY_SPACE,Viewer::MODIF_CTRL);
             require(viewer.models().size()==before,"modified Space unexpectedly scanned");
-            press(GLFW_KEY_N,GLFW_MOD_CONTROL); press(GLFW_KEY_SPACE); frame(viewer);
+            press(Viewer::KEY_N,Viewer::MODIF_CTRL); press(Viewer::KEY_SPACE); frame(viewer);
             require(viewer.models().size()==before+1,"Space did not add scan result");
             auto cloud=std::dynamic_pointer_cast<PointCloud>(viewer.models().back());
             require(cloud && cloud->points()==expected,"scan cloud does not match framebuffer world points");
             same_camera(camera,*viewer.camera());
             cloud->renderer()->set_visible(false);
-            press(GLFW_KEY_N); press(GLFW_KEY_SPACE); frame(viewer);
+            press(Viewer::KEY_N); press(Viewer::KEY_SPACE); frame(viewer);
             auto noisy=std::dynamic_pointer_cast<PointCloud>(viewer.models().back());
             require(noisy && noisy->n_vertices()==expected.size(),"noise altered scan sample count");
             unsigned changed=0;
@@ -70,17 +70,17 @@ int main(int argc,char**) {
                 for (unsigned j=0;j<3;++j) require(std::isfinite(noisy->points()[i][j]),"noise created nonfinite points");
             }
             require(changed>10,"N did not enable scan noise"); same_camera(camera,*viewer.camera());
-            noisy->renderer()->set_visible(false); press(GLFW_KEY_N);
+            noisy->renderer()->set_visible(false); press(Viewer::KEY_N);
             viewer.resize(173+int(samples),127+int(samples)); frame(viewer);
             int w,h; viewer.framebuffer_size(w,h);
             const auto resized=viewer.scan_visible_points(samples);
-            press(GLFW_KEY_SPACE); frame(viewer);
+            press(Viewer::KEY_SPACE); frame(viewer);
             auto result=std::dynamic_pointer_cast<PointCloud>(viewer.models().back());
             require(result && result->points()==resized && viewer.framebuffer_width()==w && viewer.framebuffer_height()==h,
                     "resized/HiDPI acquisition used logical or stale framebuffer coordinates");
             result->renderer()->set_visible(false);
         }
-        viewer.clear_scene(); press(GLFW_KEY_SPACE);
+        viewer.clear_scene(); press(Viewer::KEY_SPACE);
         require(viewer.models().empty(),"cleared scene scanned old geometry");
         require(viewer.device().validation_errors()==0,"scanner viewer validation errors");
         std::cout << "PASS: native scanner shortcuts, noise toggle, exact scan clouds, stable camera, MSAA, HiDPI/resize and empty-scene handling\n";

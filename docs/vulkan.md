@@ -2570,7 +2570,10 @@ MoltenVK integer-attachment warning remains.
 Modifier and Button identifiers through `easy3d/viewer/viewer_input.h`. Existing
 `Viewer::KEY_*`, `Viewer::MODIF_*` and `Viewer::BUTTON_*` source usage remains
 valid; Vulkan exposes the same names. `MODIF_CTRL` uses Command on macOS and
-Control elsewhere, matching the original viewer.
+Control elsewhere, matching the original viewer. Viewer-facing code (headers,
+viewer sources and tests) now uses these identifiers exclusively; raw
+`GLFW_KEY_*`/`GLFW_MOD_*`/`GLFW_MOUSE_BUTTON_*` names remain only in
+`backends/glfw_runtime.cpp`, which is GLFW plumbing.
 
 The native controls now include:
 
@@ -7788,3 +7791,31 @@ matrix jobs failed on Ubuntu 24.04 for reasons that do not reproduce on macOS.
 behaviour is unchanged (GLU was available before and is still not used). The Linux fixes were not
 executed locally; the workflow rerun is the remaining gate, and the later Vulkan steps (lavapipe
 headless suite, xvfb desktop suite, installed package consumer) have still not completed on CI.
+
+### 2026-11-11 — W10 batch 58: Viewer input identifiers everywhere outside GLFW plumbing
+
+**Scope.** All Key, Modifier and Button identifiers now come from
+`easy3d/viewer/viewer_input.h` instead of GLFW. The rule is mechanical replacement, with no
+translation layer, helper function or new variable:
+
+- Code outside the `easy3d::viewer` module uses the public names: headers such as
+  `manipulated_camera_frame.h` and every `tests/viewer/*.cpp` file now spell
+  `ViewerInput::KEY_*` or `Viewer::KEY_*` (same for `MODIF_*` and `BUTTON_*`) instead of
+  `GLFW_KEY_*`, `GLFW_MOD_*` and `GLFW_MOUSE_BUTTON_*`.
+- C++ sources inside the module use the unqualified names when `viewer_input.h` is already
+  included: `viewer.cpp` (through `viewer.h` → `viewer_base.h`) now compares `input_.key` and
+  `key_release_event()` keys against `KEY_*`, matching its existing `MODIF_*`/`BUTTON_*` usage.
+- Backend plumbing stays on GLFW: `backends/glfw_runtime.cpp` keeps `glfwGetKey(window,
+  GLFW_KEY_*)` and the `GLFW_MOD_*` mask, since those calls are native window-system queries
+  and `viewer_input.h` is not needed there.
+
+`ViewerInput::Key` gained the eight physical modifier keys (`KEY_LEFT_SHIFT` … `KEY_RIGHT_SUPER`,
+values 340–347) so `key_press_event()`/`key_release_event()` can report and the viewer can match
+modifier key presses without using GLFW names. They are exported to Python as well. Event actions
+(`GLFW_PRESS`, `GLFW_RELEASE`, `GLFW_REPEAT`) and `GLFW_TRUE`/`GLFW_FALSE` are not input
+identifiers and remain native; the shared router still compares them directly.
+
+**Validation (2026-11-11, macOS Release).** Vulkan `cmake-build-release` full build and serial
+CTest 140/140; OpenGL `build-opengl` full build and serial CTest 106/106. A repository-wide grep
+outside `3rd_party/` finds `GLFW_KEY_*`/`GLFW_MOD_*`/`GLFW_MOUSE_BUTTON_*` only in
+`easy3d/viewer/backends/glfw_runtime.cpp`. Python bindings and tutorials were rebuilt but not run.

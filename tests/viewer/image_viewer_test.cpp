@@ -61,13 +61,13 @@ int main(int argc,char**) {
         const size_t left=(zoomed.height/2)*zoomed.width+1;
         require(zoomed.rgba[4*left+1]==255 && fitted.rgba[4*left+1]<5,"wheel callback did not zoom image in framebuffer pixels");
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
-        key(viewer.window(),GLFW_KEY_F,0,GLFW_PRESS,0); frame(viewer);
+        key(viewer.window(),Viewer::KEY_F,0,GLFW_PRESS,0); frame(viewer);
         require(viewer.capture().rgba==fitted.rgba,"fit-image shortcut did not restore the view");
         viewer.resize(220,160); frame(viewer);
         auto resized=viewer.capture();
         require(resized.width!=fitted.width && resized.height!=fitted.height,"image test did not resize the framebuffer");
         require(resized.rgba[((resized.height/2)*resized.width+1)*4+1]==255,"resize did not recenter image at its current scale");
-        key(viewer.window(),GLFW_KEY_F,0,GLFW_PRESS,0); frame(viewer);
+        key(viewer.window(),Viewer::KEY_F,0,GLFW_PRESS,0); frame(viewer);
         resized=viewer.capture();
         require(resized.rgba[((resized.height/2)*resized.width+1)*4+1]<5,"fit after resize used stale viewport dimensions");
         auto drop=glfwSetDropCallback(viewer.window(),nullptr); glfwSetDropCallback(viewer.window(),drop);

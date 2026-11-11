@@ -48,22 +48,22 @@ int main(int argc,char**) {
         plane->set_color(vec4(.2f,.4f,.8f,.3f));plane->set_cross_section_width(.12f);
         plane->manipulator()->frame()->setOrientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.5f));
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
-        auto press=[&](int k,int m=GLFW_MOD_ALT){key(viewer.window(),k,0,GLFW_PRESS,m);};
-        press(GLFW_KEY_V);press(GLFW_KEY_X);
+        auto press=[&](int k,int m=Viewer::MODIF_ALT){key(viewer.window(),k,0,GLFW_PRESS,m);};
+        press(Viewer::KEY_V);press(Viewer::KEY_X);
         require(plane->is_visible() && !plane->cross_section(),"disabled plane responded to visibility/section shortcut");
         for (unsigned samples:{1u,4u}) {
             if (!(viewer.device().supported_sample_counts()&samples)) continue;
             viewer.set_samples(samples);const auto original=viewer.capture();
-            press(GLFW_KEY_C,GLFW_MOD_ALT|GLFW_MOD_SHIFT);
+            press(Viewer::KEY_C,Viewer::MODIF_ALT|Viewer::MODIF_SHIFT);
             require(!plane->is_enabled(),"modified shortcut enabled clipping");
             const auto camera=viewer.camera()->modelViewProjectionMatrix();
-            press(GLFW_KEY_C);require(plane->is_enabled(),"Alt-C did not enable shared clipping");
+            press(Viewer::KEY_C);require(plane->is_enabled(),"Alt-C did not enable shared clipping");
             require(same_matrix(camera,viewer.camera()->modelViewProjectionMatrix()),"Alt-C moved camera");
             require((plane->center()-viewer.camera()->sceneCenter()).norm()<1e-6f,"Alt-C did not fit plane");
             require(viewer.clipping_planes().size()==1,"shared plane not exposed to selection");
             const auto guided=viewer.capture();
             require(viewer.snapshot("vulkan-shared-clipping.png",1.5f,int(samples),1,false),"clipping snapshot failed");
-            press(GLFW_KEY_V);require(!plane->is_visible(),"Alt-V did not hide guide");
+            press(Viewer::KEY_V);require(!plane->is_visible(),"Alt-V did not hide guide");
             const auto clipped=viewer.capture();same_picking(guided,clipped);
             require(clipped.depth!=original.depth && hits(clipped)>0,"shared plane did not clip geometry");
             require(guided.rgba!=clipped.rgba,"transparent plane guide did not render");
@@ -74,17 +74,17 @@ int main(int argc,char**) {
                 transparent+=std::abs(int(r)-194)<=2 && std::abs(int(g)-209)<=2 && std::abs(int(b)-240)<=2;
             }
             require(transparent>20,"guide fill did not alpha-blend over background");
-            press(GLFW_KEY_X);require(plane->cross_section() && viewer.clipping_planes().size()==2,"Alt-X did not enable slab");
+            press(Viewer::KEY_X);require(plane->cross_section() && viewer.clipping_planes().size()==2,"Alt-X did not enable slab");
             const auto slab=viewer.capture();require(hits(slab)<hits(clipped),"cross-section did not narrow geometry");
             const auto& equations=viewer.clipping_planes();
             require(std::abs(dot(equations[0],vec4(plane->center(),1)))<1e-5f,"wrong plane offset");
             require(dot(equations[1],vec4(plane->center(),1))>0,"slab faces wrong direction");
-            press(GLFW_KEY_X);press(GLFW_KEY_V);
+            press(Viewer::KEY_X);press(Viewer::KEY_V);
             same_picking(guided,viewer.capture());
-            press(GLFW_KEY_C);require(!plane->is_enabled(),"Alt-C did not disable plane");
+            press(Viewer::KEY_C);require(!plane->is_enabled(),"Alt-C did not disable plane");
             require(viewer.capture().rgba==original.rgba,"disabling clipping did not restore scene");
         }
-        press(GLFW_KEY_C);
+        press(Viewer::KEY_C);
         auto* frame=plane->manipulator()->frame();
         const auto camera=viewer.camera()->modelViewProjectionMatrix(),pose=frame->matrix();
         viewer.mouse_press_event(170,130,ViewerInput::BUTTON_LEFT,ViewerInput::MODIF_ALT);
@@ -105,7 +105,7 @@ int main(int argc,char**) {
         viewer.set_clipping_planes({});
         bool bound=false;
         viewer.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_C,ViewerInput::MODIF_ALT);
-        press(GLFW_KEY_C);require(bound && !plane->is_enabled(),"custom binding did not override clipping control");
+        press(Viewer::KEY_C);require(bound && !plane->is_enabled(),"custom binding did not override clipping control");
         plane->set_enabled(true);
         const auto with_app=viewer.capture();viewer.set_overlays({});const auto without_app=viewer.capture();
         same_picking(with_app,without_app);

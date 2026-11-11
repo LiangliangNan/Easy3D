@@ -108,8 +108,8 @@ int main(int argc,char**) {
         frame(viewer);require(viewer.capture().rgba==annotated.rgba,"tutorial frame replaced application overlay");
         viewer.set_overlays({});require(viewer.capture().rgba==initial.rgba,"clearing application overlay erased shared guide");
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
-        auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,GLFW_MOD_ALT); frame(viewer); };
-        press(GLFW_KEY_V); const auto hidden=viewer.capture();
+        auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,Viewer::MODIF_ALT); frame(viewer); };
+        press(Viewer::KEY_V); const auto hidden=viewer.capture();
         require(hidden.rgba!=initial.rgba,"guide visibility shortcut did not change overlay"); same_picking(initial,hidden);
         // Probe the plane interior away from the outlines and from the cube.
         const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(-1.2f,1.2f,0,1);
@@ -120,11 +120,11 @@ int main(int argc,char**) {
                 std::abs(int(initial.rgba[4*pixel+1])-191)<=1 && std::abs(int(initial.rgba[4*pixel+2])-191)<=1,
                 "native clipping plane interior was not filled transparently");
         require(!viewer.pick(int(double(x)*viewer.width()/initial.width),int(double(y)*viewer.height()/initial.height)),"filled clipping guide became a picking surface");
-        press(GLFW_KEY_V); require(viewer.capture().rgba==initial.rgba,"showing guide did not restore image");
-        press(GLFW_KEY_C); const auto full=viewer.capture();
+        press(Viewer::KEY_V); require(viewer.capture().rgba==initial.rgba,"showing guide did not restore image");
+        press(Viewer::KEY_C); const auto full=viewer.capture();
         require(viewer.clipping_planes().empty() && hits(full)>hits(initial),"disabling clipping did not restore full model");
-        press(GLFW_KEY_C); require(viewer.capture().rgba==initial.rgba,"clipping toggle did not restore cut geometry");
-        press(GLFW_KEY_X); const auto slab=viewer.capture();
+        press(Viewer::KEY_C); require(viewer.capture().rgba==initial.rgba,"clipping toggle did not restore cut geometry");
+        press(Viewer::KEY_X); const auto slab=viewer.capture();
         require(viewer.clipping_planes().size()==2 && hits(slab)>0 && hits(slab)<hits(initial),"cross-section did not retain a thin slab"); check_planes(viewer,slab);
         auto mouse=glfwSetMouseButtonCallback(viewer.window(),nullptr); glfwSetMouseButtonCallback(viewer.window(),mouse);
         auto cursor=glfwSetCursorPosCallback(viewer.window(),nullptr); glfwSetCursorPosCallback(viewer.window(),cursor);
@@ -134,9 +134,9 @@ int main(int argc,char**) {
             cursor(viewer.window(),x+dx,y+dy); glfwSetCursorPos(viewer.window(),x+dx,y+dy);
             mouse(viewer.window(),button,GLFW_RELEASE,0); frame(viewer);
         };
-        auto before=viewer.clipping_planes(); drag(GLFW_MOUSE_BUTTON_LEFT,35,15);
+        auto before=viewer.clipping_planes(); drag(Viewer::BUTTON_LEFT,35,15);
         require(viewer.clipping_planes()!=before,"registered left drag did not rotate clipping plane");
-        before=viewer.clipping_planes(); drag(GLFW_MOUSE_BUTTON_RIGHT,22,18);
+        before=viewer.clipping_planes(); drag(Viewer::BUTTON_RIGHT,22,18);
         require(viewer.clipping_planes()!=before,"registered right drag did not translate clipping plane"); check_planes(viewer,viewer.capture());
         viewer.resize(460,320); frame(viewer); const auto resized=viewer.capture();
         check_planes(viewer,resized); viewer.set_samples(1); frame(viewer); same_picking(resized,viewer.capture());

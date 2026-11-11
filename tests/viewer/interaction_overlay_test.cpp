@@ -91,9 +91,9 @@ int main(int argc,char**) {
             v.set_overlays({application}); require(v.capture().rgba==region.rgba,"application update erased interaction hint");
             require(ImageIO::save("vulkan-interaction-hints.png",region.rgba,w,h,4,false),"hint artifact save failed");
 #ifdef __APPLE__
-            const int control=GLFW_KEY_LEFT_SUPER;
+            const int control=Viewer::KEY_LEFT_SUPER;
 #else
-            const int control=GLFW_KEY_LEFT_CONTROL;
+            const int control=Viewer::KEY_LEFT_CONTROL;
 #endif
             key(v.window(),control,0,GLFW_RELEASE,0);
             require(v.capture().rgba==baseline.rgba,"modifier release left stale region preview");
@@ -139,7 +139,7 @@ int main(int argc,char**) {
         v.clear_scene();
         const auto empty=v.capture();
         for (auto id:empty.ids) require(id.object==UINT32_MAX,"clear retained scene pick IDs");
-        key(v.window(),GLFW_KEY_A,0,GLFW_PRESS,0); // persistent corner axes survive scene clearing
+        key(v.window(),Viewer::KEY_A,0,GLFW_PRESS,0); // persistent corner axes survive scene clearing
         const auto no_axes=v.capture();same_picking(empty,no_axes);
         for (auto c:no_axes.rgba) require(c==255,"clear retained interaction or application overlays");
         require(v.device().validation_errors()==0,"interaction overlay validation errors");

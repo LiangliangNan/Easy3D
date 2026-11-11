@@ -100,10 +100,10 @@ void run(bool validation) {
     auto button=glfwSetMouseButtonCallback(v.window(),nullptr);glfwSetMouseButtonCallback(v.window(),button);
     require(button,"GUI button callback missing");
     glfwSetCursorPos(v.window(),15,menu_y);cursor(v.window(),15,menu_y);
-    button(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,0);v.draw_frame();
+    button(v.window(),Viewer::BUTTON_LEFT,GLFW_PRESS,0);v.draw_frame();
     require(ImGui::GetIO().MouseDown[0],"GUI button press did not reach ImGui");
     glfwSetCursorPos(v.window(),15,menu_y);cursor(v.window(),15,menu_y);
-    button(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,0);v.draw_frame();
+    button(v.window(),Viewer::BUTTON_LEFT,GLFW_RELEASE,0);v.draw_frame();
     if (!ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopup))
         std::cerr<<"GUI pointer: "<<ImGui::GetIO().MousePos.x<<","<<ImGui::GetIO().MousePos.y
                  <<" menu height="<<v.bar_height()<<" focus="<<glfwGetWindowAttrib(v.window(),GLFW_FOCUSED)
@@ -112,7 +112,7 @@ void run(bool validation) {
     require(v.draw_frame(),"GUI popup layout frame failed");
     require(ImGui::GetDrawData()->TotalVtxCount>closed_vertices,"File menu did not produce popup geometry");
     auto escape=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),escape);
-    escape(v.window(),GLFW_KEY_ESCAPE,0,GLFW_PRESS,0);escape(v.window(),GLFW_KEY_ESCAPE,0,GLFW_RELEASE,0);
+    escape(v.window(),Viewer::KEY_ESCAPE,0,GLFW_PRESS,0);escape(v.window(),Viewer::KEY_ESCAPE,0,GLFW_RELEASE,0);
     require(v.draw_frame() && !v.should_close(),"closing the menu escaped to Viewer");
     v.input=true;
     for(int i=0;i<5;++i) {require(v.draw_frame(),"text input focus frame failed");if(ImGui::GetIO().WantTextInput) break;}
@@ -128,12 +128,12 @@ void run(bool validation) {
     require(key && scroll,"ImGui callback chain missing");
     const auto projection=v.camera()->type();
     ImGui::GetIO().WantCaptureKeyboard=true;
-    key(v.window(),GLFW_KEY_P,0,GLFW_PRESS,0);key(v.window(),GLFW_KEY_P,0,GLFW_RELEASE,0);
+    key(v.window(),Viewer::KEY_P,0,GLFW_PRESS,0);key(v.window(),Viewer::KEY_P,0,GLFW_RELEASE,0);
     require(v.camera()->type()==projection,"GUI keyboard capture leaked to Viewer");
     ImGui::GetIO().WantCaptureMouse=true;scroll(v.window(),0,1);
     require(same(matrix,v.camera()->modelViewProjectionMatrix()),"GUI mouse capture moved the camera");
     ImGui::GetIO().WantCaptureKeyboard=false;
-    key(v.window(),GLFW_KEY_P,0,GLFW_PRESS,0);key(v.window(),GLFW_KEY_P,0,GLFW_RELEASE,0);
+    key(v.window(),Viewer::KEY_P,0,GLFW_PRESS,0);key(v.window(),Viewer::KEY_P,0,GLFW_RELEASE,0);
     require(v.camera()->type()!=projection,"uncaptured Viewer shortcut was lost");
     v.camera()->setType(projection);
     v.large_probe=true;require(v.draw_frame(),"large GUI draw list failed");

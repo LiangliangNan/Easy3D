@@ -113,7 +113,7 @@ int main(int argc,char**) {
         auto* vertices=renderer->get_points_drawable("vertices");
         auto* edges=renderer->get_lines_drawable("edges");
         const bool smooth=faces->smooth_shading(); press(InputViewer::KEY_M); require(faces->smooth_shading()!=smooth,"shading toggle failed");
-        press(InputViewer::KEY_M,GLFW_MOD_SHIFT); require(faces->smooth_shading()!=smooth,"modified M triggered plain shortcut");
+        press(InputViewer::KEY_M,Viewer::MODIF_SHIFT); require(faces->smooth_shading()!=smooth,"modified M triggered plain shortcut");
         bool visible=vertices->is_visible(); press(InputViewer::KEY_V); require(vertices->is_visible()!=visible,"vertex visibility failed");
         visible=edges->is_visible(); press(InputViewer::KEY_E); require(edges->is_visible()!=visible,"edge visibility failed");
         const float size=vertices->point_size(),width=edges->line_width();
@@ -121,7 +121,7 @@ int main(int argc,char**) {
         require(vertices->point_size()==size+1 && edges->line_width()==width+1,"size shortcuts failed");
         for (unsigned i=0;i<10;++i) {press(InputViewer::KEY_MINUS);press(InputViewer::KEY_LEFT_BRACKET);}
         require(vertices->point_size()==1 && edges->line_width()==1,"size shortcuts went below one");
-        const auto type=v.camera()->type(); press(InputViewer::KEY_P,GLFW_MOD_SHIFT);
+        const auto type=v.camera()->type(); press(InputViewer::KEY_P,Viewer::MODIF_SHIFT);
         require(v.camera()->type()==type,"modified P changed projection");
         press(InputViewer::KEY_P); require(v.camera()->type()!=type,"projection shortcut failed"); press(InputViewer::KEY_P);
         const auto orientation=v.camera()->orientation(); press(InputViewer::KEY_LEFT);
@@ -185,40 +185,40 @@ int main(int argc,char**) {
         bool bound=false, action=false;
         v.bind_shortcut([&](Viewer* viewer,Model* model){bound=viewer==&v && model==first;return true;},
                first,Viewer::KEY_P,Viewer::MODIF_SHIFT);
-        press(InputViewer::KEY_P,GLFW_MOD_SHIFT); require(bound,"custom modifier binding not dispatched");
+        press(InputViewer::KEY_P,Viewer::MODIF_SHIFT); require(bound,"custom modifier binding not dispatched");
         release(InputViewer::KEY_P);
         bound=false;
         v.unbind_shortcut(Viewer::KEY_P,Viewer::MODIF_SHIFT);
-        press(InputViewer::KEY_P,GLFW_MOD_SHIFT); require(!bound,"unbind(key, modifier) left a binding active");
+        press(InputViewer::KEY_P,Viewer::MODIF_SHIFT); require(!bound,"unbind(key, modifier) left a binding active");
         release(InputViewer::KEY_P);
         // unbind(model) removes only the bindings that carry that model.
         v.bind_shortcut([&](Viewer* viewer){action=viewer==&v;return true;},Viewer::KEY_J,Viewer::MODIF_ALT);
         v.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},second,Viewer::KEY_K,Viewer::MODIF_ALT);
         v.unbind_shortcut(second);
-        press(InputViewer::KEY_K,GLFW_MOD_ALT); require(!bound,"unbind(model) left a model binding active");
-        press(InputViewer::KEY_J,GLFW_MOD_ALT); require(action,"unbind(model) removed a model-free action");
+        press(InputViewer::KEY_K,Viewer::MODIF_ALT); require(!bound,"unbind(model) left a model binding active");
+        press(InputViewer::KEY_J,Viewer::MODIF_ALT); require(action,"unbind(model) removed a model-free action");
         release(InputViewer::KEY_K); release(InputViewer::KEY_J);
         // A bound function may remove its own binding; the callable stays alive for the call.
         unsigned once=0;
         v.bind_shortcut([&](Viewer* self){++once;self->unbind_shortcut(Viewer::KEY_I,Viewer::MODIF_ALT);return true;},
                Viewer::KEY_I,Viewer::MODIF_ALT);
-        press(InputViewer::KEY_I,GLFW_MOD_ALT); press(InputViewer::KEY_I,GLFW_MOD_ALT);
+        press(InputViewer::KEY_I,Viewer::MODIF_ALT); press(InputViewer::KEY_I,Viewer::MODIF_ALT);
         release(InputViewer::KEY_I);
         require(once==1,"self-unbinding shortcut was not removed or crashed");
         // Deleting a model automatically removes the shortcuts that target it.
         bound=false;
         v.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},first,Viewer::KEY_U,Viewer::MODIF_ALT);
         press(InputViewer::KEY_DELETE); require(v.models().size()==1 && v.current_model()==second,"delete-current-model failed");
-        press(InputViewer::KEY_U,GLFW_MOD_ALT); require(!bound,"delete_model kept a binding to the deleted model");
+        press(InputViewer::KEY_U,Viewer::MODIF_ALT); require(!bound,"delete_model kept a binding to the deleted model");
         release(InputViewer::KEY_U);
         // clear_scene() drops model-bound shortcuts but keeps model-free actions alive.
         v.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},second,Viewer::KEY_L,Viewer::MODIF_ALT);
         v.clear_scene(); require(v.current_model()==nullptr,"clearing scene left dangling current model");
-        press(InputViewer::KEY_L,GLFW_MOD_ALT); require(!bound,"clear_scene kept a binding to a deleted model");
-        action=false; press(InputViewer::KEY_J,GLFW_MOD_ALT); require(action,"clear_scene removed a model-free action");
+        press(InputViewer::KEY_L,Viewer::MODIF_ALT); require(!bound,"clear_scene kept a binding to a deleted model");
+        action=false; press(InputViewer::KEY_J,Viewer::MODIF_ALT); require(action,"clear_scene removed a model-free action");
         release(InputViewer::KEY_L); release(InputViewer::KEY_J);
         require(v.validation_errors()==0,"input validation errors");
-        press(InputViewer::KEY_F4,GLFW_MOD_ALT); require(v.should_close(),"Alt-F4 did not close");
+        press(InputViewer::KEY_F4,Viewer::MODIF_ALT); require(v.should_close(),"Alt-F4 did not close");
         std::cout << "PASS: camera/model shortcuts, modifiers, axes, region/middle zoom, focus, bindings and dialogs\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

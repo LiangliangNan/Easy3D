@@ -978,7 +978,7 @@ namespace easy3d {
         camera()->frame()->action_start();
         if (modifiers == MODIF_ALT && ClippingPlane::instance()->is_enabled())
             ClippingPlane::instance()->manipulator()->frame()->action_start();
-        if (input_.key == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
+        if (input_.key == KEY_Z || modifiers == MODIF_SHIFT) {
             if (button == BUTTON_LEFT) {
                 bool found = false;
                 const vec3 point = point_under_pixel(x, y, found);
@@ -1004,7 +1004,7 @@ namespace easy3d {
                         update();
                     });
 #endif
-                    if (input_.key == GLFW_KEY_Z && modifiers == 0) {
+                    if (input_.key == KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
                         camera()->interpolateToLookAt(point);
 #else // without animation  Do NOT delete!!!
@@ -1017,7 +1017,7 @@ namespace easy3d {
             } else if (button == BUTTON_RIGHT) {
                 camera()->setPivotPoint(camera()->sceneCenter());
                 show_pivot_point_ = false;
-                if (input_.key == GLFW_KEY_Z && modifiers == 0) {
+                if (input_.key == KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
                     camera()->interpolateToFitScene();
 #else // without animation  Do NOT delete!!!
@@ -1073,11 +1073,11 @@ namespace easy3d {
         }
         // axis-constrained rotation/translation of the camera
         auto axis = ManipulatedFrame::NONE;
-        if (input_.key == GLFW_KEY_X)
+        if (input_.key == KEY_X)
             axis = ManipulatedFrame::HORIZONTAL;
-        else if (input_.key == GLFW_KEY_Y)
+        else if (input_.key == KEY_Y)
             axis = ManipulatedFrame::VERTICAL;
-        else if (input_.key == GLFW_KEY_O)
+        else if (input_.key == KEY_O)
             axis = ManipulatedFrame::ORTHOGONAL;
         if (button == BUTTON_LEFT)
             camera()->frame()->action_rotate(cx, cy, dx, dy, camera(), axis);
@@ -1090,8 +1090,8 @@ namespace easy3d {
 
     bool Viewer::key_release_event(int key, int) {
         input_.key = -1;
-        if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL || key == GLFW_KEY_LEFT_SUPER ||
-            key == GLFW_KEY_RIGHT_SUPER) {
+        if (key == KEY_LEFT_CONTROL || key == KEY_RIGHT_CONTROL || key == KEY_LEFT_SUPER ||
+            key == KEY_RIGHT_SUPER) {
             zoom_region_ = false;
 #ifdef EASY3D_HAS_VULKAN
             update_interaction_overlays(true);
@@ -1121,36 +1121,36 @@ namespace easy3d {
                 return func(this, binding->second.second);
             }
         }
-        if ((key == GLFW_KEY_ESCAPE && modifiers == 0) || (key == GLFW_KEY_F4 && modifiers == MODIF_ALT))
+        if ((key == KEY_ESCAPE && modifiers == 0) || (key == KEY_F4 && modifiers == MODIF_ALT))
             exit();
-        else if (key == GLFW_KEY_F1 && modifiers == 0) {
+        else if (key == KEY_F1 && modifiers == 0) {
             if (!manual_.empty())
                 std::cout << manual_ << '\n';
-        } else if (key == GLFW_KEY_F2 && modifiers == 0)
+        } else if (key == KEY_F2 && modifiers == 0)
             set_animation(!animation_enabled_);
-        else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && modifiers == 0)
+        else if ((key == KEY_LEFT || key == KEY_RIGHT) && modifiers == 0)
             // turn left/right, 1 degree each step
-            camera()->frame()->action_turn((key == GLFW_KEY_LEFT ? 1.0f : -1.0f) * float(M_PI / 180.0), camera());
-        else if ((key == GLFW_KEY_UP || key == GLFW_KEY_DOWN) && modifiers == 0) {
+            camera()->frame()->action_turn((key == KEY_LEFT ? 1.0f : -1.0f) * float(M_PI / 180.0), camera());
+        else if ((key == KEY_UP || key == KEY_DOWN) && modifiers == 0) {
             // move camera forward/backward
             const float step = .05f * camera()->sceneRadius();
             camera()->frame()->translate(
-                camera()->frame()->inverseTransformOf(vec3(0, 0, key == GLFW_KEY_UP ? -step : step)));
-        } else if (modifiers == MODIF_CTRL && key >= GLFW_KEY_RIGHT && key <= GLFW_KEY_UP) {
+                camera()->frame()->inverseTransformOf(vec3(0, 0, key == KEY_UP ? -step : step)));
+        } else if (modifiers == MODIF_CTRL && key >= KEY_RIGHT && key <= KEY_UP) {
             // move camera left/right/up/down
             const float step = .05f * camera()->sceneRadius();
-            const vec3 direction = key == GLFW_KEY_LEFT    ? vec3(-step, 0, 0)
-                                   : key == GLFW_KEY_RIGHT ? vec3(step, 0, 0)
-                                   : key == GLFW_KEY_UP    ? vec3(0, step, 0)
+            const vec3 direction = key == KEY_LEFT    ? vec3(-step, 0, 0)
+                                   : key == KEY_RIGHT ? vec3(step, 0, 0)
+                                   : key == KEY_UP    ? vec3(0, step, 0)
                                                            : vec3(0, -step, 0);
             camera()->frame()->translate(camera()->frame()->inverseTransformOf(direction));
-        } else if (modifiers == MODIF_CTRL && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL))
-            camera()->frame()->action_zoom(key == GLFW_KEY_EQUAL ? 1 : -1, camera());
-        else if (key == GLFW_KEY_K && modifiers == MODIF_ALT) {
+        } else if (modifiers == MODIF_CTRL && (key == KEY_MINUS || key == KEY_EQUAL))
+            camera()->frame()->action_zoom(key == KEY_EQUAL ? 1 : -1, camera());
+        else if (key == KEY_K && modifiers == MODIF_ALT) {
             // add key frame
             if (kfi_->add_keyframe(*camera()->frame()))
                 LOG(INFO) << "key frame added to camera path";
-        } else if (key == GLFW_KEY_D && modifiers == MODIF_ALT) {
+        } else if (key == KEY_D && modifiers == MODIF_ALT) {
             // delete path
             kfi_->delete_path();
 #ifdef EASY3D_HAS_VULKAN
@@ -1159,7 +1159,7 @@ namespace easy3d {
 #endif
             restore_scene_bounds();
             update();
-        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) {
+        } else if (key == KEY_K && modifiers == MODIF_CTRL) {
             // play the path
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
@@ -1168,7 +1168,7 @@ namespace easy3d {
                 next_camera_path_frame_ = std::chrono::steady_clock::now();
             }
             update();
-        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
+        } else if (key == KEY_T && modifiers == MODIF_CTRL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
                 float radius = camera()->sceneRadius();
@@ -1178,17 +1178,17 @@ namespace easy3d {
             } else
                 restore_scene_bounds();
             update();
-        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL)
+        } else if (key == KEY_C && modifiers == MODIF_CTRL)
             copy_view(); // copy camera
-        else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL)
+        else if (key == KEY_V && modifiers == MODIF_CTRL)
             paste_view(); // paste camera
-        else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
+        else if (key == KEY_O && modifiers == MODIF_CTRL)
             open();
-        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
+        else if (key == KEY_S && modifiers == MODIF_CTRL)
             save();
-        else if (key == GLFW_KEY_S && modifiers == 0)
+        else if (key == KEY_S && modifiers == 0)
             snapshot();
-        else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL) {
+        else if (key == KEY_F && modifiers == MODIF_CTRL) {
             show_frame_rate_ = !show_frame_rate_;
             if (show_frame_rate_) {
                 frame_rate_start_ = std::chrono::steady_clock::now();
@@ -1196,84 +1196,84 @@ namespace easy3d {
                 framerate_ = "fps: -- (-- ms/frame)";
             }
             update();
-        } else if (key == GLFW_KEY_F && modifiers == 0)
+        } else if (key == KEY_F && modifiers == 0)
             fit_screen();
-        else if (key == GLFW_KEY_C && modifiers == 0) {
+        else if (key == KEY_C && modifiers == 0) {
             if (current_model())
                 fit_screen(current_model());
-        } else if (key == GLFW_KEY_P && modifiers == 0)
+        } else if (key == KEY_P && modifiers == 0)
             camera()->setType(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
-        else if (key == GLFW_KEY_SPACE && modifiers == 0) {
+        else if (key == KEY_SPACE && modifiers == 0) {
             // Aligns camera
             Frame frame;
             frame.setTranslation(camera()->pivotPoint());
             camera()->frame()->alignWithFrame(&frame, true);
-        } else if (key == GLFW_KEY_M && modifiers == 0) {
+        } else if (key == KEY_M && modifiers == 0) {
             if (auto *mesh = dynamic_cast<SurfaceMesh *>(current_model()))
                 for (const auto &d : mesh->renderer()->triangles_drawables())
                     d->set_smooth_shading(!d->smooth_shading());
-        } else if (modifiers == 0 && (key == GLFW_KEY_LEFT_BRACKET || key == GLFW_KEY_RIGHT_BRACKET)) {
+        } else if (modifiers == 0 && (key == KEY_LEFT_BRACKET || key == KEY_RIGHT_BRACKET)) {
             for (const auto &m : models())
                 if (m->renderer())
                     for (const auto &d : m->renderer()->lines_drawables())
-                        d->set_line_width(std::max(1.0f, d->line_width() + (key == GLFW_KEY_RIGHT_BRACKET ? 1 : -1)));
-        } else if (modifiers == 0 && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL)) {
+                        d->set_line_width(std::max(1.0f, d->line_width() + (key == KEY_RIGHT_BRACKET ? 1 : -1)));
+        } else if (modifiers == 0 && (key == KEY_MINUS || key == KEY_EQUAL)) {
             for (const auto &m : models())
                 if (m->renderer())
                     for (const auto &d : m->renderer()->points_drawables())
-                        d->set_point_size(std::max(1.0f, d->point_size() + (key == GLFW_KEY_EQUAL ? 1 : -1)));
-        } else if (modifiers == 0 && (key == GLFW_KEY_COMMA || key == GLFW_KEY_PERIOD)) {
+                        d->set_point_size(std::max(1.0f, d->point_size() + (key == KEY_EQUAL ? 1 : -1)));
+        } else if (modifiers == 0 && (key == KEY_COMMA || key == KEY_PERIOD)) {
             if (!models().empty()) {
                 auto i = std::find_if(models().begin(), models().end(),
                                       [&](const std::shared_ptr<Model> &m) { return m.get() == current_model(); });
                 const int n = int(models().size()), index = i == models().end() ? n - 1 : int(i - models().begin());
-                model_idx_ = (index + n + (key == GLFW_KEY_PERIOD ? 1 : -1)) % n;
+                model_idx_ = (index + n + (key == KEY_PERIOD ? 1 : -1)) % n;
                 fit_screen(current_model());
             }
-        } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
+        } else if (key == KEY_DELETE && modifiers == 0) {
             if (current_model())
                 delete_model(current_model());
         } else if (modifiers == 0 && current_model() && current_model()->renderer() &&
-                   (key == GLFW_KEY_E || key == GLFW_KEY_V || key == GLFW_KEY_B || key == GLFW_KEY_L)) {
+                   (key == KEY_E || key == KEY_V || key == KEY_B || key == KEY_L)) {
             auto *renderer = current_model()->renderer();
             Drawable *d = nullptr;
-            if (key == GLFW_KEY_E)
+            if (key == KEY_E)
                 d = renderer->get_lines_drawable("edges");
-            else if (key == GLFW_KEY_V)
+            else if (key == KEY_V)
                 d = renderer->get_points_drawable("vertices");
             else if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                if (key == GLFW_KEY_B)
+                if (key == KEY_B)
                     d = renderer->get_lines_drawable("borders");
                 else
                     d = renderer->get_points_drawable("locks"); // locked vertices
             }
             if (d)
                 d->set_visible(!d->is_visible());
-        } else if (key == GLFW_KEY_D && modifiers == 0) {
+        } else if (key == KEY_D && modifiers == 0) {
             if (current_model())
                 current_model()->property_stats(std::cout);
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_C) {
+        } else if (modifiers == MODIF_ALT && key == KEY_C) {
             // toggle clipping plane
             auto *plane = ClippingPlane::instance();
             plane->set_enabled(!plane->is_enabled());
             plane->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_V) {
+        } else if (modifiers == MODIF_ALT && key == KEY_V) {
             // toggle clipping plane visibility
             auto *plane = ClippingPlane::instance();
             if (plane->is_enabled())
                 plane->set_visible(!plane->is_visible());
-        } else if (modifiers == MODIF_ALT && key == GLFW_KEY_X) {
+        } else if (modifiers == MODIF_ALT && key == KEY_X) {
             auto *plane = ClippingPlane::instance();
             if (plane->is_enabled())
                 plane->set_cross_section(!plane->cross_section());
-        } else if (modifiers == 0 && key == GLFW_KEY_A) {
+        } else if (modifiers == 0 && key == KEY_A) {
 #ifdef EASY3D_HAS_VULKAN
             show_corner_axes_ = !show_corner_axes_;
 #else
             if (drawable_axes_)
                 drawable_axes_->set_visible(!drawable_axes_->is_visible());
 #endif
-        } else if (modifiers == 0 && key == GLFW_KEY_R) {
+        } else if (modifiers == 0 && key == KEY_R) {
 #ifdef EASY3D_HAS_VULKAN
             LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
 #else

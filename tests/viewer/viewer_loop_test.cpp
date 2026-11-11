@@ -62,7 +62,7 @@ struct LoopViewer : TestHost {
         if (inject_key_after_frame) {
             inject_key_after_frame = false;
             auto key = glfwSetKeyCallback(window(), nullptr); glfwSetKeyCallback(window(), key);
-            key(window(), GLFW_KEY_F9, 0, GLFW_PRESS, 0);
+            key(window(), Viewer::KEY_F9, 0, GLFW_PRESS, 0);
         }
         if (close_at && after >= close_at) request_close();
     }
@@ -238,11 +238,11 @@ void callback_failure(bool validation) {
         LoopViewer viewer(validation); scene(viewer); viewer.throw_key = true;
         auto key = glfwSetKeyCallback(viewer.window(), nullptr); glfwSetKeyCallback(viewer.window(), key);
         require(key != nullptr, "keyboard callback missing");
-        if (route == 0) key(viewer.window(), GLFW_KEY_F9, 0, GLFW_PRESS, 0);
+        if (route == 0) key(viewer.window(), Viewer::KEY_F9, 0, GLFW_PRESS, 0);
         else if (route == 1) {
             viewer.set_animation(true);
             viewer.animation_func_ = [&](TestHost*) {
-                key(viewer.window(), GLFW_KEY_F9, 0, GLFW_PRESS, 0); return true;
+                key(viewer.window(), Viewer::KEY_F9, 0, GLFW_PRESS, 0); return true;
             };
         } else viewer.inject_key_after_frame = true;
         const auto window = viewer.window();

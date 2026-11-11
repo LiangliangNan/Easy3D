@@ -61,8 +61,8 @@ int main(int argc,char**) {
             auto position=[&](const vec3& world) {
                 const auto p=v.camera()->projectedCoordinatesOf(world);mouse_pixel=vec2(p.x,p.y);return p;
             };
-            auto click=[&](const vec3& world) {position(world);mouse(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,0);
-                mouse(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,0);frame(v);};
+            auto click=[&](const vec3& world) {position(world);mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_PRESS,0);
+                mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_RELEASE,0);frame(v);};
             const auto baseline=v.capture();
             const auto fixture=v.camera()->projectedCoordinatesOf(vec3(-1.2f,0,0));
             require(v.pick(int(fixture.x),int(fixture.y)).model==retained,"initial transformed fixture pick failed");
@@ -76,24 +76,24 @@ int main(int argc,char**) {
                 const auto guide=v.capture();v.set_overlays({});const auto plain=v.capture();same_picking(guide,plain);
                 require(guide.rgba!=plain.rgba,"RGB manipulation frame not displayed");frame(v);
             }
-            auto p=position(vec3(-1.2f,0,0));mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_PRESS,GLFW_MOD_ALT);
-            key(v.window(),GLFW_KEY_X,0,GLFW_PRESS,0);
+            auto p=position(vec3(-1.2f,0,0));mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_PRESS,Viewer::MODIF_ALT);
+            key(v.window(),Viewer::KEY_X,0,GLFW_PRESS,0);
             auto transform=retained->manipulator()->matrix();
-            v.mouse_drag_event(int(p.x),int(p.y)+20,0,20,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);
+            v.mouse_drag_event(int(p.x),int(p.y)+20,0,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             require(same_matrix(transform,retained->manipulator()->matrix()),"X constraint allowed vertical model translation");
-            key(v.window(),GLFW_KEY_X,0,GLFW_RELEASE,0);
-            v.mouse_drag_event(int(p.x)+25,int(p.y)+15,25,15,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);
-            mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_RELEASE,GLFW_MOD_ALT);frame(v);
+            key(v.window(),Viewer::KEY_X,0,GLFW_RELEASE,0);
+            v.mouse_drag_event(int(p.x)+25,int(p.y)+15,25,15,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+            mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_RELEASE,Viewer::MODIF_ALT);frame(v);
             require(!same_matrix(transform,retained->manipulator()->matrix()),"Alt-right did not translate model");
             require(same_matrix(camera,v.camera()->modelViewProjectionMatrix()),"object drag moved camera");
             require(retained->points()==points,"model manipulation rewrote local geometry");
             const auto moved=retained->manipulator()->matrix()*vec4(-1.2f,0,0,1);
             const auto projected=v.camera()->projectedCoordinatesOf(moved.xyz());
             require(v.pick(int(projected.x),int(projected.y)).model==retained,"picking did not follow transformed model");
-            p=position(moved.xyz());mouse(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_PRESS,GLFW_MOD_ALT);
+            p=position(moved.xyz());mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_PRESS,Viewer::MODIF_ALT);
             transform=retained->manipulator()->matrix();
-            v.mouse_drag_event(int(p.x)+30,int(p.y)+20,30,20,GLFW_MOUSE_BUTTON_LEFT,GLFW_MOD_ALT);
-            mouse(v.window(),GLFW_MOUSE_BUTTON_LEFT,GLFW_RELEASE,GLFW_MOD_ALT);frame(v);
+            v.mouse_drag_event(int(p.x)+30,int(p.y)+20,30,20,Viewer::BUTTON_LEFT,Viewer::MODIF_ALT);
+            mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_RELEASE,Viewer::MODIF_ALT);frame(v);
             require(!same_matrix(transform,retained->manipulator()->matrix()),"Alt-left did not rotate model");
             require(same_matrix(camera,v.camera()->modelViewProjectionMatrix()),"object rotation moved camera");
             require(!other->manipulator(),"drag transformed unselected model");
@@ -105,24 +105,24 @@ int main(int argc,char**) {
             same_picking(obscured,no_guide);require(obscured.rgba==no_guide.rgba,"manipulator frame showed through nearer surface");
             v.delete_model(foreground.get());frame(v);
             // Focus cancellation and deletion during a drag must not leave borrowed pointers.
-            position(moved.xyz());mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_PRESS,GLFW_MOD_ALT);
+            position(moved.xyz());mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_PRESS,Viewer::MODIF_ALT);
             focus(v.window(),GLFW_FALSE);transform=retained->manipulator()->matrix();
-            v.mouse_drag_event(100,100,20,20,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);
+            v.mouse_drag_event(100,100,20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             require(same_matrix(transform,retained->manipulator()->matrix()),"focus loss left model drag active");
-            mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_RELEASE,GLFW_MOD_ALT);
-            position(moved.xyz());mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_PRESS,GLFW_MOD_ALT);
+            mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_RELEASE,Viewer::MODIF_ALT);
+            position(moved.xyz());mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_PRESS,Viewer::MODIF_ALT);
             require(v.delete_model(retained.get()),"selected model deletion failed");
-            v.mouse_drag_event(100,100,20,20,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);frame(v);
+            v.mouse_drag_event(100,100,20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);frame(v);
             require(same_matrix(transform,retained->manipulator()->matrix()),"deleted model was still manipulated");
-            mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_RELEASE,GLFW_MOD_ALT);
+            mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_RELEASE,Viewer::MODIF_ALT);
             click(vec3(1.2f,0,0));require(other->renderer()->is_selected(),"selection did not recover after deletion");
             click(vec3(1.2f,0,0));require(!other->renderer()->is_selected(),"second click did not unpick model");
             v.resize(560,390);frame(v);click(vec3(1.2f,0,0));require(other->renderer()->is_selected(),"resized picking failed");
-            position(vec3(1.2f,0,0));mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_PRESS,GLFW_MOD_ALT);
+            position(vec3(1.2f,0,0));mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_PRESS,Viewer::MODIF_ALT);
             transform=other->manipulator()->matrix();v.resize(580,410);frame(v);
-            v.mouse_drag_event(100,100,30,30,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);
+            v.mouse_drag_event(100,100,30,30,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             require(same_matrix(transform,other->manipulator()->matrix()),"resize left stale model drag active");
-            mouse(v.window(),GLFW_MOUSE_BUTTON_RIGHT,GLFW_RELEASE,GLFW_MOD_ALT);
+            mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_RELEASE,Viewer::MODIF_ALT);
             v.clear_scene();frame(v);require(v.models().empty(),"clear failed");
             require(v.device().validation_errors()==0,"manipulation validation errors");
         }

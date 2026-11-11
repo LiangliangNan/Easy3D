@@ -74,7 +74,7 @@ int main(int argc,char**) {
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         // This oracle compares every point's rendered color with its source;
         // hide the persistent HUD so it cannot cover otherwise valid point hits.
-        key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,0);
+        key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,0);
         auto cloud=std::make_shared<PointCloud>();
         cloud->add_vertex_property<vec3>("v:color");
         cloud->add_vertex(vec3(0,0,0)); cloud->add_vertex(vec3(1,1,1));
@@ -102,12 +102,12 @@ int main(int argc,char**) {
             return true;
         };
         viewer.set_animation(true);
-        key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
+        key(viewer.window(),Viewer::KEY_F2,0,GLFW_PRESS,0);
         require(!viewer.is_animating(),"F2 did not pause the stream");
         require(worker.wait_for_batch(std::chrono::seconds(5)),"paused worker did not publish");
         frame(viewer);
         require(cloud->n_vertices()==2 && viewer.capture().rgba==baseline.rgba,"worker directly modified the displayed model");
-        key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
+        key(viewer.window(),Viewer::KEY_F2,0,GLFW_PRESS,0);
         for (unsigned batch=0;batch<4;++batch) {
             // WSI may retry presentation during resize. Permit one batch per
             // probe, independent of the number of renderable frame attempts.

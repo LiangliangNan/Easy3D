@@ -67,12 +67,12 @@ int main(int argc, char**) {
             const auto b=viewer.capture();
             require(a.depth!=b.depth,"animation did not update depth");
             auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
-            key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
+            key(viewer.window(),Viewer::KEY_F2,0,GLFW_PRESS,0);
             require(!viewer.is_animating(),"F2 did not pause animation");
             frame(viewer);
             require(viewer.capture().depth==b.depth && viewer.updates==advanced,"paused scene advanced");
             viewer.resize(191+int(samples),159+int(samples)); frame(viewer);
-            key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
+            key(viewer.window(),Viewer::KEY_F2,0,GLFW_PRESS,0);
             require(viewer.is_animating(),"F2 did not resume animation"); frame(viewer);
         }
         // A callback can pause itself; its final geometry is still presented.

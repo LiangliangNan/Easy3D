@@ -112,7 +112,17 @@ namespace easy3d {
             KEY_EQUAL = 61 /* = */,
             KEY_LEFT_BRACKET = 91 /* [ */,
             KEY_BACKSLASH = 92 /* \ */,
-            KEY_RIGHT_BRACKET = 93 /* ] */
+            KEY_RIGHT_BRACKET = 93 /* ] */,
+            /// Physical modifier keys. Events report them as Key values and also
+            /// through the corresponding ViewerInput::Modifier bit mask.
+            KEY_LEFT_SHIFT = 340,
+            KEY_LEFT_CONTROL = 341,
+            KEY_LEFT_ALT = 342,
+            KEY_LEFT_SUPER = 343,
+            KEY_RIGHT_SHIFT = 344,
+            KEY_RIGHT_CONTROL = 345,
+            KEY_RIGHT_ALT = 346,
+            KEY_RIGHT_SUPER = 347
         };
 
         /**
