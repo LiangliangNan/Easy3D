@@ -3927,6 +3927,92 @@ namespace easy3d {
                 }
             };
 
+            class ImpostorUniformBuilder {
+            public:
+                static ImpostorUniform build(const DrawCommand &command, uint32_t width, uint32_t height) {
+                    ImpostorUniform uniform{};
+                    const bool analytic =
+                        command.point_style != PointStyle::plain || command.line_style != LineStyle::plain;
+                    const bool camera_space_line = command.geometry->topology() == Topology::lines &&
+                                                   command.line_style == LineStyle::plain &&
+                                                   !command.line_screen_space_width;
+                    mat4 model_view = mat4::identity(), projection = mat4::identity();
+                    if (analytic || camera_space_line) {
+                        model_view = command.model_view;
+                        projection = command.projection;
+                    } else if (command.ambient_occlusion)
+                        projection = command.projection;
+                    else if (command.geometry->topology() == Topology::points &&
+                             !command.clipping_planes.empty())
+                        model_view = command.model_view;
+                    const auto inverse_projection =
+                        (analytic || command.ambient_occlusion) ? inverse(projection) : mat4::identity();
+                    for (unsigned col = 0; col < 4; ++col)
+                        for (unsigned row = 0; row < 4; ++row) {
+                            uniform.model_view[col * 4 + row] = model_view(row, col);
+                            uniform.projection[col * 4 + row] = projection(row, col);
+                            uniform.inverse_projection[col * 4 + row] = inverse_projection(row, col);
+                            if (!std::isfinite(uniform.model_view[col * 4 + row]) ||
+                                !std::isfinite(uniform.projection[col * 4 + row]) ||
+                                !std::isfinite(uniform.inverse_projection[col * 4 + row]))
+                                throw std::invalid_argument("invalid impostor transform/projection");
+                        }
+                    uniform.dimensions[0] = float(command.viewport.z ? command.viewport.z : width);
+                    uniform.dimensions[1] = float(command.viewport.w ? command.viewport.w : height);
+                    uniform.viewport_origin[0] = float(command.viewport.x);
+                    uniform.viewport_origin[1] = float(command.viewport.y);
+                    // z = logical pixel size for plain styles; w = world-space
+                    // impostor radius (diameter * world_pixel_ratio * 0.5).
+                    uniform.dimensions[2] = expanded_lines(command) ? command.line_width : command.point_size;
+                    uniform.dimensions[3] = expanded_lines(command) ? command.line_radius : command.sphere_radius;
+                    for (unsigned i = 0; i < 3; ++i) {
+                        if (!std::isfinite(command.sphere_light[i]))
+                            throw std::invalid_argument("non-finite impostor light");
+                        uniform.light[i] = command.sphere_light[i];
+                    }
+                    if (analytic && command.lighting && dot(command.sphere_light, command.sphere_light) == 0)
+                        throw std::invalid_argument("impostor lighting requires a nonzero direction");
+                    uniform.light[3] = command.point_style == PointStyle::surfel   ? 2.f
+                                       : command.point_style == PointStyle::sphere ? 1.f
+                                                                                   : 0.f;
+                    if (expanded_lines(command))
+                        uniform.light[3] = command.line_style == LineStyle::plain  ? 5.f
+                                           : command.line_style == LineStyle::cone ? 4.f
+                                                                                   : 3.f;
+                    if (analytic || command.geometry->topology() == Topology::points) {
+                        uniform.clip_info[1] = command.discard_clipped_primitives ? 1.f : 0.f;
+                        uniform.clip_info[0] = float(command.clipping_planes.size());
+                        for (size_t plane = 0; plane < command.clipping_planes.size(); ++plane)
+                            for (unsigned c = 0; c < 4; ++c)
+                                uniform.clip_planes[plane * 4 + c] = command.clipping_planes[plane][c];
+                    }
+                    if (command.geometry->topology() == Topology::lines && command.line_style == LineStyle::plain) {
+                        // 1: expand the plain line in screen space, 0: in camera space.
+                        uniform.line_options[0] = command.line_screen_space_width ? 1u : 0u;
+                    }
+                    for (unsigned col = 0; col < 4; ++col)
+                        for (unsigned row = 0; row < 4; ++row)
+                            uniform.model[col * 4 + row] = command.model(row, col);
+                    for (unsigned i = 0; i < 3; ++i) {
+                        uniform.eye[i] = command.eye[i];
+                        uniform.material_light[i] = command.light[i];
+                    }
+                    for (unsigned i = 0; i < 4; ++i) {
+                        uniform.ambient[i] = command.ambient[i];
+                        uniform.specular[i] = command.specular[i];
+                        uniform.backside[i] = command.back_color[i];
+                    }
+                    uniform.shading[0] = command.material_lighting ? 1.f : 0.f;
+                    uniform.shading[1] = command.lighting_two_sides ? 1.f : 0.f;
+                    uniform.shading[2] = command.distinct_back_color ? 1.f : 0.f;
+                    uniform.shading[3] = command.shininess;
+                    for (unsigned col = 0; col < 4; ++col)
+                        for (unsigned row = 0; row < 4; ++row)
+                            uniform.shadow[col * 4 + row] = command.shadow_matrix(row, col);
+                    return uniform;
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4418,90 +4504,9 @@ namespace easy3d {
                             if (uniforms.size() > UINT32_MAX - stride)
                                 throw std::invalid_argument("too many impostor draw commands");
                             offset = static_cast<uint32_t>(uniforms.size());
-                            ImpostorUniform u{};
-                            const bool analytic =
-                                command.point_style != PointStyle::plain || command.line_style != LineStyle::plain;
-                            // A plain line expanded in camera space needs the camera-space
-                            // endpoints and the camera projection to offset them.
-                            const bool camera_space_line = command.geometry->topology() == Topology::lines &&
-                                                          command.line_style == LineStyle::plain &&
-                                                          !command.line_screen_space_width;
-                            mat4 model_view = mat4::identity(), projection = mat4::identity();
-                            if (analytic || camera_space_line) {
-                                model_view = command.model_view;
-                                projection = command.projection;
-                            } else if (command.ambient_occlusion)
-                                projection = command.projection;
-                            else if (command.geometry->topology() == Topology::points &&
-                                     !command.clipping_planes.empty())
-                                model_view = command.model_view;
-                            const auto inv =
-                                (analytic || command.ambient_occlusion) ? inverse(projection) : mat4::identity();
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row) {
-                                    u.model_view[col * 4 + row] = model_view(row, col);
-                                    u.projection[col * 4 + row] = projection(row, col);
-                                    u.inverse_projection[col * 4 + row] = inv(row, col);
-                                    if (!std::isfinite(u.model_view[col * 4 + row]) ||
-                                        !std::isfinite(u.projection[col * 4 + row]) ||
-                                        !std::isfinite(u.inverse_projection[col * 4 + row]))
-                                        throw std::invalid_argument("invalid impostor transform/projection");
-                                }
-                            u.dimensions[0] = float(command.viewport.z ? command.viewport.z : width);
-                            u.dimensions[1] = float(command.viewport.w ? command.viewport.w : height);
-                            u.viewport_origin[0] = float(command.viewport.x);
-                            u.viewport_origin[1] = float(command.viewport.y);
-                            // z = logical pixel size for plain styles; w = world-space
-                            // impostor radius (diameter * world_pixel_ratio * 0.5).
-                            u.dimensions[2] = expanded_lines(command) ? command.line_width : command.point_size;
-                            u.dimensions[3] = expanded_lines(command) ? command.line_radius : command.sphere_radius;
-                            for (unsigned i = 0; i < 3; ++i) {
-                                if (!std::isfinite(command.sphere_light[i]))
-                                    throw std::invalid_argument("non-finite impostor light");
-                                u.light[i] = command.sphere_light[i];
-                            }
-                            if (analytic && command.lighting && dot(command.sphere_light, command.sphere_light) == 0)
-                                throw std::invalid_argument("impostor lighting requires a nonzero direction");
-                            u.light[3] = command.point_style == PointStyle::surfel   ? 2.f
-                                         : command.point_style == PointStyle::sphere ? 1.f
-                                                                                     : 0.f;
-                            if (expanded_lines(command))
-                                u.light[3] = command.line_style == LineStyle::plain  ? 5.f
-                                             : command.line_style == LineStyle::cone ? 4.f
-                                                                                     : 3.f;
-                            if (analytic || command.geometry->topology() == Topology::points) {
-                                u.clip_info[1] = command.discard_clipped_primitives ? 1.f : 0.f;
-                                u.clip_info[0] = float(command.clipping_planes.size());
-                                for (size_t plane = 0; plane < command.clipping_planes.size(); ++plane)
-                                    for (unsigned c = 0; c < 4; ++c)
-                                        u.clip_planes[plane * 4 + c] = command.clipping_planes[plane][c];
-                            }
-                            if (command.geometry->topology() == Topology::lines &&
-                                command.line_style == LineStyle::plain) {
-                                // 1: expand the plain line in screen space, 0: in camera space.
-                                u.line_options[0] = command.line_screen_space_width ? 1u : 0u;
-                            }
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row)
-                                    u.model[col * 4 + row] = command.model(row, col);
-                            for (unsigned i = 0; i < 3; ++i) {
-                                u.eye[i] = command.eye[i];
-                                u.material_light[i] = command.light[i];
-                            }
-                            for (unsigned i = 0; i < 4; ++i) {
-                                u.ambient[i] = command.ambient[i];
-                                u.specular[i] = command.specular[i];
-                                u.backside[i] = command.back_color[i];
-                            }
-                            u.shading[0] = command.material_lighting ? 1.f : 0.f;
-                            u.shading[1] = command.lighting_two_sides ? 1.f : 0.f;
-                            u.shading[2] = command.distinct_back_color ? 1.f : 0.f;
-                            u.shading[3] = command.shininess;
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row)
-                                    u.shadow[col * 4 + row] = command.shadow_matrix(row, col);
+                            const auto uniform = ImpostorUniformBuilder::build(command, width, height);
                             uniforms.resize(uniforms.size() + stride);
-                            std::memcpy(uniforms.data() + offset, &u, sizeof(u));
+                            std::memcpy(uniforms.data() + offset, &uniform, sizeof(uniform));
                         }
                         float sort_depth = 0;
                         uint32_t index_offset = 0, index_count = 0;

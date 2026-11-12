@@ -119,6 +119,7 @@
       - [x] Move clipped-geometry generation, cache-key validation, and expired-source pruning into `ClippedGeometryCache`; retain the prune point after the preceding submission fence.
       - [x] Extract per-draw invariant checks into `DrawCommandValidator`; preserve their ordering before cache pruning, resource uploads, and command recording.
       - [x] Move far-to-near per-triangle index generation for transparent draws into `TransparentTriangleOrderBuilder`; keep buffer allocation/upload and draw-level ordering in `VulkanDevice`/`ScenePassEncoder`.
+      - [x] Move shader-facing impostor uniform packing into `ImpostorUniformBuilder`; keep aligned batching, buffer growth, and upload in `VulkanDevice`.
     - [ ] Improve both backends based on 'docs/vulkan-migration-assessment.md'
       - [x] Finding 1 image-diff harness completed (see above); Finding 4 overflow diagnostics and controlled point benchmark recorded. Finding 2 constructor hazard is documented and deliberately has no deprecated compatibility overload: old positional calls must be migrated to the current constructor order. Both Viewer constructors emit the legacy-context-version advisory, and `docs/vulkan.md` describes the silent reinterpretation. Finding 3 modularization is ongoing; Finding 5 Windows/platform validation remains open.
 
