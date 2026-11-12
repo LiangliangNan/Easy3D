@@ -100,14 +100,14 @@ namespace easy3d {
         // The equivalent conversion from perspective() to frustum() is described in the following code:
         // This creates a symmetric frustum. It converts to 6 params (l, r, b, t, n, f) for frustum()
         // from given 4 params (fovy, aspect, near, far)
-        void makeFrustum(double fovy, double aspect, double near, double far)
+        void makeFrustum(double fovy, double aspect, double near_plane, double far_plane)
         {
             const double DEG2RAD = 3.14159265 / 180;
             double tangent = std::tan(fovy / 2 * DEG2RAD);   // tangent of half fovy
-            double height = near * tangent;				// half height of near plane
+            double height = near_plane * tangent;				// half height of near plane
             double width = height * aspect;				// half width of near plane
             // params: left, right, bottom, top, near, far
-            glFrustum(-width, width, -height, height, near, far);
+            glFrustum(-width, width, -height, height, near_plane, far_plane);
         }
         */
 

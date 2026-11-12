@@ -1255,13 +1255,13 @@ namespace easy3d {
     void Camera::convert_click_to_line(int x, int y, vec3 &orig, vec3 &dir) const {
         const int viewport[] = {0, 0, screen_width_, screen_height_};
         const mat4 inv = transform::checked_inverse(model_view_projection_matrix());
-        const vec3 near = transform::unproject_inverse(vec3(float(x), float(y), 0), inv, viewport, false);
+        const vec3 near_point = transform::unproject_inverse(vec3(float(x), float(y), 0), inv, viewport, false);
         const vec3 inside = transform::unproject_inverse(vec3(float(x), float(y), .5f), inv, viewport, false);
-        dir = normalize(inside - near);
+        dir = normalize(inside - near_point);
         if (type() == PERSPECTIVE)
             orig = position();
         else
-            orig = near + dir * (dot(position() - near, view_direction()) / dot(dir, view_direction()));
+            orig = near_point + dir * (dot(position() - near_point, view_direction()) / dot(dir, view_direction()));
     }
 
 

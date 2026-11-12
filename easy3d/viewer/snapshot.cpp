@@ -58,18 +58,18 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
         // Match the OpenGL snapshot: preserve one source frustum dimension,
         // expanding or cropping the other for the rounded output aspect ratio.
         const double aspect = double(framebuffer_width()) / framebuffer_height(), output_aspect = double(w) / h;
-        const double near = camera()->z_near(), far = camera()->z_far();
+        const double near_plane = camera()->z_near(), far_plane = camera()->z_far();
         float x, y;
         if (camera()->type() == Camera::PERSPECTIVE) {
-            y = float(near * std::tan(camera()->field_of_view() * .5));
+            y = float(near_plane * std::tan(camera()->field_of_view() * .5));
             x = float(aspect * y);
         } else camera()->get_ortho_width_height(x, y);
         if ((expand && output_aspect > aspect) || (!expand && output_aspect < aspect))
             x = float(output_aspect * y);
         else y = float(x / output_aspect);
         const mat4 projection = camera()->type() == Camera::PERSPECTIVE
-            ? transform::frustum(-x, x, -y, y, float(near), float(far))
-            : transform::ortho(-x, x, -y, y, float(near), float(far));
+            ? transform::frustum(-x, x, -y, y, float(near_plane), float(far_plane))
+            : transform::ortho(-x, x, -y, y, float(near_plane), float(far_plane));
         const vec4 background = back_ground == 0 ? background_color() : back_ground == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0);
 
         graphics::FrameImage frame;

@@ -189,9 +189,9 @@ void sphere_snapshots(Viewer& v) {
                 require(ImageIO::load(file,rgba,w,h,channels,4,false),"sphere snapshot could not be decoded");
                 unsigned interior=0,mismatches=0;
                 for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
-                    const vec4 near=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,-1,1);
-                    const vec4 far=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,1,1);
-                    const vec3 origin=near.xyz()/near.w,direction=normalize(far.xyz()/far.w-origin);
+                    const vec4 near_point=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,-1,1);
+                    const vec4 far_point=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,1,1);
+                    const vec3 origin=near_point.xyz()/near_point.w,direction=normalize(far_point.xyz()/far_point.w-origin);
                     const vec3 offset=center-origin,perpendicular=cross(offset,direction);
                     const float discriminant=radius*radius-dot(perpendicular,perpendicular);
                     if (std::abs(discriminant)<radius*radius*.05f) continue;

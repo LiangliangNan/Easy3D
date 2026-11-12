@@ -26,45 +26,45 @@ int main(int argc,char**) {
     try {
         const bool validation = argc > 1;
         auto device=create_vulkan_device(validation, validation);
-        auto near=rectangle(-1,-.8f,-.2f,.8f,-.5f,vec4(0,0,1,1)); near.object_id=13;
-        auto far=rectangle(.2f,-.8f,1,.8f,.5f,vec4(0,0,1,1)); far.object_id=17;
+        auto near_surface=rectangle(-1,-.8f,-.2f,.8f,-.5f,vec4(0,0,1,1)); near_surface.object_id=13;
+        auto far_surface=rectangle(.2f,-.8f,1,.8f,.5f,vec4(0,0,1,1)); far_surface.object_id=17;
         auto guide=rectangle(-.95f,-.95f,.95f,.95f,0,vec4(1,0,0,.25f),true,true);
         for (unsigned count:{1u,4u}) {
             if (!(device->supported_sample_counts()&count)) continue;
-            const auto base=device->render(65,65,{near,far},vec4(0),count);
+            const auto base=device->render(65,65,{near_surface,far_surface},vec4(0),count);
             auto hud_near=rectangle(-.9f,-.9f,.9f,.9f,.2f,vec4(0,1,0,1),true);
             auto hud_far=rectangle(-.9f,-.9f,.9f,.9f,.6f,vec4(1,0,0,1),true);
             hud_near.overlay_independent_depth=hud_far.overlay_independent_depth=true;
-            const auto hud_frame=device->render(65,65,{hud_near,near,hud_far,far},vec4(0),count);
+            const auto hud_frame=device->render(65,65,{hud_near,near_surface,hud_far,far_surface},vec4(0),count);
             probe(hud_frame,16,32,0,255,0); // HUD wins even behind opaque scene depth
             same_picking(base,hud_frame);
-            const auto hud_reversed=device->render(65,65,{hud_far,near,hud_near,far},vec4(0),count);
+            const auto hud_reversed=device->render(65,65,{hud_far,near_surface,hud_near,far_surface},vec4(0),count);
             require(hud_reversed.rgba==hud_frame.rgba,"3D HUD ignored its own depth ordering");same_picking(base,hud_reversed);
-            const auto cleared=device->render(65,65,{near,far,hud_far},vec4(0),count);
+            const auto cleared=device->render(65,65,{near_surface,far_surface,hud_far},vec4(0),count);
             probe(cleared,16,32,255,0,0);same_picking(base,cleared); // own depth clears each frame
             auto flat=rectangle(-1,-1,1,1,1,vec4(0,0,1,1),true);
-            const auto layered=device->render(65,65,{flat,hud_near,near,far},vec4(0),count);
+            const auto layered=device->render(65,65,{flat,hud_near,near_surface,far_surface},vec4(0),count);
             probe(layered,16,32,0,0,255);same_picking(base,layered);
             hud_near.lighting=true;
-            const auto lit=device->render(65,65,{near,far,hud_near},vec4(0),count);
+            const auto lit=device->render(65,65,{near_surface,far_surface,hud_near},vec4(0),count);
             hud_near.normal_matrix=mat3(0,-1,0,0,0,1,1,0,0);
-            const auto relit=device->render(65,65,{near,far,hud_near},vec4(0),count);
+            const auto relit=device->render(65,65,{near_surface,far_surface,hud_near},vec4(0),count);
             require(lit.rgba!=relit.rgba,"3D HUD lighting ignored normal transform");same_picking(base,relit);
-            const auto no_hud=device->render(65,65,{near,far},vec4(0),count);
+            const auto no_hud=device->render(65,65,{near_surface,far_surface},vec4(0),count);
             require(no_hud.rgba==base.rgba,"3D HUD left stale color after removal");same_picking(base,no_hud);
-            const auto tinted=device->render(65,65,{guide,far,near},vec4(0),count);
+            const auto tinted=device->render(65,65,{guide,far_surface,near_surface},vec4(0),count);
             same_picking(base,tinted);
             probe(tinted,16,32,0,0,255);       // plane is behind the near opaque surface
             probe(tinted,48,32,64,0,191);      // plane is in front of the far opaque surface
             probe(tinted,32,32,64,0,0,64);     // visible plane on transparent background creates no hit
             require(tinted.ids[32*65+32].object==UINT32_MAX && tinted.depth[32*65+32]==1,"plane-only pixel created a picking surface");
             auto hud=rectangle(-1,-1,1,1,.9f,vec4(0,1,0,.5f),true);
-            const auto composed=device->render(65,65,{hud,guide,near,far},vec4(0),count);
+            const auto composed=device->render(65,65,{hud,guide,near_surface,far_surface},vec4(0),count);
             same_picking(base,composed); probe(composed,16,32,0,128,128);
             auto coplanar=guide; coplanar.geometry=rectangle(-1,-1,1,1,-.5f,vec4(1)).geometry;
-            probe(device->render(65,65,{near,coplanar},vec4(0),count),16,32,64,0,191);
+            probe(device->render(65,65,{near_surface,coplanar},vec4(0),count),16,32,64,0,191);
             auto zero=guide; zero.color.w=0;
-            require(device->render(65,65,{near,far,zero},vec4(0),count).rgba==base.rgba,"zero-alpha depth overlay changed color");
+            require(device->render(65,65,{near_surface,far_surface,zero},vec4(0),count).rgba==base.rgba,"zero-alpha depth overlay changed color");
             auto background=rectangle(-1,-1,1,1,.8f,vec4(0,0,1,1));
             auto back=rectangle(-1,-1,1,1,.6f,vec4(0,1,0,.5f),true,true);
             auto front=rectangle(-1,-1,1,1,.2f,vec4(1,0,0,.5f),true,true);

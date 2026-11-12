@@ -48,13 +48,13 @@ namespace easy3d {
          * \param right     Specifies the coordinates for the right vertical clipping plane.
          * \param bottom    Specifies the coordinates for the bottom horizontal clipping plane.
          * \param top       Specifies the coordinates for the top horizontal clipping plane.
-         * \param near      Specifies the distance from the viewer to the near clipping plane (always positive).
-         * \param far       Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \param near_plane Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \param far_plane  Specifies the distance from the viewer to the far clipping plane (always positive).
          * \return Orthographic projection matrix.
          * See http://www.songho.ca/opengl/gl_projectionmatrix.html
          *     https://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
          */
-        mat4 ortho(float left, float right, float bottom, float top, float near, float far);
+        mat4 ortho(float left, float right, float bottom, float top, float near_plane, float far_plane);
 
         /**
          * Creates a matrix for projecting two-dimensional coordinates onto the screen.
@@ -74,47 +74,47 @@ namespace easy3d {
          * \param right  Specifies the coordinates for the right vertical clipping plane.
          * \param bottom Specifies the coordinates for the bottom horizontal clipping plane.
          * \param top    Specifies the coordinates for the top horizontal clipping plane.
-         * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
-         * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \param near_plane Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \param far_plane  Specifies the distance from the viewer to the far clipping plane (always positive).
          * \return Perspective frustum projection matrix.
          */
-        mat4 frustum(float left, float right, float bottom, float top, float near, float far);
+        mat4 frustum(float left, float right, float bottom, float top, float near_plane, float far_plane);
 
         /**
          * Creates a matrix for a right-handed symmetric perspective-view frustum. Simulating gluPerspective().
          * \param fov_y  Specifies the field of view angle, in the y direction. Expressed in radians.
          * \param aspect Specifies the aspect ratio that determines the field of view in the x direction. The aspect
          *      ratio is the ratio of x (width) to y (height).
-         * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
-         * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \param near_plane Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \param far_plane  Specifies the distance from the viewer to the far clipping plane (always positive).
          * \return Symmetric perspective projection matrix.
          * \note In this function, angles are expressed in radians.
          * See https://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
          */
-        mat4 perspective(float fov_y, float aspect, float near, float far);
+        mat4 perspective(float fov_y, float aspect, float near_plane, float far_plane);
         /**
          * Creates a matrix for a right-handed symmetric perspective-view frustum. Simulating gluPerspective().
          * \param fov_y  Specifies the field of view angle, in the y direction. Expressed in radians.
          * \param width  Specifies the width of the view.
          * \param height Specifies the height of the view. The ratio of width to height gives the aspect ratio that
          *      defines the field of view in the x direction.
-         * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
-         * \param far    Specifies the distance from the viewer to the far clipping plane (always positive).
+         * \param near_plane Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \param far_plane  Specifies the distance from the viewer to the far clipping plane (always positive).
          * \return Symmetric perspective projection matrix.
          * \note In this function, angles are expressed in radians.
          */
-        mat4 perspective(float fov_y, float width, float height, float near, float far);
+        mat4 perspective(float fov_y, float width, float height, float near_plane, float far_plane);
 
         /**
          * Creates a matrix for a symmetric perspective-view frustum with far plane at infinite.
          * \param fov_y  Specifies the field of view angle, in the y direction. Expressed in radians.
          * \param aspect Specifies the aspect ratio that determines the field of view in the x direction. The
          *		   aspect ratio is the ratio of x (width) to y (height).
-         * \param near   Specifies the distance from the viewer to the near clipping plane (always positive).
+         * \param near_plane Specifies the distance from the viewer to the near clipping plane (always positive).
          * \return Symmetric perspective projection matrix with an infinite far plane.
          * \note In this function, angles are expressed in radians.
          */
-        mat4 infinite_perspective(float fov_y, float aspect, float near);
+        mat4 infinite_perspective(float fov_y, float aspect, float near_plane);
 
         /**
          * Creates a viewport matrix. Simulating glViewport(), with the origin located at (0, 0).
