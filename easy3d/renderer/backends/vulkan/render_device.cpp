@@ -1114,8 +1114,10 @@ namespace easy3d {
                     for (unsigned i = 0; i < 3; ++i) {
                         VkBufferImageCopy copy{};
                         copy.bufferOffset = offsets[i];
-                        copy.imageSubresource = {i == 2 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 0,
-                                                 0, 1};
+                        copy.imageSubresource = {
+                            static_cast<VkImageAspectFlags>(i == 2 ? VK_IMAGE_ASPECT_DEPTH_BIT
+                                                                  : VK_IMAGE_ASPECT_COLOR_BIT),
+                            0, 0, 1};
                         copy.imageExtent = {target.width, target.height, 1};
                         c.vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                  target.readback.handle, 1, &copy);
@@ -3200,13 +3202,13 @@ namespace easy3d {
                             }
                             if (analytic && command.lighting && dot(command.sphere_light, command.sphere_light) == 0)
                                 throw std::invalid_argument("impostor lighting requires a nonzero direction");
-                            u.light[3] = command.point_style == PointStyle::surfel   ? 2
-                                         : command.point_style == PointStyle::sphere ? 1
-                                                                                     : 0;
+                            u.light[3] = command.point_style == PointStyle::surfel   ? 2.f
+                                         : command.point_style == PointStyle::sphere ? 1.f
+                                                                                     : 0.f;
                             if (expanded_lines(command))
-                                u.light[3] = command.line_style == LineStyle::plain  ? 5
-                                             : command.line_style == LineStyle::cone ? 4
-                                                                                     : 3;
+                                u.light[3] = command.line_style == LineStyle::plain  ? 5.f
+                                             : command.line_style == LineStyle::cone ? 4.f
+                                                                                     : 3.f;
                             if (analytic || command.geometry->topology() == Topology::points) {
                                 u.clip_info[1] = command.discard_clipped_primitives ? 1.f : 0.f;
                                 u.clip_info[0] = float(command.clipping_planes.size());
