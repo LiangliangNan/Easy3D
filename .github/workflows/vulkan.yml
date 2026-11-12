@@ -206,6 +206,17 @@ jobs:
         if: runner.os != 'Windows'
         run: cmake --build build-vulkan --parallel 2
 
+      - name: Configure Vulkan image-diff peer (Ubuntu OpenGL)
+        if: runner.os == 'Linux' && matrix.backend == 'OPENGL'
+        run: |
+          cmake -S . -B build-parity-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TESTS=ON \
+            -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_PYTHON_BINDINGS=OFF
+
+      - name: Build Vulkan image-diff peer (Ubuntu OpenGL)
+        if: runner.os == 'Linux' && matrix.backend == 'OPENGL'
+        run: cmake --build build-parity-vulkan --target easy3d_backend_image_diff_test --parallel 2
+
       - name: Validate SPIR-V (Ubuntu and macOS)
         if: matrix.backend == 'VULKAN' && runner.os != 'Windows'
         run: |
@@ -242,6 +253,17 @@ jobs:
           fi
           xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
             ctest --test-dir build-vulkan --output-on-failure -L desktop
+
+      - name: Compare OpenGL and Vulkan effect/snapshot images (Ubuntu)
+        if: runner.os == 'Linux' && matrix.backend == 'OPENGL'
+        run: |
+          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$VK_DRIVER_FILES"
+          xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
+            python3 tests/cross_backend/image_diff.py \
+              --opengl build-vulkan/bin/easy3d_backend_image_diff_test \
+              --vulkan build-parity-vulkan/bin/easy3d_backend_image_diff_test \
+              --output-dir build-parity-images --validation
 
       # Hosted Windows and macOS runners cannot create the OpenGL desktop contexts
       # required by the desktop-labelled tests.

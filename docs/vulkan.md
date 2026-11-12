@@ -505,9 +505,10 @@ The migration is **not yet validated complete**:
 * The shared `viewer.offscreen` regression checks unlit triangle color
   agreement, depth/object ID, ID preservation after resize, and the known
   OpenGL/Vulkan primitive-ID capability difference. Shared checks also cover
-  picking, interaction, and DPI behavior. A systematic cross-backend
-  image-diff harness for effect-heavy and snapshot workloads remains open in
-  `ToDo.md`.
+  picking, interaction, and DPI behavior. The systematic cross-backend
+  image-diff harness for effect-heavy and snapshot workloads is now implemented;
+  its explicit limits, current measured differences, and CI pairing are recorded
+  below.
 * The earlier Linux/Mesa run was 68/69, but the successful 2026-11-12 workflow
   run passed the configured Vulkan window-backend suite, including
   `vulkan.interactionoverlay`. This closes the Linux regression gate for
@@ -560,8 +561,10 @@ with synchronization validation, reuses geometry and image addresses after
 source destruction, exercises frame and pixel capture plus target resize, then
 repeats device teardown. The existing fence wait and one-command-buffer model
 are unchanged. Pass construction/encoding and swapchain presentation remain in
-`VulkanDevice`; those are the next extraction boundaries, not justification for
-multiple frames in flight or staging/suballocation before profiling.
+`VulkanDevice`; those are the next extraction boundaries. Profiling found no
+current basis for multiple frames in flight or staging/suballocation, so both
+remain deferred unless frame-preparation or recurring dynamic-upload workloads
+show a measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha
@@ -8604,3 +8607,75 @@ guard already cleared.
 (`build-opengl-debug`) 107/107 and OpenGL Release (`build-opengl`) 107/107, all green. The Vulkan
 trees hold fewer tests than the IDE-owned `cmake-build-debug` because they are configured without
 the Qt, CGAL, FFmpeg and Python extras.
+
+### 2026-11-12 — Cross-backend image parity and submission profiling
+
+**Image-diff coverage.** `tests/cross_backend/image_diff.py` runs the same shared
+snapshot/effects test under OpenGL and Vulkan and compares plain rendering,
+ambient occlusion, soft shadows, average transparency, and scaled 4x MSAA.
+Images are 640x480 except the scaled-MSAA case at 1280x960. RGB comparisons use
+three complementary bounds: mean absolute channel error, p99 per-pixel maximum
+channel error, and fraction of pixels whose maximum channel error exceeds 16.
+The comparator reports all three and applies these workload-specific limits:
+
+| Workload | Mean RGB max | p99 pixel max | Pixels over 16 max | Alpha mismatch max |
+|---|---:|---:|---:|---:|
+| Plain | 0.25 | 2 | 0.1% | 0% |
+| Ambient occlusion | 1 | 16 | 2% | 0% |
+| Soft shadows | 1.5 | 24 | 4% | 4% |
+| Average transparency | 1.5 | 24 | 4% | 0% |
+| Scaled 4x MSAA | 1.5 | 20 | 4% | 0% |
+
+These are regression bounds, not a claim of pixel identity for effects whose
+sampling or compositing differs by backend. On the local macOS/MoltenVK Release
+comparison, mean RGB errors were 0.000 (plain), 0.153 (AO), 0.396 (soft
+shadows), 0.205 (average transparency), and 0.272 (scaled MSAA), all below
+their limits. Soft-shadow alpha differed on 2.1357% of pixels because the two
+backends composite this effect differently; the explicit 4% bound prevents
+that known approximation from being mistaken for RGB failure while still
+detecting a wider regression.
+
+The average-transparency comparison initially exposed a genuine shader mismatch:
+Vulkan sampled the generic scene texture and used its material-lighting path,
+while OpenGL's legacy average-color pass shades the drawable color directly
+with two-sided diffuse lighting. `resources/shaders/vulkan/oit_average.frag`
+now follows the OpenGL pass. The fixture uses a uniform explicit surface color
+so texture/material input differences do not confound effect parity. Both
+`opengl.snapshoteffects` and `vulkan.snapshoteffects` pass locally. The Ubuntu
+workflow runs the paired image comparison under Xvfb with lavapipe; a hosted
+workflow result is still needed to validate that CI path. Validation-enabled
+local runs also print repeated `VK_ERROR_FEATURE_NOT_PRESENT` messages about
+blending on `VK_FORMAT_R32G32_UINT`, although the test's validation-error
+counter remains zero. Treat this discrepancy as unresolved rather than as
+evidence of warning-free validation.
+
+**Submission and staging decision.** The opt-in `EASY3D_VULKAN_PROFILE=1`
+instrumentation reports CPU/API wall timings around command recording,
+`vkQueueSubmit()`, fence waits, and staging allocation/writes; it does not
+provide GPU timestamps. In a Release `viewer.pointbenchmark` run on macOS at
+3200x1834 with 4x MSAA, both native and expanded-point paths rendered 1201
+frames in about 10 seconds. Command recording took about 10-12 ms total per
+path, while synchronous `execute()` accounted for about 10 seconds; the
+`vkQueueSubmit()` and fence-wait split varied between runs and must not be read
+as pure CPU or GPU execution time. Each viewer made six staging allocations
+totaling 35,732,012 bytes, with allocation plus host writes taking under 3 ms
+during static setup.
+
+The profile now reports whether the device enabled the native `largePoints`
+feature. On this run it was enabled for the native case and disabled for the
+expanded fallback; rerunning the benchmark without profiling produced the same
+approximately 120 FPS for both. This conflicts with the earlier controlled
+record in this document (about 100 FPS native and 14-16 FPS expanded). The
+cause of the discrepancy is unresolved, so these runs do not establish equal
+point-path performance and should not replace the earlier record as a
+cross-path conclusion.
+
+The static-scene profile shows no demonstrated benefit from adding frames in
+flight or staging suballocation: CPU command recording was a small portion of
+the measured work, and staging allocation/writes occurred only during setup.
+The data also cannot quantify a GPU-side benefit because there are no GPU
+timestamps and synchronous `execute()` includes driver/GPU backpressure. Keep
+synchronous submission and capture, which retain simple lifetime semantics
+and deterministic snapshots; revisit multi-frame submission or staging reuse
+with GPU timestamp or frame-preparation/dynamic-upload evidence. The OIT
+overflow diagnostic is already implemented and tested.

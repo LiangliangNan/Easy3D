@@ -23,6 +23,18 @@ endforeach()
         set_tests_properties(viewer.offscreen PROPERTIES LABELS desktop)
     endif()
 
+    add_executable(easy3d_backend_image_diff_test snapshot_effects_test.cpp)
+    target_link_libraries(easy3d_backend_image_diff_test PRIVATE easy3d::viewer)
+    if(Easy3D_ENABLE_VULKAN)
+        add_test(NAME vulkan.snapshoteffects COMMAND easy3d_backend_image_diff_test
+                --validation --output-dir "${CMAKE_BINARY_DIR}")
+        set_tests_properties(vulkan.snapshoteffects PROPERTIES TIMEOUT 120 LABELS desktop)
+    else()
+        add_test(NAME opengl.snapshoteffects COMMAND easy3d_backend_image_diff_test
+                --output-dir "${CMAKE_BINARY_DIR}")
+        set_tests_properties(opengl.snapshoteffects PROPERTIES TIMEOUT 120 LABELS desktop)
+    endif()
+
     # Shared plain-line stroke parity: the same scene and the same expectations
     # run on both backends, each through its own capture path.
     add_executable(easy3d_plain_line_parity_test plain_line_parity_test.cpp)
@@ -140,10 +152,6 @@ if(Easy3D_ENABLE_VULKAN)
         target_link_libraries(easy3d_vulkan_frame_rate_test PRIVATE easy3d::viewer)
         add_test(NAME vulkan.framerate COMMAND easy3d_vulkan_frame_rate_test ${validation_args})
         set_tests_properties(vulkan.framerate PROPERTIES TIMEOUT 120 LABELS desktop)
-        add_executable(easy3d_vulkan_snapshot_effects_test snapshot_effects_test.cpp)
-        target_link_libraries(easy3d_vulkan_snapshot_effects_test PRIVATE easy3d::viewer)
-        add_test(NAME vulkan.snapshoteffects COMMAND easy3d_vulkan_snapshot_effects_test ${validation_args})
-        set_tests_properties(vulkan.snapshoteffects PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_clipping_plane_test clipping_plane_test.cpp)
         target_link_libraries(easy3d_vulkan_clipping_plane_test PRIVATE easy3d::viewer)
         add_test(NAME vulkan.clippingplane COMMAND easy3d_vulkan_clipping_plane_test ${validation_args})

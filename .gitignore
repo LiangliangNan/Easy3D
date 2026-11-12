@@ -27,3 +27,8 @@ python/docs/source/sg_execution_times.rst
 /build-opengl-debug
 resources/data/pump.ptx
 resources/data/huge_mesh.ply
+/build-parity-run-1
+tests/cross_backend/__pycache__/image_diff.cpython-312.pyc
+/build-parity-run-2
+/build-parity-run-3
+/build-parity-run-4

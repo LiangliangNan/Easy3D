@@ -10,10 +10,6 @@ option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          OFF)
 option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
 # Build tests
 option(Easy3D_BUILD_TESTS "Build all Easy3D tests and require Vulkan validation" OFF)
-# Remove obsolete switches from existing build-tree caches; no compatibility aliases.
-unset(Easy3D_BUILD_VULKAN_TESTS CACHE)
-unset(Easy3D_VULKAN_TEST_VALIDATION CACHE)
-unset(Easy3D_BUILD_RENDERER_TESTS CACHE)
 # Build Python bindings
 option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     OFF)
 # Build advanced features that require CGAL (>= v5.1)

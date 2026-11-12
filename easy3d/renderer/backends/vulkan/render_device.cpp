@@ -32,8 +32,11 @@
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <iostream>
@@ -129,10 +132,39 @@ namespace easy3d {
                 VkPhysicalDeviceProperties properties{};
                 VkPhysicalDeviceMemoryProperties memory{};
                 std::atomic<unsigned> errors{0};
+                bool profile_enabled = [] {
+                    const char *value = std::getenv("EASY3D_VULKAN_PROFILE");
+                    return value && *value;
+                }();
+                std::uint64_t profile_submissions = 0;
+                std::uint64_t profile_staging_allocations = 0;
+                std::uint64_t profile_staging_bytes = 0;
+                std::chrono::nanoseconds profile_execute_time{};
+                std::chrono::nanoseconds profile_record_time{};
+                std::chrono::nanoseconds profile_submit_time{};
+                std::chrono::nanoseconds profile_fence_wait_time{};
+                std::chrono::nanoseconds profile_staging_create_time{};
+                std::chrono::nanoseconds profile_staging_write_time{};
                 ~Context() {
                     if (device) {
                         // Shutdown only. Normal rendering waits on its submission fence.
                         vkDeviceWaitIdle(device);
+                        if (profile_enabled) {
+                            const auto milliseconds = [](std::chrono::nanoseconds value) {
+                                return std::chrono::duration<double, std::milli>(value).count();
+                            };
+                            std::clog << "Vulkan profile: " << profile_submissions << " submissions, "
+                                      << milliseconds(profile_execute_time) << " ms execute wall, "
+                                      << milliseconds(profile_record_time) << " ms record CPU, "
+                                      << milliseconds(profile_submit_time) << " ms queue-submit CPU, "
+                                      << milliseconds(profile_fence_wait_time) << " ms fence wait, "
+                                      << profile_staging_allocations << " staging allocations, "
+                                      << profile_staging_bytes << " staging bytes, "
+                                      << milliseconds(profile_staging_create_time) << " ms staging create CPU, "
+                                      << milliseconds(profile_staging_write_time) << " ms staging write CPU, "
+                                      << "largePoints=" << (large_points ? "enabled" : "disabled") << ", device="
+                                      << properties.deviceName << '\n';
+                        }
                         if (fence)
                             vkDestroyFence(device, fence, nullptr);
                         if (pool)
@@ -417,12 +449,18 @@ namespace easy3d {
                 void execute(const std::function<void(VkCommandBuffer)> &record,
                              VkSemaphore wait = VK_NULL_HANDLE,
                              VkSemaphore signal = VK_NULL_HANDLE) {
+                    const auto execute_start = profile_enabled ? std::chrono::steady_clock::now()
+                                                               : std::chrono::steady_clock::time_point{};
                     check(vkResetCommandBuffer(command, 0), "reset command buffer");
                     VkCommandBufferBeginInfo begin{};
                     begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                     begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
                     check(vkBeginCommandBuffer(command, &begin), "begin command buffer");
+                    const auto record_start = profile_enabled ? std::chrono::steady_clock::now()
+                                                              : std::chrono::steady_clock::time_point{};
                     record(command);
+                    if (profile_enabled)
+                        profile_record_time += std::chrono::steady_clock::now() - record_start;
                     check(vkEndCommandBuffer(command), "end command buffer");
                     check(vkResetFences(device, 1, &fence), "reset fence");
                     VkSubmitInfo si{};
@@ -439,8 +477,19 @@ namespace easy3d {
                         si.signalSemaphoreCount = 1;
                         si.pSignalSemaphores = &signal;
                     }
+                    const auto submit_start = profile_enabled ? std::chrono::steady_clock::now()
+                                                              : std::chrono::steady_clock::time_point{};
                     check(vkQueueSubmit(queue, 1, &si, fence), "submit graphics commands");
+                    if (profile_enabled)
+                        profile_submit_time += std::chrono::steady_clock::now() - submit_start;
+                    const auto wait_start = profile_enabled ? std::chrono::steady_clock::now()
+                                                            : std::chrono::steady_clock::time_point{};
                     check(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX), "wait for capture");
+                    if (profile_enabled) {
+                        profile_fence_wait_time += std::chrono::steady_clock::now() - wait_start;
+                        profile_execute_time += std::chrono::steady_clock::now() - execute_start;
+                        ++profile_submissions;
+                    }
                 }
             };
 
@@ -1382,8 +1431,19 @@ namespace easy3d {
                         }
                         const VkDeviceSize bytes = packed.size() * sizeof(GpuPoint);
                         Buffer staging(c_);
+                        const auto staging_create_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                             : std::chrono::steady_clock::time_point{};
                         staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                        if (c_.profile_enabled) {
+                            ++c_.profile_staging_allocations;
+                            c_.profile_staging_bytes += bytes;
+                            c_.profile_staging_create_time += std::chrono::steady_clock::now() - staging_create_start;
+                        }
+                        const auto staging_write_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                            : std::chrono::steady_clock::time_point{};
                         staging.transfer(packed.data(), size_t(bytes), true);
+                        if (c_.profile_enabled)
+                            c_.profile_staging_write_time += std::chrono::steady_clock::now() - staging_write_start;
                         gpu->buffer.init(bytes,
                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
                                              VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
@@ -1467,8 +1527,19 @@ namespace easy3d {
                             bytes = attributes.size() * sizeof(GpuPointAttributes);
                         }
                         Buffer staging(c_);
+                        const auto staging_create_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                             : std::chrono::steady_clock::time_point{};
                         staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                        if (c_.profile_enabled) {
+                            ++c_.profile_staging_allocations;
+                            c_.profile_staging_bytes += bytes;
+                            c_.profile_staging_create_time += std::chrono::steady_clock::now() - staging_create_start;
+                        }
+                        const auto staging_write_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                            : std::chrono::steady_clock::time_point{};
                         staging.transfer(const_cast<void *>(input), bytes, true);
+                        if (c_.profile_enabled)
+                            c_.profile_staging_write_time += std::chrono::steady_clock::now() - staging_write_start;
                         gpu->buffer.init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                          false);
                         c_.execute([&](VkCommandBuffer cmd) {
@@ -1512,8 +1583,19 @@ namespace easy3d {
                                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                     VK_IMAGE_ASPECT_COLOR_BIT);
                     Buffer staging(c_);
+                    const auto staging_create_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                         : std::chrono::steady_clock::time_point{};
                     staging.init(data->rgba().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                    if (c_.profile_enabled) {
+                        ++c_.profile_staging_allocations;
+                        c_.profile_staging_bytes += data->rgba().size();
+                        c_.profile_staging_create_time += std::chrono::steady_clock::now() - staging_create_start;
+                    }
+                    const auto staging_write_start = c_.profile_enabled ? std::chrono::steady_clock::now()
+                                                                        : std::chrono::steady_clock::time_point{};
                     staging.transfer(const_cast<unsigned char *>(data->rgba().data()), data->rgba().size(), true);
+                    if (c_.profile_enabled)
+                        c_.profile_staging_write_time += std::chrono::steady_clock::now() - staging_write_start;
                     c_.execute([&](VkCommandBuffer cmd) {
                         image_barrier(c_, cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
                                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
