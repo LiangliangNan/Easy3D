@@ -590,12 +590,15 @@ and background checks remain in `VulkanDevice`. `TransparentTriangleOrderBuilder
 generates the far-to-near triangle indices for blended draws; `VulkanDevice`
 still owns buffer growth/upload, and `ScenePassEncoder` keeps draw-level
 ordering. `ImpostorUniformBuilder` packs shader-facing per-draw constants from
-validated commands; `VulkanDevice` retains aligned batching, buffer growth, and
-upload. The device retains remaining draw preparation, command submission, and
-capture/presentation ownership. The existing fence wait and one-command-buffer
-model are unchanged. Profiling found no current basis for multiple frames in
-flight or staging/suballocation, so both remain deferred unless frame-preparation
-or recurring dynamic-upload workloads show a measurable need.
+validated commands; `VulkanDevice` retains aligned batch packing.
+`DrawBufferCache` owns the reusable uniform and transparent-index buffers,
+including capacity growth, the dynamic-uniform descriptor update, and the
+existing synchronous transfers. `VulkanDevice` coordinates batch creation and
+upload and retains command submission and capture/presentation ownership.
+The existing fence wait and one-command-buffer model are unchanged. Profiling
+found no current basis for multiple frames in flight or staging/suballocation,
+so both remain deferred unless frame-preparation or recurring dynamic-upload
+workloads show a measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha

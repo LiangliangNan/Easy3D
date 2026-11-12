@@ -4070,6 +4070,51 @@ namespace easy3d {
                 }
             };
 
+            class DrawBufferCache {
+                Context &c_;
+                VkDescriptorSet impostor_set_;
+                std::unique_ptr<Buffer> uniforms_, transparent_indices_;
+                size_t uniform_capacity_ = 0, index_capacity_ = 0;
+
+            public:
+                DrawBufferCache(Context &context, VkDescriptorSet impostor_set)
+                    : c_(context), impostor_set_(impostor_set) {}
+
+                void upload(std::vector<unsigned char> &uniforms, std::vector<uint32_t> &transparent_indices) {
+                    if (!uniforms.empty()) {
+                        if (uniforms.size() > uniform_capacity_) {
+                            std::unique_ptr<Buffer> buffer(new Buffer(c_));
+                            buffer->init(uniforms.size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+                            VkDescriptorBufferInfo info = {buffer->handle, 0, sizeof(ImpostorUniform)};
+                            VkWriteDescriptorSet write{};
+                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            write.dstSet = impostor_set_;
+                            write.descriptorCount = 1;
+                            write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                            write.pBufferInfo = &info;
+                            c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
+                            uniforms_ = std::move(buffer);
+                            uniform_capacity_ = uniforms.size();
+                        }
+                        uniforms_->transfer(uniforms.data(), uniforms.size(), true);
+                    }
+                    if (!transparent_indices.empty()) {
+                        const size_t bytes = transparent_indices.size() * sizeof(uint32_t);
+                        if (bytes > index_capacity_) {
+                            std::unique_ptr<Buffer> buffer(new Buffer(c_));
+                            buffer->init(bytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
+                            transparent_indices_ = std::move(buffer);
+                            index_capacity_ = bytes;
+                        }
+                        transparent_indices_->transfer(transparent_indices.data(), bytes, true);
+                    }
+                }
+
+                VkBuffer transparent_index_buffer() const {
+                    return transparent_indices_ ? transparent_indices_->handle : VK_NULL_HANDLE;
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4080,11 +4125,7 @@ namespace easy3d {
                 VkDescriptorSetLayout descriptors_ = VK_NULL_HANDLE;
                 VkDescriptorSetLayout impostor_descriptors_ = VK_NULL_HANDLE;
                 VkDescriptorSet impostor_set_ = VK_NULL_HANDLE;
-                std::unique_ptr<Buffer> impostor_uniforms_;
-                size_t impostor_capacity_ = 0;
-                // Triangles of transparent draws ordered far to near, rebuilt per frame.
-                std::unique_ptr<Buffer> transparent_indices_;
-                size_t transparent_index_capacity_ = 0;
+                std::unique_ptr<DrawBufferCache> draw_buffers_;
                 VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
                 VkSampler samplers_[4] = {};
                 VkPipelineLayout layout_ = VK_NULL_HANDLE;
@@ -4252,6 +4293,7 @@ namespace easy3d {
                         sample_counts_ &= properties.sampleCounts;
                     }
                     create_descriptors();
+                    draw_buffers_.reset(new DrawBufferCache(c_, impostor_set_));
                     resources_.reset(new GpuResources(c_, descriptor_pool_, descriptors_, samplers_));
                     create_layout();
                     AmbientOcclusionPipelineBuilder(c_, ao_descriptors_, ao_layout_, ao_horizons_, ao_denoise_)
@@ -4542,33 +4584,7 @@ namespace easy3d {
                         }
                         draws.push_back({std::move(command), &g, &t, offset, sort_depth, index_offset, index_count});
                     }
-                    if (!uniforms.empty()) {
-                        if (uniforms.size() > impostor_capacity_) {
-                            std::unique_ptr<Buffer> buffer(new Buffer(c_));
-                            buffer->init(uniforms.size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
-                            VkDescriptorBufferInfo info = {buffer->handle, 0, sizeof(ImpostorUniform)};
-                            VkWriteDescriptorSet write{};
-                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                            write.dstSet = impostor_set_;
-                            write.descriptorCount = 1;
-                            write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-                            write.pBufferInfo = &info;
-                            c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
-                            impostor_uniforms_ = std::move(buffer);
-                            impostor_capacity_ = uniforms.size();
-                        }
-                        impostor_uniforms_->transfer(uniforms.data(), uniforms.size(), true);
-                    }
-                    if (!transparent_indices.empty()) {
-                        const size_t bytes = transparent_indices.size() * sizeof(uint32_t);
-                        if (bytes > transparent_index_capacity_) {
-                            std::unique_ptr<Buffer> buffer(new Buffer(c_));
-                            buffer->init(bytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
-                            transparent_indices_ = std::move(buffer);
-                            transparent_index_capacity_ = bytes;
-                        }
-                        transparent_indices_->transfer(transparent_indices.data(), bytes, true);
-                    }
+                    draw_buffers_->upload(uniforms, transparent_indices);
                     return draws;
                 }
                 void encode_pass(VkCommandBuffer cmd,
@@ -4580,7 +4596,7 @@ namespace easy3d {
                                  const VkOffset2D *pixel = nullptr) {
                     ScenePassEncoder encoder(
                         c_, layout_, impostor_set_, oit_composite_layout_, oit_.get(), oit_active_, oit_method_,
-                        transparent_indices_ ? transparent_indices_->handle : VK_NULL_HANDLE);
+                        draw_buffers_->transparent_index_buffer());
                     encoder.encode(cmd, draws, background, target, pass, framebuffer, pixel);
                 }
                 // Order-independent transparency targets are created on first use and
