@@ -568,13 +568,14 @@ owns swapchain recreation, image acquisition, blitting, and queue presentation.
 Scene, shadow, and AO command recording now live in `ScenePassEncoder`,
 `ShadowPassEncoder`, and `AmbientOcclusionPassEncoder`; OIT command recording
 lives in `OitPassEncoder`. Linked-list OIT buffer, build-pass, descriptor, and
-pipeline construction now live in `LinkedListsBuilder`; `VulkanDevice` retains
-the resource ownership and descriptor-pool lifetime, remaining OIT resource
-construction, descriptor-cache setup, and frame orchestration. The existing
-fence wait and one-command-buffer model are unchanged. Profiling found no
-current basis for multiple frames in flight or staging/suballocation, so both
-remain deferred unless frame-preparation or recurring dynamic-upload workloads
-show a measurable need.
+pipeline construction now live in `LinkedListsBuilder`. Average/peeling target,
+render-pass, framebuffer, pipeline, and composite-set construction now live in
+`OitResourcesBuilder`. `VulkanDevice` retains OIT resource ownership and
+descriptor-pool lifetime, descriptor-cache setup, and frame orchestration. The
+existing fence wait and one-command-buffer model are unchanged. Profiling found
+no current basis for multiple frames in flight or staging/suballocation, so
+both remain deferred unless frame-preparation or recurring dynamic-upload
+workloads show a measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha
