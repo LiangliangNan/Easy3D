@@ -8,13 +8,14 @@ implemented for both configured backends. Mapple is intentionally OpenGL-only;
 the Qt/wx viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
-**Status after batch 76:** core feature implementation for the agreed shared
+**Current status (2026-11-12):** core feature implementation for the agreed shared
 surface is substantially complete. The latest local macOS full-suite results
-are Vulkan Debug 141/141, Vulkan Release 141/141, OpenGL Debug 107/107, and
-OpenGL Release 107/107. The Linux `tests.yml` run succeeded on
-`Easy3D-Vulkan` commit `81e6810` on 2026-11-12, including lavapipe, Xvfb,
-SPIR-V validation, and installed-package consumers. This closes the Linux CI
-gate for that commit; Windows hardware validation remains open.
+are recorded in `ToDo.md`. All six jobs in the 2026-11-12 `tests.yml` run
+[#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551)
+succeeded on commit `fcb7a23`: OpenGL and Vulkan jobs passed on macOS, Windows,
+and Ubuntu. The Windows Vulkan job covers build, SPIR-V, and non-graphics tests,
+not graphics/hardware execution. This run predates the current OIT modularization
+commits, so CI still needs to validate the current branch.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -511,20 +512,16 @@ The migration is **not yet validated complete**:
   image-diff harness for effect-heavy and snapshot workloads is now implemented;
   its explicit limits, current measured differences, and CI pairing are recorded
   below.
-* The earlier Linux/Mesa run was 68/69, but the successful 2026-11-12 workflow
-  run passed the configured Vulkan window-backend suite, including
-  `vulkan.interactionoverlay`. This closes the Linux regression gate for
-  `81e6810`; the later local batch-77 modularization changes were not part of
-  that run.
-* `.github/workflows/tests.yml` is present and includes configured-backend,
-  lavapipe, SPIR-V, and installed-package consumer jobs. Run
-  [#43273002058](https://github.com/LiangliangNan/Easy3D/actions/runs/43273002058)
-  succeeded on `Easy3D-Vulkan` commit `81e6810`: the Vulkan matrix passed
-  build, SPIR-V, lavapipe, Xvfb, and installed-consumer steps; the OpenGL
-  matrix passed its build, Xvfb, and installed-consumer steps.
-* Clean macOS installed-package consumers for both backends passed on
-  2026-11-09. Linux package consumers passed in the workflow above; Windows
-  package consumers and Windows Vulkan hardware remain unverified.
+* Run [#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551)
+  succeeded on commit `fcb7a23`. Ubuntu passed configured-window Vulkan tests,
+  lavapipe, cross-backend image comparison, and installed-package consumers.
+  Windows passed both backend builds; Vulkan also passed SPIR-V and non-graphics
+  tests. macOS passed both backend jobs, with the Vulkan job excluding the
+  unsupported transparency path. Windows Vulkan graphics/hardware testing and
+  Windows installed-package consumers remain unverified.
+* The successful workflow commit is an ancestor of the current branch but
+  predates the recent OIT modularization commits; the current branch still needs
+  a workflow run before those refactors are considered cross-platform validated.
 * The supported tutorial-facing API is intended to be shared but is not
   symbol-identical: some `Viewer` members are Vulkan-only. Constructor order
   and defaults also changed, so old positional calls can compile with different
