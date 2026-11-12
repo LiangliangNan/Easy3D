@@ -1376,6 +1376,524 @@ namespace easy3d {
                 float normal[3], color[4], texcoord[2], highlight[4];
                 uint32_t primitive;
             };
+            class AmbientOcclusionPipelineBuilder {
+                Context &c_;
+                VkDescriptorSetLayout &descriptors_;
+                VkPipelineLayout &layout_;
+                VkPipeline &horizons_;
+                VkPipeline &denoise_;
+
+            public:
+                AmbientOcclusionPipelineBuilder(Context &context,
+                                                VkDescriptorSetLayout &descriptors,
+                                                VkPipelineLayout &layout,
+                                                VkPipeline &horizons,
+                                                VkPipeline &denoise)
+                    : c_(context), descriptors_(descriptors), layout_(layout), horizons_(horizons),
+                      denoise_(denoise) {}
+
+                void create() {
+                    VkDescriptorSetLayoutBinding binding[5] = {};
+                    const VkDescriptorType types[5] = {
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER};
+                    for (unsigned i = 0; i < 5; ++i) {
+                        binding[i].binding = i;
+                        binding[i].descriptorType = types[i];
+                        binding[i].descriptorCount = 1;
+                        binding[i].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+                    }
+                    VkDescriptorSetLayoutCreateInfo li{};
+                    li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                    li.bindingCount = 5;
+                    li.pBindings = binding;
+                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &descriptors_),
+                          "create ambient-occlusion descriptor layout");
+                    VkPipelineLayoutCreateInfo pi{};
+                    pi.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+                    pi.setLayoutCount = 1;
+                    pi.pSetLayouts = &descriptors_;
+                    check(c_.vkCreatePipelineLayout(c_.device, &pi, nullptr, &layout_),
+                          "create ambient-occlusion pipeline layout");
+                    VkShaderModule modules[2] = {};
+                    try {
+                        VkShaderModuleCreateInfo mi{};
+                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                        mi.codeSize = sizeof(ao_gtao_comp);
+                        mi.pCode = ao_gtao_comp;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]),
+                              "create ambient-occlusion horizon shader");
+                        mi.codeSize = sizeof(ao_blur_comp);
+                        mi.pCode = ao_blur_comp;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]),
+                              "create ambient-occlusion blur shader");
+                        VkComputePipelineCreateInfo ci{};
+                        ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+                        ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                        ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+                        ci.stage.pName = "main";
+                        ci.layout = layout_;
+                        ci.stage.module = modules[0];
+                        check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &horizons_),
+                              "create ambient-occlusion horizon pipeline");
+                        ci.stage.module = modules[1];
+                        check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &denoise_),
+                              "create ambient-occlusion blur pipeline");
+                    } catch (...) {
+                        for (auto module : modules)
+                            if (module)
+                                c_.vkDestroyShaderModule(c_.device, module, nullptr);
+                        throw;
+                    }
+                    for (auto module : modules)
+                        if (module)
+                            c_.vkDestroyShaderModule(c_.device, module, nullptr);
+                }
+            };
+            class PipelineBuilder {
+                Context &c_;
+                VkPipelineLayout layout_;
+                VkPipelineLayout oit_composite_layout_;
+
+            public:
+                PipelineBuilder(Context &context, VkPipelineLayout layout, VkPipelineLayout oit_composite_layout)
+                    : c_(context), layout_(layout), oit_composite_layout_(oit_composite_layout) {}
+
+                void create(RenderPass &pass) {
+                    VkShaderModule modules[19] = {};
+                    try {
+                        VkShaderModuleCreateInfo mi{};
+                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                        mi.codeSize = sizeof(scene_vert);
+                        mi.pCode = scene_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create vertex shader");
+                        mi.codeSize = sizeof(scene_frag);
+                        mi.pCode = scene_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create fragment shader");
+                        mi.codeSize = sizeof(points_vert);
+                        mi.pCode = points_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]),
+                              "create point vertex shader");
+                        mi.codeSize = sizeof(points_frag);
+                        mi.pCode = points_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]),
+                              "create point fragment shader");
+                        mi.codeSize = sizeof(points_plain_frag);
+                        mi.pCode = points_plain_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[18]),
+                              "create plain point fragment shader");
+                        mi.codeSize = sizeof(lines_vert);
+                        mi.pCode = lines_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]),
+                              "create line vertex shader");
+                        mi.codeSize = sizeof(lines_frag);
+                        mi.pCode = lines_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]),
+                              "create line fragment shader");
+                        mi.codeSize = sizeof(wide_lines_vert);
+                        mi.pCode = wide_lines_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]),
+                              "create wide line vertex shader");
+                        mi.codeSize = sizeof(wide_lines_frag);
+                        mi.pCode = wide_lines_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]),
+                              "create wide line fragment shader");
+                        mi.codeSize = sizeof(overlay_vert);
+                        mi.pCode = overlay_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]),
+                              "create overlay vertex shader");
+                        mi.codeSize = sizeof(overlay_frag);
+                        mi.pCode = overlay_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]),
+                              "create overlay fragment shader");
+                        if (pass.depth_preview) {
+                            mi.codeSize = sizeof(depth_texture_frag);
+                            mi.pCode = depth_texture_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[10]),
+                                  "create depth texture fragment shader");
+                            mi.codeSize = sizeof(edl_frag);
+                            mi.pCode = edl_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[12]),
+                                  "create eye-dome-lighting fragment shader");
+                            mi.codeSize = sizeof(ssao_frag);
+                            mi.pCode = ssao_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[13]),
+                                  "create ambient-occlusion fragment shader");
+                            mi.codeSize = sizeof(shadow_frag);
+                            mi.pCode = shadow_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[14]),
+                                  "create shadow fragment shader");
+                        }
+                        if (pass.independent_depth) {
+                            mi.codeSize = sizeof(hud_frag);
+                            mi.pCode = hud_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[11]),
+                                  "create independent HUD fragment shader");
+                        }
+                        if (pass.kind != PassKind::ids) {
+                            mi.codeSize = sizeof(oit_quad_vert);
+                            mi.pCode = oit_quad_vert;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[15]),
+                                  "create transparency composite vertex shader");
+                            mi.codeSize = sizeof(oit_average_composite_frag);
+                            mi.pCode = oit_average_composite_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[16]),
+                                  "create average transparency composite shader");
+                            mi.codeSize = sizeof(oit_peel_composite_frag);
+                            mi.pCode = oit_peel_composite_frag;
+                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[17]),
+                                  "create peeling transparency composite shader");
+                        }
+                        VkPipelineShaderStageCreateInfo stages[2] = {};
+                        for (unsigned i = 0; i < 2; ++i) {
+                            stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                            stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+                            stages[i].module = modules[i];
+                            stages[i].pName = "main";
+                        }
+                        VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+                        VkVertexInputAttributeDescription attrs[] = {
+                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
+                            {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
+                            {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
+                            {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
+                            {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
+                            {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
+                        VkVertexInputAttributeDescription line_attrs[] = {
+                            attrs[0],
+                            attrs[2],
+                            attrs[3],
+                            attrs[4],
+                            {5, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, position)},
+                            {6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, color)},
+                            {7, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, texcoord)},
+                            attrs[5]};
+                        VkVertexInputAttributeDescription wide_attrs[] = {
+                            attrs[0],
+                            attrs[1],
+                            attrs[2],
+                            attrs[3],
+                            attrs[4],
+                            line_attrs[4],
+                            line_attrs[5],
+                            line_attrs[6],
+                            {8, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, normal)},
+                            attrs[5]};
+                        VkPipelineVertexInputStateCreateInfo vertex{};
+                        vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                        vertex.vertexBindingDescriptionCount = 1;
+                        vertex.pVertexBindingDescriptions = &binding;
+                        vertex.vertexAttributeDescriptionCount = 6;
+                        vertex.pVertexAttributeDescriptions = attrs;
+                        VkVertexInputBindingDescription point_bindings[] = {
+                            {0, sizeof(GpuPoint), VK_VERTEX_INPUT_RATE_INSTANCE},
+                            {1, sizeof(GpuPointAttributes), VK_VERTEX_INPUT_RATE_INSTANCE}};
+                        VkVertexInputAttributeDescription point_attrs[] = {
+                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
+                            {1, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuPointAttributes, normal)},
+                            {2, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuPointAttributes, color)},
+                            {3, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuPointAttributes, texcoord)},
+                            {4, 1, VK_FORMAT_R32_UINT, offsetof(GpuPointAttributes, primitive)},
+                            {9, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuPointAttributes, highlight)}};
+                        VkPipelineInputAssemblyStateCreateInfo assembly{};
+                        assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+                        VkPipelineViewportStateCreateInfo viewport{};
+                        viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+                        viewport.viewportCount = 1;
+                        viewport.scissorCount = 1;
+                        VkPipelineRasterizationStateCreateInfo raster{};
+                        raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+                        raster.polygonMode = VK_POLYGON_MODE_FILL;
+                        raster.cullMode = VK_CULL_MODE_NONE;
+                        raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                        raster.lineWidth = 1;
+                        raster.depthBiasEnable = VK_TRUE;
+                        VkPipelineMultisampleStateCreateInfo ms{};
+                        ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+                        ms.rasterizationSamples = pass.samples;
+                        VkPipelineDepthStencilStateCreateInfo depth{};
+                        depth.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+                        depth.depthTestEnable = VK_TRUE;
+                        depth.depthWriteEnable = VK_TRUE;
+                        depth.depthCompareOp = VK_COMPARE_OP_LESS;
+                        VkPipelineColorBlendAttachmentState blend[2] = {};
+                        // Both attachments have identical state; no independentBlend feature required.
+                        for (auto &b : blend)
+                            b.colorWriteMask = 0xf;
+                        VkPipelineColorBlendStateCreateInfo blending{};
+                        blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+                        blending.attachmentCount = 2;
+                        blending.pAttachments = blend;
+                        VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                                           VK_DYNAMIC_STATE_DEPTH_BIAS};
+                        VkPipelineDynamicStateCreateInfo dynamic{};
+                        dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+                        dynamic.dynamicStateCount = 3;
+                        dynamic.pDynamicStates = dynamic_states;
+                        VkGraphicsPipelineCreateInfo pi{};
+                        pi.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+                        pi.stageCount = 2;
+                        pi.pStages = stages;
+                        pi.pVertexInputState = &vertex;
+                        pi.pInputAssemblyState = &assembly;
+                        pi.pViewportState = &viewport;
+                        pi.pRasterizationState = &raster;
+                        pi.pMultisampleState = &ms;
+                        pi.pDepthStencilState = &depth;
+                        pi.pColorBlendState = &blending;
+                        pi.pDynamicState = &dynamic;
+                        pi.layout = layout_;
+                        pi.renderPass = pass.handle;
+                        const VkPrimitiveTopology topologies[] = {VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                                                                  VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+                                                                  VK_PRIMITIVE_TOPOLOGY_POINT_LIST};
+                        VkBool32 native_point = VK_TRUE;
+                        VkSpecializationMapEntry point_entry = {0, 0, sizeof(native_point)};
+                        VkSpecializationInfo point_specialization = {1, &point_entry, sizeof(native_point),
+                                                                     &native_point};
+                        for (unsigned i = 0; i < 7; ++i) {
+                            if (i == 2) {
+                                stages[0].module = modules[2];
+                                stages[1].module = modules[18];
+                                stages[0].pSpecializationInfo = &point_specialization;
+                                point_bindings[0].inputRate = point_bindings[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                                vertex.vertexBindingDescriptionCount = 2;
+                                vertex.pVertexBindingDescriptions = point_bindings;
+                                vertex.pVertexAttributeDescriptions = point_attrs;
+                            }
+                            if (i == 3) {
+                                stages[0].pSpecializationInfo = nullptr;
+                                point_bindings[0].inputRate = point_bindings[1].inputRate =
+                                    VK_VERTEX_INPUT_RATE_INSTANCE;
+                                stages[0].module = modules[2];
+                                stages[1].module = modules[18];
+                                binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                                vertex.vertexBindingDescriptionCount = 2;
+                                vertex.pVertexBindingDescriptions = point_bindings;
+                                vertex.pVertexAttributeDescriptions = point_attrs;
+                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
+                                ms.minSampleShading = 1;
+                            }
+                            if (i == 4) {
+                                vertex.vertexBindingDescriptionCount = 1;
+                                vertex.pVertexBindingDescriptions = &binding;
+                                stages[0].module = modules[4];
+                                stages[1].module = modules[5];
+                                binding.stride = 2 * sizeof(GpuVertex);
+                                vertex.vertexAttributeDescriptionCount = 8;
+                                vertex.pVertexAttributeDescriptions = line_attrs;
+                            }
+                            if (i == 5) {
+                                stages[0].module = modules[6];
+                                stages[1].module = modules[7];
+                                vertex.vertexAttributeDescriptionCount = 10;
+                                vertex.pVertexAttributeDescriptions = wide_attrs;
+                                ms.sampleShadingEnable = VK_FALSE;
+                                ms.minSampleShading = 0;
+                            }
+                            if (i == 6) {
+                                // Expanded impostor points (spheres and surfels). Only this
+                                // point path writes gl_FragDepth, because the impostor surface
+                                // depth differs from the proxy geometry depth, so only it loses
+                                // early depth testing.
+                                stages[0].module = modules[2];
+                                stages[1].module = modules[3];
+                                stages[0].pSpecializationInfo = nullptr;
+                                point_bindings[0].inputRate = point_bindings[1].inputRate =
+                                    VK_VERTEX_INPUT_RATE_INSTANCE;
+                                binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                                vertex.vertexBindingDescriptionCount = 2;
+                                vertex.pVertexBindingDescriptions = point_bindings;
+                                vertex.vertexAttributeDescriptionCount = 6;
+                                vertex.pVertexAttributeDescriptions = point_attrs;
+                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
+                                ms.minSampleShading = 1;
+                            }
+                            assembly.topology = topologies[i >= 3 ? 0 : i];
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.pipelines[i]),
+                                  "create pipeline");
+                        }
+                        if (pass.kind != PassKind::ids && c_.independent_blend) {
+                            // Scene triangles with straight-alpha blending. Only the color
+                            // attachment blends; the integer ID attachment keeps replacing
+                            // its value so picking still returns the nearest surface.
+                            stages[0].module = modules[0];
+                            stages[1].module = modules[1];
+                            stages[0].pSpecializationInfo = nullptr;
+                            binding.stride = sizeof(GpuVertex);
+                            binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                            vertex.vertexBindingDescriptionCount = 1;
+                            vertex.pVertexBindingDescriptions = &binding;
+                            vertex.vertexAttributeDescriptionCount = 6;
+                            vertex.pVertexAttributeDescriptions = attrs;
+                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                            ms.sampleShadingEnable = VK_FALSE;
+                            ms.minSampleShading = 0;
+                            depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
+                            depth.depthCompareOp = VK_COMPARE_OP_LESS;
+                            VkPipelineColorBlendAttachmentState transparent_blend[2] = {};
+                            transparent_blend[0].blendEnable = VK_TRUE;
+                            transparent_blend[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                            transparent_blend[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            transparent_blend[0].colorBlendOp = VK_BLEND_OP_ADD;
+                            transparent_blend[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                            transparent_blend[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            transparent_blend[0].alphaBlendOp = VK_BLEND_OP_ADD;
+                            transparent_blend[1].colorWriteMask = 0xf;
+                            transparent_blend[0].colorWriteMask = 0xf;
+                            blending.attachmentCount = 2;
+                            blending.pAttachments = transparent_blend;
+                            pi.subpass = 0;
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.transparent_pipeline),
+                                  "create transparent scene pipeline");
+                            if (pass.kind == PassKind::color_ids) {
+                                // Order-independent methods blend the transparent surfaces in
+                                // their own targets, so the scene color stays masked here while
+                                // the depth test still records their IDs and depth for picking.
+                                VkPipelineColorBlendAttachmentState id_only[2] = {};
+                                id_only[0].colorWriteMask = 0;
+                                id_only[1].colorWriteMask = 0xf;
+                                blending.pAttachments = id_only;
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.oit_id_pipeline),
+                                      "create transparency picking pipeline");
+                                blending.pAttachments = blend;
+                            }
+                        }
+                        if (pass.kind != PassKind::ids) {
+                            stages[0].module = modules[8];
+                            stages[1].module = modules[9];
+                            binding.stride = sizeof(GpuVertex);
+                            binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                            VkVertexInputAttributeDescription overlay_attrs[] = {attrs[0], attrs[2], attrs[3]};
+                            vertex.vertexAttributeDescriptionCount = 3;
+                            vertex.pVertexAttributeDescriptions = overlay_attrs;
+                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                            ms.sampleShadingEnable = VK_FALSE;
+                            ms.minSampleShading = 0;
+                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
+                            VkPipelineColorBlendAttachmentState alpha{};
+                            alpha.blendEnable = VK_TRUE;
+                            alpha.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                            alpha.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            alpha.colorBlendOp = VK_BLEND_OP_ADD;
+                            alpha.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                            alpha.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            alpha.alphaBlendOp = VK_BLEND_OP_ADD;
+                            alpha.colorWriteMask = 0xf;
+                            blending.attachmentCount = 1;
+                            blending.pAttachments = &alpha;
+                            pi.subpass = 1;
+                            depth.depthTestEnable = VK_TRUE;
+                            depth.depthWriteEnable = VK_FALSE;
+                            depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.depth_overlay_pipeline),
+                                  "create depth-tested overlay pipeline");
+                            if (pass.independent_depth) {
+                                pi.subpass = 2;
+                                depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
+                                depth.depthCompareOp = VK_COMPARE_OP_LESS;
+                                stages[0].module = modules[0];
+                                stages[1].module = modules[11]; // lit triangles, color only
+                                vertex.vertexAttributeDescriptionCount = 6;
+                                vertex.pVertexAttributeDescriptions = attrs;
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.hud_3d_pipeline),
+                                      "create independent-depth HUD pipeline");
+                                stages[0].module = modules[8];
+                                stages[1].module = modules[9];
+                                vertex.vertexAttributeDescriptionCount = 3;
+                                vertex.pVertexAttributeDescriptions = overlay_attrs;
+                            }
+                            pi.subpass = pass.independent_depth ? 3 : 2;
+                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.overlay_pipeline),
+                                  "create overlay pipeline");
+                            if (pass.depth_preview) {
+                                stages[1].module = modules[10];
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.depth_texture_pipeline),
+                                      "create depth texture overlay pipeline");
+                                // Multiply existing color by the shaded luminance from depth.
+                                // A black source with SRC_ALPHA/ONE_MINUS_SRC_ALPHA yields
+                                // dst*(1-alpha); alpha itself keeps the destination value.
+                                VkPipelineColorBlendAttachmentState edl{};
+                                edl.blendEnable = VK_TRUE;
+                                edl.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                                edl.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                                edl.colorBlendOp = VK_BLEND_OP_ADD;
+                                edl.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                                edl.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                                edl.alphaBlendOp = VK_BLEND_OP_ADD;
+                                edl.colorWriteMask = 0xf;
+                                blending.attachmentCount = 1;
+                                blending.pAttachments = &edl;
+                                stages[1].module = modules[12];
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.edl_pipeline),
+                                      "create eye-dome-lighting overlay pipeline");
+                                stages[1].module = modules[13];
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.ssao_pipeline),
+                                      "create ambient-occlusion overlay pipeline");
+                                stages[1].module = modules[14];
+                                blending.attachmentCount = 1;
+                                blending.pAttachments = &alpha;
+                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                                   &pass.shadow_pipeline),
+                                      "create shadow overlay pipeline");
+                            }
+                            // Order-independent transparency composites cover the scene and
+                            // leave the integer picking attachment untouched.
+                            stages[0].module = modules[15];
+                            stages[1].module = modules[16];
+                            stages[0].pSpecializationInfo = nullptr;
+                            vertex.vertexBindingDescriptionCount = 0;
+                            vertex.pVertexBindingDescriptions = nullptr;
+                            vertex.vertexAttributeDescriptionCount = 0;
+                            vertex.pVertexAttributeDescriptions = nullptr;
+                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                            ms.sampleShadingEnable = VK_FALSE;
+                            ms.minSampleShading = 0;
+                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
+                            VkPipelineColorBlendAttachmentState oit[2] = {};
+                            oit[0].blendEnable = VK_TRUE;
+                            oit[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+                            oit[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            oit[0].colorBlendOp = VK_BLEND_OP_ADD;
+                            oit[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                            oit[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                            oit[0].alphaBlendOp = VK_BLEND_OP_ADD;
+                            oit[0].colorWriteMask = 0xf;
+                            oit[1].colorWriteMask = 0;
+                            blending.attachmentCount = 2;
+                            blending.pAttachments = oit;
+                            pi.subpass = 0;
+                            pi.layout = oit_composite_layout_;
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.oit_average_pipeline),
+                                  "create average transparency composite pipeline");
+                            stages[1].module = modules[17];
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.oit_peel_pipeline),
+                                  "create peeling transparency composite pipeline");
+                        }
+                    } catch (...) {
+                        for (auto m : modules)
+                            if (m)
+                                c_.vkDestroyShaderModule(c_.device, m, nullptr);
+                        throw;
+                    }
+                    for (auto m : modules)
+                        c_.vkDestroyShaderModule(c_.device, m, nullptr);
+                }
+            };
+
             struct GpuGeometry {
                 GpuPoints *points = nullptr;
                 std::weak_ptr<const Geometry> source;
@@ -3287,7 +3805,8 @@ namespace easy3d {
                     create_descriptors();
                     resources_.reset(new GpuResources(c_, descriptor_pool_, descriptors_, samplers_));
                     create_layout();
-                    create_ao_pipelines();
+                    AmbientOcclusionPipelineBuilder(c_, ao_descriptors_, ao_layout_, ao_horizons_, ao_denoise_)
+                        .create();
                     color_pass(1);
                 }
                 void require_samples(unsigned samples) const {
@@ -3303,63 +3822,6 @@ namespace easy3d {
                 }
                 RenderPass &picking_pass() {
                     return passes_.get_picking(c_, [this](RenderPass &pass) { create_pipelines(pass); });
-                }
-                void create_ao_pipelines() {
-                    VkDescriptorSetLayoutBinding binding[5] = {};
-                    const VkDescriptorType types[5] = {
-                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER};
-                    for (unsigned i = 0; i < 5; ++i) {
-                        binding[i].binding = i;
-                        binding[i].descriptorType = types[i];
-                        binding[i].descriptorCount = 1;
-                        binding[i].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-                    }
-                    VkDescriptorSetLayoutCreateInfo li{};
-                    li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                    li.bindingCount = 5;
-                    li.pBindings = binding;
-                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &ao_descriptors_),
-                          "create ambient-occlusion descriptor layout");
-                    VkPipelineLayoutCreateInfo pi{};
-                    pi.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-                    pi.setLayoutCount = 1;
-                    pi.pSetLayouts = &ao_descriptors_;
-                    check(c_.vkCreatePipelineLayout(c_.device, &pi, nullptr, &ao_layout_),
-                          "create ambient-occlusion pipeline layout");
-                    VkShaderModule modules[2] = {};
-                    try {
-                        VkShaderModuleCreateInfo mi{};
-                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-                        mi.codeSize = sizeof(ao_gtao_comp);
-                        mi.pCode = ao_gtao_comp;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]),
-                              "create ambient-occlusion horizon shader");
-                        mi.codeSize = sizeof(ao_blur_comp);
-                        mi.pCode = ao_blur_comp;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]),
-                              "create ambient-occlusion blur shader");
-                        VkComputePipelineCreateInfo ci{};
-                        ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-                        ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-                        ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-                        ci.stage.pName = "main";
-                        ci.layout = ao_layout_;
-                        ci.stage.module = modules[0];
-                        check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &ao_horizons_),
-                              "create ambient-occlusion horizon pipeline");
-                        ci.stage.module = modules[1];
-                        check(c_.vkCreateComputePipelines(c_.device, VK_NULL_HANDLE, 1, &ci, nullptr, &ao_denoise_),
-                              "create ambient-occlusion blur pipeline");
-                    } catch (...) {
-                        for (auto module : modules)
-                            if (module)
-                                c_.vkDestroyShaderModule(c_.device, module, nullptr);
-                        throw;
-                    }
-                    for (auto module : modules)
-                        c_.vkDestroyShaderModule(c_.device, module, nullptr);
                 }
                 void ensure_ao(uint32_t width, uint32_t height) {
                     if (!ao_) {
@@ -3521,436 +3983,7 @@ namespace easy3d {
                           "create linked lists resolve pipeline layout");
                 }
                 void create_pipelines(RenderPass &pass) {
-                    VkShaderModule modules[19] = {};
-                    try {
-                        VkShaderModuleCreateInfo mi{};
-                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-                        mi.codeSize = sizeof(scene_vert);
-                        mi.pCode = scene_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create vertex shader");
-                        mi.codeSize = sizeof(scene_frag);
-                        mi.pCode = scene_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create fragment shader");
-                        mi.codeSize = sizeof(points_vert);
-                        mi.pCode = points_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]),
-                              "create point vertex shader");
-                        mi.codeSize = sizeof(points_frag);
-                        mi.pCode = points_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]),
-                              "create point fragment shader");
-                        mi.codeSize = sizeof(points_plain_frag);
-                        mi.pCode = points_plain_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[18]),
-                              "create plain point fragment shader");
-                        mi.codeSize = sizeof(lines_vert);
-                        mi.pCode = lines_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]),
-                              "create line vertex shader");
-                        mi.codeSize = sizeof(lines_frag);
-                        mi.pCode = lines_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]),
-                              "create line fragment shader");
-                        mi.codeSize = sizeof(wide_lines_vert);
-                        mi.pCode = wide_lines_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]),
-                              "create wide line vertex shader");
-                        mi.codeSize = sizeof(wide_lines_frag);
-                        mi.pCode = wide_lines_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]),
-                              "create wide line fragment shader");
-                        mi.codeSize = sizeof(overlay_vert);
-                        mi.pCode = overlay_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]),
-                              "create overlay vertex shader");
-                        mi.codeSize = sizeof(overlay_frag);
-                        mi.pCode = overlay_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]),
-                              "create overlay fragment shader");
-                        if (pass.depth_preview) {
-                            mi.codeSize = sizeof(depth_texture_frag);
-                            mi.pCode = depth_texture_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[10]),
-                                  "create depth texture fragment shader");
-                            mi.codeSize = sizeof(edl_frag);
-                            mi.pCode = edl_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[12]),
-                                  "create eye-dome-lighting fragment shader");
-                            mi.codeSize = sizeof(ssao_frag);
-                            mi.pCode = ssao_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[13]),
-                                  "create ambient-occlusion fragment shader");
-                            mi.codeSize = sizeof(shadow_frag);
-                            mi.pCode = shadow_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[14]),
-                                  "create shadow fragment shader");
-                        }
-                        if (pass.independent_depth) {
-                            mi.codeSize = sizeof(hud_frag);
-                            mi.pCode = hud_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[11]),
-                                  "create independent HUD fragment shader");
-                        }
-                        if (pass.kind != PassKind::ids) {
-                            mi.codeSize = sizeof(oit_quad_vert);
-                            mi.pCode = oit_quad_vert;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[15]),
-                                  "create transparency composite vertex shader");
-                            mi.codeSize = sizeof(oit_average_composite_frag);
-                            mi.pCode = oit_average_composite_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[16]),
-                                  "create average transparency composite shader");
-                            mi.codeSize = sizeof(oit_peel_composite_frag);
-                            mi.pCode = oit_peel_composite_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[17]),
-                                  "create peeling transparency composite shader");
-                        }
-                        VkPipelineShaderStageCreateInfo stages[2] = {};
-                        for (unsigned i = 0; i < 2; ++i) {
-                            stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-                            stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
-                            stages[i].module = modules[i];
-                            stages[i].pName = "main";
-                        }
-                        VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
-                        VkVertexInputAttributeDescription attrs[] = {
-                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
-                            {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
-                            {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
-                            {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
-                            {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
-                            {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
-                        VkVertexInputAttributeDescription line_attrs[] = {
-                            attrs[0],
-                            attrs[2],
-                            attrs[3],
-                            attrs[4],
-                            {5, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, position)},
-                            {6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, color)},
-                            {7, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, texcoord)},
-                            attrs[5]};
-                        VkVertexInputAttributeDescription wide_attrs[] = {
-                            attrs[0],
-                            attrs[1],
-                            attrs[2],
-                            attrs[3],
-                            attrs[4],
-                            line_attrs[4],
-                            line_attrs[5],
-                            line_attrs[6],
-                            {8, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, normal)},
-                            attrs[5]};
-                        VkPipelineVertexInputStateCreateInfo vertex{};
-                        vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                        vertex.vertexBindingDescriptionCount = 1;
-                        vertex.pVertexBindingDescriptions = &binding;
-                        vertex.vertexAttributeDescriptionCount = 6;
-                        vertex.pVertexAttributeDescriptions = attrs;
-                        VkVertexInputBindingDescription point_bindings[] = {
-                            {0, sizeof(GpuPoint), VK_VERTEX_INPUT_RATE_INSTANCE},
-                            {1, sizeof(GpuPointAttributes), VK_VERTEX_INPUT_RATE_INSTANCE}};
-                        VkVertexInputAttributeDescription point_attrs[] = {
-                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
-                            {1, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuPointAttributes, normal)},
-                            {2, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuPointAttributes, color)},
-                            {3, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuPointAttributes, texcoord)},
-                            {4, 1, VK_FORMAT_R32_UINT, offsetof(GpuPointAttributes, primitive)},
-                            {9, 1, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuPointAttributes, highlight)}};
-                        VkPipelineInputAssemblyStateCreateInfo assembly{};
-                        assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-                        VkPipelineViewportStateCreateInfo viewport{};
-                        viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-                        viewport.viewportCount = 1;
-                        viewport.scissorCount = 1;
-                        VkPipelineRasterizationStateCreateInfo raster{};
-                        raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-                        raster.polygonMode = VK_POLYGON_MODE_FILL;
-                        raster.cullMode = VK_CULL_MODE_NONE;
-                        raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-                        raster.lineWidth = 1;
-                        raster.depthBiasEnable = VK_TRUE;
-                        VkPipelineMultisampleStateCreateInfo ms{};
-                        ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-                        ms.rasterizationSamples = pass.samples;
-                        VkPipelineDepthStencilStateCreateInfo depth{};
-                        depth.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-                        depth.depthTestEnable = VK_TRUE;
-                        depth.depthWriteEnable = VK_TRUE;
-                        depth.depthCompareOp = VK_COMPARE_OP_LESS;
-                        VkPipelineColorBlendAttachmentState blend[2] = {};
-                        // Both attachments have identical state; no independentBlend feature required.
-                        for (auto &b : blend)
-                            b.colorWriteMask = 0xf;
-                        VkPipelineColorBlendStateCreateInfo blending{};
-                        blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-                        blending.attachmentCount = 2;
-                        blending.pAttachments = blend;
-                        VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
-                                                           VK_DYNAMIC_STATE_DEPTH_BIAS};
-                        VkPipelineDynamicStateCreateInfo dynamic{};
-                        dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-                        dynamic.dynamicStateCount = 3;
-                        dynamic.pDynamicStates = dynamic_states;
-                        VkGraphicsPipelineCreateInfo pi{};
-                        pi.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-                        pi.stageCount = 2;
-                        pi.pStages = stages;
-                        pi.pVertexInputState = &vertex;
-                        pi.pInputAssemblyState = &assembly;
-                        pi.pViewportState = &viewport;
-                        pi.pRasterizationState = &raster;
-                        pi.pMultisampleState = &ms;
-                        pi.pDepthStencilState = &depth;
-                        pi.pColorBlendState = &blending;
-                        pi.pDynamicState = &dynamic;
-                        pi.layout = layout_;
-                        pi.renderPass = pass.handle;
-                        const VkPrimitiveTopology topologies[] = {VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                                                                  VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
-                                                                  VK_PRIMITIVE_TOPOLOGY_POINT_LIST};
-                        VkBool32 native_point = VK_TRUE;
-                        VkSpecializationMapEntry point_entry = {0, 0, sizeof(native_point)};
-                        VkSpecializationInfo point_specialization = {1, &point_entry, sizeof(native_point),
-                                                                     &native_point};
-                        for (unsigned i = 0; i < 7; ++i) {
-                            if (i == 2) {
-                                stages[0].module = modules[2];
-                                stages[1].module = modules[18];
-                                stages[0].pSpecializationInfo = &point_specialization;
-                                point_bindings[0].inputRate = point_bindings[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-                                vertex.vertexBindingDescriptionCount = 2;
-                                vertex.pVertexBindingDescriptions = point_bindings;
-                                vertex.pVertexAttributeDescriptions = point_attrs;
-                            }
-                            if (i == 3) {
-                                stages[0].pSpecializationInfo = nullptr;
-                                point_bindings[0].inputRate = point_bindings[1].inputRate =
-                                    VK_VERTEX_INPUT_RATE_INSTANCE;
-                                stages[0].module = modules[2];
-                                stages[1].module = modules[18];
-                                binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-                                vertex.vertexBindingDescriptionCount = 2;
-                                vertex.pVertexBindingDescriptions = point_bindings;
-                                vertex.pVertexAttributeDescriptions = point_attrs;
-                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
-                                ms.minSampleShading = 1;
-                            }
-                            if (i == 4) {
-                                vertex.vertexBindingDescriptionCount = 1;
-                                vertex.pVertexBindingDescriptions = &binding;
-                                stages[0].module = modules[4];
-                                stages[1].module = modules[5];
-                                binding.stride = 2 * sizeof(GpuVertex);
-                                vertex.vertexAttributeDescriptionCount = 8;
-                                vertex.pVertexAttributeDescriptions = line_attrs;
-                            }
-                            if (i == 5) {
-                                stages[0].module = modules[6];
-                                stages[1].module = modules[7];
-                                vertex.vertexAttributeDescriptionCount = 10;
-                                vertex.pVertexAttributeDescriptions = wide_attrs;
-                                ms.sampleShadingEnable = VK_FALSE;
-                                ms.minSampleShading = 0;
-                            }
-                            if (i == 6) {
-                                // Expanded impostor points (spheres and surfels). Only this
-                                // point path writes gl_FragDepth, because the impostor surface
-                                // depth differs from the proxy geometry depth, so only it loses
-                                // early depth testing.
-                                stages[0].module = modules[2];
-                                stages[1].module = modules[3];
-                                stages[0].pSpecializationInfo = nullptr;
-                                point_bindings[0].inputRate = point_bindings[1].inputRate =
-                                    VK_VERTEX_INPUT_RATE_INSTANCE;
-                                binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-                                vertex.vertexBindingDescriptionCount = 2;
-                                vertex.pVertexBindingDescriptions = point_bindings;
-                                vertex.vertexAttributeDescriptionCount = 6;
-                                vertex.pVertexAttributeDescriptions = point_attrs;
-                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
-                                ms.minSampleShading = 1;
-                            }
-                            assembly.topology = topologies[i >= 3 ? 0 : i];
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.pipelines[i]),
-                                  "create pipeline");
-                        }
-                        if (pass.kind != PassKind::ids && c_.independent_blend) {
-                            // Scene triangles with straight-alpha blending. Only the color
-                            // attachment blends; the integer ID attachment keeps replacing
-                            // its value so picking still returns the nearest surface.
-                            stages[0].module = modules[0];
-                            stages[1].module = modules[1];
-                            stages[0].pSpecializationInfo = nullptr;
-                            binding.stride = sizeof(GpuVertex);
-                            binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-                            vertex.vertexBindingDescriptionCount = 1;
-                            vertex.pVertexBindingDescriptions = &binding;
-                            vertex.vertexAttributeDescriptionCount = 6;
-                            vertex.pVertexAttributeDescriptions = attrs;
-                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-                            ms.sampleShadingEnable = VK_FALSE;
-                            ms.minSampleShading = 0;
-                            depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
-                            depth.depthCompareOp = VK_COMPARE_OP_LESS;
-                            VkPipelineColorBlendAttachmentState transparent_blend[2] = {};
-                            transparent_blend[0].blendEnable = VK_TRUE;
-                            transparent_blend[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-                            transparent_blend[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            transparent_blend[0].colorBlendOp = VK_BLEND_OP_ADD;
-                            transparent_blend[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-                            transparent_blend[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            transparent_blend[0].alphaBlendOp = VK_BLEND_OP_ADD;
-                            transparent_blend[1].colorWriteMask = 0xf;
-                            transparent_blend[0].colorWriteMask = 0xf;
-                            blending.attachmentCount = 2;
-                            blending.pAttachments = transparent_blend;
-                            pi.subpass = 0;
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.transparent_pipeline),
-                                  "create transparent scene pipeline");
-                            if (pass.kind == PassKind::color_ids) {
-                                // Order-independent methods blend the transparent surfaces in
-                                // their own targets, so the scene color stays masked here while
-                                // the depth test still records their IDs and depth for picking.
-                                VkPipelineColorBlendAttachmentState id_only[2] = {};
-                                id_only[0].colorWriteMask = 0;
-                                id_only[1].colorWriteMask = 0xf;
-                                blending.pAttachments = id_only;
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.oit_id_pipeline),
-                                      "create transparency picking pipeline");
-                                blending.pAttachments = blend;
-                            }
-                        }
-                        if (pass.kind != PassKind::ids) {
-                            stages[0].module = modules[8];
-                            stages[1].module = modules[9];
-                            binding.stride = sizeof(GpuVertex);
-                            binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-                            VkVertexInputAttributeDescription overlay_attrs[] = {attrs[0], attrs[2], attrs[3]};
-                            vertex.vertexAttributeDescriptionCount = 3;
-                            vertex.pVertexAttributeDescriptions = overlay_attrs;
-                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-                            ms.sampleShadingEnable = VK_FALSE;
-                            ms.minSampleShading = 0;
-                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
-                            VkPipelineColorBlendAttachmentState alpha{};
-                            alpha.blendEnable = VK_TRUE;
-                            alpha.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-                            alpha.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            alpha.colorBlendOp = VK_BLEND_OP_ADD;
-                            alpha.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-                            alpha.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            alpha.alphaBlendOp = VK_BLEND_OP_ADD;
-                            alpha.colorWriteMask = 0xf;
-                            blending.attachmentCount = 1;
-                            blending.pAttachments = &alpha;
-                            pi.subpass = 1;
-                            depth.depthTestEnable = VK_TRUE;
-                            depth.depthWriteEnable = VK_FALSE;
-                            depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.depth_overlay_pipeline),
-                                  "create depth-tested overlay pipeline");
-                            if (pass.independent_depth) {
-                                pi.subpass = 2;
-                                depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
-                                depth.depthCompareOp = VK_COMPARE_OP_LESS;
-                                stages[0].module = modules[0];
-                                stages[1].module = modules[11]; // lit triangles, color only
-                                vertex.vertexAttributeDescriptionCount = 6;
-                                vertex.pVertexAttributeDescriptions = attrs;
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.hud_3d_pipeline),
-                                      "create independent-depth HUD pipeline");
-                                stages[0].module = modules[8];
-                                stages[1].module = modules[9];
-                                vertex.vertexAttributeDescriptionCount = 3;
-                                vertex.pVertexAttributeDescriptions = overlay_attrs;
-                            }
-                            pi.subpass = pass.independent_depth ? 3 : 2;
-                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.overlay_pipeline),
-                                  "create overlay pipeline");
-                            if (pass.depth_preview) {
-                                stages[1].module = modules[10];
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.depth_texture_pipeline),
-                                      "create depth texture overlay pipeline");
-                                // Multiply existing color by the shaded luminance from depth.
-                                // A black source with SRC_ALPHA/ONE_MINUS_SRC_ALPHA yields
-                                // dst*(1-alpha); alpha itself keeps the destination value.
-                                VkPipelineColorBlendAttachmentState edl{};
-                                edl.blendEnable = VK_TRUE;
-                                edl.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-                                edl.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                                edl.colorBlendOp = VK_BLEND_OP_ADD;
-                                edl.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-                                edl.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-                                edl.alphaBlendOp = VK_BLEND_OP_ADD;
-                                edl.colorWriteMask = 0xf;
-                                blending.attachmentCount = 1;
-                                blending.pAttachments = &edl;
-                                stages[1].module = modules[12];
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.edl_pipeline),
-                                      "create eye-dome-lighting overlay pipeline");
-                                stages[1].module = modules[13];
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.ssao_pipeline),
-                                      "create ambient-occlusion overlay pipeline");
-                                stages[1].module = modules[14];
-                                blending.attachmentCount = 1;
-                                blending.pAttachments = &alpha;
-                                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.shadow_pipeline),
-                                      "create shadow overlay pipeline");
-                            }
-                            // Order-independent transparency composites cover the scene and
-                            // leave the integer picking attachment untouched.
-                            stages[0].module = modules[15];
-                            stages[1].module = modules[16];
-                            stages[0].pSpecializationInfo = nullptr;
-                            vertex.vertexBindingDescriptionCount = 0;
-                            vertex.pVertexBindingDescriptions = nullptr;
-                            vertex.vertexAttributeDescriptionCount = 0;
-                            vertex.pVertexAttributeDescriptions = nullptr;
-                            assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-                            ms.sampleShadingEnable = VK_FALSE;
-                            ms.minSampleShading = 0;
-                            depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
-                            VkPipelineColorBlendAttachmentState oit[2] = {};
-                            oit[0].blendEnable = VK_TRUE;
-                            oit[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-                            oit[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            oit[0].colorBlendOp = VK_BLEND_OP_ADD;
-                            oit[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-                            oit[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-                            oit[0].alphaBlendOp = VK_BLEND_OP_ADD;
-                            oit[0].colorWriteMask = 0xf;
-                            oit[1].colorWriteMask = 0;
-                            blending.attachmentCount = 2;
-                            blending.pAttachments = oit;
-                            pi.subpass = 0;
-                            pi.layout = oit_composite_layout_;
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.oit_average_pipeline),
-                                  "create average transparency composite pipeline");
-                            stages[1].module = modules[17];
-                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                               &pass.oit_peel_pipeline),
-                                  "create peeling transparency composite pipeline");
-                        }
-                    } catch (...) {
-                        for (auto m : modules)
-                            if (m)
-                                c_.vkDestroyShaderModule(c_.device, m, nullptr);
-                        throw;
-                    }
-                    for (auto m : modules)
-                        c_.vkDestroyShaderModule(c_.device, m, nullptr);
+                    PipelineBuilder(c_, layout_, oit_composite_layout_).create(pass);
                 }
                 GpuGeometry &geometry(const std::shared_ptr<const Geometry> &data) {
                     return resources_->geometry(data);

@@ -555,7 +555,10 @@ regression passing as well.
 **`RenderDevice` modularization (batch 77).** GPU point, geometry and texture
 caches now have a `GpuResources` owner, color/picking render-pass caches are
 grouped in `PassCache`, which now owns color and picking pass lookup/construction
-while `VulkanDevice` supplies pipeline creation. Full-frame/pixel readback is
+while `PipelineBuilder` constructs graphics pipelines and `RenderPass` retains
+their handles. Ambient-occlusion descriptor-layout and compute-pipeline setup
+now lives in `AmbientOcclusionPipelineBuilder`; `VulkanDevice` retains ownership
+and teardown of those handles and the AO images/descriptors. Full-frame/pixel readback is
 centralized in synchronous capture helpers. The focused
 `vulkan.resourcelifetime` test runs with synchronization validation, reuses
 geometry and image addresses after source destruction, exercises frame and
