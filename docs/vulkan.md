@@ -565,9 +565,10 @@ geometry and image addresses after source destruction, exercises frame and
 pixel capture plus target resize, then repeats device teardown. Window
 presentation and swapchain ownership now live in a `Presentation` helper, which
 owns swapchain recreation, image acquisition, blitting, and queue presentation.
-Scene render-pass recording lives in `ScenePassEncoder`; OIT, shadow, and AO
-pass encoding/orchestration remains in `VulkanDevice`. The existing fence wait
-and one-command-buffer model are unchanged. Profiling found no current basis for
+Scene, shadow, and AO command recording now live in `ScenePassEncoder`,
+`ShadowPassEncoder`, and `AmbientOcclusionPassEncoder`; OIT target construction
+and encoding/orchestration remain in `VulkanDevice`. The existing fence wait and
+one-command-buffer model are unchanged. Profiling found no current basis for
 multiple frames in flight or staging/suballocation, so both remain deferred
 unless frame-preparation or recurring dynamic-upload workloads show a
 measurable need.

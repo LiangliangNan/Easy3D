@@ -2238,6 +2238,119 @@ namespace easy3d {
                 }
             };
 
+            class ShadowPassEncoder {
+                Context &c_;
+                VkPipelineLayout layout_;
+                const ShadowMap *shadow_map_;
+
+            public:
+                ShadowPassEncoder(Context &context, VkPipelineLayout layout, const ShadowMap *shadow_map)
+                    : c_(context), layout_(layout), shadow_map_(shadow_map) {}
+
+                template <typename Prepared>
+                void encode(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
+                    if (!shadow_map_)
+                        return;
+                    VkClearValue clear{};
+                    clear.depthStencil.depth = 1;
+                    VkRenderPassBeginInfo begin{};
+                    begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    begin.renderPass = shadow_map_->pass;
+                    begin.framebuffer = shadow_map_->framebuffer;
+                    begin.renderArea = {{0, 0}, {shadow_map_->size, shadow_map_->size}};
+                    begin.clearValueCount = 1;
+                    begin.pClearValues = &clear;
+                    c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport viewport = {0, 0, float(shadow_map_->size), float(shadow_map_->size), 0, 1};
+                    const VkRect2D scissor = begin.renderArea;
+                    c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                    c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shadow_map_->pipeline);
+                    for (const auto &draw : draws) {
+                        const auto &d = draw.command;
+                        if (!d.shadow_caster)
+                            continue;
+                        VkDeviceSize offset = 0;
+                        c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+                        Push push{};
+                        const auto mvp = d.shadow_matrix * d.model_view_projection;
+                        for (unsigned col = 0; col < 4; ++col)
+                            for (unsigned row = 0; row < 4; ++row)
+                                push.mvp[col * 4 + row] = mvp(row, col);
+                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                        c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+                    }
+                    c_.vkCmdEndRenderPass(cmd);
+                }
+            };
+
+            class AmbientOcclusionPassEncoder {
+                Context &c_;
+                Ao &ao_;
+                VkPipelineLayout layout_;
+                VkPipeline horizons_;
+                VkPipeline denoise_;
+                Target &target_;
+
+            public:
+                AmbientOcclusionPassEncoder(Context &context,
+                                            Ao &ao,
+                                            VkPipelineLayout layout,
+                                            VkPipeline horizons,
+                                            VkPipeline denoise,
+                                            Target &target)
+                    : c_(context), ao_(ao), layout_(layout), horizons_(horizons), denoise_(denoise),
+                      target_(target) {}
+
+                void dispatch(VkCommandBuffer cmd) {
+                    const auto color = VK_IMAGE_ASPECT_COLOR_BIT;
+                    const auto general = VK_IMAGE_LAYOUT_GENERAL;
+                    if (!ao_.initialized) {
+                        image_barrier(c_, cmd, ao_.raw->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
+                                      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
+                                      VK_ACCESS_SHADER_WRITE_BIT);
+                        image_barrier(c_, cmd, ao_.blurred->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
+                                      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
+                                      VK_ACCESS_SHADER_WRITE_BIT);
+                        ao_.initialized = true;
+                    } else {
+                        image_barrier(c_, cmd, ao_.raw->handle, color, general, general,
+                                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                      VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                                      VK_ACCESS_SHADER_WRITE_BIT);
+                        // The previous frame left the denoised image readable by the composite.
+                        image_barrier(c_, cmd, ao_.blurred->handle, color, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                      general, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                      VK_ACCESS_SHADER_WRITE_BIT);
+                    }
+                    const uint32_t groups_x = (ao_.width + 7) / 8, groups_y = (ao_.height + 7) / 8;
+                    c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout_, 0, 1, &ao_.set, 0, nullptr);
+                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, horizons_);
+                    c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
+                    image_barrier(c_, cmd, ao_.raw->handle, color, general, general,
+                                  VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                  VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, denoise_);
+                    c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
+                    image_barrier(c_, cmd, ao_.blurred->handle, color, general,
+                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+                                  VK_ACCESS_SHADER_READ_BIT);
+                    if (target_.samples == 1) {
+                        // The color pass rewrites the depth attachment; order it after the
+                        // compute reads instead of discarding pending work.
+                        image_barrier(
+                            c_, cmd, target_.depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                            VK_ACCESS_SHADER_READ_BIT,
+                            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+                    }
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4657,86 +4770,11 @@ namespace easy3d {
                     update_oit_composite(oit_method_);
                 }
                 void encode_shadow(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
-                    if (!shadow_map_)
-                        return;
-                    VkClearValue clear{};
-                    clear.depthStencil.depth = 1;
-                    VkRenderPassBeginInfo begin{};
-                    begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                    begin.renderPass = shadow_map_->pass;
-                    begin.framebuffer = shadow_map_->framebuffer;
-                    begin.renderArea = {{0, 0}, {shadow_map_->size, shadow_map_->size}};
-                    begin.clearValueCount = 1;
-                    begin.pClearValues = &clear;
-                    c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                    VkViewport viewport = {0, 0, float(shadow_map_->size), float(shadow_map_->size), 0, 1};
-                    const VkRect2D scissor = begin.renderArea;
-                    c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                    c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, shadow_map_->pipeline);
-                    for (const auto &draw : draws) {
-                        const auto &d = draw.command;
-                        if (!d.shadow_caster)
-                            continue;
-                        VkDeviceSize offset = 0;
-                        c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-                        Push push{};
-                        const auto mvp = d.shadow_matrix * d.model_view_projection;
-                        for (unsigned col = 0; col < 4; ++col)
-                            for (unsigned row = 0; row < 4; ++row)
-                                push.mvp[col * 4 + row] = mvp(row, col);
-                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-                        c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
-                    }
-                    c_.vkCmdEndRenderPass(cmd);
+                    ShadowPassEncoder(c_, layout_, shadow_map_.get()).encode(cmd, draws);
                 }
                 void dispatch_ao(VkCommandBuffer cmd) {
-                    const auto color = VK_IMAGE_ASPECT_COLOR_BIT;
-                    const auto general = VK_IMAGE_LAYOUT_GENERAL;
-                    if (!ao_->initialized) {
-                        image_barrier(c_, cmd, ao_->raw->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
-                                      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
-                                      VK_ACCESS_SHADER_WRITE_BIT);
-                        image_barrier(c_, cmd, ao_->blurred->handle, color, VK_IMAGE_LAYOUT_UNDEFINED, general,
-                                      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
-                                      VK_ACCESS_SHADER_WRITE_BIT);
-                        ao_->initialized = true;
-                    } else {
-                        image_barrier(c_, cmd, ao_->raw->handle, color, general, general,
-                                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                      VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                                      VK_ACCESS_SHADER_WRITE_BIT);
-                        // The previous frame left the denoised image readable by the composite.
-                        image_barrier(c_, cmd, ao_->blurred->handle, color, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                      general, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
-                                      VK_ACCESS_SHADER_WRITE_BIT);
-                    }
-                    const uint32_t groups_x = (ao_->width + 7) / 8, groups_y = (ao_->height + 7) / 8;
-                    c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_layout_, 0, 1, &ao_->set, 0,
-                                               nullptr);
-                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_horizons_);
-                    c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
-                    image_barrier(c_, cmd, ao_->raw->handle, color, general, general,
-                                  VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                  VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                    c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, ao_denoise_);
-                    c_.vkCmdDispatch(cmd, groups_x, groups_y, 1);
-                    image_barrier(c_, cmd, ao_->blurred->handle, color, general,
-                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                                  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT,
-                                  VK_ACCESS_SHADER_READ_BIT);
-                    if (target_->samples == 1) {
-                        // The color pass rewrites the depth attachment; order it after the
-                        // compute reads instead of discarding pending work.
-                        image_barrier(
-                            c_, cmd, target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
-                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                            VK_ACCESS_SHADER_READ_BIT,
-                            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-                    }
+                    AmbientOcclusionPassEncoder(c_, *ao_, ao_layout_, ao_horizons_, ao_denoise_, *target_)
+                        .dispatch(cmd);
                 }
                 void encode(VkCommandBuffer cmd,
                             const std::vector<Prepared> &draws,
