@@ -22,27 +22,21 @@ jobs:
           - os: ubuntu-24.04
             backend: "VULKAN"
             vulkan: "ON"
-            python: "ON"
           - os: ubuntu-24.04
             backend: "OPENGL"
             vulkan: "OFF"
-            python: "ON"
           - os: windows-2022
             backend: "VULKAN"
             vulkan: "ON"
-            python: "OFF"
           - os: windows-2022
             backend: "OPENGL"
             vulkan: "OFF"
-            python: "ON"
           - os: macos-15
             backend: "VULKAN"
             vulkan: "ON"
-            python: "OFF"
           - os: macos-15
             backend: "OPENGL"
             vulkan: "OFF"
-            python: "ON"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -55,24 +49,15 @@ jobs:
           sudo apt-get install -y ninja-build libboost-dev libvulkan-dev \
             mesa-vulkan-drivers vulkan-validationlayers glslang-tools spirv-tools \
             python3-dev patchelf libgl1-mesa-dev libxrandr-dev libxinerama-dev \
-            libxcursor-dev libxi-dev xvfb xauth
-
-      - name: OpenGL dependencies (Ubuntu)
-        if: runner.os == 'Linux' && matrix.backend == 'OPENGL'
-        run: |
-          sudo apt-get install -y mesa-common-dev libcgal-dev qt6-base-dev \
+            libxcursor-dev libxi-dev xvfb xauth mesa-common-dev libcgal-dev qt6-base-dev \
             libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
 
       - name: Dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja
+        run: brew install cmake ninja cgal qt ffmpeg wxwidgets
 
-      - name: OpenGL dependencies (macOS)
-        if: runner.os == 'macOS' && matrix.backend == 'OPENGL'
-        run: brew install cmake cgal qt ffmpeg wxwidgets
-
-      - name: Set up Conda (Windows OpenGL)
-        if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
+      - name: Set up Conda (Windows)
+        if: runner.os == 'Windows'
         uses: conda-incubator/setup-miniconda@v3
         with:
           architecture: x64
@@ -80,8 +65,8 @@ jobs:
           auto-activate-base: false
           channels: conda-forge,defaults
 
-      - name: OpenGL dependencies (Windows)
-        if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
+      - name: Dependencies (Windows)
+        if: runner.os == 'Windows'
         shell: bash -l {0}
         run: |
           conda install -y \
@@ -149,11 +134,10 @@ jobs:
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
+            -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
-            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }} \
-            -DEasy3D_ENABLE_CGAL=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }} \
-            -DEasy3D_ENABLE_QT=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }} \
-            -DEasy3D_ENABLE_FFMPEG=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }}
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
@@ -161,25 +145,25 @@ jobs:
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
+            -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
-            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }} \
-            -DEasy3D_ENABLE_CGAL=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }} \
-            -DEasy3D_ENABLE_QT=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }} \
-            -DEasy3D_ENABLE_FFMPEG=${{ matrix.backend == 'OPENGL' && 'ON' || 'OFF' }}
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        shell: bash -l {0}
         run: |
-          if ('${{ matrix.vulkan }}' -eq 'ON') {
-            if (-not $env:VULKAN_SDK) {
-              throw 'Vulkan SDK installation directory was not found'
-            }
-          }
-          cmake -S . -B build-vulkan -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" `
-            -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} `
-            -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON `
-            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }}
+          test -n "$VULKAN_SDK"
+          cmake -S . -B build-vulkan -G "Visual Studio 17 2022" -A x64 \
+            -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
+            -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
+            -DEasy3D_ENABLE_VULKAN=ON \
+            -DEasy3D_BUILD_SHARED_LIBS=ON \
+            -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure OpenGL (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
@@ -189,12 +173,14 @@ jobs:
             -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
             -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
             -DEasy3D_ENABLE_VULKAN=OFF \
+            -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
-            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }} \
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
             -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Build (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        shell: bash -l {0}
         run: cmake --build build-vulkan --config Release --parallel 2
 
       - name: Build OpenGL (Windows)
@@ -211,7 +197,9 @@ jobs:
         run: |
           cmake -S . -B build-parity-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TESTS=ON \
-            -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_PYTHON_BINDINGS=OFF
+            -DEasy3D_BUILD_SHARED_LIBS=ON -DEasy3D_BUILD_TUTORIALS=ON \
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Build Vulkan image-diff peer (Ubuntu OpenGL)
         if: runner.os == 'Linux' && matrix.backend == 'OPENGL'
@@ -277,11 +265,12 @@ jobs:
         if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
         run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^(vulkan\.transparency|algo\.point_cloud_normal_estimation)$'
 
-      # The Windows runner has no Vulkan ICD; validate build and shaders, then run
-      # only CPU-side tests that do not create a Vulkan device.
-      - name: Test CPU-only suite (Windows Vulkan)
+      # The Windows runner has no Vulkan ICD; run every test that does not require
+      # Vulkan rendering or a desktop context.
+      - name: Test non-graphics suite (Windows Vulkan)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -R '^(core|algo|util|kdtree)\.' -E '^algo\.point_cloud_normal_estimation$'
+        shell: bash -l {0}
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release -LE desktop -E '^(vulkan\.|viewer\.offscreen|algo\.point_cloud_normal_estimation$)'
 
       - name: Build and run an installed-package consumer (Ubuntu)
         if: runner.os == 'Linux'
