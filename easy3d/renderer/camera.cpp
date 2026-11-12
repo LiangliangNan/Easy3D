@@ -1282,13 +1282,13 @@ namespace easy3d {
 
 	 \attention The 4th component is \e not the \c d of the homogeneous equation
 	 \c a*x+b*y+c*z+d = 0 (that form, with inward normals, is what
-	 get_frustum_planes_coefficients_gribb_hartmann() returns). To install one of these planes as a
+	 get_frustum_planes_coefficients2() returns). To install one of these planes as a
 	 \c glClipPlane() clipping plane, which keeps the half-space where the homogeneous
 	 equation is positive, negate the normal: \c {-coef[i][0], -coef[i][1],
 	 -coef[i][2], coef[i][3]}.
 
 	 Planes are defined in the world coordinate system and are computed from the
-	 Camera parameters directly (see get_frustum_planes_coefficients_gribb_hartmann() for the
+	 Camera parameters directly (see get_frustum_planes_coefficients2() for the
 	 version derived from the model view projection matrix). */
 	void Camera::get_frustum_planes_coefficients(float coef[6][4]) const
 	{
@@ -1377,16 +1377,17 @@ namespace easy3d {
 
 
 	/*! Returns the 6 plane equations of the Camera frustum.
-
-	 This is an other implementation of get_frustum_planes_coefficients(...): the
+	 This is another implementation of get_frustum_planes_coefficients(...): the
 	 planes are extracted from the model view projection matrix (the classic
 	 Gribb-Hartmann combination of its rows) instead of being built from the Camera
 	 vectors, and they are returned in the homogeneous form \code a*x + b*y + c*z + d
 	 = 0 \endcode with \e inward normals, so that a point inside the frustum gives a
 	 positive left-hand side for the six planes. The planes themselves are the same
 	 (see the \attention note of get_frustum_planes_coefficients() about the
-	 components of \p coef). */
-	void Camera::get_frustum_planes_coefficients_gribb_hartmann(float frustum[6][4]) const
+	 components of \p coef).
+     See "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix" by Gil Gribb
+     and Klaus Hartmann. 2001.*/
+	void Camera::get_frustum_planes_coefficients2(float frustum[6][4]) const
 	{
         // First, let's assume that we're going to store the frustum values in a variable like this:
         // float frustum[6][4];

@@ -543,12 +543,18 @@ namespace easy3d {
          *      pointing \e out of the frustum and the fourth is the plane offset, i.e. \c p is on the plane when
          *      \code a*p.x + b*p.y + c*p.z = d \endcode and inside when that holds with a \e smaller left-hand side
          *      for all six planes. Note that this \c d is the negation of the \c d of the homogeneous form
-         *      \c a*x+b*y+c*z+d = 0 (which get_frustum_planes_coefficients_gribb_hartmann() uses).
+         *      \c a*x+b*y+c*z+d = 0 (which get_frustum_planes_coefficients2() uses).
          */
         void get_frustum_planes_coefficients(float coef[6][4]) const;
 
         /**
          * \brief Get the frustum planes coefficients (alternative version).
+         * \details This is the Gribb-Hartmann variant: the planes are extracted from the model view
+         *      projection matrix (the classic combination of its rows) instead of being built from the
+         *      Camera vectors. The numbers are the same as the ones returned by
+         *      get_frustum_planes_coefficients(), only the form and the normal direction differ.
+         *      See "Fast Extraction of Viewing Frustum Planes from the World-View-Projection Matrix" by Gil Gribb
+         *      and Klaus Hartmann. 2001.
          * \param coef The coefficients. The six 4-component vectors of \p coef respectively correspond to the left,
          *      right, near, far, top and bottom Camera frustum planes. Each vector holds a plane equation of the form:
          *      \code a*x + b*y + c*z + d = 0 \endcode where \c a,\c b, \c c, and \c d are the 4 components of each
@@ -556,7 +562,7 @@ namespace easy3d {
          *      side positive; this is the form \c glClipPlane() expects. Same planes as
          *      get_frustum_planes_coefficients(), which instead uses outward normals and the natural equation.
          */
-        void get_frustum_planes_coefficients_gribb_hartmann(float coef[6][4]) const;
+        void get_frustum_planes_coefficients2(float coef[6][4]) const;
 
     public:
         /**

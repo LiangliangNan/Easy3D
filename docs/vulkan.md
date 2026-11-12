@@ -8338,13 +8338,15 @@ those findings.
   again. The file is produced by `python/helper/generation/generate_bindings.py`, whose `binder`
   tool is not available in this environment, so the copies were refreshed from the header with the
   same text transformation instead of by a full regeneration.
-- **F4 — the remaining Camera names and wording**: `get_frustum_planes_coefficients2()` →
-  `get_frustum_planes_coefficients_gribb_hartmann()`. The numeric suffix was the last
-  non-descriptive name in the Camera's API; the variant is the Gribb-Hartmann row extraction of the
-  model view projection matrix (as documented in the batch-68 table), and it had no call site
-  outside the class. The class documentation no longer says "OpenGL projection and modelview
-  matrices", "without OpenGL" or "ManipulatedFrame"; it states "projection and model view matrices",
-  "without a graphics backend" and "ManipulatedCameraFrame".
+- **F4 — the remaining Camera wording**: the numeric suffix of `get_frustum_planes_coefficients2()`
+  is kept (the name stays short and stable for client code), and the variant is now identified in the
+  documentation instead: its header block states that it is the Gribb-Hartmann variant, which
+  extracts the planes from the rows of the model view projection matrix instead of building them
+  from the Camera vectors, and that it returns the same planes as
+  `get_frustum_planes_coefficients()` with a different equation form and normal direction (the
+  conventions are also tabulated in the batch-68 entry). The class documentation no longer says
+  "OpenGL projection and modelview matrices", "without OpenGL" or "ManipulatedFrame"; it states
+  "projection and model view matrices", "without a graphics backend" and "ManipulatedCameraFrame".
 - **F5 — tree hygiene**: verified — no conflict markers anywhere in the tree and an empty stash list.
 
 **Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL
