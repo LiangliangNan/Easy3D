@@ -36,7 +36,9 @@ namespace easy3d {
     class Camera;
     class Model;
     class ManipulatedFrame;
+#ifndef EASY3D_HAS_VULKAN
     class LinesDrawable;
+#endif
 
     /**
      * \brief A manipulator is for manipulation of an object.
@@ -87,9 +89,11 @@ namespace easy3d {
          */
         mat4 matrix() const;
 
-        /// Draw the manipulated frame with the backend's native line rendering.
+#ifndef EASY3D_HAS_VULKAN
+        /// Draw the manipulated frame with OpenGL's native line rendering.
         /// \param cam Camera used for rendering.
         void draw_frame(const Camera* cam) const;
+#endif
         /**
          * \brief Create a depth-tested frame annotation for Viewer::set_overlays().
          * \param cam Camera used to project the frame.
@@ -107,7 +111,9 @@ namespace easy3d {
         mutable mat4 frame_mvp_;
         mutable int frame_width_ = 0, frame_height_ = 0;
         mutable float frame_line_width_ = 0;
+#ifndef EASY3D_HAS_VULKAN
         LinesDrawable* drawable_model_bbox_;
+#endif
     };
 
 }

@@ -49,7 +49,6 @@ class Model;
 class Drawable;
 class LinesDrawable2D;
 class TrianglesDrawable;
-class TextRenderer;
 class KeyFrameInterpolator;
 #ifdef EASY3D_HAS_VULKAN
 /**
@@ -883,10 +882,8 @@ public:
         // changes.
         void cancel_interaction() override;
 
-        // Publishes the RGB corner axes as a 3D HUD overlay. Vulkan builds the cylinder/
-        // cone/sphere geometry once and caches it in corner_axes_geometry_, skipping the
-        // overlay while show_corner_axes_ is off; OpenGL keeps the same shape in
-        // drawable_axes_ and hides it by toggling that drawable's visibility instead.
+        // Draws the RGB corner axes as a 3D HUD. Both backends use show_corner_axes_
+        // as the authoritative visibility flag and keep backend-specific rendering.
         void draw_corner_axes() const;
 
         // Copies the current view to the system clipboard as "x y z qx qy qz qw"
@@ -954,6 +951,11 @@ public:
 	    // Rebuilds the scene bounding box from all models and standalone drawables
 	    // (screen-space lines excluded) and hands it to the camera.
 	    void restore_scene_bounds();
+
+	    // Loads the bundled fonts once and rebuilds the cached HUD text commands
+	    // when their text, visibility, DPI, or framebuffer size changes.
+	    void ensure_text_layout_engine() const;
+	    bool update_hud_text(std::vector<graphics::DrawCommand>& commands) const;
 	    //@}
 
 	    bool snapshot_hud_ = true; // Capture HUD policy; OffScreen/MultiViewer are scene-only.
@@ -965,11 +967,19 @@ public:
 	    bool animation_enabled_ = false;
 	    bool visible_ = true;
 	    bool zoom_region_ = false;
+	    bool show_corner_axes_ = true; // HUD toggle (key 'A'), shared by both backends
 	    std::exception_ptr callback_error_;
 	    int framebuffer_width_ = 0, framebuffer_height_ = 0; // cached physical pixels
 	    std::string framerate_ = "fps: -- (-- ms/frame)";
 	    std::chrono::steady_clock::time_point frame_rate_start_;
 	    unsigned frame_rate_frames_ = 0;
+	    mutable int hint_width_ = 0, hint_height_ = 0;
+	    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
+	    mutable std::string rendered_frame_rate_, rendered_hint_;
+	    mutable std::vector<graphics::DrawCommand> logo_commands_, frame_rate_commands_, hint_commands_;
+	    mutable std::unique_ptr<graphics::TextLayoutEngine> text_layout_;
+	    mutable bool fonts_tried_ = false;
+	    mutable float hint_dpi_ = 0;
 		    bool usage_printed_ = false;
 	    // Calls post_resize() when the logical or framebuffer size differs from the last
 	    // notification, so a duplicate window/framebuffer event is coalesced.
@@ -1008,10 +1018,6 @@ public:
 	                        const vec4& background, unsigned samples,
 	                        graphics::FrameImage& image);
 
-	    // Loads the bundled fonts into the text layout engine once; a failure is
-	    // latched in fonts_tried_ so the HUD simply draws no text.
-	    void ensure_text_renderer() const;
-
 	    // Window-backed construction: adopts an already created GLFW window host and
 	    // builds the render device for it. The public constructor delegates here.
 	    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
@@ -1030,17 +1036,7 @@ public:
 	    vec2 pivot_pixel_ = vec2(0);        // logical position of the pivot marked by the last pick
 	    std::chrono::steady_clock::time_point pivot_expires_;   // pivot mark auto-hides once this instant passes
 	    mutable bool pivot_hint_visible_ = false;   // pivot state of the cached overlays, lets rebuilds be skipped
-	    mutable int hint_width_ = 0, hint_height_ = 0;  // framebuffer size the cached text was laid out for
-	    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;  // HUD flags behind the cached text
-	    mutable std::string rendered_frame_rate_; // frame-rate string the cached commands were built from
-	    mutable std::vector<graphics::DrawCommand> logo_commands_;    // "Easy3D" text, rebuilt only when its inputs change
-	    mutable std::vector<graphics::DrawCommand> frame_rate_commands_;  // cached frame-rate text commands
-	    mutable std::vector<graphics::DrawCommand> hint_commands_;    // cached hint text commands
 	    mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;  // corner axes, built on first use
-	    mutable std::unique_ptr<graphics::TextLayoutEngine> texter_;  // lays out the HUD text as draw commands
-	    mutable bool fonts_tried_ = false;    // latch: font loading attempted, so failures are not retried
-	    mutable std::string rendered_hint_;   // hint text the cached commands were built from
-	    mutable float hint_dpi_ = 0;          // DPI scale the cached text layout used
 	    //@}
 
 	protected:
@@ -1099,8 +1095,6 @@ public:
 	    void release_device();
 	    //@}
 
-	    bool show_corner_axes_ = true;   // HUD toggle (key 'A'); OpenGL uses drawable_axes_ visibility instead
-
 #else
     // Keep this part of code minimum
 
@@ -1137,13 +1131,6 @@ public:
         // sizes, updates the camera extent and the GL viewport, then calls notify_resize().
         virtual void callback_event_resize(int w, int h);
 
-        // Draws one text label per mesh face at its projected pixel position, reading
-        // back the stored depth first so only faces visible at that pixel are labelled.
-        void draw_face_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
-        // Draws one text label per mesh vertex, using the same depth-tested placement as
-        // draw_face_labels().
-        void draw_vertex_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
-
     private:
 
         // GLFW callback trampoline: resolves the window's user pointer back to this
@@ -1163,9 +1150,6 @@ public:
 
         float       dpi_scaling_;   // window content scale (framebuffer pixels / logical pixels)
 
-        std::unique_ptr<TextRenderer> texter_;    // HUD text renderer, created with the current dpi_scaling_
-
-
 		//----------------- viewer data -------------------
 
 		// corner axes
@@ -1181,6 +1165,8 @@ public:
         // Retains the overlay/annotation command sets registered through
         // set_viewer_overlays()/set_viewer_annotations() and replays them in draw_overlays().
         std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
+        // Keeps built-in HUD text separate from application overlays and their draw order.
+        std::unique_ptr<opengl::OverlayRenderer> hud_overlay_renderer_;
         // OpenGL point-selection pass (render points into an id buffer, then read back);
         // lazily created and mutable because selection is queried from const paths.
         mutable std::unique_ptr<opengl::PointSelector> point_selector_;

@@ -30,13 +30,19 @@
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/drawable_lines.h>
+#endif
 
 
 namespace easy3d {
 
     Manipulator::Manipulator(Model *model)
-            : model_(model), drawable_model_bbox_(nullptr) {
+            : model_(model)
+#ifndef EASY3D_HAS_VULKAN
+            , drawable_model_bbox_(nullptr)
+#endif
+    {
         frame_ = new ManipulatedFrame;
         if (model_)
             frame_->set_position_and_orientation(model->bounding_box().center(), quat());
@@ -45,7 +51,9 @@ namespace easy3d {
 
     Manipulator::~Manipulator() {
         delete frame_;
+#ifndef EASY3D_HAS_VULKAN
         delete drawable_model_bbox_;
+#endif
     }
 
 
@@ -74,6 +82,7 @@ namespace easy3d {
     }
 
 
+#ifndef EASY3D_HAS_VULKAN
     void Manipulator::draw_frame(const Camera *cam) const {
         if (!model_ || !cam)
             return;
@@ -87,6 +96,7 @@ namespace easy3d {
         auto manip = matrix() * mat4::translation(center) * mat4::scale(box.range(0), box.range(1), box.range(2), 1.0f);
         shape::draw_box_wire(drawable_model_bbox_, cam->model_view_projection_matrix(), manip, true);
     }
+#endif
 
 graphics::DrawCommand Manipulator::draw_frame(const Camera* cam,int width,int height,float line_width) const {
     if(!model_ || !cam || !model_->bounding_box().is_valid()) return {};

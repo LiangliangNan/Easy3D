@@ -71,7 +71,16 @@ int main(int argc,char**) {
         press(InputViewer::KEY_PERIOD); require(v.current_model()==second,"next-model shortcut failed");
         press(InputViewer::KEY_PERIOD); require(v.current_model()==first,"model cycling did not wrap");
         v.fit_screen();
+        v.set_usage("", "");
+        const auto without_hint=v.capture();
+        v.set_usage("", "HUD text rendering check");
+        require(v.capture().rgba!=without_hint.rgba,"Viewer hint text was not rendered");
+        v.set_usage("", "");
         const auto image=v.capture();
+        press(InputViewer::KEY_A);
+        require(v.capture().rgba!=image.rgba,"A did not hide the corner axes");
+        press(InputViewer::KEY_A);
+        require(v.capture().rgba==image.rgba,"A did not restore the corner axes");
         // Choose a covered pixel nearest the image center: an interior surface point survives
         // the logical->framebuffer quantization that legacy hooks apply on HiDPI displays.
         size_t hit=0; double best=-1;
