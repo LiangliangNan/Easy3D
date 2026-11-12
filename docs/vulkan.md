@@ -587,14 +587,23 @@ and expired-source pruning; `VulkanDevice` prunes it after the preceding
 submission fence. `DrawCommandValidator` checks each command's pipeline and
 feature invariants before cache pruning or resource uploads; frame-wide target
 and background checks remain in `VulkanDevice`. `TransparentTriangleOrderBuilder`
-generates the far-to-near triangle indices for blended draws; `VulkanDevice`
-still owns buffer growth/upload, and `ScenePassEncoder` keeps draw-level
-ordering. `ImpostorUniformBuilder` packs shader-facing per-draw constants from
+generates the far-to-near triangle indices for blended draws; per-frame index
+accumulation remains in `VulkanDevice`, buffer growth/upload is handled by
+`DrawBufferCache`, and `ScenePassEncoder` keeps draw-level ordering.
+`ImpostorUniformBuilder` packs shader-facing per-draw constants from
 validated commands; `VulkanDevice` retains aligned batch packing.
 `DrawBufferCache` owns the reusable uniform and transparent-index buffers,
 including capacity growth, the dynamic-uniform descriptor update, and the
 existing synchronous transfers. `VulkanDevice` coordinates batch creation and
-upload and retains command submission and capture/presentation ownership.
+upload. `FrameTargetCoordinator` selects/recreates the color and picking
+targets, sizes the shadow map, and allocates or rebinds depth-preview
+descriptors; the targets and shadow map remain owned by `VulkanDevice`, which
+also performs AO-specific updates. The device retains command submission and
+capture/presentation ownership. This is the intended extraction boundary:
+`VulkanDevice` remains the device-lifetime owner and high-level frame
+coordinator, while `prepare()` assembles per-frame resources and draw data.
+Further splitting of its short, owner-bound setup methods would add indirection
+without establishing a cohesive ownership boundary.
 The existing fence wait and one-command-buffer model are unchanged. Profiling
 found no current basis for multiple frames in flight or staging/suballocation,
 so both remain deferred unless frame-preparation or recurring dynamic-upload
@@ -608,8 +617,8 @@ also remains active: Drawable buffer uploads, immediate shape helpers,
 `TextRenderer`, and the Python binding depend on it. `RenderDevice` is the
 Vulkan scene-execution interface; OpenGL currently reuses its command types for
 overlays, not as a full device backend. Full OpenGL/Vulkan device unification is
-out of scope; the remaining Vulkan pass and presentation extraction is tracked
-in `ToDo.md`.
+out of scope; Vulkan pass and presentation extraction is complete. Remaining
+cross-platform validation is tracked in `ToDo.md`.
 
 ## Historical implementation status (2026-11-04; superseded)
 

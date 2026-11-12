@@ -4115,6 +4115,122 @@ namespace easy3d {
                 }
             };
 
+            class FrameTargetCoordinator {
+                Context &c_;
+                PassCache &passes_;
+                std::unique_ptr<Target> &target_;
+                std::unique_ptr<ShadowMap> &shadow_map_;
+                uint32_t &shadow_bound_size_;
+                VkDescriptorPool descriptor_pool_;
+                VkDescriptorSetLayout descriptors_;
+                const VkSampler *samplers_;
+                VkPipelineLayout shadow_layout_;
+
+            public:
+                FrameTargetCoordinator(Context &context,
+                                       PassCache &passes,
+                                       std::unique_ptr<Target> &target,
+                                       std::unique_ptr<ShadowMap> &shadow_map,
+                                       uint32_t &shadow_bound_size,
+                                       VkDescriptorPool descriptor_pool,
+                                       VkDescriptorSetLayout descriptors,
+                                       const VkSampler *samplers,
+                                       VkPipelineLayout shadow_layout)
+                    : c_(context), passes_(passes), target_(target), shadow_map_(shadow_map),
+                      shadow_bound_size_(shadow_bound_size), descriptor_pool_(descriptor_pool),
+                      descriptors_(descriptors), samplers_(samplers), shadow_layout_(shadow_layout) {}
+
+                template <typename CreatePipelines>
+                void prepare(uint32_t width,
+                             uint32_t height,
+                             unsigned samples,
+                             const std::vector<DrawCommand> &commands,
+                             bool ao_active,
+                             const CreatePipelines &create_pipelines) {
+                    const auto &limits = c_.properties.limits;
+                    unsigned shadow_size = 0;
+                    for (const auto &command : commands)
+                        if ((command.shadow || command.shadow_caster || command.shadow_background) &&
+                            command.shadow_map_size > shadow_size)
+                            shadow_size = command.shadow_map_size;
+                    if (shadow_size) {
+                        if (shadow_size > limits.maxImageDimension2D || shadow_size > limits.maxFramebufferWidth ||
+                            shadow_size > limits.maxFramebufferHeight)
+                            throw std::invalid_argument("shadow map size exceeds device limits");
+                        if (!shadow_map_ || shadow_map_->size != shadow_size) {
+                            shadow_map_.reset();
+                            std::unique_ptr<ShadowMap> map(new ShadowMap(c_));
+                            map->init(shadow_size, shadow_layout_);
+                            shadow_map_ = std::move(map);
+                        }
+                    }
+                    const bool independent_depth =
+                        std::any_of(commands.begin(), commands.end(),
+                                    [](const DrawCommand &d) { return d.overlay_independent_depth; });
+                    const bool depth_preview =
+                        std::any_of(commands.begin(), commands.end(), [](const DrawCommand &d) {
+                            return d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow;
+                        });
+                    // Ambient occlusion resolves depth in a pre-pass, so it needs the
+                    // single-sample picking target even without multisampling.
+                    const bool needs_ids = samples > 1 || ao_active;
+                    if (!target_ || target_->width != width || target_->height != height ||
+                        target_->samples != samples || target_->color_pass.independent_depth != independent_depth ||
+                        target_->color_pass.depth_preview != depth_preview || (target_->id_pass != nullptr) != needs_ids) {
+                        if (depth_preview) {
+                            VkFormatProperties properties;
+                            c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_D32_SFLOAT, &properties);
+                            if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+                                throw std::runtime_error("scene depth preview requires sampleable D32 depth");
+                        }
+                        auto &pass =
+                            passes_.get_color(c_, samples, independent_depth, depth_preview, create_pipelines);
+                        auto *picking = needs_ids ? &passes_.get_picking(c_, create_pipelines) : nullptr;
+                        std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
+                        target->init();
+                        target_ = std::move(target);
+                    }
+                    if (depth_preview && !target_->depth_set) {
+                        target_->depth_pool = descriptor_pool_;
+                        VkDescriptorSetAllocateInfo ai{};
+                        ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                        ai.descriptorPool = descriptor_pool_;
+                        ai.descriptorSetCount = 1;
+                        ai.pSetLayouts = &descriptors_;
+                        check(c_.vkAllocateDescriptorSets(c_.device, &ai, &target_->depth_set),
+                              "allocate scene depth descriptor");
+                        VkDescriptorImageInfo images[3] = {
+                            {samplers_[0], target_->depth.view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
+                            {samplers_[1], shadow_map_ ? shadow_map_->image.view : target_->depth.view,
+                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
+                            {samplers_[0], target_->depth.view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
+                        VkWriteDescriptorSet write[3] = {};
+                        for (unsigned i = 0; i < 3; ++i) {
+                            write[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            write[i].dstSet = target_->depth_set;
+                            write[i].dstBinding = i;
+                            write[i].descriptorCount = 1;
+                            write[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                            write[i].pImageInfo = &images[i];
+                        }
+                        c_.vkUpdateDescriptorSets(c_.device, 3, write, 0, nullptr);
+                        shadow_bound_size_ = shadow_map_ ? shadow_map_->size : 0;
+                    } else if (depth_preview && shadow_map_ && shadow_bound_size_ != shadow_map_->size) {
+                        VkDescriptorImageInfo image = {samplers_[1], shadow_map_->image.view,
+                                                       VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
+                        VkWriteDescriptorSet write{};
+                        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        write.dstSet = target_->depth_set;
+                        write.dstBinding = 1;
+                        write.descriptorCount = 1;
+                        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        write.pImageInfo = &image;
+                        c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
+                        shadow_bound_size_ = shadow_map_->size;
+                    }
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4462,86 +4578,10 @@ namespace easy3d {
                         }
                         if (ao_active_)
                             ensure_ao(width, height);
-                        unsigned shadow_size = 0;
-                        for (const auto &command : commands)
-                            if ((command.shadow || command.shadow_caster || command.shadow_background) &&
-                                command.shadow_map_size > shadow_size)
-                                shadow_size = command.shadow_map_size;
-                        if (shadow_size) {
-                            if (shadow_size > limits.maxImageDimension2D || shadow_size > limits.maxFramebufferWidth ||
-                                shadow_size > limits.maxFramebufferHeight)
-                                throw std::invalid_argument("shadow map size exceeds device limits");
-                            if (!shadow_map_ || shadow_map_->size != shadow_size) {
-                                shadow_map_.reset();
-                                std::unique_ptr<ShadowMap> map(new ShadowMap(c_));
-                                map->init(shadow_size, layout_);
-                                shadow_map_ = std::move(map);
-                            }
-                        }
-                        const bool independent_depth =
-                            std::any_of(commands.begin(), commands.end(),
-                                        [](const DrawCommand &d) { return d.overlay_independent_depth; });
-                        const bool depth_preview =
-                            std::any_of(commands.begin(), commands.end(), [](const DrawCommand &d) {
-                                return d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow;
-                            });
-                        // Ambient occlusion resolves depth in a pre-pass, so it needs the
-                        // single-sample picking target even without multisampling.
-                        const bool needs_ids = samples > 1 || ao_active_;
-                        if (!target_ || target_->width != width || target_->height != height ||
-                            target_->samples != samples || target_->color_pass.independent_depth != independent_depth ||
-                            target_->color_pass.depth_preview != depth_preview ||
-                            (target_->id_pass != nullptr) != needs_ids) {
-                            if (depth_preview) {
-                                VkFormatProperties properties;
-                                c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_D32_SFLOAT, &properties);
-                                if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
-                                    throw std::runtime_error("scene depth preview requires sampleable D32 depth");
-                            }
-                            auto &pass = color_pass(samples, independent_depth, depth_preview);
-                            auto *picking = needs_ids ? &picking_pass() : nullptr;
-                            std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
-                            target->init();
-                            target_ = std::move(target);
-                        }
-                        if (depth_preview && !target_->depth_set) {
-                            target_->depth_pool = descriptor_pool_;
-                            VkDescriptorSetAllocateInfo ai{};
-                            ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                            ai.descriptorPool = descriptor_pool_;
-                            ai.descriptorSetCount = 1;
-                            ai.pSetLayouts = &descriptors_;
-                            check(c_.vkAllocateDescriptorSets(c_.device, &ai, &target_->depth_set),
-                                  "allocate scene depth descriptor");
-                            VkDescriptorImageInfo images[3] = {
-                                {samplers_[0], target_->depth.view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
-                                {samplers_[1], shadow_map_ ? shadow_map_->image.view : target_->depth.view,
-                                 VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL},
-                                {samplers_[0], target_->depth.view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
-                            VkWriteDescriptorSet write[3] = {};
-                            for (unsigned i = 0; i < 3; ++i) {
-                                write[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                                write[i].dstSet = target_->depth_set;
-                                write[i].dstBinding = i;
-                                write[i].descriptorCount = 1;
-                                write[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                                write[i].pImageInfo = &images[i];
-                            }
-                            c_.vkUpdateDescriptorSets(c_.device, 3, write, 0, nullptr);
-                            shadow_bound_size_ = shadow_map_ ? shadow_map_->size : 0;
-                        } else if (depth_preview && shadow_map_ && shadow_bound_size_ != shadow_map_->size) {
-                            VkDescriptorImageInfo image = {samplers_[1], shadow_map_->image.view,
-                                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
-                            VkWriteDescriptorSet write{};
-                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                            write.dstSet = target_->depth_set;
-                            write.dstBinding = 1;
-                            write.descriptorCount = 1;
-                            write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            write.pImageInfo = &image;
-                            c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
-                            shadow_bound_size_ = shadow_map_->size;
-                        }
+                        FrameTargetCoordinator(c_, passes_, target_, shadow_map_, shadow_bound_size_, descriptor_pool_,
+                                               descriptors_, samplers_, layout_)
+                            .prepare(width, height, samples, commands, ao_active_,
+                                     [this](RenderPass &pass) { create_pipelines(pass); });
                         if (ao_active_) {
                             ao_->update(samplers_[0], target_->depth.view, target_->depth_set, ao_projection_,
                                         ao_radius_, ao_bias_);
