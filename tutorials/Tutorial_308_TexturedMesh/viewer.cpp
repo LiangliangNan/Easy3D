@@ -36,7 +36,7 @@ using namespace easy3d;
 TexturedViewer::TexturedViewer(const std::string &title) : Viewer(title) {
     // Most OBJ assets (including the demo models) are authored Y-up; make the camera
     // agree so the scene does not appear lying on its side.
-    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->set_up_vector(vec3(0, 1, 0));
 }
 
 // The texture-aware loading pipeline. The contract of add_model() is: on success the new

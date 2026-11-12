@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    viewer.camera()->setViewDirection(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 1, 0));
 
     // Show the edges so the coarsening is visible.
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);

@@ -64,7 +64,7 @@
  *   add_vertex()/add_quad() build the single-quad geometry.
  * - DrawableTriangles: set_texture_coloring(State::VERTEX, "v:texcoord", tex) switches the
  *   drawable to textured rendering using that UV property and texture.
- * - Camera: setUpVector()/setViewDirection() orient the view to face the quad.
+ * - Camera: set_up_vector()/set_view_direction() orient the view to face the quad.
  *
  * <b>Running it</b>
  * The window shows the Easy3D logo on a quad, viewed face-on. Standard Viewer navigation
@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
 
     // Aim the camera straight at the XY plane: Y is up and we look along -Z, so the quad
     // (which lies in the XY plane) is seen face-on, like a 2D image.
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
 
     //----------------------- Load texture from an image file ------------------------
 

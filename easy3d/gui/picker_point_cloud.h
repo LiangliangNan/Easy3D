@@ -86,7 +86,7 @@ namespace easy3d {
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The front-most point covering that pixel, or an invalid vertex if nothing is visible.
-         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         * \note The coordinate is in logical window units (camera()->screen_width()/Height()), not framebuffer pixels.
          *       The method renders the visible point drawable with source vertex IDs into an offscreen target,
          *       samples the pixel at (x, y), and returns the corresponding source vertex. Hidden models/drawables,
          *       clipped points, and deleted source vertices are never returned. Both OpenGL and Vulkan backends
@@ -103,7 +103,7 @@ namespace easy3d {
          * \note The rectangle is evaluated on the GPU with through-selection: a point is selected when its
          *       projected center is inside the rectangle, in front of the camera, and not clipped. Occlusion
          *       by other scene geometry is not considered. The coordinates are in logical window units
-         *       (camera()->screenWidth()/Height()), not framebuffer pixels. Both OpenGL and Vulkan backends
+         *       (camera()->screen_width()/Height()), not framebuffer pixels. Both OpenGL and Vulkan backends
          *       present the same coordinate contract. Selected vertices are marked in the \c v:select property.
          *       A degenerate rectangle selects nothing.
          */
@@ -116,7 +116,7 @@ namespace easy3d {
          * \param deselect If true, clear selection for vertices inside the region; otherwise select them. Vertices
          *                 outside the region retain their previous state.
          * \note The polygon is evaluated on the GPU with through-selection, same as the rectangle overload.
-         *       The polygon may be concave; it is given in logical window units (camera()->screenWidth()/Height()),
+         *       The polygon may be concave; it is given in logical window units (camera()->screen_width()/Height()),
          *       not framebuffer pixels. Both OpenGL and Vulkan backends present the same coordinate contract.
          *       Selected vertices are marked in the \c v:select property. Polygons with fewer than three vertices
          *       or zero area select nothing.

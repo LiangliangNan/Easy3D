@@ -21,11 +21,11 @@ void frame(Viewer& viewer) {
     throw std::runtime_error("scanner viewer did not present");
 }
 void same_camera(const Camera& a,const Camera& b) {
-    const auto m=a.modelViewProjectionMatrix(),n=b.modelViewProjectionMatrix();
+    const auto m=a.model_view_projection_matrix(),n=b.model_view_projection_matrix();
     for (unsigned i=0;i<16;++i) require(std::abs(m[i]-n[i])<1e-6f,"scan changed the acquisition camera");
-    require(a.screenWidth()==b.screenWidth() && a.screenHeight()==b.screenHeight(),"scan changed framebuffer dimensions");
-    require(a.pivotPoint()==b.pivotPoint(),"scan changed the interaction pivot");
-    require(a.sceneCenter()==b.sceneCenter() && a.sceneRadius()==b.sceneRadius(),"scan changed camera scene bounds");
+    require(a.screen_width()==b.screen_width() && a.screen_height()==b.screen_height(),"scan changed framebuffer dimensions");
+    require(a.pivot_point()==b.pivot_point(),"scan changed the interaction pivot");
+    require(a.scene_center()==b.scene_center() && a.scene_radius()==b.scene_radius(),"scan changed camera scene bounds");
 }
 int main(int argc,char**) {
     try {
@@ -40,18 +40,18 @@ int main(int argc,char**) {
         auto mesh=std::make_shared<SurfaceMesh>();
         auto a=mesh->add_vertex(vec3(-1,-1,0)),b=mesh->add_vertex(vec3(1,-1,0));
         auto c=mesh->add_vertex(vec3(1,1,0)),d=mesh->add_vertex(vec3(-1,1,0)); mesh->add_quad(a,b,c,d);
-        viewer.add_model(mesh); viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.fit_screen(); frame(viewer);
-        viewer.camera()->setPivotPoint(vec3(.2f,.1f,.15f));
+        viewer.add_model(mesh); viewer.camera()->set_view_direction(vec3(0,0,-1)); viewer.fit_screen(); frame(viewer);
+        viewer.camera()->set_pivot_point(vec3(.2f,.1f,.15f));
         for (unsigned samples:{1u,4u}) {
             if (!(viewer.device().supported_sample_counts()&samples)) continue;
             viewer.set_samples(samples); frame(viewer);
-            auto custom=viewer.camera()->projectionMatrix(); custom(0,2)+=.05f;
+            auto custom=viewer.camera()->projection_matrix(); custom(0,2)+=.05f;
             viewer.camera()->set_projection_matrix(custom);
             const auto expected=viewer.scan_visible_points(samples);
             Camera camera(*viewer.camera());
-            camera.frame()->setPivotPoint(viewer.camera()->pivotPoint());
-            camera.set_projection_matrix(viewer.camera()->projectionMatrix());
-            camera.set_modelview_matrix(viewer.camera()->modelViewMatrix());
+            camera.frame()->setPivotPoint(viewer.camera()->pivot_point());
+            camera.set_projection_matrix(viewer.camera()->projection_matrix());
+            camera.set_model_view_matrix(viewer.camera()->model_view_matrix());
             const auto before=viewer.models().size();
             press(Viewer::KEY_SPACE,Viewer::MODIF_CTRL);
             require(viewer.models().size()==before,"modified Space unexpectedly scanned");

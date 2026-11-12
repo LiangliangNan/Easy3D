@@ -44,7 +44,7 @@ void require_pick_depth(const Viewer& v, const graphics::FrameImage& cap, const 
             if (cap.ids[si].object == UINT32_MAX) continue;
             const auto hit = v.pick(lx, ly);
             if (!hit) continue;
-            require(std::abs(v.camera()->projectedCoordinatesOf(hit.position).z - cap.depth[si]) < 1e-4f, msg);
+            require(std::abs(v.camera()->projected_coordinates_of(hit.position).z - cap.depth[si]) < 1e-4f, msg);
             return;
         }
     require(false, msg);
@@ -100,9 +100,9 @@ int main(int argc, char**) {
                 if (!result) continue;
                 const size_t si = sampled_texel(viewer, lx, ly, captured.width, captured.height);
                 const auto point = result.position;
-                const auto projected = viewer.camera()->projectedCoordinatesOf(point);
+                const auto projected = viewer.camera()->projected_coordinates_of(point);
                 require(std::abs(projected.z - captured.depth[si]) < 1e-4f, "depth picking/unprojection mismatch");
-                const auto clip = viewer.camera()->modelViewProjectionMatrix() * vec4(point, 1);
+                const auto clip = viewer.camera()->model_view_projection_matrix() * vec4(point, 1);
                 const float px = (clip.x / clip.w + 1) * .5f * captured.width;
                 const float py = (1 - clip.y / clip.w) * .5f * captured.height;
                 require(std::abs(px - float(si % captured.width) - .5f) < 1e-3f &&
@@ -131,11 +131,11 @@ int main(int argc, char**) {
         auto mouse = glfwSetMouseButtonCallback(viewer.window(), nullptr);
         glfwSetMouseButtonCallback(viewer.window(), mouse);
         glfwSetCursorPos(viewer.window(), 60, 50);
-        const auto direction = viewer.camera()->viewDirection();
+        const auto direction = viewer.camera()->view_direction();
         mouse(viewer.window(), Viewer::BUTTON_LEFT, GLFW_PRESS, 0);
         cursor(viewer.window(), 90, 75);
         mouse(viewer.window(), Viewer::BUTTON_LEFT, GLFW_RELEASE, 0);
-        require((viewer.camera()->viewDirection() - direction).norm() > 0, "mouse callback did not rotate");
+        require((viewer.camera()->view_direction() - direction).norm() > 0, "mouse callback did not rotate");
         std::set<std::pair<int, int>> extents;
         for (unsigned i = 0; i < 8; ++i) {
             if (msaa) viewer.set_samples(i % 2 ? 1 : 4);
@@ -255,7 +255,7 @@ int main(int argc, char**) {
         viewer.set_overlays({}); frame(viewer);
         require(viewer.capture().rgba==textured.rgba,"clearing overlays retained stale color");
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");
-        const auto camera_before = viewer.camera()->modelViewProjectionMatrix();
+        const auto camera_before = viewer.camera()->model_view_projection_matrix();
         require(viewer.snapshot("vulkan-window-scaled.png", 0.5f, 1, 2), "parameterized snapshot failed");
         int image_w=0, image_h=0, channels=0;
         std::vector<unsigned char> pixels;
@@ -265,14 +265,14 @@ int main(int argc, char**) {
         bool transparent=false;
         for (size_t i=3; i<pixels.size(); i+=4) transparent |= pixels[i]==0;
         require(transparent, "snapshot background option was ignored");
-        const auto camera_after = viewer.camera()->modelViewProjectionMatrix();
+        const auto camera_after = viewer.camera()->model_view_projection_matrix();
         for (unsigned i=0; i<16; ++i)
             require(std::abs(camera_after[i]-camera_before[i])<1e-6f,
                     "snapshot changed the live camera");
         {
             RunViewer run_viewer("run(bool) parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             require(run_viewer.add_model(resource::directory()+"/data/bunny.ply"), "run test model missing");
-            run_viewer.camera()->setPosition(run_viewer.camera()->position()+vec3(1,2,3));
+            run_viewer.camera()->set_position(run_viewer.camera()->position()+vec3(1,2,3));
             const auto position=run_viewer.camera()->position();
             require(run_viewer.run(false)==0 && run_viewer.frames==2 &&
                     run_viewer.camera()->position()==position, "run(false) changed camera or stopped early");

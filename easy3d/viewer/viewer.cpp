@@ -169,9 +169,9 @@ namespace easy3d {
                                      int height = 0,
                                      bool include_hud = true) const {
             if (!width)
-                width = cam.screenWidth();
+                width = cam.screen_width();
             if (!height)
-                height = cam.screenHeight();
+                height = cam.screen_height();
             return device->render(uint32_t(width), uint32_t(height),
                                   owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples);
         }
@@ -423,8 +423,8 @@ namespace easy3d {
         if (window_)
             glfwGetFramebufferSize(window_, &w, &h);
         else {
-            w = camera()->screenWidth();
-            h = camera()->screenHeight();
+            w = camera()->screen_width();
+            h = camera()->screen_height();
         }
     }
 
@@ -518,7 +518,7 @@ namespace easy3d {
             if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
                 box.grow(drawable->bounding_box());
         if (box.is_valid())
-            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
+            camera()->set_scene_bounding_box(box.min_point(), box.max_point());
     }
 
     bool Viewer::draw_frame() {
@@ -788,9 +788,9 @@ namespace easy3d {
                     box.grow(drawable->bounding_box());
         }
         if (box.is_valid()) {
-            camera()->setSceneBoundingBox(box.min_point(), box.max_point());
-            camera()->showEntireScene();
-            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+            camera()->set_scene_bounding_box(box.min_point(), box.max_point());
+            camera()->show_entire_scene();
+            ClippingPlane::instance()->fit_scene(camera()->scene_center(), camera()->scene_radius());
         }
     }
 
@@ -925,7 +925,7 @@ namespace easy3d {
         new_frame.setPosition(p);
         new_frame.setOrientation(q);
         const float duration = 0.5f;
-        camera()->interpolateTo(&new_frame, duration);
+        camera()->interpolate_to(&new_frame, duration);
         update();
     }
 
@@ -988,7 +988,7 @@ namespace easy3d {
             if (button == BUTTON_LEFT) {
                 bool found = false;
                 const vec3 point = point_under_pixel(x, y, found);
-                camera()->setPivotPoint(found ? point : camera()->sceneCenter());
+                camera()->set_pivot_point(found ? point : camera()->scene_center());
                 show_pivot_point_ = found;
                 if (found) {
 #ifdef EASY3D_HAS_VULKAN
@@ -1012,22 +1012,22 @@ namespace easy3d {
 #endif
                     if (input_.key == KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
-                        camera()->interpolateToLookAt(point);
+                        camera()->interpolate_to_look_at(point);
 #else // without animation  Do NOT delete!!!
                         // Apply the legacy zoom target directly on the UI thread.
-                        camera()->setPosition(0.1f * camera()->position() + 0.9f * point);
-                        camera()->lookAt(point);
+                        camera()->set_position(0.1f * camera()->position() + 0.9f * point);
+                        camera()->look_at(point);
 #endif
                     }
                 }
             } else if (button == BUTTON_RIGHT) {
-                camera()->setPivotPoint(camera()->sceneCenter());
+                camera()->set_pivot_point(camera()->scene_center());
                 show_pivot_point_ = false;
                 if (input_.key == KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
-                    camera()->interpolateToFitScene();
+                    camera()->interpolate_to_fit_scene();
 #else // without animation  Do NOT delete!!!
-                    camera()->showEntireScene();
+                    camera()->show_entire_scene();
 #endif
                 }
             }
@@ -1042,7 +1042,7 @@ namespace easy3d {
         if (input_.button == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL && x != input_.press_x &&
             y != input_.press_y) {
             const ivec2 origin = interaction_origin();
-            camera()->fitScreenRegion(std::min(x, input_.press_x) - origin.x,
+            camera()->fit_screen_region(std::min(x, input_.press_x) - origin.x,
                                       std::min(y, input_.press_y) - origin.y,
                                       std::max(x, input_.press_x) - origin.x,
                                       std::max(y, input_.press_y) - origin.y);
@@ -1139,12 +1139,12 @@ namespace easy3d {
             camera()->frame()->action_turn((key == KEY_LEFT ? 1.0f : -1.0f) * float(M_PI / 180.0), camera());
         else if ((key == KEY_UP || key == KEY_DOWN) && modifiers == 0) {
             // move camera forward/backward
-            const float step = .05f * camera()->sceneRadius();
+            const float step = .05f * camera()->scene_radius();
             camera()->frame()->translate(
                 camera()->frame()->inverseTransformOf(vec3(0, 0, key == KEY_UP ? -step : step)));
         } else if (modifiers == MODIF_CTRL && key >= KEY_RIGHT && key <= KEY_UP) {
             // move camera left/right/up/down
-            const float step = .05f * camera()->sceneRadius();
+            const float step = .05f * camera()->scene_radius();
             const vec3 direction = key == KEY_LEFT    ? vec3(-step, 0, 0)
                                    : key == KEY_RIGHT ? vec3(step, 0, 0)
                                    : key == KEY_UP    ? vec3(0, step, 0)
@@ -1177,10 +1177,10 @@ namespace easy3d {
         } else if (key == KEY_T && modifiers == MODIF_CTRL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
-                float radius = camera()->sceneRadius();
+                float radius = camera()->scene_radius();
                 for (size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
-                    radius = std::max(radius, distance(camera()->sceneCenter(), kfi_->keyframe_position(i)));
-                camera()->setSceneRadius(radius);
+                    radius = std::max(radius, distance(camera()->scene_center(), kfi_->keyframe_position(i)));
+                camera()->set_scene_radius(radius);
             } else
                 restore_scene_bounds();
             update();
@@ -1208,11 +1208,11 @@ namespace easy3d {
             if (current_model())
                 fit_screen(current_model());
         } else if (key == KEY_P && modifiers == 0)
-            camera()->setType(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
+            camera()->set_type(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
         else if (key == KEY_SPACE && modifiers == 0) {
             // Aligns camera
             Frame frame;
-            frame.setTranslation(camera()->pivotPoint());
+            frame.setTranslation(camera()->pivot_point());
             camera()->frame()->alignWithFrame(&frame, true);
         } else if (key == KEY_M && modifiers == 0) {
             if (auto *mesh = dynamic_cast<SurfaceMesh *>(current_model()))
@@ -1262,7 +1262,7 @@ namespace easy3d {
             // toggle clipping plane
             auto *plane = ClippingPlane::instance();
             plane->set_enabled(!plane->is_enabled());
-            plane->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+            plane->fit_scene(camera()->scene_center(), camera()->scene_radius());
         } else if (modifiers == MODIF_ALT && key == KEY_V) {
             // toggle clipping plane visibility
             auto *plane = ClippingPlane::instance();
@@ -1304,7 +1304,7 @@ namespace easy3d {
         // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
         // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
         // world-space and already carry the logical sizing through world_pixel_ratio().
-        const float pixel_scale = cam.screenWidth() > 0 ? float(width) / float(cam.screenWidth()) : 1.0f;
+        const float pixel_scale = cam.screen_width() > 0 ? float(width) / float(cam.screen_width()) : 1.0f;
         auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
                           bool selected, bool depth_bias = false) {
             if (!d->is_visible())
@@ -1388,10 +1388,10 @@ namespace easy3d {
         impl_->device =
             graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name,
                                            options.use_native_large_points);
-        camera()->setType(Camera::PERSPECTIVE);
-        camera()->setUpVector(vec3(0, 0, 1));
-        camera()->setViewDirection(vec3(-1, 0, 0));
-        camera()->showEntireScene();
+        camera()->set_type(Camera::PERSPECTIVE);
+        camera()->set_up_vector(vec3(0, 0, 1));
+        camera()->set_view_direction(vec3(-1, 0, 0));
+        camera()->show_entire_scene();
         // Transparency effects only know the camera. Rendering and presentation stay
         // in the viewer, as in Viewer::draw().
         Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable *> &surfaces, int method,
@@ -1413,7 +1413,7 @@ namespace easy3d {
         // are GPU-only). For an offscreen canvas logical units equal pixels.
         int cw, ch;
         viewer_size(cw, ch);
-        camera()->setScreenWidthAndHeight(cw, ch);
+        camera()->set_screen_width_and_height(cw, ch);
     }
     void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground) {
         for (auto &command : commands)
@@ -1452,10 +1452,10 @@ namespace easy3d {
         Camera snapshot(*camera());
         // Camera's copy constructor regenerates matrices from its parameters. Keep
         // effective matrices too, including externally calibrated/custom cameras.
-        snapshot.frame()->setPivotPoint(camera()->pivotPoint()); // do not re-adjust the copied ortho coefficient
-        snapshot.set_projection_matrix(camera()->projectionMatrix());
-        snapshot.set_modelview_matrix(camera()->modelViewMatrix());
-        const auto inv = transform::checked_inverse(snapshot.modelViewProjectionMatrix());
+        snapshot.frame()->setPivotPoint(camera()->pivot_point()); // do not re-adjust the copied ortho coefficient
+        snapshot.set_projection_matrix(camera()->projection_matrix());
+        snapshot.set_model_view_matrix(camera()->model_view_matrix());
+        const auto inv = transform::checked_inverse(snapshot.model_view_projection_matrix());
         const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
         std::vector<vec3> points;
         points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
@@ -1546,7 +1546,7 @@ namespace easy3d {
         auto commands =
             frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr, !impl_->snapshot.active);
         if (has_shadow) {
-            const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
+            const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->model_view_projection_matrix());
             const auto &surfaces = active_shadow->surfaces();
             for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
                 auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
@@ -1567,7 +1567,7 @@ namespace easy3d {
                     std::make_shared<graphics::Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
                 background.color = shadow.background_color;
                 background.object_id = UINT32_MAX;
-                background.model_view_projection = camera()->modelViewProjectionMatrix();
+                background.model_view_projection = camera()->model_view_projection_matrix();
                 background.shadow_background = true;
                 background.shadow_matrix = clip_to_shadow;
                 background.shadow_map_size = shadow.shadow_map_size;
@@ -1619,7 +1619,7 @@ namespace easy3d {
         // Keep the camera's logical screen dimensions: only the projection changes
         // for the output frustum. draw_commands() then scales plain point/line sizes
         // by output/logical and impostors keep their relative size, as on OpenGL.
-        const mat4 source_projection = camera()->projectionMatrix();
+        const mat4 source_projection = camera()->projection_matrix();
         struct Restore {
             Viewer &self;
             mat4 projection;
@@ -1691,9 +1691,9 @@ namespace easy3d {
             framebuffer_size(w, h);
             if (w > 0 && h > 0)
                 resize_render_target(w, h);
-            camera()->setUpVector(vec3(0, 0, 1));
-            camera()->setViewDirection(vec3(-1, 0, 0));
-            camera()->showEntireScene();
+            camera()->set_up_vector(vec3(0, 0, 1));
+            camera()->set_view_direction(vec3(-1, 0, 0));
+            camera()->show_entire_scene();
             // Transparency effects only know the camera, so route their frames back to
             // this viewer for rendering and presentation.
             Transparency::set_frame_renderer(camera(),
@@ -1736,7 +1736,7 @@ namespace easy3d {
         std::vector<graphics::DrawCommand> commands;
         if (show_camera_path_ && !kfi_->is_interpolation_started()) {
             auto path = camera_path_renderer_->draw_path(*kfi_, *camera());
-            auto cameras = camera_path_renderer_->draw_cameras(*kfi_, *camera(), camera()->sceneRadius() * .05f);
+            auto cameras = camera_path_renderer_->draw_cameras(*kfi_, *camera(), camera()->scene_radius() * .05f);
             if (path.geometry)
                 commands.push_back(path);
             if (cameras.geometry)
@@ -1926,11 +1926,11 @@ namespace easy3d {
 
             // create and set up the camera
             camera_ = std::unique_ptr<Camera>(new Camera);
-            camera_->setScreenWidthAndHeight(width_, height_);
-            camera_->setType(Camera::PERSPECTIVE);
-            camera_->setUpVector(vec3(0, 0, 1));       // Z pointing up
-            camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-            camera_->showEntireScene();
+            camera_->set_screen_width_and_height(width_, height_);
+            camera_->set_type(Camera::PERSPECTIVE);
+            camera_->set_up_vector(vec3(0, 0, 1));       // Z pointing up
+            camera_->set_view_direction(vec3(-1, 0, 0)); // X pointing out
+            camera_->show_entire_scene();
 
             easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
 
@@ -2202,8 +2202,8 @@ namespace easy3d {
             height_ = h;
             framebuffer_width_ = fw;
             framebuffer_height_ = fh;
-            if (w > 0 && h > 0 && (camera_->screenWidth() != w || camera_->screenHeight() != h))
-                camera_->setScreenWidthAndHeight(w, h);
+            if (w > 0 && h > 0 && (camera_->screen_width() != w || camera_->screen_height() != h))
+                camera_->set_screen_width_and_height(w, h);
             glViewport(0, 0, fw, fh);
             notify_resize();
         } catch (const std::exception &e) {
@@ -2264,8 +2264,8 @@ namespace easy3d {
 
         // camera is manipulated by the mouse, working in the screen coordinate system
         // (different from the viewport or framebuffer size, which are in pixel coordinates)
-        if (camera_->screenWidth() != width_ || camera_->screenHeight() != height_)
-            camera_->setScreenWidthAndHeight(width_, height_);
+        if (camera_->screen_width() != width_ || camera_->screen_height() != height_)
+            camera_->set_screen_width_and_height(width_, height_);
         int fw, fh;
         glfwGetFramebufferSize(window_, &fw, &fh);
         glViewport(0, 0, fw, fh);
@@ -2334,7 +2334,7 @@ namespace easy3d {
         const vec3 &wCamPos = camera_->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4 &MV = camera_->modelViewMatrix();
+        const mat4 &MV = camera_->model_view_matrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
@@ -2398,7 +2398,7 @@ namespace easy3d {
         // shown only when it is not animating
         if (show_camera_path_ && !kfi_->is_interpolation_started()) {
             kfi_->draw_path(camera(), 2.0f);
-            kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
+            kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
         }
 
         if (show_pivot_point_)
@@ -2647,10 +2647,10 @@ namespace easy3d {
                                     QueryState depth_state;
                                     depth_state.prepare(width, height);
                                     Camera snapshot(*camera());
-                                    snapshot.frame()->setPivotPoint(camera()->pivotPoint());
-                                    snapshot.projectionMatrix();
-                                    snapshot.modelViewMatrix();
-                                    mat4 projection = camera()->projectionMatrix();
+                                    snapshot.frame()->setPivotPoint(camera()->pivot_point());
+                                    snapshot.projection_matrix();
+                                    snapshot.model_view_matrix();
+                                    mat4 projection = camera()->projection_matrix();
                                     if (overlay_tile_.z > 0) {
                                         mat4 full = mat4::identity();
                                         full(0, 0) = float(viewport[2]) / width;
@@ -2660,7 +2660,7 @@ namespace easy3d {
                                         projection = full * projection;
                                     }
                                     snapshot.set_projection_matrix(projection);
-                                    snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+                                    snapshot.set_model_view_matrix(camera()->model_view_matrix());
                                     draw_scene(snapshot);
                                 });
     }
@@ -2685,13 +2685,13 @@ namespace easy3d {
             self->initialized_ = true;
         }
         Camera snapshot(*camera());
-        snapshot.frame()->setPivotPoint(camera()->pivotPoint());
-        snapshot.projectionMatrix();
-        snapshot.modelViewMatrix();
-        snapshot.set_projection_matrix(camera()->projectionMatrix());
-        snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+        snapshot.frame()->setPivotPoint(camera()->pivot_point());
+        snapshot.projection_matrix();
+        snapshot.model_view_matrix();
+        snapshot.set_projection_matrix(camera()->projection_matrix());
+        snapshot.set_model_view_matrix(camera()->model_view_matrix());
         for (unsigned i = 0; i < 16; ++i)
-            if (!std::isfinite(snapshot.modelViewProjectionMatrix()[i]))
+            if (!std::isfinite(snapshot.model_view_projection_matrix()[i]))
                 throw std::invalid_argument("nonfinite capture camera");
         graphics::FrameImage frame;
         frame.width = w;
@@ -2785,10 +2785,10 @@ namespace easy3d {
         // Keep the camera logical (as in the on-screen draw); the framebuffer target is
         // physical, so world-space impostor radii project to the same size as the scene.
         Camera snapshot(*camera());
-        snapshot.projectionMatrix();
-        snapshot.modelViewMatrix();
-        snapshot.set_projection_matrix(camera()->projectionMatrix());
-        snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+        snapshot.projection_matrix();
+        snapshot.model_view_matrix();
+        snapshot.set_projection_matrix(camera()->projection_matrix());
+        snapshot.set_model_view_matrix(camera()->model_view_matrix());
         state.prepare(fw, fh);
         FramebufferObject target(fw, fh, 0);
         if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() ||
@@ -2846,7 +2846,7 @@ namespace easy3d {
             program->bind();
             const mat4 MANIP = result.drawable->manipulated_matrix();
             program->set_uniform("MANIP", MANIP)
-                ->set_uniform("MVP_MANIP", snapshot.modelViewProjectionMatrix() * MANIP);
+                ->set_uniform("MVP_MANIP", snapshot.model_view_projection_matrix() * MANIP);
             ClippingPlane::instance()->set_program(program);
             ClippingPlane::instance()->set_discard_primitives(program, result.drawable->plane_clip_discard_primitive());
             result.drawable->gl_draw();

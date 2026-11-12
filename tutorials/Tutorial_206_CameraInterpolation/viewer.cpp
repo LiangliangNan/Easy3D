@@ -51,9 +51,9 @@ bool TutorialCameraInterpolation::key_press_event(int key, int modifiers) {
         if (kfi_->add_keyframe(*frame)) {
             // Grow the scene radius if this keyframe lies outside it, so the whole path stays
             // visible (the radius drives clipping, navigation speed, and path drawing).
-            float dist = distance(camera_->sceneCenter(), frame->position());
-            if (dist > camera_->sceneRadius())
-                camera_->setSceneRadius(dist);
+            float dist = distance(camera_->scene_center(), frame->position());
+            if (dist > camera_->scene_radius())
+                camera_->set_scene_radius(dist);
             std::cout << "Key frame added" << std::endl;
             return true;
         } else
@@ -73,7 +73,7 @@ bool TutorialCameraInterpolation::key_press_event(int key, int modifiers) {
         for (auto m : models_)
             box.grow(m->bounding_box());
         if (box.is_valid())
-            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
+            camera_->set_scene_bounding_box(box.min_point(), box.max_point());
         std::cout << "path deleted" << std::endl;
         return true;
     } else

@@ -348,7 +348,7 @@ namespace easy3d {
          * \brief Computes the world-space radius of an impostor primitive.
          * \param camera Camera whose logical screen dimensions define world_pixel_ratio().
          * \param diameter Full impostor diameter in logical pixels (point_size()/line_width()).
-         * \return World-space radius, diameter * world_pixel_ratio(pivotPoint()) * 0.5, that
+         * \return World-space radius, diameter * world_pixel_ratio(pivot_point()) * 0.5, that
          *      projects to \p diameter logical pixels on both backends. Impostor radii are
          *      world-space quantities; the framebuffer viewport handles physical sizing.
          * \details Both backends derive their impostor size from this single formula:
@@ -434,7 +434,7 @@ namespace easy3d {
 
 #ifndef EASY3D_HAS_VULKAN
         // Framebuffer-to-logical pixel scale of the currently bound OpenGL viewport:
-        // queries GL_VIEWPORT and divides its width by camera.screenWidth(), which is
+        // queries GL_VIEWPORT and divides its width by camera.screen_width(), which is
         // the DPI scale for a window, the cell scale for a MultiViewer, or the output
         // scale for a snapshot (1 when the camera reports no width). Plain points and
         // lines rasterize in framebuffer pixels, so their logical sizes are multiplied

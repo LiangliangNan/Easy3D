@@ -61,18 +61,18 @@ namespace easy3d {
                 face_ = std::make_shared<graphics::Geometry>(std::move(vertices));
                 radius_ = r;
             }
-            const mat4 mvp = camera.modelViewProjectionMatrix() * plane.manipulator()->frame()->matrix();
-            bool changed = geometry_changed || width_ != camera.screenWidth() || height_ != camera.screenHeight();
+            const mat4 mvp = camera.model_view_projection_matrix() * plane.manipulator()->frame()->matrix();
+            bool changed = geometry_changed || width_ != camera.screen_width() || height_ != camera.screen_height();
             for (unsigned i = 0; i < 16; ++i)
                 changed = changed || wire_mvp_[i] != mvp[i];
             if (changed) {
                 const std::vector<vec3> edges{corners[0], corners[1], corners[1], corners[2],
                                               corners[2], corners[3], corners[3], corners[0]};
-                wire_ = graphics::shape::draw_lines_3d(edges, std::vector<vec3>(8, vec3(1)), mvp, camera.screenWidth(),
-                                                       camera.screenHeight());
+                wire_ = graphics::shape::draw_lines_3d(edges, std::vector<vec3>(8, vec3(1)), mvp, camera.screen_width(),
+                                                       camera.screen_height());
                 wire_mvp_ = mvp;
-                width_ = camera.screenWidth();
-                height_ = camera.screenHeight();
+                width_ = camera.screen_width();
+                height_ = camera.screen_height();
             }
             graphics::DrawCommand fill;
             fill.geometry = face_;

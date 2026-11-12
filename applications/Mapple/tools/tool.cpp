@@ -94,8 +94,8 @@ namespace easy3d {
             if (w <= 0 || h <=0)
                 return;
 
-            int width = tool_manager()->viewer()->camera()->screenWidth();
-            int height = tool_manager()->viewer()->camera()->screenHeight();
+            int width = tool_manager()->viewer()->camera()->screen_width();
+            int height = tool_manager()->viewer()->camera()->screen_height();
 
             // draw the boundary of the rect
             shape::draw_quad_wire(rect, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
@@ -109,8 +109,8 @@ namespace easy3d {
 
 
         void MultiTool::draw_lasso(const Polygon2& lasso) const {
-            int width = tool_manager()->viewer()->camera()->screenWidth();
-            int height = tool_manager()->viewer()->camera()->screenHeight();
+            int width = tool_manager()->viewer()->camera()->screen_width();
+            int height = tool_manager()->viewer()->camera()->screen_height();
 
             // draw the boundary of the rect
             shape::draw_polygon_wire(lasso, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);

@@ -47,7 +47,7 @@ namespace easy3d {
 
 
     Model *ModelPicker::pick(const std::vector< std::shared_ptr<Model> > &models, int x, int y) {
-        const int width = camera()->screenWidth(), height = camera()->screenHeight();
+        const int width = camera()->screen_width(), height = camera()->screen_height();
         if (models.empty() || x < 0 || y < 0 || x >= width || y >= height)
             return nullptr;
 #ifdef EASY3D_HAS_VULKAN

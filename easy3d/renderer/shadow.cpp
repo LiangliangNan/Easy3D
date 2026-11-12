@@ -57,14 +57,14 @@ namespace easy3d {
         if (!camera_frustum_)
             camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
         // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
-        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
-        auto ar = static_cast<float>(camera_->aspectRatio());
-        auto znear = static_cast<float>(camera_->zNear());
-        auto zfar = static_cast<float>(camera_->zFar());
+        auto fov = static_cast<float>(camera_->field_of_view()) + 0.2f;
+        auto ar = static_cast<float>(camera_->aspect_ratio());
+        auto znear = static_cast<float>(camera_->z_near());
+        auto zfar = static_cast<float>(camera_->z_far());
         camera_frustum_->set_perspective(fov, ar, znear, zfar);
         const vec3& pos = camera_->position();
-        const vec3& at = camera_->position() + camera_->viewDirection();
-        const vec3& up = camera_->upVector();
+        const vec3& at = camera_->position() + camera_->view_direction();
+        const vec3& up = camera_->up_vector();
         camera_frustum_->orient(pos, at, up);
     }
 
@@ -75,11 +75,11 @@ namespace easy3d {
         if (!light_frustum_)
             light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
 
-        const vec3& at = camera_->sceneCenter();
+        const vec3& at = camera_->scene_center();
         vec3 dir = -setting::light_position.xyz();
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        const mat3& trans = transform::normal_matrix(inverse(camera_->model_view_matrix()));
         dir = normalize(trans * dir); // the light's direction in WC.
-        float radius = camera_->sceneRadius();
+        float radius = camera_->scene_radius();
         light_pos_ = at - dir * radius * light_distance_;
         const vec3& up = trans * vec3(0, 1, 0);
         light_frustum_->orient(light_pos_, at, up);
@@ -242,9 +242,9 @@ namespace easy3d {
 
     void Shadow::update_virtual_background() {
         vec3 normal = vec3(setting::light_position); // the background's normal in VC.
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        const mat3& trans = transform::normal_matrix(inverse(camera_->model_view_matrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
-        float dist = camera_->sceneRadius() * 0.002f;
+        float dist = camera_->scene_radius() * 0.002f;
         const vec3& center = light_frustum_->far_center() + normal * dist;
 
         vec3 up = light_frustum_->up_vector();
@@ -406,7 +406,7 @@ namespace easy3d {
 
         // for debugging
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
-        const float dpi_scale = static_cast<float>(w) / camera_->screenWidth();
+        const float dpi_scale = static_cast<float>(w) / camera_->screen_width();
         const float offset_x = 20.0f;
         const float offset_y = 40.0f;
         const float size = 200.0f;
@@ -466,7 +466,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4& MVP = camera_->modelViewProjectionMatrix();
+        const mat4& MVP = camera_->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3& wCamPos = camera_->position();
 
@@ -518,9 +518,9 @@ namespace easy3d {
 
     void Shadow::update_virtual_background() {
         vec3 normal = vec3(setting::light_position); // the background's normal in VC.
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        const mat3& trans = transform::normal_matrix(inverse(camera_->model_view_matrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
-        float dist = camera_->sceneRadius() * 0.002f;
+        float dist = camera_->scene_radius() * 0.002f;
         const vec3& center = light_frustum_->far_center() + normal * dist;
 
         vec3 up = light_frustum_->up_vector();
@@ -554,9 +554,9 @@ namespace easy3d {
 
     void Shadow::draw_light_frustum() {
         vec3 normal = setting::light_position.xyz(); // the background's normal in VC.
-        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        const mat3& trans = transform::normal_matrix(inverse(camera_->model_view_matrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
-        float dist = camera_->sceneRadius() * 0.004f;
+        float dist = camera_->scene_radius() * 0.004f;
         const vec3& offset = normal * dist;
 
         std::vector<vec3> points = light_frustum_->vertices();

@@ -93,9 +93,9 @@ void shader_highlights(const VulkanOptions& options) {
 }
 void scene_picking(const VulkanOptions& options) {
     OffScreen viewer(161,121,options);
-    viewer.camera()->setType(Camera::ORTHOGRAPHIC);
-    viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
-    viewer.camera()->showEntireScene(); // Position the eye along the explicitly chosen viewing direction.
+    viewer.camera()->set_type(Camera::ORTHOGRAPHIC);
+    viewer.camera()->set_view_direction(vec3(0,0,-1)); viewer.camera()->set_up_vector(vec3(0,1,0));
+    viewer.camera()->show_entire_scene(); // Position the eye along the explicitly chosen viewing direction.
     auto back=quad(-.5f),front=quad(0);
     viewer.add_model(back); viewer.add_model(front);
     const int x=viewer.width()/2,y=viewer.height()/2;
@@ -164,7 +164,7 @@ void scene_picking(const VulkanOptions& options) {
     auto f=mesh->add_vertex(vec3(1,1,0)),g=mesh->add_vertex(vec3(-1,1,0));
     const auto remaining=mesh->add_quad(d,e,f,g); mesh->delete_face(removed);
     viewer.add_model(mesh); viewer.fit_screen();
-    auto p=viewer.camera()->projectedCoordinatesOf(vec3(.1f,.1f,0));
+    auto p=viewer.camera()->projected_coordinates_of(vec3(.1f,.1f,0));
     const auto polygon=viewer.pick(int(p.x),int(p.y));
     require(polygon.face_index==remaining.idx(),"polygon/deleted-handle source mapping failed");
     auto* drawable=mesh->renderer()->get_triangles_drawable("faces");

@@ -36,7 +36,7 @@ int main(int argc,char**) {
         // Drain initial show/HiDPI callbacks before taking a pixel-exact baseline.
         frame(viewer); frame(viewer);
         const auto baseline=viewer.capture();
-        const auto camera_matrix=viewer.camera()->modelViewProjectionMatrix();
+        const auto camera_matrix=viewer.camera()->model_view_projection_matrix();
         // Drive the saved callback directly; unrelated desktop keys must not close or resize the fixture.
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,0); frame(viewer); };
@@ -51,7 +51,7 @@ int main(int argc,char**) {
             same_picking(baseline,edited);
             press(pair.second);
             const auto restored=viewer.capture();
-            const auto current_matrix=viewer.camera()->modelViewProjectionMatrix();
+            const auto current_matrix=viewer.camera()->model_view_projection_matrix();
             for (unsigned i=0;i<16;++i)
                 require(std::abs(camera_matrix[i]-current_matrix[i])<1e-6f,"text shortcuts changed the camera");
             require(restored.width==baseline.width && restored.height==baseline.height,

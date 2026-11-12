@@ -59,16 +59,16 @@ namespace easy3d {
             return;
         FrameParams p{};
         if (camera_->type() == Camera::PERSPECTIVE) {
-            p.z_near = camera_->zNear();
-            p.z_far = camera_->zFar();
+            p.z_near = camera_->z_near();
+            p.z_far = camera_->z_far();
         }
         else { // Matches the OpenGL implementation in orthogonal mode.
-            const float radius = camera_->sceneRadius();
+            const float radius = camera_->scene_radius();
             p.z_near = 2.0f * radius;
             p.z_far = 10.0f * radius;
         }
         // The scene size is the diagonal of the scene bounding box.
-        p.scene_size = 2.0f * camera_->sceneRadius();
+        p.scene_size = 2.0f * camera_->scene_radius();
         frames()[camera_] = p;
     }
 
@@ -362,11 +362,11 @@ namespace easy3d {
         width_ = viewport[2];
         height_ = viewport[3];
         if (camera_->type() == Camera::PERSPECTIVE) {
-            z_near_ = camera_->zNear();
-            z_far_ = camera_->zFar();
+            z_near_ = camera_->z_near();
+            z_far_ = camera_->z_far();
         }
         else {	// Liangliang: I tried many times and found this works perfectly in orthogonal mode
-            float radius = camera_->sceneRadius();
+            float radius = camera_->scene_radius();
             z_near_ = 2.0f * radius;
             z_far_ = 10.0f * radius;
         }
@@ -389,7 +389,7 @@ namespace easy3d {
         projection_fbo_->release();
 
         // full resolution pass
-        shade_high(camera_->sceneRadius());
+        shade_high(camera_->scene_radius());
 
         // low resolution + blur pass
         shade_low();

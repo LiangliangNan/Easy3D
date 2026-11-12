@@ -99,7 +99,7 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
     auto cloud=std::make_shared<PointCloud>();const auto dead=cloud->add_vertex(vec3(0));
     const auto left=cloud->add_vertex(vec3(-.5f,0,0)),right=cloud->add_vertex(vec3(.5f,0,0));
     const auto behind=cloud->add_vertex(vec3(-.5f,0,-.2f));cloud->delete_vertex(dead);tutorial.add_model(cloud);
-    tutorial.camera()->setViewDirection(vec3(0,0,-1));tutorial.camera()->setUpVector(vec3(0,1,0));tutorial.camera()->setType(Camera::ORTHOGRAPHIC);tutorial.fit_screen();
+    tutorial.camera()->set_view_direction(vec3(0,0,-1));tutorial.camera()->set_up_vector(vec3(0,1,0));tutorial.camera()->set_type(Camera::ORTHOGRAPHIC);tutorial.fit_screen();
     require(tutorial.run_frames(2)==0,"tutorial frame failed");
     // Seed an old frame and check the actual tutorial hook clears both attachments.
     // Raw capture bypasses pre_draw(), so capture-only tests cannot catch this bug.
@@ -119,7 +119,7 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
 #endif
     };
     cleared_frame();
-    const auto p=tutorial.camera()->projectedCoordinatesOf(cloud->position(left));
+    const auto p=tutorial.camera()->projected_coordinates_of(cloud->position(left));
     auto gesture=[&](int button){int x=int(p.x),y=int(p.y);tutorial.mouse_press_event(x-15,y-15,button,Viewer::MODIF_SHIFT);cleared_frame();
         tutorial.mouse_drag_event(x+15,y-15,30,0,button,0);tutorial.mouse_drag_event(x+15,y+15,0,30,button,0);cleared_frame();
         tutorial.mouse_drag_event(x-15,y+15,-30,0,button,0);tutorial.mouse_release_event(x-15,y+15,button,0);};

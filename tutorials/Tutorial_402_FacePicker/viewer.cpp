@@ -40,8 +40,8 @@ using namespace easy3d;
 
 TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title) {
     // Look straight at the front of the mesh so faces are easy to aim at.
-    camera()->setUpVector(vec3(0, 1, 0));
-    camera()->setViewDirection(vec3(0, 0, -1));
+    camera()->set_up_vector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, -1));
 
     // hint_ is shown in the viewer HUD; it tells the user how to interact.
     hint_ = "Click the left button on a face to pick it";

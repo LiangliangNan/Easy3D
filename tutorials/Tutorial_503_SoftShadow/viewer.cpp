@@ -39,8 +39,8 @@ using namespace easy3d;
 
 TutorialSoftShadow::TutorialSoftShadow(const std::string &title) : Viewer(title) {
     // Choose a natural "walk into the room" viewpoint: y is up and we look along +z.
-    camera()->setUpVector(vec3(0, 1, 0));
-    camera()->setViewDirection(vec3(0, 0, 1));
+    camera()->set_up_vector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, 1));
 
     // The only substantive difference from Tutorial_502_HardShadow: instantiate SoftShadow
     // (PCSS) instead of Shadow. It derives from Shadow, so the rest of the code — stored in

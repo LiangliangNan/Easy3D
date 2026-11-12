@@ -35,7 +35,7 @@ inline void set_size(Viewer& v, const TestWindow& w) {
         int width, height, fw, fh;
         v.viewer_size(width, height); v.framebuffer_size(fw, fh);
         if (width==w.width && height==w.height && std::abs(fw-expected_fw)<=1 && std::abs(fh-expected_fh)<=1 &&
-            v.camera()->screenWidth()==width && v.camera()->screenHeight()==height) return;
+            v.camera()->screen_width()==width && v.camera()->screen_height()==height) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("test window/framebuffer/camera resize did not settle");

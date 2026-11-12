@@ -129,8 +129,8 @@ int main(int argc, char **argv) {
     }
 
     // Orient the camera to view the scene from its front.
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
 
     auto drawable = cloud->renderer()->get_points_drawable("vertices");
     drawable->set_point_size(3.0f);

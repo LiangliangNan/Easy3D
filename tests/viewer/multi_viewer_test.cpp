@@ -55,9 +55,9 @@ void color_at(const std::vector<unsigned char>& rgba,int width,int x,int y,const
     for(unsigned c=0;c<3;++c) require(std::abs(int(rgba.at(p+c))-int(std::lround(expected[c]*255)))<=3,"wrong cell image or lost material");
 }
 void snapshot(Grid& grid,const char* file,float scale) {
-    const auto matrix=grid.camera()->modelViewProjectionMatrix();
+    const auto matrix=grid.camera()->model_view_projection_matrix();
     require(grid.snapshot(file,scale,4,0),"multi-view file snapshot failed");
-    for(unsigned i=0;i<16;++i) require(std::abs(grid.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"snapshot changed the shared camera");
+    for(unsigned i=0;i<16;++i) require(std::abs(grid.camera()->model_view_projection_matrix()[i]-matrix[i])<1e-6f,"snapshot changed the shared camera");
     std::vector<unsigned char> rgba;int w,h,c;require(ImageIO::load(file,rgba,w,h,c,4,false),"snapshot was not readable");
     require(w==int(std::ceil(grid.framebuffer_width()*double(scale))) && h==int(std::ceil(grid.framebuffer_height()*double(scale))),"snapshot dimensions incorrect");
     color_at(rgba,w,w/6,h/4,vec4(1,0,0,1));color_at(rgba,w,w/2,h/4,vec4(0,0,1,1));
@@ -111,16 +111,16 @@ int main(int argc,char**) {
                 if(row==1 && col>0) require(hit.drawable.get()==(col==1?static_cast<Drawable*>(point.get()):static_cast<Drawable*>(line.get())),"impostor source escaped its assigned cell");
             }
         }
-        const auto projection=grid.camera()->projectionMatrix(),view=grid.camera()->modelViewMatrix();
+        const auto projection=grid.camera()->projection_matrix(),view=grid.camera()->model_view_matrix();
         auto custom=projection;custom(0,2)+=.12f;grid.camera()->set_projection_matrix(custom);
-        auto shifted=view;shifted(0,3)+=.1f;grid.camera()->set_modelview_matrix(shifted);
+        auto shifted=view;shifted(0,3)+=.1f;grid.camera()->set_model_view_matrix(shifted);
         const auto custom_point=api.window_to_world(api.world_to_window(vec3(0)));
         require(custom_point.norm()<1e-4f,"custom multi-view matrices were lost in coordinate conversion");
         bool custom_hit=false;const auto custom_surface=api.point_under_pixel(grid.width()/6,grid.height()/4,custom_hit);
         require(custom_hit && std::abs(custom_surface.x)<1e-4f,"cell depth query ignored custom camera matrices");
         const auto custom_pick=grid.pick(grid.width()/6,grid.height()/4);
         require(custom_pick.model==red && std::abs(custom_pick.position.x)<1e-4f,"cell source picking ignored custom matrices");
-        grid.camera()->set_projection_matrix(projection);grid.camera()->set_modelview_matrix(view);
+        grid.camera()->set_projection_matrix(projection);grid.camera()->set_model_view_matrix(view);
         red->renderer()->set_visible(false);frame(grid);
         bool found=false;grid.point_under_pixel(grid.width()/6,grid.height()/4,found);require(!found,"hidden model rendered in its assigned cell");
         grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(found,"explicit drawable assignment inherited parent-model visibility");
@@ -154,8 +154,8 @@ int main(int argc,char**) {
         point->set_point_size(23);
         bool rejected=false;try{grid.set_layout(0,2);}catch(const std::invalid_argument&){rejected=true;}require(rejected && grid.rows()==2,"invalid layout modified the grid");
         grid.resize(317,237);frame(grid);
-        auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivotPoint();vec3 delta;
-        const auto reset_camera=[&](){grid.camera()->setPosition(position);grid.camera()->setOrientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);};
+        auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivot_point();vec3 delta;
+        const auto reset_camera=[&](){grid.camera()->set_position(position);grid.camera()->set_orientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);};
         const auto pan=[&](int x,int y,int dx){
             grid.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,0);grid.mouse_drag_event(x+dx,y,dx,0,Viewer::BUTTON_RIGHT,0);grid.mouse_release_event(x+dx,y,Viewer::BUTTON_RIGHT,0);
             return grid.camera()->position()-position;
@@ -166,8 +166,8 @@ int main(int argc,char**) {
         for(int i=0;i<2;++i) {
             reset_camera();
             const auto moved=pan((2*i+3)*grid.width()/6,grid.height()/4,10);
-            const auto projected=api.world_to_window(grid.camera()->sceneCenter());
-            require((api.window_to_world(projected)-grid.camera()->sceneCenter()).norm()<1e-4f,"active-cell coordinate round trip failed");
+            const auto projected=api.world_to_window(grid.camera()->scene_center());
+            require((api.window_to_world(projected)-grid.camera()->scene_center()).norm()<1e-4f,"active-cell coordinate round trip failed");
             if(i==0) delta=moved;else require((moved-delta).norm()<1e-5f,"camera pan depends on the cell's canvas offset");
         }
         reset_camera();

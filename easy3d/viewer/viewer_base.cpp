@@ -71,14 +71,14 @@ namespace easy3d {
     vec3 ViewerBase::world_to_window(const vec3 &world) const {
         int viewport[] = {0, 0, 0, 0};
         viewer_size(viewport[2], viewport[3]);
-        return transform::project(world, camera()->modelViewProjectionMatrix(), viewport, false);
+        return transform::project(world, camera()->model_view_projection_matrix(), viewport, false);
     }
     // Inverse of world_to_window(): window logical coordinates (top-left origin,
     // depth in [0,1]) -> world space. See the coordinate contract above.
     vec3 ViewerBase::window_to_world(const vec3 &window) const {
         int viewport[] = {0, 0, 0, 0};
         viewer_size(viewport[2], viewport[3]);
-        return transform::unproject(window, camera()->modelViewProjectionMatrix(), viewport, false);
+        return transform::unproject(window, camera()->model_view_projection_matrix(), viewport, false);
     }
     // Logical window coordinates scaled into framebuffer pixels. The depth component
     // is unchanged. See the coordinate contract above.

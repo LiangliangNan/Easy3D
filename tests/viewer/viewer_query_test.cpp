@@ -44,16 +44,16 @@ std::shared_ptr<QueryViewer> make_host(unsigned samples, bool validation) {
         o.device.sync_validation = validation;
         auto v = std::make_shared<QueryViewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
-        v->camera()->setViewDirection(vec3(0, 0, -1));
-        v->camera()->setUpVector(vec3(0, 1, 0));
+        v->camera()->set_view_direction(vec3(0, 0, -1));
+        v->camera()->set_up_vector(vec3(0, 1, 0));
         return v;
     }
 #else
     auto v = std::make_shared<QueryViewer>("Portable camera queries", 181, 151, int(samples));
     v->hide();
     v->set_usage("");
-    v->camera()->setViewDirection(vec3(0, 0, -1));
-    v->camera()->setUpVector(vec3(0, 1, 0));
+    v->camera()->set_view_direction(vec3(0, 0, -1));
+    v->camera()->set_up_vector(vec3(0, 1, 0));
     return v;
 #endif
 }
@@ -72,7 +72,7 @@ void check(unsigned samples, bool validation) {
     back->set_uniform_coloring(vec4(0, 0, 1, 1));
     v->fit_screen();
     for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-        v->camera()->setType(type);
+        v->camera()->set_type(type);
         for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f), vec3(10, 10, 0)})
             require(near_enough(v->window_to_world(v->world_to_window(p)), p, 2e-3f), "projection round trip failed");
         int fw, fh;
@@ -91,20 +91,20 @@ void check(unsigned samples, bool validation) {
         const int x = v->width() / 2, y = v->height() / 2;
         // Camera and viewer share one checked projection; their conventions must agree.
         for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f)}) {
-            require(near_enough(v->camera()->projectedCoordinatesOf(p), v->world_to_window(p), 1e-5f),
+            require(near_enough(v->camera()->projected_coordinates_of(p), v->world_to_window(p), 1e-5f),
                     "camera and viewer projection disagree");
             const auto w = v->world_to_window(p);
-            require(near_enough(v->camera()->unprojectedCoordinatesOf(w), v->window_to_world(w), 1e-4f),
+            require(near_enough(v->camera()->unprojected_coordinates_of(w), v->window_to_world(w), 1e-4f),
                     "camera and viewer unprojection disagree");
         }
         vec3 orig, dir;
-        v->camera()->convertClickToLine(x, y, orig, dir);
+        v->camera()->convert_click_to_line(x, y, orig, dir);
         for (float depth : {0.f, .5f}) {
-            const auto on_ray = v->camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), depth));
+            const auto on_ray = v->camera()->unprojected_coordinates_of(vec3(float(x), float(y), depth));
             require(distance(on_ray, orig + dir * dot(on_ray - orig, dir)) < 1e-4f,
                     "click ray does not pass through the unprojected pixel");
         }
-        const mat4 original = v->camera()->modelViewProjectionMatrix();
+        const mat4 original = v->camera()->model_view_projection_matrix();
 #ifndef EASY3D_HAS_VULKAN
         GLuint ubo = 0, pbo = 0;
         {
@@ -139,7 +139,7 @@ void check(unsigned samples, bool validation) {
                 "query missed HiDPI framebuffer pixel center");
         require(v->frames == 0, "query ran frame callbacks");
         for (unsigned i = 0; i < 16; ++i)
-            require(original[i] == v->camera()->modelViewProjectionMatrix()[i], "query changed camera matrices");
+            require(original[i] == v->camera()->model_view_projection_matrix()[i], "query changed camera matrices");
 #ifndef EASY3D_HAS_VULKAN
         {
             GLint binding = 0, viewport[4], pack = 0;
@@ -200,7 +200,7 @@ void check(unsigned samples, bool validation) {
         v->delete_drawable(hud.get());
     }
     // Custom matrices must survive the temporary framebuffer-sized Camera copy.
-    const auto projection = v->camera()->projectionMatrix();
+    const auto projection = v->camera()->projection_matrix();
     auto shifted = projection;
     shifted(0, 3) += .15f;
     shifted(1, 3) -= .1f;

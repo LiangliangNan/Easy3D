@@ -50,7 +50,7 @@ int main(int argc,char**) {
             require(v.has_usage(),"OpenGL counterpart manual/hint missing");
             v.add_model(retained);auto other=quad(1.2f);v.add_model(other);
             for (const auto& m:v.models()) m->renderer()->get_triangles_drawable("faces")->set_lighting(false);
-            v.camera()->setType(Camera::ORTHOGRAPHIC);v.fit_screen();frame(v);
+            v.camera()->set_type(Camera::ORTHOGRAPHIC);v.fit_screen();frame(v);
             vec2 mouse_pixel(0);
             auto mouse=[&](GLFWwindow*,int button,int action,int modifiers) {
                 if (action==GLFW_PRESS) v.mouse_press_event(int(mouse_pixel.x),int(mouse_pixel.y),button,modifiers);
@@ -59,18 +59,18 @@ int main(int argc,char**) {
             auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
             auto focus=glfwSetWindowFocusCallback(v.window(),nullptr);glfwSetWindowFocusCallback(v.window(),focus);
             auto position=[&](const vec3& world) {
-                const auto p=v.camera()->projectedCoordinatesOf(world);mouse_pixel=vec2(p.x,p.y);return p;
+                const auto p=v.camera()->projected_coordinates_of(world);mouse_pixel=vec2(p.x,p.y);return p;
             };
             auto click=[&](const vec3& world) {position(world);mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_PRESS,0);
                 mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_RELEASE,0);frame(v);};
             const auto baseline=v.capture();
-            const auto fixture=v.camera()->projectedCoordinatesOf(vec3(-1.2f,0,0));
+            const auto fixture=v.camera()->projected_coordinates_of(vec3(-1.2f,0,0));
             require(v.pick(int(fixture.x),int(fixture.y)).model==retained,"initial transformed fixture pick failed");
             click(vec3(-1.2f,0,0));
             require(retained->renderer()->is_selected() && retained->manipulator(),"click did not select/create manipulator");
             require(!other->renderer()->is_selected(),"selection affected second model");
             same_picking(baseline,v.capture());
-            const auto points=retained->points();const auto camera=v.camera()->modelViewProjectionMatrix();
+            const auto points=retained->points();const auto camera=v.camera()->model_view_projection_matrix();
             for (unsigned samples:{1u,4u}) {
                 if (!(v.device().supported_sample_counts()&samples)) continue;v.set_samples(samples);frame(v);
                 const auto guide=v.capture();v.set_overlays({});const auto plain=v.capture();same_picking(guide,plain);
@@ -85,17 +85,17 @@ int main(int argc,char**) {
             v.mouse_drag_event(int(p.x)+25,int(p.y)+15,25,15,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             mouse(v.window(),Viewer::BUTTON_RIGHT,GLFW_RELEASE,Viewer::MODIF_ALT);frame(v);
             require(!same_matrix(transform,retained->manipulator()->matrix()),"Alt-right did not translate model");
-            require(same_matrix(camera,v.camera()->modelViewProjectionMatrix()),"object drag moved camera");
+            require(same_matrix(camera,v.camera()->model_view_projection_matrix()),"object drag moved camera");
             require(retained->points()==points,"model manipulation rewrote local geometry");
             const auto moved=retained->manipulator()->matrix()*vec4(-1.2f,0,0,1);
-            const auto projected=v.camera()->projectedCoordinatesOf(moved.xyz());
+            const auto projected=v.camera()->projected_coordinates_of(moved.xyz());
             require(v.pick(int(projected.x),int(projected.y)).model==retained,"picking did not follow transformed model");
             p=position(moved.xyz());mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_PRESS,Viewer::MODIF_ALT);
             transform=retained->manipulator()->matrix();
             v.mouse_drag_event(int(p.x)+30,int(p.y)+20,30,20,Viewer::BUTTON_LEFT,Viewer::MODIF_ALT);
             mouse(v.window(),Viewer::BUTTON_LEFT,GLFW_RELEASE,Viewer::MODIF_ALT);frame(v);
             require(!same_matrix(transform,retained->manipulator()->matrix()),"Alt-left did not rotate model");
-            require(same_matrix(camera,v.camera()->modelViewProjectionMatrix()),"object rotation moved camera");
+            require(same_matrix(camera,v.camera()->model_view_projection_matrix()),"object rotation moved camera");
             require(!other->manipulator(),"drag transformed unselected model");
             require(v.snapshot("vulkan-object-manipulation.png",1,1),"manipulation snapshot failed");
             // A nearer opaque model must hide the frame, without changing its IDs.

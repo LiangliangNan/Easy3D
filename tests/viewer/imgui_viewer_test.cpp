@@ -72,7 +72,7 @@ void run(bool validation) {
     mesh->add_triangle(a,b,c);v.add_model(mesh);
     auto* faces=mesh->renderer()->get_triangles_drawable("faces");
     faces->set_lighting(false);faces->set_uniform_coloring(vec4(0,0,1,1));
-    v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));v.fit_screen();
+    v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));v.fit_screen();
     v.set_background_color(vec4(.1f,.2f,.3f,1));
     require(v.draw_frame(),"ImGui first frame failed");
     require(v.context(),"ImGui context was not created");
@@ -122,7 +122,7 @@ void run(bool validation) {
     character(v.window(),'A');character(v.window(),0x03a9);v.draw_frame();
     require(std::strstr(v.text,"A") && std::strstr(v.text,"\xce\xa9"),"UTF-8 text entry did not reach ImGui");
     v.input=false;v.draw_frame();
-    const auto matrix=v.camera()->modelViewProjectionMatrix();
+    const auto matrix=v.camera()->model_view_projection_matrix();
     auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
     auto scroll=glfwSetScrollCallback(v.window(),nullptr);glfwSetScrollCallback(v.window(),scroll);
     require(key && scroll,"ImGui callback chain missing");
@@ -131,11 +131,11 @@ void run(bool validation) {
     key(v.window(),Viewer::KEY_P,0,GLFW_PRESS,0);key(v.window(),Viewer::KEY_P,0,GLFW_RELEASE,0);
     require(v.camera()->type()==projection,"GUI keyboard capture leaked to Viewer");
     ImGui::GetIO().WantCaptureMouse=true;scroll(v.window(),0,1);
-    require(same(matrix,v.camera()->modelViewProjectionMatrix()),"GUI mouse capture moved the camera");
+    require(same(matrix,v.camera()->model_view_projection_matrix()),"GUI mouse capture moved the camera");
     ImGui::GetIO().WantCaptureKeyboard=false;
     key(v.window(),Viewer::KEY_P,0,GLFW_PRESS,0);key(v.window(),Viewer::KEY_P,0,GLFW_RELEASE,0);
     require(v.camera()->type()!=projection,"uncaptured Viewer shortcut was lost");
-    v.camera()->setType(projection);
+    v.camera()->set_type(projection);
     v.large_probe=true;require(v.draw_frame(),"large GUI draw list failed");
 #ifdef EASY3D_HAS_VULKAN
     const std::string large_file="vulkan-imgui-large.png";
@@ -151,7 +151,7 @@ void run(bool validation) {
     const auto clipped=(size_t(100*ih/v.height())*iw+size_t(110*iw/v.width()))*4;
     require(!(pixels[clipped]<3 && pixels[clipped+1]>250 && pixels[clipped+2]<3),
             "large GUI geometry escaped clipping");
-    const auto before_snapshot=v.camera()->modelViewProjectionMatrix();
+    const auto before_snapshot=v.camera()->model_view_projection_matrix();
     for(float scale:{.5f,1.5f,2.0f}) {
         const auto name="imgui-scaled-"+std::to_string(scale)+".png";
         require(v.snapshot(name,scale,1),"scaled GUI snapshot failed");
@@ -160,7 +160,7 @@ void run(bool validation) {
         require(pixels[p]<3 && pixels[p+1]>250 && pixels[p+2]<3,"GUI clip viewport did not scale with file output");
         const auto q=(size_t(100*ih/v.height())*iw+size_t(110*iw/v.width()))*4;
         require(!(pixels[q]<3 && pixels[q+1]>250 && pixels[q+2]<3),"scaled GUI clip rectangle leaked");
-        require(same(before_snapshot,v.camera()->modelViewProjectionMatrix()),"GUI file output changed the live camera");
+        require(same(before_snapshot,v.camera()->model_view_projection_matrix()),"GUI file output changed the live camera");
     }
     v.large_probe=false;
 #ifdef EASY3D_HAS_VULKAN

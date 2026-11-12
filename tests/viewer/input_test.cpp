@@ -91,7 +91,7 @@ int main(int argc,char**) {
         require(found,"pivot depth pick failed");
         const vec3 hook_target=picked;
         v.mouse_press_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
-        require((v.camera()->pivotPoint()-hook_target).norm()<1e-6f,"Shift-click selected wrong surface pivot");
+        require((v.camera()->pivot_point()-hook_target).norm()<1e-6f,"Shift-click selected wrong surface pivot");
         v.mouse_release_event(mx,my,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         const auto before_focus=v.camera()->position(); press(InputViewer::KEY_Z);
         v.mouse_press_event(mx,my,Viewer::BUTTON_LEFT,0);
@@ -151,13 +151,13 @@ int main(int argc,char**) {
         v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_MIDDLE,0);
         require(v.camera()->position()!=pos && same_orientation(v.camera()->orientation(),ori),"middle drag did not zoom");
         v.mouse_release_event(20,50,Viewer::BUTTON_MIDDLE,0);
-        v.camera()->setPivotPoint(vec3(1,2,3));
+        v.camera()->set_pivot_point(vec3(1,2,3));
         v.mouse_press_event(20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_SHIFT);
-        require(v.camera()->pivotPoint()==v.camera()->sceneCenter(),"Shift-right pivot reset failed");
+        require(v.camera()->pivot_point()==v.camera()->scene_center(),"Shift-right pivot reset failed");
         v.mouse_release_event(20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_SHIFT);
-        v.camera()->setPivotPoint(vec3(1,2,3));
+        v.camera()->set_pivot_point(vec3(1,2,3));
         v.mouse_press_event(-10,-10,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
-        require(v.camera()->pivotPoint()==v.camera()->sceneCenter(),"empty Shift-click did not reset pivot");
+        require(v.camera()->pivot_point()==v.camera()->scene_center(),"empty Shift-click did not reset pivot");
         v.mouse_release_event(-10,-10,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         auto focus=glfwSetWindowFocusCallback(v.window(),nullptr);glfwSetWindowFocusCallback(v.window(),focus);
         press(InputViewer::KEY_X); focus(v.window(),GLFW_FALSE); pos=v.camera()->position();
@@ -168,7 +168,7 @@ int main(int argc,char**) {
         {
             ClipboardRestore clipboard(v.window());
             const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
-            v.camera()->setPosition(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+            v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
             // Vulkan pastes immediately; OpenGL animates to the saved view over 0.5 s. Both
             // must restore it, so drive frames until arrival rather than assuming one timing.
             const auto paste_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);

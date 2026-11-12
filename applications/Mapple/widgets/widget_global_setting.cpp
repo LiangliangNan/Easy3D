@@ -171,7 +171,7 @@ void WidgetGlobalSetting::recenterClippingPlane() {
 
     if (box.is_valid()) {
         ClippingPlane::instance()->fit_scene(box.center(), box.radius());
-        viewer_->camera()->setSceneBoundingBox(box.min_point(), box.max_point());
+        viewer_->camera()->set_scene_bounding_box(box.min_point(), box.max_point());
         viewer_->update();
     }
 }

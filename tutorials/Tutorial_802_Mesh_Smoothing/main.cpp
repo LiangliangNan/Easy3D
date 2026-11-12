@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
     }
 
     // Look at the bunny from the front.
-    viewer.camera()->setViewDirection(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 1, 0));
 
     // Perturb the model so the smoothing effect is clearly visible.
     add_noise(mesh);

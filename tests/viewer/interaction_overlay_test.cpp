@@ -60,7 +60,7 @@ int main(int argc,char**) {
             if (!(v.device().supported_sample_counts()&samples)) continue;
             v.set_samples(samples);
             const auto baseline=v.capture();
-            const auto camera=v.camera()->modelViewProjectionMatrix();
+            const auto camera=v.camera()->model_view_projection_matrix();
             // Mouse hooks take logical window coordinates; the viewer renders the region
             // hint in framebuffer space at logical*dpi, i.e. still w/4..3w/4 on screen.
             const int x0=v.width()/4,y0=v.height()/4,x1=3*v.width()/4,y1=3*v.height()/4;
@@ -84,7 +84,7 @@ int main(int argc,char**) {
                                   region.rgba[edge + 2] > 250);
             }
             require(solid_boundary, "region boundary is not solid blue within one pixel of its edge");
-            const auto after=v.camera()->modelViewProjectionMatrix();
+            const auto after=v.camera()->model_view_projection_matrix();
             for (unsigned i=0;i<16;++i) require(camera[i]==after[i],"region preview moved camera");
             // Application overlay replacement must not erase the host's UI layer.
             v.set_overlays({}); require(v.capture().rgba!=region.rgba,"application overlay did not clear");

@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
     ViewerImGui viewer(EXAMPLE_TITLE);
 
     // Orient the camera to a standard front view: look along -Z with +Y pointing up.
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
 
     // Load the model into the viewer (which takes ownership); report failure if any.
     if (!viewer.add_model(file_name)) {

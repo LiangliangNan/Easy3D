@@ -22,8 +22,8 @@ std::shared_ptr<SurfaceMesh> triangle(float z) {
     auto m=std::make_shared<SurfaceMesh>();m->add_triangle(m->add_vertex(vec3(-1,-1,z)),m->add_vertex(vec3(1,-1,z)),m->add_vertex(vec3(0,1,z)));return m;
 }
 void setup(OffScreen& v,const std::shared_ptr<SurfaceMesh>& mesh) {
-    v.add_model(mesh);v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));
-    v.camera()->setType(Camera::ORTHOGRAPHIC);v.fit_screen();
+    v.add_model(mesh);v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
+    v.camera()->set_type(Camera::ORTHOGRAPHIC);v.fit_screen();
     for(auto d:mesh->renderer()->points_drawables())d->set_visible(false);
     for(auto d:mesh->renderer()->lines_drawables())d->set_visible(false);
     auto* faces=mesh->renderer()->get_triangles_drawable("faces");faces->set_lighting(false);faces->set_uniform_coloring(vec4(1,0,0,1));
@@ -42,9 +42,9 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
     Viewer window("Interleaved query host",151,113,4,false,false,true,options);window.set_usage("");
     OffScreen a(161,127,options),b(103,79,options);
     auto mesh=triangle(0),other=triangle(.4f);setup(a,mesh);setup(b,other);
-    const auto matrix=a.camera()->modelViewProjectionMatrix();const auto pivot=a.camera()->pivotPoint();
+    const auto matrix=a.camera()->model_view_projection_matrix();const auto pivot=a.camera()->pivot_point();
     const auto verify=[&](OffScreen& v,const std::shared_ptr<SurfaceMesh>& expected,float z) {
-        const auto camera_matrix=v.camera()->modelViewProjectionMatrix();const auto saved_pivot=v.camera()->pivotPoint();
+        const auto camera_matrix=v.camera()->model_view_projection_matrix();const auto saved_pivot=v.camera()->pivot_point();
         const int x=v.width()/2,y=v.height()/2;const auto hit=v.pick(x,y);
         require(hit.model==expected && hit.face_index==0 && hit.drawable==expected->renderer()->triangles_drawables().front(),"offscreen source ownership/provenance is wrong");
         require(std::abs(hit.position.z-z)<1e-5f,"offscreen world hit is wrong");
@@ -53,8 +53,8 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
         const auto q=v.world_to_window(hit.position);require(std::abs(q.x-x-.5f)<1e-3f && std::abs(q.y-y-.5f)<1e-3f,"offscreen projection lost the exact pixel center");
         require(distance(v.window_to_world(q),hit.position)<1e-4f,"offscreen coordinate round trip failed");
         require(!v.pick(-1,y) && !v.pick(v.width(),y),"outside offscreen query returned a source");
-        for(unsigned i=0;i<16;++i)require(std::abs(v.camera()->modelViewProjectionMatrix()[i]-camera_matrix[i])<1e-6f,"offscreen query changed camera matrices");
-        require(v.camera()->pivotPoint()==saved_pivot,"offscreen query changed camera pivot");
+        for(unsigned i=0;i<16;++i)require(std::abs(v.camera()->model_view_projection_matrix()[i]-camera_matrix[i])<1e-6f,"offscreen query changed camera matrices");
+        require(v.camera()->pivot_point()==saved_pivot,"offscreen query changed camera pivot");
     };
     verify(a,mesh,0);verify(b,other,.4f);verify(a,mesh,0);
     const auto before=a.pick(80,63);
@@ -67,7 +67,7 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
         require(std::abs(int(p[0])-127)<=2 && std::abs(int(p[1])-128)<=2 && p[2]<3 && p[3]==255,"offscreen annotation alpha or scene color differs");
         const auto after=a.pick(80,63);require(after.model==before.model && std::abs(after.depth-before.depth)<1e-6f,"offscreen MSAA/annotation changed scene depth or source");
     }
-    for(unsigned i=0;i<16;++i)require(std::abs(a.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"offscreen annotated rendering changed the live camera");
+    for(unsigned i=0;i<16;++i)require(std::abs(a.camera()->model_view_projection_matrix()[i]-matrix[i])<1e-6f,"offscreen annotated rendering changed the live camera");
     mesh->renderer()->set_visible(false);require(!a.pick(80,63),"offscreen query included a hidden model");mesh->renderer()->set_visible(true);
     auto points=std::make_shared<PointsDrawable>("shared offscreen points");a.add_drawable(points);
     points->update_vertex_buffer({vec3(-.4f,0,.2f),vec3(.4f,0,.2f)});points->set_impostor_type(PointsDrawable::SPHERE);points->set_point_size(21);
@@ -83,7 +83,7 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
     a.resize(173,133);require(window.run_frames(2)==0,"interleaved native viewer did not render");
     require(a.width()==173 && a.height()==133 && a.framebuffer_width()==173 && a.dpi_scaling()==1,"offscreen fixed pixel canvas changed after native callbacks");
     a.set_overlays({});verify(a,mesh,0);
-    for(unsigned i=0;i<16;++i) require(std::isfinite(a.camera()->modelViewProjectionMatrix()[i]),"offscreen resize produced invalid matrices");
+    for(unsigned i=0;i<16;++i) require(std::isfinite(a.camera()->model_view_projection_matrix()[i]),"offscreen resize produced invalid matrices");
     bool rejected=false;try{a.pixel_to_world(0,0,std::numeric_limits<float>::quiet_NaN());}catch(const std::invalid_argument&){rejected=true;}
     require(rejected,"offscreen unprojection accepted nonfinite depth");
     a.set_overlays({overlay});a.clear_scene();
@@ -94,5 +94,5 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
 #ifdef EASY3D_HAS_VULKAN
     require(a.device().validation_errors()==0 && b.device().validation_errors()==0,"offscreen shared API validation errors");
 #endif
-    require(pivot==a.camera()->pivotPoint(),"offscreen query/render/resize changed the pivot");
+    require(pivot==a.camera()->pivot_point(),"offscreen query/render/resize changed the pivot");
 });}

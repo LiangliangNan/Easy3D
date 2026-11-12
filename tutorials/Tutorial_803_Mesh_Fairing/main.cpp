@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     }
 
     // Look at the hemisphere from the side so the patch and its rim are visible.
-    viewer.camera()->setViewDirection(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 1, 0));
 
     // Perturb the model so the fairing effect is clearly visible.
     add_noise(mesh);

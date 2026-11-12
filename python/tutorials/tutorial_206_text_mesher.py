@@ -72,8 +72,8 @@ else:
 viewer = easy3d.Viewer("Easy3D Viewer - Text mesher")
 viewer.set_usage("")
 # Adjust the camera view to look at the text from the front.
-viewer.camera().setViewDirection(easy3d.vec3(0, 0, -1))  # View direction.
-viewer.camera().setUpVector(easy3d.vec3(0, 1, 0))        # Camera's up vector.
+viewer.camera().set_view_direction(easy3d.vec3(0, 0, -1))  # View direction.
+viewer.camera().set_up_vector(easy3d.vec3(0, 1, 0))        # Camera's up vector.
 # Add the generated mesh to the viewer for visualization.
 viewer.add_model(mesh)
 # Launch the viewer to display the 3D text model.

@@ -54,8 +54,8 @@
  *
  * <b>Easy3D API</b>
  * - Viewer: subclassed to load the cloud, draw the camera frusta, and overlay the source image.
- * - Camera: set_from_calibration() builds the pose and projection from K, R, t; setPosition(),
- *   setOrientation(), and setFieldOfView() are used for the equivalent "ground truth" pose.
+ * - Camera: set_from_calibration() builds the pose and projection from K, R, t; set_position(),
+ *   set_orientation(), and set_field_of_view() are used for the equivalent "ground truth" pose.
  * - LinesDrawable: draws the camera frusta and the back-projected 3D ray.
  * - PointCloud: the reconstructed 3D points loaded from the .ply file.
  *

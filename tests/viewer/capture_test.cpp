@@ -29,7 +29,7 @@ void material(const std::shared_ptr<SurfaceMesh>& m) {
     for(auto d:m->renderer()->points_drawables())d->set_visible(false);
     auto* d=m->renderer()->get_triangles_drawable("faces");d->set_lighting(false);d->set_uniform_coloring(vec4(1,0,0,1));
 }
-template<class Host> void camera(Host& v) {v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));v.camera()->setType(Camera::ORTHOGRAPHIC);v.fit_screen();}
+template<class Host> void camera(Host& v) {v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));v.camera()->set_type(Camera::ORTHOGRAPHIC);v.fit_screen();}
 struct Scanner:TutorialVirtualScanner {using TutorialVirtualScanner::key_press_event;};
 }
 int main(int argc,char**) {return test::run("shared capture and tutorial scanner",[&]{
@@ -39,7 +39,7 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     OpenGLOptions options;
 #endif
     OffScreen host(151,113,options);auto mesh=quad();host.add_model(mesh);material(mesh);camera(host);
-    const auto matrix=host.camera()->modelViewProjectionMatrix();
+    const auto matrix=host.camera()->model_view_projection_matrix();
 #ifndef EASY3D_HAS_VULKAN
     // Cold capture must tolerate pixel-transfer buffers, including lazy texture uploads.
     GLuint buffers[2];glGenBuffers(2,buffers);
@@ -67,7 +67,7 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     auto overlay=graphics::shape::draw_quad_filled(Rect(0,151,0,113),vec4(0,1,0,.5f),151,113);host.set_overlays({overlay});
     const auto annotated=host.capture(4);require(annotated.depth==one.depth && annotated.ids[center].object==0,"annotation contaminated scene metadata");
     require(std::abs(int(annotated.rgba[4*center])-127)<=2 && std::abs(int(annotated.rgba[4*center+1])-128)<=2,"capture overlay compositing differs");
-    for(unsigned i=0;i<16;++i)require(host.camera()->modelViewProjectionMatrix()[i]==matrix[i],"capture mutated the camera");
+    for(unsigned i=0;i<16;++i)require(host.camera()->model_view_projection_matrix()[i]==matrix[i],"capture mutated the camera");
     auto point=std::make_shared<PointsDrawable>("capture sphere");host.add_drawable(point);
     point->update_vertex_buffer({vec3(0,0,.3f)});point->set_point_size(31);point->set_impostor_type(PointsDrawable::SPHERE);
     point->set_lighting(false);point->set_uniform_coloring(vec4(0,0,1,1));host.set_overlays({});
@@ -76,8 +76,8 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     host.clear_scene();const auto empty=host.capture(1);
     require(std::all_of(empty.ids.begin(),empty.ids.end(),[](const graphics::FrameImage::Id& p){return p.object==UINT32_MAX;}),"clear_scene retained captured objects");
     Scanner scanner;scanner.resize(101,79);scanner.set_usage("");scanner.key_press_event(Scanner::KEY_SPACE,0);require(scanner.models().empty(),"empty tutorial scan added points");
-    auto source=quad();scanner.add_model(source);material(source);camera(scanner);scanner.camera()->setPivotPoint(vec3(.1f,.2f,.3f));
-    const auto expected=scanner.capture(1);const auto acquisition=scanner.camera()->modelViewProjectionMatrix();const auto pivot=scanner.camera()->pivotPoint();
+    auto source=quad();scanner.add_model(source);material(source);camera(scanner);scanner.camera()->set_pivot_point(vec3(.1f,.2f,.3f));
+    const auto expected=scanner.capture(1);const auto acquisition=scanner.camera()->model_view_projection_matrix();const auto pivot=scanner.camera()->pivot_point();
     scanner.key_press_event(Scanner::KEY_SPACE,0);
     auto cloud=std::dynamic_pointer_cast<PointCloud>(scanner.models().back());
     size_t count=0;for(unsigned y=0;y<expected.height;++y)for(unsigned x=0;x<expected.width;++x) {
@@ -85,8 +85,8 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
         require(cloud && count<cloud->points().size() && distance(cloud->points()[count++],scanner.pixel_to_world(x,y,expected.depth[p]))<1e-4f,"tutorial scan lost framebuffer pixel centers");
     }
     require(count>100 && cloud->n_vertices()==count,"tutorial scan omitted/added scene samples");
-    require(scanner.camera()->pivotPoint()==pivot,"tutorial scan changed pivot");
-    for(unsigned i=0;i<16;++i)require(scanner.camera()->modelViewProjectionMatrix()[i]==acquisition[i],"tutorial scan changed acquisition camera");
+    require(scanner.camera()->pivot_point()==pivot,"tutorial scan changed pivot");
+    for(unsigned i=0;i<16;++i)require(scanner.camera()->model_view_projection_matrix()[i]==acquisition[i],"tutorial scan changed acquisition camera");
 #ifdef EASY3D_HAS_VULKAN
     require(host.device().validation_errors()==0 && scanner.device().validation_errors()==0,"capture validation errors");
 #endif

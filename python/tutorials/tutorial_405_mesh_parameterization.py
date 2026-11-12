@@ -89,8 +89,8 @@ viewer.add_model(mesh_lscm)
 viewer.assign(0, 1, mesh_lscm)
 
 # Set the camera view direction and up vector for a better view.
-viewer.camera().setViewDirection(easy3d.vec3(0, 0, 1))   # Set the view direction.
-viewer.camera().setUpVector(easy3d.vec3(0, 1, 0))        # Set the up vector.
+viewer.camera().set_view_direction(easy3d.vec3(0, 0, 1))   # Set the view direction.
+viewer.camera().set_up_vector(easy3d.vec3(0, 1, 0))        # Set the up vector.
 
 # Add instructions for the viewer (optional).
 viewer.set_usage("",

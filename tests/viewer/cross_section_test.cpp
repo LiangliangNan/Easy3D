@@ -25,7 +25,7 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
         require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,"guide/MSAA changed source IDs");
 }
 void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
-    const auto inverse_mvp=inverse(viewer.camera()->modelViewProjectionMatrix());
+    const auto inverse_mvp=inverse(viewer.camera()->model_view_projection_matrix());
     const auto world_at=[&](unsigned x,unsigned y) {
         const auto i=size_t(y)*image.width+x;
         const auto world=inverse_mvp*vec4(2*(x+.5f)/image.width-1,1-2*(y+.5f)/image.height,2*image.depth[i]-1,1);
@@ -69,31 +69,31 @@ int main(int argc,char**) {
         auto* plane=ClippingPlane::instance();
         require(plane->is_enabled(),"tutorial did not enable shared clipping plane");
         plane->set_cross_section_width(.01f); // keep the thin slab visible in this small fixture
-        viewer.camera()->setViewDirection(vec3(-1,1,-1));
+        viewer.camera()->set_view_direction(vec3(-1,1,-1));
         require(viewer.add_model(file)!=nullptr,"cross-section fixture load failed");
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
         frame(viewer);
         // Look from the retained side: opaque cube surfaces must hide the guide.
         const Camera saved(*viewer.camera());
-        viewer.camera()->setViewDirection(vec3(-1,1,1)); viewer.camera()->showEntireScene(); frame(viewer);
+        viewer.camera()->set_view_direction(vec3(-1,1,1)); viewer.camera()->show_entire_scene(); frame(viewer);
         const auto behind=viewer.capture(); plane->set_visible(false); const auto reference=viewer.capture();
         plane->set_visible(true);
         same_picking(behind,reference);
-        const auto probe_clip=viewer.camera()->modelViewProjectionMatrix()*vec4(.4f,-.4f,-1,1);
+        const auto probe_clip=viewer.camera()->model_view_projection_matrix()*vec4(.4f,-.4f,-1,1);
         const int bx=int((probe_clip.x/probe_clip.w+1)*.5f*behind.width),by=int((1-probe_clip.y/probe_clip.w)*.5f*behind.height);
         require(bx>=0 && by>=0 && bx<int(behind.width) && by<int(behind.height),"occlusion probe outside viewport");
         const auto bi=size_t(by)*behind.width+bx;
         require(reference.ids[bi].object!=UINT32_MAX,"occlusion probe missed the cube");
         const auto a=viewer.pixel_to_world(bx,by,0),b=viewer.pixel_to_world(bx,by,1);
         const auto plane_point=a+(b-a)*(-a.z/(b.z-a.z));
-        require(std::abs(plane_point.x)<viewer.camera()->sceneRadius()*.95f &&
-                std::abs(plane_point.y)<viewer.camera()->sceneRadius()*.95f,"occlusion probe missed guide interior");
+        require(std::abs(plane_point.x)<viewer.camera()->scene_radius()*.95f &&
+                std::abs(plane_point.y)<viewer.camera()->scene_radius()*.95f,"occlusion probe missed guide interior");
         for (unsigned c=0;c<4;++c) require(behind.rgba[4*bi+c]==reference.rgba[4*bi+c],"filled guide showed through nearer opaque geometry");
         *viewer.camera()=saved; frame(viewer);
         const auto initial=viewer.capture();
         require(viewer.clipping_planes().size()==1 && hits(initial)>100,"cross-section did not enable a clipping plane"); check_planes(viewer,initial);
-        require((plane->center()-viewer.camera()->sceneCenter()).norm()<1e-6f &&
-                std::abs(plane->scene_radius()-viewer.camera()->sceneRadius())<1e-6f,"shared plane was not fitted to tutorial scene");
+        require((plane->center()-viewer.camera()->scene_center()).norm()<1e-6f &&
+                std::abs(plane->scene_radius()-viewer.camera()->scene_radius())<1e-6f,"shared plane was not fitted to tutorial scene");
         // Changes through the public controller must be visible without a
         // tutorial pre_draw() copying state into private planes/geometry.
         const auto color=plane->color();plane->set_color(vec4(0,.5f,1,.4f));
@@ -112,7 +112,7 @@ int main(int argc,char**) {
         press(Viewer::KEY_V); const auto hidden=viewer.capture();
         require(hidden.rgba!=initial.rgba,"guide visibility shortcut did not change overlay"); same_picking(initial,hidden);
         // Probe the plane interior away from the outlines and from the cube.
-        const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(-1.2f,1.2f,0,1);
+        const auto clip=viewer.camera()->model_view_projection_matrix()*vec4(-1.2f,1.2f,0,1);
         const int x=int((clip.x/clip.w+1)*.5f*initial.width),y=int((1-clip.y/clip.w)*.5f*initial.height);
         require(x>=0 && y>=0 && x<int(initial.width) && y<int(initial.height),"plane interior probe is outside viewport");
         const auto pixel=size_t(y)*initial.width+x;

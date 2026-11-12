@@ -41,8 +41,8 @@ using namespace easy3d;
 TutorialObjectManipulation::TutorialObjectManipulation(const std::string &title) : Viewer(title) {
 
     // Look straight at the front of the logo so the letters are easy to click.
-    camera()->setViewDirection(vec3(0, 0, -1));
-    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, -1));
+    camera()->set_up_vector(vec3(0, 1, 0));
 
     // manual_ is the full help text (shown on demand); hint_ is the short HUD reminder.
     manual_ =

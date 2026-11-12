@@ -58,7 +58,7 @@ camera = renderer.camera()
 pos = camera.position() + easy3d.vec3(0.2, 0.2, 0.2)
 
 # Set the new camera position.
-camera.setPosition(pos)
+camera.set_position(pos)
 
 # Render the model again with the new camera position.
 image_file = file_name + "_2.png"

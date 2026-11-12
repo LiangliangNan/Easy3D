@@ -66,7 +66,7 @@
  *   re-syncs the GPU buffers after geometry was appended post-load.
  * - LinesDrawable, Polygon2: used in the contour branch to draw the outlines as thick colored
  *   lines (CONE impostors) with per-vertex colors.
- * - Camera::setViewDirection()/setUpVector(): face the text straight-on (it lies in the XY
+ * - Camera::set_view_direction()/set_up_vector(): face the text straight-on (it lies in the XY
  *   plane and is extruded along the Z axis).
  *
  * <b>Running it</b>
@@ -149,8 +149,8 @@ int main(int argc, char **argv) {
 #endif
 
     // We always want to look at the front of the meshed text.
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
 
     // The mesher appended geometry after attaching the model; refresh its buffers and fit both strings.
     if (auto *model = viewer.current_model())

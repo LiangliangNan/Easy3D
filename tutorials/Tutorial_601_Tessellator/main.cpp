@@ -198,8 +198,8 @@ int main(int argc, char **argv) {
     Viewer viewer(EXAMPLE_TITLE);
 
     // Look straight down onto the XY plane: y is up on screen, the camera looks along -z.
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
     auto mesh = create_tessellation_mesh();
     if (!mesh || mesh->empty())
         return EXIT_FAILURE;

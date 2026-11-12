@@ -59,7 +59,7 @@
  *   turns it on, and its built-in viewer shortcuts toggle visibility and cross-section mode.
  * - Manipulator / ManipulatedFrame: the interaction machinery; frame()->action_rotate() and
  *   action_translate() convert 2D mouse motion into 3D plane motion using the Camera.
- * - Viewer: subclassed here to override mouse_drag_event(); camera()->setViewDirection() aims
+ * - Viewer: subclassed here to override mouse_drag_event(); camera()->set_view_direction() aims
  *   the initial view.
  *
  * <b>Running it</b>
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     CrossSection viewer(EXAMPLE_TITLE);
 
     // Look at the bunny from an oblique direction so the cut surface is visible.
-    viewer.camera()->setViewDirection(vec3(-1, 1, -1));
+    viewer.camera()->set_view_direction(vec3(-1, 1, -1));
 
     if (!viewer.add_model(file_name)) {
         std::cerr << "failed to load model. Please make sure the file exists and format is correct" << std::endl;

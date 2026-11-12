@@ -341,9 +341,9 @@ namespace easy3d {
 //                add_drawable(view_frustum_);
 //            }
 //
-//            const float fov = camera()->fieldOfView();
+//            const float fov = camera()->field_of_view();
 //            const float hw_ratio = static_cast<float>(height()) / width();
-//            const float halfWidth = camera()->sceneRadius() * 2;  // large enough to put the image plane behind the object
+//            const float halfWidth = camera()->scene_radius() * 2;  // large enough to put the image plane behind the object
 //            const float halfHeight = halfWidth * hw_ratio;
 //            const float dist = halfHeight / std::tan(fov * 0.5);
 //
@@ -359,11 +359,11 @@ namespace easy3d {
 //            Box3 box = current_model()->bounding_box();
 //            // convert to world coordinate system
 //            for (auto &p : corners) {
-//                p = camera()->worldCoordinatesOf(p);
+//                p = camera()->world_coordinates_of(p);
 //                box.grow(p);
 //            }
 //            box.grow(camera()->position());
-//            camera()->setSceneBoundingBox(box);
+//            camera()->set_scene_bounding_box(box);
 //
 //            image_plane_->update_vertex_buffer(corners);
 //

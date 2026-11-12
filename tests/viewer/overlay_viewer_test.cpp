@@ -29,8 +29,8 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     OpenGLOptions options;
 #endif
     AnnotationView v("Annotations",161,121,4,false,false,true,options);v.set_usage("");v.hide_logo();
-    v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));
-    v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+    v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
+    v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
     const int w=v.framebuffer_width(),h=v.framebuffer_height();
     std::vector<graphics::Vertex> vertices(4);
     const vec3 p[]={vec3(0,0,0),vec3(float(w),0,0),vec3(float(w),float(h),0),vec3(0,float(h),0)};

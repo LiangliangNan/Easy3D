@@ -15,7 +15,7 @@ template<class F> void rejects(F call) {
     require(threw,"invalid OBJ operation accepted");
 }
 std::size_t pixel(const Camera* cam,const graphics::FrameImage& image,const vec3& world) {
-    const auto p=cam->projectedCoordinatesOf(world);
+    const auto p=cam->projected_coordinates_of(world);
     const int x=int(p.x),y=int(p.y);
     require(x>=0 && y>=0 && x<int(image.width) && y<int(image.height),"OBJ probe is outside viewport");
     return std::size_t(y)*image.width+x;
@@ -48,8 +48,8 @@ int main(int argc,char**) {
         VulkanOptions options; options.validation=options.sync_validation=argc>1;
         OffScreen renderer(321,221,options);
         renderer.set_background_color(vec4(1)); // The UV oracle includes a white background probe.
-        renderer.camera()->setType(Camera::ORTHOGRAPHIC);
-        renderer.camera()->setViewDirection(vec3(0,0,-1)); renderer.camera()->setUpVector(vec3(0,1,0));
+        renderer.camera()->set_type(Camera::ORTHOGRAPHIC);
+        renderer.camera()->set_view_direction(vec3(0,0,-1)); renderer.camera()->set_up_vector(vec3(0,1,0));
         require(renderer.add_model(asset.mesh,false)!=nullptr,"could not attach OBJ mesh");
         asset.create_drawables();
         const auto count=asset.mesh->renderer()->triangles_drawables().size();
@@ -71,7 +71,7 @@ int main(int argc,char**) {
         const std::vector<vec3> face_probes={vec3(-1.5f,.5f,0),vec3(-2.5f,1.5f,0),vec3(2,1,0),
             vec3(-2,-2,0),vec3(2,-2,0),vec3(4.5f,1,0)};
         for (std::size_t face=0;face<face_probes.size();++face) {
-            const auto point=renderer.camera()->projectedCoordinatesOf(face_probes[face]);
+            const auto point=renderer.camera()->projected_coordinates_of(face_probes[face]);
             const auto picked=renderer.pick(int(point.x),int(point.y));
             require(picked.face_index==int(face),"OBJ material part did not retain its original face index");
         }

@@ -56,7 +56,7 @@ namespace easy3d {
      *      move to the right.
      *
      *      A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
-     *      the associated Camera::pivotPoint().
+     *      the associated Camera::pivot_point().
      * \see Frame, ManipulatedFrame, Camera
      */
     class ManipulatedCameraFrame : public ManipulatedFrame {
@@ -86,8 +86,8 @@ namespace easy3d {
          * \brief Returns the point the ManipulatedCameraFrame pivots around, which is the
          *      camera's pivot point.
          * \details The pivot point is defined in the world coordinate system. Default value is (0,0,0).
-         *      When the ManipulatedCameraFrame is associated with a Camera, Camera::pivotPoint() also returns this
-         *      value. This point can interactively be changed by Camera::setPivotPoint().
+         *      When the ManipulatedCameraFrame is associated with a Camera, Camera::pivot_point() also returns this
+         *      value. This point can interactively be changed by Camera::set_pivot_point().
          * \return The pivot point.
          * \sa setPivotPoint()
          */
@@ -106,8 +106,8 @@ namespace easy3d {
         /**
          * \brief Returns whether the QGLViewer::ZOOM action zooms on the pivot point.
          * \details When set to \c false (default), a zoom action will move the camera along its
-         *      Camera::viewDirection(), i.e., back and forth along a direction perpendicular to the projection screen.
-         *      setZoomsOnPivotPoint() to \c true will move the camera along an axis defined by the Camera::pivotPoint()
+         *      Camera::view_direction(), i.e., back and forth along a direction perpendicular to the projection screen.
+         *      setZoomsOnPivotPoint() to \c true will move the camera along an axis defined by the Camera::pivot_point()
          *      and its current position instead. As a result, the projected position of the pivot point on screen will
          *      stay the same during a zoom.
          * \return \c true if zooming on the pivot point is enabled, \c false otherwise.
@@ -162,27 +162,27 @@ namespace easy3d {
         //---------------------------------------------------------------
 
 //		if (key == ViewerInput::KEY_UP && modifiers == 0) {	// move camera forward
-//			float step = 0.02f * camera_->sceneRadius();
+//			float step = 0.02f * camera_->scene_radius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
 //		}
 //		else if (key == ViewerInput::KEY_DOWN && modifiers == 0) {// move camera backward
-//			float step = 0.02f * camera_->sceneRadius();
+//			float step = 0.02f * camera_->scene_radius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
 //		}
 //        else if (key == ViewerInput::KEY_LEFT && modifiers == ViewerInput::MODIF_CTRL) {	// move camera left
-//            float step = 0.02f * camera_->sceneRadius();
+//            float step = 0.02f * camera_->scene_radius();
 //            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
 //        }
 //        else if (key == ViewerInput::KEY_RIGHT && modifiers == ViewerInput::MODIF_CTRL) {	// move camera right
-//            float step = 0.02f * camera_->sceneRadius();
+//            float step = 0.02f * camera_->scene_radius();
 //            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
 //        }
 //		else if (key == ViewerInput::KEY_UP && modifiers == ViewerInput::MODIF_CTRL) {	// move camera up
-//			float step = 0.02f * camera_->sceneRadius();
+//			float step = 0.02f * camera_->scene_radius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
 //		}
 //		else if (key == ViewerInput::KEY_DOWN && modifiers == ViewerInput::MODIF_CTRL) {	// move camera down
-//			float step = 0.02f * camera_->sceneRadius();
+//			float step = 0.02f * camera_->scene_radius();
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 //		}
 //
@@ -194,15 +194,15 @@ namespace easy3d {
 //        static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
 //        tempFrame->setPosition(coef*camera()->frame()->position() + (1.0-coef)*p);
 //        tempFrame->setOrientation(camera()->frame()->orientation());
-//        camera()->setFrame(tempFrame);
-//        camera()->lookAt(p);
+//        camera()->set_frame(tempFrame);
+//        camera()->look_at(p);
 //
 //        // zoom to fit screen
 //        static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
 //        tempFrame->setPosition(camera()->frame()->position());
 //        tempFrame->setOrientation(camera()->frame()->orientation());
-//        camera()->setFrame(tempFrame);
-//        camera()->showEntireScene();
+//        camera()->set_frame(tempFrame);
+//        camera()->show_entire_scene();
 
     private:
         bool zoomsOnPivotPoint_;

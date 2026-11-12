@@ -48,11 +48,11 @@ int main(int argc,char**) {
             toggle();require(viewer.capture().rgba==shown.rgba,"axes toggle did not restore rendering");
         }
         const auto before=viewer.capture();
-        viewer.camera()->setOrientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.7f));
+        viewer.camera()->set_orientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.7f));
         const auto rotated=viewer.capture();same_picking(before,rotated);
         require(rotated.rgba!=before.rgba,"axes ignored camera orientation");
-        viewer.camera()->setPosition(viewer.camera()->position()+vec3(2,3,4));
-        viewer.camera()->setType(Camera::ORTHOGRAPHIC);
+        viewer.camera()->set_position(viewer.camera()->position()+vec3(2,3,4));
+        viewer.camera()->set_type(Camera::ORTHOGRAPHIC);
         require(viewer.capture().rgba==rotated.rgba,"camera translation/projection changed orientation-only axes");
         require(viewer.add_model(resource::directory()+"/data/sphere.obj"),"scene fixture missing");
         viewer.set_usage("default","Corner axes and usage hint");

@@ -75,8 +75,8 @@ surface = mesh.renderer().get_triangles_drawable("faces")
 surface.set_coloring_method(easy3d.State.UNIFORM_COLOR)  # Set uniform color rendering.
 
 # Set the camera view direction and up vector for a better view position.
-viewer.camera().setViewDirection(easy3d.vec3(0, 1, 0))   # Set the view direction.
-viewer.camera().setUpVector(easy3d.vec3(0, 0, 1))        # Set the up vector.
+viewer.camera().set_view_direction(easy3d.vec3(0, 1, 0))   # Set the view direction.
+viewer.camera().set_up_vector(easy3d.vec3(0, 0, 1))        # Set the up vector.
 
 # Launch the viewer.
 viewer.run()

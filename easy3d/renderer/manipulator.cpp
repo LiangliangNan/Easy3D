@@ -85,14 +85,14 @@ namespace easy3d {
         const Box3 box = model_->bounding_box(false);
         const vec3 &center = box.center();
         auto manip = matrix() * mat4::translation(center) * mat4::scale(box.range(0), box.range(1), box.range(2), 1.0f);
-        shape::draw_box_wire(drawable_model_bbox_, cam->modelViewProjectionMatrix(), manip, true);
+        shape::draw_box_wire(drawable_model_bbox_, cam->model_view_projection_matrix(), manip, true);
     }
 
 graphics::DrawCommand Manipulator::draw_frame(const Camera* cam,int width,int height,float line_width) const {
     if(!model_ || !cam || !model_->bounding_box().is_valid()) return {};
     const auto box=model_->bounding_box();
     const auto transform=matrix()*mat4::translation(box.center())*mat4::scale(box.range(0),box.range(1),box.range(2),1.0f);
-    const auto mvp=cam->modelViewProjectionMatrix()*transform;
+    const auto mvp=cam->model_view_projection_matrix()*transform;
     bool same=frame_command_.geometry && frame_width_==width && frame_height_==height && frame_line_width_==line_width;
     for(unsigned i=0;same && i<16;++i) same=frame_mvp_[i]==mvp[i];
     if(!same) {

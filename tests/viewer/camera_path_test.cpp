@@ -60,10 +60,10 @@ int main(int argc,char**) {
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code,int mods=0){key(v.window(),code,0,GLFW_PRESS,mods);};
         const std::vector<vec3> keys={vec3(0,0,100),vec3(60,0,100),vec3(60,60,80)};
-        for (const auto& p:keys) {v.camera()->setPosition(p);v.camera()->lookAt(vec3(0));press(Viewer::KEY_K);}
+        for (const auto& p:keys) {v.camera()->set_position(p);v.camera()->look_at(vec3(0));press(Viewer::KEY_K);}
         require(v.path().number_of_keyframes()==3,"K did not record camera keyframes");
         press(Viewer::KEY_K,Viewer::MODIF_SHIFT);require(v.path().number_of_keyframes()==3,"modified K recorded a keyframe");
-        v.camera()->setPosition(vec3(160,120,240));v.camera()->lookAt(vec3(20,20,0));v.camera()->setSceneRadius(160);v.camera()->showEntireScene();
+        v.camera()->set_position(vec3(160,120,240));v.camera()->look_at(vec3(20,20,0));v.camera()->set_scene_radius(160);v.camera()->show_entire_scene();
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);
             require(v.draw_frame(),"camera-guide frame failed");const auto guides=v.capture();

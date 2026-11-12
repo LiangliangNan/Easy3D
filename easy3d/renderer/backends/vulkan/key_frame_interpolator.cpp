@@ -40,9 +40,9 @@ namespace easy3d {
             const auto &samples = path.interpolate();
             if (samples.size() < 2)
                 return {};
-            const auto mvp = camera.modelViewProjectionMatrix();
+            const auto mvp = camera.model_view_projection_matrix();
             bool same = path_command_.geometry && samples.size() == path_positions_.size() &&
-                        width_ == camera.screenWidth() && height_ == camera.screenHeight() && thickness_ == thickness;
+                        width_ == camera.screen_width() && height_ == camera.screen_height() && thickness_ == thickness;
             for (size_t i = 0; same && i < samples.size(); ++i)
                 same = path_positions_[i] == samples[i].position();
             for (unsigned i = 0; same && i < 16; ++i)
@@ -58,9 +58,9 @@ namespace easy3d {
                 }
                 path_command_ =
                     graphics::shape::draw_lines_3d(segments, std::vector<vec3>(segments.size(), vec3(1)), mvp,
-                                                   camera.screenWidth(), camera.screenHeight(), thickness);
-                width_ = camera.screenWidth();
-                height_ = camera.screenHeight();
+                                                   camera.screen_width(), camera.screen_height(), thickness);
+                width_ = camera.screen_width();
+                height_ = camera.screen_height();
                 thickness_ = thickness;
                 path_mvp_ = mvp;
             }
@@ -76,9 +76,9 @@ namespace easy3d {
                 return {};
             if (!std::isfinite(camera_width) || camera_width <= 0)
                 throw std::invalid_argument("camera marker width must be positive and finite");
-            const float aspect = float(camera.screenHeight()) / camera.screenWidth();
+            const float aspect = float(camera.screen_height()) / camera.screen_width();
             bool same = camera_command_.geometry && keyframes_.size() == path.number_of_keyframes() &&
-                        camera_width_ == camera_width && fov_ == camera.fieldOfView() && aspect_ == aspect;
+                        camera_width_ == camera_width && fov_ == camera.field_of_view() && aspect_ == aspect;
             for (size_t i = 0; same && i < keyframes_.size(); ++i) {
                 const auto frame = path.keyframe(i);
                 same = keyframes_[i].position() == frame.position();
@@ -94,7 +94,7 @@ namespace easy3d {
                     keyframes_.push_back(frame);
                     std::vector<vec3> points;
                     std::vector<unsigned> elements;
-                    easy3d::shape::create_camera(points, elements, camera_width, camera.fieldOfView(), aspect);
+                    easy3d::shape::create_camera(points, elements, camera_width, camera.field_of_view(), aspect);
                     const auto offset = uint32_t(vertices.size());
                     for (auto index : elements)
                         indices.push_back(offset + index);
@@ -109,11 +109,11 @@ namespace easy3d {
                     std::make_shared<graphics::Geometry>(std::move(vertices), std::move(indices));
                 camera_command_.overlay = camera_command_.overlay_depth_test = true;
                 camera_width_ = camera_width;
-                fov_ = camera.fieldOfView();
+                fov_ = camera.field_of_view();
                 aspect_ = aspect;
             }
             auto result = camera_command_;
-            result.model_view_projection = camera.modelViewProjectionMatrix();
+            result.model_view_projection = camera.model_view_projection_matrix();
             result.color = color;
             return result;
         }

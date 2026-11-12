@@ -90,7 +90,7 @@ namespace easy3d {
         width_ = w;
         height_ = h;
         dpi_scaling_ = 1;
-        camera()->setScreenWidthAndHeight(w, h);
+        camera()->set_screen_width_and_height(w, h);
     }
     bool OffScreen::render(const std::string &file, float scale, int samples, int bg, bool expand) const {
         if (!std::isfinite(scale) || scale <= 0 || double(width()) * scale > std::numeric_limits<int>::max() ||

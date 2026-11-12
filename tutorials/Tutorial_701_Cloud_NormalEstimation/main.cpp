@@ -131,8 +131,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     // Orient the camera to view the bunny from its front.
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(1, 0, 0));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(1, 0, 0));
 
     // Configure how the points are drawn.
     auto drawable = model->renderer()->get_points_drawable("vertices");

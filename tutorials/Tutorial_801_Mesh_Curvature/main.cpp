@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     }
 
     // Look at the bunny from the front so the curvature pattern is easy to read.
-    viewer.camera()->setViewDirection(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 1, 0));
 
     // Show the mean curvature initially.
     apply_curvature(0, &viewer, mesh);

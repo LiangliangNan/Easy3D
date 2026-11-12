@@ -20,7 +20,7 @@ template<class Function> void rejects(Function f) {
     require(threw,"invalid texture/scalar input was accepted");
 }
 size_t pixel(const OffScreen& renderer, const graphics::FrameImage& frame, float x, float y) {
-    const auto p = renderer.camera()->projectedCoordinatesOf(vec3(x,y,0));
+    const auto p = renderer.camera()->projected_coordinates_of(vec3(x,y,0));
     require(p.x >= 0 && p.x < frame.width && p.y >= 0 && p.y < frame.height,"texture probe is offscreen");
     return size_t(p.y)*frame.width+size_t(p.x);
 }
@@ -64,9 +64,9 @@ void tests(const VulkanOptions& options) {
     cached=concurrent[0];
     for (auto* result:concurrent) require(result && result==cached,"concurrent CPU cache requests created distinct textures");
     OffScreen renderer(129,97,options);
-    renderer.camera()->setType(Camera::ORTHOGRAPHIC);
-    renderer.camera()->setViewDirection(vec3(0,0,-1));
-    renderer.camera()->setUpVector(vec3(0,1,0));
+    renderer.camera()->set_type(Camera::ORTHOGRAPHIC);
+    renderer.camera()->set_view_direction(vec3(0,0,-1));
+    renderer.camera()->set_up_vector(vec3(0,1,0));
     auto quad = std::make_shared<TrianglesDrawable>();
     renderer.add_drawable(quad);
     quad->update_vertex_buffer({vec3(-1,-1,0),vec3(1,-1,0),vec3(1,1,0),vec3(-1,1,0)});

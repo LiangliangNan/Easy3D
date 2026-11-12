@@ -39,13 +39,13 @@ int main(int argc,char**) {
         auto toggle=[&]{key(v.window(),Viewer::KEY_F,0,GLFW_PRESS,Viewer::MODIF_CTRL);};
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);v.draw_frame();
-            const auto baseline=v.capture();const auto camera=v.camera()->modelViewProjectionMatrix();
+            const auto baseline=v.capture();const auto camera=v.camera()->model_view_projection_matrix();
             key(v.window(),Viewer::KEY_F,0,GLFW_PRESS,Viewer::MODIF_SHIFT);
             require(!v.shown(),"Shift-F toggled frame rate");
             toggle();require(v.shown() && v.rate().find("--")!=std::string::npos,"Ctrl/Command-F did not start fresh sampling");
             const auto shown=v.capture();same_picking(baseline,shown);
             require(shown.rgba!=baseline.rgba,"frame rate/hint reflow did not render");
-            const auto after=v.camera()->modelViewProjectionMatrix();
+            const auto after=v.camera()->model_view_projection_matrix();
             for (unsigned i=0;i<16;++i) require(camera[i]==after[i],"modified F fitted the scene");
             const auto placeholder=v.rate();std::this_thread::sleep_for(std::chrono::milliseconds(1030));
             require(v.capture().rgba==shown.rgba && v.rate()==placeholder,"capture advanced frame-rate sampling");

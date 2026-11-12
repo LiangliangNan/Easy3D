@@ -144,11 +144,11 @@ def check_raster_states(directory):
     viewer = easy3d.OffScreen(129, 97)
     viewer.set_background_color(easy3d.vec4(0, 0, 0, 1))
     camera = viewer.camera()
-    camera.setType(easy3d.Camera.ORTHOGRAPHIC)
-    camera.setSceneBoundingBox(easy3d.vec3(-1), easy3d.vec3(1))
-    camera.setViewDirection(easy3d.vec3(0, 0, -1))
-    camera.setUpVector(easy3d.vec3(0, 1, 0))
-    camera.showEntireScene()
+    camera.set_type(easy3d.Camera.ORTHOGRAPHIC)
+    camera.set_scene_bounding_box(easy3d.vec3(-1), easy3d.vec3(1))
+    camera.set_view_direction(easy3d.vec3(0, 0, -1))
+    camera.set_up_vector(easy3d.vec3(0, 1, 0))
+    camera.show_entire_scene()
 
     def probes(name, points):
         image = directory / name
@@ -157,8 +157,8 @@ def check_raster_states(directory):
         assert (w, h) == (viewer.width(), viewer.height())
 
         def sample(world):
-            # projectedCoordinatesOf() uses the same top-down rows as bitmap().
-            screen = camera.projectedCoordinatesOf(world)
+            # projected_coordinates_of() uses the same top-down rows as bitmap().
+            screen = camera.projected_coordinates_of(world)
             return pixel(int(round(screen.x)), int(round(screen.y)))
 
         return [sample(point) for point in points]
@@ -232,11 +232,11 @@ def check_point_line_states(directory):
     camera = viewer.camera()
 
     def frame():
-        camera.setType(easy3d.Camera.ORTHOGRAPHIC)
-        camera.setSceneBoundingBox(easy3d.vec3(-1), easy3d.vec3(1))
-        camera.setViewDirection(easy3d.vec3(0, 0, -1))
-        camera.setUpVector(easy3d.vec3(0, 1, 0))
-        camera.showEntireScene()
+        camera.set_type(easy3d.Camera.ORTHOGRAPHIC)
+        camera.set_scene_bounding_box(easy3d.vec3(-1), easy3d.vec3(1))
+        camera.set_view_direction(easy3d.vec3(0, 0, -1))
+        camera.set_up_vector(easy3d.vec3(0, 1, 0))
+        camera.show_entire_scene()
 
     frame()
 
@@ -248,18 +248,18 @@ def check_point_line_states(directory):
         return pixel
 
     def at(pixel, world, dx=0, dy=0):
-        screen = camera.projectedCoordinatesOf(world)
+        screen = camera.projected_coordinates_of(world)
         return pixel(int(round(screen.x)) + dx, int(round(screen.y)) + dy)
 
     def thin(pixel, world):
         # Size-2 points and width-1 lines may rasterize into either adjacent
         # pixel depending on the sub-pixel center; take the strongest neighbor.
-        screen = camera.projectedCoordinatesOf(world)
+        screen = camera.projected_coordinates_of(world)
         x, y = int(round(screen.x)), int(round(screen.y))
         return max((pixel(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)), key=sum)
 
     def blank(pixel, world, dy):
-        screen = camera.projectedCoordinatesOf(world)
+        screen = camera.projected_coordinates_of(world)
         x, y = int(round(screen.x)), int(round(screen.y))
         return all(pixel(x + dx, y + dy + j) == (0, 0, 0)
                    for dx in (-1, 0, 1) for j in (-1, 0, 1))

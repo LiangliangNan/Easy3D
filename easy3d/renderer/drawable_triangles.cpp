@@ -78,12 +78,12 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3 &wCamPos = camera->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4 &MV = camera->modelViewMatrix();
+        const mat4 &MV = camera->model_view_matrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         // transformation introduced by manipulation

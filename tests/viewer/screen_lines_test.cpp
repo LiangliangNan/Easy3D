@@ -24,8 +24,8 @@ int main(int argc,char**) {
         const std::vector<vec2> points{vec2(10,15),vec2(130,15),vec2(130,100)};
         lines->update_vertex_buffer(points,161,127);lines->update_element_buffer(std::vector<unsigned>{0,1,1,2});
         lines->set_uniform_coloring(vec4(1,0,0,1));
-        const auto center=v.camera()->sceneCenter();const float radius=v.camera()->sceneRadius();v.fit_screen();
-        require(v.camera()->sceneCenter()==center && v.camera()->sceneRadius()==radius,"2D bounds changed camera fit");
+        const auto center=v.camera()->scene_center();const float radius=v.camera()->scene_radius();v.fit_screen();
+        require(v.camera()->scene_center()==center && v.camera()->scene_radius()==radius,"2D bounds changed camera fit");
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;
             const auto image=v.capture(count);unsigned colored=0,partial=0;
@@ -37,8 +37,8 @@ int main(int argc,char**) {
                 ++colored;partial+=image.rgba[4*i+3]<255;
             }
             require(colored>100,"indexed 2D polyline did not render");if (count==4) require(partial>30,"2D ribbons lack MSAA coverage");
-            v.camera()->setPosition(v.camera()->position()+vec3(2,3,4));
-            v.camera()->setOrientation(v.camera()->orientation()*quat(vec3(0,1,0),.3f));v.camera()->setType(Camera::ORTHOGRAPHIC);
+            v.camera()->set_position(v.camera()->position()+vec3(2,3,4));
+            v.camera()->set_orientation(v.camera()->orientation()*quat(vec3(0,1,0),.3f));v.camera()->set_type(Camera::ORTHOGRAPHIC);
             v.set_clipping_planes({vec4(1,0,0,-10000)});
             require(v.capture(count).rgba==image.rgba,"camera/clipping changed screen-space polyline");
             require(!v.pick(60,15) && v.scan_visible_points(count).empty(),"screen line participated in picking/scanning");
@@ -82,17 +82,17 @@ int main(int argc,char**) {
         require(covered>100,"resize did not preserve normalized line placement");
         lines->update_vertex_buffer({},251,173);lines->disable_element_buffer();
         const auto cleared=v.capture();for (auto c:cleared.rgba) require(c==0,"empty screen drawable retained geometry");
-        v.set_clipping_planes({});v.camera()->setUpVector(vec3(0,1,0));v.camera()->setViewDirection(vec3(0,0,-1));
+        v.set_clipping_planes({});v.camera()->set_up_vector(vec3(0,1,0));v.camera()->set_view_direction(vec3(0,0,-1));
         auto* model=v.add_model(resource::directory()+"/data/sphere.obj");require(model,"world fixture missing");
         auto world=std::make_shared<LinesDrawable>("world line");v.add_drawable(world);
         world->update_vertex_buffer({vec3(30,-5,0),vec3(30,5,0)});world->set_line_width(3);v.fit_screen();
-        const float scene_radius=v.camera()->sceneRadius();const auto scene_center=v.camera()->sceneCenter();
+        const float scene_radius=v.camera()->scene_radius();const auto scene_center=v.camera()->scene_center();
         lines->update_vertex_buffer({vec2(1e6f,1e6f),vec2(2e6f,2e6f)},251,173);v.fit_screen();
-        require(v.camera()->sceneRadius()==scene_radius && v.camera()->sceneCenter()==scene_center,"2D coordinates polluted world bounds");
+        require(v.camera()->scene_radius()==scene_radius && v.camera()->scene_center()==scene_center,"2D coordinates polluted world bounds");
         lines->update_vertex_buffer({vec2(0,86.5f),vec2(251,86.5f)},251,173);
         lines->set_visible(false);const auto bare=v.capture();lines->set_visible(true);const auto overlay=v.capture();same_picking(bare,overlay);
         require(bare.rgba!=overlay.rgba,"2D line did not overlay opaque geometry");
-        const auto pixel=v.camera()->projectedCoordinatesOf(vec3(30,0,0));const auto hit=v.pick(int(pixel.x),int(pixel.y));
+        const auto pixel=v.camera()->projected_coordinates_of(vec3(30,0,0));const auto hit=v.pick(int(pixel.x),int(pixel.y));
         if (!hit || hit.drawable.get()!=world.get())
             std::cerr<<"world-line probe "<<pixel<<" hit "<<(hit ? hit.drawable->name() : "background")<<'\n';
         require(hit && hit.drawable.get()==world.get(),"2D drawable corrupted later 3D picking provenance");

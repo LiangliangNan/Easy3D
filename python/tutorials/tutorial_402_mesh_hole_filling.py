@@ -94,8 +94,8 @@ viewer.set_usage("",
 )
 
 # Set the camera view direction and up vector for a better view position.
-viewer.camera().setViewDirection(easy3d.vec3(0, 0, 1))   # Set the view direction.
-viewer.camera().setUpVector(easy3d.vec3(1, 0, 0))        # Set the up vector.
+viewer.camera().set_view_direction(easy3d.vec3(0, 0, 1))   # Set the view direction.
+viewer.camera().set_up_vector(easy3d.vec3(1, 0, 0))        # Set the up vector.
 
 # The bunny model included in Easy3D has a per-face scalar property, which will be rendered by
 # default. To better reveal the effect of hole filling, let's show the bunny with a uniform color.

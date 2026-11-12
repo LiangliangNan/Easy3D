@@ -308,8 +308,8 @@ namespace easy3d {
             for (const auto& frame : keyframes_) {
                 std::vector<vec3> cam_points;
                 std::vector<unsigned int> cam_indices;
-                shape::create_camera(cam_points, cam_indices, camera_width, camera->fieldOfView(),
-                                      static_cast<float>(camera->screenHeight()) / static_cast<float>(camera->screenWidth()));
+                shape::create_camera(cam_points, cam_indices, camera_width, camera->field_of_view(),
+                                      static_cast<float>(camera->screen_height()) / static_cast<float>(camera->screen_width()));
                 unsigned int offset = static_cast<unsigned int>(points.size());
                 for (auto id : cam_indices)
                     indices.push_back(offset + id);

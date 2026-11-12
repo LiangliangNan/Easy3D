@@ -112,14 +112,14 @@ std::shared_ptr<EventViewer> host(bool validation) {
         o.device.sync_validation = validation;
         auto v = std::make_shared<EventViewer>("Portable events", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
-        v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
+        v->camera()->set_view_direction(vec3(0,0,-1)); v->camera()->set_up_vector(vec3(0,1,0));
         return v;
     }
 #else
     auto v = std::make_shared<EventViewer>("Portable events", 181, 151, 4);
     v->hide();
     v->set_usage("");
-    v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
+    v->camera()->set_view_direction(vec3(0,0,-1)); v->camera()->set_up_vector(vec3(0,1,0));
     return v;
 #endif
 }
@@ -174,25 +174,25 @@ void frames_and_input(bool validation) {
 
     v->consume=true;
     double px,py; glfwGetCursorPos(e.window,&px,&py);
-    const auto camera=v->camera()->modelViewProjectionMatrix();
+    const auto camera=v->camera()->model_view_projection_matrix();
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,Viewer::MODIF_SHIFT);
     require(v->mx==int(px) && v->my==int(py) && v->button_mods==Viewer::MODIF_SHIFT,"button event lost actual logical cursor/modifiers");
     e.cursor(e.window,30.75,40.25); e.cursor(e.window,33.75,44.25);
     require(v->mx==33 && v->my==44 && v->dx==3 && v->dy==4 && v->drags==2,"consumed drag coordinates/deltas changed");
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,0);
-    require(v->buttons==2 && same(camera,v->camera()->modelViewProjectionMatrix()),"consumed gesture moved builtin camera");
+    require(v->buttons==2 && same(camera,v->camera()->model_view_projection_matrix()),"consumed gesture moved builtin camera");
     // Cancel a builtin region zoom by consuming its release.
     v->consume=false; v->consume_release=true;
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,ViewerBase::MODIF_CTRL);
     e.cursor(e.window,70,80);
-    const auto zoom_camera=v->camera()->modelViewProjectionMatrix();
+    const auto zoom_camera=v->camera()->model_view_projection_matrix();
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,ViewerBase::MODIF_CTRL);
-    require(same(zoom_camera,v->camera()->modelViewProjectionMatrix()),"consumed release performed builtin zoom");
+    require(same(zoom_camera,v->camera()->model_view_projection_matrix()),"consumed release performed builtin zoom");
     v->consume_release=false;
-    const auto rotating=v->camera()->modelViewProjectionMatrix();
+    const auto rotating=v->camera()->model_view_projection_matrix();
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_PRESS,0);
-    e.cursor(e.window,80,80);bool moved=!same(rotating,v->camera()->modelViewProjectionMatrix());
-    e.cursor(e.window,86,84);moved=moved || !same(rotating,v->camera()->modelViewProjectionMatrix());
+    e.cursor(e.window,80,80);bool moved=!same(rotating,v->camera()->model_view_projection_matrix());
+    e.cursor(e.window,86,84);moved=moved || !same(rotating,v->camera()->model_view_projection_matrix());
     e.button(e.window,Viewer::BUTTON_LEFT,GLFW_RELEASE,0);
     require(moved,"default drag did not resume after a consumed release");
     v->consume=true;

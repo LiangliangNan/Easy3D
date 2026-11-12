@@ -65,7 +65,7 @@ namespace easy3d {
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The visible model at the cursor, or nullptr if the list is empty, the coordinate is out of bounds,
          *         or no visible drawable covers the pixel.
-         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         * \note The coordinate is in logical window units (camera()->screen_width()/Height()), not framebuffer pixels.
          *       On HiDPI displays the logical extent is smaller than the framebuffer by the DPI scaling factor.
          *       Null models and models without visible renderers are skipped. The method renders visible drawables
          *       with their model's unique ID into an offscreen target, then samples the

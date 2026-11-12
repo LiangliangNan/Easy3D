@@ -72,20 +72,20 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
     double aspectRatio = sub_w / static_cast<double>(sub_h);
     double newAspectRatio = w / static_cast<double>(h);
-    double zNear = camera()->zNear();
-    double zFar = camera()->zFar();
+    double zNear = camera()->z_near();
+    double zFar = camera()->z_far();
 
     float xMin = 0.0f, yMin = 0.0f;
     if (camera()->type() == Camera::PERSPECTIVE)
         if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio))) {
-            yMin = static_cast<float>(zNear * std::tan(camera()->fieldOfView() / 2.0));
+            yMin = static_cast<float>(zNear * std::tan(camera()->field_of_view() / 2.0));
             xMin = static_cast<float>(newAspectRatio * yMin);
         } else {
-            xMin = static_cast<float>(zNear * std::tan(camera()->fieldOfView() / 2.0) * aspectRatio);
+            xMin = static_cast<float>(zNear * std::tan(camera()->field_of_view() / 2.0) * aspectRatio);
             yMin = static_cast<float>(xMin / newAspectRatio);
         }
     else {
-        camera()->getOrthoWidthHeight(xMin, yMin);
+        camera()->get_ortho_width_height(xMin, yMin);
         if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio)))
             xMin = static_cast<float>(newAspectRatio * yMin);
         else
@@ -111,8 +111,8 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     if (nbY * sub_h < h) ++nbY;
 
     // remember the current projection matrix
-    // const mat4& proj_matrix = camera()->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
-    const mat4 proj_matrix = camera()->projectionMatrix();
+    // const mat4& proj_matrix = camera()->projection_matrix(); // Liangliang: This will definitely NOT work !!!
+    const mat4 proj_matrix = camera()->projection_matrix();
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
@@ -266,7 +266,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     if (original_height % 8)
         h = (original_height / 8 + 1) * 8;
     if (w != original_width || h != original_height)
-        camera_->setScreenWidthAndHeight(w, h);
+        camera_->set_screen_width_and_height(w, h);
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
@@ -304,8 +304,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         }
 #endif
 
-        camera_->setPosition(f.position());
-        camera_->setOrientation(f.orientation());
+        camera_->set_position(f.position());
+        camera_->set_orientation(f.orientation());
 
         // this very important (the progress bar may interfere the framebuffer)
         makeCurrent();
@@ -370,7 +370,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
     // restore the viewer size
     if (w != original_width || h != original_height) {
-        camera_->setScreenWidthAndHeight(original_width, original_height);
+        camera_->set_screen_width_and_height(original_width, original_height);
         update();
     }
 
@@ -401,7 +401,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     if (original_height % 8)
         h = (original_height / 8 + 1) * 8;
     if (w != original_width || h != original_height)
-        camera_->setScreenWidthAndHeight(w, h);
+        camera_->set_screen_width_and_height(w, h);
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
@@ -438,8 +438,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 #endif
 
         const auto &f = frames[frame_index];
-        camera_->setPosition(f.position());
-        camera_->setOrientation(f.orientation());
+        camera_->set_position(f.position());
+        camera_->set_orientation(f.orientation());
 
         // this very important (the progress bar may interfere the framebuffer)
         makeCurrent();
@@ -496,7 +496,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 
     // restore the viewer size
     if (w != original_width || h != original_height) {
-        camera_->setScreenWidthAndHeight(original_width, original_height);
+        camera_->set_screen_width_and_height(original_width, original_height);
         update();
     }
 

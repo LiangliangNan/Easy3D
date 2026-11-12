@@ -51,69 +51,74 @@ namespace easy3d {
 
 	/*! Default constructor.
 
-	 sceneCenter() is set to (0,0,0) and sceneRadius() is set to 1.0. type() is
-	 PERSPECTIVE, with a \c M_PI/4 fieldOfView().
-
-	 See IODistance(), physicalDistanceToScreen(), physicalScreenWidth() and
-	 focusDistance() documentations for default stereo parameter values. */
+	 scene_center() is (0,0,0), scene_radius() is 1.0 and type() is PERSPECTIVE with a
+	 \c M_PI/4 field_of_view(); the Camera looks along the +Y axis (set_view_direction())
+	 with Z up, then show_entire_scene() places it so that the unit scene is visible.
+	 screen_width()/screen_height() start at 600x400 and are replaced by the viewer's
+	 logical size as soon as the Camera is driven by a Viewer, and the stereo parameters
+	 of the original libQGLViewer Camera are not part of Easy3D. */
 	Camera::Camera()
 		: frame_(nullptr)
-		, fieldOfView_(static_cast<float>(M_PI / 4.0))
-		, modelViewMatrixIsUpToDate_(false)
-		, projectionMatrixIsUpToDate_(false)
+		, field_of_view_(static_cast<float>(M_PI / 4.0))
+		, model_view_matrix_is_up_to_date_(false)
+		, projection_matrix_is_up_to_date_(false)
 	{
-        interpolationKfi_ = new KeyFrameInterpolator;
-        setFrame(new ManipulatedCameraFrame());
+        interpolation_kfi_ = new KeyFrameInterpolator;
+        set_frame(new ManipulatedCameraFrame());
 
-		// Requires fieldOfView() to define focusDistance()
-		setSceneRadius(1.0f);
+		// Requires field_of_view(): the scene bounds below derive z_near()/z_far()
+		// and the orthographic scale from it.
+		set_scene_radius(1.0f);
 
 		// Initial value (only scaled after this)
-		orthoCoef_ = std::tan(fieldOfView() / 2.0f);
+		ortho_coef_ = std::tan(field_of_view() / 2.0f);
 
-		// Also defines the pivotPoint(), which changes orthoCoef_. Requires a
+		// Also defines the pivot_point(), which changes ortho_coef_. Requires a
 		// frame().
-		setSceneCenter(vec3(0.0f, 0.0f, 0.0f));
+		set_scene_center(vec3(0.0f, 0.0f, 0.0f));
 
-		// Requires fieldOfView() when called with ORTHOGRAPHIC. Attention to
-		// projectionMatrix_ below.
-		setType(PERSPECTIVE);
-		setViewDirection(vec3(0.0, 1.0, 0.0));
+		// Requires field_of_view() when called with ORTHOGRAPHIC. Attention to
+		// projection_matrix_ below.
+		set_type(PERSPECTIVE);
+		set_view_direction(vec3(0.0, 1.0, 0.0));
 
-		// #CONNECTION# initFromDOMElement default values
-		setZNearCoefficient(0.001f);
-		setZClippingCoefficient(std::sqrt(3.0f));
+		// #CONNECTION# keep these in sync with the defaults documented by
+		// z_near_coefficient() and z_clipping_coefficient().
+		set_z_near_coefficient(0.001f);
+		set_z_clipping_coefficient(std::sqrt(3.0f));
 
 		// Dummy values
-		setScreenWidthAndHeight(600, 400);
+		set_screen_width_and_height(600, 400);
 
-        modelViewMatrix_.load_identity();
-        projectionMatrix_.load_zero(); // computeProjectionMatrix() is lazy and assumes 0.0 everywhere
+        model_view_matrix_.load_identity();
+        projection_matrix_.load_zero(); // compute_projection_matrix() is lazy and assumes 0.0 everywhere
 
 		// position and orient the camera
-		showEntireScene();
+		show_entire_scene();
 	}
 
 	/*! Virtual destructor.
 
-	 The frame() is deleted, but the different keyframe_interpolator() are \e not
-	 deleted (in case they are shared). */
+	 The frame() and keyframe_interpolator() are deleted: the Camera created both in
+	 its constructors and owns them (the interpolator is never shared, and set_frame()
+	 rebinds it to the new frame). Note that the frame set_frame() \e replaces is not
+	 deleted, so delete the previous frame yourself when it is not shared. */
 	Camera::~Camera() {
 		delete frame_;
-        delete interpolationKfi_;
+        delete interpolation_kfi_;
 	}
 
 	/*! Copy constructor. Performs a deep copy using operator=(). */
 	Camera::Camera(const Camera &camera)
 		: frame_(nullptr)
 	{
-        interpolationKfi_ = new KeyFrameInterpolator;
+        interpolation_kfi_ = new KeyFrameInterpolator;
 
-        // Requires the interpolationKfi_
-		setFrame(new ManipulatedCameraFrame(*camera.frame()));
+        // Requires the interpolation_kfi_
+		set_frame(new ManipulatedCameraFrame(*camera.frame()));
 
-        modelViewMatrix_.load_identity();
-        projectionMatrix_.load_zero(); // computeProjectionMatrix() is lazy and assumes 0.0 everywhere
+        model_view_matrix_.load_identity();
+        projection_matrix_.load_zero(); // compute_projection_matrix() is lazy and assumes 0.0 everywhere
 
 		(*this) = camera;
 	}
@@ -124,39 +129,39 @@ namespace easy3d {
 	 modified, but its Frame::position() and Frame::orientation() are set to those
 	 of \p camera.
 
-	 \attention The Camera screenWidth() and screenHeight() are set to those of \p
+	 \attention The Camera screen_width() and screen_height() are set to those of \p
 	 camera. If your Camera is associated with a Viewer, you should update these
 	 value after the call to this method: \code
-	 *(camera()) = otherCamera;
-	 camera()->setScreenWidthAndHeight(width(), height());
+	 *(camera()) = other_camera;
+	 camera()->set_screen_width_and_height(width(), height());
 	 \endcode
-	 The same applies to sceneCenter() and sceneRadius(), if needed. */
+	 The same applies to scene_center() and scene_radius(), if needed. */
 	Camera &Camera::operator=(const Camera &camera) {
-		setScreenWidthAndHeight(camera.screenWidth(), camera.screenHeight());
-		setFieldOfView(camera.fieldOfView());
-		setSceneRadius(camera.sceneRadius());
-		setSceneCenter(camera.sceneCenter());
-		setZNearCoefficient(camera.zNearCoefficient());
-		setZClippingCoefficient(camera.zClippingCoefficient());
-		setType(camera.type());
+		set_screen_width_and_height(camera.screen_width(), camera.screen_height());
+		set_field_of_view(camera.field_of_view());
+		set_scene_radius(camera.scene_radius());
+		set_scene_center(camera.scene_center());
+		set_z_near_coefficient(camera.z_near_coefficient());
+		set_z_clipping_coefficient(camera.z_clipping_coefficient());
+		set_type(camera.type());
 
-		orthoCoef_ = camera.orthoCoef_;
-		projectionMatrixIsUpToDate_ = false;
+		ortho_coef_ = camera.ortho_coef_;
+		projection_matrix_is_up_to_date_ = false;
 
-		// frame_ and interpolationKfi_ pointers are not shared.
+		// frame_ and interpolation_kfi_ pointers are not shared.
 		frame_->setReferenceFrame(nullptr);
 		frame_->setPosition(camera.position());
 		frame_->setOrientation(camera.orientation());
 
-        interpolationKfi_->stop_interpolation();
+        interpolation_kfi_->stop_interpolation();
 
-		computeProjectionMatrix();
-		computeModelViewMatrix();
+		compute_projection_matrix();
+		compute_model_view_matrix();
 
 		return *this;
 	}
 
-	/*! Sets Camera screenWidth() and screenHeight() (expressed in pixels).
+	/*! Sets Camera screen_width() and screen_height() (expressed in pixels).
 
 	You should not call this method when the Camera is associated with a Viewer,
 	since the latter automatically updates these values when it is resized (hence
@@ -166,67 +171,68 @@ namespace easy3d {
 	frustum coherence.
 
 	If your Camera is used without a Viewer (offscreen rendering, shadow maps),
-	use setAspectRatio() instead to define the projection matrix. */
-	void Camera::setScreenWidthAndHeight(int width, int height) {
+	use set_aspect_ratio() instead to define the projection matrix. */
+	void Camera::set_screen_width_and_height(int width, int height) {
 		// Prevent negative and zero dimensions that would cause divisions by zero.
-		screenWidth_ = width > 0 ? width : 1;
-		screenHeight_ = height > 0 ? height : 1;
-		projectionMatrixIsUpToDate_ = false;
+		screen_width_ = width > 0 ? width : 1;
+		screen_height_ = height > 0 ? height : 1;
+		projection_matrix_is_up_to_date_ = false;
 	}
 
 	/*! Returns the near clipping plane distance used by the Camera projection
 	 matrix.
 
-	 The clipping planes' positions depend on the sceneRadius() and sceneCenter()
+	 The clipping planes' positions depend on the scene_radius() and scene_center()
 	 rather than being fixed small-enough and large-enough values. A good scene
 	 dimension approximation will hence result in an optimal precision of the
 	 z-buffer.
 
 	 The near clipping plane is positioned at a distance equal to
-	 zClippingCoefficient() * sceneRadius() in front of the sceneCenter(): \code
-	 zNear = distanceToSceneCenter() - zClippingCoefficient()*sceneRadius();
+	 z_clipping_coefficient() * scene_radius() in front of the scene_center(): \code
+	 z_near = distance_to_scene_center() - z_clipping_coefficient()*scene_radius();
 	 \endcode
 
-	 In order to prevent negative or too small zNear() values (which would degrade
-	 the z precision), zNearCoefficient() is used when the Camera is inside the
-	 sceneRadius() sphere: \code const double zMin = zNearCoefficient() *
-	 zClippingCoefficient() * sceneRadius(); if (zNear < zMin) zNear = zMin;
+	 In order to prevent negative or too small z_near() values (which would degrade
+	 the z precision), z_near_coefficient() is used when the Camera is inside the
+	 scene_radius() sphere: \code const double z_min = z_near_coefficient() *
+	 z_clipping_coefficient() * scene_radius(); if (z_near < z_min) z_near = z_min;
 	 // With an ORTHOGRAPHIC type, the value is simply clamped to 0.0
 	 \endcode
 
-	 See also the zFar(), zClippingCoefficient() and zNearCoefficient()
+	 See also the z_far(), z_clipping_coefficient() and z_near_coefficient()
 	 documentations.
 
-	 If you need a completely different zNear computation, overload the zNear() and
-	 zFar() methods in a new class that publicly inherits from Camera and use
-	 Viewer::setCamera():
+	 If you need a completely different z_near computation, overload the z_near() and
+	 z_far() (and, for an orthographic Camera, get_ortho_width_height()) methods in a
+	 new class that publicly inherits from Camera:
 	 \code
-	     class MyCamera :: public Camera
+	     class MyCamera : public Camera
          {
-           virtual double Camera::zNear() const { return 0.001; };
-           virtual double Camera::zFar() const { return 100.0; };
+           virtual float z_near() const { return 0.001f; };
+           virtual float z_far() const { return 100.0f; };
          }
 	 \endcode
 
-	 See the <a href="../examples/standardCamera.html">standardCamera example</a>
-	 for an application.
+	 Since a Viewer creates and owns its own Camera, such a subclass is used with a
+	 Camera you construct and drive yourself (see the Tutorial_205_RealCamera example,
+	 which configures a Camera from real intrinsic and extrinsic parameters).
 
 	 \attention The value is always positive although the clipping plane is
 	 positioned at a negative z value in the Camera coordinate system. This follows
 	 the \c gluPerspective standard. */
-	float Camera::zNear() const {
+	float Camera::z_near() const {
 #if 0 // standard camera
         return 0.001f;
 #else
-		const float zNearScene = zClippingCoefficient() * sceneRadius();
-		float z = distanceToSceneCenter() - zNearScene;
+		const float z_near_scene = z_clipping_coefficient() * scene_radius();
+		float z = distance_to_scene_center() - z_near_scene;
 
-		// Prevents negative or null zNear values.
-		const float zMin = zNearCoefficient() * zNearScene;
-		if (z < zMin)
+		// Prevents negative or null z_near values.
+		const float z_min = z_near_coefficient() * z_near_scene;
+		if (z < z_min)
 			switch (type()) {
 			case PERSPECTIVE:
-				z = zMin;
+				z = z_min;
 				break;
 			case ORTHOGRAPHIC:
 				z = 0.0;
@@ -240,55 +246,58 @@ namespace easy3d {
 	matrix.
 
 	The far clipping plane is positioned at a distance equal to
-	zClippingCoefficient() * sceneRadius() behind the sceneCenter(): \code zFar =
-	distanceToSceneCenter() + zClippingCoefficient()*sceneRadius(); \endcode
+	z_clipping_coefficient() * scene_radius() behind the scene_center(): \code z_far =
+	distance_to_scene_center() + z_clipping_coefficient()*scene_radius(); \endcode
 
-	See the zNear() documentation for details. */
-	float Camera::zFar() const {
+	See the z_near() documentation for details. */
+	float Camera::z_far() const {
 #if 0 // standard camera
         return 1000.0f;
 #else
-		return distanceToSceneCenter() + zClippingCoefficient() * sceneRadius();
+		return distance_to_scene_center() + z_clipping_coefficient() * scene_radius();
 #endif
 	}
 
-	/*! Sets the vertical fieldOfView() of the Camera (in radians).
+	/*! Sets the vertical field_of_view() of the Camera (in radians).
 
-	Note that focusDistance() is set to sceneRadius() / std::tan(fieldOfView()/2) by this
-	method. */
-	void Camera::setFieldOfView(float fov) {
-		fieldOfView_ = fov;
-		projectionMatrixIsUpToDate_ = false;
+	Only the vertical value is stored: horizontal_field_of_view() is derived from it
+	with aspect_ratio(), and set_horizontal_field_of_view() does the opposite. The
+	projection matrix is recomputed on the next query, and set_fov_to_fit_scene()
+	uses the same setter to make the whole scene fit vertically. */
+	void Camera::set_field_of_view(float fov) {
+		field_of_view_ = fov;
+		projection_matrix_is_up_to_date_ = false;
 	}
 
 	/*! Defines the Camera type().
 
 	Changing the camera Type alters the viewport and the objects' sizes can be
 	changed. This method guarantees that the two frustum match in a plane normal to
-	viewDirection(), passing through the pivotPoint().
+	view_direction(), passing through the pivot_point().
 
 	Prefix the type with \c Camera if needed, as in:
 	\code
-	    camera()->setType(ORTHOGRAPHIC);
+	    camera()->set_type(ORTHOGRAPHIC);
 	\endcode */
-	void Camera::setType(Type type) {
+	void Camera::set_type(Type type) {
 		// make ORTHOGRAPHIC frustum fit PERSPECTIVE (at least in plane normal to
-		// viewDirection(), passing through RAP). Done only when CHANGING type since
-		// orthoCoef_ may have been changed with a setPivotPoint() in the meantime.
+		// view_direction(), passing through RAP). Done only when CHANGING type since
+		// ortho_coef_ may have been changed with a set_pivot_point() in the meantime.
 		if ((type == ORTHOGRAPHIC) && (type_ == PERSPECTIVE))
-			orthoCoef_ = std::tan(fieldOfView() / 2.0f);
+			ortho_coef_ = std::tan(field_of_view() / 2.0f);
 		type_ = type;
-		projectionMatrixIsUpToDate_ = false;
+		projection_matrix_is_up_to_date_ = false;
 	}
 
 	/*! Sets the Camera frame().
 
-	If you want to move the Camera, use setPosition() and setOrientation() or one of
-	the Camera positioning methods (lookAt(), fitSphere(), showEntireScene()...)
+	If you want to move the Camera, use set_position() and set_orientation() or one of
+	the Camera positioning methods (look_at(), fit_sphere(), show_entire_scene()...)
 	instead.
 
 	If you want to save the Camera position(), there's no need to call this method
-	either. Use addKeyFrameToPath() and playPath() instead.
+	either. Use keyframe_interpolator() instead, e.g. add_keyframe() to record the
+	pose and start_interpolation() to replay it.
 
 	This method is actually mainly useful if you derive the ManipulatedFrame
 	class and want to use an instance of your new class to move the Camera.
@@ -296,12 +305,12 @@ namespace easy3d {
 	A \c NULL \p mcf pointer will silently be ignored. The calling method is
 	responsible for deleting the previous frame() pointer if needed in order to
 	prevent memory leaks. */
-	void Camera::setFrame(ManipulatedCameraFrame *const mcf) {
+	void Camera::set_frame(ManipulatedCameraFrame *const mcf) {
 		if (!mcf)
 			return;
 
 		frame_ = mcf;
-        interpolationKfi_->set_frame(frame());
+        interpolation_kfi_->set_frame(frame());
 
         easy3d::connect(&frame_->modified,  this,  &Camera::modified);
         // frame_->modified.connect(this, &Camera::modified); // this should also work
@@ -309,114 +318,118 @@ namespace easy3d {
         modified();
 	}
 
-	/*! Returns the distance from the Camera center to sceneCenter(), projected
-	  along the Camera Z axis. Used by zNear() and zFar() to optimize the Z range.
+	/*! Returns the distance from the Camera center to scene_center(), projected
+	  along the Camera Z axis. Used by z_near() and z_far() to optimize the Z range.
 	*/
-	float Camera::distanceToSceneCenter() const {
-		return std::fabs((frame()->coordinatesOf(sceneCenter())).z);
+	float Camera::distance_to_scene_center() const {
+		return std::fabs((frame()->coordinatesOf(scene_center())).z);
 	}
 
-	/*! Returns the \p halfWidth and \p halfHeight of the Camera orthographic
+	/*! Returns the \p half_width and \p half_height of the Camera orthographic
 	 frustum.
 
 	 These values are only valid and used when the Camera is of type()
-	 ORTHOGRAPHIC. They are expressed in OpenGL units and are used by
-	 loadProjectionMatrix() to define the projection matrix using: \code glOrtho(
-	 -halfWidth, halfWidth, -halfHeight, halfHeight, zNear(), zFar() ) \endcode
+	 ORTHOGRAPHIC. They are expressed in world units and are used by
+	 compute_projection_matrix() to define the projection matrix as an \c glOrtho(
+	 -half_width, half_width, -half_height, half_height, z_near(), z_far() ) would do.
 
 	 These values are proportional to the Camera (z projected) distance to the
-	 pivotPoint(). When zooming on the object, the Camera is translated forward \e
+	 pivot_point(). When zooming on the object, the Camera is translated forward \e
 	 and its frustum is narrowed, making the object appear bigger on screen, as
 	 intuitively expected.
 
-	 Overload this method to change this behavior if desired, as is done in the
-	 <a href="../examples/standardCamera.html">standardCamera example</a>. */
-	void Camera::getOrthoWidthHeight(float &halfWidth, float &halfHeight) const {
-		const float dist = orthoCoef_ * std::fabs(cameraCoordinatesOf(pivotPoint()).z);
-		//#CONNECTION# fitScreenRegion
-		halfWidth = dist * ((aspectRatio() < 1.0f) ? 1.0f : aspectRatio());
-		halfHeight = dist * ((aspectRatio() < 1.0f) ? 1.0f / aspectRatio() : 1.0f);
+	 This method is virtual: overload it (as well as z_near() and z_far()) to change
+	 this behavior if desired. */
+	void Camera::get_ortho_width_height(float &half_width, float &half_height) const {
+		const float dist = ortho_coef_ * std::fabs(camera_coordinates_of(pivot_point()).z);
+		//#CONNECTION# fit_screen_region
+		half_width = dist * ((aspect_ratio() < 1.0f) ? 1.0f : aspect_ratio());
+		half_height = dist * ((aspect_ratio() < 1.0f) ? 1.0f / aspect_ratio() : 1.0f);
 	}
 
 	/*! Computes the projection matrix associated with the Camera.
 
 	 If type() is PERSPECTIVE, defines a \c GL_PROJECTION matrix similar to
-	 what would \c gluPerspective() do using the fieldOfView(), window
-	 aspectRatio(), zNear() and zFar() parameters.
+	 what would \c gluPerspective() do using the field_of_view(), window
+	 aspect_ratio(), z_near() and z_far() parameters.
 
 	 If type() is ORTHOGRAPHIC, the projection matrix is as what \c
 	 glOrtho() would do. Frustum's width and height are set using
-	 getOrthoWidthHeight().
+	 get_ortho_width_height().
 
-	 Both types use zNear() and zFar() to place clipping planes. These values are
-	 determined from sceneRadius() and sceneCenter() so that they best fit the scene
+	 Both types use z_near() and z_far() to place clipping planes. These values are
+	 determined from scene_radius() and scene_center() so that they best fit the scene
 	 size.
 
-	 Use getProjectionMatrix() to retrieve this matrix. Overload
-	 loadProjectionMatrix() if you want your Camera to use an exotic projection
-	 matrix.
+	 Use projection_matrix() to retrieve this matrix. That accessor (and
+	 model_view_projection_matrix()) calls this method itself, so you only need to
+	 call it explicitly to force an immediate recomputation. Overriding the virtual
+	 z_near(), z_far() and get_ortho_width_height() is usually enough to get an exotic
+	 frustum; override this method, or install a matrix with set_projection_matrix(),
+	 if you want to define the matrix as a whole.
 
-	 \note You must call this method if your Camera is not associated with a
-	 Viewer and is used for off screen computations (using
-	 (un)projectedCoordinatesOf() for instance). loadProjectionMatrix() does it
-	 otherwise. */
-	void Camera::computeProjectionMatrix()
+	 \note A Camera used on its own, without a Viewer (offscreen rendering, shadow
+	 maps, (un)projected_coordinates_of() computations), needs no explicit call: the
+	 accessors recompute on demand. Only set_projection_matrix() bypasses this
+	 mechanism, and it is cleared by the next parameter change. */
+	void Camera::compute_projection_matrix()
 	{
-		if (projectionMatrixIsUpToDate_)
+		if (projection_matrix_is_up_to_date_)
 			return;
 
-		const float ZNear = zNear();
-		const float ZFar = zFar();
+		const float ZNear = z_near();
+		const float ZFar = z_far();
 
 		switch (type())
 		{
 		case PERSPECTIVE:
 		{
 			// #CONNECTION# all non-null coefficients were set to 0.0 in constructor.
-			const float f = 1.0f / std::tan(fieldOfView() / 2.0f);
-			projectionMatrix_[0] = f / aspectRatio();
-			projectionMatrix_[5] = f;
-			projectionMatrix_[10] = (ZNear + ZFar) / (ZNear - ZFar);
-			projectionMatrix_[11] = -1.0f;
-			projectionMatrix_[14] = 2.0f * ZNear * ZFar / (ZNear - ZFar);
-			projectionMatrix_[15] = 0.0f;
-			// same as gluPerspective( 180.0*fieldOfView()/M_PI, aspectRatio(), zNear(), zFar() );
+			const float f = 1.0f / std::tan(field_of_view() / 2.0f);
+			projection_matrix_[0] = f / aspect_ratio();
+			projection_matrix_[5] = f;
+			projection_matrix_[10] = (ZNear + ZFar) / (ZNear - ZFar);
+			projection_matrix_[11] = -1.0f;
+			projection_matrix_[14] = 2.0f * ZNear * ZFar / (ZNear - ZFar);
+			projection_matrix_[15] = 0.0f;
+			// same as gluPerspective( 180.0*field_of_view()/M_PI, aspect_ratio(), z_near(), z_far() );
 			break;
 		}
 		case ORTHOGRAPHIC:
 		{
 			float w, h;
-			getOrthoWidthHeight(w, h);
-			projectionMatrix_[0] = 1.0f / w;
-			projectionMatrix_[5] = 1.0f / h;
-			projectionMatrix_[10] = -2.0f / (ZFar - ZNear);
-			projectionMatrix_[11] = 0.0f;
-			projectionMatrix_[14] = -(ZFar + ZNear) / (ZFar - ZNear);
-			projectionMatrix_[15] = 1.0f;
-			// same as glOrtho( -w, w, -h, h, zNear(), zFar() );
+			get_ortho_width_height(w, h);
+			projection_matrix_[0] = 1.0f / w;
+			projection_matrix_[5] = 1.0f / h;
+			projection_matrix_[10] = -2.0f / (ZFar - ZNear);
+			projection_matrix_[11] = 0.0f;
+			projection_matrix_[14] = -(ZFar + ZNear) / (ZFar - ZNear);
+			projection_matrix_[15] = 1.0f;
+			// same as glOrtho( -w, w, -h, h, z_near(), z_far() );
 			break;
 		}
 		}
 
-		projectionMatrixIsUpToDate_ = true;
+		projection_matrix_is_up_to_date_ = true;
 	}
 
-	/*! Computes the modelView matrix associated with the Camera's position() and
+	/*! Computes the model_view matrix associated with the Camera's position() and
 	 orientation().
 
 	 This matrix converts from the world coordinates system to the Camera
 	 coordinates system, so that coordinates can then be projected on screen using
-	 the projection matrix (see computeProjectionMatrix()).
+	 the projection matrix (see compute_projection_matrix()).
 
-	 Use getModelViewMatrix() to retrieve this matrix.
+	 Use model_view_matrix() to retrieve this matrix.
 
-	 \note You must call this method if your Camera is not associated with a
-	 Viewer and is used for offscreen computations (using
-	 (un)projectedCoordinatesOf() for instance). loadModelViewMatrix() does it
-	 otherwise. */
-	void Camera::computeModelViewMatrix()
+	 \note The matrix is recomputed on demand by model_view_matrix() and
+	 model_view_projection_matrix(), so a Camera used without a Viewer (offscreen
+	 rendering, coordinate conversions) needs no explicit call. Only
+	 set_model_view_matrix() bypasses this mechanism: it installs the matrix as-is and
+	 the next pose change discards it. */
+	void Camera::compute_model_view_matrix()
 	{
-		if (modelViewMatrixIsUpToDate_)
+		if (model_view_matrix_is_up_to_date_)
 			return;
 
 		const quat q = orientation();
@@ -434,334 +447,355 @@ namespace easy3d {
 
 		const float q23 = 2.0f * q[2] * q[3];
 
-		modelViewMatrix_[0] = 1.0f - q11 - q22;
-		modelViewMatrix_[1] = q01 - q23;
-		modelViewMatrix_[2] = q02 + q13;
-		modelViewMatrix_[3] = 0.0f;
+		model_view_matrix_[0] = 1.0f - q11 - q22;
+		model_view_matrix_[1] = q01 - q23;
+		model_view_matrix_[2] = q02 + q13;
+		model_view_matrix_[3] = 0.0f;
 
-		modelViewMatrix_[4] = q01 + q23;
-		modelViewMatrix_[5] = 1.0f - q22 - q00;
-		modelViewMatrix_[6] = q12 - q03;
-		modelViewMatrix_[7] = 0.0f;
+		model_view_matrix_[4] = q01 + q23;
+		model_view_matrix_[5] = 1.0f - q22 - q00;
+		model_view_matrix_[6] = q12 - q03;
+		model_view_matrix_[7] = 0.0f;
 
-		modelViewMatrix_[8] = q02 - q13;
-		modelViewMatrix_[9] = q12 + q03;
-		modelViewMatrix_[10] = 1.0f - q11 - q00;
-		modelViewMatrix_[11] = 0.0;
+		model_view_matrix_[8] = q02 - q13;
+		model_view_matrix_[9] = q12 + q03;
+		model_view_matrix_[10] = 1.0f - q11 - q00;
+		model_view_matrix_[11] = 0.0;
 
 		const vec3 t = q.inverse_rotate(position());
 
-		modelViewMatrix_[12] = -t.x;
-		modelViewMatrix_[13] = -t.y;
-		modelViewMatrix_[14] = -t.z;
-		modelViewMatrix_[15] = 1.0;
+		model_view_matrix_[12] = -t.x;
+		model_view_matrix_[13] = -t.y;
+		model_view_matrix_[14] = -t.z;
+		model_view_matrix_[15] = 1.0;
 
-		modelViewMatrixIsUpToDate_ = true;
+		model_view_matrix_is_up_to_date_ = true;
 	}
 
-	/*! Fills \p m with the Camera projection matrix values.
+	/*! Returns the Camera projection matrix.
 
-	 Based on computeProjectionMatrix() to make sure the Camera projection matrix is
+	 Based on compute_projection_matrix() to make sure the Camera projection matrix is
 	 up to date.
 
-	 This matrix only reflects the Camera's internal parameters and it may differ
-	 from the \c GL_PROJECTION matrix retrieved using \c
-	 glGetDoublev(GL_PROJECTION_MATRIX, m). It actually represents the state of the
-	 \c GL_PROJECTION after Viewer::preDraw(), at the beginning of
-	 Viewer::draw(). If you modified the \c GL_PROJECTION matrix (for instance
-	 using Viewer::startScreenCoordinatesSystem()), the two results differ.
+	 This matrix only reflects the Camera's internal parameters. It is the matrix the
+	 backends bind for drawing (see the per-drawable matrices computed by
+	 Drawable::draw and the picking code), so it may differ from a projection matrix
+	 that a rendering pass installed itself, e.g. the one used while
+	 set_projection_matrix() was in effect or the one of a shadow-map pass.
 
-	 The result is an OpenGL 4x4 matrix, which is given in \e column-major order
-	 (see \c glMultMatrix man page for details).
+	 The matrix is OpenGL-style: right-handed camera space looking along \c -Z, with
+	 clip coordinates mapped to the [-1, 1] x [-1, 1] x [-1, 1] cube. Only the Camera
+	 is described here; the window origin and the pixel size of the render target
+	 belong to the Viewer, which converts with world_to_window()/window_to_world()
+	 (see also projected_coordinates_of()/unprojected_coordinates_of() here and
+	 transform::project()/unproject() below). Prefer those over multiplying by this
+	 matrix by hand: they behave the same on both backends.
 
-	 See also getModelViewMatrix() and setFromProjectionMatrix(). */
-	const mat4& Camera::projectionMatrix() const
+	 The matrix is stored in \e column-major order (see mat4 for details).
+
+	 See also model_view_matrix() and set_projection_matrix(). */
+	const mat4& Camera::projection_matrix() const
 	{
 		// May not be needed, but easier like this.
-		const_cast<Camera*>(this)->computeProjectionMatrix();
-		return projectionMatrix_;
+		const_cast<Camera*>(this)->compute_projection_matrix();
+		return projection_matrix_;
 	}
 
-	/*! Fills \p m with the Camera modelView matrix values.
+	/*! Returns the Camera model view matrix.
 
-	 First calls computeModelViewMatrix() to define the Camera modelView matrix.
+	 First calls compute_model_view_matrix() to define the Camera model view matrix.
 
-	 Note that this matrix may \e not be the one you would get from a \c
-	 glGetDoublev(GL_MODELVIEW_MATRIX, m). It actually represents the state of the
-	 \c GL_MODELVIEW after Viewer::preDraw(), at the \e beginning of
-	 Viewer::draw(). It converts from the world to the Camera coordinate system.
-	 As soon as you modify the \c GL_MODELVIEW in your Viewer::draw() method
-	 (using glTranslate, glRotate... or similar methods), the two matrices differ.
+	 The returned matrix is the pure Camera pose: it converts from the world to the
+	 Camera coordinate system, before any per-drawable manipulated matrix is applied
+	 (Drawable::manipulated_matrix() is what extra local transform a drawable adds).
+	 Because the Camera holds no OpenGL state, this is exactly the matrix the backends
+	 use, and it does not change when a render pass pushes and pops its own transforms.
 
-	 The result is an OpenGL 4x4 matrix, which is given in \e column-major order
-	 (see \c glMultMatrix man page for details).
+	 The matrix is stored in \e column-major order (see mat4 for details).
 
-	 See also getProjectionMatrix() and setFromModelViewMatrix(). */
-	const mat4& Camera::modelViewMatrix() const
+	 See also projection_matrix(), model_view_projection_matrix() and
+	 set_from_model_view_matrix(). */
+	const mat4& Camera::model_view_matrix() const
 	{
 		// May not be needed, but easier like this.
-		const_cast<Camera*>(this)->computeModelViewMatrix();
-		return modelViewMatrix_;
+		const_cast<Camera*>(this)->compute_model_view_matrix();
+		return model_view_matrix_;
 	}
 
 
-	/*! Fills \p m with the product of the ModelView and Projection matrices.
+	/*! Returns the product of the projection and the model view matrices.
 
-	  Calls getModelViewMatrix() and getProjectionMatrix() and then fills \p m with
-	  the product of these two matrices. */
-	mat4 Camera::modelViewProjectionMatrix() const {
-		return projectionMatrix() * modelViewMatrix();
+	  Calls projection_matrix() and model_view_matrix() (which recompute both caches
+	  on demand) and returns their product, i.e. the matrix that maps world
+	  coordinates to clip coordinates. This is the matrix used by
+	  transform::project()/unproject() and by the backends when they bind a drawable. */
+	mat4 Camera::model_view_projection_matrix() const {
+		return projection_matrix() * model_view_matrix();
 	}
 
 	// -----------------------------------------------------------------
 	// Change the matrices directly. This is useful if you want to temporally
 	// change the view, e.g., grabbing a large snapshot from the framebuffer...
 	void Camera::set_projection_matrix(const mat4& proj) {
-		projectionMatrix_ = proj;
+		projection_matrix_ = proj;
 	}
 
 
-	void Camera::set_modelview_matrix(const mat4& mv) {
-		modelViewMatrix_ = mv;
+	void Camera::set_model_view_matrix(const mat4& mv) {
+		model_view_matrix_ = mv;
 	}
 
-	/*! Sets the sceneRadius() value. Negative values are ignored.
+	/*! Sets the scene_radius() value. Invalid (non positive or near zero) values are
+	ignored, with an error message.
 
-	\attention This methods also sets focusDistance() to sceneRadius() /
-	std::tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
-	void Camera::setSceneRadius(float radius) {
+	\attention The radius also sizes the clipping planes (see z_near() and z_far())
+	and the eye distance computed by show_entire_scene(), so the cached projection
+	matrix is invalidated. No other Camera state is derived from it. */
+	void Camera::set_scene_radius(float radius) {
 		if (radius <= epsilon<float>()) {
 			LOG(ERROR) << "Scene radius must be positive (value is: " << radius << ")";
 			return;
 		}
 
-		sceneRadius_ = radius;
-		projectionMatrixIsUpToDate_ = false;
+		scene_radius_ = radius;
+		projection_matrix_is_up_to_date_ = false;
 	}
 
-	/*! Similar to setSceneRadius() and setSceneCenter(), but the scene limits are
+	/*! Similar to set_scene_radius() and set_scene_center(), but the scene limits are
 	  defined by a (world axis aligned) bounding box. */
-	void Camera::setSceneBoundingBox(const vec3 &min, const vec3 &max) {
-		setSceneCenter((min + max) / 2.0f);
-		setSceneRadius(0.5f * (max - min).norm());
+	void Camera::set_scene_bounding_box(const vec3 &min, const vec3 &max) {
+		set_scene_center((min + max) / 2.0f);
+		set_scene_radius(0.5f * (max - min).norm());
 	}
 
-	/*! Sets the sceneCenter().
+	/*! Sets the scene_center().
 
-	 \attention This method also sets the pivotPoint() to sceneCenter(). */
-	void Camera::setSceneCenter(const vec3 &center) {
-		sceneCenter_ = center;
-		setPivotPoint(sceneCenter());
-		projectionMatrixIsUpToDate_ = false;
+	 \attention This method also sets the pivot_point() to scene_center(). */
+	void Camera::set_scene_center(const vec3 &center) {
+		scene_center_ = center;
+		set_pivot_point(scene_center());
+		projection_matrix_is_up_to_date_ = false;
 	}
 
 
-	/*! Changes the pivotPoint() to \p point (defined in the world coordinate
+	/*! Changes the pivot_point() to \p point (defined in the world coordinate
 	 * system). */
-	void Camera::setPivotPoint(const vec3 &point) {
-		const float prevDist = std::fabs(cameraCoordinatesOf(pivotPoint()).z);
+	void Camera::set_pivot_point(const vec3 &point) {
+		const float prev_dist = std::fabs(camera_coordinates_of(pivot_point()).z);
 
-		// If frame's RAP is set directly, projectionMatrixIsUpToDate_ should also be
+		// If frame's RAP is set directly, projection_matrix_is_up_to_date_ should also be
 		// set to 'false' to ensure proper re-computation of the ORTHO projection matrix.
 		frame()->setPivotPoint(point);
 
-		// orthoCoef_ is used to compensate for changes of the pivotPoint, so that the
-		// image does not change when the pivotPoint is changed in ORTHOGRAPHIC mode.
-		const float newDist = std::fabs(cameraCoordinatesOf(pivotPoint()).z);
+		// ortho_coef_ is used to compensate for changes of the pivot_point, so that the
+		// image does not change when the pivot_point is changed in ORTHOGRAPHIC mode.
+		const float new_dist = std::fabs(camera_coordinates_of(pivot_point()).z);
 		// Prevents division by zero when rap is set to camera position
-		if ((prevDist > 1E-9) && (newDist > 1E-9))
-			orthoCoef_ *= prevDist / newDist;
-		projectionMatrixIsUpToDate_ = false;
+		if ((prev_dist > 1E-9) && (new_dist > 1E-9))
+			ortho_coef_ *= prev_dist / new_dist;
+		projection_matrix_is_up_to_date_ = false;
 	}
 
 	/*! Returns the world length that projects to one logical screen pixel at \p position.
 
 	 A line of \c n * world_pixel_ratio() world units, located at \p position in the
 	 world coordinates system, will be projected with a length of \c n logical
-	 pixels on screen (DPI-independent; screenHeight() is logical on both backends).
+	 pixels on screen (DPI-independent; screen_height() is logical on both backends).
 
 	 Use this method to scale objects so that they have a constant logical pixel size
 	 on screen. The following code will draw a 20 logical pixel line, starting at
-	 sceneCenter() and always directed along the screen vertical direction: \code
+	 scene_center() and always directed along the screen vertical direction: \code
 	 glBegin(GL_LINES);
-	 glVertex3fv(sceneCenter());
-	 glVertex3fv(sceneCenter() + 20 * world_pixel_ratio(sceneCenter()) *
-	 camera()->upVector()); glEnd(); \endcode */
+	 glVertex3fv(scene_center());
+	 glVertex3fv(scene_center() + 20 * world_pixel_ratio(scene_center()) *
+	 camera()->up_vector()); glEnd(); \endcode */
 	float Camera::world_pixel_ratio(const vec3 &position) const {
 		switch (type()) {
 		case PERSPECTIVE:
 			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
-				std::tan(fieldOfView() / 2.0f) / static_cast<float>(screenHeight());
+				std::tan(field_of_view() / 2.0f) / static_cast<float>(screen_height());
 		case ORTHOGRAPHIC: {
 			float w(0), h(0);
-			getOrthoWidthHeight(w, h);
-			return 2.0f * h / static_cast<float>(screenHeight());
+			get_ortho_width_height(w, h);
+			return 2.0f * h / static_cast<float>(screen_height());
 		}
 		}
 		// Bad compilers complain
 		return 1.0f;
 	}
 
-	/*! Changes the Camera fieldOfView() so that the entire scene (defined by
-	 Viewer::sceneCenter() and Viewer::sceneRadius()) is visible from the
+	/*! Changes the Camera field_of_view() so that the entire scene (defined by
+	 scene_center() and scene_radius()) is visible from the
 	 Camera position().
 
 	 The position() and orientation() of the Camera are not modified and you first
-	 have to orientate the Camera in order to actually see the scene (see lookAt(),
-	 showEntireScene() or fitSphere()).
+	 have to orientate the Camera in order to actually see the scene (see look_at(),
+	 show_entire_scene() or fit_sphere()).
 
 	 This method is especially useful for \e shadow \e maps computation. Use the
-	 Camera positioning tools (setPosition(), lookAt()) to position a Camera at the
-	 light position. Then use this method to define the fieldOfView() so that the
+	 Camera positioning tools (set_position(), look_at()) to position a Camera at the
+	 light position. Then use this method to define the field_of_view() so that the
 	 shadow map resolution is optimally used: \code
-	 // The light camera needs size hints in order to optimize its fieldOfView
-	 lightCamera->setSceneRadius(sceneRadius());
-	 lightCamera->setSceneCenter(sceneCenter());
+	 // The light camera needs size hints in order to optimize its field_of_view
+	 light_camera->set_scene_radius(scene_radius());
+	 light_camera->set_scene_center(scene_center());
 
 	 // Place the light camera.
-	 lightCamera->setPosition(lightFrame->position());
-	 lightCamera->lookAt(sceneCenter());
-	 lightCamera->setFOVToFitScene();
+	 light_camera->set_position(light_frame->position());
+	 light_camera->look_at(scene_center());
+	 light_camera->set_fov_to_fit_scene();
 	 \endcode
 
-	 See the (soon available) shadowMap contribution example for a practical
-	 implementation.
+	 The snippet above is the typical use: a light Camera that shares the scene
+	 bounds of the main Camera, so that its frustum covers exactly the geometry to be
+	 shadowed.
 
-	 \attention The fieldOfView() is clamped to M_PI/2.0. This happens when the
-	 Camera is at a distance lower than std::sqrt(2.0) * sceneRadius() from the
-	 sceneCenter(). It optimizes the shadow map resolution, although it may miss
+	 \attention The field_of_view() is clamped to M_PI/2.0. This happens when the
+	 Camera is at a distance lower than std::sqrt(2.0) * scene_radius() from the
+	 scene_center(). It optimizes the shadow map resolution, although it may miss
 	 some parts of the scene. */
-	void Camera::setFOVToFitScene() {
-		if (distanceToSceneCenter() > std::sqrt(2.0f) * sceneRadius())
-			setFieldOfView(2.0f * std::asin(sceneRadius() / distanceToSceneCenter()));
+	void Camera::set_fov_to_fit_scene() {
+		if (distance_to_scene_center() > std::sqrt(2.0f) * scene_radius())
+			set_field_of_view(2.0f * std::asin(scene_radius() / distance_to_scene_center()));
 		else
-			setFieldOfView(static_cast<float>(M_PI) / 2.0f);
+			set_field_of_view(static_cast<float>(M_PI) / 2.0f);
 	}
 
-    /*! Makes the Camera smoothly zoom on a visible 3D point \p p.
-     See also interpolateToFitScene(). */
-    void Camera::interpolateToLookAt(const vec3 &p) {
+    /*! Makes the Camera smoothly move towards and look at the 3D point \p p.
+
+     The end pose places the eye nine tenths of the way from the current
+     position() towards \p p and oriented by look_at(), i.e. with \p p projected in
+     the center of the window. The eye already being close to \p p keeps the
+     rotation needed to face it small, which makes the move read as a zoom rather
+     than as a turn. The interpolation takes half a second and replaces any
+     interpolation in progress.
+
+     See also interpolate_to_fit_scene() and look_at(). */
+    void Camera::interpolate_to_look_at(const vec3 &p) {
         const float coef = 0.1f;
         const vec3& pos = coef*frame()->position() + (1.0f-coef)*p;
         const quat& ori = frame()->orientation();
 
-        ManipulatedCameraFrame tempFrame;
+        ManipulatedCameraFrame temp_frame;
 
 #if 1 // Move the POI to screen center
-        // Small hack: attach a temporary frame to take advantage of lookAt without
+        // Small hack: attach a temporary frame to take advantage of look_at without
         // modifying frame
-        ManipulatedCameraFrame *const originalFrame = frame();
-        tempFrame.setPositionAndOrientation(pos, ori);
-        setFrame(&tempFrame);
-        lookAt(p);
-        setFrame(originalFrame);
+        ManipulatedCameraFrame *const original_frame = frame();
+        temp_frame.setPositionAndOrientation(pos, ori);
+        set_frame(&temp_frame);
+        look_at(p);
+        set_frame(original_frame);
 #else
-        tempFrame.setPositionAndOrientation(pos, ori);
+        temp_frame.setPositionAndOrientation(pos, ori);
 #endif
-        interpolateTo(&tempFrame, 0.5);
+        interpolate_to(&temp_frame, 0.5);
     }
 
-    /*! Interpolates the Camera on a one second KeyFrameInterpolator path so that
+    /*! Interpolates the Camera along a half second KeyFrameInterpolator path so that
      the entire scene fits the screen at the end.
 
-     The scene is defined by its sceneCenter() and its sceneRadius(). See
-     showEntireScene().
+     The scene is defined by its scene_center() and its scene_radius(). See
+     show_entire_scene(), which computes the end pose; like it, this method only
+     translates the Camera, so the orientation() is preserved.
 
-     The orientation() of the Camera is not modified. See also
-     interpolateToZoomOnPixel(). */
-    void Camera::interpolateToFitScene() {
-        // Small hack: attach a temporary frame to take advantage of lookAt without
+     See also interpolate_to_look_at(). */
+    void Camera::interpolate_to_fit_scene() {
+        // Small hack: attach a temporary frame to take advantage of look_at without
         // modifying frame
-        ManipulatedCameraFrame tempFrame;
-        ManipulatedCameraFrame *const originalFrame = frame();
-        tempFrame.setPosition(frame()->position());
-        tempFrame.setOrientation(frame()->orientation());
-        setFrame(&tempFrame);
-        showEntireScene();
-        setFrame(originalFrame);
+        ManipulatedCameraFrame temp_frame;
+        ManipulatedCameraFrame *const original_frame = frame();
+        temp_frame.setPosition(frame()->position());
+        temp_frame.setOrientation(frame()->orientation());
+        set_frame(&temp_frame);
+        show_entire_scene();
+        set_frame(original_frame);
 
-        interpolateTo(&tempFrame, 0.5);
+        interpolate_to(&temp_frame, 0.5);
     }
 
     /*! Smoothly interpolates the Camera on a KeyFrameInterpolator path so that it
       goes to \p fr.
 
-      \p fr is expressed in world coordinates. \p duration tunes the interpolation
-      speed (default is 1 second).
+      \p fr is expressed in world coordinates. \p duration is the time (in seconds)
+      the move takes. The current Camera pose is recorded as the first keyframe and
+      \p fr as the keyframe at \p duration, so the path always has two keyframes:
+      keyframe_interpolator()->delete_path() is called first and any interpolation
+      in progress is stopped.
 
-      See also interpolateToFitScene() and interpolateToZoomOnPixel(). */
-    void Camera::interpolateTo(const Frame *fr, float duration) {
-        if (interpolationKfi_->is_interpolation_started())
-            interpolationKfi_->stop_interpolation();
+      See also interpolate_to_look_at() and interpolate_to_fit_scene(). */
+    void Camera::interpolate_to(const Frame *fr, float duration) {
+        if (interpolation_kfi_->is_interpolation_started())
+            interpolation_kfi_->stop_interpolation();
 
-        interpolationKfi_->delete_path();
-        interpolationKfi_->add_keyframe(*frame());
-        interpolationKfi_->add_keyframe(*fr, duration);
-        interpolationKfi_->start_interpolation();
+        interpolation_kfi_->delete_path();
+        interpolation_kfi_->add_keyframe(*frame());
+        interpolation_kfi_->add_keyframe(*fr, duration);
+        interpolation_kfi_->start_interpolation();
     }
 
 
 	/*! Moves the Camera so that the entire scene is visible.
 
-	 Simply calls fitSphere() on a sphere defined by sceneCenter() and
-	 sceneRadius().
+	 Simply calls fit_sphere() on a sphere defined by scene_center() and
+	 scene_radius().
 
 	 You will typically use this method in Viewer::init() after you defined a new
-	 sceneRadius(). */
-	void Camera::showEntireScene() const { fitSphere(sceneCenter(), sceneRadius()); }
+	 scene_radius(). */
+	void Camera::show_entire_scene() const { fit_sphere(scene_center(), scene_radius()); }
 
-	/*! Moves the Camera so that its sceneCenter() is projected on the center of the
-	 window. The orientation() and fieldOfView() are unchanged.
+	/*! Moves the Camera so that its scene_center() is projected on the center of the
+	 window. The orientation() and field_of_view() are unchanged.
 
-	 Simply projects the current position on a line passing through sceneCenter().
-	 See also showEntireScene().*/
-	void Camera::centerScene() const {
-		frame()->projectOnLine(sceneCenter(), viewDirection());
+	 Simply projects the current position on a line passing through scene_center().
+	 See also show_entire_scene().*/
+	void Camera::center_scene() const {
+		frame()->projectOnLine(scene_center(), view_direction());
 	}
 
 	/*! Sets the Camera orientation(), so that it looks at point \p target (defined
 	 in the world coordinate system).
 
-	 The Camera position() is not modified. Simply setViewDirection().
+	 The Camera position() is not modified. Simply set_view_direction().
 
-	 See also setUpVector(), setOrientation(), showEntireScene(), fitSphere() and
-	 fitBoundingBox(). */
-	void Camera::lookAt(const vec3 &target) const {
-		setViewDirection(target - position());
+	 See also set_up_vector(), set_orientation(), show_entire_scene(), fit_sphere() and
+	 fit_bounding_box(). */
+	void Camera::look_at(const vec3 &target) const {
+		set_view_direction(target - position());
 	}
 
 	/*! Moves the Camera so that the sphere defined by (\p center, \p radius) is
 	 visible and fits in the frustum.
 
 	 The Camera is simply translated to center the sphere in the screen and make it
-	 fit the frustum. Its orientation() and its fieldOfView() are unchanged.
+	 fit the frustum. Its orientation() and its field_of_view() are unchanged.
 
 	 You should therefore orientate the Camera before you call this method. See
-	 lookAt(), setOrientation() and setUpVector(). */
-	void Camera::fitSphere(const vec3 &center, float radius) const {
+	 look_at(), set_orientation() and set_up_vector(). */
+	void Camera::fit_sphere(const vec3 &center, float radius) const {
 		float distance = 0.0f;
 		switch (type()) {
 		case PERSPECTIVE: {
-			const float yview = radius / std::sin(fieldOfView() / 2.0f);
-			const float xview = radius / std::sin(horizontalFieldOfView() / 2.0f);
+			const float yview = radius / std::sin(field_of_view() / 2.0f);
+			const float xview = radius / std::sin(horizontal_field_of_view() / 2.0f);
 			distance = std::max(xview, yview);
 			break;
 		}
 		case ORTHOGRAPHIC: {
-			distance = dot((center - pivotPoint()), viewDirection()) + (radius / orthoCoef_);
+			distance = dot((center - pivot_point()), view_direction()) + (radius / ortho_coef_);
 			break;
 		}
 		}
-		vec3 newPos(center - distance * viewDirection());
-		frame()->setPositionWithConstraint(newPos);
+		vec3 new_pos(center - distance * view_direction());
+		frame()->setPositionWithConstraint(new_pos);
 	}
 
 	/*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
-	  max) is entirely visible, using fitSphere(). */
-	void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) const {
+	  max) is entirely visible, using fit_sphere(). */
+	void Camera::fit_bounding_box(const vec3 &min, const vec3 &max) const {
         const float radius = distance(min, max) * 0.5f;
         const vec3& center = 0.5f * (min + max);
-        fitSphere(center, radius);
+        fit_sphere(center, radius);
 	}
 
 	/*! Moves the Camera so that the rectangular screen region defined by \p
@@ -770,79 +804,79 @@ namespace easy3d {
 	  The Camera is translated (its orientation() is unchanged) so that \p rectangle
 	  is entirely visible. Since the pixel coordinates only define a \e frustum in
 	  3D, it's the intersection of this frustum with a plane (orthogonal to the
-	  viewDirection() and passing through the sceneCenter()) that is used to define
+	  view_direction() and passing through the scene_center()) that is used to define
 	  the 3D rectangle that is eventually fitted. */
-	void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) const {
+	void Camera::fit_screen_region(int xmin, int ymin, int xmax, int ymax) const {
         if (xmin == xmax || ymin == ymax)
             return;
 
-		const vec3& vd = viewDirection();
-		const float distToPlane = distanceToSceneCenter();
+		const vec3& vd = view_direction();
+		const float dist_to_plane = distance_to_scene_center();
 		int cx = static_cast<int>((xmin + xmax) * 0.5);
 		int cy = static_cast<int>((ymin + ymax) * 0.5);
 
 		vec3 orig, dir;
-		convertClickToLine(cx, cy, orig, dir);
-		const vec3& newCenter = orig + distToPlane / dot(dir, vd) * dir;
+		convert_click_to_line(cx, cy, orig, dir);
+		const vec3& new_center = orig + dist_to_plane / dot(dir, vd) * dir;
 
-		convertClickToLine(xmin, cy, orig, dir);
-		const vec3& pointX = orig + distToPlane / dot(dir, vd) * dir;
+		convert_click_to_line(xmin, cy, orig, dir);
+		const vec3& point_x = orig + dist_to_plane / dot(dir, vd) * dir;
 
-		convertClickToLine(cx, ymin, orig, dir);
-		const vec3& pointY = orig + distToPlane / dot(dir, vd) * dir;
+		convert_click_to_line(cx, ymin, orig, dir);
+		const vec3& point_y = orig + dist_to_plane / dot(dir, vd) * dir;
 
 		float distance = 0.0f;
 		switch (type()) {
 		case PERSPECTIVE: {
-			const float distX =
-				(pointX - newCenter).norm() / std::sin(horizontalFieldOfView() / 2.0f);
-			const float distY = (pointY - newCenter).norm() / std::sin(fieldOfView() / 2.0f);
-			distance = std::max(distX, distY);
+			const float dist_x =
+				(point_x - new_center).norm() / std::sin(horizontal_field_of_view() / 2.0f);
+			const float dist_y = (point_y - new_center).norm() / std::sin(field_of_view() / 2.0f);
+			distance = std::max(dist_x, dist_y);
 			break;
 		}
 		case ORTHOGRAPHIC: {
-			const float dist = dot((newCenter - pivotPoint()), vd);
-			//#CONNECTION# getOrthoWidthHeight
-			const float distX = (pointX - newCenter).norm() / orthoCoef_ /
-				((aspectRatio() < 1.0f) ? 1.0f : aspectRatio());
-			const float distY = (pointY - newCenter).norm() / orthoCoef_ /
-				((aspectRatio() < 1.0f) ? 1.0f / aspectRatio() : 1.0f);
-			distance = dist + std::max(distX, distY);
+			const float dist = dot((new_center - pivot_point()), vd);
+			//#CONNECTION# get_ortho_width_height
+			const float dist_x = (point_x - new_center).norm() / ortho_coef_ /
+				((aspect_ratio() < 1.0f) ? 1.0f : aspect_ratio());
+			const float dist_y = (point_y - new_center).norm() / ortho_coef_ /
+				((aspect_ratio() < 1.0f) ? 1.0f / aspect_ratio() : 1.0f);
+			distance = dist + std::max(dist_x, dist_y);
 			break;
 		}
 		}
 
-		vec3 newPos(newCenter - distance * vd);
-		frame()->setPositionWithConstraint(newPos);
+		vec3 new_pos(new_center - distance * vd);
+		frame()->setPositionWithConstraint(new_pos);
 	}
 
-	/*! Rotates the Camera so that its upVector() becomes \p up (defined in the
+	/*! Rotates the Camera so that its up_vector() becomes \p up (defined in the
 	 world coordinate system).
 
 	 The Camera is rotated around an axis orthogonal to \p up and to the current
-	 upVector() direction. Use this method in order to define the Camera horizontal
+	 up_vector() direction. Use this method in order to define the Camera horizontal
 	 plane.
 
-	 When \p noMove is set to \c false, the orientation modification is compensated
-	 by a translation, so that the pivotPoint() stays projected at the same position
+	 When \p no_move is set to \c false, the orientation modification is compensated
+	 by a translation, so that the pivot_point() stays projected at the same position
 	 on screen. This is especially useful when the Camera is used as an observer of
 	 the scene (default mouse binding).
 
-	 When \p noMove is \c true (default), the Camera position() is left unchanged,
-	 which is an intuitive behavior when the Camera is in a walk-through fly mode
-	 (see the Viewer::MOVE_FORWARD and Viewer::MOVE_BACKWARD
-	 Viewer::MouseAction).
+	 When \p no_move is \c true (default), the Camera position() is left unchanged,
+	 which is the intuitive behavior in a walk-through mode: the Camera turns in
+	 place instead of re-framing the pivot point.
 
-	 The frame()'s ManipulatedFrame::sceneUpVector() is set accordingly.
+	 The rotation is applied to frame(), so up_vector() (which is derived from the
+	 Camera orientation()) now returns \p up.
 
-	 See also setViewDirection(), lookAt() and setOrientation(). */
-	void Camera::setUpVector(const vec3 &up, bool noMove) const {
+	 See also set_view_direction(), look_at() and set_orientation(). */
+	void Camera::set_up_vector(const vec3 &up, bool no_move) const {
 		quat q(vec3(0.0, 1.0, 0.0), frame()->transformOf(up));
 
-		if (!noMove)
-			frame()->setPosition(pivotPoint() -
+		if (!no_move)
+			frame()->setPosition(pivot_point() -
 			(frame()->orientation() * q)
-				.rotate(frame()->coordinatesOf(pivotPoint())));
+				.rotate(frame()->coordinatesOf(pivot_point())));
 
 		frame()->rotate(q);
 	}
@@ -854,78 +888,79 @@ namespace easy3d {
 	 system: \p theta = \p phi = 0 means that the Camera is directed towards the
 	 world Z axis. Both angles are expressed in radians.
 
-	 See also setUpVector(). The position() of the Camera is unchanged, you may want
-	 to call showEntireScene() after this method to move the Camera.
+	 See also set_up_vector(). The position() of the Camera is unchanged, you may want
+	 to call show_entire_scene() after this method to move the Camera.
 
-	 This method can be useful to create Quicktime VR panoramic sequences, see the
-	 Viewer::saveSnapshot() documentation for details. */
-	void Camera::setOrientation(float theta, float phi) const {
+	 This method can be useful to render a panoramic sequence: sweep \p theta (and
+	 optionally \p phi), drawing and grabbing a frame after each step, e.g. with
+	 Viewer::capture(). */
+	void Camera::set_orientation(float theta, float phi) const {
 		vec3 axis(0.0f, 1.0f, 0.0f);
 		const quat rot1(axis, theta);
 		axis = vec3(-std::cos(theta), 0.0f, std::sin(theta));
 		const quat rot2(axis, phi);
-		setOrientation(rot1 * rot2);
+		set_orientation(rot1 * rot2);
 	}
 
 	/*! Sets the Camera orientation(), defined in the world coordinate system. */
-	void Camera::setOrientation(const quat &q) const {
+	void Camera::set_orientation(const quat &q) const {
 		frame()->setOrientation(q);
 	}
 
-	/*! Rotates the Camera so that its viewDirection() is \p direction (defined in
+	/*! Rotates the Camera so that its view_direction() is \p direction (defined in
 	 the world coordinate system).
 
 	 The Camera position() is not modified. The Camera is rotated so that the
-	 horizon (defined by its upVector()) is preserved. See also lookAt() and
-	 setUpVector(). */
-	void Camera::setViewDirection(const vec3 &direction) const {
+	 horizon (defined by its up_vector()) is preserved. See also look_at() and
+	 set_up_vector(). */
+	void Camera::set_view_direction(const vec3 &direction) const {
 		if (direction.length2() < 1E-10)
 			return;
 
-		vec3 xAxis = cross(direction, upVector());
-		if (xAxis.length2() < 1E-10)
+		vec3 x_axis = cross(direction, up_vector());
+		if (x_axis.length2() < 1E-10)
 		{
-			// target is aligned with upVector, this means a rotation around the X axis.
+			// target is aligned with up_vector, this means a rotation around the X axis.
 			// the X axis is then unchanged, let's keep it !
-			xAxis = frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
+			x_axis = frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
 		}
 
 		quat q;
-		q.set_from_rotated_basis(xAxis, cross(xAxis, direction), -direction);
+		q.set_from_rotated_basis(x_axis, cross(x_axis, direction), -direction);
 		frame()->setOrientationWithConstraint(q);
 	}
 
 	/*! Returns the Camera position (the eye), defined in the world coordinate
 	system.
 
-	Use setPosition() to set the Camera position. Other convenient methods are
-	showEntireScene() or fitSphere(). Actually returns \c frame()->position().
+	Use set_position() to set the Camera position. Other convenient methods are
+	show_entire_scene() or fit_sphere(). Actually returns \c frame()->position().
 
 	This position corresponds to the projection center of a PERSPECTIVE
-	Camera. It is not located in the image plane, which is at a zNear() distance
+	Camera. It is not located in the image plane, which is at a z_near() distance
 	ahead. */
 	vec3 Camera::position() const { return frame()->position(); }
 
 	/*! Returns the normalized up vector of the Camera, defined in the world
 	coordinate system.
 
-	Set using setUpVector() or setOrientation(). It is orthogonal to viewDirection()
-	and to rightVector().
+	Set using set_up_vector() or set_orientation(). It is orthogonal to view_direction()
+	and to right_vector().
 
 	It corresponds to the Y axis of the associated frame() (actually returns
 	frame()->inverseTransformOf(vec3(0.0, 1.0, 0.0)) ). */
-	vec3 Camera::upVector() const {
+	vec3 Camera::up_vector() const {
 		return frame()->inverseTransformOf(vec3(0.0, 1.0, 0.0));
 	}
 	/*! Returns the normalized view direction of the Camera, defined in the world
 	coordinate system.
 
-	Change this value using setViewDirection(), lookAt() or setOrientation(). It is
-	orthogonal to upVector() and to rightVector().
+	Change this value using set_view_direction(), look_at() or set_orientation(). It is
+	orthogonal to up_vector() and to right_vector().
 
 	This corresponds to the negative Z axis of the frame() (
 	frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)) ). */
-	vec3 Camera::viewDirection() const {
+	vec3 Camera::view_direction() const {
 		return frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0));
 	}
 
@@ -933,64 +968,66 @@ namespace easy3d {
 	coordinate system.
 
 	This vector lies in the Camera horizontal plane, directed along the X axis
-	(orthogonal to upVector() and to viewDirection()). Set using setUpVector(),
-	lookAt() or setOrientation().
+	(orthogonal to up_vector() and to view_direction()). Set using set_up_vector(),
+	look_at() or set_orientation().
 
 	Simply returns frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0)). */
-	vec3 Camera::rightVector() const {
+	vec3 Camera::right_vector() const {
 		return frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
 	}
 
 	/*! Returns the Camera orientation, defined in the world coordinate system.
 
-	Actually returns \c frame()->orientation(). Use setOrientation(), setUpVector()
-	or lookAt() to set the Camera orientation. */
+	Actually returns \c frame()->orientation(). Use set_orientation(), set_up_vector()
+	or look_at() to set the Camera orientation. */
 	quat Camera::orientation() const { return frame()->orientation(); }
 
 	/*! Sets the Camera position() (the eye), defined in the world coordinate
 	 * system. */
-	void Camera::setPosition(const vec3 &pos) const { frame()->setPosition(pos); }
+	void Camera::set_position(const vec3 &pos) const { frame()->setPosition(pos); }
 
 	/*! Returns the Camera frame coordinates of a point \p src defined in world
 	coordinates.
 
-	worldCoordinatesOf() performs the inverse transformation.
+	world_coordinates_of() performs the inverse transformation.
 
 	Note that the point coordinates are simply converted in a different coordinate
-	system. They are not projected on screen. Use projectedCoordinatesOf() for that.
+	system. They are not projected on screen. Use projected_coordinates_of() for that.
 	*/
-	vec3 Camera::cameraCoordinatesOf(const vec3 &src) const {
+	vec3 Camera::camera_coordinates_of(const vec3 &src) const {
 		return frame()->coordinatesOf(src);
 	}
 
 	/*! Returns the world coordinates of the point whose position \p src is defined
 	in the Camera coordinate system.
 
-	cameraCoordinatesOf() performs the inverse transformation. */
-	vec3 Camera::worldCoordinatesOf(const vec3 &src) const {
+	camera_coordinates_of() performs the inverse transformation. */
+	vec3 Camera::world_coordinates_of(const vec3 &src) const {
 		return frame()->inverseCoordinatesOf(src);
 	}
 
-	/*! The point the Camera pivots around with the Viewer::ROTATE mouse binding.
-	Defined in world coordinate system.
+	/*! The point the Camera pivots around when the view is rotated with the mouse
+	(ManipulatedCameraFrame::action_rotate()). Defined in the world coordinate system.
 
-	Default value is the sceneCenter().
+	Default value is the scene_center().
 
-	\attention setSceneCenter() changes this value. */
-	vec3 Camera::pivotPoint() const { return frame()->pivotPoint(); }
+	\attention set_scene_center() changes this value. */
+	vec3 Camera::pivot_point() const { return frame()->pivotPoint(); }
 
 
 	void Camera::set_from_model_view_matrix(const mat4& mv) const
 	{
-		// Get upper left (rotation) matrix
+		// The upper-left 3x3 block of a rigid model view matrix is the rotation
 		mat3 rot(mv);
 
-		// Transform upperLeft into the associated float
+		// Express it as the equivalent quaternion
 		quat q;
 		q.set_from_rotation_matrix(rot);
 
-		setOrientation(q);
-		setPosition(-q.rotate(vec3(mv(0, 3), mv(1, 3), mv(2, 3))));
+		set_orientation(q);
+		// The last column is the Camera position expressed in the Camera CS, so undo
+		// the rotation to get it back in world coordinates.
+		set_position(-q.rotate(vec3(mv(0, 3), mv(1, 3), mv(2, 3))));
 	}
 
 
@@ -1004,7 +1041,7 @@ namespace easy3d {
 #if 0
         const quat q(inverse(R));  // the inverse rotation represented by a quaternion
         if (convert)
-            setOrientation(q);  // this already includes the conversion
+            set_orientation(q);  // this already includes the conversion
         else {
             /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
             ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
@@ -1012,10 +1049,10 @@ namespace easy3d {
             mat3 flip(1.0);
             flip(1, 1) = -1;   // invert the Y axis
             flip(2, 2) = -1;   // invert the Z axis
-            setOrientation(quat(flip) * q);
+            set_orientation(quat(flip) * q);
         }
 
-        setPosition(-q.rotate(t));    // camera position: -inverse(rot) * t
+        set_position(-q.rotate(t));    // camera position: -inverse(rot) * t
 
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
         // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820
@@ -1025,7 +1062,7 @@ namespace easy3d {
         //const float proj11 = 2.0f * fy / image_height; // this will be more accurate
         
         const float fov = 2.0f * std::atan(1.0f / proj11);
-        setFieldOfView(fov);
+        set_field_of_view(fov);
 
 #else
 
@@ -1068,10 +1105,10 @@ namespace easy3d {
     }
 
 
-	/*! Defines the Camera position(), orientation() and fieldOfView() from a
-	 projection matrix.
+	/*! Defines the Camera position(), orientation() and field_of_view() from a
+	 calibration/projection matrix.
 
-	 \p matrix has to be given in the format used by vision algorithm. It has 3
+	 \p proj has to be given in the format used by vision algorithms. It has 3
 	 lines and 4 columns. It transforms a point from the world homogeneous
 	 coordinate system (4 coordinates: \c sx, \c sy, \c sz and \c s) into a point in
 	 the screen homogeneous coordinate system (3 coordinates: \c sx, \c sy, and \c
@@ -1080,14 +1117,15 @@ namespace easy3d {
 	 Its three lines correspond to the homogeneous coordinates of the normals to the
 	 planes x=0, y=0 and z=0, defined in the Camera coordinate system.
 
-	 \attention Passing the result of getProjectionMatrix() or getModelViewMatrix()
-	 to this method is not possible (purposefully incompatible matrix dimensions).
-	 \p matrix is more likely to be the product of these two matrices, without the
-	 last line.
+	 \attention Passing the result of projection_matrix() or model_view_matrix() to
+	 this method is not possible (purposefully incompatible matrix dimensions).
+	 \p proj is more likely to be the product of these two matrices, without the last
+	 line, i.e. the usual \c K * \c [R | t] decomposition of a calibrated camera.
 
-	 Use setFromModelViewMatrix() to set position() and orientation() from a \c
-	 GL_MODELVIEW matrix. fieldOfView() can also be retrieved from a \e perspective
-	 \c GL_PROJECTION matrix using 2.0 * std::atan(1.0/projectionMatrix[5]).
+	 Use set_from_model_view_matrix() to set position() and orientation() from a
+	 model view matrix. field_of_view() can also be retrieved from a \e perspective
+	 projection matrix using 2.0 * std::atan(1.0/projection_matrix[5]) -- which is
+	 what the \c fy / \c cy entries of \p proj amount to here, see the notes below.
 
 	 This code was written by Sylvain Paris. Modified and bug fixed by Liangliang Nan.
 	 */
@@ -1168,9 +1206,9 @@ namespace easy3d {
 		// We set the camera.
 		quat q;
 		q.set_from_rotation_matrix(rot);
-		setOrientation(q);
-		setPosition(cam_pos);
-		setFieldOfView(fov);
+		set_orientation(q);
+		set_position(cam_pos);
+		set_field_of_view(fov);
 	}
 
 
@@ -1185,14 +1223,14 @@ namespace easy3d {
 	 with world_to_window() and picking on both backends.
 
 	 Only the intrinsic Camera matrices and screen size are used; no graphics-context
-	 state is read. For an offscreen Camera, update the matrices first with
-	 computeModelViewMatrix() and computeProjectionMatrix().
+	 state is read, so an offscreen Camera only needs its screen_width()/screen_height()
+	 and its pose: the matrices are recomputed on demand.
 
-	 unprojectedCoordinatesOf() performs the inverse transformation. */
-    vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
-        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
+	 unprojected_coordinates_of() performs the inverse transformation. */
+    vec3 Camera::projected_coordinates_of(const vec3 &src, const Frame *frame) const {
+        const int viewport[] = {0, 0, screen_width_, screen_height_};
         return transform::project(frame ? frame->inverseCoordinatesOf(src) : src,
-                                  modelViewProjectionMatrix(), viewport, false);
+                                  model_view_projection_matrix(), viewport, false);
     }
 
 	/*! Returns the world unprojected coordinates of a point \p src defined in the
@@ -1206,57 +1244,60 @@ namespace easy3d {
 	 transform::unproject(). For repeated queries with unchanged matrices, reuse a
 	 precomputed inverse via transform::unproject_inverse().
 
-	 projectedCoordinatesOf() performs the inverse transformation. */
-    vec3 Camera::unprojectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
-        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
-        const vec3 point = transform::unproject(src, modelViewProjectionMatrix(), viewport, false);
+	 projected_coordinates_of() performs the inverse transformation. */
+    vec3 Camera::unprojected_coordinates_of(const vec3 &src, const Frame *frame) const {
+        const int viewport[] = {0, 0, screen_width_, screen_height_};
+        const vec3 point = transform::unproject(src, model_view_projection_matrix(), viewport, false);
         return frame ? frame->coordinatesOf(point) : point;
     }
 
 
-    void Camera::convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const {
-        const int viewport[] = {0, 0, screenWidth_, screenHeight_};
-        const mat4 inv = transform::checked_inverse(modelViewProjectionMatrix());
+    void Camera::convert_click_to_line(int x, int y, vec3 &orig, vec3 &dir) const {
+        const int viewport[] = {0, 0, screen_width_, screen_height_};
+        const mat4 inv = transform::checked_inverse(model_view_projection_matrix());
         const vec3 near = transform::unproject_inverse(vec3(float(x), float(y), 0), inv, viewport, false);
         const vec3 inside = transform::unproject_inverse(vec3(float(x), float(y), .5f), inv, viewport, false);
         dir = normalize(inside - near);
         if (type() == PERSPECTIVE)
             orig = position();
         else
-            orig = near + dir * (dot(position() - near, viewDirection()) / dot(dir, viewDirection()));
+            orig = near + dir * (dot(position() - near, view_direction()) / dot(dir, view_direction()));
     }
 
 
 	/*! Returns the 6 plane equations of the Camera frustum.
 
-	The six 4-component vectors of \p coef respectively correspond to the left,
-	right, near, far, top and bottom Camera frustum planes. Each vector holds a
-	plane equation of the form: \code a*x + b*y + c*z + d = 0 \endcode where \c a,
-	\c b, \c c and \c d are the 4 components of each vector, in that order.
+	 \p coef is filled with six 4-component vectors, in order: left, right, near,
+	 far, top and bottom. The first three components are a unit normal pointing
+	 \e out of the frustum and the fourth is the offset of the plane, so \c p lies on
+	 the plane when \code a*p.x + b*p.y + c*p.z = d \endcode, and the frustum
+	 interior is where the left-hand side is \e smaller than \c d for all six planes:
+	 \code
+	 bool inside = true;
+	 for (int i = 0; i < 6 && inside; ++i)
+	 inside = (coef[i][0]*p.x + coef[i][1]*p.y + coef[i][2]*p.z - coef[i][3]) <= 0.0f;
+	 \endcode
+	 This is the test to use for frustum culling (a bounding sphere of radius \c r
+	 around \c p is outside as soon as the left-hand side exceeds \c r for one plane).
 
-	See the <a href="../examples/frustumCulling.html">frustumCulling example</a> for
-	an application.
+	 \attention The 4th component is \e not the \c d of the homogeneous equation
+	 \c a*x+b*y+c*z+d = 0 (that form, with inward normals, is what
+	 get_frustum_planes_coefficients2() returns). To install one of these planes as a
+	 \c glClipPlane() clipping plane, which keeps the half-space where the homogeneous
+	 equation is positive, negate the normal: \c {-coef[i][0], -coef[i][1],
+	 -coef[i][2], coef[i][3]}.
 
-	This format is compatible with the \c glClipPlane() function. One camera frustum
-	plane can hence be applied in an other viewer to visualize the culling results:
-	\code
-	 // Retrieve plane equations
-	 double coef[6][4];
-	 mainViewer->camera()->getFrustumPlanesCoefficients(coef);
-
-	 // These two additional clipping planes (which must have been enabled)
-	 // will reproduce the mainViewer's near and far clipping.
-	 glClipPlane(GL_CLIP_PLANE0, coef[2]);
-	 glClipPlane(GL_CLIP_PLANE1, coef[3]);
-	\endcode */
-	void Camera::getFrustumPlanesCoefficients(float coef[6][4]) const
+	 Planes are defined in the world coordinate system and are computed from the
+	 Camera parameters directly (see get_frustum_planes_coefficients2() for the
+	 version derived from the model view projection matrix). */
+	void Camera::get_frustum_planes_coefficients(float coef[6][4]) const
 	{
 		// Computed once and for all
 		const vec3 pos = position();
-		const vec3 viewDir = viewDirection();
-		const vec3 up = upVector();
-		const vec3 right = rightVector();
-		const float posViewDir = dot(pos, viewDir);
+		const vec3 view_dir = view_direction();
+		const vec3 up = up_vector();
+		const vec3 right = right_vector();
+		const float pos_view_dir = dot(pos, view_dir);
 
 		static vec3 normal[6];
 		static float dist[6];
@@ -1265,20 +1306,20 @@ namespace easy3d {
 		{
 		case PERSPECTIVE:
 		{
-			const float hhfov = horizontalFieldOfView() / 2.0f;
+			const float hhfov = horizontal_field_of_view() / 2.0f;
 			const float chhfov = std::cos(hhfov);
 			const float shhfov = std::sin(hhfov);
-			normal[0] = -shhfov * viewDir;
+			normal[0] = -shhfov * view_dir;
 			normal[1] = normal[0] + chhfov * right;
 			normal[0] = normal[0] - chhfov * right;
 
-			normal[2] = -viewDir;
-			normal[3] = viewDir;
+			normal[2] = -view_dir;
+			normal[3] = view_dir;
 
-			const float hfov = fieldOfView() / 2.0f;
+			const float hfov = field_of_view() / 2.0f;
 			const float chfov = std::cos(hfov);
 			const float shfov = std::sin(hfov);
-			normal[4] = -shfov * viewDir;
+			normal[4] = -shfov * view_dir;
 			normal[5] = normal[4] - chfov * up;
 			normal[4] = normal[4] + chfov * up;
 
@@ -1289,18 +1330,18 @@ namespace easy3d {
 
 			// Natural equations are:
 			// dist[0,1,4,5] = pos * normal[0,1,4,5];
-			// dist[2] = (pos + zNear() * viewDir) * normal[2];
-			// dist[3] = (pos + zFar()  * viewDir) * normal[3];
+			// dist[2] = (pos + z_near() * view_dir) * normal[2];
+			// dist[3] = (pos + z_far()  * view_dir) * normal[3];
 
 			// 2 times less computation using expanded/merged equations. Dir vectors are normalized.
-			const float posRightCosHH = chhfov * dot(pos, right);
-			dist[0] = -shhfov * posViewDir;
-			dist[1] = dist[0] + posRightCosHH;
-			dist[0] = dist[0] - posRightCosHH;
-			const float posUpCosH = chfov * dot(pos, up);
-			dist[4] = -shfov * posViewDir;
-			dist[5] = dist[4] - posUpCosH;
-			dist[4] = dist[4] + posUpCosH;
+			const float pos_right_cos_hh = chhfov * dot(pos, right);
+			dist[0] = -shhfov * pos_view_dir;
+			dist[1] = dist[0] + pos_right_cos_hh;
+			dist[0] = dist[0] - pos_right_cos_hh;
+			const float pos_up_cos_h = chfov * dot(pos, up);
+			dist[4] = -shfov * pos_view_dir;
+			dist[5] = dist[4] - pos_up_cos_h;
+			dist[4] = dist[4] + pos_up_cos_h;
 
 			break;
 		}
@@ -1311,7 +1352,7 @@ namespace easy3d {
 			normal[5] = -up;
 
 			float hw, hh;
-			getOrthoWidthHeight(hw, hh);
+			get_ortho_width_height(hw, hh);
 			dist[0] = dot((pos - hw * right), normal[0]);
 			dist[1] = dot((pos + hw * right), normal[1]);
 			dist[4] = dot((pos + hh * up), normal[4]);
@@ -1320,10 +1361,10 @@ namespace easy3d {
 		}
 
 		// Front and far planes are identical for both camera types.
-		normal[2] = -viewDir;
-		normal[3] = viewDir;
-		dist[2] = -posViewDir - zNear();
-		dist[3] = posViewDir + zFar();
+		normal[2] = -view_dir;
+		normal[3] = view_dir;
+		dist[2] = -pos_view_dir - z_near();
+		dist[3] = pos_view_dir + z_far();
 
 		for (int i = 0; i < 6; ++i)
 		{
@@ -1335,15 +1376,22 @@ namespace easy3d {
 	}
 
 
-	/**
-	 * Returns the 6 plane equations of the Camera frustum. This is another implementation of getFrustumPlanesCoefficients(...).
-	 */
-	void Camera::getFrustumPlanesCoefficients2(float frustum[6][4]) const
+	/*! Returns the 6 plane equations of the Camera frustum.
+
+	 This is an other implementation of get_frustum_planes_coefficients(...): the
+	 planes are extracted from the model view projection matrix (the classic
+	 Gribb-Hartmann combination of its rows) instead of being built from the Camera
+	 vectors, and they are returned in the homogeneous form \code a*x + b*y + c*z + d
+	 = 0 \endcode with \e inward normals, so that a point inside the frustum gives a
+	 positive left-hand side for the six planes. The planes themselves are the same
+	 (see the \attention note of get_frustum_planes_coefficients() about the
+	 components of \p coef). */
+	void Camera::get_frustum_planes_coefficients2(float frustum[6][4]) const
 	{
         // First, let's assume that we're going to store the frustum values in a variable like this:
         // float frustum[6][4];
         // That's six sets of four numbers (six planes, each with an A, B, C, and D value).
-		const mat4& clip = modelViewProjectionMatrix();
+		const mat4& clip = model_view_projection_matrix();
 
 		/* Extract the numbers for the LEFT plane */
 		frustum[0][0] = clip[3] + clip[0];
@@ -1426,8 +1474,8 @@ namespace easy3d {
 
 
     void Camera::modified() {
-		projectionMatrixIsUpToDate_ = false;
-		modelViewMatrixIsUpToDate_ = false;
+		projection_matrix_is_up_to_date_ = false;
+		model_view_matrix_is_up_to_date_ = false;
         frame_modified.send();
 	}
 

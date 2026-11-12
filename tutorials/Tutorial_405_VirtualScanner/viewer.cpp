@@ -48,7 +48,7 @@ TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title) : Viewe
         "press 'Space' to perform scanning\n"
         "press 'n' to toggle Gaussian noise";
     // Keep the world's "up" aligned with +Y so scans are captured in a natural orientation.
-    camera()->setUpVector(easy3d::vec3(0, 1, 0));
+    camera()->set_up_vector(easy3d::vec3(0, 1, 0));
 }
 
 // 'n' toggles sensor noise; 'space' performs the virtual scan. Other keys go to the base Viewer.
@@ -64,7 +64,7 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         if (w <= 0 || h <= 0)
             return true;
         // Rendering maps world -> screen via the MVP; back-projection needs the inverse.
-        const auto inv = inverse(camera()->modelViewProjectionMatrix());
+        const auto inv = inverse(camera()->model_view_projection_matrix());
         // Render the scene off screen and read back color, depth, and object IDs. The depth
         // buffer already contains only the nearest (visible) surface — exactly what a range
         // scanner measures. samples() requests the viewer's multisampling for the color.
@@ -96,15 +96,15 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         // Optionally imitate sensor noise: zero-mean Gaussian perturbation with a standard
         // deviation scaled to the scene size, so it stays subtle regardless of model scale.
         if (add_noise_)
-            easy3d::GaussianNoise::apply(cloud.get(), camera()->sceneRadius() * .0001f);
+            easy3d::GaussianNoise::apply(cloud.get(), camera()->scene_radius() * .0001f);
         // Keep the complete acquisition camera state, including its pivot.
         // Model attachment may fit the scene; retain the acquisition camera.
         // Adding a model can re-fit the scene and move the camera; we save the exact view
         // used for the scan and restore it afterwards so repeated scans stay aligned.
         Camera saved(*camera());
-        saved.frame()->setPivotPoint(camera()->pivotPoint());
-        saved.set_projection_matrix(camera()->projectionMatrix());
-        saved.set_modelview_matrix(camera()->modelViewMatrix());
+        saved.frame()->setPivotPoint(camera()->pivot_point());
+        saved.set_projection_matrix(camera()->projection_matrix());
+        saved.set_model_view_matrix(camera()->model_view_matrix());
         // The clipping plane is also tied to the scene bounds; remember its center/radius.
         const auto *plane = ClippingPlane::instance();
         const auto center = plane->center();
@@ -112,9 +112,9 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         add_model(cloud);
         ClippingPlane::instance()->fit_scene(center, radius);
         *camera() = saved;
-        camera()->frame()->setPivotPoint(saved.pivotPoint());
-        camera()->set_projection_matrix(saved.projectionMatrix());
-        camera()->set_modelview_matrix(saved.modelViewMatrix());
+        camera()->frame()->setPivotPoint(saved.pivot_point());
+        camera()->set_projection_matrix(saved.projection_matrix());
+        camera()->set_model_view_matrix(saved.model_view_matrix());
         update();
         return true;
     }

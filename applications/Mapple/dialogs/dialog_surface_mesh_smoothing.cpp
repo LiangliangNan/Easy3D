@@ -89,7 +89,7 @@ void DialogSurfaceMeshSmoothing::apply() {
 
         // only re-scale if we don't have a (fixed) boundary
         const bool rescale = !has_boundary;
-        const float scene_radius = viewer_->camera()->sceneRadius();
+        const float scene_radius = viewer_->camera()->scene_radius();
         const float dt = uniform_laplace ? timestep : timestep * scene_radius * scene_radius;
         smoother.implicit_smoothing(dt, uniform_laplace, rescale);
     }

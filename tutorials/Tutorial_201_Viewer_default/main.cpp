@@ -56,7 +56,7 @@
  * - initialize(): bootstraps the library (logging, resource paths, ...); call it once first.
  * - Viewer: the interactive window. add_model() loads a file and takes ownership of the model;
  *   run() starts the event/render loop.
- * - Camera: obtained via Viewer::camera(). setViewDirection() and setUpVector() orient it.
+ * - Camera: obtained via Viewer::camera(). set_view_direction() and set_up_vector() orient it.
  * - resource::directory(): the path to Easy3D's bundled sample data.
  *
  * <b>Running it</b>
@@ -80,8 +80,8 @@ int main(int argc, char **argv) {
     Viewer viewer(EXAMPLE_TITLE);
 
     // Orient the camera to a standard front view: look along -Z with +Y pointing up.
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
 
     // Load the model into the viewer (which takes ownership). add_model() returns nullptr
     // on failure, so we bail out with an error message if the file is missing or invalid.

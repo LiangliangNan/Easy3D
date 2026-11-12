@@ -93,8 +93,8 @@ namespace easy3d {
 #endif
 
     void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        gl_x = transform::pixel_index(x, camera()->screenWidth(), width);
-        const auto top_y = transform::pixel_index(y, camera()->screenHeight(), height);
+        gl_x = transform::pixel_index(x, camera()->screen_width(), width);
+        const auto top_y = transform::pixel_index(y, camera()->screen_height(), height);
         // Flip a discrete row index (top row 0 <-> bottom row height-1), not a continuous
         // coordinate: for centers, height - (i + 0.5) == (height - 1 - i) + 0.5.
         const int64_t bottom_y = int64_t(height) - 1 - top_y;

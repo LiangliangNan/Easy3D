@@ -44,8 +44,8 @@ int main(int argc,char**) {
         while (glGetError()!=GL_NO_ERROR) {}
         const std::string output="opengl-materials.png";
 #endif
-        viewer.camera()->setType(Camera::ORTHOGRAPHIC);
-        viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
+        viewer.camera()->set_type(Camera::ORTHOGRAPHIC);
+        viewer.camera()->set_view_direction(vec3(0,0,-1)); viewer.camera()->set_up_vector(vec3(0,1,0));
         auto* model=viewer.add_model(file);
         require(model && viewer.models().size()==1,"textured viewer failed to load material mesh");
         for (const auto& d:model->renderer()->triangles_drawables()) {
@@ -64,8 +64,8 @@ int main(int argc,char**) {
         std::vector<unsigned char> rgba; int w=0,h=0,channels=0;
         require(ImageIO::load(output,rgba,w,h,channels,4,false),"could not read material snapshot");
         auto probe=[&](const vec3& world,int r,int g,int b) {
-            const auto p=viewer.camera()->projectedCoordinatesOf(world);
-            const int x=int(p.x*w/viewer.camera()->screenWidth()),y=int(p.y*h/viewer.camera()->screenHeight());
+            const auto p=viewer.camera()->projected_coordinates_of(world);
+            const int x=int(p.x*w/viewer.camera()->screen_width()),y=int(p.y*h/viewer.camera()->screen_height());
             require(x>=0 && y>=0 && x<w && y<h,"material viewer probe outside snapshot");
             const auto i=(std::size_t(y)*w+x)*4;
             require(std::abs(int(rgba[i])-r)<3 && std::abs(int(rgba[i+1])-g)<3 && std::abs(int(rgba[i+2])-b)<3,
@@ -88,8 +88,8 @@ int main(int argc,char**) {
         const auto* reloaded=dynamic_cast<SurfaceMesh*>(viewer.current_model());
         require(viewer.models().size()==1 && reloaded && reloaded->n_faces()==1,"OBJ drop did not replace material scene");
         viewer.resize(360,280); frame(viewer);
-        const auto p=viewer.camera()->projectedCoordinatesOf(vec3(.2f,.2f,0));
-        bool found=false; viewer.point_under_pixel(int(double(p.x)*viewer.width()/viewer.camera()->screenWidth()),int(double(p.y)*viewer.height()/viewer.camera()->screenHeight()),found);
+        const auto p=viewer.camera()->projected_coordinates_of(vec3(.2f,.2f,0));
+        bool found=false; viewer.point_under_pixel(int(double(p.x)*viewer.width()/viewer.camera()->screen_width()),int(double(p.y)*viewer.height()/viewer.camera()->screen_height()),found);
         require(found,"material reload lost world-point picking");
         require(viewer.device().validation_errors()==0,"native material viewer validation errors");
 #else

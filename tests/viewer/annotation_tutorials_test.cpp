@@ -39,8 +39,8 @@ struct ManipulationView:TutorialObjectManipulation {
 };
 void frame(Viewer& v) {require(v.run_frames(2)==0,"tutorial frame failed");}
 void front(Viewer& v) {
-    v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));
-    v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+    v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
+    v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
 }
 std::vector<vec3> plane(float z) {return {vec3(-.8f,-.8f,z),vec3(.8f,-.8f,z),vec3(.8f,.8f,z),vec3(-.8f,-.8f,z),vec3(.8f,.8f,z),vec3(-.8f,.8f,z)};}
 void verify_depth(DepthView& v,float depth,float scale,int samples) {
@@ -54,9 +54,9 @@ void depth_preview() {
     DepthView v("Shared depth preview");v.resize(320,280);frame(v);front(v);
     auto faces=std::make_shared<TrianglesDrawable>("plane");faces->update_vertex_buffer(plane(0));faces->set_lighting(false);v.add_drawable(faces);frame(v);
     auto hit=v.pick(v.width()/2,v.height()/2);require(bool(hit),"depth fixture missed");
-    const auto camera=v.camera()->modelViewProjectionMatrix();
+    const auto camera=v.camera()->model_view_projection_matrix();
     for(float scale:{1.0f,1.5f,2.0f}) for(int samples:{1,4}) verify_depth(v,hit.depth,scale,samples);
-    for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->modelViewProjectionMatrix()[i],"depth preview changed camera");
+    for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->model_view_projection_matrix()[i],"depth preview changed camera");
     const auto again=v.pick(v.width()/2,v.height()/2);
     require(again.drawable==faces && std::abs(again.depth-hit.depth)<1e-6f,"depth preview changed picking");
     faces->update_vertex_buffer(plane(.4f));frame(v);hit=v.pick(v.width()/2,v.height()/2);
@@ -90,8 +90,8 @@ void real_camera() {
     frame(v);
     const auto rect=v.image_rect();require(rect.width()>0 && rect.height()>0,"calibrated image missing");
     v.hover_enabled=true;
-    v.mouse_free_move_event(int((rect.x_min()+rect.width()*.5)*v.camera()->screenWidth()/v.framebuffer_width()),
-                           int((rect.y_min()+rect.height()*.5)*v.camera()->screenHeight()/v.framebuffer_height()),0,0,0);
+    v.mouse_free_move_event(int((rect.x_min()+rect.width()*.5)*v.camera()->screen_width()/v.framebuffer_width()),
+                           int((rect.y_min()+rect.height()*.5)*v.camera()->screen_height()/v.framebuffer_height()),0,0,0);
     require(v.draw_frame(),"synthetic hover frame failed");bool ray=false;for(const auto& d:v.drawables()) if(d->name()=="ray" && d->is_visible()) ray=true;
     require(ray,"calibrated image hover missed the ray at native DPI");
     require(v.snapshot("calibrated-camera.png",1.5f,4,1,true),"calibrated camera snapshot failed");
@@ -101,7 +101,7 @@ void real_camera() {
 void manipulator() {
     ManipulationView v("Shared manipulator guide");auto mesh=std::make_shared<SurfaceMesh>();
     auto a=mesh->add_vertex(vec3(-.8f,-.8f,0)),b=mesh->add_vertex(vec3(.8f,-.8f,0)),c=mesh->add_vertex(vec3(.8f,.8f,0)),d=mesh->add_vertex(vec3(-.8f,.8f,0));mesh->add_quad(a,b,c,d);v.add_model(mesh);front(v);
-    const auto p=v.camera()->projectedCoordinatesOf(vec3(0));v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);v.mouse_release_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);frame(v);
+    const auto p=v.camera()->projected_coordinates_of(vec3(0));v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);v.mouse_release_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);frame(v);
     require(bool(mesh->manipulator()),"model selection did not create manipulator");
     auto guide=mesh->manipulator()->draw_frame(v.camera(),v.framebuffer_width(),v.framebuffer_height());
     require(guide.geometry && guide.overlay_depth_test,"manipulator did not return a depth-tested guide");

@@ -75,9 +75,9 @@ int main(int argc, char**) {
         require(ImageIO::load("vulkan-bunny.png", png, w, h, channels, 4, false) && w == 242 && h == 191,
                 "scaled PNG dimensions mismatch");
         for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-            renderer.camera()->setType(type);
+            renderer.camera()->set_type(type);
             const auto before = renderer.capture();
-            const auto projection = renderer.camera()->projectionMatrix();
+            const auto projection = renderer.camera()->projection_matrix();
             bool different_framing = false;
             for (unsigned count : {1u, 4u}) {
                 if (!(renderer.device().supported_sample_counts() & count)) continue;
@@ -100,9 +100,9 @@ int main(int argc, char**) {
             const auto after = renderer.capture();
             require(before.rgba == after.rgba && before.depth == after.depth, "snapshot changed live camera/rendering");
             for (unsigned i=0; i<16; ++i)
-                require(projection[i] == renderer.camera()->projectionMatrix()[i], "snapshot changed live projection");
+                require(projection[i] == renderer.camera()->projection_matrix()[i], "snapshot changed live projection");
         }
-        renderer.camera()->setType(Camera::PERSPECTIVE);
+        renderer.camera()->set_type(Camera::PERSPECTIVE);
         faces->set_uniform_coloring(vec4(0, 0, 1, 1));
         auto blue = renderer.capture();
         for (size_t i = 0; i < blue.ids.size(); ++i)
@@ -145,7 +145,7 @@ int main(int argc, char**) {
         require(hits(large)>100,"scene adapter did not expand large points");
         points->set_impostor_type(PointsDrawable::SPHERE);
         for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-            renderer.camera()->setType(type);
+            renderer.camera()->set_type(type);
             auto spheres = renderer.capture();
             require(hits(spheres)>50,"scene sphere adapter did not render");
             if (renderer.device().supported_sample_counts(graphics::PointStyle::sphere) & 4) {
@@ -161,10 +161,10 @@ int main(int argc, char**) {
         require(normals_required, "surfel without normals was silently rendered");
         cloud->add_vertex_property<vec3>("v:normal", vec3(0, 0, 1));
         cloud->renderer()->update();
-        renderer.camera()->setViewDirection(vec3(0, 0, -1));
+        renderer.camera()->set_view_direction(vec3(0, 0, -1));
         renderer.fit_screen();
         for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-            renderer.camera()->setType(type);
+            renderer.camera()->set_type(type);
             auto discs = renderer.capture();
             require(hits(discs) > 50, "scene adapter did not render oriented surfels");
             if (renderer.device().supported_sample_counts(graphics::PointStyle::surfel) & 4) {
@@ -183,7 +183,7 @@ int main(int argc, char**) {
         for (auto style : {LinesDrawable::CYLINDER, LinesDrawable::CONE}) {
             segments->set_impostor_type(style);
             for (auto projection : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-                renderer.camera()->setType(projection);
+                renderer.camera()->set_type(projection);
                 auto solid = renderer.capture();
                 require(hits(solid) > 50, "scene line impostor did not render");
                 const auto native_style = style == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder : graphics::LineStyle::cone;
@@ -201,16 +201,16 @@ int main(int argc, char**) {
         segments->set_impostor_type(LinesDrawable::CYLINDER);
         segments->set_lighting(true);
         segments->set_uniform_coloring(vec4(1, 1, 1, 1));
-        renderer.camera()->setType(Camera::ORTHOGRAPHIC);
+        renderer.camera()->set_type(Camera::ORTHOGRAPHIC);
         unsigned front = 0;
         const vec3 directions[] = {vec3(0, 0, -1), vec3(0, -1, 0)};
         const vec3 ups[] = {vec3(0, 1, 0), vec3(0, 0, -1)};
         for (int i = 0; i < 2; ++i) {
-            renderer.camera()->setUpVector(ups[i]);
-            renderer.camera()->setViewDirection(directions[i]);
+            renderer.camera()->set_up_vector(ups[i]);
+            renderer.camera()->set_view_direction(directions[i]);
             renderer.fit_screen();
             const auto frame = renderer.capture();
-            const auto at = renderer.camera()->projectedCoordinatesOf(vec3(0));
+            const auto at = renderer.camera()->projected_coordinates_of(vec3(0));
             const size_t pixel = size_t(at.y) * frame.width + size_t(at.x);
             require(frame.ids[pixel].object != UINT32_MAX, "line impostor lighting sample missed the silhouette");
             if (front == 0)
@@ -220,13 +220,13 @@ int main(int argc, char**) {
                         "line impostor lighting depends on camera orientation");
         }
         require(front > 180, "camera-facing line impostor surface is unlit");
-        renderer.camera()->setUpVector(vec3(0, 1, 0));
-        renderer.camera()->setViewDirection(vec3(0, 0, -1));
+        renderer.camera()->set_up_vector(vec3(0, 1, 0));
+        renderer.camera()->set_view_direction(vec3(0, 0, -1));
         renderer.fit_screen();
         segments->set_lighting(false);
         segments->set_impostor_type(LinesDrawable::PLAIN);
         for (auto projection : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
-            renderer.camera()->setType(projection);
+            renderer.camera()->set_type(projection);
             const auto ribbon = renderer.capture();
             require(hits(ribbon) > 100, "scene adapter did not expand plain wide lines");
             if (renderer.device().supported_sample_counts(graphics::LineStyle::plain) & 4) {
@@ -241,11 +241,11 @@ int main(int argc, char**) {
         custom->set_opacity(1);
         renderer.add_drawable(custom); // enable CPU buffers before supplying temporary data
         custom->update_vertex_buffer({vec3(-1, -1, 0), vec3(1, -1, 0), vec3(0, 1, 0)});
-        renderer.camera()->setViewDirection(vec3(0, 0, -1));
-        renderer.camera()->setUpVector(vec3(0, 1, 0));
+        renderer.camera()->set_view_direction(vec3(0, 0, -1));
+        renderer.camera()->set_up_vector(vec3(0, 1, 0));
         renderer.fit_screen();
         require(hits(renderer.capture()) > 100, "custom drawable did not render");
-        const auto projected = renderer.camera()->projectedCoordinatesOf(vec3(0, 0, 0));
+        const auto projected = renderer.camera()->projected_coordinates_of(vec3(0, 0, 0));
         const auto planar = renderer.capture();
         const size_t pixel = size_t(projected.y) * planar.width + size_t(projected.x);
         require(pixel < planar.depth.size() && std::abs(planar.depth[pixel] - projected.z) < 1e-4f,

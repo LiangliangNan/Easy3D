@@ -26,7 +26,7 @@ template<class Tutorial> struct PickerHost:Tutorial {
 };
 template<class Host>
 void click(Host& viewer,const vec3& world,int button=Viewer::BUTTON_LEFT,int modifiers=0) {
-    const auto p=viewer.camera()->projectedCoordinatesOf(world);
+    const auto p=viewer.camera()->projected_coordinates_of(world);
     viewer.mouse_press_event(int(p.x),int(p.y),button,modifiers);
     viewer.mouse_release_event(int(p.x),int(p.y),button,modifiers);
     frame(viewer);
@@ -48,7 +48,7 @@ int main(int argc,char**) {
             PickerHost<TutorialModelPicker> viewer("Native model picker test"); set_size(viewer, options);
             block_navigation_input(viewer);glfwSetKeyCallback(viewer.window(),nullptr);
             auto* model=viewer.add_model(file); require(model!=nullptr,"model picker load failed");
-            viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen();
+            viewer.camera()->set_type(Camera::ORTHOGRAPHIC); viewer.fit_screen();
             if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
             frame(viewer); const auto baseline=viewer.capture();
             click(viewer,vec3(-1.4f,.3f,0));
@@ -67,7 +67,7 @@ int main(int argc,char**) {
             block_navigation_input(viewer);glfwSetKeyCallback(viewer.window(),nullptr);
             auto* model=viewer.add_model(file); require(model!=nullptr,"face picker load failed");
             auto* faces=model->renderer()->get_triangles_drawable("faces");
-            viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen();
+            viewer.camera()->set_type(Camera::ORTHOGRAPHIC); viewer.fit_screen();
             if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
             frame(viewer); const auto baseline=viewer.capture();
             click(viewer,vec3(-1.4f,.3f,0));

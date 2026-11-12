@@ -15,7 +15,7 @@ using namespace easy3d;
 void require(bool ok,const char* text) { if (!ok) throw std::runtime_error(text); }
 std::vector<vec3> check_scan(OffScreen& viewer,unsigned samples) {
     const auto reference=viewer.capture(samples);
-    const auto mvp=viewer.camera()->modelViewProjectionMatrix();
+    const auto mvp=viewer.camera()->model_view_projection_matrix();
     const auto points=viewer.scan_visible_points(samples);
     size_t k=0;
     for (size_t i=0;i<reference.ids.size();++i) {
@@ -28,7 +28,7 @@ std::vector<vec3> check_scan(OffScreen& viewer,unsigned samples) {
         require(std::abs(.5f*(clip.z/clip.w+1)-reference.depth[i])<1e-5f,"scan used incorrect world depth");
     }
     require(k==points.size(),"background or overlay produced scan points");
-    const auto after=viewer.camera()->modelViewProjectionMatrix();
+    const auto after=viewer.camera()->model_view_projection_matrix();
     for (unsigned i=0;i<16;++i) require(std::abs(after[i]-mvp[i])<1e-6f,"scan changed the camera");
     return points;
 }
@@ -48,9 +48,9 @@ int main(int argc,char**) {
         auto ha=hidden->add_vertex(vec3(-.2f,-.2f,-.8f)),hb=hidden->add_vertex(vec3(.2f,-.2f,-.8f));
         auto hc=hidden->add_vertex(vec3(.2f,.2f,-.8f)),hd=hidden->add_vertex(vec3(-.2f,.2f,-.8f));
         hidden->add_quad(ha,hb,hc,hd); viewer.add_model(hidden); hidden->renderer()->set_visible(false);
-        viewer.camera()->setUpVector(vec3(0,1,0)); viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.fit_screen();
+        viewer.camera()->set_up_vector(vec3(0,1,0)); viewer.camera()->set_view_direction(vec3(0,0,-1)); viewer.fit_screen();
         for (auto projection:{Camera::PERSPECTIVE,Camera::ORTHOGRAPHIC}) {
-            viewer.camera()->setType(projection);
+            viewer.camera()->set_type(projection);
             const auto baseline=check_scan(viewer,1); require(baseline.size()>100,"test surface scan is empty");
             hidden->renderer()->set_visible(true);
             require(check_scan(viewer,1)==baseline,"occluded geometry produced scan points");
@@ -74,19 +74,19 @@ int main(int argc,char**) {
             viewer.set_clipping_planes({});
         }
         viewer.resize(137,99); require(!check_scan(viewer,1).empty(),"resized scan failed");
-        auto custom_projection=viewer.camera()->projectionMatrix(),custom_view=viewer.camera()->modelViewMatrix();
+        auto custom_projection=viewer.camera()->projection_matrix(),custom_view=viewer.camera()->model_view_matrix();
         custom_projection(0,2)+=.13f; custom_view(0,3)+=.1f;
-        viewer.camera()->set_projection_matrix(custom_projection); viewer.camera()->set_modelview_matrix(custom_view);
+        viewer.camera()->set_projection_matrix(custom_projection); viewer.camera()->set_model_view_matrix(custom_view);
         require(!check_scan(viewer,1).empty(),"custom camera matrices were lost during scanning");
         viewer.clear_scene();
         auto points=std::make_shared<PointsDrawable>(); viewer.add_drawable(points);
         points->update_vertex_buffer({vec3(-.3f,0,0),vec3(.3f,0,0)});
         points->update_normal_buffer({vec3(0,0,1),vec3(0,0,1)}); points->set_point_size(24); viewer.fit_screen();
-        viewer.camera()->setPivotPoint(vec3(.1f,0,.15f));
+        viewer.camera()->set_pivot_point(vec3(.1f,0,.15f));
         for (auto style:{PointsDrawable::PLAIN,PointsDrawable::SPHERE,PointsDrawable::SURFEL}) {
             points->set_impostor_type(style);
             const auto scan=check_scan(viewer,1); require(scan.size()>20,"point-style scan is empty");
-            const float radius=points->point_size()*viewer.camera()->world_pixel_ratio(viewer.camera()->pivotPoint())*.5f;
+            const float radius=points->point_size()*viewer.camera()->world_pixel_ratio(viewer.camera()->pivot_point())*.5f;
             for (const auto& p:scan) {
                 if (style==PointsDrawable::SPHERE) {
                     const float distance=std::min((p-vec3(-.3f,0,0)).length(),(p-vec3(.3f,0,0)).length());
@@ -103,7 +103,7 @@ int main(int argc,char**) {
         for (auto style:{LinesDrawable::CYLINDER,LinesDrawable::CONE}) {
             line->set_impostor_type(style);
             const auto scan=check_scan(viewer,1); require(scan.size()>20,"line impostor scan is empty");
-            const float radius=24*viewer.camera()->world_pixel_ratio(viewer.camera()->pivotPoint())*.5f;
+            const float radius=24*viewer.camera()->world_pixel_ratio(viewer.camera()->pivot_point())*.5f;
             for (const auto& p:scan) {
                 const float r=style==LinesDrawable::CONE?radius*(.4f-p.x)/.8f:radius;
                 require(p.x>=-.4001f && p.x<=.4001f,"line scan is outside segment caps");

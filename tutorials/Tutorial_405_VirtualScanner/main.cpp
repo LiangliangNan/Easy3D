@@ -60,7 +60,7 @@
  * <b>Easy3D API</b>
  * - Viewer::capture(): renders the scene off screen and returns a graphics::FrameImage with
  *   color, per-pixel depth, and object/primitive IDs (used here to reject background pixels).
- * - Camera::modelViewProjectionMatrix() and mat4 inverse(): the transform (and its inverse)
+ * - Camera::model_view_projection_matrix() and mat4 inverse(): the transform (and its inverse)
  *   used for back-projection.
  * - PointCloud: the scan result, added to the viewer with add_model().
  * - GaussianNoise::apply(): optional sensor-noise simulation; ClippingPlane: preserved across

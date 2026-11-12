@@ -108,17 +108,17 @@ namespace easy3d {
 
         //todo: not fully tested
         //todo: use the Constraint class (see action_rotate() in ManipulatedCameraFrame)
-		vec3 trans = camera->projectedCoordinatesOf(position());
+		vec3 trans = camera->projected_coordinates_of(position());
 		DLOG_IF(has_nan(trans), ERROR)
-						<< "projectedCoordinatesOf(position()): " << trans
+						<< "projected_coordinates_of(position()): " << trans
 						<< "\n\tposition(): " << position()
 						<< "\n\tcamera position: " << camera->position()
 						<< "\n\tcamera orientation: " << camera->orientation();
 		if (has_nan(trans))
 			return;
 
-		const int w = camera->screenWidth();
-		const int h = camera->screenHeight();
+		const int w = camera->screen_width();
+		const int h = camera->screen_height();
 
 		quat rot;
 		if (axis == NONE) {	// free rotation
@@ -170,15 +170,15 @@ namespace easy3d {
 			// Scale to fit the screen mouse displacement
 			switch (camera->type()) {
 				case Camera::PERSPECTIVE:
-					trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
+					trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
 							 std::fabs((camera->frame()->coordinatesOf(position())).z) /
-                            static_cast<float>(camera->screenHeight());
+                            static_cast<float>(camera->screen_height());
 					break;
 				case Camera::ORTHOGRAPHIC: {
 					float w, h;
-					camera->getOrthoWidthHeight(w, h);
-					trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
-					trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
+					camera->get_ortho_width_height(w, h);
+					trans[0] *= 2.0f * w / static_cast<float>(camera->screen_width());
+					trans[1] *= 2.0f * h / static_cast<float>(camera->screen_height());
 					break;
 				}
 			}
@@ -200,15 +200,15 @@ namespace easy3d {
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
-				trans *= 2.0 * std::tan(camera->fieldOfView() / 2.0f) *
+				trans *= 2.0 * std::tan(camera->field_of_view() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(position())).z) /
-					camera->screenHeight();
+					camera->screen_height();
 				break;
 			case Camera::ORTHOGRAPHIC: {
 				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
-				trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
+				camera->get_ortho_width_height(w, h);
+				trans[0] *= 2.0f * w / static_cast<float>(camera->screen_width());
+				trans[1] *= 2.0f * h / static_cast<float>(camera->screen_height());
 				break;
 			    }
 			}

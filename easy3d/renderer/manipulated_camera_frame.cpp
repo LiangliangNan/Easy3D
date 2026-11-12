@@ -73,7 +73,7 @@ namespace easy3d {
         if (dx == 0 && dy == 0)
             return;
 
-        const vec3& trans = camera->projectedCoordinatesOf(pivotPoint());
+        const vec3& trans = camera->projected_coordinates_of(pivotPoint());
         DLOG_IF(has_nan(trans), ERROR)
                         << "projectedCoordinatesOf(pivotPoint()): " << trans
                         << "\n\tpivotPoint():    " << pivotPoint()
@@ -82,8 +82,8 @@ namespace easy3d {
         if (has_nan(trans))
             return;
 
-        const int w = camera->screenWidth();
-        const int h = camera->screenHeight();
+        const int w = camera->screen_width();
+        const int h = camera->screen_height();
 
         static CameraConstraint cons(camera);
         switch (axis) {
@@ -127,15 +127,15 @@ namespace easy3d {
             switch (camera->type())
             {
                 case Camera::PERSPECTIVE:
-                    trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
+                    trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
                              fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-                            static_cast<float>(camera->screenHeight());
+                            static_cast<float>(camera->screen_height());
                     break;
                 case Camera::ORTHOGRAPHIC: {
                     float w, h;
-                    camera->getOrthoWidthHeight(w, h);
-                    trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
-                    trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
+                    camera->get_ortho_width_height(w, h);
+                    trans[0] *= 2.0f * w / static_cast<float>(camera->screen_width());
+                    trans[1] *= 2.0f * h / static_cast<float>(camera->screen_height());
                     break;
                 }
             }
@@ -152,15 +152,15 @@ namespace easy3d {
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
-				trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
+				trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-                        static_cast<float>(camera->screenHeight());
+                        static_cast<float>(camera->screen_height());
 				break;
 			case Camera::ORTHOGRAPHIC: {
 				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
-				trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
+				camera->get_ortho_width_height(w, h);
+				trans[0] *= 2.0f * w / static_cast<float>(camera->screen_width());
+				trans[1] *= 2.0f * h / static_cast<float>(camera->screen_height());
 				break;
 			}
 			}
@@ -176,7 +176,7 @@ namespace easy3d {
 	{
 		const float delta = wheelDelta(wheel_dy);
 		if (zoomsOnPivotPoint_) {
-			const vec3& direction = camera->pivotPoint() - position();	
+			const vec3& direction = camera->pivot_point() - position();	
 
             // Liangliang:
             //  - We don't want to move the camera too close to (when zoom in) or
@@ -187,14 +187,14 @@ namespace easy3d {
 
             // the new camera position
             const vec3& new_pos = position() + delta * direction;
-            const vec3& offset = camera->pivotPoint() - new_pos;
+            const vec3& offset = camera->pivot_point() - new_pos;
 
             // the camera should not go behind the pivot point
-            if (dot(offset, camera->viewDirection()) <= 0)
+            if (dot(offset, camera->view_direction()) <= 0)
                 return;
 
 #if 0 //  we allow to zoom out (to avoid lock)
-            const float sceneRadius = camera->sceneRadius();
+            const float sceneRadius = camera->scene_radius();
             // don't get too close to and don't get too far away from the pivot point.
             if ( (offset.norm() <= 0.01f * sceneRadius) || (offset.norm() >= 100.0f * sceneRadius))
                 return;
@@ -210,7 +210,7 @@ namespace easy3d {
             //    beyond the range.
 
             // in the camera space
-            const vec3& target = camera->frame()->coordinatesOf(camera->sceneCenter());
+            const vec3& target = camera->frame()->coordinatesOf(camera->scene_center());
             const float coef = target.z;//std::max<float>(fabs(target.z), 0.2f * sceneRadius);
             const vec3 trans_eye(0.0f, 0.0f, coef * delta);
 
@@ -222,8 +222,8 @@ namespace easy3d {
             frame.translate(offset);
 
 #if 0 //  we allow to zoom out (to avoid lock)
-            const float sceneRadius = camera->sceneRadius();
-            const vec3& new_target = frame.coordinatesOf(camera->sceneCenter());
+            const float sceneRadius = camera->scene_radius();
+            const vec3& new_target = frame.coordinatesOf(camera->scene_center());
             // don't get too close to and don't get too far away from the pivot point.
             if ( new_target.z >= -0.01f * sceneRadius || new_target.z <= -100.0f * sceneRadius)
                 return;

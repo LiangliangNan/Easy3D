@@ -166,12 +166,12 @@ int main(int argc, char **argv) {
         line->set_lighting(false);
         renderer.add_drawable(line);
         auto *camera = renderer.camera();
-        camera->setSceneBoundingBox(vec3(-1), vec3(1));
-        camera->setPosition(vec3(0, 0, 3));
-        camera->setViewDirection(vec3(0, 0, -1));
-        camera->setUpVector(vec3(0, 1, 0));
+        camera->set_scene_bounding_box(vec3(-1), vec3(1));
+        camera->set_position(vec3(0, 0, 3));
+        camera->set_view_direction(vec3(0, 0, -1));
+        camera->set_up_vector(vec3(0, 1, 0));
         auto measure_projection = [&](Camera::Type type) {
-            camera->setType(type);
+            camera->set_type(type);
             return measure(renderer.capture(1));
         };
         // Screen-space expansion: the stroke keeps the requested pixel width.

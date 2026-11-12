@@ -40,8 +40,8 @@ using namespace easy3d;
 
 TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
     // We always want to look at the front of the easy3d logo.
-    camera()->setViewDirection(vec3(0, 0, -1));
-    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, -1));
+    camera()->set_up_vector(vec3(0, 1, 0));
 
     // hint_ is shown in the viewer HUD; it tells the user how to interact.
     hint_ = "Press the left button to pick/unpick a model";

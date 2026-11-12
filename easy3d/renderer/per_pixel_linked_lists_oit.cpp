@@ -227,8 +227,8 @@ void PerPixelLinkedListsOIT::draw(const std::vector<TrianglesDrawable*>& surface
     if (!camera_)
         return;
 
-    int w = camera_->screenWidth();
-    int h = camera_->screenHeight();
+    int w = camera_->screen_width();
+    int h = camera_->screen_height();
     if (w <= 0 || h <= 0)
         return;
 
@@ -365,9 +365,9 @@ void PerPixelLinkedListsOIT::build_lists(const std::vector<TrianglesDrawable*>& 
     }
 
     // Camera and lighting (shared across all drawables).
-    const mat4& MVP = camera_->modelViewProjectionMatrix();
+    const mat4& MVP = camera_->model_view_projection_matrix();
     const vec3& wCamPos = camera_->position();
-    const mat4& MV = camera_->modelViewMatrix();
+    const mat4& MV = camera_->model_view_matrix();
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();

@@ -107,12 +107,12 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3 &wCamPos = camera->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4 &MV = camera->modelViewMatrix();
+        const mat4 &MV = camera->model_view_matrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         // transformation introduced by manipulation
@@ -172,10 +172,10 @@ namespace easy3d {
         program->bind();
 
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix())
-                ->set_uniform("screen_width", camera->screenWidth() * viewport_pixel_scale(*camera));
+                ->set_uniform("screen_width", camera->screen_width() * viewport_pixel_scale(*camera));
 
         program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
                 ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
@@ -219,8 +219,8 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
@@ -260,12 +260,12 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3 &wCamPos = camera->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4 &MV = camera->modelViewMatrix();
+        const mat4 &MV = camera->model_view_matrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         // transformation introduced by manipulation
@@ -331,8 +331,8 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("sphere_radius", impostor_radius(*camera, point_size()))
@@ -375,10 +375,10 @@ namespace easy3d {
 
         easy3d_debug_log_gl_error
 
-        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3 &wCamPos = camera->position();
-        const vec4 &wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
+        const vec4 &wLightPos = inverse(camera->model_view_matrix()) * setting::light_position;
 
         // transformation introduced by manipulation
         const mat4 MANIP = manipulated_matrix();
@@ -433,10 +433,10 @@ namespace easy3d {
 
         easy3d_debug_log_gl_error
 
-        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->model_view_projection_matrix();
         // camera position is defined in world coordinate system.
         const vec3 &wCamPos = camera->position();
-        const vec4 &wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
+        const vec4 &wLightPos = inverse(camera->model_view_matrix()) * setting::light_position;
 
         // transformation introduced by manipulation
         const mat4 MANIP = manipulated_matrix();

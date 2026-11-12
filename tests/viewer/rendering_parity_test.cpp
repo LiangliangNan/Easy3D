@@ -17,8 +17,8 @@ int main() {
         VulkanOptions options;options.validation=options.sync_validation=true;
         OffScreen native(160,120,options);
         require(native.background_color()==setting::background_color,"offscreen background ignores shared settings");
-        auto* camera=native.camera();camera->setType(Camera::ORTHOGRAPHIC);
-        camera->setSceneBoundingBox(vec3(-1),vec3(1));camera->setViewDirection(vec3(0,0,-1));camera->showEntireScene();
+        auto* camera=native.camera();camera->set_type(Camera::ORTHOGRAPHIC);
+        camera->set_scene_bounding_box(vec3(-1),vec3(1));camera->set_view_direction(vec3(0,0,-1));camera->show_entire_scene();
         GLuint fbo,color,depth;glGenFramebuffers(1,&fbo);glBindFramebuffer(GL_FRAMEBUFFER,fbo);
         glGenTextures(1,&color);glBindTexture(GL_TEXTURE_2D,color);
         glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,160,120,0,GL_RGBA,GL_UNSIGNED_BYTE,nullptr);
@@ -45,7 +45,7 @@ int main() {
                 if (!(native.device().supported_sample_counts()&samples)) continue;
                 const auto image=native.capture(samples);
                 for(const auto& p:probes) {
-                    const auto screen=camera->projectedCoordinatesOf(p);const int x=int(screen.x),y=int(screen.y);
+                    const auto screen=camera->projected_coordinates_of(p);const int x=int(screen.x),y=int(screen.y);
                     const auto a=(size_t(y)*160+x)*4,b=(size_t(119-y)*160+x)*4;
                     for(unsigned c=0;c<3;++c) if(std::abs(int(image.rgba[a+c])-int(reference[b+c]))>4) {
                         std::cerr<<"mode "<<mode<<" point "<<p<<" channel "<<c<<" Vulkan "<<int(image.rgba[a+c])<<" OpenGL "<<int(reference[b+c])<<'\n';
@@ -70,7 +70,7 @@ int main() {
             const std::vector<vec3> probes{vec3(-.4f,-.1f,0),vec3(.4f,-.1f,0)};
             compare(gl,vk,probes);
             gl.set_smooth_shading(false);vk->set_smooth_shading(false);compare(gl,vk,probes);
-            camera->setViewDirection(vec3(.3f,0,-1));camera->showEntireScene();compare(gl,vk,probes);
+            camera->set_view_direction(vec3(.3f,0,-1));camera->show_entire_scene();compare(gl,vk,probes);
             native.clear_scene();
         }
         {

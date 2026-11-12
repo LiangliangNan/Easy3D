@@ -77,7 +77,7 @@ namespace easy3d {
                 const auto &data = d.cpu_buffers();
                 auto &entry = screen_lines[&d];
                 if (entry.source.lock() != drawable || !entry.command.geometry || entry.revision != data.revision ||
-                    entry.width != camera.screenWidth() || entry.height != camera.screenHeight() ||
+                    entry.width != camera.screen_width() || entry.height != camera.screen_height() ||
                     entry.line_width != width) {
                     const size_t count = data.indices.empty() ? data.vertices.size() : data.indices.size();
                     if (count % 2)
@@ -89,15 +89,15 @@ namespace easy3d {
                         if (index >= data.vertices.size())
                             throw std::out_of_range("screen-space line index out of range");
                         const auto &p = data.vertices[index];
-                        segments.emplace_back((p.x + 1) * camera.screenWidth() * .5f,
-                                              (1 - p.y) * camera.screenHeight() * .5f);
+                        segments.emplace_back((p.x + 1) * camera.screen_width() * .5f,
+                                              (1 - p.y) * camera.screen_height() * .5f);
                     }
-                    entry.command = graphics::shape::draw_lines_2d(segments, vec4(1), camera.screenWidth(),
-                                                                   camera.screenHeight(), width);
+                    entry.command = graphics::shape::draw_lines_2d(segments, vec4(1), camera.screen_width(),
+                                                                   camera.screen_height(), width);
                     entry.source = drawable;
                     entry.revision = data.revision;
-                    entry.width = camera.screenWidth();
-                    entry.height = camera.screenHeight();
+                    entry.width = camera.screen_width();
+                    entry.height = camera.screen_height();
                     entry.line_width = width;
                 }
                 auto result = entry.command;
@@ -313,8 +313,8 @@ namespace easy3d {
                                          : p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel
                                                                                         : graphics::PointStyle::plain;
                     result.sphere_radius = Drawable::impostor_radius(cam, p->point_size());
-                    result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
-                    result.projection = cam.projectionMatrix();
+                    result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
+                    result.projection = cam.projection_matrix();
                     // setting::light_position is already a view-space direction; the
                     // impostor shaders dot it against camera-space ray normals.
                     result.sphere_light = vec3(setting::light_position);
@@ -328,14 +328,14 @@ namespace easy3d {
                     // Plain lines are expanded in camera space (a world-space half-width) or in
                     // screen space (a constant pixel width); the client selects the mode.
                     result.line_screen_space_width = setting::lines_drawable_screen_space_width;
-                    result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
-                    result.projection = cam.projectionMatrix();
+                    result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
+                    result.projection = cam.projection_matrix();
                     result.sphere_light = vec3(setting::light_position);
                 }
-                result.model_view_projection = cam.modelViewProjectionMatrix() * d.manipulated_matrix();
+                result.model_view_projection = cam.model_view_projection_matrix() * d.manipulated_matrix();
                 if (!clipping_planes.empty()) {
-                    result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
-                    const auto plane_transform = transpose(inverse(cam.modelViewMatrix()));
+                    result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
+                    const auto plane_transform = transpose(inverse(cam.model_view_matrix()));
                     for (const auto &plane : clipping_planes)
                         result.clipping_planes.push_back(plane_transform * plane);
                     result.discard_clipped_primitives = d.plane_clip_discard_primitive();
@@ -359,7 +359,7 @@ namespace easy3d {
                     result.shininess = d.material().shininess;
                     result.model = d.manipulated_matrix();
                     result.eye = cam.position();
-                    result.light = vec3(inverse(cam.modelViewMatrix()) * setting::light_position);
+                    result.light = vec3(inverse(cam.model_view_matrix()) * setting::light_position);
                     if (auto *p = dynamic_cast<PointsDrawable *>(&d)) {
                         if (p->impostor_type() != PointsDrawable::PLAIN) {
                             result.eye = vec3(0);

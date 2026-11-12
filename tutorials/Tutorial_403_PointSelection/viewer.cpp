@@ -64,8 +64,8 @@ bool TutorialPointSelection::mouse_press_event(int x, int y, int button, int mod
                 // The region is stored in framebuffer pixels (top-left origin) because that
                 // is what the GPU selection query expects. Mouse events arrive in logical
                 // screen units, which differ by the DPI scaling factor on HiDPI displays.
-                polygon_.push_back(easy3d::vec2(float(x) * framebuffer_width() / camera()->screenWidth(),
-                                                float(y) * framebuffer_height() / camera()->screenHeight()));
+                polygon_.push_back(easy3d::vec2(float(x) * framebuffer_width() / camera()->screen_width(),
+                                                float(y) * framebuffer_height() / camera()->screen_height()));
                 break;
             }
         return true;
@@ -117,7 +117,7 @@ bool TutorialPointSelection::mouse_release_event(int x, int y, int button, int m
             // Points must be projected exactly as they are rendered: camera MVP combined
             // with the drawable's own manipulation transform.
             const auto transform = drawable->manipulated_matrix();
-            request.model_view_projection = camera()->modelViewProjectionMatrix() * transform;
+            request.model_view_projection = camera()->model_view_projection_matrix() * transform;
             // Clipping planes are given in world space; the query tests points in model
             // space, so convert each plane p by transpose(T): dot(p, T*q) == dot(T^T*p, q).
             for (const auto &plane : clipping_planes())
@@ -239,8 +239,8 @@ void TutorialPointSelection::pre_draw() {
 // sufficiently distant sample becomes a new polygon corner.
 void TutorialPointSelection::extend(int x, int y) {
     // Convert logical screen units to framebuffer pixels (HiDPI scaling), as in mouse_press.
-    const easy3d::vec2 p{float(x) * framebuffer_width() / camera()->screenWidth(),
-                         float(y) * framebuffer_height() / camera()->screenHeight()};
+    const easy3d::vec2 p{float(x) * framebuffer_width() / camera()->screen_width(),
+                         float(y) * framebuffer_height() / camera()->screen_height()};
     if (rectangle_) {
         // Four corners: start, current, and the two mixed-coordinate corners.
         const auto first = polygon_.front();

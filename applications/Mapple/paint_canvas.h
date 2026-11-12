@@ -102,9 +102,9 @@ public:
     // NOTE: This method assumes that a GL context is available, and that its
     //		 content was drawn using the Camera (i.e. using its projection and modelview
     //		 matrices). This method hence cannot be used for offscreen Camera computations.
-    //		 Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar
+    //		 Use camera_coordinates_of() and world_coordinates_of() to perform similar
     //		 operations in that case.
-    //       The precision of the z-Buffer highly depends on how the zNear() and zFar()
+    //       The precision of the z-Buffer highly depends on how the z_near() and z_far()
     //       values are fitted to your scene. Loose boundaries will result in imprecision
     //		 along the viewing direction.
     easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found);

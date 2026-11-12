@@ -38,7 +38,7 @@ namespace easy3d {
     class TrianglesDrawable;
 
     // Code can be simplified by omitting frustum and use the Camera class instead.
-    // check line 611, void Camera::setFOVToFitScene(), in camera.cpp.
+    // check line 611, void Camera::set_fov_to_fit_scene(), in camera.cpp.
 
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.

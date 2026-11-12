@@ -126,7 +126,7 @@ int main(int argc,char**) {
                 visible.insert(id.primitive);
                 const auto& point=appended[id.primitive-2];
                 const auto world=viewer.pixel_to_world(int(i%image.width),int(i/image.width),image.depth[i]);
-                require(std::abs(dot(world-point.position,viewer.camera()->viewDirection()))<1e-4f,
+                require(std::abs(dot(world-point.position,viewer.camera()->view_direction()))<1e-4f,
                         "streamed point depth belongs to stale geometry");
                 if (viewer.samples()==1) {
                     for (unsigned c=0;c<3;++c)

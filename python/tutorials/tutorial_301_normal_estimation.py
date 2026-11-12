@@ -106,8 +106,8 @@ viewer.set_usage("",
 point_cloud.renderer().get_points_drawable("vertices").set_distinct_back_color(True)
 
 # Set the camera view direction and up vector for a better view.
-viewer.camera().setViewDirection(easy3d.vec3(0, -1, 0))     # Set the view direction.
-viewer.camera().setUpVector(easy3d.vec3(-1, 0, 0))          # Set the up vector.
+viewer.camera().set_view_direction(easy3d.vec3(0, -1, 0))     # Set the view direction.
+viewer.camera().set_up_vector(easy3d.vec3(-1, 0, 0))          # Set the up vector.
 
 # -------------------------------------------------------------------------------
 # Running the Viewer

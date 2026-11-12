@@ -69,7 +69,7 @@ namespace easy3d {
      *		- Call the drawable's draw() function
      *		- Call release();
      *
-     *		To retrieve the model view projection matrix, call camera's <code> modelViewProjectionMatrix() </code>
+     *		To retrieve the model view projection matrix, call camera's <code> model_view_projection_matrix() </code>
      */
 	class ShaderProgram
 	{

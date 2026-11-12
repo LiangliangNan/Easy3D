@@ -37,9 +37,9 @@ using namespace easy3d;
 
 TutorialEyeDomeLighting::TutorialEyeDomeLighting(const std::string &title) : Viewer(title) {
     // A conventional viewing setup for the bunny: y up, looking down -z, framed on the scene.
-    camera()->setUpVector(vec3(0, 1, 0));
-    camera()->setViewDirection(vec3(0, 0, -1));
-    camera_->showEntireScene();
+    camera()->set_up_vector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, -1));
+    camera_->show_entire_scene();
 
     // Create the EDL effect bound to this viewer's camera: the neighbor-depth comparisons
     // are done in screen space, using the near/far range of this camera's projection.

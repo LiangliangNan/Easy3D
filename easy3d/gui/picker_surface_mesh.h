@@ -91,7 +91,7 @@ namespace easy3d {
          * \param x The cursor x-coordinate in logical window units (top-left origin, x right).
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picked face, or an invalid face if no face is under the cursor.
-         * \note The coordinate is in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels.
+         * \note The coordinate is in logical window units (camera()->screen_width()/Height()), not framebuffer pixels.
          *       The method renders the visible face drawable with primitive IDs into an offscreen target, samples
          *       the pixel at (x, y), and maps the primitive ID back to the mesh face. Both OpenGL and Vulkan
          *       backends present the same coordinate contract.
@@ -176,7 +176,7 @@ namespace easy3d {
          * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
          * \note The rectangle is evaluated with through-selection: a face is selected when all its vertices
          *       project inside the rectangle, are in front of the camera, and are not clipped. The coordinates
-         *       are in logical window units (camera()->screenWidth()/Height()), not framebuffer pixels. Both
+         *       are in logical window units (camera()->screen_width()/Height()), not framebuffer pixels. Both
          *       OpenGL and Vulkan backends present the same coordinate contract.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Rect &rect);
@@ -187,7 +187,7 @@ namespace easy3d {
          * \param plg Polygon region in logical window coordinates (top-left origin).
          * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
          * \note The polygon is evaluated with through-selection, same as the rectangle overload. The polygon
-         *       may be concave; it is given in logical window units (camera()->screenWidth()/Height()), not
+         *       may be concave; it is given in logical window units (camera()->screen_width()/Height()), not
          *       framebuffer pixels. A polygon with fewer than three points or zero area returns no faces.
          *       This operation does not modify mesh selection properties.
          */

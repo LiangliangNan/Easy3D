@@ -71,22 +71,22 @@ namespace easy3d {
         };
 
         /**
- * \brief Rasterize TrueType glyphs and produce backend-independent text commands.
- *
- * \details Layout is performed on the CPU and requires no graphics context.
- * Input is decoded as UTF-8 Unicode scalar values; a missing glyph uses the
- * font's glyph zero. This engine provides basic horizontal layout only: it
- * does not perform script shaping, bidirectional reordering, or font fallback.
- * Returned layouts own immutable geometry and atlas snapshots and remain
- * valid after the engine is destroyed or its cache is cleared. Calls on one
- * engine must be externally synchronized.
- */
+         * \brief Rasterize TrueType glyphs and produce backend-independent text commands.
+         *
+         * \details Layout is performed on the CPU and requires no graphics context.
+         * Input is decoded as UTF-8 Unicode scalar values; a missing glyph uses the
+         * font's glyph zero. This engine provides basic horizontal layout only: it
+         * does not perform script shaping, bidirectional reordering, or font fallback.
+         * Returned layouts own immutable geometry and atlas snapshots and remain
+         * valid after the engine is destroyed or its cache is cleared. Calls on one
+         * engine must be externally synchronized.
+         */
         class TextLayoutEngine {
         public:
             /**
-     * \brief Create a text layout engine.
-     * \param atlas_size Requested glyph-atlas page size in pixels.
-     */
+             * \brief Create a text layout engine.
+             * \param atlas_size Requested glyph-atlas page size in pixels.
+             */
             explicit TextLayoutEngine(unsigned atlas_size = 512);
 
             /// Destroy the engine; already returned layouts remain valid.
@@ -97,11 +97,11 @@ namespace easy3d {
             TextLayoutEngine &operator=(const TextLayoutEngine &) = delete;
 
             /**
-     * \brief Load a TrueType font.
-     * \param filename Path to the font file.
-     * \return Font index to use in TextOptions::font.
-     * \throws std::runtime_error if the file is unreadable or unsupported.
-     */
+             * \brief Load a TrueType font.
+             * \param filename Path to the font file.
+             * \return Font index to use in TextOptions::font.
+             * \throws std::runtime_error if the file is unreadable or unsupported.
+             */
             std::size_t add_font(const std::string &filename);
 
             /// Return the loaded font names in font-index order.
@@ -109,20 +109,20 @@ namespace easy3d {
             const std::vector<std::string> &font_names() const;
 
             /**
-     * \brief Lay out UTF-8 text into immutable glyph draw commands.
-     * \param utf8 Text to decode and lay out.
-     * \param width Target framebuffer width in pixels.
-     * \param height Target framebuffer height in pixels.
-     * \param options Font, size, placement, spacing, and alignment options.
-     * \return Glyph commands and their layout metrics.
-     */
+             * \brief Lay out UTF-8 text into immutable glyph draw commands.
+             * \param utf8 Text to decode and lay out.
+             * \param width Target framebuffer width in pixels.
+             * \param height Target framebuffer height in pixels.
+             * \param options Font, size, placement, spacing, and alignment options.
+             * \return Glyph commands and their layout metrics.
+             */
             TextLayout
             layout(const std::string &utf8, unsigned width, unsigned height, const TextOptions &options = {});
 
             /**
-     * \brief Release cached glyphs and atlas pages.
-     * \details Loaded fonts and previously returned layouts are retained.
-     */
+             * \brief Release cached glyphs and atlas pages.
+             * \details Loaded fonts and previously returned layouts are retained.
+             */
             void clear_cache();
 
         private:

@@ -96,7 +96,7 @@ namespace {
     PointCloudPicker::~PointCloudPicker() = default;
 
     PointCloud::Vertex PointCloudPicker::pick_vertex(PointCloud* model, int x, int y) {
-        const int width = camera()->screenWidth(), height = camera()->screenHeight();
+        const int width = camera()->screen_width(), height = camera()->screen_height();
         if (!model || model->empty() || x < 0 || y < 0 || x >= width || y >= height)
             return PointCloud::Vertex();
         const auto* renderer = model->renderer();
@@ -148,11 +148,11 @@ namespace {
         program->bind();
         program->set_uniform("sphere", drawable->impostor_type() != PointsDrawable::PLAIN)
                ->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE)
-               ->set_uniform("MV", camera()->modelViewMatrix())
-               ->set_uniform("PROJ", camera()->projectionMatrix())
+               ->set_uniform("MV", camera()->model_view_matrix())
+               ->set_uniform("PROJ", camera()->projection_matrix())
                ->set_uniform("MANIP", drawable->manipulated_matrix())
                ->set_uniform("point_size", drawable->point_size())
-               ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivotPoint()) * 0.5f)
+               ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivot_point()) * 0.5f)
                ->set_uniform("screen_width", w);
         ClippingPlane::instance()->set_program(program);
         drawable->gl_draw();
@@ -177,7 +177,7 @@ namespace {
     }
 
     void PointCloudPicker::pick_vertices(PointCloud* model, const Polygon2& polygon, bool deselect) {
-        const int width = camera()->screenWidth(), height = camera()->screenHeight();
+        const int width = camera()->screen_width(), height = camera()->screen_height();
         if (!model || model->empty() || polygon.size() < 3 || width <= 0 || height <= 0)
             return;
         const auto* renderer = model->renderer();
@@ -212,7 +212,7 @@ namespace {
         request.width = width;
         request.height = height;
         request.polygon.assign(polygon.begin(), polygon.end());
-        request.model_view_projection = camera()->modelViewProjectionMatrix() * transform;
+        request.model_view_projection = camera()->model_view_projection_matrix() * transform;
         request.deselect = deselect;
         // Clipping is stored in world space; the shaders test positions before
         // the model transform, so move each plane into the drawable's local frame.
@@ -250,7 +250,7 @@ namespace {
     // selection (transform feedback on OpenGL, a compute shader on Vulkan) produces
     // the same through-selection and now handles both backends.
     void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
-        const int win_width = camera()->screenWidth(), win_height = camera()->screenHeight();
+        const int win_width = camera()->screen_width(), win_height = camera()->screen_height();
         if (!model || win_width < 2 || win_height < 2)
             return;
 
@@ -263,7 +263,7 @@ namespace {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
+        const mat4 &m = camera()->model_view_projection_matrix() * MANIP;
 
         auto &select = model->vertex_property<bool>("v:select").vector();
 
@@ -289,7 +289,7 @@ namespace {
 
 
     void PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        const int win_width = camera()->screenWidth(), win_height = camera()->screenHeight();
+        const int win_width = camera()->screen_width(), win_height = camera()->screen_height();
         if (!model || plg.size() < 3 || win_width < 2 || win_height < 2)
             return;
 
@@ -311,7 +311,7 @@ namespace {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
+        const mat4 &m = camera()->model_view_projection_matrix() * MANIP;
 
         auto& select = model->vertex_property<bool>("v:select").vector();
 

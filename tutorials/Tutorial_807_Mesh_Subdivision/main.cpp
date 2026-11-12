@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     }
 
     // View the cube from a corner so all three visible faces show the refinement.
-    viewer.camera()->setViewDirection(vec3(1, 1, -1));
+    viewer.camera()->set_view_direction(vec3(1, 1, -1));
 
     // Show the edges so the refinement is visible.
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);

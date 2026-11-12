@@ -100,7 +100,7 @@ namespace easy3d {
             if (!program)
                 return;
 
-            const mat4 &MVP = camera->modelViewProjectionMatrix();
+            const mat4 &MVP = camera->model_view_projection_matrix();
             // transformation introduced by manipulation
             const mat4 MANIP = manipulated_matrix();
             // Pre-compute MVP * MANIP for shader efficiency (saves one matrix multiplication per vertex)
@@ -137,9 +137,9 @@ namespace easy3d {
 
             program->bind();
             program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                    ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                    ->set_uniform("MV", camera->modelViewMatrix())
-                    ->set_uniform("PROJ", camera->projectionMatrix())
+                    ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                    ->set_uniform("MV", camera->model_view_matrix())
+                    ->set_uniform("PROJ", camera->projection_matrix())
                     ->set_uniform("MANIP", manipulated_matrix());
 
             program->set_uniform("radius", impostor_radius(*camera, line_width()))
@@ -184,9 +184,9 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))
@@ -227,9 +227,9 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))
@@ -270,7 +270,7 @@ namespace easy3d {
             if (!program)
                 return;
 
-            const mat4 &MVP = camera->modelViewProjectionMatrix();
+            const mat4 &MVP = camera->model_view_projection_matrix();
             // transformation introduced by manipulation
             const mat4 MANIP = manipulated_matrix();
             // Pre-compute MVP * MANIP for shader efficiency (saves one matrix multiplication per vertex)
@@ -307,9 +307,9 @@ namespace easy3d {
                 return;
 
             program->bind();
-            program->set_uniform("MV", camera->modelViewMatrix())
-                    ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                    ->set_uniform("PROJ", camera->projectionMatrix())
+            program->set_uniform("MV", camera->model_view_matrix())
+                    ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                    ->set_uniform("PROJ", camera->projection_matrix())
                     ->set_uniform("MANIP", manipulated_matrix());
             program->set_uniform("radius", impostor_radius(*camera, line_width()));
 
@@ -354,9 +354,9 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))
@@ -398,9 +398,9 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-                ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
-                ->set_uniform("MV", camera->modelViewMatrix())
-                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("invMV", inverse(camera->model_view_matrix()))
+                ->set_uniform("MV", camera->model_view_matrix())
+                ->set_uniform("PROJ", camera->projection_matrix())
                 ->set_uniform("MANIP", manipulated_matrix());
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))

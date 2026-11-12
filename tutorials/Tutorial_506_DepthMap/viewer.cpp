@@ -41,9 +41,9 @@ using namespace easy3d;
 
 TutorialDepthMap::TutorialDepthMap(const std::string &title) : Viewer(title) {
     // A conventional viewing setup: y up, looking down -z, framed on the whole scene.
-    camera()->setUpVector(vec3(0, 1, 0));
-    camera()->setViewDirection(vec3(0, 0, -1));
-    camera()->showEntireScene();
+    camera()->set_up_vector(vec3(0, 1, 0));
+    camera()->set_view_direction(vec3(0, 0, -1));
+    camera()->show_entire_scene();
 }
 
 TutorialDepthMap::~TutorialDepthMap() = default;

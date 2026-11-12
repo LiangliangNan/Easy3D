@@ -86,7 +86,7 @@ SurfaceMeshPicker::SurfaceMeshPicker(const Camera* cam):Picker(cam),hit_resoluti
 SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh* model,int x,int y) {
     picked_face_=SurfaceMesh::Face();picked_model_=nullptr;picked_point_=vec3(0);
     picked_x_=picked_y_=-1;
-    if(!model || x<0 || y<0 || x>=camera()->screenWidth() || y>=camera()->screenHeight()) return picked_face_;
+    if(!model || x<0 || y<0 || x>=camera()->screen_width() || y>=camera()->screen_height()) return picked_face_;
     const auto drawable=face_drawable(model);
     if(!drawable || !drawable->is_visible()) return picked_face_;
 #ifdef EASY3D_HAS_VULKAN
@@ -109,7 +109,7 @@ SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh* model,SurfaceMes
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
     double closest=double(hit_resolution_)*hit_resolution_;
     for(auto vertex:model->vertices(face)) {
-        const auto p=camera()->projectedCoordinatesOf(transform*model->position(vertex));
+        const auto p=camera()->projected_coordinates_of(transform*model->position(vertex));
         if(!std::isfinite(p.x) || !std::isfinite(p.y) || p.z<0 || p.z>=1) continue;
         const double distance=distance2(vec2(p),vec2(float(x),float(y)));
         if(distance<closest) {closest=distance;result=vertex;}
@@ -125,8 +125,8 @@ SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh* model,SurfaceMes
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
     double closest=double(hit_resolution_)*hit_resolution_;
     for(auto edge:model->halfedges(face)) {
-        const auto a=camera()->projectedCoordinatesOf(transform*model->position(model->source(edge)));
-        const auto b=camera()->projectedCoordinatesOf(transform*model->position(model->target(edge)));
+        const auto a=camera()->projected_coordinates_of(transform*model->position(model->source(edge)));
+        const auto b=camera()->projected_coordinates_of(transform*model->position(model->target(edge)));
         if(!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y) ||
            a.z<0 || a.z>=1 || b.z<0 || b.z>=1 || distance2(vec2(a),vec2(b))<1e-12f) continue;
         const double distance=Segment2(vec2(a),vec2(b)).squared_distance(vec2(float(x),float(y)));
@@ -157,7 +157,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
     }
     if(!area) return result;
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
-    const auto mvp=camera()->modelViewProjectionMatrix()*transform;
+    const auto mvp=camera()->model_view_projection_matrix()*transform;
     const auto& points=model->points();std::vector<unsigned char> selected(points.size(),0);
     const auto* clipping=ClippingPlane::instance();
     // Byte flags avoid vector<bool>'s shared-word writes under OpenMP.
@@ -170,7 +170,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
             const auto world=transform*points[i];const auto d=dot(clipping->normal(),world-clipping->center());
             if(d>0 || (clipping->cross_section() && d < -clipping->cross_section_width()*clipping->scene_radius())) continue;
         }
-        const int viewport[] = {0,0,camera()->screenWidth(),camera()->screenHeight()};
+        const int viewport[] = {0,0,camera()->screen_width(),camera()->screen_height()};
         const vec2 p = vec2(transform::project(points[i],mvp,viewport,false));
         bool inside=polygon.contains(p);
         for(size_t j=0,k=polygon.size()-1;!inside && j<polygon.size();k=j++) {
@@ -216,7 +216,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         program->bind();
         const mat4 MANIP=drawable->manipulated_matrix();
         program->set_uniform("MANIP",MANIP)
-               ->set_uniform("MVP_MANIP",camera()->modelViewProjectionMatrix()*MANIP);
+               ->set_uniform("MVP_MANIP",camera()->model_view_projection_matrix()*MANIP);
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
         drawable->gl_draw();
@@ -233,16 +233,16 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         const int id=color::encode(c[0],c[1],c[2],c[3]);
         if(id<0) return SurfaceMesh::Face();
         const SurfaceMesh::Face face=face_from_primitive(model,std::uint32_t(id));
-        if(face.is_valid()) picked_point_=camera()->unprojectedCoordinatesOf(vec3(
-            float(transform::scale_coordinate(gl_x+.5, width, camera()->screenWidth())),
-            float(transform::scale_coordinate(height-gl_y-.5, height, camera()->screenHeight())), depth));
+        if(face.is_valid()) picked_point_=camera()->unprojected_coordinates_of(vec3(
+            float(transform::scale_coordinate(gl_x+.5, width, camera()->screen_width())),
+            float(transform::scale_coordinate(height-gl_y-.5, height, camera()->screen_height())), depth));
         return face;
     }
 #else
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
             const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
         if(!drawable || !drawable->has_cpu_buffers()) return SurfaceMesh::Face();
-        const int width=camera()->screenWidth(),height=camera()->screenHeight();
+        const int width=camera()->screen_width(),height=camera()->screen_height();
         if(width<=0 || height<=0) return SurfaceMesh::Face();
         // The backend RenderDevice repeats the same rasterized ID/depth pass and
         // returns the object ID, primitive ID, and depth of the sampled pixel.
@@ -261,7 +261,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         // Source provenance is invalidated by buffer edits; the face ranges stay valid
         // for the unchanged draw order.
         if(!face.is_valid()) face=face_from_primitive(model,primitive);
-        if(face.is_valid()) picked_point_=camera()->unprojectedCoordinatesOf(vec3(x+.5f,y+.5f,sample.depth));
+        if(face.is_valid()) picked_point_=camera()->unprojected_coordinates_of(vec3(x+.5f,y+.5f,sample.depth));
         return face;
     }
 #endif

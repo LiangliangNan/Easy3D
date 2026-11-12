@@ -114,8 +114,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, 1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, 1));
 
     // Show the harmonic parameterization initially.
     parameterize(0, &viewer, mesh);

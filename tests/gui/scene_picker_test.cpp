@@ -31,11 +31,11 @@ int main() {
         viewer.add_model(cloud);
         viewer.add_model(mesh);
         auto* camera = viewer.camera();
-        camera->setViewDirection(vec3(0, 0, -1));
-        camera->setUpVector(vec3(0, 1, 0));
-        camera->setType(Camera::PERSPECTIVE);
+        camera->set_view_direction(vec3(0, 0, -1));
+        camera->set_up_vector(vec3(0, 1, 0));
+        camera->set_type(Camera::PERSPECTIVE);
         viewer.fit_screen();
-        camera->setType(Camera::ORTHOGRAPHIC);
+        camera->set_type(Camera::ORTHOGRAPHIC);
         auto* drawable = cloud->renderer()->get_points_drawable("vertices");
         drawable->set_impostor_type(PointsDrawable::SPHERE);
         drawable->set_point_size(10);
@@ -43,7 +43,7 @@ int main() {
 
         ModelPicker model_picker(camera);
         PointCloudPicker point_picker(camera);
-        const auto center = camera->projectedCoordinatesOf(cloud->position(front));
+        const auto center = camera->projected_coordinates_of(cloud->position(front));
         const int x = int(center.x), y = int(center.y);
         require(model_picker.pick({mesh, cloud}, x, y) == cloud.get(), "model pick lost closest model");
         require(model_picker.pick({mesh}, x, y) == mesh.get(), "model pick ignored candidate set");
@@ -81,7 +81,7 @@ int main() {
         cloud->set_manipulator(std::make_shared<Manipulator>(cloud.get()));
         const vec3 translation(-.3f, .3f, 0);
         cloud->manipulator()->frame()->translate(translation);
-        const auto moved = camera->projectedCoordinatesOf(cloud->position(front) + translation);
+        const auto moved = camera->projected_coordinates_of(cloud->position(front) + translation);
         require(point_picker.pick_vertex(cloud.get(), int(moved.x), int(moved.y)) == front,
                 "point pick ignored the model transform");
         drawable->update_element_buffer(std::vector<unsigned>{unsigned(rear.idx()), unsigned(front.idx())});

@@ -38,9 +38,9 @@ PointRender render_points(bool native_large_points, bool validation) {
     cloud->add_vertex(vec3(0, 0, 0));
     cloud->add_vertex(vec3(0.7f, 0.5f, 0));
     viewer.add_model(cloud);
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setType(Camera::ORTHOGRAPHIC);
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_type(Camera::ORTHOGRAPHIC);
     viewer.fit_screen();
     auto *points = cloud->renderer()->get_points_drawable("vertices");
     require(points, "point-cloud vertex drawable missing");

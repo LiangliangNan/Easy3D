@@ -34,8 +34,8 @@ int main(int argc, char**) {
         const std::vector<vec3> original={{-1,-1,0},{1,-1,0},{0,1,0}};
         surface->update_vertex_buffer(original,true);
         surface->set_uniform_coloring(vec4(1,0,0,1)); surface->set_lighting(false);
-        viewer.camera()->setViewDirection(vec3(0,0,-1));
-        viewer.camera()->setUpVector(vec3(0,1,0));
+        viewer.camera()->set_view_direction(vec3(0,0,-1));
+        viewer.camera()->set_up_vector(vec3(0,1,0));
         viewer.fit_screen(); frame(viewer); frame(viewer);
         viewer.set_animation(true);
         require(!viewer.is_animating(),"missing callback reported as active");

@@ -67,9 +67,9 @@ namespace easy3d {
         if (!camera_)
             return;
         FrameParams p{};
-        p.radius = std::max(camera_->sceneRadius() * radius_, 1e-4f);
+        p.radius = std::max(camera_->scene_radius() * radius_, 1e-4f);
         p.bias = bias_;
-        p.projection = camera_->projectionMatrix();
+        p.projection = camera_->projection_matrix();
         frames()[camera_] = p;
     }
 
@@ -227,9 +227,9 @@ namespace easy3d {
 
         program->bind(); easy3d_debug_log_gl_error
 
-        program->set_uniform("invPROJ", inverse(camera_->projectionMatrix()));
-        program->set_uniform("PROJ", camera_->projectionMatrix());
-        program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
+        program->set_uniform("invPROJ", inverse(camera_->projection_matrix()));
+        program->set_uniform("PROJ", camera_->projection_matrix());
+        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_, 1e-4f));
         program->set_uniform("bias", bias_);
         program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
 
@@ -264,8 +264,8 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_log_gl_error
 
         program->bind(); easy3d_debug_log_gl_error
-        program->set_uniform("invPROJ", inverse(camera_->projectionMatrix()));
-        program->set_uniform("radius", std::max(camera_->sceneRadius() * radius_, 1e-4f));
+        program->set_uniform("invPROJ", inverse(camera_->projection_matrix()));
+        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_, 1e-4f));
         program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
         program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 1);
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);

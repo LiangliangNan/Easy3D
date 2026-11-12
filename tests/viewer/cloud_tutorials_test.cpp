@@ -71,7 +71,7 @@ int main(int argc,char**) {
         while(glGetError()!=GL_NO_ERROR) {}
 #endif
         auto cloud=sphere(false);v.add_model(cloud);
-        v.camera()->setUpVector(vec3(0,1,0));v.camera()->setViewDirection(vec3(1,0,0));v.fit_screen();
+        v.camera()->set_up_vector(vec3(0,1,0));v.camera()->set_view_direction(vec3(1,0,0));v.fit_screen();
         auto points=cloud->renderer()->get_points_drawable("vertices");
         points->set_uniform_coloring(vec4(.6f,.6f,1,1));points->set_point_size(3);points->set_distinct_back_color(true);
         render(v,"cloud-before-normals");
@@ -110,7 +110,7 @@ int main(int argc,char**) {
         v.delete_model(cloud.get());cloud.reset();
 
         cloud=cube();v.add_model(cloud);
-        v.camera()->setViewDirection(vec3(-1,-1,-1));v.fit_screen();
+        v.camera()->set_view_direction(vec3(-1,-1,-1));v.fit_screen();
         points=cloud->renderer()->get_points_drawable("vertices");
         points->set_uniform_coloring(vec4(.6f,.6f,1,1));points->set_point_size(3);points->set_lighting(false);
         const auto plain=render(v,"cloud-before-planes");

@@ -107,8 +107,8 @@ int main(int argc, char **argv) {
     }
 
     // Turn the camera to look at the bottom of the bunny model
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, 1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, 1));
 
     // Highlight the boundary loops (the holes to be filled). "borders" is the renderer's built-in
     // lines drawable for boundary edges; color it red and thicken it so the holes stand out.

@@ -72,8 +72,8 @@ int main(int argc,char**) {
         auto points=cloud->renderer()->get_points_drawable("vertices");
         points->set_point_size(13); points->set_impostor_type(PointsDrawable::PLAIN);
         points->set_uniform_coloring(vec4(0,0,1,1)); points->set_lighting(false);
-        viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
-        viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen(); frame(viewer); frame(viewer);
+        viewer.camera()->set_view_direction(vec3(0,0,-1)); viewer.camera()->set_up_vector(vec3(0,1,0));
+        viewer.camera()->set_type(Camera::ORTHOGRAPHIC); viewer.fit_screen(); frame(viewer); frame(viewer);
         const auto original=viewer.point_resource(points);
         require(original->source_ids()==std::vector<uint32_t>({1,2,3}) && original->source_count()==4,
                 "point snapshot did not preserve deleted source slots");

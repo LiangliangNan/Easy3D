@@ -31,9 +31,9 @@ void measure(Viewer &v, const char *path) {
     auto *points = v.current_model()->renderer()->get_points_drawable("vertices");
     require(points, "vertices drawable missing");
     points->set_point_size(5.0f);
-    v.camera()->setUpVector(vec3(0, 1, 0));
-    v.camera()->setViewDirection(vec3(0, 0, -1));
-    v.camera()->showEntireScene();
+    v.camera()->set_up_vector(vec3(0, 1, 0));
+    v.camera()->set_view_direction(vec3(0, 0, -1));
+    v.camera()->show_entire_scene();
 #ifndef EASY3D_HAS_VULKAN
     // The OpenGL host enables vsync; uncapped presentation keeps the comparison render-bound.
     const auto previous = glfwGetCurrentContext();
@@ -57,7 +57,7 @@ void measure(Viewer &v, const char *path) {
     require(covered > 10000, "benchmark scene did not render");
     std::cout << path << ": logical " << v.width() << "x" << v.height() << ", framebuffer "
               << v.framebuffer_width() << "x" << v.framebuffer_height() << ", dpi " << v.dpi_scaling()
-              << ", camera " << v.camera()->screenWidth() << "x" << v.camera()->screenHeight()
+              << ", camera " << v.camera()->screen_width() << "x" << v.camera()->screen_height()
               << ", samples 4, id-pass covered " << covered << " px\n";
     const int frames = 300;
     const auto start = std::chrono::steady_clock::now();

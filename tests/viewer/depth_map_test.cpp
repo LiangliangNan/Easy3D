@@ -64,9 +64,9 @@ int main(int argc,char**) {
             if (!(v.device().supported_sample_counts()&count)) continue;
             v.set_samples(count);frame(v);const auto image=v.capture();same_picking(initial,image);verify(v,image);
         }
-        v.camera()->setViewDirection(vec3(.2f,.1f,-1));frame(v);const auto moved=v.capture();
+        v.camera()->set_view_direction(vec3(.2f,.1f,-1));frame(v);const auto moved=v.capture();
         require(moved.depth!=initial.depth && moved.rgba!=initial.rgba && verify(v,moved)>10,"camera motion left stale depth inset");
-        v.camera()->setType(Camera::ORTHOGRAPHIC);v.fit_screen();frame(v);verify(v,v.capture());
+        v.camera()->set_type(Camera::ORTHOGRAPHIC);v.fit_screen();frame(v);verify(v,v.capture());
         v.resize(360,300);frame(v);verify(v,v.capture());
         require(v.snapshot("vulkan-depth-map.png",1.5f,int(v.samples()),1),"depth map snapshot failed");
         v.clear_scene();frame(v);const auto empty=v.capture();require(verify(v,empty)==0,"empty scene retained stale depth");

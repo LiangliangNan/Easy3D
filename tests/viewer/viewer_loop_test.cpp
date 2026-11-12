@@ -87,7 +87,7 @@ void scene(LoopViewer& viewer) {
     viewer.add_model(mesh);
     auto faces = mesh->renderer()->get_triangles_drawable("faces");
     faces->set_uniform_coloring(vec4(.8f, .2f, .1f, 1)); faces->set_lighting(false);
-    viewer.camera()->setViewDirection(vec3(0, 0, -1)); viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1)); viewer.camera()->set_up_vector(vec3(0, 1, 0));
     viewer.fit_screen();
 }
 void camera_playback(bool validation) {
@@ -123,7 +123,7 @@ void camera_playback(bool validation) {
             "resumed viewer path did not finish at its last sample");
     viewer.key_press_event(Viewer::KEY_D, Viewer::MODIF_ALT);
     require(viewer.path().number_of_keyframes() == 0, "viewer path deletion failed");
-    viewer.camera()->setPosition(observer);
+    viewer.camera()->set_position(observer);
     first.setPosition(vec3(-.4f,0,.5f)); last.setPosition(vec3(.4f,0,.5f));
     viewer.path().add_keyframe(first,0); viewer.path().add_keyframe(last,.1f);
     bool found = false;
@@ -166,11 +166,11 @@ void exercise(bool validation) {
     check_file(viewer);
     require(viewer.initializations == 1 && viewer.before == 0 && viewer.after == 0,
             "capture did not initialize exactly once without advancing frame hooks");
-    const auto camera = viewer.camera()->modelViewProjectionMatrix();
+    const auto camera = viewer.camera()->model_view_projection_matrix();
     const int visibility = glfwGetWindowAttrib(viewer.window(), GLFW_VISIBLE);
     require(viewer.run_frames(2) == 0 && viewer.before >= 2 && viewer.after == 2, "bounded frame budget was not exact");
     require(glfwGetWindowAttrib(viewer.window(), GLFW_VISIBLE) == visibility, "bounded run showed/hidden the window");
-    same_camera(camera, viewer.camera()->modelViewProjectionMatrix());
+    same_camera(camera, viewer.camera()->model_view_projection_matrix());
     const auto prepared = viewer.before;
     auto refresh = glfwSetWindowRefreshCallback(viewer.window(), nullptr);
     glfwSetWindowRefreshCallback(viewer.window(), refresh);
@@ -198,11 +198,11 @@ void exercise(bool validation) {
     require(viewer.run_frames(1) == 0 && viewer.after == closed_after, "closed window consumed a frame");
     glfwSetWindowShouldClose(viewer.window(), GLFW_FALSE); viewer.set_animation(false);
     viewer.close_at = viewer.after + 2;
-    const auto preserved = viewer.camera()->modelViewProjectionMatrix();
+    const auto preserved = viewer.camera()->model_view_projection_matrix();
     require(viewer.run(false) == 0 && viewer.after == viewer.close_at, "run(false) did not run until close");
-    same_camera(preserved, viewer.camera()->modelViewProjectionMatrix());
+    same_camera(preserved, viewer.camera()->model_view_projection_matrix());
     glfwSetWindowShouldClose(viewer.window(), GLFW_FALSE);
-    viewer.camera()->setPosition(viewer.camera()->position() + vec3(2, 3, 4));
+    viewer.camera()->set_position(viewer.camera()->position() + vec3(2, 3, 4));
     const auto displaced = viewer.camera()->position();
     viewer.close_at = viewer.after + 2;
     require(viewer.run(true) == 0 && viewer.after == viewer.close_at && viewer.camera()->position() != displaced,

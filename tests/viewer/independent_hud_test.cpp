@@ -39,8 +39,8 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
     OpenGLOptions options;
 #endif
     HudView v("Independent HUD",161,121,4,false,false,true,options);v.hide_hud();
-    v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));
-    v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+    v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
+    v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
     auto scene=std::make_shared<TrianglesDrawable>("scene");
     scene->update_vertex_buffer({vec3(-10,-10,0),vec3(10,-10,0),vec3(0,10,0)});
     scene->set_uniform_coloring(vec4(0,0,1,1));scene->set_lighting(false);v.add_drawable(scene);
@@ -99,7 +99,7 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
     // resolving. An early HUD resolve produces unequal red/blue edge channels.
     front=quad(-.5f,vec4(1,0,0,.5f));v.set_overlays({front});
     std::vector<vec3> silhouette;
-    const auto inv=inverse(v.camera()->modelViewProjectionMatrix());
+    const auto inv=inverse(v.camera()->model_view_projection_matrix());
     for(unsigned i:{0u,1u,2u,0u,2u,3u}) {
         vec3 p=front.geometry->vertices()[i].position;p.z=0;silhouette.push_back(inv*p);
     }

@@ -35,18 +35,18 @@ int main(int argc,char**) {
         auto press=[&](int code,int mods){key(v.window(),code,0,GLFW_PRESS,mods);};
         const std::vector<vec3> poses={vec3(0,0,100),vec3(60,0,100),vec3(60,60,80)};
         for (const auto& pose:poses) {
-            v.camera()->setPosition(pose);v.camera()->lookAt(vec3(0));press(Viewer::KEY_K,Viewer::MODIF_ALT);
+            v.camera()->set_position(pose);v.camera()->look_at(vec3(0));press(Viewer::KEY_K,Viewer::MODIF_ALT);
         }
         require(v.path().number_of_keyframes()==3 && !v.visible_path(),"Alt-K did not record independent path");
         press(Viewer::KEY_K,Viewer::MODIF_SHIFT);require(v.path().number_of_keyframes()==3,"modified K recorded keyframe");
-        const auto scene_radius=v.camera()->sceneRadius();
+        const auto scene_radius=v.camera()->scene_radius();
         press(Viewer::KEY_T,Viewer::MODIF_CTRL);
-        require(v.visible_path() && v.camera()->sceneRadius()>scene_radius,"show path did not include keyframe bounds");
+        require(v.visible_path() && v.camera()->scene_radius()>scene_radius,"show path did not include keyframe bounds");
         press(Viewer::KEY_T,Viewer::MODIF_CTRL);
-        require(!v.visible_path() && v.camera()->sceneRadius()==scene_radius,"hide path did not restore scene bounds");
+        require(!v.visible_path() && v.camera()->scene_radius()==scene_radius,"hide path did not restore scene bounds");
         press(Viewer::KEY_T,Viewer::MODIF_CTRL);
-        v.camera()->setPosition(vec3(160,120,240));v.camera()->lookAt(vec3(20,20,0));
-        v.camera()->setSceneRadius(160);v.camera()->showEntireScene();
+        v.camera()->set_position(vec3(160,120,240));v.camera()->look_at(vec3(20,20,0));
+        v.camera()->set_scene_radius(160);v.camera()->show_entire_scene();
         std::vector<graphics::Vertex> vertices(3);
         vertices[0].position=vec3(.7f,.7f,0);vertices[1].position=vec3(.95f,.7f,0);vertices[2].position=vec3(.7f,.95f,0);
         graphics::DrawCommand app;app.geometry=std::make_shared<graphics::Geometry>(vertices);app.color=vec4(1,0,0,1);
@@ -77,7 +77,7 @@ int main(int argc,char**) {
         v.bind_shortcut([](Viewer*,Model*){return true;},nullptr,Viewer::KEY_D,Viewer::MODIF_ALT);
         press(Viewer::KEY_D,Viewer::MODIF_ALT);require(v.path().number_of_keyframes()==4,"custom binding did not override default path key");
         v.path().delete_path();v.set_animation(false);v.animation_func_={};
-        v.camera()->setPosition(poses.front());press(Viewer::KEY_K,Viewer::MODIF_ALT);
+        v.camera()->set_position(poses.front());press(Viewer::KEY_K,Viewer::MODIF_ALT);
         v.clear_scene();require(v.path().number_of_keyframes()==1,"scene clearing discarded viewer camera path");
         v.path_visibility(true);v.draw_frame();
         PathViewer independent("Independent viewer path"); set_size(independent, options);
@@ -87,7 +87,7 @@ int main(int argc,char**) {
         key2(independent.window(),Viewer::KEY_T,0,GLFW_PRESS,PathViewer::MODIF_CTRL);
         require(independent.path().number_of_keyframes()==0,"empty path visibility created keyframes");
         // Deletion via the default handler in a viewer without a custom binding.
-        independent.camera()->setPosition(poses.front());key2(independent.window(),Viewer::KEY_K,0,GLFW_PRESS,Viewer::MODIF_ALT);
+        independent.camera()->set_position(poses.front());key2(independent.window(),Viewer::KEY_K,0,GLFW_PRESS,Viewer::MODIF_ALT);
         key2(independent.window(),Viewer::KEY_K,0,GLFW_PRESS,PathViewer::MODIF_CTRL);
         key2(independent.window(),Viewer::KEY_D,0,GLFW_PRESS,Viewer::MODIF_ALT);
         require(!independent.path().is_interpolation_started() && independent.path().number_of_keyframes()==0,"Alt-D did not stop/delete path");

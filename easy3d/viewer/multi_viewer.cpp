@@ -67,9 +67,9 @@ ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
     return ivec4(x,y,int(int64_t(col+1)*width/cols)-x,int(int64_t(row+1)*height/rows)-y);
 }
 void configure_cell(Camera& cell,const Camera& source,int width,int height) {
-    cell.setScreenWidthAndHeight(width,height);
-    cell.set_projection_matrix(source.projectionMatrix());
-    cell.set_modelview_matrix(source.modelViewMatrix());
+    cell.set_screen_width_and_height(width,height);
+    cell.set_projection_matrix(source.projection_matrix());
+    cell.set_model_view_matrix(source.model_view_matrix());
 }
 
 }
@@ -120,7 +120,7 @@ void MultiViewer::update_division() {
         drawable_division_.reset(new LinesDrawable2D("division"));
     }
     const auto active=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
-    camera()->setScreenWidthAndHeight(active.z,active.w);
+    camera()->set_screen_width_and_height(active.z,active.w);
     const int fw=framebuffer_width(),fh=framebuffer_height();
 #ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
@@ -167,10 +167,10 @@ void MultiViewer::clear_scene() {
 }
 vec3 MultiViewer::world_to_window(const vec3& world) const {
     const auto vp=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
-    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivotPoint());
+    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivot_point());
     configure_cell(cell,*camera(),vp.z,vp.w);
     const int viewport[] = {vp.x,vp.y,vp.z,vp.w};
-    return transform::project(world,cell.modelViewProjectionMatrix(),viewport,false);
+    return transform::project(world,cell.model_view_projection_matrix(),viewport,false);
 }
 vec3 MultiViewer::window_to_world(const vec3& window) const {
     if(!std::isfinite(window.x) || !std::isfinite(window.y) || !std::isfinite(window.z) || width()<=0 || height()<=0)
@@ -179,10 +179,10 @@ vec3 MultiViewer::window_to_world(const vec3& window) const {
     for(int r=0;r<num_rows_;++r) if(window.y < int64_t(r+1)*height()/num_rows_) {row=r;break;}
     for(int c=0;c<num_cols_;++c) if(window.x < int64_t(c+1)*width()/num_cols_) {col=c;break;}
     const auto vp=cell_bounds(row,col,num_rows_,num_cols_,width(),height());
-    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivotPoint());
+    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivot_point());
     configure_cell(cell,*camera(),vp.z,vp.w);
     const int viewport[] = {vp.x,vp.y,vp.z,vp.w};
-    return transform::unproject(window,cell.modelViewProjectionMatrix(),viewport,false);
+    return transform::unproject(window,cell.model_view_projection_matrix(),viewport,false);
 }
 bool MultiViewer::snapshot() const {
     std::string name=current_model()?file_system::replace_extension(current_model()->name(),"png"):"untitled.png";
@@ -200,7 +200,7 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         // Logical cell bounds drive the cell camera (DPI-independent impostor sizing);
         // the framebuffer cell width drives plain point/line scaling in draw_commands.
         const auto lv=cell_bounds(r,c,num_rows_,num_cols_,Viewer::width(),Viewer::height());
-        Camera cell(cam);cell.frame()->setPivotPoint(cam.pivotPoint());
+        Camera cell(cam);cell.frame()->setPivotPoint(cam.pivot_point());
         configure_cell(cell,snapshot_active_?*camera():cam,lv.z,lv.w);
         std::vector<DrawSource> local;
         const auto commands=Viewer::draw_commands(cell,vp.z,vp.w,&local,true);
@@ -325,7 +325,7 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
     // dims) so world-space impostor radii carry DPI-independent sizing.
     GLint target[4];glGetIntegerv(GL_VIEWPORT,target);
     const int fw=target[2],fh=target[3];
-    Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());
+    Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivot_point());
     auto draw=[&](const Drawable* d) {
         if(!d || (source && source->drawable.get()!=d) || !d->is_visible() || dynamic_cast<const LinesDrawable2D*>(d)) return;
         if(auto p=dynamic_cast<const TrianglesDrawable*>(d)) p->TrianglesDrawable::draw(&cell);
@@ -373,7 +373,7 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
         const auto vp=cell_bounds(r,c,num_rows_,num_cols_,width(),height());
         if(x>=vp.x && y>=vp.y && x<vp.x+vp.z && y<vp.y+vp.w) {
             active_row_=r;active_col_=c;interaction_origin_=ivec2(vp.x,vp.y);
-            camera()->setScreenWidthAndHeight(vp.z,vp.w);
+            camera()->set_screen_width_and_height(vp.z,vp.w);
             return Viewer::mouse_press_event(x,y,button,modifiers);
         }
     }
@@ -385,10 +385,10 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     auto* self=const_cast<MultiViewer*>(this);
     if(!initialized_) { self->init(); self->initialized_=true; }
     const int w=int(std::ceil(framebuffer_width()*double(scale))),h=int(std::ceil(framebuffer_height()*double(scale)));
-    const mat4 original=camera()->projectionMatrix();const bool active=snapshot_active_;
-    const double z_near=camera()->zNear(), z_far=camera()->zFar();float x,y;
-    if(camera()->type()==Camera::PERSPECTIVE) {y=float(z_near*std::tan(camera()->fieldOfView()*.5));x=float(y*camera()->aspectRatio());}
-    else camera()->getOrthoWidthHeight(x,y);
+    const mat4 original=camera()->projection_matrix();const bool active=snapshot_active_;
+    const double z_near=camera()->z_near(), z_far=camera()->z_far();float x,y;
+    if(camera()->type()==Camera::PERSPECTIVE) {y=float(z_near*std::tan(camera()->field_of_view()*.5));x=float(y*camera()->aspect_ratio());}
+    else camera()->get_ortho_width_height(x,y);
     const double output_aspect=(double(w)/num_cols_)/(double(h)/num_rows_);
     if((expand && output_aspect>double(x)/y) || (!expand && output_aspect<double(x)/y)) x=float(output_aspect*y);
     else y=float(x/output_aspect);

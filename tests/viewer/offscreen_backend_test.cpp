@@ -36,9 +36,9 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
 #else
     require(!faces->has_cpu_buffers(),"OpenGL did not select native buffers");
 #endif
-    renderer.camera()->setViewDirection(vec3(0,0,-1));renderer.camera()->setUpVector(vec3(0,1,0));renderer.fit_screen();
+    renderer.camera()->set_view_direction(vec3(0,0,-1));renderer.camera()->set_up_vector(vec3(0,1,0));renderer.fit_screen();
     renderer.set_background_color(vec4(.12f,.23f,.34f,1));
-    const auto matrix=renderer.camera()->modelViewProjectionMatrix();
+    const auto matrix=renderer.camera()->model_view_projection_matrix();
     require(renderer.render(prefix+".png",1,1,0),"common render failed");
     const auto rgba=image(prefix+".png",161,127);const auto center=(size_t(63)*161+80)*4;
     require(std::abs(int(rgba[center])-204)<=1 && std::abs(int(rgba[center+1])-51)<=1,"common scene did not render its material color");
@@ -57,7 +57,7 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     for (unsigned channel=0;channel<4;++channel)
         require(std::abs(int(frame.rgba[4*center_pixel+channel])-int(rgba[center+channel]))<=1,
                 "file snapshot color differs from the common capture");
-    for(unsigned i=0;i<16;++i) require(std::abs(renderer.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"file rendering changed live camera matrices");
+    for(unsigned i=0;i<16;++i) require(std::abs(renderer.camera()->model_view_projection_matrix()[i]-matrix[i])<1e-6f,"file rendering changed live camera matrices");
     require(!renderer.render(prefix+"-invalid.png",-1),"invalid render request accepted");
 #ifdef EASY3D_HAS_VULKAN
     {

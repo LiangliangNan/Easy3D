@@ -54,8 +54,8 @@ int main() {
         Viewer::poll_events(); v.draw_frame();
         int fw = 0, fh = 0; v.framebuffer_size(fw, fh);
         require(fw > 0 && fh > 0, "test window has no framebuffer");
-        const mat4 before = v.camera()->modelViewProjectionMatrix();
-        const int cam_w = v.camera()->screenWidth(), cam_h = v.camera()->screenHeight();
+        const mat4 before = v.camera()->model_view_projection_matrix();
+        const int cam_w = v.camera()->screen_width(), cam_h = v.camera()->screen_height();
 
         // A 2x snapshot is larger than the window. Within the GL size limits it
         // must render as ONE whole-image offscreen pass -- draw() called once --
@@ -77,9 +77,9 @@ int main() {
         v.occlude = false;
 
         // The snapshot borrows the camera and the frame path; both are back.
-        require(v.camera()->screenWidth() == cam_w && v.camera()->screenHeight() == cam_h,
+        require(v.camera()->screen_width() == cam_w && v.camera()->screen_height() == cam_h,
                 "the snapshot left the camera at the output size");
-        const mat4 after = v.camera()->modelViewProjectionMatrix();
+        const mat4 after = v.camera()->model_view_projection_matrix();
         for (unsigned i = 0; i < 16; ++i) require(after[i] == before[i], "the snapshot left the projection overridden");
 
         std::cout << "PASS: an in-limit scaled AO snapshot renders as one continuous whole-image pass (no tile seams) and restores the camera\n";

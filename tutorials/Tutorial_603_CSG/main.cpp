@@ -163,8 +163,8 @@ int main(int argc, char **argv) {
     // results can be compared side by side under identical navigation.
     MultiViewer viewer(2, 2, EXAMPLE_TITLE);
     // Look straight down onto the XY plane: y is up on screen, the camera looks along -z.
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->set_up_vector(vec3(0, 1, 0));
+    viewer.camera()->set_view_direction(vec3(0, 0, -1));
 
     // -------------------------------------------------------------------------
     // view (0, 0): the two input polygons, in distinct colors.

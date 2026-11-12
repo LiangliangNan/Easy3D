@@ -89,16 +89,16 @@ void WidgetCheckerSphere::initializeGL()
 	);
 
     camera_ = new Camera;
-    camera_->setType(Camera::ORTHOGRAPHIC);
-    camera_->setScreenWidthAndHeight(width(), height());
-    camera_->setPosition(vec3(0.0f, 0.0f, 1.0f));
+    camera_->set_type(Camera::ORTHOGRAPHIC);
+    camera_->set_screen_width_and_height(width(), height());
+    camera_->set_position(vec3(0.0f, 0.0f, 1.0f));
     // either set view direction
-    //camera_->setViewDirection(vec3(0.0, 0.0, -1.0));
-    // or set lookAt point
-    camera_->lookAt(vec3(0.0f, 0.0f, 0.0f));
+    //camera_->set_view_direction(vec3(0.0, 0.0, -1.0));
+    // or set the look_at() point
+    camera_->look_at(vec3(0.0f, 0.0f, 0.0f));
     // allow some margin for the light sphere to be visible near the border of the viewer
-    camera_->setSceneRadius(1.1f);
-    camera_->showEntireScene();
+    camera_->set_scene_radius(1.1f);
+    camera_->show_entire_scene();
 }
 
 
@@ -110,7 +110,7 @@ void WidgetCheckerSphere::resizeGL(int w, int h)
     // So I don't need to set up.
     // glViewport(0, 0, static_cast<int>(w * highdpi_), static_cast<int>(h * highdpi_));
 
-    camera_->setScreenWidthAndHeight(w, h);
+    camera_->set_screen_width_and_height(w, h);
 }
 
 
@@ -224,12 +224,12 @@ void WidgetCheckerSphere::paintGL() {
     //      the base class implementation and should perform clearing on their own.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    const mat4& MVP = camera_->modelViewProjectionMatrix();
+    const mat4& MVP = camera_->model_view_projection_matrix();
     // camera position is defined in world coordinate system.
     const vec3& wCamPos = camera_->position();
     // it can also be computed as follows:
     //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-    const mat4& MV = camera_->modelViewMatrix();
+    const mat4& MV = camera_->model_view_matrix();
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     const mat4 lightManip = mat4::translation(lightPos_.xyz());

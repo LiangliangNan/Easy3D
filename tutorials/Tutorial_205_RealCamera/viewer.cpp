@@ -63,9 +63,9 @@ TutorialRealCamera::TutorialRealCamera(const std::string &title,
             std::cerr << "failed to load bundler file" << std::endl;
 
         // Start from a neutral overview of the whole cloud.
-        camera()->setUpVector(vec3(0, 1, 0));
-        camera()->setViewDirection(vec3(0, 0, -1));
-        camera()->showEntireScene();
+        camera()->set_up_vector(vec3(0, 1, 0));
+        camera()->set_view_direction(vec3(0, 0, -1));
+        camera()->show_entire_scene();
         load_image();
     } else
         std::cerr << "failed to load point cloud" << std::endl;
@@ -179,13 +179,13 @@ bool TutorialRealCamera::KRT_to_camera(int view_index, Camera *c, bool ground_tr
         // R: rotation matrix of world frame in camera frame
         // The camera orientation is the inverse rotation (camera frame -> world frame).
         const quat q(inverse(cam.R)); // the inverse rotation represented by a quaternion
-        c->setOrientation(q);
-        c->setPosition(-q.rotate(cam.t));                               // camera position: -inverse(rot) * t
+        c->set_orientation(q);
+        c->set_position(-q.rotate(cam.t));                               // camera position: -inverse(rot) * t
         // Derive the vertical field of view from fy and the image height:
         // proj[1][1] = 2 fy / h, and fov = 2 atan(1 / proj[1][1]).
         const float proj11 = 2.0f * cam.fy / static_cast<float>(cam.h); // proj[1][1]
         const float fov = 2.0f * std::atan(1.0f / proj11);
-        c->setFieldOfView(fov);
+        c->set_field_of_view(fov);
     } else {
         // Let Easy3D build position, orientation, and fov directly from the calibration.
         c->set_from_calibration(cam.fx, cam.fy, 0.0f, cam.cx, cam.cy, cam.R, cam.t, true);
@@ -204,7 +204,7 @@ void TutorialRealCamera::update_cameras_drawable(bool ground_truth) {
         cameras_drawable_ = new LinesDrawable("cameras");
         add_drawable(std::shared_ptr<LinesDrawable>(cameras_drawable_)); // add the camera drawable to the viewer
         cameras_drawable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-        cameras_drawable_->set_line_width(2.0f);
+        cameras_drawable_->set_line_width(4.0f);
     }
 
     std::vector<vec3> vertices;
@@ -213,7 +213,7 @@ void TutorialRealCamera::update_cameras_drawable(bool ground_truth) {
         Camera c;
         KRT_to_camera(static_cast<int>(i), &c, ground_truth);
         std::vector<vec3> points;
-        shape::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(),
+        shape::create_camera(points, c.scene_radius() * 0.03f, c.field_of_view(),
                              static_cast<float>(views_[i].h) / static_cast<float>(views_[i].w));
         // Transform the frustum from the camera's local frame into world coordinates.
         const mat4 &m = c.frame()->worldMatrix();

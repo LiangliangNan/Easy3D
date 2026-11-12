@@ -55,7 +55,7 @@
  *   show_camera_path_ flag that draws the recorded path and keyframe cameras.
  * - KeyFrameInterpolator: add_keyframe() records a pose; delete_path() clears it; playback is
  *   started/stopped through the Viewer's Ctrl+K shortcut.
- * - Camera / Frame: camera()->frame() is the pose captured as a keyframe; sceneRadius() is
+ * - Camera / Frame: camera()->frame() is the pose captured as a keyframe; scene_radius() is
  *   grown so the whole path stays in view.
  *
  * <b>Running it</b>

@@ -20,7 +20,7 @@ struct GeometryViewer : Viewer {
 };
 void frame(GeometryViewer& v) {Viewer::poll_events();require(v.draw_frame(),"geometry tutorial did not present");}
 void probe(GeometryViewer& v,const vec3& world,bool filled,const SurfaceMesh* model) {
-    const auto p=v.camera()->projectedCoordinatesOf(world);const auto hit=v.pick(int(p.x),int(p.y));
+    const auto p=v.camera()->projected_coordinates_of(world);const auto hit=v.pick(int(p.x),int(p.y));
     require(bool(hit)==filled,"polygon hole/fill picking mismatch");
     if (filled) require(hit.model.get()==model && hit.face_index>=0,"polygon source-face provenance missing");
 }
@@ -51,7 +51,7 @@ int main(int argc,char**) {
             colored+=curves.rgba[4*i]!=255 || curves.rgba[4*i+1]!=255 || curves.rgba[4*i+2]!=255;
         }
         require(colored>500,"curve families did not render");
-        v.camera()->setPosition(vec3(5,6,7));v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setViewDirection(vec3(1,0,0));
+        v.camera()->set_position(vec3(5,6,7));v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_view_direction(vec3(1,0,0));
         require(v.capture().rgba==curves.rgba,"camera movement changed screen-space curves");
         require(v.snapshot("vulkan-curves.png",1,int(v.samples()),1),"curves snapshot failed");
         v.resize(600,450);frame(v);const auto resized=v.capture();require(resized.width!=curves.width,"curves did not resize");
@@ -59,7 +59,7 @@ int main(int argc,char**) {
         for (unsigned kind=0;kind<3;++kind) {
             v.clear_scene();auto mesh=kind==0 ? create_tessellation_mesh() : (kind==1 ? create_partition_mesh() : create_csg_mesh());
             require(mesh && mesh->n_faces()>3,"geometry algorithm produced no result");v.add_model(mesh);
-            v.camera()->setUpVector(vec3(0,1,0));v.camera()->setViewDirection(vec3(0,0,-1));v.fit_screen();frame(v);
+            v.camera()->set_up_vector(vec3(0,1,0));v.camera()->set_view_direction(vec3(0,0,-1));v.fit_screen();frame(v);
             for (unsigned samples:{1u,4u}) {
                 if (!(v.device().supported_sample_counts()&samples)) continue;v.set_samples(samples);frame(v);
                 if (kind==0) {

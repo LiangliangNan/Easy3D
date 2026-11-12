@@ -56,10 +56,10 @@ int main(int argc,char**) {
             viewer.set_samples(samples);const auto original=viewer.capture();
             press(Viewer::KEY_C,Viewer::MODIF_ALT|Viewer::MODIF_SHIFT);
             require(!plane->is_enabled(),"modified shortcut enabled clipping");
-            const auto camera=viewer.camera()->modelViewProjectionMatrix();
+            const auto camera=viewer.camera()->model_view_projection_matrix();
             press(Viewer::KEY_C);require(plane->is_enabled(),"Alt-C did not enable shared clipping");
-            require(same_matrix(camera,viewer.camera()->modelViewProjectionMatrix()),"Alt-C moved camera");
-            require((plane->center()-viewer.camera()->sceneCenter()).norm()<1e-6f,"Alt-C did not fit plane");
+            require(same_matrix(camera,viewer.camera()->model_view_projection_matrix()),"Alt-C moved camera");
+            require((plane->center()-viewer.camera()->scene_center()).norm()<1e-6f,"Alt-C did not fit plane");
             require(viewer.clipping_planes().size()==1,"shared plane not exposed to selection");
             const auto guided=viewer.capture();
             require(viewer.snapshot("vulkan-shared-clipping.png",1.5f,int(samples),1,false),"clipping snapshot failed");
@@ -86,7 +86,7 @@ int main(int argc,char**) {
         }
         press(Viewer::KEY_C);
         auto* frame=plane->manipulator()->frame();
-        const auto camera=viewer.camera()->modelViewProjectionMatrix(),pose=frame->matrix();
+        const auto camera=viewer.camera()->model_view_projection_matrix(),pose=frame->matrix();
         viewer.mouse_press_event(170,130,ViewerInput::BUTTON_LEFT,ViewerInput::MODIF_ALT);
         viewer.mouse_drag_event(195,150,25,20,ViewerInput::BUTTON_LEFT,ViewerInput::MODIF_ALT);
         viewer.mouse_release_event(195,150,ViewerInput::BUTTON_LEFT,ViewerInput::MODIF_ALT);
@@ -97,7 +97,7 @@ int main(int argc,char**) {
         viewer.mouse_release_event(190,155,ViewerInput::BUTTON_RIGHT,ViewerInput::MODIF_ALT);
         const auto delta=frame->position()-center;
         require(delta.norm()>1e-5f && cross(delta,normal).norm()<1e-5f,"Alt-right drag violated normal constraint");
-        require(same_matrix(camera,viewer.camera()->modelViewProjectionMatrix()),"plane drag moved camera");
+        require(same_matrix(camera,viewer.camera()->model_view_projection_matrix()),"plane drag moved camera");
         viewer.set_clipping_planes({vec4(1,0,0,0)});
         require(viewer.clipping_planes()[0]!=vec4(1,0,0,0),"explicit plane overrode enabled shared plane");
         plane->set_enabled(false);

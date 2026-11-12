@@ -95,7 +95,7 @@ namespace easy3d {
      *      **Coordinate systems.** All picker methods accept screen coordinates
      *      expressed in logical window units (top-left origin, x right, y down),
      *      matching ViewerBase::world_to_window() and mouse event callbacks. The
-     *      camera's screenWidth()/screenHeight() define the logical extent; on HiDPI
+     *      camera's screen_width()/screen_height() define the logical extent; on HiDPI
      *      displays this is smaller than the framebuffer pixel dimensions by the
      *      DPI scaling factor. Internally, single-element picks convert the logical
      *      coordinate to a framebuffer pixel before sampling; region selections
@@ -133,12 +133,12 @@ namespace easy3d {
          * \param y The cursor y-coordinate in logical window units (top-left origin, y down).
          * \return The picking line from the near plane through the cursor position into the scene.
          * \note The coordinate must lie within the camera screen extent and is in logical window units, not framebuffer pixels. On HiDPI displays
-         *       the logical extent is camera()->screenWidth()/Height(), which is smaller than the
+         *       the logical extent is camera()->screen_width()/Height(), which is smaller than the
          *       framebuffer pixel dimensions by the DPI scaling factor.
          */
         Line3 picking_line(int x, int y) const {
-            const vec3 p_near = camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), 0));
-            const vec3 p_far = camera()->unprojectedCoordinatesOf(vec3(float(x), float(y), 1));
+            const vec3 p_near = camera()->unprojected_coordinates_of(vec3(float(x), float(y), 0));
+            const vec3 p_far = camera()->unprojected_coordinates_of(vec3(float(x), float(y), 1));
             return Line3::from_two_points(p_near, p_far);
         }
 

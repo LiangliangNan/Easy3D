@@ -56,9 +56,9 @@ WalkThrough::~WalkThrough() {
 void WalkThrough::add_keyframe(const Frame &frame, bool quiet) {
     if (kfi_->add_keyframe(frame)) {
         // update scene radius to make sure the path is within the view frustum
-        float dist = distance(camera_->sceneCenter(), frame.position());
-        if (dist > camera_->sceneRadius())
-            camera_->setSceneRadius(dist);
+        float dist = distance(camera_->scene_center(), frame.position());
+        if (dist > camera_->scene_radius())
+            camera_->set_scene_radius(dist);
 
         LOG_IF(!quiet, INFO) << "a key frame added to camera path";
         path_modified.send();
@@ -75,7 +75,7 @@ void WalkThrough::set_scene(const std::vector< std::shared_ptr<Model> > &scene) 
         box += m->bounding_box();
     }
     scene_box_ = box;
-    camera_->setSceneRadius(box.radius() * 1.1f);
+    camera_->set_scene_radius(box.radius() * 1.1f);
 
     if (status_ != STOPPED)
         interpolator()->interpolate();
@@ -113,7 +113,7 @@ void WalkThrough::walk_to(const vec3 &ground_point) {
     add_keyframe(cam_pos, view_dir);
 
     // set the pivot point ahead of the character.
-    camera_->setPivotPoint(ground_point + view_dir * third_person_forward_distance() * 2.0f);
+    camera_->set_pivot_point(ground_point + view_dir * third_person_forward_distance() * 2.0f);
 }
 
 
@@ -132,14 +132,14 @@ void WalkThrough::set_third_person_forward_factor(float f) {
 
 
 void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
-    camera_->setSceneRadius(scene_box_.radius() * 1.1f);
+    camera_->set_scene_radius(scene_box_.radius() * 1.1f);
     rotate_axis_ = axis;
 
     const float object_height = scene_box_.max_coord(2);
 
     const auto up = -rotate_axis_.direction(); // picking line points inside screen
     const auto vertical_offset = rotate_vertical_offset_factor_ * object_height * up;
-    const auto at = rotate_axis_.projection(camera_->sceneCenter() + vertical_offset);
+    const auto at = rotate_axis_.projection(camera_->scene_center() + vertical_offset);
     const auto dist_to_axis = scene_box_.diagonal_length() + rotate_zoom_out_factor_ * object_height;
     const auto relative_cam0 = geom::orthogonal(up).normalize() * dist_to_axis;
 
@@ -151,15 +151,15 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
         easy3d::quat q(up, -angle_step * static_cast<float>(i)); // "-" for counterclockwise rotation
         const auto relative_cam = q.rotate(relative_cam0);
         Camera cam;
-        cam.setPosition(at + relative_cam);
-        cam.lookAt(at + up * pitch_offset);
+        cam.set_position(at + relative_cam);
+        cam.look_at(at + up * pitch_offset);
 
-//        cam.setUpVector(up); // if no pitch
+//        cam.set_up_vector(up); // if no pitch
 
         // the up vector changes w.r.t. pitch angle
         const auto ortho = cross(relative_cam, up).normalize(); // the rotation axis for camera pitch
         q.set_axis_angle(ortho, -pitch_angle);
-        cam.setUpVector(q.rotate(up));
+        cam.set_up_vector(q.rotate(up));
 
         add_keyframe(*cam.frame(), true);
     }
@@ -246,7 +246,7 @@ int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /*
 
     const auto frame = kfi_->keyframe(idx);
     if (animation)
-        camera_->interpolateTo(&frame, duration);
+        camera_->interpolate_to(&frame, duration);
     else
         camera_->frame()->setPositionAndOrientation(frame.position(), frame.orientation());
 
@@ -259,7 +259,7 @@ int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /*
 
     vec3 foot =
             frame.position() + view_dir * third_person_forward_distance() * 2.0f - vec3(0, 0, 1) * character_height();
-    camera_->setPivotPoint(foot);
+    camera_->set_pivot_point(foot);
 
     return current_frame_idx_;
 }
@@ -289,7 +289,7 @@ float WalkThrough::character_height() const {
     if (scene_box_.is_valid())
         return scene_box_.range(2) * height_factor_;
     else
-        return camera_->sceneRadius() * height_factor_;
+        return camera_->scene_radius() * height_factor_;
 }
 
 
@@ -306,10 +306,10 @@ vec3 WalkThrough::character_head(const vec3 &pos) const {
 quat WalkThrough::to_orientation(const vec3 &view_dir) const {
     const vec3 &up_dir = ground_plane_normal_;
     vec3 xAxis = cross(view_dir, up_dir);
-    if (xAxis.length2() < epsilon_sqr<float>()) {    // target is aligned with this upVector, meaning a rotation around the X axis.
+    if (xAxis.length2() < epsilon_sqr<float>()) {    // target is aligned with this up vector, meaning a rotation around the X axis.
         // The X axis is then unchanged, so let's keep it!
-        // rightVector() == camera_->frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
-        xAxis = camera_->rightVector();
+        // right_vector() == camera_->frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
+        xAxis = camera_->right_vector();
     }
 
     quat orient;

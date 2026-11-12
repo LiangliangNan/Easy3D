@@ -33,8 +33,8 @@ void faces_only(Model* model) {
     for(const auto& d:model->renderer()->triangles_drawables()) d->set_lighting(false);
 }
 void view(Viewer& v) {
-    v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setUpVector(vec3(0,1,0));
-    v.camera()->setViewDirection(vec3(0,0,-1));v.fit_screen();
+    v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_up_vector(vec3(0,1,0));
+    v.camera()->set_view_direction(vec3(0,0,-1));v.fit_screen();
 }
 Viewer::PickResult hit(Viewer& v,const vec3& point) {
     const auto p=v.world_to_window(point);
@@ -43,7 +43,7 @@ Viewer::PickResult hit(Viewer& v,const vec3& point) {
 void exercise(Viewer& v) {
     auto distant=quad(0),close=quad(.5f);v.add_model(distant);v.add_model(close);
     faces_only(distant.get());faces_only(close.get());view(v);
-    const auto matrix=v.camera()->modelViewProjectionMatrix();
+    const auto matrix=v.camera()->model_view_projection_matrix();
 #ifndef EASY3D_HAS_VULKAN
     GLuint copy_buffer;glGenBuffers(1,&copy_buffer);glBindBuffer(GL_COPY_READ_BUFFER,copy_buffer);
     glBufferData(GL_COPY_READ_BUFFER,16,nullptr,GL_STATIC_DRAW);
@@ -81,7 +81,7 @@ void exercise(Viewer& v) {
     }
     const auto projected=v.world_to_window(result.position);
     require(std::abs(projected.z-result.depth)<2e-5f,"returned world point does not reproduce depth");
-    for(unsigned i=0;i<16;++i) require(std::abs(matrix[i]-v.camera()->modelViewProjectionMatrix()[i])<1e-6f,"picking changed camera");
+    for(unsigned i=0;i<16;++i) require(std::abs(matrix[i]-v.camera()->model_view_projection_matrix()[i])<1e-6f,"picking changed camera");
     require(!v.pick(-1,0) && !v.pick(v.width(),0),"out-of-bounds pick succeeded");
     close->renderer()->set_visible(false);require(hit(v,vec3(-.6f,.2f,0)).model==distant,"hidden model occluded picking");
     auto* plane=ClippingPlane::instance();plane->fit_scene(vec3(0,0,-.25f),2);plane->set_enabled(true);
@@ -97,7 +97,7 @@ void exercise(Viewer& v) {
     result={};require(retained.expired() && retained_model.expired(),"pick ownership leaked sources");
     auto points=std::make_shared<PointsDrawable>("standalone spheres");v.add_drawable(points);
     points->update_vertex_buffer({vec3(0)});points->set_point_size(30);points->set_impostor_type(PointsDrawable::SPHERE);
-    points->set_lighting(false);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+    points->set_lighting(false);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
     result=hit(v,vec3(0));
     require(result && !result.model && result.drawable==points,"standalone point drawable was not picked");
     require(result.depth<1 && result.position.z>0,"sphere pick did not use analytic front-surface depth");
@@ -123,11 +123,11 @@ void impostor_widths(Viewer& v) {
     lines->set_impostor_type(LinesDrawable::CYLINDER);lines->set_lighting(false);
     lines->set_uniform_coloring(vec4(1,0,0,1));v.add_drawable(lines);
     auto& camera=*v.camera();
-    camera.setViewDirection(vec3(0,0,-1));camera.setUpVector(vec3(0,1,0));
+    camera.set_view_direction(vec3(0,0,-1));camera.set_up_vector(vec3(0,1,0));
     for (auto projection:{Camera::ORTHOGRAPHIC,Camera::PERSPECTIVE}) {
-        camera.setType(projection);camera.setSceneBoundingBox(vec3(-1),vec3(1));camera.showEntireScene();
-        camera.setPivotPoint(vec3(0));
-        const float radius=100*camera.world_pixel_ratio(camera.pivotPoint())*.5f;
+        camera.set_type(projection);camera.set_scene_bounding_box(vec3(-1),vec3(1));camera.show_entire_scene();
+        camera.set_pivot_point(vec3(0));
+        const float radius=100*camera.world_pixel_ratio(camera.pivot_point())*.5f;
         const float distance=camera.position().norm();
         const float plane_width=std::abs(v.world_to_window(vec3(0,radius,0)).y-
                                          v.world_to_window(vec3(0,-radius,0)).y);
@@ -173,14 +173,14 @@ void sphere_snapshots(Viewer& v) {
     std::unique_ptr<Texture> texture(Texture::create({255,0,0,255},1,1,4));
     require(bool(texture),"sphere texture creation failed");
     for (auto projection:{Camera::PERSPECTIVE,Camera::ORTHOGRAPHIC}) {
-        v.camera()->setType(projection);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+        v.camera()->set_type(projection);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
         for (bool textured:{false,true}) {
             const vec3 center=textured?vec3(.7f,.3f,0):vec3(0);
             points->update_vertex_buffer({center});
             if (textured) points->set_texture_coloring(State::VERTEX,"v:texcoord",texture.get());
             else points->set_uniform_coloring(vec4(1,0,0,1));
-            const float radius=points->point_size()*v.camera()->world_pixel_ratio(v.camera()->pivotPoint())*.5f;
-            const auto inv=inverse(v.camera()->modelViewProjectionMatrix());
+            const float radius=points->point_size()*v.camera()->world_pixel_ratio(v.camera()->pivot_point())*.5f;
+            const auto inv=inverse(v.camera()->model_view_projection_matrix());
             for (float scale:{1.f,1.5f}) {
                 const std::string file="sphere-"+std::to_string(int(projection))+"-"+std::to_string(textured)+
                     "-"+std::to_string(v.samples())+"-"+std::to_string(scale)+".png";
@@ -228,19 +228,19 @@ struct ManipulationView:TutorialObjectManipulation {
 void tutorials() {
     {
         ManipulationView v("Portable Tutorial 405");auto m=quad(0);v.add_model(m);faces_only(m.get());view(v);
-        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        const auto p=v.camera()->projected_coordinates_of(vec3(-.6f,.2f,0));
         const int x=int(p.x),y=int(p.y);
         v.mouse_press_event(x,y,Viewer::BUTTON_LEFT,0);
         v.mouse_release_event(x,y,Viewer::BUTTON_LEFT,0);
         require(m->renderer()->is_selected() && m->manipulator(),"Tutorial 405 selection missed at native DPI");
-        const auto camera=v.camera()->modelViewProjectionMatrix();
+        const auto camera=v.camera()->model_view_projection_matrix();
         const auto before=m->manipulator()->matrix();
         v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
         v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
         v.mouse_release_event(x+20,y+10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
         const auto translated=m->manipulator()->matrix();
         require((translated*vec4(0,0,0,1)-before*vec4(0,0,0,1)).length()>1e-4f,"Tutorial 405 did not translate model");
-        for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->modelViewProjectionMatrix()[i],"object drag moved camera");
+        for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->model_view_projection_matrix()[i],"object drag moved camera");
         v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);v.focus_event(false);
         v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
         for(unsigned i=0;i<16;++i) require(translated[i]==m->manipulator()->matrix()[i],"focus loss did not cancel model drag");
@@ -255,7 +255,7 @@ void tutorials() {
 
     {
         ModelPickerView v("Portable Tutorial 401");auto m=quad(0);v.add_model(m);faces_only(m.get());view(v);
-        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        const auto p=v.camera()->projected_coordinates_of(vec3(-.6f,.2f,0));
         v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
         require(m->renderer()->is_selected(),"Tutorial 401 click missed at native DPI");
         v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_RIGHT,0);
@@ -265,7 +265,7 @@ void tutorials() {
     }
     {
         FacePickerView v("Portable Tutorial 402");auto m=quad(0);v.Viewer::add_model(m);faces_only(m.get());view(v);
-        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        const auto p=v.camera()->projected_coordinates_of(vec3(-.6f,.2f,0));
         v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
         auto* faces=m->renderer()->get_triangles_drawable("faces");
         require(faces->highlight() && faces->highlight_range()==std::make_pair(0,1),"Tutorial 402 DPI conversion lost polygon highlight");

@@ -10,8 +10,8 @@ supported backend-neutral API rather than backend internals.
 
 **Status after local Z-click transition cleanup:** core feature implementation
 for the agreed shared surface is substantially complete. Viewer-triggered focus
-and fit use the existing `Camera::interpolateToLookAt()` and
-`Camera::interpolateToFitScene()` APIs on both backends; the Viewer does not
+and fit use the existing `Camera::interpolate_to_look_at()` and
+`Camera::interpolate_to_fit_scene()` APIs on both backends; the Viewer does not
 maintain a second interpolator for these actions. The updated
 validation-enabled `vulkan.input` test checks that focus animation progresses
 and reaches its target. Earlier local Vulkan and OpenGL full-suite results are
@@ -199,17 +199,17 @@ needs no change.
 (2026-11-09); consolidated onto one checked projection in Batch 47 (2026-11-10).* Easy3D uses
 three distinct coordinate systems. All code must follow these
 conventions consistently. Batch 46 removed the last backend divergence: legacy mouse hooks,
-`Camera::screenWidth()/Height()`, `Viewer::pick()` and the world↔window/pixel conversion API
+`Camera::screen_width()/screen_height()`, `Viewer::pick()` and the world↔window/pixel conversion API
 are now logical/DPI-independent on **both** OpenGL and Vulkan. The Batch 36 claim that these
 already matched was aspirational; Batch 46 is what makes it true.
 
 ### Three Coordinate Systems
 
 1. **Logical Window Coordinates** (points, DPI-independent)
-   - **Methods**: `Viewer::width()`, `Viewer::height()`, `ViewerBase::viewer_size(w, h)`, `Camera::screenWidth()`, `Camera::screenHeight()`
+   - **Methods**: `Viewer::width()`, `Viewer::height()`, `ViewerBase::viewer_size(w, h)`, `Camera::screen_width()`, `Camera::screen_height()`
    - **Purpose**: UI layout, window events, mouse coordinates, camera operations, projection calculations
    - **Characteristics**: Represents the logical window size as the user perceives it; same on all DPI displays
-   - **Key relationship**: `Camera::screenWidth()/Height()` == `Viewer::width()/height()` for a single-view
+   - **Key relationship**: `Camera::screen_width()/screen_height()` == `Viewer::width()/height()` for a single-view
      `Viewer` (kept in sync automatically). A `MultiViewer`'s `camera()` instead describes one cell, so its
      screen dimensions are the logical cell size, not the whole window. These dimensions are logical on
      **both** backends (Batch 46); no framebuffer-size members were added to `Camera`.
@@ -224,7 +224,7 @@ already matched was aspirational; Batch 46 is what makes it true.
    - **Methods**: Parameters passed to the viewer event hooks (`mouse_press_event`, `mouse_release_event`, `mouse_drag_event`, etc.)
    - **Purpose**: User interaction, picking, hover detection
    - **Characteristics**: Always in logical window coordinates with top-left origin (0,0), on **both** backends (Batch 46 unified the hooks; Vulkan previously delivered framebuffer pixels)
-   - **Usage**: Use directly with `width()`/`height()` for bounds checking; pass to camera methods like `projectedCoordinatesOf()`
+   - **Usage**: Use directly with `width()`/`height()` for bounds checking; pass to camera methods like `projected_coordinates_of()`
 
 ### World ↔ Window/Pixel Conversion API (Batch 46)
 
@@ -247,8 +247,8 @@ Depth is normalized [0,1] (near=0, far=1); OpenGL's [-1,1] window depth is remap
 
 All window↔world conversions route through one checked implementation in `renderer/transform.h`:
 `transform::project` / `transform::unproject` (plus `unproject_inverse` for bulk queries that reuse
-a precomputed inverse, `checked_inverse`, `scale_coordinate`, `pixel_index`). `Camera::projectedCoordinatesOf`/
-`unprojectedCoordinatesOf`, `ViewerBase::world_to_window`/`window_to_world`/`world_to_pixel`/`pixel_to_world`,
+a precomputed inverse, `checked_inverse`, `scale_coordinate`, `pixel_index`). `Camera::projected_coordinates_of`/
+`unprojected_coordinates_of`, `ViewerBase::world_to_window`/`window_to_world`/`world_to_pixel`/`pixel_to_world`,
 the pickers, and `MultiViewer` cell mapping all delegate to it — there are no parallel hand-written
 clip-space formulas left. Consequences:
 
@@ -270,9 +270,9 @@ clip-space formulas left. Consequences:
 
 ### When to Use Which
 
-**Use Camera methods** (`screenWidth()`, `screenHeight()`) for:
+**Use Camera methods** (`screen_width()`, `screen_height()`) for:
 - Camera operations (projection matrices, view calculations)
-- Coordinate conversions (`projectedCoordinatesOf()`, `unprojectedCoordinatesOf()`)
+- Coordinate conversions (`projected_coordinates_of()`, `unprojected_coordinates_of()`)
 - Picking operations
 - Any camera-centric computation
 
@@ -292,7 +292,7 @@ clip-space formulas left. Consequences:
 
 1. **Never mix coordinate systems**: Don't pass framebuffer coordinates to methods expecting logical coordinates, or vice versa.
 
-2. **Keep camera and viewer in sync**: When the window resizes, both `Camera::setScreenWidthAndHeight()` and the viewer's logical size must be updated to the same values.
+2. **Keep camera and viewer in sync**: When the window resizes, both `Camera::set_screen_width_and_height()` and the viewer's logical size must be updated to the same values.
 
 3. **Document coordinate expectations**: When adding new methods that take coordinates, clearly document which coordinate system they expect.
 
@@ -302,10 +302,10 @@ clip-space formulas left. Consequences:
 
 6. **Drawable sizes are logical pixels**: `PointsDrawable::point_size()` and `LinesDrawable::line_width()`
    are expressed in **logical pixels** (DPI-independent) on both backends (Batch 46; the OpenGL-imposter
-   behavior won). Impostor radii are computed once via the shared `impostor_radius(camera, diameter)` helper
+   behavior won). Impostor radii are computed once via the shared `Drawable::impostor_radius(camera, diameter)` helper
    (`diameter * camera.world_pixel_ratio(pivot) * 0.5`, world-space), so projected size is DPI-independent. Plain
    points/lines rasterize in framebuffer pixels and are scaled from logical size by the viewport-to-camera
-   ratio (`viewport_pixel_scale(camera)` on OpenGL; the target/camera ratio in Vulkan `draw_commands`).
+   ratio (`Drawable::viewport_pixel_scale(camera)` on OpenGL; the target/camera ratio in Vulkan `draw_commands`).
    `Camera::world_pixel_ratio()` therefore returns world-units-per-**logical**-pixel on both backends.
 
 ### Example: Correct Coordinate Usage
@@ -322,7 +322,7 @@ bool MyViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     Model* picked = picker_->pick(models(), x, y);
     
     // Use logical coordinates for camera operations
-    vec3 world_pos = camera()->unprojectedCoordinatesOf(vec3(x, y, 0.5f));
+    vec3 world_pos = camera()->unprojected_coordinates_of(vec3(x, y, 0.5f));
     
     return true;
 }
@@ -1210,7 +1210,7 @@ auto* model = renderer.add_model("bunny.ply");
 if (model) {
     auto* faces = model->renderer()->get_triangles_drawable("faces");
     faces->set_uniform_coloring(easy3d::vec4(0.7f, 0.85f, 1, 1));
-    renderer.camera()->showEntireScene();
+    renderer.camera()->show_entire_scene();
     renderer.render("bunny.png");
 }
 ```
@@ -1369,7 +1369,7 @@ package.
 `PointsDrawable::PLAIN` accepts positive finite framebuffer-pixel sizes; sizes
 other than one use instanced triangle quads and never request `largePoints`.
 `PointsDrawable::SPHERE` uses a view-space radius of
-`point_size() * camera.world_pixel_ratio(camera.pivotPoint()) / 2`, matching the legacy
+`point_size() * camera.world_pixel_ratio(camera.pivot_point()) / 2`, matching the legacy
 radius convention. Manipulation transforms the center; radius is independent of
 model scale. Model/default drawable styling remains plain one-pixel points until
 explicitly changed. `PointsDrawable::SURFEL` now renders oriented circular discs
@@ -1459,7 +1459,7 @@ and the other roadmap gates remain outstanding.
 ## Cylinder/cone line impostors and Tutorial 302
 
 `LinesDrawable::CYLINDER` and `LinesDrawable::CONE` are now supported by the native
-scene adapter. Radius is `line_width() * camera.world_pixel_ratio(camera.pivotPoint()) / 2`,
+scene adapter. Radius is `line_width() * camera.world_pixel_ratio(camera.pivot_point()) / 2`,
 matching the existing radius convention. Cylinders have two flat caps; cones have
 a base cap at the first endpoint and taper to the second endpoint. Model/view
 transforms move the endpoints, while radius remains in view-space units. A
@@ -2060,7 +2060,7 @@ OpenGL host remains available.
 ```
 
 This stage also corrects native depth-to-world reconstruction. The legacy
-`Camera::unprojectedCoordinatesOf()` uses a height-minus-one coordinate convention;
+`Camera::unprojected_coordinates_of()` uses a height-minus-one coordinate convention;
 passing framebuffer pixel centers to it introduced a one-pixel Y offset.
 `VulkanOffScreen::unproject_pixel()` instead reconstructs the exact top-left
 framebuffer center from readback depth and the inverse MVP. `pick()` and
@@ -2114,7 +2114,7 @@ so callers can supply a triangle/image annotation and its world-to-clip MVP:
 ```cpp
 easy3d::graphics::DrawCommand plane;
 plane.geometry = plane_triangles;
-plane.model_view_projection = viewer.camera()->modelViewProjectionMatrix();
+plane.model_view_projection = viewer.camera()->model_view_projection_matrix();
 plane.color = easy3d::vec4(1, 0, 0, 0.2f);
 plane.overlay_depth_test = true;
 viewer.set_overlays({plane});
@@ -2414,7 +2414,7 @@ animation, and an empty scene returns an empty vector.
 
 Tutorial 405 now builds with the native Vulkan host. **Space** acquires the visible
 scene and adds a new PointCloud; **N** toggles the shared Gaussian-noise algorithm.
-Native noise sigma is `0.0001 * camera.sceneRadius()` in world units. Scanned clouds
+Native noise sigma is `0.0001 * camera.scene_radius()` in world units. Scanned clouds
 remain visible and participate in later scans, as other visible scene models do.
 Acquisition attaches results with `add_model(cloud, true, false)` (`fit_scene = false`)
 without refitting, keeping the complete camera state and custom matrices.
@@ -8058,3 +8058,96 @@ screen-space expansion.
 
 The remaining migration gates (Linux/Mesa CI rerun, Windows hardware, cross-platform validation)
 are unchanged.
+
+### 2026-11-12 — W10 batch 68: Camera follows the core library naming convention
+
+**Scope.** `Camera` was the last public class still carrying libQGLViewer's camelCase spelling,
+which made the same call read differently depending on where it came from (`camera->viewDirection()`
+next to `camera->scene_center()`). Its own API now uses the core library convention (all lower case,
+words connected by `_`): 56 functions and 13 member variables renamed, as a clean rename with no
+deprecated aliases.
+
+- *Accessors*: `viewDirection()`, `upVector()`, `rightVector()`, `fieldOfView()`,
+  `horizontalFieldOfView()`, `aspectRatio()`, `screenWidth()`, `screenHeight()`, `zNear()`,
+  `zFar()`, `zNearCoefficient()`, `zClippingCoefficient()`, `sceneRadius()`, `sceneCenter()`,
+  `distanceToSceneCenter()`, `pivotPoint()`, `getOrthoWidthHeight()`,
+  `getFrustumPlanesCoefficients()` and `...Coefficients2()` become `view_direction()` and so on
+  (`frame()` was already snake_case; only its setter `setFrame()` changed).
+- *Manipulators*: `setViewDirection()`, `setUpVector()`, `setPosition()`, `setOrientation()`,
+  `lookAt()`, `showEntireScene()`, `fitSphere()`, `fitBoundingBox()`, `fitScreenRegion()`,
+  `centerScene()`, `setType()`, `setFieldOfView()`, `setHorizontalFieldOfView()`,
+  `setFOVToFitScene()`, `setAspectRatio()`, `setScreenWidthAndHeight()`, `setZNearCoefficient()`,
+  `setZClippingCoefficient()`, `setSceneRadius()`, `setSceneCenter()`, `setSceneBoundingBox()`,
+  `setPivotPoint()`, `setFrame()`, `setModelViewMatrix()` become their snake_case spellings
+  (`set_model_view_matrix()`, not `set_modelview_matrix()`).
+- *Matrices and conversions*: `computeProjectionMatrix()`, `computeModelViewMatrix()`,
+  `projectionMatrix()`, `modelViewMatrix()`, `modelViewProjectionMatrix()`, `cameraCoordinatesOf()`,
+  `worldCoordinatesOf()`, `projectedCoordinatesOf()`, `unprojectedCoordinatesOf()`,
+  `convertClickToLine()`, `interpolateTo()`, `interpolateToLookAt()`, `interpolateToFitScene()`
+  follow the same rule.
+- *Members*: the 13 camelCase fields become `screen_width_`, `screen_height_`, `field_of_view_`,
+  `scene_center_`, `scene_radius_`, `z_near_coef_`, `z_clipping_coef_`, `ortho_coef_`,
+  `model_view_matrix_`, `model_view_matrix_is_up_to_date_`, `projection_matrix_`,
+  `projection_matrix_is_up_to_date_` and `interpolation_kfi_`; `frame_` and `type_` were already
+  snake_case.
+- *Deliberately unchanged*: the `Frame` family (`Frame`, `ManipulatedFrame`,
+  `ManipulatedCameraFrame`, `KeyFrameInterpolator`) keeps its inherited camelCase surface
+  (`frame()->setPosition()`, `frame()->setOrientation()`, `setPivotPoint()`, `pivotPoint()`,
+  `referenceFrame()`, `coordinatesOf()`, `transformOf()`) — renaming those classes is a separate
+  task, and this batch only touches call sites where the receiver is a `Camera`. Qt's
+  `setOrientation()` and the GLFW/`3rd_party` spellings are likewise untouched. The batch-46/47
+  coordinate contract is preserved: `Camera` still holds only the logical window size and gains no
+  framebuffer accessor.
+- *Propagation*: 139 files — `easy3d/` (renderer, viewer, gui, effects, both backends, notably
+  `backends/vulkan/drawable.cpp`, `backends/vulkan/clipping_plane.cpp` and
+  `backends/vulkan/key_frame_interpolator.cpp`), `applications/Mapple/`, `tutorials/`,
+  `python/tutorials/`, `tests/`,
+  the pybind11 surface (`python/bindings/easy3d/renderer/camera.cpp`, bound names and docstrings)
+  and comment-only references elsewhere. `tests/viewer/plain_line_parity_test.cpp` (added by
+  batch 66 upstream) was the one file the compiler caught still using the old spellings.
+- *Resolved conflict*: `easy3d/renderer/backends/vulkan/drawable.cpp` carried unresolved stash
+  markers from the batch 66/67 merge (`<<<<<<< Updated upstream` / `>>>>>>> Stashed changes`).
+  It now keeps both the plain-line expansion switch (`setting::lines_drawable_screen_space_width`)
+  and the renamed matrix accessors.
+
+**Documentation.** `camera.h` and `camera.cpp` still documented behavior inherited from
+libQGLViewer that does not exist here. The stale text was rewritten against the actual code, not
+deleted: the dead external links and references to `Viewer::setCamera()`, `Viewer::preDraw()`,
+`Viewer::startScreenCoordinatesSystem()`, `Viewer::saveSnapshot()`,
+`Viewer::MOVE_FORWARD/MOVE_BACKWARD`, `ManipulatedFrame::sceneUpVector()`, `focusDistance()`,
+`addKeyFrameToPath()/playPath()` and "OpenGL units" are gone, replaced by the Easy3D equivalents
+(`keyframe_interpolator()`, `add_keyframe()`, `start_interpolation()`, `Viewer::capture()`,
+`ManipulatedCameraFrame::action_rotate()`, `world units`). The matrix getters now state that they
+recompute lazily when the parameters changed, and that `set_projection_matrix()` and
+`set_model_view_matrix()` install a matrix without marking it up to date, so the next parameter or
+pose change discards it. The window-origin/pixel-size contract now points at
+`Viewer::world_to_window()/window_to_world()` and `transform::project()/unproject()` instead of
+`glGetDoublev`-based helpers.
+
+`get_frustum_planes_coefficients()` and `get_frustum_planes_coefficients2()` documented the same
+convention for two different outputs, and both statements were wrong. The real conventions were
+measured with a probe program (camera at `(0,-10,0)`, `look_at(origin)`, `scene_radius` 3,
+`z_near` 4.80385, `z_far` 15.1962) rather than derived:
+
+| Variant | Form | Normal | Interior test | `glClipPlane()` |
+|---|---|---|---|---|
+| `..._coefficients()` | `a*x+b*y+c*z = d` (natural equation, 4th component is `-d`) | unit, points out | `a*x+b*y+c*z - d <= 0` | needs `{-a,-b,-c,+d}` |
+| `..._coefficients2()` | `a*x+b*y+c*z+d = 0` (Gribb-Hartmann rows of the model view projection matrix) | points in | value `>= 0` | directly usable |
+
+The head/tail sample in the header now matches variant 1's own convention, and the mixed
+`double coef[6][4]` / `glClipPlane(GL_CLIP_PLANE0, coef[2])` snippet that would not compile was
+replaced.
+
+**Validation.** Both trees rebuilt cleanly and both suites then ran serially on macOS
+(2026-11-12): OpenGL `build-opengl` 107/107 in 50.8 s and Vulkan `cmake-build-debug` 147/147 in
+289.2 s. The rename is behavior-preserving — the Camera-sensitive checks pass on both backends
+(`opengl.tutorial205`/`vulkan.realcamera`, `opengl.tutorial206` (interpolation),
+`opengl.plainlineparity`/`vulkan.plainlineparity`, `viewer.pointbenchmark`,
+`vulkan.interactionoverlay`).
+
+The compiler, not grep, is the completeness check: `tests/viewer/plain_line_parity_test.cpp` still
+used the old spellings and only failed at link/compile time, and the same build exposed the stash
+markers in `backends/vulkan/drawable.cpp` (that file is excluded from OpenGL builds, so a source
+grep was the only other way to see it). After the fix, a repo-wide grep outside `3rd_party/` finds
+no camelCase `Camera` spelling left, and `camera.h` itself contains only `glClipPlane()` and the
+inherited `referenceFrame()` name.

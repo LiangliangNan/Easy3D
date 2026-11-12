@@ -164,8 +164,8 @@ void analytic_clipping(RenderDevice& device) {
 }
 void scene_clipping(const VulkanOptions& options) {
     OffScreen viewer(181,141,options);
-    viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.camera()->setViewDirection(vec3(0,0,-1));
-    viewer.camera()->setUpVector(vec3(0,1,0));
+    viewer.camera()->set_type(Camera::ORTHOGRAPHIC); viewer.camera()->set_view_direction(vec3(0,0,-1));
+    viewer.camera()->set_up_vector(vec3(0,1,0));
     auto mesh=std::make_shared<SurfaceMesh>();
     auto a=mesh->add_vertex(vec3(-1,-1,0)),b=mesh->add_vertex(vec3(1,-1,0)),c=mesh->add_vertex(vec3(1,1,0)),e=mesh->add_vertex(vec3(-1,1,0));
     const auto face=mesh->add_quad(a,b,c,e); viewer.add_model(mesh);
@@ -173,14 +173,14 @@ void scene_clipping(const VulkanOptions& options) {
     viewer.set_clipping_planes({vec4(2,0,0,-.2f)});
     require(viewer.clipping_planes()[0].x==1,"world clipping planes are not normalized");
     for (auto type:{Camera::ORTHOGRAPHIC,Camera::PERSPECTIVE}) {
-        viewer.camera()->setType(type);
-        auto p=viewer.camera()->projectedCoordinatesOf(vec3(-.2f,0,0));
+        viewer.camera()->set_type(type);
+        auto p=viewer.camera()->projected_coordinates_of(vec3(-.2f,0,0));
         require(!viewer.pick(int(p.x),int(p.y)),"world clipping ignored model transformation");
-        p=viewer.camera()->projectedCoordinatesOf(vec3(.5f,0,0)); const auto hit=viewer.pick(int(p.x),int(p.y));
+        p=viewer.camera()->projected_coordinates_of(vec3(.5f,0,0)); const auto hit=viewer.pick(int(p.x),int(p.y));
         require(hit.face_index==face.idx() && hit.position.x>.1f,"clipped tessellation lost source face/world position");
     }
-    viewer.camera()->setViewDirection(normalize(vec3(-1,.4f,-1))); viewer.camera()->showEntireScene();
-    const auto p=viewer.camera()->projectedCoordinatesOf(vec3(.5f,0,0));
+    viewer.camera()->set_view_direction(normalize(vec3(-1,.4f,-1))); viewer.camera()->show_entire_scene();
+    const auto p=viewer.camera()->projected_coordinates_of(vec3(.5f,0,0));
     require(viewer.pick(int(p.x),int(p.y)).face_index==face.idx(),"camera motion changed world clipping plane");
     const auto saved=viewer.clipping_planes();
     rejects([&]{ viewer.set_clipping_planes({vec4(0)}); }); require(viewer.clipping_planes()==saved,"failed plane setter changed state");

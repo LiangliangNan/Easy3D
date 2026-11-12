@@ -80,7 +80,7 @@ int main(int argc,char**) {
         Viewer::poll_events();v.draw_frame();
         const int fw = v.framebuffer_width(), fh = v.framebuffer_height();
         require(fw>0 && fh>0,"test window has no framebuffer");
-        const mat4 before = v.camera()->modelViewProjectionMatrix();
+        const mat4 before = v.camera()->model_view_projection_matrix();
         const auto live = v.capture();
 
         // The plain frame is the reference the effects have to change.
@@ -139,9 +139,9 @@ int main(int argc,char**) {
 
         // The snapshot borrows the camera and the frame path; both are back. The camera
         // carries logical window dimensions on both backends (Batch 46), not the framebuffer.
-        require(v.camera()->screenWidth()==v.width() && v.camera()->screenHeight()==v.height(),
+        require(v.camera()->screen_width()==v.width() && v.camera()->screen_height()==v.height(),
                 "the snapshot left the camera at the output size");
-        const mat4 after = v.camera()->modelViewProjectionMatrix();
+        const mat4 after = v.camera()->model_view_projection_matrix();
         for (unsigned i=0;i<16;++i) require(after[i]==before[i],"the snapshot left the projection overridden");
         Viewer::poll_events();v.draw_frame();
         require(v.capture().rgba==live.rgba,"the snapshot changed the live frame");

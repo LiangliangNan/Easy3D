@@ -118,10 +118,10 @@ PaintCanvas::PaintCanvas(MainWindow* window)
     setMouseTracking(true);
 
     camera_ = new Camera;
-    camera_->setType(Camera::PERSPECTIVE);
-    camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
-    camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-    camera_->showEntireScene();
+    camera_->set_type(Camera::PERSPECTIVE);
+    camera_->set_up_vector(vec3(0, 0, 1)); // Z pointing up
+    camera_->set_view_direction(vec3(-1, 0, 0)); // X pointing out
+    camera_->show_entire_scene();
 
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
@@ -241,7 +241,7 @@ void PaintCanvas::resizeGL(int w, int h) {
     // So I don't need to set up.
     // glViewport(0, 0, static_cast<int>(w * highdpi_), static_cast<int>(h * highdpi_));
 
-    camera()->setScreenWidthAndHeight(w, h);
+    camera()->set_screen_width_and_height(w, h);
 }
 
 
@@ -352,15 +352,15 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                         bool found = false;
                         const vec3 &p = pointUnderPixel(e->pos(), found);
                         if (found) {
-                            camera_->setPivotPoint(p);
+                            camera_->set_pivot_point(p);
                             if (pressed_key_ == Qt::Key_Z && e->modifiers() == Qt::NoModifier)
-                                camera()->interpolateToLookAt(p);
+                                camera()->interpolate_to_look_at(p);
                         } else
-                            camera_->setPivotPoint(camera_->sceneCenter());
+                            camera_->set_pivot_point(camera_->scene_center());
                     } else if (e->button() == Qt::RightButton) {
-                        camera_->setPivotPoint(camera_->sceneCenter());
+                        camera_->set_pivot_point(camera_->scene_center());
                         if (pressed_key_ == Qt::Key_Z && e->modifiers() == Qt::NoModifier)
-                            camera()->interpolateToFitScene();
+                            camera()->interpolate_to_fit_scene();
                     }
                 }
             }
@@ -395,7 +395,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
         int xmax = std::max(mouse_pressed_pos_.x(), e->pos().x());
         int ymin = std::min(mouse_pressed_pos_.y(), e->pos().y());
         int ymax = std::max(mouse_pressed_pos_.y(), e->pos().y());
-        camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
+        camera_->fit_screen_region(xmin, ymin, xmax, ymax);
     }
     else {
         if (e->button() == Qt::LeftButton || e->button() == Qt::RightButton)
@@ -662,26 +662,26 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
         camera_->frame()->action_turn(-angle, camera_);
     } else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {    // move camera forward
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
     } else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
     } else if (e->key() == Qt::Key_Left &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera left
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
     } else if (e->key() == Qt::Key_Right &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera right
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
     } else if (e->key() == Qt::Key_Up &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera up
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
     } else if (e->key() == Qt::Key_Down &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera down
-        float step = 0.05f * camera_->sceneRadius();
+        float step = 0.05f * camera_->scene_radius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
     } else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
@@ -700,7 +700,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
         // Aligns camera
         Frame frame;
-        frame.setTranslation(camera_->pivotPoint());
+        frame.setTranslation(camera_->pivot_point());
         camera_->frame()->alignWithFrame(&frame, true);
 
         // Aligns frame
@@ -1023,10 +1023,10 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     for (const auto &p : vts)
         radius = std::max(radius, distance(box.center(), p));
 
-    camera_->setSceneCenter(box.center());
+    camera_->set_scene_center(box.center());
     // make it a little bigger to ensure tiny objects (far away from other big objects) are also visible
-    camera_->setSceneRadius(radius);
-    camera_->fitBoundingBox(box.min_point(), box.max_point());
+    camera_->set_scene_radius(radius);
+    camera_->fit_bounding_box(box.min_point(), box.max_point());
     update();
 }
 
@@ -1048,10 +1048,10 @@ void PaintCanvas::adjustSceneRadius() {
     // attention: the scene center is not changed.
     // Note: This is not accurate and just an estimate. If you see problem in rendering, use the max distance
     //       from the scene center to the eight vertices of the box.
-    camera()->setSceneRadius(
+    camera()->set_scene_radius(
             std::max(
-                    distance(camera()->sceneCenter(), box.min_point()),
-                    distance(camera()->sceneCenter(), box.max_point())
+                    distance(camera()->scene_center(), box.min_point()),
+                    distance(camera()->scene_center(), box.max_point())
                     )
             );
 }
@@ -1129,8 +1129,8 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
 
     found = depth < 1.0f;
     if (found) {
-        // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-        return camera_->unprojectedCoordinatesOf(vec3(static_cast<float>(p.x()), static_cast<float>(p.y()), depth));
+        // The input to unprojected_coordinates_of() is defined in the screen coordinate system
+        return camera_->unprojected_coordinates_of(vec3(static_cast<float>(p.x()), static_cast<float>(p.y()), depth));
     }
 
     return {};
@@ -1235,7 +1235,7 @@ void PaintCanvas::drawCornerAxes() {
     const vec3 &wCamPos = camera_->position();
     // it can also be computed as follows:
     //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-    const mat4 &MV = camera_->modelViewMatrix();
+    const mat4 &MV = camera_->model_view_matrix();
     const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
@@ -1286,7 +1286,7 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     {
         const auto& p = mesh->position(v);
         face_center += p;
-        const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
+        const vec3 proj = camera()->projected_coordinates_of(manip * p);
         texter_->draw("v" + std::to_string(v.idx()),
                       static_cast<int>(proj.x) * dpiScaling(),
                       static_cast<int>(proj.y) * dpiScaling(),
@@ -1296,7 +1296,7 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     }
 
     // draw label for the picked face
-    const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center / valence));
+    const vec3 proj = camera()->projected_coordinates_of(manip * (face_center / valence));
     texter_->draw("f" + std::to_string(picked_face_index_),
                   static_cast<int>(proj.x) * dpiScaling(),
                   static_cast<int>(proj.y) * dpiScaling(),
@@ -1319,7 +1319,7 @@ void PaintCanvas::drawPickedVertexID() {
     // draw the ID of the picked vertex
     auto vertex = PointCloud::Vertex(picked_vertex_index_);
     vec3 pos = cloud->position(vertex);
-    pos = camera()->projectedCoordinatesOf(manip * pos);
+    pos = camera()->projected_coordinates_of(manip * pos);
     texter_->draw("v" + std::to_string(picked_vertex_index_),
                   static_cast<int>(pos.x) * dpiScaling(),
                   static_cast<int>(pos.y) * dpiScaling(),
@@ -1410,9 +1410,9 @@ void PaintCanvas::postDraw() {
             drawable_manip_sphere_ = new LinesDrawable;
 
         const int radius = 150; // pixels
-        float ratio = camera_->world_pixel_ratio(camera_->pivotPoint());
-        auto manip = mat4::translation(camera_->pivotPoint()) * mat4::scale(radius * ratio) ;
-        shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
+        float ratio = camera_->world_pixel_ratio(camera_->pivot_point());
+        auto manip = mat4::translation(camera_->pivot_point()) * mat4::scale(radius * ratio) ;
+        shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->model_view_projection_matrix(), manip);
     }
 
     // ------- draw the axes indicating the orientation of the model  ----------
@@ -1591,9 +1591,9 @@ void PaintCanvas::deleteSelectedPrimitives() {
 
 void PaintCanvas::setPerspective(bool b) {
     if (b)
-        camera_->setType(Camera::PERSPECTIVE);
+        camera_->set_type(Camera::PERSPECTIVE);
     else
-        camera_->setType(Camera::ORTHOGRAPHIC);
+        camera_->set_type(Camera::ORTHOGRAPHIC);
     update();
 }
 
@@ -1651,14 +1651,14 @@ void PaintCanvas::pasteCamera() {
 
     //////////////////////////////////////////////////////////////////////////
     // change view directly
-    // 	camera()->setPosition(pos);
-    // 	camera()->setOrientation(orient);
+    // 	camera()->set_position(pos);
+    // 	camera()->set_orientation(orient);
     // I prefer to make animation
     Frame new_frame;
     new_frame.setPosition(pos);
     new_frame.setOrientation(orient);
     const float duration = 0.5f;
-    camera()->interpolateTo(&new_frame, duration);
+    camera()->interpolate_to(&new_frame, duration);
 
     update();
 }
@@ -1696,11 +1696,11 @@ void PaintCanvas::saveState(std::ostream& output) const {
         case Camera::PERSPECTIVE:	output << "\t type: " << "PERSPECTIVE" << std::endl;	break;
         case Camera::ORTHOGRAPHIC:	output << "\t type: " << "ORTHOGRAPHIC" << std::endl;	break;
     }
-    output << "\t zClippingCoefficient: " << camera()->zClippingCoefficient() << std::endl;
-    output << "\t zNearCoefficient: " << camera()->zNearCoefficient() << std::endl;
-    output << "\t sceneRadius: " << camera()->sceneRadius() << std::endl;
-    output << "\t fieldOfView: " << camera()->fieldOfView() << std::endl;
-    output << "\t sceneCenter: " << camera()->sceneCenter() << std::endl;
+    output << "\t zClippingCoefficient: " << camera()->z_clipping_coefficient() << std::endl;
+    output << "\t zNearCoefficient: " << camera()->z_near_coefficient() << std::endl;
+    output << "\t sceneRadius: " << camera()->scene_radius() << std::endl;
+    output << "\t fieldOfView: " << camera()->field_of_view() << std::endl;
+    output << "\t sceneCenter: " << camera()->scene_center() << std::endl;
 
     // ManipulatedCameraFrame
     output << "\t position: " << camera()->frame()->position() << std::endl;
@@ -1754,43 +1754,43 @@ void PaintCanvas::restoreState(std::istream& input) {
                         in.get_line();
                         in >> dummy >> x >> y;
                         window()->move(QPoint(x, y));
-                        camera()->setScreenWidthAndHeight(this->width(), this->height());
+                        camera()->set_screen_width_and_height(this->width(), this->height());
                     }
                 } else if (keyword.find("type") != std::string::npos) {
                     std::string t;
                     in >> t;
                     if (t == "PERSPECTIVE")
-                        camera()->setType(Camera::PERSPECTIVE);
+                        camera()->set_type(Camera::PERSPECTIVE);
                     else if (t == "ORTHOGRAPHIC")
-                        camera()->setType(Camera::ORTHOGRAPHIC);
+                        camera()->set_type(Camera::ORTHOGRAPHIC);
                 } else if (keyword.find("zClippingCoefficient") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->setZClippingCoefficient(v);
+                    camera()->set_z_clipping_coefficient(v);
                 } else if (keyword.find("zNearCoefficient") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->setZNearCoefficient(v);
+                    camera()->set_z_near_coefficient(v);
                 } else if (keyword.find("sceneRadius") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->setSceneRadius(v);
+                    camera()->set_scene_radius(v);
                 } else if (keyword.find("fieldOfView") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->setFieldOfView(v);
+                    camera()->set_field_of_view(v);
                 } else if (keyword.find("sceneCenter") != std::string::npos) {
                     vec3 p;
                     in >> p;
-                    camera()->setSceneCenter(p);
+                    camera()->set_scene_center(p);
                 } else if (keyword.find("position") != std::string::npos) {
                     vec3 p;
                     in >> p;
-                    camera()->setPosition(p);
+                    camera()->set_position(p);
                 } else if (keyword.find("orientation") != std::string::npos) {
                     quat q;
                     in >> q;
-                    camera()->setOrientation(q);
+                    camera()->set_orientation(q);
                 } else if (keyword.find("wheelSens") != std::string::npos) {
                     float v(0);
                     in >> v;
@@ -1814,7 +1814,7 @@ void PaintCanvas::restoreState(std::istream& input) {
                 } else if (keyword.find("pivotPoint") != std::string::npos) {
                     vec3 p;
                     in >> p;
-                    camera()->setPivotPoint(p);
+                    camera()->set_pivot_point(p);
                 } else {
                     dummy = keyword.substr(0, keyword.find(':'));
                     LOG(WARNING) << "view property '" << dummy

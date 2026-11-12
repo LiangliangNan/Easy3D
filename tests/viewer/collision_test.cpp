@@ -58,8 +58,8 @@ int main(int argc,char**) {
             require(v.models().size()==2 && v.is_animating() && v.has_usage(),"default collision scene/usage missing");
             require(v.snapshot("vulkan-collision-default.png",1,1),"default collision snapshot failed");
             v.clear_scene();v.add_model(first);v.add_model(second);v.initialize_collision();
-            v.camera()->setViewDirection(vec3(0,0,-1));v.camera()->setUpVector(vec3(0,1,0));
-            v.camera()->setType(Camera::ORTHOGRAPHIC);v.fit_screen();
+            v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
+            v.camera()->set_type(Camera::ORTHOGRAPHIC);v.fit_screen();
             for (const auto& m:v.models()) m->renderer()->get_triangles_drawable("faces")->set_lighting(false);
             auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
             auto press=[&](int code,int mods=0){key(v.window(),code,0,GLFW_PRESS,mods);};
@@ -92,12 +92,12 @@ int main(int argc,char**) {
             require(reference.detect(first->manipulator()->matrix(),second->manipulator()->matrix()).empty(),"separated meshes still intersect");
             check_colors(*first,*second,reference,false);
             first->manipulator()->frame()->setFromMatrix(initial);v.detect();check_colors(*first,*second,reference,true);
-            const auto camera=v.camera()->modelViewProjectionMatrix();
+            const auto camera=v.camera()->model_view_projection_matrix();
             v.mouse_press_event(100,100,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             auto pose=first->manipulator()->matrix();
             v.mouse_drag_event(130,110,30,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             v.mouse_release_event(130,110,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
-            require(!same(pose,first->manipulator()->matrix()) && same(camera,v.camera()->modelViewProjectionMatrix()),"paused Alt-right did not manipulate only first model");
+            require(!same(pose,first->manipulator()->matrix()) && same(camera,v.camera()->model_view_projection_matrix()),"paused Alt-right did not manipulate only first model");
             check_colors(*first,*second,reference,false);
             v.mouse_press_event(100,100,Viewer::BUTTON_LEFT,Viewer::MODIF_ALT);pose=first->manipulator()->matrix();
             v.mouse_drag_event(120,120,20,20,Viewer::BUTTON_LEFT,Viewer::MODIF_ALT);

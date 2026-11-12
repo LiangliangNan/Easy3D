@@ -58,12 +58,12 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
         // Match the OpenGL snapshot: preserve one source frustum dimension,
         // expanding or cropping the other for the rounded output aspect ratio.
         const double aspect = double(framebuffer_width()) / framebuffer_height(), output_aspect = double(w) / h;
-        const double near = camera()->zNear(), far = camera()->zFar();
+        const double near = camera()->z_near(), far = camera()->z_far();
         float x, y;
         if (camera()->type() == Camera::PERSPECTIVE) {
-            y = float(near * std::tan(camera()->fieldOfView() * .5));
+            y = float(near * std::tan(camera()->field_of_view() * .5));
             x = float(aspect * y);
-        } else camera()->getOrthoWidthHeight(x, y);
+        } else camera()->get_ortho_width_height(x, y);
         if ((expand && output_aspect > aspect) || (!expand && output_aspect < aspect))
             x = float(output_aspect * y);
         else y = float(x / output_aspect);
@@ -157,21 +157,21 @@ namespace easy3d {
 
 		double aspectRatio = sub_w / static_cast<double>(sub_h);
 		double newAspectRatio = w / static_cast<double>(h);
-		double zNear = camera_->zNear();
-		double zFar = camera_->zFar();
+		double zNear = camera_->z_near();
+		double zFar = camera_->z_far();
 
 		float xMin = 0.0f, yMin = 0.0f;
 		if (camera_->type() == Camera::PERSPECTIVE)
 			if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio))) {
-				yMin = static_cast<float>(zNear * std::tan(camera_->fieldOfView() / 2.0));
+				yMin = static_cast<float>(zNear * std::tan(camera_->field_of_view() / 2.0));
 				xMin = static_cast<float>(newAspectRatio * yMin);
 			}
 			else {
-				xMin = static_cast<float>(zNear * std::tan(camera_->fieldOfView() / 2.0) * aspectRatio);
+				xMin = static_cast<float>(zNear * std::tan(camera_->field_of_view() / 2.0) * aspectRatio);
 				yMin = static_cast<float>(xMin / newAspectRatio);
 			}
 		else {
-			camera_->getOrthoWidthHeight(xMin, yMin);
+			camera_->get_ortho_width_height(xMin, yMin);
 			if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio)))
 				xMin = static_cast<float>(newAspectRatio * yMin);
 			else
@@ -211,8 +211,8 @@ namespace easy3d {
 		if (nbY * sub_h < h) ++nbY;
 
 		// remember the current projection matrix
-		// const mat4& proj_matrix = camera_->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
-		const mat4 proj_matrix = camera_->projectionMatrix();
+		// const mat4& proj_matrix = camera_->projection_matrix(); // Liangliang: This will definitely NOT work !!!
+		const mat4 proj_matrix = camera_->projection_matrix();
 
 		// temporarily don't allow updating rendering when the camera parameters are changing.
 		easy3d::disconnect_all(&camera_->frame_modified);
@@ -274,7 +274,7 @@ namespace easy3d {
                 // Scene annotations belong in snapshots; HUD callbacks do not.
                 if (show_camera_path_ && !kfi_->is_interpolation_started()) {
                     kfi_->draw_path(camera(), 2.0f);
-                    kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
+                    kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
                 }
                 draw_overlays(true);
 
