@@ -8384,6 +8384,12 @@ for the fragments it could have rejected before shading.
 - *Unchanged*: the point vertex shader, the cylinder and cone impostor paths, the wide-line and
   line impostor shaders (they already had one pipeline per style), the CPU extraction and the
   geometry upload paths, which the profiling showed were executed once, not per frame.
+- *Follow-up fix in the same batch*: the new impostor-point pipeline initially inherited the
+  wide-line pipeline's vertex attribute count (10) while the point attribute array holds 6
+  entries, so the driver read past the array and reported
+  `VK_ERROR_FORMAT_NOT_SUPPORTED: VkFormat VK_FORMAT_R4G4_UNORM_PACK8 is not supported for
+  vertex buffers on this device`. The pipeline now sets its own attribute count, and the warning is
+  gone.
 
 **Measured result (2026-11-12, macOS, release).** `resources/data/pump.ptx` in an 1600x900 window
 with 4 samples:
@@ -8396,4 +8402,6 @@ with 4 samples:
 The offscreen path improved from 145 ms/frame to 5.7 ms/frame. The two backends now agree.
 
 **Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL Release
-(`build-opengl`) 107/107, both green.
+(`build-opengl`) 107/107, both green. `vulkan.crosssection` failed once during a loaded run and passes
+in isolation; it is the known load-sensitive desktop test (it also failed in the pre-change run of the
+same session), not a regression from this batch.

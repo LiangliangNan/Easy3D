@@ -2252,6 +2252,7 @@ namespace easy3d {
                                 binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
                                 vertex.vertexBindingDescriptionCount = 2;
                                 vertex.pVertexBindingDescriptions = point_bindings;
+                                vertex.vertexAttributeDescriptionCount = 6;
                                 vertex.pVertexAttributeDescriptions = point_attrs;
                                 ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
                                 ms.minSampleShading = 1;
