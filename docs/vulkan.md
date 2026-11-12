@@ -11,9 +11,10 @@ supported backend-neutral API rather than backend internals.
 **Status after batch 76:** core feature implementation for the agreed shared
 surface is substantially complete. The latest local macOS full-suite results
 are Vulkan Debug 141/141, Vulkan Release 141/141, OpenGL Debug 107/107, and
-OpenGL Release 107/107. The `vulkan.yml` workflow is present, but its latest
-GitHub runs were cancelled during Build before tests or package-consumer checks;
-Linux/Mesa and Windows hardware validation remain open gates.
+OpenGL Release 107/107. The Linux `vulkan.yml` run succeeded on
+`Easy3D-Vulkan` commit `81e6810` on 2026-11-12, including lavapipe, Xvfb,
+SPIR-V validation, and installed-package consumers. This closes the Linux CI
+gate for that commit; Windows hardware validation remains open.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -507,18 +508,20 @@ The migration is **not yet validated complete**:
   picking, interaction, and DPI behavior. A systematic cross-backend
   image-diff harness for effect-heavy and snapshot workloads remains open in
   `ToDo.md`.
-* `vulkan.interactionoverlay` and other recent regressions pass locally on
-  macOS; the prior Linux/Mesa result was 68/69. Reproduce the failure and record
-  the disposition on the intended Linux runner before closing that platform
-  gate.
+* The earlier Linux/Mesa run was 68/69, but the successful 2026-11-12 workflow
+  run passed the configured Vulkan window-backend suite, including
+  `vulkan.interactionoverlay`. This closes the Linux regression gate for
+  `81e6810`; the later local batch-77 modularization changes were not part of
+  that run.
 * `.github/workflows/vulkan.yml` is present and includes configured-backend,
-  lavapipe, SPIR-V, and installed-package consumer jobs. The latest run for
-  `f8bd274c` ([#43256663038](https://github.com/LiangliangNan/Easy3D/actions/runs/43256663038))
-  was cancelled during Build; the later validation and consumer jobs were
-  skipped. It therefore supplies no Linux/Mesa or package-consumer result.
+  lavapipe, SPIR-V, and installed-package consumer jobs. Run
+  [#43273002058](https://github.com/LiangliangNan/Easy3D/actions/runs/43273002058)
+  succeeded on `Easy3D-Vulkan` commit `81e6810`: the Vulkan matrix passed
+  build, SPIR-V, lavapipe, Xvfb, and installed-consumer steps; the OpenGL
+  matrix passed its build, Xvfb, and installed-consumer steps.
 * Clean macOS installed-package consumers for both backends passed on
-  2026-11-09. Linux/Windows package consumers and Windows Vulkan hardware remain
-  unverified.
+  2026-11-09. Linux package consumers passed in the workflow above; Windows
+  package consumers and Windows Vulkan hardware remain unverified.
 * The supported tutorial-facing API is intended to be shared but is not
   symbol-identical: some `Viewer` members are Vulkan-only. Constructor order
   and defaults also changed, so old positional calls can compile with different
@@ -549,6 +552,17 @@ realizes its commands with `opengl::OverlayRenderer`. The immediate
 Focused input/HUD checks pass on OpenGL and Vulkan, with the Vulkan text-viewer
 regression passing as well.
 
+**`RenderDevice` modularization (batch 77).** GPU point, geometry and texture
+caches now have a `GpuResources` owner, color/picking render-pass caches are
+grouped in `PassCache`, and full-frame/pixel readback is centralized in
+synchronous capture helpers. The focused `vulkan.resourcelifetime` test runs
+with synchronization validation, reuses geometry and image addresses after
+source destruction, exercises frame and pixel capture plus target resize, then
+repeats device teardown. The existing fence wait and one-command-buffer model
+are unchanged. Pass construction/encoding and swapchain presentation remain in
+`VulkanDevice`; those are the next extraction boundaries, not justification for
+multiple frames in flight or staging/suballocation before profiling.
+
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha
 semantics differ, so consolidating them before parity is demonstrated would
@@ -556,8 +570,9 @@ change behavior rather than remove duplication safely. `VertexArrayObject`
 also remains active: Drawable buffer uploads, immediate shape helpers,
 `TextRenderer`, and the Python binding depend on it. `RenderDevice` is the
 Vulkan scene-execution interface; OpenGL currently reuses its command types for
-overlays, not as a full device backend. Broader device unification and
-modularization remain gated on measured correctness/performance baselines.
+overlays, not as a full device backend. Full OpenGL/Vulkan device unification is
+out of scope; the remaining Vulkan pass and presentation extraction is tracked
+in `ToDo.md`.
 
 ## Historical implementation status (2026-11-04; superseded)
 

@@ -959,6 +959,14 @@ namespace easy3d {
                     check(c.vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
                 }
             };
+            struct PassCache {
+                std::map<unsigned, std::unique_ptr<RenderPass>> color;
+                std::unique_ptr<RenderPass> picking;
+                void clear() {
+                    color.clear();
+                    picking.reset();
+                }
+            };
             struct Target {
                 Context &c;
                 uint32_t width, height;
@@ -1036,6 +1044,76 @@ namespace easy3d {
                     }
                 }
             };
+            template <class Record>
+            FrameImage capture_frame(Context &c, Target &target, const Record &record) {
+                const size_t pixels = size_t(target.width) * target.height;
+                if (!target.readback.handle)
+                    target.readback.init(VkDeviceSize(pixels) * 16 + 8, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+                const size_t id_offset = (pixels * 4 + 7) & ~size_t(7);
+                const size_t depth_offset = id_offset + pixels * 8;
+                FrameImage result;
+                result.width = target.width;
+                result.height = target.height;
+                result.rgba.resize(pixels * 4);
+                result.depth.resize(pixels);
+                result.ids.resize(pixels);
+                static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
+                c.execute([&](VkCommandBuffer cmd) {
+                    record(cmd);
+                    const VkImage images[] = {target.color.handle, target.ids.handle, target.depth.handle};
+                    const VkDeviceSize offsets[] = {0, VkDeviceSize(id_offset), VkDeviceSize(depth_offset)};
+                    for (unsigned i = 0; i < 3; ++i) {
+                        VkBufferImageCopy copy{};
+                        copy.bufferOffset = offsets[i];
+                        copy.imageSubresource = {i == 2 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                                 0, 1};
+                        copy.imageExtent = {target.width, target.height, 1};
+                        c.vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                 target.readback.handle, 1, &copy);
+                    }
+                    VkMemoryBarrier host{};
+                    host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                    host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                    host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+                    c.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
+                                           &host, 0, nullptr, 0, nullptr);
+                });
+                std::vector<unsigned char> bytes(depth_offset + pixels * 4);
+                target.readback.transfer(bytes.data(), bytes.size(), false);
+                std::memcpy(result.rgba.data(), bytes.data(), pixels * 4);
+                std::memcpy(result.ids.data(), bytes.data() + id_offset, pixels * 8);
+                std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
+                return result;
+            }
+            template <class Record>
+            ScenePixel capture_pixel(Context &c, Target &target, uint32_t x, uint32_t y, const Record &record) {
+                const VkOffset2D pixel{int32_t(x), int32_t(y)};
+                c.execute([&](VkCommandBuffer cmd) {
+                    record(cmd, pixel);
+                    VkBufferImageCopy copy{};
+                    copy.imageOffset = {pixel.x, pixel.y, 0};
+                    copy.imageExtent = {1, 1, 1};
+                    copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                    c.vkCmdCopyImageToBuffer(cmd, target.ids.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                             target.readback.handle, 1, &copy);
+                    copy.bufferOffset = 8;
+                    copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                    c.vkCmdCopyImageToBuffer(cmd, target.depth.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                             target.readback.handle, 1, &copy);
+                    VkMemoryBarrier host{};
+                    host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                    host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                    host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+                    c.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
+                                           &host, 0, nullptr, 0, nullptr);
+                });
+                unsigned char bytes[12];
+                target.readback.transfer(bytes, sizeof(bytes), false);
+                ScenePixel result;
+                std::memcpy(&result.id, bytes, 8);
+                std::memcpy(&result.depth, bytes + 8, 4);
+                return result;
+            }
 
             struct AoParameters {
                 float projection[16], inverse_projection[16], shape[4];
@@ -1229,6 +1307,252 @@ namespace easy3d {
                 ~GpuTexture() {
                     if (set)
                         c.vkFreeDescriptorSets(c.device, pool, 1, &set);
+                }
+            };
+            class GpuResources {
+                Context &c_;
+                VkDescriptorPool descriptor_pool_;
+                VkDescriptorSetLayout descriptors_;
+                const VkSampler *samplers_;
+                std::map<const PointData *, std::unique_ptr<GpuPoints>> points_;
+                std::map<const Geometry *, std::unique_ptr<GpuGeometry>> geometry_;
+                std::map<const Image *, std::unique_ptr<GpuTexture>> textures_;
+                uint64_t point_uploads_ = 0;
+
+            public:
+                GpuResources(Context &context,
+                             VkDescriptorPool descriptor_pool,
+                             VkDescriptorSetLayout descriptors,
+                             const VkSampler *samplers)
+                    : c_(context), descriptor_pool_(descriptor_pool), descriptors_(descriptors), samplers_(samplers) {}
+                GpuResources(const GpuResources &) = delete;
+                GpuResources &operator=(const GpuResources &) = delete;
+                ~GpuResources() {
+                    clear();
+                }
+                void clear() {
+                    geometry_.clear();
+                    textures_.clear();
+                    points_.clear();
+                }
+                void prune() {
+                    for (auto it = geometry_.begin(); it != geometry_.end();) {
+                        if (it->second->source.expired())
+                            it = geometry_.erase(it);
+                        else
+                            ++it;
+                    }
+                    for (auto it = textures_.begin(); it != textures_.end();) {
+                        if (it->second->source.expired())
+                            it = textures_.erase(it);
+                        else
+                            ++it;
+                    }
+                    for (auto it = points_.begin(); it != points_.end();) {
+                        if (it->second->source.expired())
+                            it = points_.erase(it);
+                        else
+                            ++it;
+                    }
+                }
+                uint64_t point_upload_count() const {
+                    return point_uploads_;
+                }
+                GpuPoints &point(const std::shared_ptr<const PointData> &data) {
+                    for (auto it = points_.begin(); it != points_.end();) {
+                        if (it->second->source.expired())
+                            it = points_.erase(it);
+                        else
+                            ++it;
+                    }
+                    auto found = points_.find(data.get());
+                    if (found != points_.end()) {
+                        if (found->second->source.lock() == data)
+                            return *found->second;
+                        points_.erase(found);
+                    }
+                    std::unique_ptr<GpuPoints> gpu(new GpuPoints(c_));
+                    gpu->source = data;
+                    if (!data->positions().empty()) {
+                        std::vector<GpuPoint> packed(data->positions().size());
+                        for (size_t i = 0; i < packed.size(); ++i) {
+                            for (unsigned j = 0; j < 3; ++j)
+                                packed[i].position[j] = data->positions()[i][j];
+                            packed[i].source = data->source_ids()[i];
+                        }
+                        const VkDeviceSize bytes = packed.size() * sizeof(GpuPoint);
+                        Buffer staging(c_);
+                        staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                        staging.transfer(packed.data(), size_t(bytes), true);
+                        gpu->buffer.init(bytes,
+                                         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                                             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                         false);
+                        c_.execute([&](VkCommandBuffer cmd) {
+                            VkBufferCopy copy = {0, 0, bytes};
+                            c_.vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
+                            VkBufferMemoryBarrier barrier{};
+                            barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+                            if (c_.compute)
+                                barrier.dstAccessMask |= VK_ACCESS_SHADER_READ_BIT;
+                            barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                            barrier.buffer = gpu->buffer.handle;
+                            barrier.size = VK_WHOLE_SIZE;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                                    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
+                                                        (c_.compute ? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT : 0),
+                                                    0, 0, nullptr, 1, &barrier, 0, nullptr);
+                        });
+                        ++point_uploads_;
+                    }
+                    auto *result = gpu.get();
+                    points_.emplace(data.get(), std::move(gpu));
+                    return *result;
+                }
+                GpuGeometry &geometry(const std::shared_ptr<const Geometry> &data) {
+                    auto found = geometry_.find(data.get());
+                    if (found != geometry_.end()) {
+                        if (found->second->source.lock() == data)
+                            return *found->second;
+                        geometry_.erase(found);
+                    }
+                    std::unique_ptr<GpuGeometry> gpu(new GpuGeometry(c_));
+                    gpu->source = data;
+                    const size_t count = data->indices().empty() ? data->vertices().size() : data->indices().size();
+                    gpu->count = static_cast<uint32_t>(count);
+                    const unsigned primitive_size = data->topology() == Topology::triangles ? 3
+                                                    : data->topology() == Topology::lines   ? 2
+                                                                                           : 1;
+                    std::vector<GpuVertex> packed(count);
+                    vec3 center(0);
+                    for (size_t i = 0; i < count; ++i) {
+                        const auto &v = data->vertices()[data->indices().empty() ? i : data->indices()[i]];
+                        auto &p = packed[i];
+                        for (unsigned j = 0; j < 3; ++j) {
+                            p.position[j] = v.position[j];
+                            p.normal[j] = v.normal[j];
+                        }
+                        for (unsigned j = 0; j < 4; ++j) {
+                            p.color[j] = v.color[j];
+                            p.highlight[j] = v.highlight[j];
+                        }
+                        for (unsigned j = 0; j < 2; ++j)
+                            p.texcoord[j] = v.texcoord[j];
+                        p.primitive = data->primitive_ids().empty() ? static_cast<uint32_t>(i / primitive_size)
+                                                                    : data->primitive_ids()[i / primitive_size];
+                        center += v.position;
+                    }
+                    if (count)
+                        gpu->center = center / float(count);
+                    if (data->topology() == Topology::points)
+                        gpu->points = &point(data->point_data());
+                    if (count) {
+                        std::vector<GpuPointAttributes> attributes;
+                        const void *input = packed.data();
+                        size_t bytes = packed.size() * sizeof(GpuVertex);
+                        if (gpu->points) {
+                            attributes.resize(count);
+                            for (size_t i = 0; i < count; ++i) {
+                                auto &a = attributes[i];
+                                const auto &v = packed[i];
+                                std::memcpy(a.normal, v.normal, sizeof(a.normal));
+                                std::memcpy(a.color, v.color, sizeof(a.color));
+                                std::memcpy(a.texcoord, v.texcoord, sizeof(a.texcoord));
+                                std::memcpy(a.highlight, v.highlight, sizeof(a.highlight));
+                                a.primitive = v.primitive;
+                            }
+                            input = attributes.data();
+                            bytes = attributes.size() * sizeof(GpuPointAttributes);
+                        }
+                        Buffer staging(c_);
+                        staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                        staging.transfer(const_cast<void *>(input), bytes, true);
+                        gpu->buffer.init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                         false);
+                        c_.execute([&](VkCommandBuffer cmd) {
+                            VkBufferCopy copy = {0, 0, bytes};
+                            c_.vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
+                            VkBufferMemoryBarrier barrier{};
+                            barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+                            barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                            barrier.buffer = gpu->buffer.handle;
+                            barrier.size = VK_WHOLE_SIZE;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                                    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &barrier, 0,
+                                                    nullptr);
+                        });
+                    }
+                    auto *result = gpu.get();
+                    geometry_.emplace(data.get(), std::move(gpu));
+                    return *result;
+                }
+                GpuTexture &texture(const std::shared_ptr<const Image> &data) {
+                    auto found = textures_.find(data.get());
+                    if (found != textures_.end()) {
+                        if (found->second->source.lock() == data)
+                            return *found->second;
+                        textures_.erase(found);
+                    }
+                    if (data->width() > c_.properties.limits.maxImageDimension2D ||
+                        data->height() > c_.properties.limits.maxImageDimension2D)
+                        throw std::invalid_argument("texture exceeds device image limits");
+                    if (data->sampler().filter == TextureFilter::linear) {
+                        VkFormatProperties properties;
+                        c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R8G8B8A8_UNORM, &properties);
+                        if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+                            throw std::runtime_error("RGBA8 linear texture filtering is unsupported by this device");
+                    }
+                    std::unique_ptr<GpuTexture> gpu(new GpuTexture(c_, descriptor_pool_));
+                    gpu->source = data;
+                    gpu->image.init(data->width(), data->height(), VK_FORMAT_R8G8B8A8_UNORM,
+                                    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                    VK_IMAGE_ASPECT_COLOR_BIT);
+                    Buffer staging(c_);
+                    staging.init(data->rgba().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
+                    staging.transfer(const_cast<unsigned char *>(data->rgba().data()), data->rgba().size(), true);
+                    c_.execute([&](VkCommandBuffer cmd) {
+                        image_barrier(c_, cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
+                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                      VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+                        VkBufferImageCopy copy{};
+                        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                        copy.imageExtent = {data->width(), data->height(), 1};
+                        c_.vkCmdCopyBufferToImage(cmd, staging.handle, gpu->image.handle,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+                        image_barrier(c_, cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                    });
+                    VkDescriptorSetAllocateInfo ai{};
+                    ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                    ai.descriptorPool = descriptor_pool_;
+                    ai.descriptorSetCount = 1;
+                    ai.pSetLayouts = &descriptors_;
+                    check(c_.vkAllocateDescriptorSets(c_.device, &ai, &gpu->set),
+                          "allocate texture descriptor (maximum 1024 live textures)");
+                    const unsigned sampler_index = (data->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
+                                                   (data->sampler().filter == TextureFilter::linear ? 1 : 0);
+                    VkDescriptorImageInfo image{samplers_[sampler_index], gpu->image.view,
+                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+                    VkDescriptorImageInfo images[2] = {image, image};
+                    VkWriteDescriptorSet write[2] = {};
+                    for (unsigned i = 0; i < 2; ++i) {
+                        write[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        write[i].dstSet = gpu->set;
+                        write[i].dstBinding = i;
+                        write[i].descriptorCount = 1;
+                        write[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        write[i].pImageInfo = &images[i];
+                    }
+                    c_.vkUpdateDescriptorSets(c_.device, 2, write, 0, nullptr);
+                    auto *result = gpu.get();
+                    textures_.emplace(data.get(), std::move(gpu));
+                    return *result;
                 }
             };
             // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
@@ -1477,11 +1801,9 @@ namespace easy3d {
                 Context c_;
                 std::string name_;
                 std::unique_ptr<PointSelector> point_selector_;
-                std::map<const PointData *, std::unique_ptr<GpuPoints>> point_resources_;
-                uint64_t point_uploads_ = 0;
+                std::unique_ptr<GpuResources> resources_;
                 uint32_t sample_counts_ = 1;
-                std::map<unsigned, std::unique_ptr<RenderPass>> passes_;
-                std::unique_ptr<RenderPass> id_pass_;
+                PassCache passes_;
                 VkDescriptorSetLayout descriptors_ = VK_NULL_HANDLE;
                 VkDescriptorSetLayout impostor_descriptors_ = VK_NULL_HANDLE;
                 VkDescriptorSet impostor_set_ = VK_NULL_HANDLE;
@@ -1516,8 +1838,6 @@ namespace easy3d {
                 uint32_t shadow_bound_size_ = 0;
                 std::unique_ptr<Swapchain> swapchain_;
                 std::shared_ptr<const Image> white_;
-                std::map<const Geometry *, std::unique_ptr<GpuGeometry>> geometry_;
-                std::map<const Image *, std::unique_ptr<GpuTexture>> textures_;
                 struct ClipEntry {
                     std::weak_ptr<const Geometry> source;
                     std::vector<vec4> planes;
@@ -1580,13 +1900,12 @@ namespace easy3d {
                     target_.reset();
                     pixel_target_.reset();
                     shadow_map_.reset();
+                    point_selector_.reset();
                     // Free transparency descriptor sets before the textures they reference.
                     lists_.reset();
                     oit_.reset();
-                    geometry_.clear();
-                    textures_.clear();
+                    resources_.reset();
                     passes_.clear();
-                    id_pass_.reset();
                     ao_.reset();
                     if (ao_horizons_)
                         c_.vkDestroyPipeline(c_.device, ao_horizons_, nullptr);
@@ -1635,60 +1954,13 @@ namespace easy3d {
                     return c_.errors.load();
                 }
                 uint64_t point_upload_count() const override {
-                    return point_uploads_;
+                    return resources_ ? resources_->point_upload_count() : 0;
                 }
                 uint32_t oit_dropped_fragments() const override {
                     return oit_dropped_;
                 }
                 GpuPoints &point_resource(const std::shared_ptr<const PointData> &data) {
-                    for (auto it = point_resources_.begin(); it != point_resources_.end();) {
-                        if (it->second->source.expired())
-                            it = point_resources_.erase(it);
-                        else
-                            ++it;
-                    }
-                    auto found = point_resources_.find(data.get());
-                    if (found != point_resources_.end())
-                        return *found->second;
-                    std::unique_ptr<GpuPoints> gpu(new GpuPoints(c_));
-                    gpu->source = data;
-                    if (!data->positions().empty()) {
-                        std::vector<GpuPoint> packed(data->positions().size());
-                        for (size_t i = 0; i < packed.size(); ++i) {
-                            for (unsigned j = 0; j < 3; ++j)
-                                packed[i].position[j] = data->positions()[i][j];
-                            packed[i].source = data->source_ids()[i];
-                        }
-                        const VkDeviceSize bytes = packed.size() * sizeof(GpuPoint);
-                        Buffer staging(c_);
-                        staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
-                        staging.transfer(packed.data(), size_t(bytes), true);
-                        gpu->buffer.init(bytes,
-                                         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                         false);
-                        c_.execute([&](VkCommandBuffer cmd) {
-                            VkBufferCopy copy = {0, 0, bytes};
-                            c_.vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
-                            VkBufferMemoryBarrier barrier{};
-                            barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-                            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-                            if (c_.compute)
-                                barrier.dstAccessMask |= VK_ACCESS_SHADER_READ_BIT;
-                            barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                            barrier.buffer = gpu->buffer.handle;
-                            barrier.size = VK_WHOLE_SIZE;
-                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                                    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
-                                                        (c_.compute ? VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT : 0),
-                                                    0, 0, nullptr, 1, &barrier, 0, nullptr);
-                        });
-                        ++point_uploads_;
-                    }
-                    auto *result = gpu.get();
-                    point_resources_.emplace(data.get(), std::move(gpu));
-                    return *result;
+                    return resources_->point(data);
                 }
                 std::vector<uint32_t> select_points(const PointSelectionRequest &request) override {
                     if (!request.width || !request.height)
@@ -1755,6 +2027,7 @@ namespace easy3d {
                         sample_counts_ &= properties.sampleCounts;
                     }
                     create_descriptors();
+                    resources_.reset(new GpuResources(c_, descriptor_pool_, descriptors_, samplers_));
                     create_layout();
                     create_ao_pipelines();
                     color_pass(1);
@@ -1768,8 +2041,8 @@ namespace easy3d {
                 }
                 RenderPass &color_pass(unsigned samples, bool independent_depth = false, bool depth_preview = false) {
                     const unsigned key = samples | (independent_depth ? 128u : 0u) | (depth_preview ? 256u : 0u);
-                    auto found = passes_.find(key);
-                    if (found != passes_.end())
+                    auto found = passes_.color.find(key);
+                    if (found != passes_.color.end())
                         return *found->second;
                     std::unique_ptr<RenderPass> pass(
                         new RenderPass(c_, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
@@ -1779,17 +2052,17 @@ namespace easy3d {
                     pass->init();
                     create_pipelines(*pass);
                     auto *result = pass.get();
-                    passes_.emplace(key, std::move(pass));
+                    passes_.color.emplace(key, std::move(pass));
                     return *result;
                 }
                 RenderPass &picking_pass() {
-                    if (!id_pass_) {
+                    if (!passes_.picking) {
                         std::unique_ptr<RenderPass> pass(new RenderPass(c_, PassKind::ids, VK_SAMPLE_COUNT_1_BIT));
                         pass->init();
                         create_pipelines(*pass);
-                        id_pass_ = std::move(pass);
+                        passes_.picking = std::move(pass);
                     }
-                    return *id_pass_;
+                    return *passes_.picking;
                 }
                 void create_ao_pipelines() {
                     VkDescriptorSetLayoutBinding binding[5] = {};
@@ -2440,141 +2713,10 @@ namespace easy3d {
                         c_.vkDestroyShaderModule(c_.device, m, nullptr);
                 }
                 GpuGeometry &geometry(const std::shared_ptr<const Geometry> &data) {
-                    auto it = geometry_.find(data.get());
-                    if (it != geometry_.end())
-                        return *it->second;
-                    std::unique_ptr<GpuGeometry> gpu(new GpuGeometry(c_));
-                    gpu->source = data;
-                    size_t count = data->indices().empty() ? data->vertices().size() : data->indices().size();
-                    gpu->count = static_cast<uint32_t>(count);
-                    const unsigned size = data->topology() == Topology::triangles ? 3
-                                          : data->topology() == Topology::lines   ? 2
-                                                                                  : 1;
-                    std::vector<GpuVertex> packed(count);
-                    vec3 center(0);
-                    for (size_t i = 0; i < count; ++i) {
-                        const auto &v = data->vertices()[data->indices().empty() ? i : data->indices()[i]];
-                        auto &p = packed[i];
-                        for (unsigned j = 0; j < 3; ++j) {
-                            p.position[j] = v.position[j];
-                            p.normal[j] = v.normal[j];
-                        }
-                        for (unsigned j = 0; j < 4; ++j) {
-                            p.color[j] = v.color[j];
-                            p.highlight[j] = v.highlight[j];
-                        }
-                        for (unsigned j = 0; j < 2; ++j)
-                            p.texcoord[j] = v.texcoord[j];
-                        p.primitive = data->primitive_ids().empty() ? static_cast<uint32_t>(i / size)
-                                                                    : data->primitive_ids()[i / size];
-                        center += v.position;
-                    }
-                    if (count)
-                        gpu->center = center / float(count);
-                    if (data->topology() == Topology::points)
-                        gpu->points = &point_resource(data->point_data());
-                    if (count) {
-                        std::vector<GpuPointAttributes> attributes;
-                        const void *input = packed.data();
-                        size_t bytes = packed.size() * sizeof(GpuVertex);
-                        if (gpu->points) {
-                            attributes.resize(count);
-                            for (size_t i = 0; i < count; ++i) {
-                                auto &a = attributes[i];
-                                const auto &v = packed[i];
-                                std::memcpy(a.normal, v.normal, sizeof(a.normal));
-                                std::memcpy(a.color, v.color, sizeof(a.color));
-                                std::memcpy(a.texcoord, v.texcoord, sizeof(a.texcoord));
-                                std::memcpy(a.highlight, v.highlight, sizeof(a.highlight));
-                                a.primitive = v.primitive;
-                            }
-                            input = attributes.data();
-                            bytes = attributes.size() * sizeof(GpuPointAttributes);
-                        }
-                        Buffer staging(c_);
-                        staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
-                        staging.transfer(const_cast<void *>(input), bytes, true);
-                        gpu->buffer.init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                         false);
-                        c_.execute([&](VkCommandBuffer cmd) {
-                            VkBufferCopy copy = {0, 0, bytes};
-                            c_.vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
-                            VkBufferMemoryBarrier barrier{};
-                            barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-                            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                            barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-                            barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                            barrier.buffer = gpu->buffer.handle;
-                            barrier.size = VK_WHOLE_SIZE;
-                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                                    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &barrier, 0,
-                                                    nullptr);
-                        });
-                    }
-                    auto *result = gpu.get();
-                    geometry_.emplace(data.get(), std::move(gpu));
-                    return *result;
+                    return resources_->geometry(data);
                 }
                 GpuTexture &texture(const std::shared_ptr<const Image> &data) {
-                    auto it = textures_.find(data.get());
-                    if (it != textures_.end())
-                        return *it->second;
-                    if (data->width() > c_.properties.limits.maxImageDimension2D ||
-                        data->height() > c_.properties.limits.maxImageDimension2D)
-                        throw std::invalid_argument("texture exceeds device image limits");
-                    if (data->sampler().filter == TextureFilter::linear) {
-                        VkFormatProperties properties;
-                        c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R8G8B8A8_UNORM, &properties);
-                        if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
-                            throw std::runtime_error("RGBA8 linear texture filtering is unsupported by this device");
-                    }
-                    std::unique_ptr<GpuTexture> gpu(new GpuTexture(c_, descriptor_pool_));
-                    gpu->source = data;
-                    gpu->image.init(data->width(), data->height(), VK_FORMAT_R8G8B8A8_UNORM,
-                                    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                    VK_IMAGE_ASPECT_COLOR_BIT);
-                    Buffer staging(c_);
-                    staging.init(data->rgba().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
-                    staging.transfer(const_cast<unsigned char *>(data->rgba().data()), data->rgba().size(), true);
-                    c_.execute([&](VkCommandBuffer cmd) {
-                        image_barrier(c_, cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED,
-                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                                      VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
-                        VkBufferImageCopy copy{};
-                        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                        copy.imageExtent = {data->width(), data->height(), 1};
-                        c_.vkCmdCopyBufferToImage(cmd, staging.handle, gpu->image.handle,
-                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
-                        image_barrier(c_, cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
-                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                    });
-                    VkDescriptorSetAllocateInfo ai{};
-                    ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                    ai.descriptorPool = descriptor_pool_;
-                    ai.descriptorSetCount = 1;
-                    ai.pSetLayouts = &descriptors_;
-                    check(c_.vkAllocateDescriptorSets(c_.device, &ai, &gpu->set),
-                          "allocate texture descriptor (maximum 1024 live textures)");
-                    const unsigned sampler_index = (data->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
-                                                   (data->sampler().filter == TextureFilter::linear ? 1 : 0);
-                    VkDescriptorImageInfo image = {samplers_[sampler_index], gpu->image.view,
-                                                   VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-                    VkDescriptorImageInfo images[2] = {image, image};
-                    VkWriteDescriptorSet write[2] = {};
-                    for (unsigned i = 0; i < 2; ++i) {
-                        write[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        write[i].dstSet = gpu->set;
-                        write[i].dstBinding = i;
-                        write[i].descriptorCount = 1;
-                        write[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        write[i].pImageInfo = &images[i];
-                    }
-                    c_.vkUpdateDescriptorSets(c_.device, 2, write, 0, nullptr);
-                    auto *result = gpu.get();
-                    textures_.emplace(data.get(), std::move(gpu));
-                    return *result;
+                    return resources_->texture(data);
                 }
                 static bool expanded_lines(const DrawCommand &d) {
                     return d.geometry->topology() == Topology::lines &&
@@ -2767,24 +2909,7 @@ namespace easy3d {
                         else
                             ++it;
                     }
-                    for (auto it = geometry_.begin(); it != geometry_.end();) {
-                        if (it->second->source.expired())
-                            it = geometry_.erase(it);
-                        else
-                            ++it;
-                    }
-                    for (auto it = point_resources_.begin(); it != point_resources_.end();) {
-                        if (it->second->source.expired())
-                            it = point_resources_.erase(it);
-                        else
-                            ++it;
-                    }
-                    for (auto it = textures_.begin(); it != textures_.end();) {
-                        if (it->second->source.expired())
-                            it = textures_.erase(it);
-                        else
-                            ++it;
-                    }
+                    resources_->prune();
                     if (!pixel_query) {
                         ao_active_ = false;
                         for (const auto &command : commands) {
@@ -4458,46 +4583,12 @@ namespace easy3d {
                     oit_method_ = transparency;
                     oit_layers_ = peel_layers ? peel_layers : 16u;
                     const auto draws = prepare(width, height, commands, background, samples);
-                    FrameImage result;
-                    result.width = width;
-                    result.height = height;
-                    const size_t pixels = size_t(width) * height;
                     // Presentation never allocates host readback storage. Allocate only for
                     // an explicitly requested capture, including eight-byte ID alignment.
-                    if (!target_->readback.handle)
-                        target_->readback.init(VkDeviceSize(pixels) * 16 + 8, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
-                    const size_t id_offset = (pixels * 4 + 7) & ~size_t(7);
-                    const size_t depth_offset = id_offset + pixels * 8;
-                    result.rgba.resize(pixels * 4);
-                    result.depth.resize(pixels);
-                    result.ids.resize(pixels);
-                    static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
-                    c_.execute([&](VkCommandBuffer cmd) {
+                    auto result = capture_frame(c_, *target_, [&](VkCommandBuffer cmd) {
                         encode(cmd, draws, background);
-                        const VkImage images[] = {target_->color.handle, target_->ids.handle, target_->depth.handle};
-                        const VkDeviceSize offsets[] = {0, VkDeviceSize(id_offset), VkDeviceSize(depth_offset)};
-                        for (unsigned i = 0; i < 3; ++i) {
-                            VkBufferImageCopy copy{};
-                            copy.bufferOffset = offsets[i];
-                            copy.imageSubresource = {i == 2 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 0,
-                                                     0, 1};
-                            copy.imageExtent = {width, height, 1};
-                            c_.vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                      target_->readback.handle, 1, &copy);
-                        }
-                        VkMemoryBarrier host{};
-                        host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                        host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
-                                                &host, 0, nullptr, 0, nullptr);
                     });
                     capture_oit_overflow();
-                    std::vector<unsigned char> bytes(depth_offset + pixels * 4);
-                    target_->readback.transfer(bytes.data(), bytes.size(), false);
-                    std::memcpy(result.rgba.data(), bytes.data(), pixels * 4);
-                    std::memcpy(result.ids.data(), bytes.data() + id_offset, pixels * 8);
-                    std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
                     return result;
                 }
                 ScenePixel sample_pixel(uint32_t width,
@@ -4519,32 +4610,9 @@ namespace easy3d {
                         pixel_target_ = std::move(target);
                     }
                     auto &target = *pixel_target_;
-                    const VkOffset2D pixel{int32_t(x), int32_t(y)};
-                    c_.execute([&](VkCommandBuffer cmd) {
+                    return capture_pixel(c_, target, x, y, [&](VkCommandBuffer cmd, const VkOffset2D &pixel) {
                         encode_pass(cmd, draws, background, target, pass, target.framebuffer, &pixel);
-                        VkBufferImageCopy copy{};
-                        copy.imageOffset = {pixel.x, pixel.y, 0};
-                        copy.imageExtent = {1, 1, 1};
-                        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                        c_.vkCmdCopyImageToBuffer(cmd, target.ids.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                  target.readback.handle, 1, &copy);
-                        copy.bufferOffset = 8;
-                        copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-                        c_.vkCmdCopyImageToBuffer(cmd, target.depth.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                                  target.readback.handle, 1, &copy);
-                        VkMemoryBarrier host{};
-                        host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                        host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
-                                                &host, 0, nullptr, 0, nullptr);
                     });
-                    unsigned char bytes[12];
-                    target.readback.transfer(bytes, sizeof(bytes), false);
-                    ScenePixel result;
-                    std::memcpy(&result.id, bytes, 8);
-                    std::memcpy(&result.depth, bytes + 8, 4);
-                    return result;
                 }
                 bool present(uint32_t width,
                              uint32_t height,
