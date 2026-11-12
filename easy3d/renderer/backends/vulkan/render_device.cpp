@@ -1883,6 +1883,83 @@ namespace easy3d {
                 }
             };
 
+            class Presentation {
+                Context &c_;
+                std::unique_ptr<Swapchain> swapchain_;
+
+            public:
+                explicit Presentation(Context &context) : c_(context) {}
+
+                bool prepare(uint32_t width, uint32_t height) {
+                    if (!swapchain_ || swapchain_->dirty || swapchain_->requested_width != width ||
+                        swapchain_->requested_height != height) {
+                        // Swapchain recreation is a lifecycle boundary; normal frames wait only their draw fence.
+                        check(c_.vkDeviceWaitIdle(c_.device), "drain presentation before swapchain recreation");
+                        swapchain_.reset();
+                        std::unique_ptr<Swapchain> next(new Swapchain(c_));
+                        next->init(width, height);
+                        if (!next->handle)
+                            return false;
+                        swapchain_ = std::move(next);
+                    }
+                    return true;
+                }
+
+                template <typename Record, typename Submitted>
+                bool present(uint32_t width,
+                             uint32_t height,
+                             VkImage source,
+                             const Record &record,
+                             const Submitted &submitted) {
+                    uint32_t image = 0;
+                    const auto acquired = c_.vkAcquireNextImageKHR(c_.device, swapchain_->handle, UINT64_MAX,
+                                                                   swapchain_->acquired, VK_NULL_HANDLE, &image);
+                    if (acquired == VK_ERROR_OUT_OF_DATE_KHR) {
+                        swapchain_->dirty = true;
+                        return false;
+                    }
+                    if (acquired != VK_SUBOPTIMAL_KHR)
+                        check(acquired, "acquire presentation image");
+                    c_.execute(
+                        [&](VkCommandBuffer cmd) {
+                            record(cmd);
+                            image_barrier(c_, cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT);
+                            VkImageBlit copy{};
+                            copy.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                            copy.srcOffsets[1] = {int32_t(width), int32_t(height), 1};
+                            copy.dstOffsets[1] = {int32_t(swapchain_->extent.width),
+                                                  int32_t(swapchain_->extent.height), 1};
+                            c_.vkCmdBlitImage(cmd, source, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                              swapchain_->images[image], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy,
+                                              VK_FILTER_NEAREST);
+                            image_barrier(c_, cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+                                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                          VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                          VK_ACCESS_TRANSFER_WRITE_BIT, 0);
+                        },
+                        swapchain_->acquired, swapchain_->ready[image]);
+                    submitted();
+                    VkPresentInfoKHR info{};
+                    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+                    info.waitSemaphoreCount = 1;
+                    info.pWaitSemaphores = &swapchain_->ready[image];
+                    info.swapchainCount = 1;
+                    info.pSwapchains = &swapchain_->handle;
+                    info.pImageIndices = &image;
+                    const auto presented = c_.vkQueuePresentKHR(c_.queue, &info);
+                    if (presented == VK_ERROR_OUT_OF_DATE_KHR || presented == VK_SUBOPTIMAL_KHR ||
+                        acquired == VK_SUBOPTIMAL_KHR)
+                        swapchain_->dirty = true;
+                    if (presented != VK_ERROR_OUT_OF_DATE_KHR && presented != VK_SUBOPTIMAL_KHR)
+                        check(presented, "present frame");
+                    return presented != VK_ERROR_OUT_OF_DATE_KHR;
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -1922,7 +1999,7 @@ namespace easy3d {
                 std::unique_ptr<Target> target_, pixel_target_;
                 std::unique_ptr<ShadowMap> shadow_map_;
                 uint32_t shadow_bound_size_ = 0;
-                std::unique_ptr<Swapchain> swapchain_;
+                std::unique_ptr<Presentation> presentation_;
                 std::shared_ptr<const Image> white_;
                 struct ClipEntry {
                     std::weak_ptr<const Geometry> source;
@@ -1982,7 +2059,7 @@ namespace easy3d {
                     // fence completes. Drain at shutdown/recreation only, never per frame.
                     if (c_.device)
                         c_.vkDeviceWaitIdle(c_.device);
-                    swapchain_.reset();
+                    presentation_.reset();
                     target_.reset();
                     pixel_target_.reset();
                     shadow_map_.reset();
@@ -4714,64 +4791,15 @@ namespace easy3d {
                         throw std::logic_error("headless Vulkan device has no presentation surface");
                     if (!width || !height)
                         return false;
-                    if (!swapchain_ || swapchain_->dirty || swapchain_->requested_width != width ||
-                        swapchain_->requested_height != height) {
-                        // Rare lifecycle boundary. The normal frame path waits only its draw fence.
-                        check(c_.vkDeviceWaitIdle(c_.device), "drain presentation before swapchain recreation");
-                        swapchain_.reset();
-                        std::unique_ptr<Swapchain> next(new Swapchain(c_));
-                        next->init(width, height);
-                        if (!next->handle)
-                            return false;
-                        swapchain_ = std::move(next);
-                    }
-                    const auto draws = prepare(width, height, commands, background, samples);
-                    uint32_t image = 0;
-                    const auto acquired = c_.vkAcquireNextImageKHR(c_.device, swapchain_->handle, UINT64_MAX,
-                                                                   swapchain_->acquired, VK_NULL_HANDLE, &image);
-                    if (acquired == VK_ERROR_OUT_OF_DATE_KHR) {
-                        swapchain_->dirty = true;
+                    if (!presentation_)
+                        presentation_.reset(new Presentation(c_));
+                    if (!presentation_->prepare(width, height))
                         return false;
-                    }
-                    if (acquired != VK_SUBOPTIMAL_KHR)
-                        check(acquired, "acquire presentation image");
-                    c_.execute(
-                        [&](VkCommandBuffer cmd) {
-                            encode(cmd, draws, background, false);
-                            image_barrier(c_, cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
-                                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                          VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-                                          VK_ACCESS_TRANSFER_WRITE_BIT);
-                            VkImageBlit copy{};
-                            copy.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                            copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-                            copy.srcOffsets[1] = {int32_t(width), int32_t(height), 1};
-                            copy.dstOffsets[1] = {int32_t(swapchain_->extent.width), int32_t(swapchain_->extent.height),
-                                                  1};
-                            c_.vkCmdBlitImage(cmd, target_->color.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                              swapchain_->images[image], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy,
-                                              VK_FILTER_NEAREST);
-                            image_barrier(c_, cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
-                                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-                                          VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                                          VK_ACCESS_TRANSFER_WRITE_BIT, 0);
-                        },
-                        swapchain_->acquired, swapchain_->ready[image]);
-                    capture_oit_overflow();
-                    VkPresentInfoKHR info{};
-                    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-                    info.waitSemaphoreCount = 1;
-                    info.pWaitSemaphores = &swapchain_->ready[image];
-                    info.swapchainCount = 1;
-                    info.pSwapchains = &swapchain_->handle;
-                    info.pImageIndices = &image;
-                    const auto presented = c_.vkQueuePresentKHR(c_.queue, &info);
-                    if (presented == VK_ERROR_OUT_OF_DATE_KHR || presented == VK_SUBOPTIMAL_KHR ||
-                        acquired == VK_SUBOPTIMAL_KHR)
-                        swapchain_->dirty = true;
-                    if (presented != VK_ERROR_OUT_OF_DATE_KHR && presented != VK_SUBOPTIMAL_KHR)
-                        check(presented, "present frame");
-                    return presented != VK_ERROR_OUT_OF_DATE_KHR;
+                    const auto draws = prepare(width, height, commands, background, samples);
+                    return presentation_->present(
+                        width, height, target_->color.handle,
+                        [&](VkCommandBuffer cmd) { encode(cmd, draws, background, false); },
+                        [&] { capture_oit_overflow(); });
                 }
             };
         } // namespace

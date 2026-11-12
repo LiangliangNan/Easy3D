@@ -21,7 +21,7 @@ The tracker also leaves two concrete validation items open:
 * The earlier Linux Vulkan baseline was 68/69: `vulkan.interactionoverlay` disagreed with its one-pixel border expectation. The latest tracker still says this needs resolution against the relevant Mesa/CI environment.
 * The portable expanded-point fallback has not been profiled on a MoltenVK device without the optional `largePoints` feature. The measured native path was about 80 FPS at 3200×1834, 4× MSAA, with zero validation errors; this is not a Vulkan-versus-OpenGL comparison and says nothing about the fallback.
 
-Windows hardware execution and cross-platform packaging are not established by the Mac results. The checkout has no active `.github/workflows/vulkan.yml`; the workflow file is contained in `.github/uncompress_here.zip`. Documentation should not claim a running CI matrix until an actual workflow file is restored and its runs are observed.
+Windows hardware execution and cross-platform packaging are not established by the Mac results. The checkout has no active `.github/workflows/tests.yml`; the workflow file is contained in `.github/uncompress_here.zip`. Documentation should not claim a running CI matrix until an actual workflow file is restored and its runs are observed.
 
 ## Alignment and quality by area
 

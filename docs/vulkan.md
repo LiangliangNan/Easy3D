@@ -11,7 +11,7 @@ supported backend-neutral API rather than backend internals.
 **Status after batch 76:** core feature implementation for the agreed shared
 surface is substantially complete. The latest local macOS full-suite results
 are Vulkan Debug 141/141, Vulkan Release 141/141, OpenGL Debug 107/107, and
-OpenGL Release 107/107. The Linux `vulkan.yml` run succeeded on
+OpenGL Release 107/107. The Linux `tests.yml` run succeeded on
 `Easy3D-Vulkan` commit `81e6810` on 2026-11-12, including lavapipe, Xvfb,
 SPIR-V validation, and installed-package consumers. This closes the Linux CI
 gate for that commit; Windows hardware validation remains open.
@@ -516,7 +516,7 @@ The migration is **not yet validated complete**:
   `vulkan.interactionoverlay`. This closes the Linux regression gate for
   `81e6810`; the later local batch-77 modularization changes were not part of
   that run.
-* `.github/workflows/vulkan.yml` is present and includes configured-backend,
+* `.github/workflows/tests.yml` is present and includes configured-backend,
   lavapipe, SPIR-V, and installed-package consumer jobs. Run
   [#43273002058](https://github.com/LiangliangNan/Easy3D/actions/runs/43273002058)
   succeeded on `Easy3D-Vulkan` commit `81e6810`: the Vulkan matrix passed
@@ -561,12 +561,13 @@ grouped in `PassCache`, and full-frame/pixel readback is centralized in
 synchronous capture helpers. The focused `vulkan.resourcelifetime` test runs
 with synchronization validation, reuses geometry and image addresses after
 source destruction, exercises frame and pixel capture plus target resize, then
-repeats device teardown. The existing fence wait and one-command-buffer model
-are unchanged. Pass construction/encoding and swapchain presentation remain in
-`VulkanDevice`; those are the next extraction boundaries. Profiling found no
-current basis for multiple frames in flight or staging/suballocation, so both
-remain deferred unless frame-preparation or recurring dynamic-upload workloads
-show a measurable need.
+repeats device teardown. Window presentation and swapchain ownership now live
+in a `Presentation` helper, which owns swapchain recreation, image acquisition,
+blitting, and queue presentation. Pass construction/encoding remains in
+`VulkanDevice`. The existing fence wait and one-command-buffer model are
+unchanged. Profiling found no current basis for multiple frames in flight or
+staging/suballocation, so both remain deferred unless frame-preparation or
+recurring dynamic-upload workloads show a measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha
@@ -1358,7 +1359,7 @@ remain outstanding. There is no controlled, same-scene OpenGL-versus-Vulkan
 performance or image-comparison result yet.
 
 The archived Vulkan/OpenGL workflow is restored at
-`.github/workflows/vulkan.yml`. Run `42612100874` was not started because
+`.github/workflows/tests.yml`. Run `42612100874` was not started because
 GitHub reported an account billing lock. The first run that executed,
 `43074459422`, failed in both jobs for Linux-only reasons: the Vulkan job could
 not compile PyEasy3D without GLU headers, and the OpenGL job's Python test
@@ -1382,6 +1383,8 @@ compatibility hazard: the old OpenGL positional overloads can compile while
 silently changing the requested window size, sample count, or other settings.
 Replace old positional calls with the D1 order
 `Viewer(title, width, height, samples, full_screen, visible, resizable, options)`.
+No deprecated compatibility overload is provided; callers must migrate old
+positional calls to this order.
 The default sample count is now one. Both Viewer constructors emit a warning
 when both requested dimensions are at most 16 pixels, as this may indicate that
 old OpenGL context-version arguments were supplied positionally. This is only
@@ -8190,7 +8193,7 @@ inherited `referenceFrame()` name.
 
 ### 2026-11-12 — W10 batch 69: close the three Vulkan failures reported by the CI window-backend step
 
-**Scope.** The `vulkan.yml` "Test configured window backend" step (ubuntu-24.04, Xvfb, lavapipe)
+**Scope.** The `tests.yml` "Test configured window backend" step (ubuntu-24.04, Xvfb, lavapipe)
 failed three desktop tests while the OpenGL job passed. Each had a distinct cause.
 
 - *`vulkan.tutorial704` — `Viewer failed: point size and sphere radius must be finite and positive`.*
@@ -8255,7 +8258,7 @@ size, plain width in framebuffer pixels, world-space radius for the camera-space
 finished in 23-24 s locally with both paths budget-limited, and in the OpenGL Release tree in 10.6 s.
 The guard is not observable on macOS: removing it and re-running Tutorial 704 still passed, because
 the measured radius stayed positive (`1.59e-10`), while the Linux rounding produced zero. The
-Linux/Mesa rerun of `vulkan.yml` remains the gate for these three tests.
+Linux/Mesa rerun of `tests.yml` remains the gate for these three tests.
 
 ### 2026-11-12 — W10 batch 70: target-to-camera sizing is not the DPI scale; grid lines follow the target
 
@@ -8323,7 +8326,7 @@ OpenGL Release (`build-opengl`) 107/107, both green. The OpenGL tree is unchange
 
 ### 2026-11-12 — W10 batch 72: the region wire covers its boundary texel at every sample count
 
-**Scope.** After batch 71, the `vulkan.yml` window-backend step still failed one test:
+**Scope.** After batch 71, the `tests.yml` window-backend step still failed one test:
 `vulkan.interactionoverlay` reported "region boundary is not solid blue within one pixel of its
 edge". The zoom-region overlay records its rect in framebuffer pixels (`logical * dpi`) and draws a
 one-logical-pixel wire centered on those coordinates

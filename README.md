@@ -116,8 +116,8 @@ unchanged. The one deliberate API change is the viewer constructor:
 `Viewer(title, width, height, samples, full_screen, visible, resizable, options)`, where `options` is `VulkanOptions` 
 or `OpenGLOptions` for the configured backend and `samples` defaults to 1. Old positional calls such as 
 `Viewer(title, 4, 3, 2, false, false)` still compile but now request a 4x3 window with 2 samples (instead of 4 samples 
-with OpenGL 3.2) — update such calls explicitly. See [docs/vulkan.md](docs/vulkan.md) for the full backend and 
-migration details.
+with OpenGL 3.2) — update such calls explicitly. See [the Vulkan migration guide](https://github.com/LiangliangNan/Easy3D/blob/main/docs/vulkan.md)
+for the full backend and migration details.
 
 The **optional** third-party libraries are:
 - **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
@@ -178,8 +178,9 @@ step</a>.
 - Please check [here](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).
 
 ### Test Easy3D
-All tests and their CTest registration live in [`tests`](tests/README.md). Configure
-with `-DEasy3D_BUILD_TESTS=ON`, build normally, then run
+All tests and their CTest registration live in the
+[test guide](https://github.com/LiangliangNan/Easy3D/blob/main/tests/README.md).
+Configure with `-DEasy3D_BUILD_TESTS=ON`, build normally, then run
 `ctest --test-dir YOUR_BUILD_DIRECTORY --output-on-failure`. This enables all tests
 for the configured backend; Vulkan regression tests require validation layers.
 The option defaults to `OFF`. Desktop tests run for bounded frames and require no
