@@ -84,7 +84,7 @@ namespace {
     const std::vector<vec2> square_a = {vec2(0, 0), vec2(400, 0), vec2(400, 400), vec2(0, 400)};
     const std::vector<vec2> square_b = {vec2(200, 200), vec2(600, 200), vec2(600, 600), vec2(200, 600)};
 
-    enum Operation { UNION, INTERSECTION, DIFFERENCE };
+    enum Operation { CSG_UNION, CSG_INTERSECTION, CSG_DIFFERENCE };
 
     // Run one boolean operation on the two squares and return the resulting simple contours.
     std::vector<Polygon2> compute(Operation op) {
@@ -92,18 +92,18 @@ namespace {
         Polygon2 b(square_b.begin(), square_b.end());
         std::vector<Polygon2> result;
         switch (op) {
-        case UNION:
+        case CSG_UNION:
             // Union = tessellate all contours together with the non-zero winding rule:
             // any region covered by at least one input polygon is kept.
             result = {a, b};
             csg::union_of(result);
             break;
-        case INTERSECTION:
+        case CSG_INTERSECTION:
             // Intersection = keep only regions covered by both inputs (winding number >= 2
             // in absolute value, i.e. WINDING_ABS_GEQ_TWO).
             csg::intersection_of(a, b, result);
             break;
-        case DIFFERENCE:
+        case CSG_DIFFERENCE:
             // Difference = A with B subtracted: the operator reverses one contour's orientation
             // and extracts the regions with positive winding number.
             csg::difference_of(a, b, result);
@@ -151,7 +151,7 @@ namespace {
 // The default (union) result, also used by the geometry tutorial test.
 std::shared_ptr<SurfaceMesh> create_csg_mesh() {
     auto mesh = std::make_shared<SurfaceMesh>();
-    build_mesh(compute(UNION), mesh.get());
+    build_mesh(compute(CSG_UNION), mesh.get());
     return mesh;
 }
 
@@ -194,9 +194,9 @@ int main(int argc, char **argv) {
     // view (0, 1): union; view (1, 0): intersection; view (1, 1): difference (A - B).
     auto union_mesh = create_csg_mesh();
     auto intersection_mesh = std::make_shared<SurfaceMesh>();
-    build_mesh(compute(INTERSECTION), intersection_mesh.get());
+    build_mesh(compute(CSG_INTERSECTION), intersection_mesh.get());
     auto difference_mesh = std::make_shared<SurfaceMesh>();
-    build_mesh(compute(DIFFERENCE), difference_mesh.get());
+    build_mesh(compute(CSG_DIFFERENCE), difference_mesh.get());
     viewer.add_model(union_mesh);
     viewer.add_model(intersection_mesh);
     viewer.add_model(difference_mesh);
