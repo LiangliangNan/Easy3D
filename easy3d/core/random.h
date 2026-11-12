@@ -27,6 +27,7 @@
 #ifndef EASY3D_CORE_RANDOM_H
 #define EASY3D_CORE_RANDOM_H
 
+#include <cstdlib>
 #include <random>
 
 #include <easy3d/core/types.h>
@@ -55,19 +56,41 @@ namespace easy3d {
     }
 
     /**
-     * \brief Generate a pseudo-random RGB color.
-     * \param allow_dark If true, channels may range from 0 to 1; otherwise the
-     *        lower channel bound is 0.3.
-     * \return Random RGB color with independently sampled channels.
+     * \brief Generate a pseudo-random vivid RGB color.
+     * \details Sampling red, green, and blue independently is simple, but does
+     * not control the resulting hue, saturation, or brightness; it can produce
+     * dull or very dark colors, and its hue distribution is not uniform. This
+     * function instead samples hue uniformly around the HSV color wheel,
+     * restricts saturation to [0.75, 1], then converts the result to RGB.
+     * Unless \p allow_dark is true, HSV value is restricted to [0.8, 1], so
+     * the strongest RGB channel stays bright. HSV value is not perceptual
+     * luminance, so some hues (notably blue) can still appear darker than
+     * others. Independently generated colors are not guaranteed to be distinct.
+     * \param allow_dark If true, allow HSV value to range from 0 to 1; hue and
+     *        saturation ranges are unchanged.
+     * \return RGB components in [0, 1].
      */
     inline vec3 random_color(bool allow_dark = false) {
-        static float min_rgb = 0.3f;
-        min_rgb = allow_dark ? 0.0f : min_rgb;
-        return vec3(
-            random_float(min_rgb, 1.0f),
-            random_float(min_rgb, 1.0f),
-            random_float(min_rgb, 1.0f)
-        );
+        const float hue = random_float() * 6.0f;
+        const int hue_sector = static_cast<int>(hue);
+        const int sector = hue_sector % 6;
+        const float fraction = hue - static_cast<float>(hue_sector);
+        const float saturation = random_float(0.75f, 1.0f);
+        const float value = random_float(allow_dark ? 0.0f : 0.8f, 1.0f);
+        const float chroma = value * saturation;
+        const float x = chroma * (sector % 2 == 0 ? fraction : 1.0f - fraction);
+        const float offset = value - chroma;
+
+        float r, g, b;
+        switch (sector) {
+            case 0: r = chroma; g = x;      b = 0.0f;    break;
+            case 1: r = x;      g = chroma; b = 0.0f;    break;
+            case 2: r = 0.0f;   g = chroma; b = x;       break;
+            case 3: r = 0.0f;   g = x;      b = chroma; break;
+            case 4: r = x;      g = 0.0f;   b = chroma; break;
+            default:r = chroma; g = 0.0f;   b = x;       break;
+        }
+        return vec3(r + offset, g + offset, b + offset);
     }
 
 }

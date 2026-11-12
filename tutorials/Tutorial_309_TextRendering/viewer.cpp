@@ -35,6 +35,8 @@
 #include <cctype>
 #include <stdexcept>
 
+#include "easy3d/core/random.h"
+
 using namespace easy3d;
 
 // \cond
@@ -159,15 +161,17 @@ void TutorialTextRendering::pre_draw() {
     // Move below the instruction block (7 lines plus a gap) for the font gallery.
     o.y += 7 * intro.line_height + size_ * dpi * 0.5f;
     o.align = easy3d::graphics::TextAlign::left;
-    // One sample line per loaded font, two per row, each in a pseudo-random color.
+    // One sample line per loaded font, two per row, each in a random color.
     const auto &names = text_.font_names();
     float next_x = o.x;
     for (std::size_t i = 0; i < names.size(); ++i) {
         o.font = i; // select the i-th registered font
         // Even indices start a new row at the left margin; odd indices continue the row.
         o.x = (i % 2) ? next_x : 50 * dpi;
-        o.color = easy3d::vec4(0.15f + 0.5f * float((i * 3) % 7) / 7, 0.1f + 0.5f * float((i * 5) % 7) / 7,
-                               0.25f + 0.5f * float(i % 7) / 7, 1);
+        o.color = vec4(easy3d::random_color(), 1.0f);
+            // pseudo-random color.
+            // easy3d::vec4(0.15f + 0.5f * float((i * 3) % 7) / 7, 0.1f + 0.5f * float((i * 5) % 7) / 7,
+            //                    0.25f + 0.5f * float(i % 7) / 7, 1);
         const auto label = std::to_string(i) + (i % 2 ? " - I Love Easy3D!" : " - Easy3D makes 3D easy!     ");
         auto line = text_.layout(label, framebuffer_width(), framebuffer_height(), o);
         // advance = how far the line extended; the next sample on this row starts there.

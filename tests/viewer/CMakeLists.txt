@@ -422,6 +422,7 @@ if(Easy3D_ENABLE_VULKAN)
             easy3d_vulkan_collision_test
             easy3d_vulkan_corner_axes_test
             easy3d_vulkan_cross_section_test
+            easy3d_vulkan_depth_map_test
             easy3d_vulkan_frame_rate_test
             easy3d_vulkan_image_viewer_test
             easy3d_vulkan_interaction_overlay_test
