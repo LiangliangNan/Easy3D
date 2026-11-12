@@ -8284,3 +8284,27 @@ check fails without the material path.
 `vulkan.scene`, which exercises the new material/specular check, and `vulkan.tutorial302`), and
 OpenGL Release (`build-opengl`) 107/107, both green. The OpenGL tree is unchanged by this batch.
 `easy3d/util/version.h` is unchanged. Linux/Mesa, Windows hardware and CI remain separate gates.
+
+### 2026-11-12 — W10 batch 72: the region wire covers its boundary texel at every sample count
+
+**Scope.** After batch 71, the `vulkan.yml` window-backend step still failed one test:
+`vulkan.interactionoverlay` reported "region boundary is not solid blue within one pixel of its
+edge". The zoom-region overlay records its rect in framebuffer pixels (`logical * dpi`) and draws a
+one-logical-pixel wire centered on those coordinates
+(`graphics::shape::draw_quad_wire(rect, ..., framebuffer_width(), framebuffer_height(), dpi)`). At
+integer coordinates a one-pixel ribbon is centered on the boundary between texels, so it covers
+half of each neighbour: the MSAA resolve then blends it with the fill and the background instead of
+producing a solid texel, and when both ribbon edges coincide with pixel centers the fill rule can
+exclude both neighbours (which is what lavapipe does). The pivot cross had the same problem, fixed
+in batch 69 by centering the ribbon on the marked texel; the region rect now follows that
+convention for all four edges, `(logical + 0.5) * dpi`, so the wire spans exactly one logical texel
+at DPI 1 (two at DPI 2) and is fully covered at any sample count. The filled region shares the
+same half-texel shift, so the wire stays centered on it; the center-fill color, the picking/depth
+results and the camera are unchanged. The OpenGL viewer draws its region wire with native GL lines
+in logical space and is untouched.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147, including
+`vulkan.interactionoverlay` (which captures the region at both 1 and 4 samples and checks the
+boundary, fill blending, pivot cross, expiry and focus cancellation), and OpenGL Release
+(`build-opengl`) 107/107, both green. The lavapipe/Xvfb CI rerun remains the Linux gate because
+lavapipe cannot create a Cocoa surface locally. `easy3d/util/version.h` is unchanged.

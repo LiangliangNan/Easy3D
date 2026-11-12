@@ -1,37 +1,3 @@
-
-
-
-
-
-
-The "VULKAN" backend GitHub workflow vulkan.yml still failed (OpenGL backend passed).
-
-71/89 Test  #89: vulkan.manipulation ..............   Passed    0.42 sec
-      Start  90: vulkan.usage
-72/89 Test  #90: vulkan.usage .....................   Passed    0.84 sec
-      Start  91: vulkan.interactionoverlay
-73/89 Test  #91: vulkan.interactionoverlay ........***Failed   23.86 sec
-FAIL: region boundary is not solid blue within one pixel of its edge
-
-
-99% tests passed, 1 tests failed out of 89
-
-Label Time Summary:
-desktop    = 187.56 sec*proc (89 tests)
-
-Total Test time (real) = 187.60 sec
-
-The following tests FAILED:
-	 91 - vulkan.interactionoverlay (Failed)                desktop
-Errors while running CTest
-
-
-
-
-
-
-
-
 One residual note: Vulkan has a single impostor pipeline for textured and colored lines. OpenGL has two distinct pipelines.
 
 
@@ -83,7 +49,7 @@ Use snake-case for the following classes:
 Constraint, Frame, ManipulatedFrame, 
 
 
-Random colors are bright, distinct (see Jianwei's paper). Test on segmentation/components/faces.
+Random colors are bright, distinct (see Jianwei's paper). Test on segmentation/components/faces, and text rendering tutorial.
 Hovering mouse highlights the object/face under the cursor (in ModelPicker/FacePicker/ObjectManipulation tutorials).
 
 New features:

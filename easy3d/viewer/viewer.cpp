@@ -1871,7 +1871,13 @@ namespace easy3d {
         }
         if (zoom_region_ && (input_.x != input_.press_x || input_.y != input_.press_y)) {
             // Mouse coordinates are logical; scale into the framebuffer overlay space.
-            const Rect rect{input_.press_x * dpi, input_.x * dpi, input_.press_y * dpi, input_.y * dpi};
+            // The one-logical-pixel wire is centered on its endpoints, so place them on
+            // the boundary texels' centers: a wire centered on a texel boundary covers
+            // only half of each neighbour and never resolves to a solid color under
+            // MSAA, and lavapipe's fill rule can drop it entirely. Same convention as
+            // the pivot cross above.
+            const Rect rect{(input_.press_x + 0.5f) * dpi, (input_.x + 0.5f) * dpi,
+                            (input_.press_y + 0.5f) * dpi, (input_.y + 0.5f) * dpi};
             commands.push_back(
                 graphics::shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f), framebuffer_width(), framebuffer_height()));
             commands.push_back(graphics::shape::draw_quad_wire(rect, vec4(0, 0, 1, 1), framebuffer_width(),
