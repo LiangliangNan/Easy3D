@@ -3887,6 +3887,46 @@ namespace easy3d {
                 }
             };
 
+            class TransparentTriangleOrderBuilder {
+            public:
+                struct Range {
+                    uint32_t offset = 0;
+                    uint32_t count = 0;
+                };
+
+                static Range append(const DrawCommand &command, std::vector<uint32_t> &indices) {
+                    const auto &vertices = command.geometry->vertices();
+                    const auto &source_indices = command.geometry->indices();
+                    const size_t count = source_indices.empty() ? vertices.size() : source_indices.size();
+                    std::vector<std::pair<float, uint32_t>> order(count / 3);
+                    for (size_t t = 0; t < order.size(); ++t) {
+                        vec3 centroid(0);
+                        for (unsigned j = 0; j < 3; ++j) {
+                            const size_t vertex = source_indices.empty() ? 3 * t + j : source_indices[3 * t + j];
+                            centroid += vertices[vertex].position;
+                        }
+                        const auto clip = command.model_view_projection * vec4(centroid / 3.0f, 1);
+                        order[t] = {0.5f * (clip.z + clip.w), uint32_t(t)};
+                    }
+                    std::stable_sort(order.begin(), order.end(),
+                                     [](const std::pair<float, uint32_t> &a,
+                                        const std::pair<float, uint32_t> &b) { return a.first > b.first; });
+                    const size_t added = order.size() * 3;
+                    if (added > UINT32_MAX || indices.size() > UINT32_MAX - added)
+                        throw std::invalid_argument("too many transparent triangles");
+                    Range range;
+                    range.offset = uint32_t(indices.size());
+                    range.count = uint32_t(added);
+                    for (const auto &entry : order) {
+                        const uint32_t first = entry.second * 3;
+                        indices.push_back(first);
+                        indices.push_back(first + 1);
+                        indices.push_back(first + 2);
+                    }
+                    return range;
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4471,31 +4511,9 @@ namespace easy3d {
                             // Straight-alpha blending needs every triangle of a drawable in
                             // far-to-near order, not only the drawables themselves.
                             if (!pixel_query) {
-                                const auto &vertices = command.geometry->vertices();
-                                const auto &indices = command.geometry->indices();
-                                const size_t count = indices.empty() ? vertices.size() : indices.size();
-                                std::vector<std::pair<float, uint32_t>> order(count / 3);
-                                for (size_t t = 0; t < order.size(); ++t) {
-                                    vec3 centroid(0);
-                                    for (unsigned j = 0; j < 3; ++j)
-                                        centroid += vertices[indices.empty() ? 3 * t + j : indices[3 * t + j]].position;
-                                    const auto clip = command.model_view_projection * vec4(centroid / 3.0f, 1);
-                                    order[t] = {0.5f * (clip.z + clip.w), uint32_t(t)};
-                                }
-                                std::stable_sort(order.begin(), order.end(),
-                                                 [](const std::pair<float, uint32_t> &a,
-                                                    const std::pair<float, uint32_t> &b) { return a.first > b.first; });
-                                const size_t added = order.size() * 3;
-                                if (added > UINT32_MAX || transparent_indices.size() > UINT32_MAX - added)
-                                    throw std::invalid_argument("too many transparent triangles");
-                                index_offset = uint32_t(transparent_indices.size());
-                                index_count = uint32_t(added);
-                                for (const auto &entry : order) {
-                                    const uint32_t first = entry.second * 3;
-                                    transparent_indices.push_back(first);
-                                    transparent_indices.push_back(first + 1);
-                                    transparent_indices.push_back(first + 2);
-                                }
+                                const auto range = TransparentTriangleOrderBuilder::append(command, transparent_indices);
+                                index_offset = range.offset;
+                                index_count = range.count;
                             }
                         }
                         draws.push_back({std::move(command), &g, &t, offset, sort_depth, index_offset, index_count});
