@@ -311,6 +311,7 @@ namespace easy3d {
             // after transforming their centers; model scaling does not scale the radius.
             PointStyle point_style = PointStyle::plain; ///< Point rendering style.
             float point_size = 1;                       ///< Plain-point diameter in framebuffer pixels.
+            // Plain points are sized in pixels and never read this field, so it stays unused for them.
             float sphere_radius = 1; ///< View-space radius for sphere/surfel impostors, independent of model scale.
             vec3 sphere_light = vec3(0.3f, 0.5f, 1); ///< View-space directional light for point impostors.
             // Surfels orient their disc by the inverse-transpose of this affine matrix's
@@ -321,6 +322,8 @@ namespace easy3d {
             // in view-space units, independent of model scale. Cones taper from the
             // first endpoint (base) to the second (tip); cylinders have two flat caps.
             LineStyle line_style = LineStyle::plain; ///< Line rendering style.
+            // Cylinder/cone impostors always read this radius; camera-space plain lines expand
+            // by it, and screen-space plain lines never do (then it stays unused).
             float line_radius = 1; ///< View-space radius for cylinder/cone impostors, independent of model scale.
             // Plain lines use framebuffer-pixel widths. Width one retains native line
             // rasterization; other widths use butt-capped triangle ribbons, without joins.

@@ -1000,11 +1000,16 @@ namespace easy3d {
                     // Tutorial_204_Viewer_Qt) and hide the hint after a delay.
                     if (!drawable_pivot_)
                         drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
-                    const float size = 10.0f; // arm in logical pixels (DPI-independent), matching the Vulkan overlay
-                    const std::vector<vec2> points = {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size),
-                                                      vec2(x, y + size)};
-                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
-                    drawable_pivot_->set_line_width(dpi_scaling());
+                    // The pivot cross is ten logical pixels long and one logical pixel wide;
+                    // both backends draw it in framebuffer pixels. Screen-space lines are
+                    // corner-based (texel (i, j) spans [i, i+1) x [j, j+1)), so center the
+                    // ribbon on the marked pixel's center instead of its corner.
+                    const float dpi = dpi_scaling();
+                    const float px = (x + 0.5f) * dpi, py = (y + 0.5f) * dpi, size = 10.0f * dpi;
+                    const std::vector<vec2> points = {vec2(px - size, py), vec2(px + size, py),
+                                                      vec2(px, py - size), vec2(px, py + size)};
+                    drawable_pivot_->update_vertex_buffer(points, framebuffer_width(), framebuffer_height(), true);
+                    drawable_pivot_->set_line_width(dpi);
                     Timer<>::single_shot(10000, [&]() {
                         show_pivot_point_ = false;
                         update();
@@ -1846,8 +1851,11 @@ namespace easy3d {
         commands.insert(commands.end(), frame_rate_commands_.begin(), frame_rate_commands_.end());
         commands.insert(commands.end(), hint_commands_.begin(), hint_commands_.end());
         if (pivot) {
-            // pivot_pixel_ is logical; the overlay is recorded in framebuffer pixels.
-            const float x = pivot_pixel_.x * dpi, y = pivot_pixel_.y * dpi, size = 10 * dpi;
+            // The pivot cross is ten logical pixels long and one logical pixel wide;
+            // both backends draw it in framebuffer pixels. Screen-space lines are
+            // corner-based (texel (i, j) spans [i, i+1) x [j, j+1)), so center the
+            // ribbon on the marked pixel's center instead of its corner.
+            const float x = (pivot_pixel_.x + 0.5f) * dpi, y = (pivot_pixel_.y + 0.5f) * dpi, size = 10.0f * dpi;
             commands.push_back(graphics::shape::draw_lines_2d(
                 {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size), vec2(x, y + size)}, vec4(0, 0, 0, 1),
                 framebuffer_width(), framebuffer_height(), dpi));

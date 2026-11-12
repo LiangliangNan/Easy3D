@@ -312,7 +312,11 @@ namespace easy3d {
                     result.point_style = p->impostor_type() == PointsDrawable::SPHERE   ? graphics::PointStyle::sphere
                                          : p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel
                                                                                         : graphics::PointStyle::plain;
-                    result.sphere_radius = Drawable::impostor_radius(cam, p->point_size());
+                    // Only the sphere/surfel pipelines read the world-space radius (a plain point
+                    // is sized in framebuffer pixels), and the conversion is degenerate when the
+                    // pivot lies in the eye plane, so leave the field alone for plain points.
+                    if (result.point_style != graphics::PointStyle::plain)
+                        result.sphere_radius = Drawable::impostor_radius(cam, p->point_size());
                     result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
                     result.projection = cam.projection_matrix();
                     // setting::light_position is already a view-space direction; the
@@ -324,10 +328,13 @@ namespace easy3d {
                                         : l->impostor_type() == LinesDrawable::CONE   ? graphics::LineStyle::cone
                                                                                       : graphics::LineStyle::plain;
                     result.line_width = l->line_width();
-                    result.line_radius = Drawable::impostor_radius(cam, l->line_width());
                     // Plain lines are expanded in camera space (a world-space half-width) or in
                     // screen space (a constant pixel width); the client selects the mode.
                     result.line_screen_space_width = setting::lines_drawable_screen_space_width;
+                    // Cylinder/cone impostors always read the world-space radius and camera-space
+                    // plain lines expand by it; screen-space plain lines work in pixels only.
+                    if (result.line_style != graphics::LineStyle::plain || !result.line_screen_space_width)
+                        result.line_radius = Drawable::impostor_radius(cam, l->line_width());
                     result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
                     result.projection = cam.projection_matrix();
                     result.sphere_light = vec3(setting::light_position);

@@ -8151,3 +8151,54 @@ markers in `backends/vulkan/drawable.cpp` (that file is excluded from OpenGL bui
 grep was the only other way to see it). After the fix, a repo-wide grep outside `3rd_party/` finds
 no camelCase `Camera` spelling left, and `camera.h` itself contains only `glClipPlane()` and the
 inherited `referenceFrame()` name.
+
+### 2026-11-12 — W10 batch 69: close the three Vulkan failures reported by the CI window-backend step
+
+**Scope.** The `vulkan.yml` "Test configured window backend" step (ubuntu-24.04, Xvfb, lavapipe)
+failed three desktop tests while the OpenGL job passed. Each had a distinct cause.
+
+- *`vulkan.tutorial704` — `Viewer failed: point size and sphere radius must be finite and positive`.*
+  The Vulkan scene adapter computed `sphere_radius = impostor_radius(camera, point_size)` for every
+  points command, but only the sphere and surfel pipelines read that field; `points.vert` and
+  `points.frag` early-out at `material.light.w == 0` for plain points and never touch
+  `dimensions.w`. The conversion itself can be meaningless: Tutorial 704 calls
+  `set_up_vector(vec3(0, 1, 0))` and `set_view_direction(vec3(0, 0, -1))` after the model fit, which
+  on this scene leaves the pivot essentially in the eye plane. A probe build measured the first
+  frame as `eye = (1.51593, 0.0761792, -0.793613)`, `pivot = (-0.0184425, 0.0761791, -0.793613)`:
+  the camera-space depth of the pivot is a rounding residue (`|z| ≈ 1e-7`), so
+  `world_pixel_ratio()` returned `1.06e-10` and a point size of 3 produced
+  `radius = 1.59e-10`. That is positive, which is why macOS passed; on Linux the same rounding gave
+  exactly zero and `render_device.cpp` rejected the command (it requires a finite, positive
+  `sphere_radius` for every point draw). The adapter now computes the radius only for sphere and
+  surfel points and leaves the declared default otherwise. The analogous line guard applies to
+  cylinder/cone impostors and to camera-space plain lines; screen-space plain lines work in
+  framebuffer pixels only, so they skip it too. `render_device.h` states which pipelines read each
+  field.
+- *`vulkan.interactionoverlay` — `pivot cross did not match the original black marker`.* `Viewer`'s
+  OpenGL and Vulkan pivot overlays had diverged. OpenGL passed logical coordinates to
+  `LinesDrawable2D::update_vertex_buffer(points, width(), height(), true)` and then set a
+  framebuffer-pixel line width of `dpi_scaling()`, i.e. a buffer mixing logical positions with a
+  framebuffer-pixel width; Vulkan multiplied the logical pixel by `dpi` before
+  `graphics::shape::draw_lines_2d(..., framebuffer_width(), framebuffer_height(), dpi)`. Both now
+  build the cross in framebuffer pixels: the marked pixel is centered at `(pixel + 0.5) * dpi` and
+  each arm is `10 * dpi` long, with the ribbon centered on that texel's center. The mapping is
+  corner-based (texel `(i, j)` spans `[i, i+1) x [j, j+1)`), so a one-pixel ribbon anchored at the
+  texel *corner* straddles two texels; MoltenVK's fill rule covered the probed texel while
+  lavapipe's excluded it, which is what the test observed on CI. Both backends now also share the
+  same comment stating the contract.
+- *`viewer.pointbenchmark` — timeout after 120 s.* The test warmed up for 30 frames and then timed
+  300 frames on the 479187-point fountain cloud at 1600x917 with 4x MSAA. That fits comfortably on
+  hardware, but a software rasterizer multiplies the frame count by an expensive per-frame cost and
+  cannot finish inside the CTest timeout. Both loops are now time-budget-aware: three warm-up
+  frames, then at least three timed frames and ten seconds of wall clock, so a slow rasterizer stops
+  early instead of rendering a fixed count. The DPI/coverage assertions and the reported
+  ms/frame/FPS figures are unchanged; the run is marked `(budget-limited)` when the time budget,
+  not the frame count, ended it.
+
+**Validation.** Vulkan Debug (`cmake-build-debug`) full serial CTest 147/147 and OpenGL Release
+(`build-opengl`) full serial CTest 107/107 on macOS, including `vulkan.tutorial704`,
+`vulkan.interactionoverlay` and `viewer.pointbenchmark`; in the Vulkan Debug tree the benchmark
+finished in 23-24 s locally with both paths budget-limited, and in the OpenGL Release tree in 10.6 s.
+The guard is not observable on macOS: removing it and re-running Tutorial 704 still passed, because
+the measured radius stayed positive (`1.59e-10`), while the Linux rounding produced zero. The
+Linux/Mesa rerun of `vulkan.yml` remains the gate for these three tests.

@@ -26,6 +26,9 @@ void require(bool ok, const char *text) {
 // The tutorial's camera frusta and photo overlay are excluded; the cloud dominates the
 // frame and is identical on every path. No performance threshold is asserted because
 // throughput is machine-dependent; the numbers are recorded in docs/vulkan.md.
+// The test is time-budget-aware: every loop runs a minimum number of frames and then keeps
+// rendering until a per-path wall-clock budget is exhausted, so software rasterizers
+// (lavapipe) finish well inside the ctest TIMEOUT even when a frame costs a second or more.
 void measure(Viewer &v, const char *path) {
     require(v.add_model(resource::directory() + "/data/fountain/pointcloud.ply"), "fountain cloud missing");
     auto *points = v.current_model()->renderer()->get_points_drawable("vertices");
@@ -41,7 +44,10 @@ void measure(Viewer &v, const char *path) {
     glfwSwapInterval(0);
     glfwMakeContextCurrent(previous);
 #endif
-    for (int i = 0; i < 30; ++i)
+    // Warm-up only needs to reach a steady state; keeping it small bounds the run on a
+    // software rasterizer, where every frame is expensive.
+    const int warmup_frames = 3;
+    for (int i = 0; i < warmup_frames; ++i)
         require(v.draw_frame(), "warmup frame did not present");
     // Backend-independent DPI contract: logical window size, physical framebuffer, and their ratio.
     require(v.width() == 1600 && v.height() == 917, "logical window size differs from the requested size");
@@ -59,13 +65,24 @@ void measure(Viewer &v, const char *path) {
               << v.framebuffer_width() << "x" << v.framebuffer_height() << ", dpi " << v.dpi_scaling()
               << ", camera " << v.camera()->screen_width() << "x" << v.camera()->screen_height()
               << ", samples 4, id-pass covered " << covered << " px\n";
-    const int frames = 300;
+    // Time-budget-aware loop: run at least three frames, then keep going until ten seconds
+    // elapse. Fast hardware still renders thousands of frames; a software rasterizer stops
+    // early, and its expensive frames are not multiplied by a large minimum count.
+    const int min_frames = 3;
+    const double budget_seconds = 10.0;
     const auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < frames; ++i)
+    int frames = 0;
+    double elapsed = 0.0;
+    do {
         require(v.draw_frame(), "timed frame did not present");
-    const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-    std::cout << path << ": " << frames << " frames in " << seconds << " s, " << 1000.0 * seconds / frames
-              << " ms/frame, " << frames / seconds << " FPS\n";
+        ++frames;
+        elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    } while (frames < min_frames || elapsed < budget_seconds);
+    std::cout << path << ": " << frames << " frames in " << elapsed << " s, " << 1000.0 * elapsed / frames
+              << " ms/frame, " << frames / elapsed << " FPS";
+    if (elapsed >= budget_seconds)
+        std::cout << " (budget-limited)";
+    std::cout << "\n";
 }
 } // namespace
 
