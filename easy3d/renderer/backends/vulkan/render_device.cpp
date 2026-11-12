@@ -4474,179 +4474,212 @@ namespace easy3d {
                     oit_->peel_sets.emplace(key, set);
                     return set;
                 }
-                void encode_oit(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
-                    std::vector<const Prepared *> transparent;
-                    for (const auto &draw : draws)
-                        if (draw.command.transparent)
-                            transparent.push_back(&draw);
-                    if (transparent.empty())
-                        return;
-                    ensure_oit(target_->width, target_->height);
-                    const uint32_t width = target_->width, height = target_->height;
-                    const auto full_view = [&] {
-                        VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-                        const VkRect2D scissor = {{0, 0}, {width, height}};
-                        c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                        c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                    };
-                    const auto set_view = [&](const DrawCommand &d) {
-                        const auto &r = d.viewport;
-                        VkViewport viewport = {
-                            float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
-                        VkRect2D scissor = {{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
-                        c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                        c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                    };
-                    const auto bind_draw = [&](const Prepared &draw, VkPipeline pipeline,
-                                               VkPipelineLayout pipeline_layout, VkDescriptorSet texture_set) {
-                        set_view(draw.command);
-                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-                        c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
-                                                   &texture_set, 0, nullptr);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1,
-                                                   &impostor_set_, 1, &draw.uniform_offset);
-                        VkDeviceSize offset = 0;
-                        c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-                        Push push{};
-                        for (unsigned col = 0; col < 4; ++col)
-                            for (unsigned row = 0; row < 4; ++row)
-                                push.mvp[col * 4 + row] = draw.command.model_view_projection(row, col);
-                        for (unsigned i = 0; i < 4; ++i)
-                            push.color[i] = draw.command.color[i];
-                        push.object = draw.command.object_id;
-                        push.lighting = draw.command.lighting ? 1 : 0;
-                        for (unsigned col = 0; col < 3; ++col)
-                            for (unsigned row = 0; row < 3; ++row)
-                                push.normal[col * 3 + row] = draw.command.normal_matrix(row, col);
-                        c_.vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-                    };
-                    if (oit_method_ == TransparencyMethod::average) {
-                        for (auto *image : {&oit_->color, &oit_->count}) {
-                            auto &layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
-                            const bool fresh = layout == VK_IMAGE_LAYOUT_UNDEFINED;
-                            image_barrier(c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT, layout,
+
+                class OitPassEncoder {
+                    VulkanDevice &device_;
+                    Context &c_;
+                    std::unique_ptr<Oit> &oit_;
+                    std::unique_ptr<LinkedLists> &lists_;
+                    std::unique_ptr<Target> &target_;
+                    VkPipelineLayout &layout_;
+                    VkDescriptorSet &impostor_set_;
+                    VkPipelineLayout &oit_peel_layout_;
+                    VkPipelineLayout &oit_composite_layout_;
+                    VkPipelineLayout &oit_lists_layout_;
+                    VkPipelineLayout &oit_resolve_layout_;
+                    TransparencyMethod &oit_method_;
+                    unsigned &oit_layers_;
+
+                public:
+                    explicit OitPassEncoder(VulkanDevice &device)
+                        : device_(device), c_(device.c_), oit_(device.oit_), lists_(device.lists_),
+                          target_(device.target_), layout_(device.layout_), impostor_set_(device.impostor_set_),
+                          oit_peel_layout_(device.oit_peel_layout_),
+                          oit_composite_layout_(device.oit_composite_layout_),
+                          oit_lists_layout_(device.oit_lists_layout_), oit_resolve_layout_(device.oit_resolve_layout_),
+                          oit_method_(device.oit_method_), oit_layers_(device.oit_layers_) {}
+
+                    void encode(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
+                        std::vector<const Prepared *> transparent;
+                        for (const auto &draw : draws)
+                            if (draw.command.transparent)
+                                transparent.push_back(&draw);
+                        if (transparent.empty())
+                            return;
+                        device_.ensure_oit(target_->width, target_->height);
+                        const uint32_t width = target_->width, height = target_->height;
+                        const auto full_view = [&] {
+                            VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+                            const VkRect2D scissor = {{0, 0}, {width, height}};
+                            c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                            c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                        };
+                        const auto set_view = [&](const DrawCommand &d) {
+                            const auto &r = d.viewport;
+                            VkViewport viewport = {
+                                float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+                            VkRect2D scissor = {
+                                {r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
+                            c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                            c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                        };
+                        const auto bind_draw = [&](const Prepared &draw,
+                                                   VkPipeline pipeline,
+                                                   VkPipelineLayout pipeline_layout,
+                                                   VkDescriptorSet texture_set) {
+                            set_view(draw.command);
+                            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
+                                                       &texture_set, 0, nullptr);
+                            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1,
+                                                       &impostor_set_, 1, &draw.uniform_offset);
+                            VkDeviceSize offset = 0;
+                            c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+                            Push push{};
+                            for (unsigned col = 0; col < 4; ++col)
+                                for (unsigned row = 0; row < 4; ++row)
+                                    push.mvp[col * 4 + row] = draw.command.model_view_projection(row, col);
+                            for (unsigned i = 0; i < 4; ++i)
+                                push.color[i] = draw.command.color[i];
+                            push.object = draw.command.object_id;
+                            push.lighting = draw.command.lighting ? 1 : 0;
+                            for (unsigned col = 0; col < 3; ++col)
+                                for (unsigned row = 0; row < 3; ++row)
+                                    push.normal[col * 3 + row] = draw.command.normal_matrix(row, col);
+                            c_.vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push),
+                                                  &push);
+                        };
+                        if (oit_method_ == TransparencyMethod::average) {
+                            for (auto *image : {&oit_->color, &oit_->count}) {
+                                auto &layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
+                                const bool fresh = layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                                image_barrier(c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT, layout,
+                                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                              fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+                                                    : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                              fresh ? 0 : VK_ACCESS_SHADER_READ_BIT,
+                                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                                layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                            }
+                            VkClearValue clears[2] = {};
+                            VkRenderPassBeginInfo begin{};
+                            begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                            begin.renderPass = oit_->average_pass;
+                            begin.framebuffer = oit_->average_framebuffer;
+                            begin.renderArea = {{0, 0}, {width, height}};
+                            begin.clearValueCount = 2;
+                            begin.pClearValues = clears;
+                            c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                            full_view();
+                            for (const Prepared *draw : transparent) {
+                                bind_draw(*draw, oit_->average_pipeline, layout_, draw->texture->set);
+                                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                            }
+                            c_.vkCmdEndRenderPass(cmd);
+                            for (auto *image : {&oit_->color, &oit_->count}) {
+                                auto &layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
+                                image_barrier(c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                                              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                              VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                              VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                            }
+                        } else if (oit_method_ == TransparencyMethod::linked_lists) {
+                            device_.ensure_linked_lists(width, height, oit_layers_);
+                            // Reset the head pointers to -1 (empty list) and the node counter to 0.
+                            VkMemoryBarrier clear_barrier{};
+                            clear_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                            clear_barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+                            clear_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                    VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &clear_barrier, 0, nullptr, 0,
+                                                    nullptr);
+                            c_.vkCmdFillBuffer(cmd, lists_->head.handle, 0, VkDeviceSize(width) * height * 4,
+                                               0xFFFFFFFFu);
+                            c_.vkCmdFillBuffer(cmd, lists_->counter.handle, 0, 4, 0u);
+                            // Make the clears (transfer) and the host-written params visible to the
+                            // build fragment shader before it appends nodes.
+                            VkMemoryBarrier build_barrier{};
+                            build_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                            build_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
+                            build_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_HOST_BIT,
+                                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &build_barrier, 0,
+                                                    nullptr, 0, nullptr);
+                            VkRenderPassBeginInfo build{};
+                            build.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                            build.renderPass = lists_->build_pass;
+                            build.framebuffer = lists_->build_framebuffer;
+                            build.renderArea = {{0, 0}, {width, height}};
+                            c_.vkCmdBeginRenderPass(cmd, &build, VK_SUBPASS_CONTENTS_INLINE);
+                            full_view();
+                            for (const Prepared *draw : transparent) {
+                                bind_draw(*draw, lists_->build_pipeline, oit_lists_layout_, draw->texture->set);
+                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_lists_layout_, 2,
+                                                           1, &lists_->set, 0, nullptr);
+                                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                            }
+                            c_.vkCmdEndRenderPass(cmd);
+                            // Copy the allocation counter to host-visible memory so the host can
+                            // report pool overflow. It counts every append attempt, including
+                            // fragments dropped once the pool was full.
+                            VkMemoryBarrier counter_barrier{};
+                            counter_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                            counter_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                            counter_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                    VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &counter_barrier, 0, nullptr,
+                                                    0, nullptr);
+                            VkBufferCopy counter_copy{};
+                            counter_copy.size = 4;
+                            c_.vkCmdCopyBuffer(cmd, lists_->counter.handle, lists_->counter_readback.handle, 1,
+                                               &counter_copy);
+                            // Order the linked-list writes before the resolve pass reads them.
+                            VkMemoryBarrier resolve_barrier{};
+                            resolve_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                            resolve_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                            resolve_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &resolve_barrier, 0,
+                                                    nullptr, 0, nullptr);
+                            // Resolve into the shared accumulation image, then expose it to the
+                            // scene composite (which over-blends it like a peeled result).
+                            const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->color_layout,
                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                           fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
                                                 : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                                           fresh ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                            layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                        }
-                        VkClearValue clears[2] = {};
-                        VkRenderPassBeginInfo begin{};
-                        begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                        begin.renderPass = oit_->average_pass;
-                        begin.framebuffer = oit_->average_framebuffer;
-                        begin.renderArea = {{0, 0}, {width, height}};
-                        begin.clearValueCount = 2;
-                        begin.pClearValues = clears;
-                        c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                        full_view();
-                        for (const Prepared *draw : transparent) {
-                            bind_draw(*draw, oit_->average_pipeline, layout_, draw->texture->set);
-                            c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
-                        }
-                        c_.vkCmdEndRenderPass(cmd);
-                        for (auto *image : {&oit_->color, &oit_->count}) {
-                            auto &layout = image == &oit_->color ? oit_->color_layout : oit_->count_layout;
-                            image_barrier(
-                                c_, cmd, image->handle, VK_IMAGE_ASPECT_COLOR_BIT,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                            layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        }
-                    } else if (oit_method_ == TransparencyMethod::linked_lists) {
-                        ensure_linked_lists(width, height, oit_layers_);
-                        // Reset the head pointers to -1 (empty list) and the node counter to 0.
-                        VkMemoryBarrier clear_barrier{};
-                        clear_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        clear_barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-                        clear_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &clear_barrier, 0, nullptr, 0,
-                                                nullptr);
-                        c_.vkCmdFillBuffer(cmd, lists_->head.handle, 0, VkDeviceSize(width) * height * 4, 0xFFFFFFFFu);
-                        c_.vkCmdFillBuffer(cmd, lists_->counter.handle, 0, 4, 0u);
-                        // Make the clears (transfer) and the host-written params visible to the
-                        // build fragment shader before it appends nodes.
-                        VkMemoryBarrier build_barrier{};
-                        build_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        build_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
-                        build_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_HOST_BIT,
-                                                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &build_barrier, 0, nullptr,
-                                                0, nullptr);
-                        VkRenderPassBeginInfo build{};
-                        build.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                        build.renderPass = lists_->build_pass;
-                        build.framebuffer = lists_->build_framebuffer;
-                        build.renderArea = {{0, 0}, {width, height}};
-                        c_.vkCmdBeginRenderPass(cmd, &build, VK_SUBPASS_CONTENTS_INLINE);
-                        full_view();
-                        for (const Prepared *draw : transparent) {
-                            bind_draw(*draw, lists_->build_pipeline, oit_lists_layout_, draw->texture->set);
-                            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_lists_layout_, 2, 1,
+                            oit_->color_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                            VkClearValue clear{};
+                            VkRenderPassBeginInfo resolve{};
+                            resolve.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                            resolve.renderPass = oit_->reset_pass;
+                            resolve.framebuffer = oit_->reset_framebuffer;
+                            resolve.renderArea = {{0, 0}, {width, height}};
+                            resolve.clearValueCount = 1;
+                            resolve.pClearValues = &clear;
+                            c_.vkCmdBeginRenderPass(cmd, &resolve, VK_SUBPASS_CONTENTS_INLINE);
+                            full_view();
+                            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lists_->resolve_pipeline);
+                            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_resolve_layout_, 0, 1,
                                                        &lists_->set, 0, nullptr);
-                            c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
-                        }
-                        c_.vkCmdEndRenderPass(cmd);
-                        // Copy the allocation counter to host-visible memory so the host can
-                        // report pool overflow. It counts every append attempt, including
-                        // fragments dropped once the pool was full.
-                        VkMemoryBarrier counter_barrier{};
-                        counter_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        counter_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-                        counter_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 1, &counter_barrier, 0, nullptr, 0,
-                                                nullptr);
-                        VkBufferCopy counter_copy{};
-                        counter_copy.size = 4;
-                        c_.vkCmdCopyBuffer(cmd, lists_->counter.handle, lists_->counter_readback.handle, 1,
-                                           &counter_copy);
-                        // Order the linked-list writes before the resolve pass reads them.
-                        VkMemoryBarrier resolve_barrier{};
-                        resolve_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-                        resolve_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-                        resolve_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 1, &resolve_barrier, 0,
-                                                nullptr, 0, nullptr);
-                        // Resolve into the shared accumulation image, then expose it to the
-                        // scene composite (which over-blends it like a peeled result).
-                        const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;
-                        image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->color_layout,
-                                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                      fresh ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                      fresh ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                        oit_->color_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                        VkClearValue clear{};
-                        VkRenderPassBeginInfo resolve{};
-                        resolve.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                        resolve.renderPass = oit_->reset_pass;
-                        resolve.framebuffer = oit_->reset_framebuffer;
-                        resolve.renderArea = {{0, 0}, {width, height}};
-                        resolve.clearValueCount = 1;
-                        resolve.pClearValues = &clear;
-                        c_.vkCmdBeginRenderPass(cmd, &resolve, VK_SUBPASS_CONTENTS_INLINE);
-                        full_view();
-                        c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lists_->resolve_pipeline);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_resolve_layout_, 0, 1,
-                                                   &lists_->set, 0, nullptr);
-                        c_.vkCmdDraw(cmd, 3, 1, 0, 0);
-                        c_.vkCmdEndRenderPass(cmd);
-                        image_barrier(
-                            c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
-                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                        oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    } else {
-                        {
+                            c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+                            c_.vkCmdEndRenderPass(cmd);
+                            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                            oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        } else {
                             const bool fresh = oit_->color_layout == VK_IMAGE_LAYOUT_UNDEFINED;
                             image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->color_layout,
                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -4666,108 +4699,118 @@ namespace easy3d {
                             begin.pClearValues = &clear;
                             c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
                             c_.vkCmdEndRenderPass(cmd);
-                        }
-                        if (!oit_->start_ready) {
-                            // Zero is the sentinel "nothing peeled yet" depth.
-                            VkClearValue clear{};
-                            VkRenderPassBeginInfo begin{};
-                            begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                            begin.renderPass = oit_->start_pass;
-                            begin.framebuffer = oit_->start_framebuffer;
-                            begin.renderArea = {{0, 0}, {1, 1}};
-                            begin.clearValueCount = 1;
-                            begin.pClearValues = &clear;
-                            c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                            c_.vkCmdEndRenderPass(cmd);
-                            image_barrier(c_, cmd, oit_->start_depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                                          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                              VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                            oit_->start_ready = true;
-                        }
-                        for (unsigned layer = 0; layer < oit_layers_; ++layer) {
-                            const unsigned target = layer & 1u;
-                            const unsigned previous = layer == 0 ? 2u : 1u - target;
-                            auto &depth_image = oit_->depth(target);
-                            auto &depth_layout = oit_->depth_layout[target];
-                            const bool fresh_depth = depth_layout == VK_IMAGE_LAYOUT_UNDEFINED;
-                            image_barrier(
-                                c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT, depth_layout,
-                                VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                                fresh_depth ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                                fresh_depth ? 0 : VK_ACCESS_SHADER_READ_BIT,
-                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-                            depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                            // The layer target is replaced every pass, so its previous
-                            // contents (last read by the layer blend) are discarded.
-                            const bool fresh_layer = oit_->layer_layout == VK_IMAGE_LAYOUT_UNDEFINED;
-                            image_barrier(
-                                c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->layer_layout,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                fresh_layer ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                fresh_layer ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-                            oit_->layer_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                            VkClearValue clears[2] = {};
-                            clears[1].depthStencil.depth = 1;
-                            VkRenderPassBeginInfo begin{};
-                            begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                            begin.renderPass = oit_->layer_pass;
-                            begin.framebuffer = oit_->layer_framebuffers[target];
-                            begin.renderArea = {{0, 0}, {width, height}};
-                            begin.clearValueCount = 2;
-                            begin.pClearValues = clears;
-                            c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                            full_view();
-                            for (const Prepared *draw : transparent) {
-                                bind_draw(*draw, oit_->layer_pipeline, oit_peel_layout_, oit_peel_set(*draw, previous));
-                                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                            if (!oit_->start_ready) {
+                                // Zero is the sentinel "nothing peeled yet" depth.
+                                VkClearValue start_clear{};
+                                VkRenderPassBeginInfo start{};
+                                start.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                                start.renderPass = oit_->start_pass;
+                                start.framebuffer = oit_->start_framebuffer;
+                                start.renderArea = {{0, 0}, {1, 1}};
+                                start.clearValueCount = 1;
+                                start.pClearValues = &start_clear;
+                                c_.vkCmdBeginRenderPass(cmd, &start, VK_SUBPASS_CONTENTS_INLINE);
+                                c_.vkCmdEndRenderPass(cmd);
+                                image_barrier(c_, cmd, oit_->start_depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                                  VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                oit_->start_ready = true;
                             }
-                            c_.vkCmdEndRenderPass(cmd);
-                            image_barrier(c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                                          VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                              VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                            for (unsigned layer = 0; layer < oit_layers_; ++layer) {
+                                const unsigned target_index = layer & 1u;
+                                const unsigned previous = layer == 0 ? 2u : 1u - target_index;
+                                auto &depth_image = oit_->depth(target_index);
+                                auto &depth_layout = oit_->depth_layout[target_index];
+                                const bool fresh_depth = depth_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                                image_barrier(
+                                    c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT, depth_layout,
+                                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                    fresh_depth ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+                                                : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                        VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                                    fresh_depth ? 0 : VK_ACCESS_SHADER_READ_BIT,
+                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+                                depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                                // The layer target is replaced every pass, so its previous
+                                // contents (last read by the layer blend) are discarded.
+                                const bool fresh_layer = oit_->layer_layout == VK_IMAGE_LAYOUT_UNDEFINED;
+                                image_barrier(
+                                    c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT, oit_->layer_layout,
+                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                    fresh_layer ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+                                                : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                    fresh_layer ? 0 : VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+                                oit_->layer_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                                VkClearValue clears[2] = {};
+                                clears[1].depthStencil.depth = 1;
+                                VkRenderPassBeginInfo begin{};
+                                begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                                begin.renderPass = oit_->layer_pass;
+                                begin.framebuffer = oit_->layer_framebuffers[target_index];
+                                begin.renderArea = {{0, 0}, {width, height}};
+                                begin.clearValueCount = 2;
+                                begin.pClearValues = clears;
+                                c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                                full_view();
+                                for (const Prepared *draw : transparent) {
+                                    bind_draw(*draw, oit_->layer_pipeline, oit_peel_layout_,
+                                              device_.oit_peel_set(*draw, previous));
+                                    c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                                }
+                                c_.vkCmdEndRenderPass(cmd);
+                                image_barrier(
+                                    c_, cmd, depth_image.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+                                        VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+                                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                                    VK_ACCESS_SHADER_READ_BIT);
+                                depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+                                image_barrier(
+                                    c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                                oit_->layer_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                // Blend the resolved layer under the running accumulation.
+                                VkRenderPassBeginInfo blend{};
+                                blend.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                                blend.renderPass = oit_->accumulate_pass;
+                                blend.framebuffer = oit_->accumulate_framebuffer;
+                                blend.renderArea = {{0, 0}, {width, height}};
+                                c_.vkCmdBeginRenderPass(cmd, &blend, VK_SUBPASS_CONTENTS_INLINE);
+                                full_view();
+                                c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                                c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_->accumulate_pipeline);
+                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_,
+                                                           0, 1, &oit_->layer_set, 0, nullptr);
+                                c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+                                c_.vkCmdEndRenderPass(cmd);
+                            }
+                            image_barrier(c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+                                          VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                                              VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                                          VK_ACCESS_SHADER_READ_BIT);
-                            depth_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-                            image_barrier(
-                                c_, cmd, oit_->layer.handle, VK_IMAGE_ASPECT_COLOR_BIT,
-                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                            oit_->layer_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                            // Blend the resolved layer under the running accumulation.
-                            VkRenderPassBeginInfo blend{};
-                            blend.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                            blend.renderPass = oit_->accumulate_pass;
-                            blend.framebuffer = oit_->accumulate_framebuffer;
-                            blend.renderArea = {{0, 0}, {width, height}};
-                            c_.vkCmdBeginRenderPass(cmd, &blend, VK_SUBPASS_CONTENTS_INLINE);
-                            full_view();
-                            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_->accumulate_pipeline);
-                            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0,
-                                                       1, &oit_->layer_set, 0, nullptr);
-                            c_.vkCmdDraw(cmd, 3, 1, 0, 0);
-                            c_.vkCmdEndRenderPass(cmd);
+                                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+                            oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                         }
-                        image_barrier(
-                            c_, cmd, oit_->color.handle, VK_IMAGE_ASPECT_COLOR_BIT,
-                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-                        oit_->color_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                        device_.update_oit_composite(oit_method_);
                     }
-                    update_oit_composite(oit_method_);
+                };
+
+                void encode_oit(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
+                    OitPassEncoder(*this).encode(cmd, draws);
                 }
                 void encode_shadow(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
                     ShadowPassEncoder(c_, layout_, shadow_map_.get()).encode(cmd, draws);
