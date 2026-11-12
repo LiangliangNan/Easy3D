@@ -1,4 +1,11 @@
-name: Vulkan renderer
+##############################################################################
+# GitHub Actions Workflow to test building Easy3D on Windows, Ubuntu, and macOS.
+#
+# Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
+#
+# Licensed under GNU LGPL.3, see LICENCE file
+##############################################################################
+name: Test Easy3D
 on:
   push:
   pull_request:
