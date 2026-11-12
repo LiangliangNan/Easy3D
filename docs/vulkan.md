@@ -580,12 +580,14 @@ the OIT passes, and reads linked-list overflow after submission completes.
 the scene pass, and optional picking capture, including their depth transitions.
 `ClippedGeometryCache` owns clipping-result generation, cache-key validation,
 and expired-source pruning; `VulkanDevice` prunes it after the preceding
-submission fence. `VulkanDevice` retains remaining draw preparation, command
-submission, and capture/presentation ownership. The existing fence wait and
-one-command-buffer model are unchanged. Profiling found no current basis for
-multiple frames in flight or staging/suballocation, so both remain deferred
-unless frame-preparation or recurring dynamic-upload workloads show a
-measurable need.
+submission fence. `DrawCommandValidator` checks each command's pipeline and
+feature invariants before cache pruning or resource uploads; frame-wide target
+and background checks remain in `VulkanDevice`. The device retains remaining
+draw preparation, command submission, and capture/presentation ownership. The
+existing fence wait and one-command-buffer model are unchanged. Profiling found
+no current basis for multiple frames in flight or staging/suballocation, so
+both remain deferred unless frame-preparation or recurring dynamic-upload
+workloads show a measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha

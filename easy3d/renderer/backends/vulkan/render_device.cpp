@@ -3724,6 +3724,169 @@ namespace easy3d {
                 }
             };
 
+            class DrawCommandValidator {
+                const Context &c_;
+
+            public:
+                explicit DrawCommandValidator(const Context &context) : c_(context) {}
+
+                void validate(uint32_t width,
+                              uint32_t height,
+                              unsigned samples,
+                              bool pixel_query,
+                              const std::vector<DrawCommand> &commands) const {
+                    const auto &limits = c_.properties.limits;
+                    for (const auto &command : commands) {
+                        if (pixel_query && command.overlay)
+                            continue;
+                        const auto &vp = command.viewport;
+                        if (vp != ivec4(0) &&
+                            (vp.x < 0 || vp.y < 0 || vp.z <= 0 || vp.w <= 0 ||
+                             uint64_t(vp.x) + uint64_t(vp.z) > width || uint64_t(vp.y) + uint64_t(vp.w) > height))
+                            throw std::invalid_argument("draw viewport is outside the render target");
+                        if (!command.geometry ||
+                            (!command.overlay && command.object_id == UINT32_MAX && !command.shadow_background))
+                            throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
+                        if (command.overlay_depth_test && !command.overlay)
+                            throw std::invalid_argument("overlay depth testing requires an overlay command");
+                        if (command.overlay_independent_depth && (!command.overlay || command.overlay_depth_test))
+                            throw std::invalid_argument(
+                                "independent HUD depth requires an overlay without scene depth testing");
+                        if (command.scene_depth_texture && (!command.overlay || command.overlay_depth_test ||
+                                                            command.overlay_independent_depth || command.texture))
+                            throw std::invalid_argument(
+                                "scene depth sampling requires a flat overlay without an image texture");
+                        if (command.eye_dome_lighting && (!command.overlay || command.overlay_depth_test ||
+                                                          command.overlay_independent_depth || command.texture))
+                            throw std::invalid_argument(
+                                "eye-dome lighting requires a flat overlay without an image texture");
+                        if (command.ambient_occlusion && (!command.overlay || command.overlay_depth_test ||
+                                                          command.overlay_independent_depth || command.texture))
+                            throw std::invalid_argument(
+                                "ambient occlusion requires a flat overlay without an image texture");
+                        if (command.ambient_occlusion && (!std::isfinite(command.color.x) || command.color.x <= 0 ||
+                                                          !std::isfinite(command.color.y) || command.color.y < 0))
+                            throw std::invalid_argument(
+                                "ambient occlusion requires a positive radius and a non-negative bias");
+                        if (command.shadow && (!command.overlay || command.overlay_depth_test ||
+                                               command.overlay_independent_depth || command.texture))
+                            throw std::invalid_argument("shadow requires a flat overlay without an image texture");
+                        if (command.shadow &&
+                            (!std::isfinite(command.color.x) || command.color.x < 0 || command.color.x > 1 ||
+                             !std::isfinite(command.color.y) || command.color.y < 0))
+                            throw std::invalid_argument("shadow requires darkness in [0, 1] and non-negative softness");
+                        if (command.shadow && (!std::isfinite(command.color.z) || !std::isfinite(command.color.w) ||
+                                               command.color.z <= 0 || command.color.w <= command.color.z))
+                            throw std::invalid_argument("shadow requires a positive light near/far range");
+                        if ((command.shadow || command.shadow_caster || command.shadow_background) &&
+                            (!command.shadow_map_size || (command.shadow_map_size & (command.shadow_map_size - 1))))
+                            throw std::invalid_argument("shadow map size must be a nonzero power of two");
+                        if ((command.shadow_caster || command.shadow_background) &&
+                            command.geometry->topology() != Topology::triangles)
+                            throw std::invalid_argument("shadow casters and receivers require triangle geometry");
+                        if (command.shadow_background && (command.overlay || command.object_id != UINT32_MAX))
+                            throw std::invalid_argument(
+                                "shadow background requires a scene draw with the background ID");
+                        if (command.transparent && command.overlay)
+                            throw std::invalid_argument(
+                                "transparent blending is a scene option, not an overlay option");
+                        if (command.transparent && command.geometry->topology() != Topology::triangles)
+                            throw std::invalid_argument("transparent blending requires triangle geometry");
+                        if (command.transparent && (command.color.w < 0 || command.color.w > 1))
+                            throw std::invalid_argument("transparent color alpha must be in [0, 1]");
+                        if (command.transparent && !c_.independent_blend && !pixel_query)
+                            throw std::runtime_error("transparent scene blending requires independentBlend");
+                        if (command.overlay && command.geometry->topology() != Topology::triangles)
+                            throw std::invalid_argument("overlay draws require triangle geometry");
+                        if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
+                            command.point_style != PointStyle::surfel)
+                            throw std::invalid_argument("unknown point style");
+                        if (command.line_style != LineStyle::plain && command.line_style != LineStyle::cylinder &&
+                            command.line_style != LineStyle::cone)
+                            throw std::invalid_argument("unknown line style");
+                        if (!std::isfinite(command.line_width) || command.line_width <= 0)
+                            throw std::invalid_argument("line width must be finite and positive");
+                        if (!std::isfinite(command.line_radius) || command.line_radius <= 0)
+                            throw std::invalid_argument("line radius must be finite and positive");
+                        if (command.geometry->topology() != Topology::lines && command.line_style != LineStyle::plain)
+                            throw std::invalid_argument("line impostor style requires line geometry");
+                        if (command.line_style != LineStyle::plain &&
+                            (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
+                             command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1))
+                            throw std::invalid_argument("line impostor model-view transform must be affine");
+                        if (!std::isfinite(command.point_size) || command.point_size <= 0 ||
+                            !std::isfinite(command.sphere_radius) || command.sphere_radius <= 0)
+                            throw std::invalid_argument("point size and sphere radius must be finite and positive");
+                        if (command.geometry->topology() != Topology::points &&
+                            command.point_style != PointStyle::plain)
+                            throw std::invalid_argument("point impostor style requires point geometry");
+                        if ((command.point_style != PointStyle::plain || command.line_style != LineStyle::plain) &&
+                            samples > 1 && !c_.sample_shading)
+                            throw std::invalid_argument(
+                                "multisampled impostors require sampleRateShading for correct coverage/depth");
+                        if (command.shadow || command.shadow_caster || command.shadow_background) {
+                            for (unsigned col = 0; col < 4; ++col)
+                                for (unsigned row = 0; row < 4; ++row)
+                                    if (!std::isfinite(command.shadow_matrix(row, col)))
+                                        throw std::invalid_argument("non-finite shadow matrix");
+                        }
+                        for (unsigned col = 0; col < 4; ++col) {
+                            if (!std::isfinite(command.color[col]))
+                                throw std::invalid_argument("non-finite draw color");
+                            for (unsigned row = 0; row < 4; ++row)
+                                if (!std::isfinite(command.model_view_projection(row, col)))
+                                    throw std::invalid_argument("non-finite transform");
+                        }
+                        if (command.material_lighting) {
+                            if (!std::isfinite(command.shininess) || command.shininess < 0)
+                                throw std::invalid_argument("material shininess must be finite and nonnegative");
+                            for (unsigned c = 0; c < 4; ++c) {
+                                if (!std::isfinite(command.ambient[c]) || !std::isfinite(command.specular[c]) ||
+                                    !std::isfinite(command.back_color[c]))
+                                    throw std::invalid_argument("non-finite material color");
+                                for (unsigned r = 0; r < 4; ++r)
+                                    if (!std::isfinite(command.model(r, c)))
+                                        throw std::invalid_argument("non-finite material model transform");
+                            }
+                            for (unsigned c = 0; c < 3; ++c)
+                                if (!std::isfinite(command.eye[c]) || !std::isfinite(command.light[c]))
+                                    throw std::invalid_argument("non-finite material camera/light");
+                            if (command.lighting && dot(command.light, command.light) == 0)
+                                throw std::invalid_argument("material lighting requires a nonzero direction");
+                        }
+                        if (command.point_style == PointStyle::surfel) {
+                            if (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
+                                command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1)
+                                throw std::invalid_argument("surfel model-view transform must be affine");
+                            const auto normal_transform = transpose(inverse(mat3(command.model_view)));
+                            for (unsigned col = 0; col < 3; ++col)
+                                for (unsigned row = 0; row < 3; ++row)
+                                    if (!std::isfinite(normal_transform(row, col)))
+                                        throw std::invalid_argument(
+                                            "surfel model-view transform must have an invertible linear part");
+                            const auto &vertices = command.geometry->vertices();
+                            const auto &indices = command.geometry->indices();
+                            const size_t count = indices.empty() ? vertices.size() : indices.size();
+                            for (size_t i = 0; i < count; ++i) {
+                                const auto n = normal_transform * vertices[indices.empty() ? i : indices[i]].normal;
+                                const float length_squared = dot(n, n);
+                                if (!std::isfinite(length_squared) || length_squared <= 0)
+                                    throw std::invalid_argument("surfels require finite nonzero transformed normals");
+                            }
+                        }
+                        for (unsigned col = 0; col < 3; ++col)
+                            for (unsigned row = 0; row < 3; ++row)
+                                if (!std::isfinite(command.normal_matrix(row, col)))
+                                    throw std::invalid_argument("non-finite normal transform");
+                        if (command.ambient_occlusion)
+                            for (unsigned col = 0; col < 4; ++col)
+                                for (unsigned row = 0; row < 4; ++row)
+                                    if (!std::isfinite(command.projection(row, col)))
+                                        throw std::invalid_argument("non-finite ambient-occlusion projection");
+                    }
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -4095,154 +4258,7 @@ namespace easy3d {
                     for (unsigned i = 0; i < 4; ++i)
                         if (!std::isfinite(background[i]))
                             throw std::invalid_argument("non-finite background color");
-                    for (const auto &command : commands) {
-                        if (pixel_query && command.overlay)
-                            continue;
-                        const auto &vp = command.viewport;
-                        if (vp != ivec4(0) &&
-                            (vp.x < 0 || vp.y < 0 || vp.z <= 0 || vp.w <= 0 ||
-                             uint64_t(vp.x) + uint64_t(vp.z) > width || uint64_t(vp.y) + uint64_t(vp.w) > height))
-                            throw std::invalid_argument("draw viewport is outside the render target");
-                        if (!command.geometry ||
-                            (!command.overlay && command.object_id == UINT32_MAX && !command.shadow_background))
-                            throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
-                        if (command.overlay_depth_test && !command.overlay)
-                            throw std::invalid_argument("overlay depth testing requires an overlay command");
-                        if (command.overlay_independent_depth && (!command.overlay || command.overlay_depth_test))
-                            throw std::invalid_argument(
-                                "independent HUD depth requires an overlay without scene depth testing");
-                        if (command.scene_depth_texture && (!command.overlay || command.overlay_depth_test ||
-                                                            command.overlay_independent_depth || command.texture))
-                            throw std::invalid_argument(
-                                "scene depth sampling requires a flat overlay without an image texture");
-                        if (command.eye_dome_lighting && (!command.overlay || command.overlay_depth_test ||
-                                                          command.overlay_independent_depth || command.texture))
-                            throw std::invalid_argument(
-                                "eye-dome lighting requires a flat overlay without an image texture");
-                        if (command.ambient_occlusion && (!command.overlay || command.overlay_depth_test ||
-                                                          command.overlay_independent_depth || command.texture))
-                            throw std::invalid_argument(
-                                "ambient occlusion requires a flat overlay without an image texture");
-                        if (command.ambient_occlusion && (!std::isfinite(command.color.x) || command.color.x <= 0 ||
-                                                          !std::isfinite(command.color.y) || command.color.y < 0))
-                            throw std::invalid_argument(
-                                "ambient occlusion requires a positive radius and a non-negative bias");
-                        if (command.shadow && (!command.overlay || command.overlay_depth_test ||
-                                               command.overlay_independent_depth || command.texture))
-                            throw std::invalid_argument("shadow requires a flat overlay without an image texture");
-                        if (command.shadow &&
-                            (!std::isfinite(command.color.x) || command.color.x < 0 || command.color.x > 1 ||
-                             !std::isfinite(command.color.y) || command.color.y < 0))
-                            throw std::invalid_argument("shadow requires darkness in [0, 1] and non-negative softness");
-                        if (command.shadow && (!std::isfinite(command.color.z) || !std::isfinite(command.color.w) ||
-                                               command.color.z <= 0 || command.color.w <= command.color.z))
-                            throw std::invalid_argument("shadow requires a positive light near/far range");
-                        if ((command.shadow || command.shadow_caster || command.shadow_background) &&
-                            (!command.shadow_map_size || (command.shadow_map_size & (command.shadow_map_size - 1))))
-                            throw std::invalid_argument("shadow map size must be a nonzero power of two");
-                        if ((command.shadow_caster || command.shadow_background) &&
-                            command.geometry->topology() != Topology::triangles)
-                            throw std::invalid_argument("shadow casters and receivers require triangle geometry");
-                        if (command.shadow_background && (command.overlay || command.object_id != UINT32_MAX))
-                            throw std::invalid_argument(
-                                "shadow background requires a scene draw with the background ID");
-                        if (command.transparent && command.overlay)
-                            throw std::invalid_argument(
-                                "transparent blending is a scene option, not an overlay option");
-                        if (command.transparent && command.geometry->topology() != Topology::triangles)
-                            throw std::invalid_argument("transparent blending requires triangle geometry");
-                        if (command.transparent && (command.color.w < 0 || command.color.w > 1))
-                            throw std::invalid_argument("transparent color alpha must be in [0, 1]");
-                        if (command.transparent && !c_.independent_blend && !pixel_query)
-                            throw std::runtime_error("transparent scene blending requires independentBlend");
-                        if (command.overlay && command.geometry->topology() != Topology::triangles)
-                            throw std::invalid_argument("overlay draws require triangle geometry");
-                        if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
-                            command.point_style != PointStyle::surfel)
-                            throw std::invalid_argument("unknown point style");
-                        if (command.line_style != LineStyle::plain && command.line_style != LineStyle::cylinder &&
-                            command.line_style != LineStyle::cone)
-                            throw std::invalid_argument("unknown line style");
-                        if (!std::isfinite(command.line_width) || command.line_width <= 0)
-                            throw std::invalid_argument("line width must be finite and positive");
-                        if (!std::isfinite(command.line_radius) || command.line_radius <= 0)
-                            throw std::invalid_argument("line radius must be finite and positive");
-                        if (command.geometry->topology() != Topology::lines && command.line_style != LineStyle::plain)
-                            throw std::invalid_argument("line impostor style requires line geometry");
-                        if (command.line_style != LineStyle::plain &&
-                            (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
-                             command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1))
-                            throw std::invalid_argument("line impostor model-view transform must be affine");
-                        if (!std::isfinite(command.point_size) || command.point_size <= 0 ||
-                            !std::isfinite(command.sphere_radius) || command.sphere_radius <= 0)
-                            throw std::invalid_argument("point size and sphere radius must be finite and positive");
-                        if (command.geometry->topology() != Topology::points &&
-                            command.point_style != PointStyle::plain)
-                            throw std::invalid_argument("point impostor style requires point geometry");
-                        if ((command.point_style != PointStyle::plain || command.line_style != LineStyle::plain) &&
-                            samples > 1 && !c_.sample_shading)
-                            throw std::invalid_argument(
-                                "multisampled impostors require sampleRateShading for correct coverage/depth");
-                        if ((command.shadow || command.shadow_caster || command.shadow_background)) {
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row)
-                                    if (!std::isfinite(command.shadow_matrix(row, col)))
-                                        throw std::invalid_argument("non-finite shadow matrix");
-                        }
-                        for (unsigned col = 0; col < 4; ++col) {
-                            if (!std::isfinite(command.color[col]))
-                                throw std::invalid_argument("non-finite draw color");
-                            for (unsigned row = 0; row < 4; ++row)
-                                if (!std::isfinite(command.model_view_projection(row, col)))
-                                    throw std::invalid_argument("non-finite transform");
-                        }
-                        if (command.material_lighting) {
-                            if (!std::isfinite(command.shininess) || command.shininess < 0)
-                                throw std::invalid_argument("material shininess must be finite and nonnegative");
-                            for (unsigned c = 0; c < 4; ++c) {
-                                if (!std::isfinite(command.ambient[c]) || !std::isfinite(command.specular[c]) ||
-                                    !std::isfinite(command.back_color[c]))
-                                    throw std::invalid_argument("non-finite material color");
-                                for (unsigned r = 0; r < 4; ++r)
-                                    if (!std::isfinite(command.model(r, c)))
-                                        throw std::invalid_argument("non-finite material model transform");
-                            }
-                            for (unsigned c = 0; c < 3; ++c)
-                                if (!std::isfinite(command.eye[c]) || !std::isfinite(command.light[c]))
-                                    throw std::invalid_argument("non-finite material camera/light");
-                            if (command.lighting && dot(command.light, command.light) == 0)
-                                throw std::invalid_argument("material lighting requires a nonzero direction");
-                        }
-                        if (command.point_style == PointStyle::surfel) {
-                            if (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
-                                command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1)
-                                throw std::invalid_argument("surfel model-view transform must be affine");
-                            const auto normal_transform = transpose(inverse(mat3(command.model_view)));
-                            for (unsigned col = 0; col < 3; ++col)
-                                for (unsigned row = 0; row < 3; ++row)
-                                    if (!std::isfinite(normal_transform(row, col)))
-                                        throw std::invalid_argument(
-                                            "surfel model-view transform must have an invertible linear part");
-                            const auto &vertices = command.geometry->vertices();
-                            const auto &indices = command.geometry->indices();
-                            const size_t count = indices.empty() ? vertices.size() : indices.size();
-                            for (size_t i = 0; i < count; ++i) {
-                                const auto n = normal_transform * vertices[indices.empty() ? i : indices[i]].normal;
-                                const float length_squared = dot(n, n);
-                                if (!std::isfinite(length_squared) || length_squared <= 0)
-                                    throw std::invalid_argument("surfels require finite nonzero transformed normals");
-                            }
-                        }
-                        for (unsigned col = 0; col < 3; ++col)
-                            for (unsigned row = 0; row < 3; ++row)
-                                if (!std::isfinite(command.normal_matrix(row, col)))
-                                    throw std::invalid_argument("non-finite normal transform");
-                        if (command.ambient_occlusion)
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row)
-                                    if (!std::isfinite(command.projection(row, col)))
-                                        throw std::invalid_argument("non-finite ambient-occlusion projection");
-                    }
+                    DrawCommandValidator(c_).validate(width, height, samples, pixel_query, commands);
                     // The preceding call's fence has completed. Retire expired resources now.
                     clipped_.prune();
                     resources_->prune();
