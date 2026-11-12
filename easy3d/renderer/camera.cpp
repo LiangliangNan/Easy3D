@@ -149,9 +149,9 @@ namespace easy3d {
 		projection_matrix_is_up_to_date_ = false;
 
 		// frame_ and interpolation_kfi_ pointers are not shared.
-		frame_->setReferenceFrame(nullptr);
-		frame_->setPosition(camera.position());
-		frame_->setOrientation(camera.orientation());
+		frame_->set_reference_frame(nullptr);
+		frame_->set_position(camera.position());
+		frame_->set_orientation(camera.orientation());
 
         interpolation_kfi_->stop_interpolation();
 
@@ -322,7 +322,7 @@ namespace easy3d {
 	  along the Camera Z axis. Used by z_near() and z_far() to optimize the Z range.
 	*/
 	float Camera::distance_to_scene_center() const {
-		return std::fabs((frame()->coordinatesOf(scene_center())).z);
+		return std::fabs((frame()->coordinates_of(scene_center())).z);
 	}
 
 	/*! Returns the \p half_width and \p half_height of the Camera orthographic
@@ -585,7 +585,7 @@ namespace easy3d {
 
 		// If frame's RAP is set directly, projection_matrix_is_up_to_date_ should also be
 		// set to 'false' to ensure proper re-computation of the ORTHO projection matrix.
-		frame()->setPivotPoint(point);
+		frame()->set_pivot_point(point);
 
 		// ortho_coef_ is used to compensate for changes of the pivot_point, so that the
 		// image does not change when the pivot_point is changed in ORTHOGRAPHIC mode.
@@ -612,7 +612,7 @@ namespace easy3d {
 	float Camera::world_pixel_ratio(const vec3 &position) const {
 		switch (type()) {
 		case PERSPECTIVE:
-			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
+			return 2.0f * std::fabs((frame()->coordinates_of(position)).z) *
 				std::tan(field_of_view() / 2.0f) / static_cast<float>(screen_height());
 		case ORTHOGRAPHIC: {
 			float w(0), h(0);
@@ -682,12 +682,12 @@ namespace easy3d {
         // Small hack: attach a temporary frame to take advantage of look_at without
         // modifying frame
         ManipulatedCameraFrame *const original_frame = frame();
-        temp_frame.setPositionAndOrientation(pos, ori);
+        temp_frame.set_position_and_orientation(pos, ori);
         set_frame(&temp_frame);
         look_at(p);
         set_frame(original_frame);
 #else
-        temp_frame.setPositionAndOrientation(pos, ori);
+        temp_frame.set_position_and_orientation(pos, ori);
 #endif
         interpolate_to(&temp_frame, 0.5);
     }
@@ -705,8 +705,8 @@ namespace easy3d {
         // modifying frame
         ManipulatedCameraFrame temp_frame;
         ManipulatedCameraFrame *const original_frame = frame();
-        temp_frame.setPosition(frame()->position());
-        temp_frame.setOrientation(frame()->orientation());
+        temp_frame.set_position(frame()->position());
+        temp_frame.set_orientation(frame()->orientation());
         set_frame(&temp_frame);
         show_entire_scene();
         set_frame(original_frame);
@@ -750,7 +750,7 @@ namespace easy3d {
 	 Simply projects the current position on a line passing through scene_center().
 	 See also show_entire_scene().*/
 	void Camera::center_scene() const {
-		frame()->projectOnLine(scene_center(), view_direction());
+		frame()->project_on_line(scene_center(), view_direction());
 	}
 
 	/*! Sets the Camera orientation(), so that it looks at point \p target (defined
@@ -787,7 +787,7 @@ namespace easy3d {
 		}
 		}
 		vec3 new_pos(center - distance * view_direction());
-		frame()->setPositionWithConstraint(new_pos);
+		frame()->set_position_with_constraint(new_pos);
 	}
 
 	/*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
@@ -847,7 +847,7 @@ namespace easy3d {
 		}
 
 		vec3 new_pos(new_center - distance * vd);
-		frame()->setPositionWithConstraint(new_pos);
+		frame()->set_position_with_constraint(new_pos);
 	}
 
 	/*! Rotates the Camera so that its up_vector() becomes \p up (defined in the
@@ -871,12 +871,12 @@ namespace easy3d {
 
 	 See also set_view_direction(), look_at() and set_orientation(). */
 	void Camera::set_up_vector(const vec3 &up, bool no_move) const {
-		quat q(vec3(0.0, 1.0, 0.0), frame()->transformOf(up));
+		quat q(vec3(0.0, 1.0, 0.0), frame()->transform_of(up));
 
 		if (!no_move)
-			frame()->setPosition(pivot_point() -
+			frame()->set_position(pivot_point() -
 			(frame()->orientation() * q)
-				.rotate(frame()->coordinatesOf(pivot_point())));
+				.rotate(frame()->coordinates_of(pivot_point())));
 
 		frame()->rotate(q);
 	}
@@ -904,7 +904,7 @@ namespace easy3d {
 
 	/*! Sets the Camera orientation(), defined in the world coordinate system. */
 	void Camera::set_orientation(const quat &q) const {
-		frame()->setOrientation(q);
+		frame()->set_orientation(q);
 	}
 
 	/*! Rotates the Camera so that its view_direction() is \p direction (defined in
@@ -922,12 +922,12 @@ namespace easy3d {
 		{
 			// target is aligned with up_vector, this means a rotation around the X axis.
 			// the X axis is then unchanged, let's keep it !
-			x_axis = frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
+			x_axis = frame()->inverse_transform_of(vec3(1.0, 0.0, 0.0));
 		}
 
 		quat q;
 		q.set_from_rotated_basis(x_axis, cross(x_axis, direction), -direction);
-		frame()->setOrientationWithConstraint(q);
+		frame()->set_orientation_with_constraint(q);
 	}
 
 	/*! Returns the Camera position (the eye), defined in the world coordinate
@@ -948,9 +948,9 @@ namespace easy3d {
 	and to right_vector().
 
 	It corresponds to the Y axis of the associated frame() (actually returns
-	frame()->inverseTransformOf(vec3(0.0, 1.0, 0.0)) ). */
+	frame()->inverse_transform_of(vec3(0.0, 1.0, 0.0)) ). */
 	vec3 Camera::up_vector() const {
-		return frame()->inverseTransformOf(vec3(0.0, 1.0, 0.0));
+		return frame()->inverse_transform_of(vec3(0.0, 1.0, 0.0));
 	}
 	/*! Returns the normalized view direction of the Camera, defined in the world
 	coordinate system.
@@ -959,9 +959,9 @@ namespace easy3d {
 	orthogonal to up_vector() and to right_vector().
 
 	This corresponds to the negative Z axis of the frame() (
-	frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)) ). */
+	frame()->inverse_transform_of(vec3(0.0, 0.0, -1.0)) ). */
 	vec3 Camera::view_direction() const {
-		return frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0));
+		return frame()->inverse_transform_of(vec3(0.0, 0.0, -1.0));
 	}
 
 	/*! Returns the normalized right vector of the Camera, defined in the world
@@ -971,9 +971,9 @@ namespace easy3d {
 	(orthogonal to up_vector() and to view_direction()). Set using set_up_vector(),
 	look_at() or set_orientation().
 
-	Simply returns frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0)). */
+	Simply returns frame()->inverse_transform_of(vec3(1.0, 0.0, 0.0)). */
 	vec3 Camera::right_vector() const {
-		return frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
+		return frame()->inverse_transform_of(vec3(1.0, 0.0, 0.0));
 	}
 
 	/*! Returns the Camera orientation, defined in the world coordinate system.
@@ -984,7 +984,7 @@ namespace easy3d {
 
 	/*! Sets the Camera position() (the eye), defined in the world coordinate
 	 * system. */
-	void Camera::set_position(const vec3 &pos) const { frame()->setPosition(pos); }
+	void Camera::set_position(const vec3 &pos) const { frame()->set_position(pos); }
 
 	/*! Returns the Camera frame coordinates of a point \p src defined in world
 	coordinates.
@@ -995,7 +995,7 @@ namespace easy3d {
 	system. They are not projected on screen. Use projected_coordinates_of() for that.
 	*/
 	vec3 Camera::camera_coordinates_of(const vec3 &src) const {
-		return frame()->coordinatesOf(src);
+		return frame()->coordinates_of(src);
 	}
 
 	/*! Returns the world coordinates of the point whose position \p src is defined
@@ -1003,7 +1003,7 @@ namespace easy3d {
 
 	camera_coordinates_of() performs the inverse transformation. */
 	vec3 Camera::world_coordinates_of(const vec3 &src) const {
-		return frame()->inverseCoordinatesOf(src);
+		return frame()->inverse_coordinates_of(src);
 	}
 
 	/*! The point the Camera pivots around when the view is rotated with the mouse
@@ -1012,7 +1012,7 @@ namespace easy3d {
 	Default value is the scene_center().
 
 	\attention set_scene_center() changes this value. */
-	vec3 Camera::pivot_point() const { return frame()->pivotPoint(); }
+	vec3 Camera::pivot_point() const { return frame()->pivot_point(); }
 
 
 	void Camera::set_from_model_view_matrix(const mat4& mv) const
@@ -1229,7 +1229,7 @@ namespace easy3d {
 	 unprojected_coordinates_of() performs the inverse transformation. */
     vec3 Camera::projected_coordinates_of(const vec3 &src, const Frame *frame) const {
         const int viewport[] = {0, 0, screen_width_, screen_height_};
-        return transform::project(frame ? frame->inverseCoordinatesOf(src) : src,
+        return transform::project(frame ? frame->inverse_coordinates_of(src) : src,
                                   model_view_projection_matrix(), viewport, false);
     }
 
@@ -1248,7 +1248,7 @@ namespace easy3d {
     vec3 Camera::unprojected_coordinates_of(const vec3 &src, const Frame *frame) const {
         const int viewport[] = {0, 0, screen_width_, screen_height_};
         const vec3 point = transform::unproject(src, model_view_projection_matrix(), viewport, false);
-        return frame ? frame->coordinatesOf(point) : point;
+        return frame ? frame->coordinates_of(point) : point;
     }
 
 
@@ -1282,13 +1282,13 @@ namespace easy3d {
 
 	 \attention The 4th component is \e not the \c d of the homogeneous equation
 	 \c a*x+b*y+c*z+d = 0 (that form, with inward normals, is what
-	 get_frustum_planes_coefficients2() returns). To install one of these planes as a
+	 get_frustum_planes_coefficients_gribb_hartmann() returns). To install one of these planes as a
 	 \c glClipPlane() clipping plane, which keeps the half-space where the homogeneous
 	 equation is positive, negate the normal: \c {-coef[i][0], -coef[i][1],
 	 -coef[i][2], coef[i][3]}.
 
 	 Planes are defined in the world coordinate system and are computed from the
-	 Camera parameters directly (see get_frustum_planes_coefficients2() for the
+	 Camera parameters directly (see get_frustum_planes_coefficients_gribb_hartmann() for the
 	 version derived from the model view projection matrix). */
 	void Camera::get_frustum_planes_coefficients(float coef[6][4]) const
 	{
@@ -1386,7 +1386,7 @@ namespace easy3d {
 	 positive left-hand side for the six planes. The planes themselves are the same
 	 (see the \attention note of get_frustum_planes_coefficients() about the
 	 components of \p coef). */
-	void Camera::get_frustum_planes_coefficients2(float frustum[6][4]) const
+	void Camera::get_frustum_planes_coefficients_gribb_hartmann(float frustum[6][4]) const
 	{
         // First, let's assume that we're going to store the frustum values in a variable like this:
         // float frustum[6][4];

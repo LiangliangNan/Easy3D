@@ -248,12 +248,12 @@ int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /*
     if (animation)
         camera_->interpolate_to(&frame, duration);
     else
-        camera_->frame()->setPositionAndOrientation(frame.position(), frame.orientation());
+        camera_->frame()->set_position_and_orientation(frame.position(), frame.orientation());
 
     current_frame_idx_ = idx;
     path_modified.send();
 
-    vec3 view_dir = frame.inverseTransformOf(vec3(0.0, 0.0, -1.0));
+    vec3 view_dir = frame.inverse_transform_of(vec3(0.0, 0.0, -1.0));
     view_dir.z = 0;
     view_dir.normalize();
 
@@ -308,7 +308,7 @@ quat WalkThrough::to_orientation(const vec3 &view_dir) const {
     vec3 xAxis = cross(view_dir, up_dir);
     if (xAxis.length2() < epsilon_sqr<float>()) {    // target is aligned with this up vector, meaning a rotation around the X axis.
         // The X axis is then unchanged, so let's keep it!
-        // right_vector() == camera_->frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
+        // right_vector() == camera_->frame()->inverse_transform_of(vec3(1.0, 0.0, 0.0));
         xAxis = camera_->right_vector();
     }
 

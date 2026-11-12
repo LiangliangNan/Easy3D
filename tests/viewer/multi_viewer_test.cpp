@@ -155,7 +155,7 @@ int main(int argc,char**) {
         bool rejected=false;try{grid.set_layout(0,2);}catch(const std::invalid_argument&){rejected=true;}require(rejected && grid.rows()==2,"invalid layout modified the grid");
         grid.resize(317,237);frame(grid);
         auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivot_point();vec3 delta;
-        const auto reset_camera=[&](){grid.camera()->set_position(position);grid.camera()->set_orientation(orientation);grid.camera()->frame()->setPivotPoint(pivot);};
+        const auto reset_camera=[&](){grid.camera()->set_position(position);grid.camera()->set_orientation(orientation);grid.camera()->frame()->set_pivot_point(pivot);};
         const auto pan=[&](int x,int y,int dx){
             grid.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,0);grid.mouse_drag_event(x+dx,y,dx,0,Viewer::BUTTON_RIGHT,0);grid.mouse_release_event(x+dx,y,Viewer::BUTTON_RIGHT,0);
             return grid.camera()->position()-position;

@@ -8308,3 +8308,51 @@ in logical space and is untouched.
 boundary, fill blending, pivot cross, expiry and focus cancellation), and OpenGL Release
 (`build-opengl`) 107/107, both green. The lavapipe/Xvfb CI rerun remains the Linux gate because
 lavapipe cannot create a Cocoa surface locally. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-12 — W10 batch 73: the Frame family and the constraints follow the core library naming convention
+
+**Scope.** The batch-68 audit found that the Camera rename only half met its goal: `Camera`'s own API
+became snake_case, but the classes it collaborates with kept libQGLViewer's camelCase, so a client
+still read `camera->set_position(p)` next to `camera->frame()->setPosition(p)`. The same audit found
+that the generated Python binding carries its own copies of the Camera documentation, which had
+drifted away from the header, and that two Camera names were still non-descriptive. This batch closes
+those findings.
+
+- **F3 — the `Frame` family and the constraint classes** (`easy3d/renderer/frame.h`,
+  `manipulated_frame.h`, `manipulated_camera_frame.h`, `constraint.h`): 61 methods and 11 members
+  renamed to the core library convention — `setPosition()` → `set_position()`,
+  `coordinatesOf()` → `coordinates_of()`, `referenceFrame()` → `reference_frame()`,
+  `translationConstraintType()` → `translation_constraint_type()`, `worldMatrix()` →
+  `world_matrix()`, and so on — as a clean rename with no deprecated aliases. `Frame`,
+  `ManipulatedFrame`, `ManipulatedCameraFrame`, `Constraint`, `AxisPlaneConstraint` and
+  `LocalConstraint` now read like `Model`, `PointCloud` and `SurfaceMesh`, so the whole camera path
+  (Camera, frame, constraints) is consistent. 29 files were touched: the library (renderer, viewer,
+  gui), Mapple, three tutorials, six tests and the Python bindings.
+- **F2 — the Python binding's documentation copies** (`python/bindings/easy3d/renderer/camera.cpp`):
+  the generated file embeds copies of the header's documentation (the class docstring, 60 method
+  docstrings and the `Type` enum docstring). Those copies had drifted: they still advertised
+  libQGLViewer methods that do not exist in this library (`addKeyFrameToPath()`, `playPath()`,
+  `loadProjectionMatrix()`), named the frame type `ManipulatedFrame` and its accessor
+  `referenceFrame()`, and described the matrices as "OpenGL projection" in a cross-backend library.
+  All of them are now regenerated from the current header, so the two copies cannot drift apart
+  again. The file is produced by `python/helper/generation/generate_bindings.py`, whose `binder`
+  tool is not available in this environment, so the copies were refreshed from the header with the
+  same text transformation instead of by a full regeneration.
+- **F4 — the remaining Camera names and wording**: `get_frustum_planes_coefficients2()` →
+  `get_frustum_planes_coefficients_gribb_hartmann()`. The numeric suffix was the last
+  non-descriptive name in the Camera's API; the variant is the Gribb-Hartmann row extraction of the
+  model view projection matrix (as documented in the batch-68 table), and it had no call site
+  outside the class. The class documentation no longer says "OpenGL projection and modelview
+  matrices", "without OpenGL" or "ManipulatedFrame"; it states "projection and model view matrices",
+  "without a graphics backend" and "ManipulatedCameraFrame".
+- **F5 — tree hygiene**: verified — no conflict markers anywhere in the tree and an empty stash list.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL
+(`build-opengl`) 107/107, both green, including `python.rendering` (the refreshed binding
+documentation) and the camera-sensitive checks (`vulkan.tutorial205`/`vulkan.realcamera`,
+`vulkan.tutorial206` (interpolation), `vulkan.viewerloop`, `opengl.tutorial206`). The rename is
+behavior-preserving: the token streams of `frame.h`, `frame.cpp`, `constraint.h`, `constraint.cpp`,
+`manipulated_frame.h` and `manipulated_camera_frame.h` are identical before and after the change once
+comments and identifiers are normalized. A repo-wide grep outside `3rd_party/` finds no camelCase
+`Frame`, `ManipulatedFrame`, `ManipulatedCameraFrame` or constraint spelling left, and the Python
+bindings expose no camelCase name.

@@ -63,8 +63,8 @@ namespace easy3d {
      * Such a transformation can also be interpreted as a change of coordinate system.
      *
      * <h3>Hierarchy of Frames</h3>
-     * The position and the orientation of a Frame are actually defined with respect to a referenceFrame().
-     * The default referenceFrame() is the world coordinate system (represented by a NULL referenceFrame()).
+     * The position and the orientation of a Frame are actually defined with respect to a reference_frame().
+     * The default reference_frame() is the world coordinate system (represented by a NULL reference_frame()).
      * Frames can hence easily be organized in a tree hierarchy, which root is the world coordinate system.
      *
      * <h3>Constraints</h3>
@@ -116,34 +116,34 @@ namespace easy3d {
          * \brief Sets the position of the Frame.
          * \param position The new position of the Frame.
          */
-        void setPosition(const vec3 &position);
+        void set_position(const vec3 &position);
         /**
          * \brief Sets the position of the Frame with constraint.
          * \param position The new position of the Frame.
          */
-        void setPositionWithConstraint(vec3 &position);
+        void set_position_with_constraint(vec3 &position);
         /**
          * \brief Sets the orientation of the Frame.
          * \param orientation The new orientation of the Frame.
          */
-        void setOrientation(const quat &orientation);
+        void set_orientation(const quat &orientation);
         /**
          * \brief Sets the orientation of the Frame with constraint.
          * \param orientation The new orientation of the Frame.
          */
-        void setOrientationWithConstraint(quat &orientation);
+        void set_orientation_with_constraint(quat &orientation);
         /**
          * \brief Sets the position and orientation of the Frame.
          * \param position The new position of the Frame.
          * \param orientation The new orientation of the Frame.
          */
-        void setPositionAndOrientation(const vec3 &position, const quat &orientation);
+        void set_position_and_orientation(const vec3 &position, const quat &orientation);
         /**
          * \brief Sets the position and orientation of the Frame with constraint.
          * \param position The new position of the Frame.
          * \param orientation The new orientation of the Frame.
          */
-        void setPositionAndOrientationWithConstraint(vec3 &position, quat &orientation);
+        void set_position_and_orientation_with_constraint(vec3 &position, quat &orientation);
         /**
          * \brief Returns the position of the Frame.
          * \return The position of the Frame.
@@ -164,10 +164,10 @@ namespace easy3d {
         /**
          * \brief Sets the translation of the Frame.
          * \param translation The new translation of the Frame.
-         * \details Sets the translation of the Frame, locally defined with respect to the referenceFrame().
+         * \details Sets the translation of the Frame, locally defined with respect to the reference_frame().
          *      Emits the modified() signal.
          */
-        void setTranslation(const vec3 &translation) {
+        void set_translation(const vec3 &translation) {
             t_ = translation;
             modified.send();
         }
@@ -175,15 +175,15 @@ namespace easy3d {
          * \brief Sets the translation of the Frame with constraint.
          * \param translation The new translation of the Frame.
          */
-        void setTranslationWithConstraint(vec3 &translation);
+        void set_translation_with_constraint(vec3 &translation);
 
         /**
          * \brief Sets the rotation of the Frame.
          * \param rotation The new rotation of the Frame.
-         * \details Sets the rotation of the Frame, locally defined with respect to the referenceFrame().
+         * \details Sets the rotation of the Frame, locally defined with respect to the reference_frame().
          * Emits the modified() signal.
          */
-        void setRotation(const quat &rotation) {
+        void set_rotation(const quat &rotation) {
             q_ = rotation;
             modified.send();
         }
@@ -191,31 +191,31 @@ namespace easy3d {
          * \brief Sets the rotation of the Frame with constraint.
          * \param rotation The new rotation of the Frame.
          */
-        void setRotationWithConstraint(quat &rotation);
+        void set_rotation_with_constraint(quat &rotation);
         /**
          * \brief Sets the translation and rotation of the Frame.
          * \param translation The new translation of the Frame.
          * \param rotation The new rotation of the Frame.
          */
-        void setTranslationAndRotation(const vec3 &translation, const quat &rotation);
+        void set_translation_and_rotation(const vec3 &translation, const quat &rotation);
         /**
          * \brief Sets the translation and rotation of the Frame with constraint.
          * \param translation The new translation of the Frame.
          * \param rotation The new rotation of the Frame.
          */
-        void setTranslationAndRotationWithConstraint(vec3 &translation, quat &rotation);
+        void set_translation_and_rotation_with_constraint(vec3 &translation, quat &rotation);
 
         /**
          * \brief Returns the translation of the Frame.
          * \return The translation of the Frame.
-         * \details Returns the Frame translation, defined with respect to the referenceFrame().
+         * \details Returns the Frame translation, defined with respect to the reference_frame().
          * Use position() to get the result in the world coordinates.
          */
         vec3 translation() const { return t_; }
         /**
          * \brief Returns the rotation of the Frame.
          * \return The rotation of the Frame.
-         * \details Returns the Frame rotation, defined with respect to the referenceFrame().
+         * \details Returns the Frame rotation, defined with respect to the reference_frame().
          * Use orientation() to get the result in the world coordinates.
          */
         quat rotation() const { return q_; }
@@ -227,32 +227,32 @@ namespace easy3d {
          * \brief Returns the reference Frame.
          * \return The reference Frame.
          * \details Returns the reference Frame, in which coordinates system the Frame is defined.
-         *      The translation() and rotation() of the Frame are defined with respect to the referenceFrame()
-         *      coordinate system. A \c NULL referenceFrame() (default value)means that the Frame is defined in
+         *      The translation() and rotation() of the Frame are defined with respect to the reference_frame()
+         *      coordinate system. A \c NULL reference_frame() (default value)means that the Frame is defined in
          *      the world coordinate system.
-         *      Use position() and orientation() to recursively convert values along the referenceFrame() chain
+         *      Use position() and orientation() to recursively convert values along the reference_frame() chain
          *      and to get values expressed in the world coordinate system. The values match when the
-         *      referenceFrame() is \c NULL.
-         *      Use setReferenceFrame() to set this value and create a Frame hierarchy. Convenient functions allow you
-         *      to convert 3D coordinates from one Frame to another: see coordinatesOf(), localCoordinatesOf(),
-         *      coordinatesOfIn() and their inverse functions.
-         *      Vectors can also be converted using transformOf(), transformOfIn, localTransformOf() and their inverse
+         *      reference_frame() is \c NULL.
+         *      Use set_reference_frame() to set this value and create a Frame hierarchy. Convenient functions allow you
+         *      to convert 3D coordinates from one Frame to another: see coordinates_of(), local_coordinates_of(),
+         *      coordinates_of_in() and their inverse functions.
+         *      Vectors can also be converted using transform_of(), transform_of_in, local_transform_of() and their inverse
          *      functions.
          */
-        const Frame *referenceFrame() const { return referenceFrame_; }
+        const Frame *reference_frame() const { return reference_frame_; }
         /**
          * \brief Sets the reference Frame.
-         * \details The Frame translation() and rotation() are then defined in the referenceFrame() coordinate system.
+         * \details The Frame translation() and rotation() are then defined in the reference_frame() coordinate system.
          *      Use position() and orientation() to express these in the world coordinate system.
          * \param refFrame The reference Frame.
          */
-        void setReferenceFrame(const Frame* refFrame);
+        void set_reference_frame(const Frame* refFrame);
         /**
          * \brief Checks if setting the reference Frame will create a loop.
          * \param frame The Frame to check.
          * \return true if setting the reference Frame will create a loop, false otherwise.
          */
-        bool settingAsReferenceFrameWillCreateALoop(const Frame* const frame) const;
+        bool setting_as_reference_frame_will_create_a_loop(const Frame* const frame) const;
         //@}
 
         /*! @name Frame modification */
@@ -283,26 +283,26 @@ namespace easy3d {
          * \param rotation The rotation quaternion.
          * \param point The point to rotate around.
          */
-        void rotateAroundPoint(quat &rotation, const vec3 &point);
+        void rotate_around_point(quat &rotation, const vec3 &point);
         /**
          * \brief Rotates the Frame around a point.
          * \param rotation The rotation quaternion.
          * \param point The point to rotate around.
          */
-        void rotateAroundPoint(const quat &rotation, const vec3 &point);
+        void rotate_around_point(const quat &rotation, const vec3 &point);
         /**
          * \brief Aligns the Frame with another Frame.
          * \param frame The Frame to align with.
          * \param move Whether to move the Frame.
          * \param threshold The threshold for alignment.
          */
-        void alignWithFrame(const Frame *const frame, bool move = false, float threshold = 0.0f);
+        void align_with_frame(const Frame *const frame, bool move = false, float threshold = 0.0f);
         /**
          * \brief Projects the Frame on a line.
          * \param origin The origin of the line.
          * \param direction The direction of the line.
          */
-        void projectOnLine(const vec3 &origin, const vec3 &direction);
+        void project_on_line(const vec3 &origin, const vec3 &direction);
         //@}
 
         /*! @name Coordinate system transformation of 3D coordinates */
@@ -313,39 +313,39 @@ namespace easy3d {
          * \param src The source point.
          * \return The transformed point.
          */
-        vec3 coordinatesOf(const vec3 &src) const;
+        vec3 coordinates_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D point from the Frame's coordinate system to the world coordinate system.
          * \param src The source point.
          * \return The transformed point.
          */
-        vec3 inverseCoordinatesOf(const vec3 &src) const;
+        vec3 inverse_coordinates_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D point to the Frame's local coordinate system.
          * \param src The source point.
          * \return The transformed point.
          */
-        vec3 localCoordinatesOf(const vec3 &src) const;
+        vec3 local_coordinates_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D point from the Frame's local coordinate system to the world coordinate system.
          * \param src The source point.
          * \return The transformed point.
          */
-        vec3 localInverseCoordinatesOf(const vec3 &src) const;
+        vec3 local_inverse_coordinates_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D point to another Frame's coordinate system.
          * \param src The source point.
          * \param in The target Frame.
          * \return The transformed point.
          */
-        vec3 coordinatesOfIn(const vec3 &src, const Frame *const in) const;
+        vec3 coordinates_of_in(const vec3 &src, const Frame *const in) const;
         /**
          * \brief Transforms a 3D point from another Frame's coordinate system to the Frame's coordinate system.
          * \param src The source point.
          * \param from The source Frame.
          * \return The transformed point.
          */
-        vec3 coordinatesOfFrom(const vec3 &src, const Frame *const from) const;
+        vec3 coordinates_of_from(const vec3 &src, const Frame *const from) const;
         //@}
 
         /*! @name Coordinate system transformation of vectors */
@@ -353,7 +353,7 @@ namespace easy3d {
         // frame (the world coordinate system by default, see the "Composition of
         // frame" section).
 
-        // The transformOf() (resp. inverseTransformOf()) functions transform a 3D
+        // The transform_of() (resp. inverse_transform_of()) functions transform a 3D
         // vector from (resp. to) the world coordinate system. This section defines
         // the 3D vector transformation functions. See the Coordinate system
         // transformation of 3D points above for the transformation of 3D points. The
@@ -380,39 +380,39 @@ namespace easy3d {
          * \param src The source vector.
          * \return The transformed vector.
          */
-        vec3 transformOf(const vec3 &src) const;
+        vec3 transform_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D vector from the Frame's coordinate system to the world coordinate system.
          * \param src The source vector.
          * \return The transformed vector.
          */
-        vec3 inverseTransformOf(const vec3 &src) const;
+        vec3 inverse_transform_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D vector to the Frame's local coordinate system.
          * \param src The source vector.
          * \return The transformed vector.
          */
-        vec3 localTransformOf(const vec3 &src) const;
+        vec3 local_transform_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D vector from the Frame's local coordinate system to the world coordinate system.
          * \param src The source vector.
          * \return The transformed vector.
          */
-        vec3 localInverseTransformOf(const vec3 &src) const;
+        vec3 local_inverse_transform_of(const vec3 &src) const;
         /**
          * \brief Transforms a 3D vector to another Frame's coordinate system.
          * \param src The source vector.
          * \param in The target Frame.
          * \return The transformed vector.
          */
-        vec3 transformOfIn(const vec3 &src, const Frame *const in) const;
+        vec3 transform_of_in(const vec3 &src, const Frame *const in) const;
         /**
          * \brief Transforms a 3D vector from another Frame's coordinate system to the Frame's coordinate system.
          * \param src The source vector.
          * \param from The source Frame.
          * \return The transformed vector.
          */
-        vec3 transformOfFrom(const vec3 &src, const Frame *const from) const;
+        vec3 transform_of_from(const vec3 &src, const Frame *const from) const;
         //@}
 
         /*! @name Constraint on the displacement */
@@ -429,7 +429,7 @@ namespace easy3d {
          * \param constraint The new constraint.
          * \details A NULL value means no constraint. The previous constraint should be deleted by the calling method if needed.
          */
-        void setConstraint(Constraint *const constraint) { constraint_ = constraint; }
+        void set_constraint(Constraint *const constraint) { constraint_ = constraint; }
         //@}
 
 
@@ -445,12 +445,12 @@ namespace easy3d {
          * \brief Returns the world transformation matrix of the Frame.
          * \return The world transformation matrix.
          */
-        mat4 worldMatrix() const;
+        mat4 world_matrix() const;
         /**
          * \brief Sets the Frame from a transformation matrix.
          * \param m The transformation matrix.
          */
-        void setFromMatrix(const mat4 &m);
+        void set_from_matrix(const mat4 &m);
 
         //@}
 
@@ -459,20 +459,20 @@ namespace easy3d {
         /**
          * \brief Returns the inverse of the Frame.
          * \return The inverse of the Frame.
-         * \sa worldInverse()
+         * \sa world_inverse()
          */
         Frame inverse() const;
 
         /**
          * \brief Returns the inverse of the Frame's world transformation.
          * \return The inverse of the Frame's world transformation.
-         * \details The result Frame has a NULL referenceFrame() and a NULL constraint(). The orientation() of the new
+         * \details The result Frame has a NULL reference_frame() and a NULL constraint(). The orientation() of the new
          *      Frame is the quat::inverse() of the original orientation. Its position() is the negated and inverse
          *      rotated image of the original position.
-         *      Use inverse() for a local (i.e. with respect to referenceFrame()) transformation inverse.
+         *      Use inverse() for a local (i.e. with respect to reference_frame()) transformation inverse.
          * \sa inverse()
          */
-        Frame worldInverse() const {
+        Frame world_inverse() const {
             return Frame(-(orientation().inverse_rotate(position())), orientation().inverse());
         }
         //@}
@@ -486,7 +486,7 @@ namespace easy3d {
         Constraint *constraint_;    ///< Constraint applied to the Frame
 
         // Frame composition
-        const Frame *referenceFrame_;   ///< Reference Frame
+        const Frame *reference_frame_;   ///< Reference Frame
 
     public:
         Signal<> modified;  ///< Signal emitted when the Frame is modified

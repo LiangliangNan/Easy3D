@@ -49,7 +49,7 @@ int main(int argc,char**) {
             viewer.camera()->set_projection_matrix(custom);
             const auto expected=viewer.scan_visible_points(samples);
             Camera camera(*viewer.camera());
-            camera.frame()->setPivotPoint(viewer.camera()->pivot_point());
+            camera.frame()->set_pivot_point(viewer.camera()->pivot_point());
             camera.set_projection_matrix(viewer.camera()->projection_matrix());
             camera.set_model_view_matrix(viewer.camera()->model_view_matrix());
             const auto before=viewer.models().size();

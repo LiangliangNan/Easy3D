@@ -663,26 +663,26 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         camera_->frame()->action_turn(-angle, camera_);
     } else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {    // move camera forward
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(0.0, 0.0, -step)));
     } else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(0.0, 0.0, step)));
     } else if (e->key() == Qt::Key_Left &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera left
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(-step, 0.0, 0.0)));
     } else if (e->key() == Qt::Key_Right &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera right
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(step, 0.0, 0.0)));
     } else if (e->key() == Qt::Key_Up &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera up
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(0.0, step, 0.0)));
     } else if (e->key() == Qt::Key_Down &&
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera down
         float step = 0.05f * camera_->scene_radius();
-        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
+        camera_->frame()->translate(camera_->frame()->inverse_transform_of(vec3(0.0, -step, 0.0)));
     } else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             fitScreen(currentModel());
@@ -700,12 +700,12 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
         // Aligns camera
         Frame frame;
-        frame.setTranslation(camera_->pivot_point());
-        camera_->frame()->alignWithFrame(&frame, true);
+        frame.set_translation(camera_->pivot_point());
+        camera_->frame()->align_with_frame(&frame, true);
 
         // Aligns frame
         //if (manipulatedFrame())
-        //	manipulatedFrame()->alignWithFrame(camera_->frame());
+        //	manipulatedFrame()->align_with_frame(camera_->frame());
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
         camera_->frame()->action_zoom(-1, camera_);
     else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
@@ -1655,8 +1655,8 @@ void PaintCanvas::pasteCamera() {
     // 	camera()->set_orientation(orient);
     // I prefer to make animation
     Frame new_frame;
-    new_frame.setPosition(pos);
-    new_frame.setOrientation(orient);
+    new_frame.set_position(pos);
+    new_frame.set_orientation(orient);
     const float duration = 0.5f;
     camera()->interpolate_to(&new_frame, duration);
 
@@ -1705,12 +1705,12 @@ void PaintCanvas::saveState(std::ostream& output) const {
     // ManipulatedCameraFrame
     output << "\t position: " << camera()->frame()->position() << std::endl;
     output << "\t orientation: " << camera()->frame()->orientation() << std::endl;
-    output << "\t wheelSens: " << camera()->frame()->wheelSensitivity() << std::endl;
-    output << "\t rotSens: " << camera()->frame()->rotationSensitivity() << std::endl;
-    output << "\t zoomSens: " << camera()->frame()->zoomSensitivity() << std::endl;
-    output << "\t transSens: " << camera()->frame()->translationSensitivity() << std::endl;
-    output << "\t zoomsOnPivotPoint: " << camera()->frame()->zoomsOnPivotPoint() << std::endl;
-    output << "\t pivotPoint: " << camera()->frame()->pivotPoint() << std::endl;
+    output << "\t wheelSens: " << camera()->frame()->wheel_sensitivity() << std::endl;
+    output << "\t rotSens: " << camera()->frame()->rotation_sensitivity() << std::endl;
+    output << "\t zoomSens: " << camera()->frame()->zoom_sensitivity() << std::endl;
+    output << "\t transSens: " << camera()->frame()->translation_sensitivity() << std::endl;
+    output << "\t zooms_on_pivot_point: " << camera()->frame()->zooms_on_pivot_point() << std::endl;
+    output << "\t pivot_point: " << camera()->frame()->pivot_point() << std::endl;
 
     output << "</camera>" << std::endl << std::endl;
 
@@ -1794,24 +1794,24 @@ void PaintCanvas::restoreState(std::istream& input) {
                 } else if (keyword.find("wheelSens") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->frame()->setWheelSensitivity(v);
+                    camera()->frame()->set_wheel_sensitivity(v);
                 } else if (keyword.find("rotSens") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->frame()->setRotationSensitivity(v);
+                    camera()->frame()->set_rotation_sensitivity(v);
                 } else if (keyword.find("zoomSens") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->frame()->setZoomSensitivity(v);
+                    camera()->frame()->set_zoom_sensitivity(v);
                 } else if (keyword.find("transSens") != std::string::npos) {
                     float v(0);
                     in >> v;
-                    camera()->frame()->setTranslationSensitivity(v);
-                } else if (keyword.find("zoomsOnPivotPoint") != std::string::npos) {
+                    camera()->frame()->set_translation_sensitivity(v);
+                } else if (keyword.find("zooms_on_pivot_point") != std::string::npos) {
                     bool v(false);
                     in >> v;
-                    camera()->frame()->setZoomsOnPivotPoint(v);
-                } else if (keyword.find("pivotPoint") != std::string::npos) {
+                    camera()->frame()->set_zooms_on_pivot_point(v);
+                } else if (keyword.find("pivot_point") != std::string::npos) {
                     vec3 p;
                     in >> p;
                     camera()->set_pivot_point(p);

@@ -91,7 +91,7 @@ int main(int argc,char**) {
             first->manipulator()->frame()->translate(vec3(100,0,0));v.detect();
             require(reference.detect(first->manipulator()->matrix(),second->manipulator()->matrix()).empty(),"separated meshes still intersect");
             check_colors(*first,*second,reference,false);
-            first->manipulator()->frame()->setFromMatrix(initial);v.detect();check_colors(*first,*second,reference,true);
+            first->manipulator()->frame()->set_from_matrix(initial);v.detect();check_colors(*first,*second,reference,true);
             const auto camera=v.camera()->model_view_projection_matrix();
             v.mouse_press_event(100,100,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
             auto pose=first->manipulator()->matrix();

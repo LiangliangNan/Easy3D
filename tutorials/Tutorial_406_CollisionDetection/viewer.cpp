@@ -140,7 +140,7 @@ void TutorialCollisionDetection::advance() {
     const auto mesh = collision_models_[0].lock();
     angle_ += .0001f;
     const auto pose = mat4::rotation(vec3(0, 0, 1), angle_) * mesh->manipulator()->frame()->matrix();
-    mesh->manipulator()->frame()->setFromMatrix(pose);
+    mesh->manipulator()->frame()->set_from_matrix(pose);
     detect();
 }
 void TutorialCollisionDetection::detect() {

@@ -44,7 +44,7 @@ namespace easy3d {
 
 
 	ManipulatedCameraFrame::ManipulatedCameraFrame()
-        : zoomsOnPivotPoint_(true)
+        : zooms_on_pivot_point_(true)
 	{
 	}
 
@@ -53,7 +53,7 @@ namespace easy3d {
 	ManipulatedCameraFrame &ManipulatedCameraFrame::operator=(const ManipulatedCameraFrame &mcf)
 	{
 		ManipulatedFrame::operator=(mcf);
-		setZoomsOnPivotPoint(mcf.zoomsOnPivotPoint_);
+		set_zooms_on_pivot_point(mcf.zooms_on_pivot_point_);
 		return *this;
 	}
 
@@ -73,10 +73,10 @@ namespace easy3d {
         if (dx == 0 && dy == 0)
             return;
 
-        const vec3& trans = camera->projected_coordinates_of(pivotPoint());
+        const vec3& trans = camera->projected_coordinates_of(pivot_point());
         DLOG_IF(has_nan(trans), ERROR)
-                        << "projectedCoordinatesOf(pivotPoint()): " << trans
-                        << "\n\tpivotPoint():    " << pivotPoint()
+                        << "projectedCoordinatesOf(pivot_point()): " << trans
+                        << "\n\tpivotPoint():    " << pivot_point()
                         << "\n\tcamera position: " << camera->position()
                         << "\n\tcamera orientation: " << camera->orientation();
         if (has_nan(trans))
@@ -88,27 +88,27 @@ namespace easy3d {
         static CameraConstraint cons(camera);
         switch (axis) {
             case NONE:
-                setConstraint(nullptr);
+                set_constraint(nullptr);
                 break;
             case ORTHOGONAL:
-                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
-                setConstraint(&cons);
+                cons.set_rotation_constraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
+                set_constraint(&cons);
                 break;
             case VERTICAL:
-                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 1, 0));
-                setConstraint(&cons);
+                cons.set_rotation_constraint(AxisPlaneConstraint::AXIS, vec3(0, 1, 0));
+                set_constraint(&cons);
                 break;
             case HORIZONTAL:
-                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(1, 0, 0));
-                setConstraint(&cons);
+                cons.set_rotation_constraint(AxisPlaneConstraint::AXIS, vec3(1, 0, 0));
+                set_constraint(&cons);
                 break;
         }
 
         const int pre_x = x - dx;
         const int pre_y = y - dy;
-        const quat &rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
-        // Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-        rotateAroundPoint(rot, pivotPoint());
+        const quat &rot = deformed_ball_quaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+        // Rotates the ManipulatedCameraFrame around its pivot_point() instead of its origin.
+        rotate_around_point(rot, pivot_point());
 
         modified.send();
 	}
@@ -128,7 +128,7 @@ namespace easy3d {
             {
                 case Camera::PERSPECTIVE:
                     trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
-                             fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
+                             fabs((camera->frame()->coordinates_of(pivot_point())).z) /
                             static_cast<float>(camera->screen_height());
                     break;
                 case Camera::ORTHOGRAPHIC: {
@@ -139,7 +139,7 @@ namespace easy3d {
                     break;
                 }
             }
-            translate(inverseTransformOf(translationSensitivity() * trans));
+            translate(inverse_transform_of(translation_sensitivity() * trans));
         }
         else {
 			vec3 trans;
@@ -153,7 +153,7 @@ namespace easy3d {
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
 				trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
-					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
+					fabs((camera->frame()->coordinates_of(pivot_point())).z) /
                         static_cast<float>(camera->screen_height());
 				break;
 			case Camera::ORTHOGRAPHIC: {
@@ -165,7 +165,7 @@ namespace easy3d {
 			}
 			}
 
-			translate(inverseTransformOf(translationSensitivity() * trans));
+			translate(inverse_transform_of(translation_sensitivity() * trans));
 		}
 
         modified.send();
@@ -174,8 +174,8 @@ namespace easy3d {
 
 	void ManipulatedCameraFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
-		const float delta = wheelDelta(wheel_dy);
-		if (zoomsOnPivotPoint_) {
+		const float delta = wheel_delta(wheel_dy);
+		if (zooms_on_pivot_point_) {
 			const vec3& direction = camera->pivot_point() - position();	
 
             // Liangliang:
@@ -210,12 +210,12 @@ namespace easy3d {
             //    beyond the range.
 
             // in the camera space
-            const vec3& target = camera->frame()->coordinatesOf(camera->scene_center());
+            const vec3& target = camera->frame()->coordinates_of(camera->scene_center());
             const float coef = target.z;//std::max<float>(fabs(target.z), 0.2f * sceneRadius);
             const vec3 trans_eye(0.0f, 0.0f, coef * delta);
 
             // translation in the world space
-            const vec3 offset = inverseTransformOf(trans_eye);
+            const vec3 offset = inverse_transform_of(trans_eye);
 
             // compute the target point if we do move the camera
             ManipulatedCameraFrame frame = *camera->frame();
@@ -223,7 +223,7 @@ namespace easy3d {
 
 #if 0 //  we allow to zoom out (to avoid lock)
             const float sceneRadius = camera->scene_radius();
-            const vec3& new_target = frame.coordinatesOf(camera->scene_center());
+            const vec3& new_target = frame.coordinates_of(camera->scene_center());
             // don't get too close to and don't get too far away from the pivot point.
             if ( new_target.z >= -0.01f * sceneRadius || new_target.z <= -100.0f * sceneRadius)
                 return;
@@ -237,7 +237,7 @@ namespace easy3d {
 
 		// #CONNECTION# startAction should always be called before
 		if (previousConstraint_)
-			setConstraint(previousConstraint_);
+			set_constraint(previousConstraint_);
 	}
 
 

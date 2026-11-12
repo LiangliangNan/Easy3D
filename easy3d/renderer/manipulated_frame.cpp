@@ -50,14 +50,14 @@ namespace easy3d {
 	 * Frame constructor for details).
 	 *
 	 * The different sensitivities are set to their default values (see
-	 * rotationSensitivity(), translationSensitivity(), spinningSensitivity() and
-	 * wheelSensitivity()). */
+	 * rotation_sensitivity(), translation_sensitivity(), spinningSensitivity() and
+	 * wheel_sensitivity()). */
 	ManipulatedFrame::ManipulatedFrame()
 	{
-		setRotationSensitivity(1.0);
-		setTranslationSensitivity(1.0);
-		setWheelSensitivity(1.0);
-		setZoomSensitivity(1.0);
+		set_rotation_sensitivity(1.0);
+		set_translation_sensitivity(1.0);
+		set_wheel_sensitivity(1.0);
+		set_zoom_sensitivity(1.0);
 
         previousConstraint_ = nullptr;
 	}
@@ -66,10 +66,10 @@ namespace easy3d {
 	ManipulatedFrame &ManipulatedFrame::operator=(const ManipulatedFrame &mf) {
 		Frame::operator=(mf);
 
-		setRotationSensitivity(mf.rotationSensitivity());
-		setTranslationSensitivity(mf.translationSensitivity());
-		setWheelSensitivity(mf.wheelSensitivity());
-		setZoomSensitivity(mf.zoomSensitivity());
+		set_rotation_sensitivity(mf.rotation_sensitivity());
+		set_translation_sensitivity(mf.translation_sensitivity());
+		set_wheel_sensitivity(mf.wheel_sensitivity());
+		set_zoom_sensitivity(mf.zoom_sensitivity());
 
 		return *this;
 	}
@@ -85,9 +85,9 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-	float ManipulatedFrame::wheelDelta(int wheel_dy) const {
+	float ManipulatedFrame::wheel_delta(int wheel_dy) const {
 		static constexpr float WHEEL_SENSITIVITY_COEFF = 0.1f;
-		return static_cast<float>(wheel_dy) * wheelSensitivity() * WHEEL_SENSITIVITY_COEFF;
+		return static_cast<float>(wheel_dy) * wheel_sensitivity() * WHEEL_SENSITIVITY_COEFF;
 	}
 
 
@@ -97,7 +97,7 @@ namespace easy3d {
 
 	void ManipulatedFrame::action_end() {
 		if (previousConstraint_)
-			setConstraint(previousConstraint_);
+			set_constraint(previousConstraint_);
 	}
 
 
@@ -125,7 +125,7 @@ namespace easy3d {
             const int pre_x = mouse_x - mouse_dx;
             const int pre_y = mouse_y - mouse_dy;
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-			rot = deformedBallQuaternion(mouse_x, mouse_y, pre_x, pre_y, trans[0], trans[1], w, h);
+			rot = deformed_ball_quaternion(mouse_x, mouse_y, pre_x, pre_y, trans[0], trans[1], w, h);
 		}
 		else {
             if (axis == ORTHOGONAL) {
@@ -138,17 +138,17 @@ namespace easy3d {
             } else if (axis == VERTICAL) {
                 const int pre_x = mouse_x - mouse_dx;
                 const int pre_y = mouse_y;    // restricts the movement to be horizontal (so purl vertical rotation)
-                rot = deformedBallQuaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
+                rot = deformed_ball_quaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
             } else if (axis == HORIZONTAL) {
                 const int pre_x = mouse_x;    // restricts the movement to be vertical (so purl horizontal rotation)
                 const int pre_y = mouse_y - mouse_dy;
-                rot = deformedBallQuaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
+                rot = deformed_ball_quaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
             }
 		}
 
         trans = vec3(-rot[0], -rot[1], -rot[2]);
         trans = camera->frame()->orientation().rotate(trans);
-        trans = transformOf(trans);
+        trans = transform_of(trans);
         rot[0] = trans[0];
         rot[1] = trans[1];
         rot[2] = trans[2];
@@ -171,7 +171,7 @@ namespace easy3d {
 			switch (camera->type()) {
 				case Camera::PERSPECTIVE:
 					trans *= 2.0f * std::tan(camera->field_of_view() / 2.0f) *
-							 std::fabs((camera->frame()->coordinatesOf(position())).z) /
+							 std::fabs((camera->frame()->coordinates_of(position())).z) /
                             static_cast<float>(camera->screen_height());
 					break;
 				case Camera::ORTHOGRAPHIC: {
@@ -183,10 +183,10 @@ namespace easy3d {
 				}
 			}
 			// Transform to world coordinate system.
-			trans = camera->frame()->orientation().rotate(translationSensitivity() * trans);
+			trans = camera->frame()->orientation().rotate(translation_sensitivity() * trans);
 			// And then down to frame
-			if (referenceFrame())
-				trans = referenceFrame()->transformOf(trans);
+			if (reference_frame())
+				trans = reference_frame()->transform_of(trans);
 			translate(trans);
 		}
 		else {  // new implementation
@@ -201,7 +201,7 @@ namespace easy3d {
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
 				trans *= 2.0 * std::tan(camera->field_of_view() / 2.0f) *
-					fabs((camera->frame()->coordinatesOf(position())).z) /
+					fabs((camera->frame()->coordinates_of(position())).z) /
 					camera->screen_height();
 				break;
 			case Camera::ORTHOGRAPHIC: {
@@ -213,10 +213,10 @@ namespace easy3d {
 			    }
 			}
 			// Transform to world coordinate system.
-			trans = camera->frame()->orientation().rotate(translationSensitivity() * trans);
+			trans = camera->frame()->orientation().rotate(translation_sensitivity() * trans);
 			// And then down to frame
-			if (referenceFrame())
-				trans = referenceFrame()->transformOf(trans);
+			if (reference_frame())
+				trans = reference_frame()->transform_of(trans);
 
 			translate(trans);
 		}
@@ -227,19 +227,19 @@ namespace easy3d {
 
 	void ManipulatedFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
-		const float delta = wheelDelta(wheel_dy);
+		const float delta = wheel_delta(wheel_dy);
 
 		vec3 trans(0.0f, 0.0f, (camera->position() - position()).norm() * delta);
 
 		trans = camera->frame()->orientation().rotate(trans);
-		if (referenceFrame())
-			trans = referenceFrame()->transformOf(trans);
+		if (reference_frame())
+			trans = reference_frame()->transform_of(trans);
 		translate(trans);
         modified.send();
 
 		// #CONNECTION# startAction should always be called before
 		if (previousConstraint_)
-			setConstraint(previousConstraint_);
+			set_constraint(previousConstraint_);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +250,7 @@ namespace easy3d {
 	 * of this distance (tends to zero) on the ball, the function is continuous. */
 	static float projectOnBall(float x, float y) {
 		// If you change the size value, change angle computation in
-		// deformedBallQuaternion().
+		// deformed_ball_quaternion().
 		constexpr float size = 1.0f;
 		constexpr float size2 = size * size;
 		constexpr float size_limit = size2 * 0.5f;
@@ -262,12 +262,12 @@ namespace easy3d {
 
 	/** Returns a quaternion computed according to the mouse motion. Mouse positions
 	 * are projected on a deformed ball, centered on (\p cx,\p cy). */
-	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const {
+	quat ManipulatedFrame::deformed_ball_quaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const {
 		// Points on the deformed ball
-		const float px = rotationSensitivity() * (static_cast<float>(pre_x) - cx) / static_cast<float>(w);
-		const float py = rotationSensitivity() * (cy - static_cast<float>(pre_y)) / static_cast<float>(h);
-		const float dx = rotationSensitivity() * (static_cast<float>(x) - cx) / static_cast<float>(w);
-		const float dy = rotationSensitivity() * (cy - static_cast<float>(y)) / static_cast<float>(h);
+		const float px = rotation_sensitivity() * (static_cast<float>(pre_x) - cx) / static_cast<float>(w);
+		const float py = rotation_sensitivity() * (cy - static_cast<float>(pre_y)) / static_cast<float>(h);
+		const float dx = rotation_sensitivity() * (static_cast<float>(x) - cx) / static_cast<float>(w);
+		const float dy = rotation_sensitivity() * (cy - static_cast<float>(y)) / static_cast<float>(h);
 
 		const vec3 p1(px, py, projectOnBall(px, py));
 		const vec3 p2(dx, dy, projectOnBall(dx, dy));

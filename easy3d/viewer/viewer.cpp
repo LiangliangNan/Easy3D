@@ -922,8 +922,8 @@ namespace easy3d {
         q.normalize();
         // I prefer to animate the view change rather than snap to it.
         Frame new_frame;
-        new_frame.setPosition(p);
-        new_frame.setOrientation(q);
+        new_frame.set_position(p);
+        new_frame.set_orientation(q);
         const float duration = 0.5f;
         camera()->interpolate_to(&new_frame, duration);
         update();
@@ -1148,7 +1148,7 @@ namespace easy3d {
             // move camera forward/backward
             const float step = .05f * camera()->scene_radius();
             camera()->frame()->translate(
-                camera()->frame()->inverseTransformOf(vec3(0, 0, key == KEY_UP ? -step : step)));
+                camera()->frame()->inverse_transform_of(vec3(0, 0, key == KEY_UP ? -step : step)));
         } else if (modifiers == MODIF_CTRL && key >= KEY_RIGHT && key <= KEY_UP) {
             // move camera left/right/up/down
             const float step = .05f * camera()->scene_radius();
@@ -1156,7 +1156,7 @@ namespace easy3d {
                                    : key == KEY_RIGHT ? vec3(step, 0, 0)
                                    : key == KEY_UP    ? vec3(0, step, 0)
                                                            : vec3(0, -step, 0);
-            camera()->frame()->translate(camera()->frame()->inverseTransformOf(direction));
+            camera()->frame()->translate(camera()->frame()->inverse_transform_of(direction));
         } else if (modifiers == MODIF_CTRL && (key == KEY_MINUS || key == KEY_EQUAL))
             camera()->frame()->action_zoom(key == KEY_EQUAL ? 1 : -1, camera());
         else if (key == KEY_K && modifiers == MODIF_ALT) {
@@ -1219,8 +1219,8 @@ namespace easy3d {
         else if (key == KEY_SPACE && modifiers == 0) {
             // Aligns camera
             Frame frame;
-            frame.setTranslation(camera()->pivot_point());
-            camera()->frame()->alignWithFrame(&frame, true);
+            frame.set_translation(camera()->pivot_point());
+            camera()->frame()->align_with_frame(&frame, true);
         } else if (key == KEY_M && modifiers == 0) {
             if (auto *mesh = dynamic_cast<SurfaceMesh *>(current_model()))
                 for (const auto &d : mesh->renderer()->triangles_drawables())
@@ -1464,7 +1464,7 @@ namespace easy3d {
         Camera snapshot(*camera());
         // Camera's copy constructor regenerates matrices from its parameters. Keep
         // effective matrices too, including externally calibrated/custom cameras.
-        snapshot.frame()->setPivotPoint(camera()->pivot_point()); // do not re-adjust the copied ortho coefficient
+        snapshot.frame()->set_pivot_point(camera()->pivot_point()); // do not re-adjust the copied ortho coefficient
         snapshot.set_projection_matrix(camera()->projection_matrix());
         snapshot.set_model_view_matrix(camera()->model_view_matrix());
         const auto inv = transform::checked_inverse(snapshot.model_view_projection_matrix());
@@ -2670,7 +2670,7 @@ namespace easy3d {
                                     QueryState depth_state;
                                     depth_state.prepare(width, height);
                                     Camera snapshot(*camera());
-                                    snapshot.frame()->setPivotPoint(camera()->pivot_point());
+                                    snapshot.frame()->set_pivot_point(camera()->pivot_point());
                                     snapshot.projection_matrix();
                                     snapshot.model_view_matrix();
                                     mat4 projection = camera()->projection_matrix();
@@ -2708,7 +2708,7 @@ namespace easy3d {
             self->initialized_ = true;
         }
         Camera snapshot(*camera());
-        snapshot.frame()->setPivotPoint(camera()->pivot_point());
+        snapshot.frame()->set_pivot_point(camera()->pivot_point());
         snapshot.projection_matrix();
         snapshot.model_view_matrix();
         snapshot.set_projection_matrix(camera()->projection_matrix());

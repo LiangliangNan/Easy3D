@@ -174,7 +174,7 @@ void MultiViewer::clear_scene() {
 }
 vec3 MultiViewer::world_to_window(const vec3& world) const {
     const auto vp=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
-    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivot_point());
+    Camera cell(*camera());cell.frame()->set_pivot_point(camera()->pivot_point());
     configure_cell(cell,*camera(),vp.z,vp.w);
     const int viewport[] = {vp.x,vp.y,vp.z,vp.w};
     return transform::project(world,cell.model_view_projection_matrix(),viewport,false);
@@ -186,7 +186,7 @@ vec3 MultiViewer::window_to_world(const vec3& window) const {
     for(int r=0;r<num_rows_;++r) if(window.y < int64_t(r+1)*height()/num_rows_) {row=r;break;}
     for(int c=0;c<num_cols_;++c) if(window.x < int64_t(c+1)*width()/num_cols_) {col=c;break;}
     const auto vp=cell_bounds(row,col,num_rows_,num_cols_,width(),height());
-    Camera cell(*camera());cell.frame()->setPivotPoint(camera()->pivot_point());
+    Camera cell(*camera());cell.frame()->set_pivot_point(camera()->pivot_point());
     configure_cell(cell,*camera(),vp.z,vp.w);
     const int viewport[] = {vp.x,vp.y,vp.z,vp.w};
     return transform::unproject(window,cell.model_view_projection_matrix(),viewport,false);
@@ -207,7 +207,7 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         // Logical cell bounds drive the cell camera (DPI-independent impostor sizing);
         // the framebuffer cell width drives plain point/line scaling in draw_commands.
         const auto lv=cell_bounds(r,c,num_rows_,num_cols_,Viewer::width(),Viewer::height());
-        Camera cell(cam);cell.frame()->setPivotPoint(cam.pivot_point());
+        Camera cell(cam);cell.frame()->set_pivot_point(cam.pivot_point());
         configure_cell(cell,snapshot_active_?*camera():cam,lv.z,lv.w);
         std::vector<DrawSource> local;
         const auto commands=Viewer::draw_commands(cell,vp.z,vp.w,&local,true);
@@ -338,7 +338,7 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
     // dims) so world-space impostor radii carry DPI-independent sizing.
     GLint target[4];glGetIntegerv(GL_VIEWPORT,target);
     const int fw=target[2],fh=target[3];
-    Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivot_point());
+    Camera cell(snapshot);cell.frame()->set_pivot_point(snapshot.pivot_point());
     auto draw=[&](const Drawable* d) {
         if(!d || (source && source->drawable.get()!=d) || !d->is_visible() || dynamic_cast<const LinesDrawable2D*>(d)) return;
         if(auto p=dynamic_cast<const TrianglesDrawable*>(d)) p->TrianglesDrawable::draw(&cell);

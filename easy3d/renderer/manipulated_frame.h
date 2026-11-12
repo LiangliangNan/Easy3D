@@ -83,28 +83,28 @@ namespace easy3d {
 		 * \brief Sets the rotation sensitivity.
 		 * \param sensitivity The new rotation sensitivity.
 		 */
-		void setRotationSensitivity(float sensitivity) {
-			rotationSensitivity_ = sensitivity;
+		void set_rotation_sensitivity(float sensitivity) {
+			rotation_sensitivity_ = sensitivity;
 		}
 		/**
 		 * \brief Sets the translation sensitivity.
 		 * \param sensitivity The new translation sensitivity.
 		 */
-		void setTranslationSensitivity(float sensitivity) {
-			translationSensitivity_ = sensitivity;
+		void set_translation_sensitivity(float sensitivity) {
+			translation_sensitivity_ = sensitivity;
 		}
 		/**
 		 * \brief Sets the wheel sensitivity.
 		 * \param sensitivity The new wheel sensitivity.
 		 */
-		void setWheelSensitivity(float sensitivity) {
-			wheelSensitivity_ = sensitivity;
+		void set_wheel_sensitivity(float sensitivity) {
+			wheel_sensitivity_ = sensitivity;
 		}
 		/**
 		 * \brief Sets the zoom sensitivity.
 		 * \param sensitivity The new zoom sensitivity.
 		 */
-		void setZoomSensitivity(float sensitivity) { zoomSensitivity_ = sensitivity; }
+		void set_zoom_sensitivity(float sensitivity) { zoom_sensitivity_ = sensitivity; }
 
 	public:
 		/**
@@ -114,9 +114,9 @@ namespace easy3d {
 		 *		rotation (and inversely for lower values). A 0.0 value will forbid ManipulatedFrame mouse rotation
 		 *		(see also constraint()).
 		 * \return The rotation sensitivity.
-		 * \sa setRotationSensitivity(), translationSensitivity(), zoomSensitivity(), and wheelSensitivity().
+		 * \sa set_rotation_sensitivity(), translation_sensitivity(), zoom_sensitivity(), and wheel_sensitivity().
 		 */
-		float rotationSensitivity() const { return rotationSensitivity_; }
+		float rotation_sensitivity() const { return rotation_sensitivity_; }
 
 		/**
 		 * \brief Returns the translation sensitivity.
@@ -126,25 +126,25 @@ namespace easy3d {
 		 *		higher value will generate a larger	translation (and inversely for lower values). A 0.0 value will
 		 *		forbid ManipulatedFrame mouse translation (see also constraint()).
 		 * \return The translation sensitivity.
-		 * \sa setTranslationSensitivity(), rotationSensitivity(), zoomSensitivity(), and wheelSensitivity().
+		 * \sa set_translation_sensitivity(), rotation_sensitivity(), zoom_sensitivity(), and wheel_sensitivity().
 		 */
-		float translationSensitivity() const { return translationSensitivity_; }
+		float translation_sensitivity() const { return translation_sensitivity_; }
 		/**
 		 * \brief Returns the zoom sensitivity.
 		 * \details Default value is 1.0. A higher value will make the zoom faster. Use a negative value to invert the
 		 *		zoom in and out directions.
 		 * \return The zoom sensitivity.
-		 * \sa setZoomSensitivity(), translationSensitivity(), rotationSensitivity(), and wheelSensitivity().
+		 * \sa set_zoom_sensitivity(), translation_sensitivity(), rotation_sensitivity(), and wheel_sensitivity().
 		 */
-		float zoomSensitivity() const { return zoomSensitivity_; }
+		float zoom_sensitivity() const { return zoom_sensitivity_; }
 		/**
 		 * \brief Returns the wheel sensitivity.
 		 * \details Default value is 1.0. A higher value will make the wheel action more efficient (usually meaning a
 		 *		faster zoom). Use a negative value to invert the zoom in and out directions.
 		 * \return The wheel sensitivity.
-		 * \sa setWheelSensitivity(), translationSensitivity(), rotationSensitivity(), and zoomSensitivity().
+		 * \sa set_wheel_sensitivity(), translation_sensitivity(), rotation_sensitivity(), and zoom_sensitivity().
 		 */
-		float wheelSensitivity() const { return wheelSensitivity_; }
+		float wheel_sensitivity() const { return wheel_sensitivity_; }
 		//@}
 
 		/*! @name Frame manipulation */
@@ -199,19 +199,19 @@ namespace easy3d {
 	protected:
         /* Returns a quaternion computed according to the mouse motion. Mouse positions
         are projected on a deformed ball, centered on (\p cx,\p cy), viewer size (\p w, \p h).*/
-		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const;
+		quat deformed_ball_quaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const;
 
 		Constraint *previousConstraint_; // When manipulation is without constraint.
 
-		/* Returns a normalized wheel delta, proportional to wheelSensitivity(). */
-		float wheelDelta(int wheel_dy) const;
+		/* Returns a normalized wheel delta, proportional to wheel_sensitivity(). */
+		float wheel_delta(int wheel_dy) const;
 
 	private:
 		// Sensitivity
-		float rotationSensitivity_;
-		float translationSensitivity_;
-		float wheelSensitivity_;
-		float zoomSensitivity_;
+		float rotation_sensitivity_;
+		float translation_sensitivity_;
+		float wheel_sensitivity_;
+		float zoom_sensitivity_;
 	};
 
 }

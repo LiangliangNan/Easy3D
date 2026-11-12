@@ -229,7 +229,7 @@ namespace easy3d {
                     break;
                 }
                 const auto &f = interpolated_path_[id];
-                frame()->setPositionAndOrientation(f.position(), f.orientation());
+                frame()->set_position_and_orientation(f.position(), f.orientation());
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                 if (id == interpolated_path_.size() - 1)  // reaches the end frame
                     last_stopped_index_ = 0;
@@ -267,7 +267,7 @@ namespace easy3d {
         if (!manual_playback_ || !interpolation_started_) return false;
         if (!frame_) {stop_interpolation();return false;}
         const auto& sample=interpolated_path_.at(size_t(last_stopped_index_));
-        frame_->setPositionAndOrientation(sample.position(),sample.orientation());
+        frame_->set_position_and_orientation(sample.position(),sample.orientation());
         const bool finished=++last_stopped_index_>=int(interpolated_path_.size());
         if (finished) {last_stopped_index_=0;interpolation_started_=false;manual_playback_=false;}
         frame_interpolated.send();

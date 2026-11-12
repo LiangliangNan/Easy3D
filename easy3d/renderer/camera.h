@@ -56,13 +56,13 @@ namespace easy3d {
      * \class Camera easy3d/renderer/camera.h
      * \details A Camera defines some intrinsic parameters (field_of_view(), position(), view_direction(), up_vector()...)
      * and useful positioning tools that ease its placement (show_entire_scene(), fit_sphere(), look_at()...). It exports
-     * its associated OpenGL projection and modelview matrices and can interactively be modified using the mouse.
+     * its associated projection and model view matrices and can interactively be modified using the mouse.
      *
      * <h3>Mouse manipulation</h3>
      *
-     * The position() and orientation() of the Camera are defined by a ManipulatedFrame (retrieved using frame()).
+     * The position() and orientation() of the Camera are defined by a ManipulatedCameraFrame (retrieved using frame()).
      * These methods are just convenient wrappers to the equivalent Frame methods. This also means that the Camera
-     * frame() can be attached to a Frame::referenceFrame() which enables complex Camera setups.
+     * frame() can be attached to a Frame::reference_frame() which enables complex Camera setups.
      *
      * If a pivot_point() has been set, the Camera observes a scene and rotates around its pivot_point().
      *
@@ -84,8 +84,8 @@ namespace easy3d {
      * projected_coordinates_of() and unprojected_coordinates_of() will convert from screen to 3D coordinates.
      * convert_click_to_line() is very useful for analytical object selection.
      *
-     * A Camera can also be used outside a viewer or even without OpenGL for its coordinate system conversion
-     * capabilities. Note however that some of them explicitly rely on the presence of a Z-buffer.
+     * A Camera can also be used outside a viewer or even without a graphics backend for its coordinate system
+     * conversion capabilities. Note however that some of them explicitly rely on the presence of a Z-buffer.
      *
      * <h3>Coordinate Systems</h3>
      *
@@ -543,7 +543,7 @@ namespace easy3d {
          *      pointing \e out of the frustum and the fourth is the plane offset, i.e. \c p is on the plane when
          *      \code a*p.x + b*p.y + c*p.z = d \endcode and inside when that holds with a \e smaller left-hand side
          *      for all six planes. Note that this \c d is the negation of the \c d of the homogeneous form
-         *      \c a*x+b*y+c*z+d = 0 (which get_frustum_planes_coefficients2() uses).
+         *      \c a*x+b*y+c*z+d = 0 (which get_frustum_planes_coefficients_gribb_hartmann() uses).
          */
         void get_frustum_planes_coefficients(float coef[6][4]) const;
 
@@ -556,7 +556,7 @@ namespace easy3d {
          *      side positive; this is the form \c glClipPlane() expects. Same planes as
          *      get_frustum_planes_coefficients(), which instead uses outward normals and the natural equation.
          */
-        void get_frustum_planes_coefficients2(float coef[6][4]) const;
+        void get_frustum_planes_coefficients_gribb_hartmann(float coef[6][4]) const;
 
     public:
         /**
@@ -694,7 +694,7 @@ namespace easy3d {
         /**
          * \brief Returns the ManipulatedCameraFrame attached to the Camera.
          * \details This frame defines the Camera position() and orientation() and translates mouse events into
-         *      Camera displacement (the Viewer drives it for you). Its own Frame::referenceFrame() may be another
+         *      Camera displacement (the Viewer drives it for you). Its own Frame::reference_frame() may be another
          *      frame, which enables nested camera setups. Set using set_frame().
          * \return The manipulated frame.
          */

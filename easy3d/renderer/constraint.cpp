@@ -66,63 +66,63 @@ namespace easy3d {
 
 	/*! Default constructor.
 
-	translationConstraintType() and rotationConstraintType() are set to
-	AxisPlaneConstraint::FREE. translationConstraintDirection() and
-	rotationConstraintDirection() are set to (0,0,0). */
+	translation_constraint_type() and rotation_constraint_type() are set to
+	AxisPlaneConstraint::FREE. translation_constraint_direction() and
+	rotation_constraint_direction() are set to (0,0,0). */
 	AxisPlaneConstraint::AxisPlaneConstraint()
-		: translationConstraintType_(FREE), rotationConstraintType_(FREE) {
-		// Do not use set since setRotationConstraintType needs a read.
+		: translation_constraint_type_(FREE), rotation_constraint_type_(FREE) {
+		// Do not use set since set_rotation_constraint_type needs a read.
 	}
 
-	/*! Simply calls setTranslationConstraintType() and
-	 * setTranslationConstraintDirection(). */
-    void AxisPlaneConstraint::setTranslationConstraint(Type type, const vec3 &direction) {
-        setTranslationConstraintType(type);
-        setTranslationConstraintDirection(direction);
+	/*! Simply calls set_translation_constraint_type() and
+	 * set_translation_constraint_direction(). */
+    void AxisPlaneConstraint::set_translation_constraint(Type type, const vec3 &direction) {
+        set_translation_constraint_type(type);
+        set_translation_constraint_direction(direction);
     }
 
-	/*! Defines the translationConstraintDirection(). The coordinate system where \p
+	/*! Defines the translation_constraint_direction(). The coordinate system where \p
 	 * direction is expressed depends on your class implementation. */
-	void AxisPlaneConstraint::setTranslationConstraintDirection(
+	void AxisPlaneConstraint::set_translation_constraint_direction(
 		const vec3 &direction) {
-		if ((translationConstraintType() != AxisPlaneConstraint::FREE) &&
-			(translationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
+		if ((translation_constraint_type() != AxisPlaneConstraint::FREE) &&
+			(translation_constraint_type() != AxisPlaneConstraint::FORBIDDEN)) {
 			const float norm = direction.norm();
 			if (norm < 1E-8) {
 				LOG(ERROR) << "AxisPlaneConstraint::setTranslationConstraintDir: null vector "
 					"for translation constraint";
-				translationConstraintType_ = AxisPlaneConstraint::FREE;
+				translation_constraint_type_ = AxisPlaneConstraint::FREE;
 			}
 			else
-				translationConstraintDir_ = direction / norm;
+				translation_constraint_dir_ = direction / norm;
 		}
 	}
 
-	/*! Simply calls setRotationConstraintType() and
-	 * setRotationConstraintDirection(). */
-	void AxisPlaneConstraint::setRotationConstraint(Type type,
+	/*! Simply calls set_rotation_constraint_type() and
+	 * set_rotation_constraint_direction(). */
+	void AxisPlaneConstraint::set_rotation_constraint(Type type,
 		const vec3 &direction) {
-		setRotationConstraintType(type);
-		setRotationConstraintDirection(direction);
+		set_rotation_constraint_type(type);
+		set_rotation_constraint_direction(direction);
 	}
 
-	/*! Defines the rotationConstraintDirection(). The coordinate system where \p
+	/*! Defines the rotation_constraint_direction(). The coordinate system where \p
 	 * direction is expressed depends on your class implementation. */
-	void AxisPlaneConstraint::setRotationConstraintDirection(const vec3 &direction) {
-		if ((rotationConstraintType() != AxisPlaneConstraint::FREE) &&
-			(rotationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
+	void AxisPlaneConstraint::set_rotation_constraint_direction(const vec3 &direction) {
+		if ((rotation_constraint_type() != AxisPlaneConstraint::FREE) &&
+			(rotation_constraint_type() != AxisPlaneConstraint::FORBIDDEN)) {
 			const float norm = direction.norm();
 			if (norm < 1E-8) {
 				LOG(ERROR) << "AxisPlaneConstraint::setRotationConstraintDir: null vector for "
 					"rotation constraint";
-				rotationConstraintType_ = AxisPlaneConstraint::FREE;
+				rotation_constraint_type_ = AxisPlaneConstraint::FREE;
 			}
 			else
-				rotationConstraintDir_ = direction / norm;
+				rotation_constraint_dir_ = direction / norm;
 		}
 	}
 
-	/*! Set the Type() of the rotationConstraintType(). Default is
+	/*! Set the Type() of the rotation_constraint_type(). Default is
 	 AxisPlaneConstraint::FREE.
 
 	 Depending on this value, the Frame will freely rotate
@@ -130,40 +130,40 @@ namespace easy3d {
 	 (AxisPlaneConstraint::AXIS), or will not able to rotate at all
 	 (AxisPlaneConstraint::FORBIDDEN).
 
-	 Use Frame::setOrientation() to define the orientation of the constrained Frame
+	 Use Frame::set_orientation() to define the orientation of the constrained Frame
 	 before it gets constrained.
 
 	 \attention An AxisPlaneConstraint::PLANE Type() is not meaningful for
 	 rotational constraints and will be ignored. */
-	void AxisPlaneConstraint::setRotationConstraintType(Type type) {
-		if (rotationConstraintType() == AxisPlaneConstraint::PLANE) {
-			LOG(ERROR) << "AxisPlaneConstraint::setRotationConstraintType: the PLANE type "
+	void AxisPlaneConstraint::set_rotation_constraint_type(Type type) {
+		if (rotation_constraint_type() == AxisPlaneConstraint::PLANE) {
+			LOG(ERROR) << "AxisPlaneConstraint::set_rotation_constraint_type: the PLANE type "
 				"cannot be used for a rotation constraints";
 			return;
 		}
 
-		rotationConstraintType_ = type;
+		rotation_constraint_type_ = type;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
 	//                               LocalConstraint                              //
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Depending on translationConstraintType(), constrain \p translation to be
+	/*! Depending on translation_constraint_type(), constrain \p translation to be
 	  along an axis or limited to a plane defined in the Frame local coordinate
-	  system by translationConstraintDirection(). */
-	void LocalConstraint::constrainTranslation(vec3 &translation,
+	  system by translation_constraint_direction(). */
+	void LocalConstraint::constrain_translation(vec3 &translation,
 		Frame *const frame) {
 		vec3 proj;
-		switch (translationConstraintType()) {
+		switch (translation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 			break;
 		case AxisPlaneConstraint::PLANE:
-			proj = frame->rotation().rotate(translationConstraintDirection());
+			proj = frame->rotation().rotate(translation_constraint_direction());
 			project_on_plane(translation, proj);
 			break;
 		case AxisPlaneConstraint::AXIS:
-			proj = frame->rotation().rotate(translationConstraintDirection());
+			proj = frame->rotation().rotate(translation_constraint_direction());
 			project_on_axis(translation, proj);
 			break;
 		case AxisPlaneConstraint::FORBIDDEN:
@@ -172,16 +172,16 @@ namespace easy3d {
 		}
 	}
 
-	/*! When rotationConstraintType() is AxisPlaneConstraint::AXIS, constrain \p
+	/*! When rotation_constraint_type() is AxisPlaneConstraint::AXIS, constrain \p
 	  rotation to be a rotation around an axis whose direction is defined in the
-	  Frame local coordinate system by rotationConstraintDirection(). */
-	void LocalConstraint::constrainRotation(quat &rotation, Frame *const) {
-		switch (rotationConstraintType()) {
+	  Frame local coordinate system by rotation_constraint_direction(). */
+	void LocalConstraint::constrain_rotation(quat &rotation, Frame *const) {
+		switch (rotation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {
-			vec3 axis = rotationConstraintDirection();
+			vec3 axis = rotation_constraint_direction();
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
 			rotation = quat(q, 2.0f * std::acos(rotation[3]));
@@ -196,30 +196,30 @@ namespace easy3d {
 	//                               WorldConstraint                              //
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Depending on translationConstraintType(), constrain \p translation to be
+	/*! Depending on translation_constraint_type(), constrain \p translation to be
 	  along an axis or limited to a plane defined in the world coordinate system by
-	  translationConstraintDirection(). */
-	void WorldConstraint::constrainTranslation(vec3 &translation,
+	  translation_constraint_direction(). */
+	void WorldConstraint::constrain_translation(vec3 &translation,
 		Frame *const frame) {
 		vec3 proj;
-		switch (translationConstraintType()) {
+		switch (translation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 			break;
 		case AxisPlaneConstraint::PLANE:
-			if (frame->referenceFrame()) {
-				proj = frame->referenceFrame()->transformOf(translationConstraintDirection());
+			if (frame->reference_frame()) {
+				proj = frame->reference_frame()->transform_of(translation_constraint_direction());
 				project_on_plane(translation, proj);
 			}
 			else
-				project_on_plane(translation, translationConstraintDirection());
+				project_on_plane(translation, translation_constraint_direction());
 			break;
 		case AxisPlaneConstraint::AXIS:
-			if (frame->referenceFrame()) {
-				proj = frame->referenceFrame()->transformOf(translationConstraintDirection());
+			if (frame->reference_frame()) {
+				proj = frame->reference_frame()->transform_of(translation_constraint_direction());
 				project_on_axis(translation, proj);
 			}
 			else
-				project_on_axis(translation, translationConstraintDirection());
+				project_on_axis(translation, translation_constraint_direction());
 			break;
 		case AxisPlaneConstraint::FORBIDDEN:
 			translation = vec3(0.0, 0.0, 0.0);
@@ -227,18 +227,18 @@ namespace easy3d {
 		}
 	}
 
-	/*! When rotationConstraintType() is AxisPlaneConstraint::AXIS, constrain \p
+	/*! When rotation_constraint_type() is AxisPlaneConstraint::AXIS, constrain \p
 	  rotation to be a rotation around an axis whose direction is defined in the
-	  world coordinate system by rotationConstraintDirection(). */
-	void WorldConstraint::constrainRotation(quat &rotation,
+	  world coordinate system by rotation_constraint_direction(). */
+	void WorldConstraint::constrain_rotation(quat &rotation,
 		Frame *const frame) {
-		switch (rotationConstraintType()) {
+		switch (rotation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {
 			vec3 q(rotation[0], rotation[1], rotation[2]);
-			vec3 axis = frame->transformOf(rotationConstraintDirection());
+			vec3 axis = frame->transform_of(rotation_constraint_direction());
 			project_on_axis(q, axis);
 			rotation = quat(q, 2.0f * std::acos(rotation[3]));
 			break;
@@ -258,25 +258,25 @@ namespace easy3d {
 	CameraConstraint::CameraConstraint(const Camera *const camera)
 		: AxisPlaneConstraint(), camera_(camera) {}
 
-	/*! Depending on translationConstraintType(), constrain \p translation to be
+	/*! Depending on translation_constraint_type(), constrain \p translation to be
 	  along an axis or limited to a plane defined in the camera() coordinate system
-	  by translationConstraintDirection(). */
-	void CameraConstraint::constrainTranslation(vec3 &translation,
+	  by translation_constraint_direction(). */
+	void CameraConstraint::constrain_translation(vec3 &translation,
 		Frame *const frame) {
 		vec3 proj;
-		switch (translationConstraintType()) {
+		switch (translation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 			break;
 		case AxisPlaneConstraint::PLANE:
-			proj = camera()->frame()->inverseTransformOf(translationConstraintDirection());
-			if (frame->referenceFrame())
-				proj = frame->referenceFrame()->transformOf(proj);
+			proj = camera()->frame()->inverse_transform_of(translation_constraint_direction());
+			if (frame->reference_frame())
+				proj = frame->reference_frame()->transform_of(proj);
 			project_on_plane(translation, proj);
 			break;
 		case AxisPlaneConstraint::AXIS:
-			proj = camera()->frame()->inverseTransformOf(translationConstraintDirection());
-			if (frame->referenceFrame())
-				proj = frame->referenceFrame()->transformOf(proj);
+			proj = camera()->frame()->inverse_transform_of(translation_constraint_direction());
+			if (frame->reference_frame())
+				proj = frame->reference_frame()->transform_of(proj);
 			project_on_axis(translation, proj);
 			break;
 		case AxisPlaneConstraint::FORBIDDEN:
@@ -285,18 +285,18 @@ namespace easy3d {
 		}
 	}
 
-	/*! When rotationConstraintType() is AxisPlaneConstraint::AXIS, constrain \p
+	/*! When rotation_constraint_type() is AxisPlaneConstraint::AXIS, constrain \p
 	  rotation to be a rotation around an axis whose direction is defined in the
-	  camera() coordinate system by rotationConstraintDirection(). */
-	void CameraConstraint::constrainRotation(quat &rotation,
+	  camera() coordinate system by rotation_constraint_direction(). */
+	void CameraConstraint::constrain_rotation(quat &rotation,
 		Frame *const frame) {
-		switch (rotationConstraintType()) {
+		switch (rotation_constraint_type()) {
 		case AxisPlaneConstraint::FREE:
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {
-			vec3 axis = frame->transformOf(
-				camera()->frame()->inverseTransformOf(rotationConstraintDirection()));
+			vec3 axis = frame->transform_of(
+				camera()->frame()->inverse_transform_of(rotation_constraint_direction()));
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
 			rotation = quat(q, 2.0f * std::acos(rotation[3]));

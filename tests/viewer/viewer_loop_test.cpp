@@ -95,8 +95,8 @@ void camera_playback(bool validation) {
     scene(viewer);
     const auto observer = viewer.camera()->position();
     Frame first(*viewer.camera()->frame()), last(first);
-    first.setPosition(observer + vec3(1,0,0));
-    last.setPosition(observer + vec3(2,0,0));
+    first.set_position(observer + vec3(1,0,0));
+    last.set_position(observer + vec3(2,0,0));
     require(viewer.path().add_keyframe(first,0) && viewer.path().add_keyframe(last,.002f), "path fixture failed");
     unsigned applied = 0;
     const auto caller = std::this_thread::get_id();
@@ -124,7 +124,7 @@ void camera_playback(bool validation) {
     viewer.key_press_event(Viewer::KEY_D, Viewer::MODIF_ALT);
     require(viewer.path().number_of_keyframes() == 0, "viewer path deletion failed");
     viewer.camera()->set_position(observer);
-    first.setPosition(vec3(-.4f,0,.5f)); last.setPosition(vec3(.4f,0,.5f));
+    first.set_position(vec3(-.4f,0,.5f)); last.set_position(vec3(.4f,0,.5f));
     viewer.path().add_keyframe(first,0); viewer.path().add_keyframe(last,.1f);
     bool found = false;
     const auto surface = viewer.point_under_pixel(viewer.width()/2,viewer.height()/2,found);

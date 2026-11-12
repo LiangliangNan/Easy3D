@@ -41,9 +41,9 @@ namespace easy3d {
     {
         manipulator_ = new Manipulator;
         static LocalConstraint constraint;
-        //constraint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
-        constraint.setTranslationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
-        manipulator_->frame()->setConstraint(&constraint);
+        //constraint.set_translation_constraint_type(AxisPlaneConstraint::AXIS);
+        constraint.set_translation_constraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
+        manipulator_->frame()->set_constraint(&constraint);
     }
 
 
@@ -60,7 +60,7 @@ namespace easy3d {
 
     void ClippingPlane::fit_scene(const vec3 &center, float radius) {
         scene_radius_ = radius;
-        manipulator_->frame()->setPosition(center); // we change position only (and keep the orientation)
+        manipulator_->frame()->set_position(center); // we change position only (and keep the orientation)
     }
 
 

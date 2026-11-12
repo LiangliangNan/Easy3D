@@ -370,7 +370,7 @@ void DialogWalkThrough::preview(bool b) {
                 break;
             }
             const auto &f = frames[id];
-            viewer_->camera()->frame()->setPositionAndOrientation(f.position(), f.orientation());
+            viewer_->camera()->frame()->set_position_and_orientation(f.position(), f.orientation());
             const int interval = interpolator()->interpolation_period() / interpolator()->interpolation_speed();
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             if (id == frames.size() - 1)  // reaches the end frame

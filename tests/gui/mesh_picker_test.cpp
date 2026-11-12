@@ -156,7 +156,7 @@ void rendered_tests() {
     const auto rotated_vertex=picker.camera()->projected_coordinates_of(transform*mesh->position(first));
     require(picker.pick_vertex(mesh.get(),front,int(rotated_vertex.x),int(rotated_vertex.y))==first,
             "vertex hit did not follow model rotation");
-    mesh->manipulator()->frame()->setOrientation(quat());mesh->manipulator()->frame()->setPosition(vec3(0));
+    mesh->manipulator()->frame()->set_orientation(quat());mesh->manipulator()->frame()->set_position(vec3(0));
     camera->set_type(Camera::ORTHOGRAPHIC);viewer.fit_screen();
 
     // Nonplanar and concave polygons use the same tessellation as rendering.

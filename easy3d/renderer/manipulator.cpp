@@ -39,7 +39,7 @@ namespace easy3d {
             : model_(model), drawable_model_bbox_(nullptr) {
         frame_ = new ManipulatedFrame;
         if (model_)
-            frame_->setPositionAndOrientation(model->bounding_box().center(), quat());
+            frame_->set_position_and_orientation(model->bounding_box().center(), quat());
     }
 
 
@@ -52,7 +52,7 @@ namespace easy3d {
     void Manipulator::reset() {
         if (model_) {
             const vec3 &center = model_->bounding_box(true).center();
-            frame()->setPositionAndOrientation(center, quat());
+            frame()->set_position_and_orientation(center, quat());
         }
     }
 

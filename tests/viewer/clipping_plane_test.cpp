@@ -46,7 +46,7 @@ int main(int argc,char**) {
         viewer.set_overlays({overlay});
         plane->set_enabled(false);plane->set_visible(true);plane->set_cross_section(false);
         plane->set_color(vec4(.2f,.4f,.8f,.3f));plane->set_cross_section_width(.12f);
-        plane->manipulator()->frame()->setOrientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.5f));
+        plane->manipulator()->frame()->set_orientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.5f));
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int k,int m=Viewer::MODIF_ALT){key(viewer.window(),k,0,GLFW_PRESS,m);};
         press(Viewer::KEY_V);press(Viewer::KEY_X);

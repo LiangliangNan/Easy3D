@@ -102,7 +102,7 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         // Adding a model can re-fit the scene and move the camera; we save the exact view
         // used for the scan and restore it afterwards so repeated scans stay aligned.
         Camera saved(*camera());
-        saved.frame()->setPivotPoint(camera()->pivot_point());
+        saved.frame()->set_pivot_point(camera()->pivot_point());
         saved.set_projection_matrix(camera()->projection_matrix());
         saved.set_model_view_matrix(camera()->model_view_matrix());
         // The clipping plane is also tied to the scene bounds; remember its center/radius.
@@ -112,7 +112,7 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         add_model(cloud);
         ClippingPlane::instance()->fit_scene(center, radius);
         *camera() = saved;
-        camera()->frame()->setPivotPoint(saved.pivot_point());
+        camera()->frame()->set_pivot_point(saved.pivot_point());
         camera()->set_projection_matrix(saved.projection_matrix());
         camera()->set_model_view_matrix(saved.model_view_matrix());
         update();

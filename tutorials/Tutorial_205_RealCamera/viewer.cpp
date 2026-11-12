@@ -216,7 +216,7 @@ void TutorialRealCamera::update_cameras_drawable(bool ground_truth) {
         shape::create_camera(points, c.scene_radius() * 0.03f, c.field_of_view(),
                              static_cast<float>(views_[i].h) / static_cast<float>(views_[i].w));
         // Transform the frustum from the camera's local frame into world coordinates.
-        const mat4 &m = c.frame()->worldMatrix();
+        const mat4 &m = c.frame()->world_matrix();
         for (auto &p : points)
             vertices.push_back(m * p);
     }
