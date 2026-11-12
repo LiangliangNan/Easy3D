@@ -549,7 +549,8 @@ namespace easy3d {
         // validation facilities are unavailable. Sync validation implies validation;
         // device_name optionally filters physical devices by name substring.
         // use_native_large_points controls the optional largePoints feature; false forces
-        // portable expanded-point rendering.
+        // portable expanded-point rendering. profiling enables a CPU/API timing report
+        // when the device is destroyed; EASY3D_VULKAN_PROFILE enables it process-wide.
         std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false,
                                                            bool sync_validation = false,
                                                            const std::string &device_name = {});
@@ -557,6 +558,11 @@ namespace easy3d {
                                                            bool sync_validation,
                                                            const std::string &device_name,
                                                            bool use_native_large_points);
+        std::unique_ptr<RenderDevice> create_vulkan_device(bool validation,
+                                                           bool sync_validation,
+                                                           const std::string &device_name,
+                                                           bool use_native_large_points,
+                                                           bool profiling);
 
     } // namespace graphics
 } // namespace easy3d

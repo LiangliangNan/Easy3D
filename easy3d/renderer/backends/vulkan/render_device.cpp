@@ -197,7 +197,9 @@ namespace easy3d {
                           bool sync_validation,
                           const std::string &device_name,
                           const VulkanSurface *window = nullptr,
-                          bool use_native_large_points = true) {
+                          bool use_native_large_points = true,
+                          bool profiling = false) {
+                    profile_enabled = profile_enabled || profiling;
                     library = window && window->loader ? window->loader : internal::VulkanLoader::open();
                     load_global(*library);
                     validation = validation || sync_validation;
@@ -2094,8 +2096,9 @@ namespace easy3d {
                           bool sync_validation,
                           const std::string &device_name,
                           const VulkanSurface *surface = nullptr,
-                          bool use_native_large_points = true) {
-                    c_.init(validation, sync_validation, device_name, surface, use_native_large_points);
+                          bool use_native_large_points = true,
+                          bool profiling = false) {
+                    c_.init(validation, sync_validation, device_name, surface, use_native_large_points, profiling);
                     name_ = c_.properties.deviceName;
                     white_ = std::make_shared<Image>(1, 1, std::vector<unsigned char>(4, 255));
                     sample_counts_ = c_.properties.limits.framebufferColorSampleCounts &
@@ -4779,23 +4782,23 @@ namespace easy3d {
         std::unique_ptr<RenderDevice>
         create_vulkan_device(bool validation, bool sync_validation, const std::string &device_name,
                              bool use_native_large_points) {
+            return create_vulkan_device(validation, sync_validation, device_name, use_native_large_points, false);
+        }
+        std::unique_ptr<RenderDevice>
+        create_vulkan_device(bool validation, bool sync_validation, const std::string &device_name,
+                             bool use_native_large_points, bool profiling) {
             std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-            device->init(validation, sync_validation, device_name, nullptr, use_native_large_points);
+            device->init(validation, sync_validation, device_name, nullptr, use_native_large_points, profiling);
             return std::unique_ptr<RenderDevice>(device.release());
         }
         std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
                                                                   bool validation,
                                                                   bool sync_validation,
-                                                                  const std::string &device_name) {
-            return create_vulkan_window_device(surface, validation, sync_validation, device_name, true);
-        }
-        std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
-                                                                  bool validation,
-                                                                  bool sync_validation,
                                                                   const std::string &device_name,
-                                                                  bool use_native_large_points) {
+                                                                  bool use_native_large_points,
+                                                                  bool profiling) {
             std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-            device->init(validation, sync_validation, device_name, &surface, use_native_large_points);
+            device->init(validation, sync_validation, device_name, &surface, use_native_large_points, profiling);
             return std::unique_ptr<RenderDevice>(device.release());
         }
 

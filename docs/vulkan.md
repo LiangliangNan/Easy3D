@@ -83,6 +83,8 @@ by both backends), then backend-specific protected/private parts, each in its ow
 struct VulkanOptions {
     bool validation = false;
     bool sync_validation = false;
+    bool profiling = false;
+    bool use_native_large_points = true;
     std::string device_name;
 };
 #else
@@ -8658,10 +8660,13 @@ to validate that CI path. Validation-enabled local runs also print repeated
 zero. Treat this discrepancy as unresolved rather than as evidence of
 warning-free validation.
 
-**Submission and staging decision.** The opt-in `EASY3D_VULKAN_PROFILE=1`
-instrumentation reports CPU/API wall timings around command recording,
-`vkQueueSubmit()`, fence waits, and staging allocation/writes; it does not
-provide GPU timestamps. In a Release `viewer.pointbenchmark` run on macOS at
+**Submission and staging decision.** Profiling can be enabled per viewer with
+`VulkanOptions::profiling = true`, or process-wide with
+`EASY3D_VULKAN_PROFILE=1`. It reports CPU/API wall timings around command
+recording, `vkQueueSubmit()`, fence waits, and staging allocation/writes; it
+does not provide GPU timestamps. The `vulkan.scene` test enables profiling and
+checks that the report is emitted without asserting timing values. In a Release
+`viewer.pointbenchmark` run on macOS at
 3200x1834 with 4x MSAA, both native and expanded-point paths rendered 1201
 frames in about 10 seconds. Command recording took about 10-12 ms total per
 path, while synchronous `execute()` accounted for about 10 seconds; the

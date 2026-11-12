@@ -61,11 +61,13 @@ struct VulkanOptions {
     bool validation = false;
     /// Request synchronization validation; this also enables validation layers.
     bool sync_validation = false;
-    /// Optional substring used to select a matching physical-device name.
-    std::string device_name;
+    /// Report CPU/API and staging timings when the Vulkan device is destroyed.
+    bool profiling = false;
     /// Use the native Vulkan large-points feature when available. Disable to
     /// exercise the portable expanded-point renderer or compare its performance.
     bool use_native_large_points = true;
+    /// Optional substring used to select a matching physical-device name.
+    std::string device_name = {};
 };
 #else
 /**
