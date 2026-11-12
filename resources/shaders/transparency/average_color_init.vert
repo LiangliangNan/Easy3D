@@ -29,6 +29,7 @@
 in  vec3 vtx_position;	// vertex position
 in  vec3 vtx_normal;	// vertex normal
 in  vec3 vtx_color;		// vertex color
+in  vec2 vtx_texcoord;	// texture coordinate
 
 uniform vec3 default_color;
 uniform bool per_vertex_color;
@@ -45,6 +46,7 @@ uniform vec4 clippingPlane1;
 
 // the data to be sent to the fragment shader
 out Data{
+	vec2 texcoord;
 	vec3 color;
 	vec3 normal;
 	vec3 position;
@@ -73,6 +75,7 @@ void main(void)
 	else
 		DataOut.color = default_color;
 
+    DataOut.texcoord = vtx_texcoord;
 	DataOut.normal = NORMAL * vtx_normal;
 	DataOut.position = new_position.xyz;
 

@@ -36,6 +36,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/setting.h>
@@ -84,6 +85,8 @@ namespace easy3d {
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
                 ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
+                ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
                 ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
             };
             std::vector<std::string> outputs;
@@ -116,6 +119,10 @@ namespace easy3d {
                         ->set_uniform("MVP_MANIP", MVP * MANIP)
                         ->set_uniform( "NORMAL", NORMAL);
                 program->set_uniform("smooth_shading", d->smooth_shading());
+                program->set_uniform("lighting", d->lighting());
+                program->set_uniform("two_sides_lighting", d->lighting_two_sides());
+                program->set_uniform("distinct_back_color", d->distinct_back_color());
+                program->set_uniform("backside_color", d->back_color());
                 program->set_block_uniform("Material", "ambient", d->material().ambient);
                 program->set_block_uniform("Material", "specular", d->material().specular);
                 program->set_block_uniform("Material", "shininess", &d->material().shininess);
@@ -125,10 +132,22 @@ namespace easy3d {
                 program->set_uniform("selected", d->is_selected());
                 program->set_uniform("highlight_color", setting::highlight_color);
 
+                bool use_texture = (d->texture() &&
+                                    (d->coloring_method() == State::SCALAR_FIELD ||
+                                     d->coloring_method() == State::TEXTURED));
+                program->set_uniform("use_texture", use_texture);
+                if (use_texture) {
+                    program->bind_texture("textureID", d->texture()->id(), 0);
+                    program->set_uniform("texture_repeat", d->texture_repeat());
+                    program->set_uniform("fractional_repeat", d->texture_fractional_repeat());
+                }
+
                 ClippingPlane::instance()->set_program(program);
                 ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
 
                 d->gl_draw();
+                if (use_texture)
+                    program->release_texture();
             }
         }
 

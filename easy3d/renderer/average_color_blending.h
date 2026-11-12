@@ -40,9 +40,9 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using average color blending.
-     * \details Vulkan accumulates straight-alpha fragments order independently,
-     *      exactly like the OpenGL average-color shaders, and composites the
-     *      average over the opaque scene.
+     * \details Both backends use the drawable's texture and material lighting
+     *      when accumulating order-independent average color, then composite
+     *      that approximation over the opaque scene.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
      * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT
      */

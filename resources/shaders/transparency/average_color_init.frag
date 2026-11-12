@@ -37,6 +37,10 @@ uniform float	Alpha;
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
+uniform bool	lighting = true;
+uniform bool	two_sides_lighting = true;
+uniform bool	distinct_back_color = true;
+uniform vec3	backside_color = vec3(0.8f, 0.4f, 0.4f);
 layout(std140) uniform Material {
         vec3	ambient;
         vec3	specular;
@@ -45,11 +49,16 @@ layout(std140) uniform Material {
 
 // smooth shading
 uniform bool    smooth_shading = true;
+uniform bool    use_texture = false;
+uniform sampler2D textureID;
+uniform float   texture_repeat = 1.0f;
+uniform float   fractional_repeat = 0.0f;
 
 uniform bool 	selected = false;
 uniform vec4 	highlight_color;
 
 in Data{
+    vec2 texcoord;
 	vec3 color;
 	vec3 normal;
 	vec3 position;
@@ -57,48 +66,52 @@ in Data{
 } DataIn;
 
 
-vec4 ShadeFragment()
+vec4 ShadeFragment(vec3 flat_normal)
 {
-    vec3 normal;
-    if (smooth_shading)
-        normal = normalize(DataIn.normal);
-    else {
-#if 0	// Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
-        vec3 fdx = vec3( dFdx( DataIn.position.x ), dFdx( DataIn.position.y ), dFdx( DataIn.position.z ) );
-        vec3 fdy = vec3( dFdy( DataIn.position.x ), dFdy( DataIn.position.y ), dFdy( DataIn.position.z ) );
-        normal = normalize(cross(fdx, fdy));
-#else
-        normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-#endif
-//      // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
-//      if (dot(normal, DataIn.normal) < 0)
-        if ((gl_FrontFacing == false) /*&& (two_sides_lighting == false)*/)
-            normal = -normal;
+    vec4 color;
+    if (use_texture) {
+        float repeat = texture_repeat + fractional_repeat / 100.0;
+        color = texture(textureID, DataIn.texcoord * repeat);
     }
+    else
+        color = vec4(DataIn.color, 1.0);
+
+    if ((gl_FrontFacing == false) && distinct_back_color)
+        color.rgb = backside_color;
+
+    if (!lighting)
+        return vec4(color.rgb, Alpha * (use_texture ? color.a : 1.0));
+
+    vec3 normal = smooth_shading ? normalize(DataIn.normal) : flat_normal;
+    if (!smooth_shading && (gl_FrontFacing == false) && !two_sides_lighting)
+        normal = -normal;
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);
     vec3 light_dir = normalize(wLightPos);
+    float df = two_sides_lighting ? abs(dot(light_dir, normal)) : max(dot(light_dir, normal), 0.0);
+    float sf = 0.0;
+    if (df > 0.0) {
+        vec3 half_vector = normalize(light_dir + view_dir);
+        sf = two_sides_lighting ? abs(dot(half_vector, normal)) : max(dot(half_vector, normal), 0.0);
+        sf = pow(sf, shininess);
+    }
 
-    // diffuse factor
-    float df = abs(dot(light_dir, normal));				// light up both sides
-
-    // specular factor
-    vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
-    float sf = max(dot(half_vector, normal), 0.0);		// only the front side can have specular
-    sf = pow(sf, shininess);
-
-    return vec4(DataIn.color * df + specular * sf + ambient, Alpha);
+    return vec4(color.rgb * df + specular * sf + ambient, Alpha * (use_texture ? color.a : 1.0));
 }
 
 void main(void)
 {
+    vec3 flat_normal = vec3(0.0);
+    if (!smooth_shading)
+        flat_normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
     if (DataIn.clipped > 0.0)
         discard;
 
-	vec4 color = ShadeFragment();
+    vec4 color = ShadeFragment(flat_normal);
     if (selected)
-        color = mix(color, highlight_color, 0.6);
+        color.rgb = mix(color.rgb, highlight_color.rgb, 0.6);
 
-	fragOutput0 = vec4(color.rgb * color.a, color.a);
-	fragOutput1 = vec4(1.0);
+    float alpha = clamp(color.a, 0.0, 1.0);
+    fragOutput0 = vec4(color.rgb * alpha, alpha);
+    fragOutput1 = vec4(1.0);
 }

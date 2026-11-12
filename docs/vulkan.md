@@ -8612,7 +8612,8 @@ the Qt, CGAL, FFmpeg and Python extras.
 
 **Image-diff coverage.** `tests/cross_backend/image_diff.py` runs the same shared
 snapshot/effects test under OpenGL and Vulkan and compares plain rendering,
-ambient occlusion, soft shadows, average transparency, and scaled 4x MSAA.
+ambient occlusion, soft shadows, average transparency (both uniform-color and
+textured/material cases), and scaled 4x MSAA.
 Images are 640x480 except the scaled-MSAA case at 1280x960. RGB comparisons use
 three complementary bounds: mean absolute channel error, p99 per-pixel maximum
 channel error, and fraction of pixels whose maximum channel error exceeds 16.
@@ -8624,30 +8625,38 @@ The comparator reports all three and applies these workload-specific limits:
 | Ambient occlusion | 1 | 16 | 2% | 0% |
 | Soft shadows | 1.5 | 24 | 4% | 4% |
 | Average transparency | 1.5 | 24 | 4% | 0% |
+| Textured average transparency | 1.5 | 24 | 4% | 0% |
 | Scaled 4x MSAA | 1.5 | 20 | 4% | 0% |
 
 These are regression bounds, not a claim of pixel identity for effects whose
 sampling or compositing differs by backend. On the local macOS/MoltenVK Release
 comparison, mean RGB errors were 0.000 (plain), 0.153 (AO), 0.396 (soft
-shadows), 0.205 (average transparency), and 0.272 (scaled MSAA), all below
-their limits. Soft-shadow alpha differed on 2.1357% of pixels because the two
-backends composite this effect differently; the explicit 4% bound prevents
-that known approximation from being mistaken for RGB failure while still
-detecting a wider regression.
+shadows), 0.218 (uniform-color average transparency), 0.075 (textured/material
+average transparency), and 0.272 (scaled MSAA), all below their limits.
+Textured average transparency had p99 pixel error 0 and zero alpha mismatches.
+Soft-shadow alpha differed on 2.1357% of pixels because the two backends
+composite this effect differently; the explicit 4% bound prevents that known
+approximation from being mistaken for RGB failure while still detecting a
+wider regression.
 
-The average-transparency comparison initially exposed a genuine shader mismatch:
-Vulkan sampled the generic scene texture and used its material-lighting path,
-while OpenGL's legacy average-color pass shades the drawable color directly
-with two-sided diffuse lighting. `resources/shaders/vulkan/oit_average.frag`
-now follows the OpenGL pass. The fixture uses a uniform explicit surface color
-so texture/material input differences do not confound effect parity. Both
-`opengl.snapshoteffects` and `vulkan.snapshoteffects` pass locally. The Ubuntu
-workflow runs the paired image comparison under Xvfb with lavapipe; a hosted
-workflow result is still needed to validate that CI path. Validation-enabled
-local runs also print repeated `VK_ERROR_FEATURE_NOT_PRESENT` messages about
-blending on `VK_FORMAT_R32G32_UINT`, although the test's validation-error
-counter remains zero. Treat this discrepancy as unresolved rather than as
-evidence of warning-free validation.
+The average-transparency comparison exposed a real implementation choice:
+Vulkan's original pass used the same texture and material-lighting semantics as
+its regular scene and depth-peeling passes, while OpenGL's legacy average pass
+ignored textures and always used two-sided diffuse lighting. The more complete
+Vulkan behavior was retained, and OpenGL's average pass now uses the drawable's
+texture, texture repeat, opacity, material lighting, smooth/flat normals, and
+backside-color settings. This also makes OpenGL average transparency consistent
+with its other transparency methods. The general effect fixture still uses a
+uniform color to isolate effect differences; an additional textured workload
+uses partially transparent texels plus front- and back-facing surfaces to
+exercise the material path. Both `opengl.snapshoteffects` and
+`vulkan.snapshoteffects` pass locally. The Ubuntu workflow runs the paired image
+comparison under Xvfb with lavapipe; a hosted workflow result is still needed
+to validate that CI path. Validation-enabled local runs also print repeated
+`VK_ERROR_FEATURE_NOT_PRESENT` messages about blending on
+`VK_FORMAT_R32G32_UINT`, although the test's validation-error counter remains
+zero. Treat this discrepancy as unresolved rather than as evidence of
+warning-free validation.
 
 **Submission and staging decision.** The opt-in `EASY3D_VULKAN_PROFILE=1`
 instrumentation reports CPU/API wall timings around command recording,

@@ -15,6 +15,7 @@ TOLERANCES = {
     "ambient-occlusion.rgba": (1.0, 16, 0.02),
     "soft-shadow.rgba": (1.5, 24, 0.04),
     "average-transparency.rgba": (1.5, 24, 0.04),
+    "average-textured-transparency.rgba": (1.5, 24, 0.04),
     "scaled-msaa.rgba": (1.5, 20, 0.04),
 }
 

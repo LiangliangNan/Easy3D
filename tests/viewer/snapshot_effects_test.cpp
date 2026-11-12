@@ -6,12 +6,15 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/texture.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -69,6 +72,7 @@ struct EffectViewer : Viewer {
     }
     mutable int draws = 0;
     bool occlude = false, blend = false, cast_shadow = false;
+    std::vector<TrianglesDrawable*> blend_surfaces;
     void draw() const override {
         ++draws;
         if (occlude && occlusion_) {
@@ -83,7 +87,10 @@ struct EffectViewer : Viewer {
             shadow_->end();
             return;
         }
-        if (blend && blending_) { blending_->draw(surfaces()); return; }
+        if (blend && blending_) {
+            blending_->draw(blend_surfaces.empty() ? surfaces() : blend_surfaces);
+            return;
+        }
         Viewer::draw();
     }
     AmbientOcclusion* occlusion_ = nullptr;
@@ -112,6 +119,7 @@ int main(int argc,char** argv) {
         OpenGLOptions options;
         (void)validation;
 #endif
+        {
         const int width=320,height=240,samples=1;
         EffectViewer v("Snapshot effects",width,height,samples,false,false,true,options);
         v.enable_effects();
@@ -215,6 +223,57 @@ int main(int argc,char** argv) {
 #ifdef EASY3D_HAS_VULKAN
         require(v.device().validation_errors()==0,"snapshot validation errors");
 #endif
+        }
+
+        {
+        EffectViewer v("Textured average transparency",320,240,1,false,false,true,options);
+        v.enable_effects();
+        auto mesh=std::make_shared<SurfaceMesh>();
+        auto a=mesh->add_vertex(vec3(-2,-1,0)), b=mesh->add_vertex(vec3(0,-1,0));
+        auto c=mesh->add_vertex(vec3(0,1,0)), d=mesh->add_vertex(vec3(-2,1,0));
+        auto e=mesh->add_vertex(vec3(0,-1,0)), f=mesh->add_vertex(vec3(2,-1,0));
+        auto g=mesh->add_vertex(vec3(2,1,0)), h=mesh->add_vertex(vec3(0,1,0));
+        mesh->add_triangle(a,b,c); mesh->add_triangle(a,c,d);
+        mesh->add_triangle(e,g,f); mesh->add_triangle(e,h,g);
+        auto texcoords=mesh->add_vertex_property<vec2>("v:texcoord");
+        texcoords[a]=texcoords[e]=vec2(0,0);
+        texcoords[b]=texcoords[f]=vec2(1,0);
+        texcoords[c]=texcoords[g]=vec2(1,1);
+        texcoords[d]=texcoords[h]=vec2(0,1);
+        std::unique_ptr<Texture> texture(Texture::create(
+            {255,0,0,255, 0,255,0,128, 0,0,255,64, 255,255,0,255},
+            2,2,4,Texture::CLAMP_TO_EDGE,Texture::NEAREST));
+        require(texture!=nullptr,"textured transparency image could not be created");
+        require(v.add_model(mesh)!=nullptr,"textured transparency mesh could not be added");
+        auto* faces=mesh->renderer()->get_triangles_drawable("faces");
+        require(faces!=nullptr,"textured transparency drawable is missing");
+        faces->set_texture_coloring(State::VERTEX,"v:texcoord",texture.get());
+        faces->set_opacity(.5f);
+        faces->set_lighting(true);
+        faces->set_lighting_two_sides(false);
+        faces->set_distinct_back_color(true);
+        faces->set_back_color(vec4(1,0,1,1));
+        faces->set_smooth_shading(true);
+        v.camera()->set_type(Camera::ORTHOGRAPHIC);
+        v.camera()->set_view_direction(vec3(0,0,-1));
+        v.camera()->set_up_vector(vec3(0,1,0));
+        v.fit_screen();
+        const int fw=v.framebuffer_width(), fh=v.framebuffer_height();
+        require(v.snapshot(output_path(output_dir,"cross-backend-average-textured-plain.png"),1,1,1),
+                "textured plain snapshot failed");
+        const auto plain=read_snapshot(output_path(output_dir,"cross-backend-average-textured-plain.png"),fw,fh);
+        v.blend=true;
+        v.blend_surfaces={faces};
+        require(v.snapshot(output_path(output_dir,"cross-backend-average-textured.png"),1,1,1),
+                "textured average-transparency snapshot failed");
+        const auto image=read_snapshot(output_path(output_dir,"cross-backend-average-textured.png"),fw,fh);
+        require(image!=plain,"textured average transparency did not change the plain frame");
+        write_rgba(output_path(output_dir,"average-textured-transparency.rgba"),image,fw,fh);
+#ifdef EASY3D_HAS_VULKAN
+        require(v.device().validation_errors()==0,"textured average-transparency validation errors");
+#endif
+        }
+
         std::cout<<"PASS: OpenGL/Vulkan effect and snapshot images written to "<<output_dir<<'\n';
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }
