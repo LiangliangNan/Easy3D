@@ -7954,3 +7954,107 @@ unaffected by the batch (the real-camera regression lives in the Vulkan-only tes
 
 The remaining migration gates (Linux/Mesa CI rerun, Windows hardware, cross-platform validation)
 are unchanged.
+
+### 2026-11-12 — W10 batch 66: plain-line expansion keeps both camera-space and screen-space, behind one switch
+
+**Scope.** Tutorial 301_Drawables showed the OpenGL backend's blue bounding-box wireframe wider
+than the Vulkan backend's. The refined symptom: in a perspective camera the OpenGL stroke widens
+towards the camera and narrows away from it (99 px at the near end down to 35 px at the far end of
+a 50 px stroke), while the Vulkan stroke keeps one width along its whole length; in an
+orthographic camera the two backends agree. The change that removed the OpenGL difference was
+reconsidered and not taken; instead **both expansions are kept and selected by a client-settable
+switch**.
+
+- *New setting* `setting::lines_drawable_screen_space_width` (`easy3d/util/setting.h`,
+  `easy3d/util/setting.cpp`, also encoded/decoded with the other settings). It is `false` by
+  default, which keeps the current OpenGL behavior (camera-space expansion). Setting it to `true`
+  expands plain lines in screen space, so the stroke keeps the requested number of framebuffer
+  pixels along its whole length and the two backends draw the same stroke.
+- *OpenGL geometry shaders* (`resources/shaders/lines/lines_plain_color_width_control.geom` and
+  `lines_plain_texture_width_control.geom`): both expansions live in the shader, selected by the
+  new `screen_space_width` uniform. The camera-space branch is the previous code (a world-space
+  radius, so the projected width follows the perspective foreshortening). The screen-space branch
+  clips the centerline against the eye plane in homogeneous space, takes the screen-space
+  direction from the projected endpoints and offsets each end by half the requested framebuffer
+  width. The vertex emission and the clipping-plane distances are shared by both branches.
+- *OpenGL caller* (`easy3d/renderer/drawable_lines.cpp`): the two plain-line paths pass
+  `screen_space_width` from the setting, plus the viewport size and the requested width in
+  framebuffer pixels (`line_width() * viewport_pixel_scale(camera)`) for the screen-space branch.
+  The `radius` and `perspective` uniforms remain for the camera-space branch; the cylinder and
+  cone impostors keep their world-space radius.
+- *Unchanged*: the native Vulkan backend (its ribbon is always screen-space, and reproducing the
+  camera-space expansion would need the world-space perpendicular, so the setting has no effect
+  there), native one-pixel lines, the cylinder/cone impostors and the screen-space lines.
+
+- *New shared check* `tests/viewer/plain_line_parity_test.cpp`, registered as
+  `vulkan.plainlineparity` and `opengl.plainlineparity`. The same source, scene and expectations
+  run in both trees; each backend captures through its own path (OpenGL: `glReadPixels` behind
+  `Viewer::capture()`, Vulkan: the OffScreen device readback). The scene is a plain world-space
+  `LinesDrawable` of width 50 whose ends sit at view depths 1.5 and 4.5; the perpendicular stroke
+  thickness is sampled in 20 bins along the line. With the screen-space expansion the check
+  requires a constant thickness equal to the requested width; in the OpenGL tree it also checks
+  that the camera-space expansion still changes the width with the distance.
+
+**Measured result (2026-11-12, macOS).**
+
+| Backend | Screen space (perspective / orthographic) | Camera space (perspective) |
+|---|---|---|
+| Vulkan | constant 49 px / 49 px (7750 / 5800 px covered) | n/a (always screen space) |
+| OpenGL | constant 49 px / 49 px (7750 / 5800 px covered) | 99 px down to 35 px (10328 px covered) |
+
+**Validation.** OpenGL `build-opengl` full serial CTest 107/107 and Vulkan `cmake-build-debug`
+full serial CTest 147/147, both green, including the two parity tests.
+
+The remaining migration gates (Linux/Mesa CI rerun, Windows hardware, cross-platform validation)
+are unchanged.
+
+### 2026-11-12 — W10 batch 67: the native Vulkan backend supports both plain-line expansions
+
+**Scope.** Batch 66 kept the camera-space and the screen-space plain-line expansions in the OpenGL
+backend, selected by `setting::lines_drawable_screen_space_width`. The native Vulkan backend now
+honors the same switch, so one setting controls both backends.
+
+- *Draw command* (`easy3d/renderer/render_device.h`): new field `line_screen_space_width`, which
+  selects how a plain line is expanded. It defaults to screen space, so the low-level render
+  device keeps its current behavior (and the renderer tests that assert constant pixel widths
+  stay valid).
+- *Scene adapter* (`easy3d/renderer/backends/vulkan/drawable.cpp`): the field is filled from
+  `setting::lines_drawable_screen_space_width`, exactly like the OpenGL path, so the two backends
+  follow the same client setting.
+- *Render device* (`easy3d/renderer/backends/vulkan/render_device.cpp`): the mode reaches the
+  shader through a dedicated flag, `ImpostorUniform::line_options[0]`, which the shaders read as
+  the boolean `line_screen_space_width` (1: screen space, 0: camera space). The flag follows
+  `clip_info` in the shared uniform buffer, so the shaders that read only the prefix of that
+  buffer (the `Impostor` block) see it at the same offset as the ones that read all of it (the
+  `MaterialState` block); the buffer grew from 512 to 528 bytes and the layout assertion was
+  updated. A plain line expanded in camera space also needs the camera-space endpoints and the
+  camera projection, which the device previously left as identity for plain lines (the screen-space
+  ribbon works in clip space only), so `model_view` and `projection` are now supplied for that
+  mode.
+- *Ribbon shader* (`resources/shaders/vulkan/wide_lines.vert`): the screen-space branch is the
+  previous code (a constant framebuffer-pixel width). The camera-space branch offsets the
+  camera-space endpoints by the world-space half-width (`dimensions.w`, the same
+  `impostor_radius(camera, line_width)` the OpenGL geometry shader uses) with the same
+  perpendicular rule (the camera-to-midpoint ray for a perspective camera, the view axis for an
+  orthographic one; the perspective case is detected from the projection's w term), so the width
+  on screen follows the distance to the camera exactly as on OpenGL.
+
+**Measured result (2026-11-12, macOS).** The shared check reports identical numbers on both
+backends, in both modes:
+
+| Mode | OpenGL | Vulkan |
+|---|---|---|
+| Screen space, perspective | constant 49 px, 7750 px covered | constant 49 px, 7750 px covered |
+| Screen space, orthographic | constant 49 px, 5800 px covered | constant 49 px, 5800 px covered |
+| Camera space, perspective | 99 px down to 35 px, 10328 px covered | 99 px down to 35 px, 10328 px covered |
+
+**Validation.** OpenGL `build-opengl` full serial CTest 107/107 and Vulkan `cmake-build-debug`
+full serial CTest 147/147, both green, including `opengl.plainlineparity` and
+`vulkan.plainlineparity`, which now check both expansions on both backends.
+
+With the default setting (`false`, camera space) both backends now draw plain lines the same way;
+setting `setting::lines_drawable_screen_space_width = true` switches both to the constant-width
+screen-space expansion.
+
+The remaining migration gates (Linux/Mesa CI rerun, Windows hardware, cross-platform validation)
+are unchanged.

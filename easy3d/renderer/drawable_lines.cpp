@@ -30,6 +30,7 @@
 
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/texture_manager.h>
@@ -144,6 +145,15 @@ namespace easy3d {
             program->set_uniform("radius", impostor_radius(*camera, line_width()))
                     ->set_uniform("default_color", color())
                     ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
+
+            // Screen-space expansion (setting::lines_drawable_screen_space_width) keeps the
+            // stroke width constant in framebuffer pixels, so it needs the viewport size and
+            // the requested width in those units.
+            GLint viewport[4] = {0, 0, 0, 0};
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            program->set_uniform("screen_space_width", setting::lines_drawable_screen_space_width)
+                    ->set_uniform("viewport_size", vec2(float(viewport[2]), float(viewport[3])))
+                    ->set_uniform("line_width", line_width() * viewport_pixel_scale(*camera));
 
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)
@@ -302,6 +312,15 @@ namespace easy3d {
                     ->set_uniform("PROJ", camera->projectionMatrix())
                     ->set_uniform("MANIP", manipulated_matrix());
             program->set_uniform("radius", impostor_radius(*camera, line_width()));
+
+            // Screen-space expansion (setting::lines_drawable_screen_space_width) keeps the
+            // stroke width constant in framebuffer pixels, so it needs the viewport size and
+            // the requested width in those units.
+            GLint viewport[4] = {0, 0, 0, 0};
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            program->set_uniform("screen_space_width", setting::lines_drawable_screen_space_width)
+                    ->set_uniform("viewport_size", vec2(float(viewport[2]), float(viewport[3])))
+                    ->set_uniform("line_width", line_width() * viewport_pixel_scale(*camera));
 
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)

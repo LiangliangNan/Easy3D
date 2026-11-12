@@ -142,6 +142,14 @@ namespace easy3d {
         /// @brief Backside color for lines drawable.
         /// @details This variable defines the color used for the backside of lines when `lines_drawable_distinct_backside_color` is enabled.
         extern EASY3D_UTIL_EXPORT vec4 lines_drawable_backside_color;
+        /// @brief Whether plain lines are expanded in screen space.
+        /// @details This variable selects how a plain line wider than one pixel is drawn.
+        /// When disabled (the default), the line is expanded in camera space by a world-space
+        /// radius, so its width on screen changes with the distance to the camera: a line
+        /// pointing at the camera becomes thinner. When enabled, the line is expanded in screen
+        /// space and keeps the requested number of pixels along its whole length. The native
+        /// Vulkan backend always expands plain lines in screen space.
+        extern EASY3D_UTIL_EXPORT bool lines_drawable_screen_space_width;
 
         // Triangles drawable settings
         /// @brief Whether two-side lighting is enabled for triangles drawable.

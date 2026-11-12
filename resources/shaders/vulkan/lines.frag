@@ -3,6 +3,7 @@ layout(set=0,binding=0) uniform sampler2D image_texture;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
     vec4 dimensions; vec4 viewport_origin; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
+    bool line_screen_space_width; // 1: expand the plain line in screen space, 0: in camera space
 } shape;
 layout(location=0) flat in vec3 base;
 layout(location=1) flat in vec3 end;

@@ -66,6 +66,7 @@ namespace easy3d {
         bool lines_drawable_two_side_lighting = false;
         bool lines_drawable_distinct_backside_color = false;
         vec4 lines_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
+        bool lines_drawable_screen_space_width = false;
         // triangles drawable
         bool triangles_drawable_two_side_lighting = true;
         bool triangles_drawable_distinct_backside_color = true;
@@ -223,6 +224,7 @@ namespace easy3d {
             ENCODE("lines drawable", lines_drawable_two_side_lighting)
             ENCODE("lines drawable", lines_drawable_distinct_backside_color)
             ENCODE("lines drawable", lines_drawable_backside_color)
+            ENCODE("lines drawable", lines_drawable_screen_space_width)
             // triangles drawable
             ENCODE("triangles drawable", triangles_drawable_two_side_lighting)
             ENCODE("triangles drawable", triangles_drawable_distinct_backside_color)
@@ -339,6 +341,7 @@ namespace easy3d {
             DECODE("lines drawable", lines_drawable_two_side_lighting)
             DECODE("lines drawable", lines_drawable_distinct_backside_color)
             DECODE("lines drawable", lines_drawable_backside_color)
+            DECODE("lines drawable", lines_drawable_screen_space_width)
             // triangles drawable
             DECODE("triangles drawable", triangles_drawable_two_side_lighting)
             DECODE("triangles drawable", triangles_drawable_distinct_backside_color)

@@ -15,9 +15,10 @@ layout(push_constant) uniform Draw {
 } draw;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 viewport_origin; // viewport width, height, pixel width, view-space radius
+    vec4 dimensions; vec4 viewport_origin; // viewport width, height, pixel width, world-space radius
     vec4 light; // shared uniform layout; unused by ribbons
     vec4 clip_planes[2]; vec4 clip_info;
+    bool line_screen_space_width; // 1: expand the plain line in screen space, 0: in camera space
 } shape;
 layout(location=0) out vec4 ribbon_color;
 layout(location=1) out vec2 ribbon_uv;
@@ -55,16 +56,34 @@ void main() {
     vec4 start = mix(a,b,lo), finish = mix(a,b,hi);
     start = vec4(start.x,-start.y,0.5*(start.z+start.w),start.w);
     finish = vec4(finish.x,-finish.y,0.5*(finish.z+finish.w),finish.w);
-    vec2 delta = (finish.xy/finish.w-start.xy/start.w)*shape.dimensions.xy;
-    float length_pixels = length(delta);
-    if (length_pixels <= 0) { gl_Position=vec4(2,2,2,1); return; }
-    vec2 offset = vec2(-delta.y,delta.x)/length_pixels*shape.dimensions.z/shape.dimensions.xy;
     const int ends[6] = int[](0,1,1,0,1,0);
     const float sides[6] = float[](-1,-1,1,-1,1,1);
     bool at_end = ends[gl_VertexIndex] != 0;
-    vec4 p = at_end ? finish : start;
-    p.xy += sides[gl_VertexIndex]*offset*p.w;
-    gl_Position = p;
+    if (shape.line_screen_space_width) {
+        // Screen-space expansion: a constant framebuffer-pixel width.
+        vec2 delta = (finish.xy/finish.w-start.xy/start.w)*shape.dimensions.xy;
+        float length_pixels = length(delta);
+        if (length_pixels <= 0) { gl_Position=vec4(2,2,2,1); return; }
+        vec2 offset = vec2(-delta.y,delta.x)/length_pixels*shape.dimensions.z/shape.dimensions.xy;
+        vec4 p = at_end ? finish : start;
+        p.xy += sides[gl_VertexIndex]*offset*p.w;
+        gl_Position = p;
+    } else {
+        // Camera-space expansion: the stroke has a world-space half-width, so its width on
+        // screen changes with the distance to the camera (the legacy OpenGL behavior).
+        vec3 base_view = (shape.model_view*vec4(position,1)).xyz;
+        vec3 top_view = (shape.model_view*vec4(end_position,1)).xyz;
+        vec3 axes = top_view-base_view;
+        vec3 view_dir = vec3(0,0,1); // view direction for an orthographic camera
+        if (shape.projection[2][3] != 0.0) // a perspective projection has a w term
+            view_dir = normalize(vec3(0)-0.5*(base_view+top_view));
+        vec3 offset = cross(view_dir,axes);
+        offset = shape.dimensions.w*normalize(offset);
+        vec3 p_view = mix(base_view,top_view,at_end ? hi : lo);
+        p_view += sides[gl_VertexIndex]*offset;
+        vec4 clip = shape.projection*vec4(p_view,1.0);
+        gl_Position = vec4(clip.x,-clip.y,0.5*(clip.z+clip.w),clip.w);
+    }
     float t = at_end ? hi : lo;
     ribbon_color = mix(lit_color(start_color,normal),lit_color(finish_color,end_normal),t);
     ribbon_uv = mix(texcoord,end_texcoord,t);

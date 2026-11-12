@@ -1234,10 +1234,14 @@ namespace easy3d {
             struct ImpostorUniform {
                 float model_view[16], projection[16], inverse_projection[16], dimensions[4], viewport_origin[4],
                     light[4], clip_planes[8], clip_info[4];
+                // line_options[0] is the shader's line_screen_space_width flag (0 or 1); a bool
+                // in a uniform block is stored as an integer. It follows clip_info so that the
+                // shaders reading only the prefix of this buffer see it at the same offset.
+                uint32_t line_options[4];
                 float model[16], eye[4], material_light[4], ambient[4], specular[4], backside[4], shading[4],
                     shadow[16];
             };
-            static_assert(sizeof(ImpostorUniform) == 512, "impostor uniform layout changed");
+            static_assert(sizeof(ImpostorUniform) == 528, "impostor uniform layout changed");
             struct Push {
                 float mvp[16], color[4];
                 uint32_t object, lighting;
@@ -2925,8 +2929,13 @@ namespace easy3d {
                             ImpostorUniform u{};
                             const bool analytic =
                                 command.point_style != PointStyle::plain || command.line_style != LineStyle::plain;
+                            // A plain line expanded in camera space needs the camera-space
+                            // endpoints and the camera projection to offset them.
+                            const bool camera_space_line = command.geometry->topology() == Topology::lines &&
+                                                          command.line_style == LineStyle::plain &&
+                                                          !command.line_screen_space_width;
                             mat4 model_view = mat4::identity(), projection = mat4::identity();
-                            if (analytic) {
+                            if (analytic || camera_space_line) {
                                 model_view = command.model_view;
                                 projection = command.projection;
                             } else if (command.ambient_occlusion)
@@ -2974,6 +2983,11 @@ namespace easy3d {
                                 for (size_t plane = 0; plane < command.clipping_planes.size(); ++plane)
                                     for (unsigned c = 0; c < 4; ++c)
                                         u.clip_planes[plane * 4 + c] = command.clipping_planes[plane][c];
+                            }
+                            if (command.geometry->topology() == Topology::lines &&
+                                command.line_style == LineStyle::plain) {
+                                // 1: expand the plain line in screen space, 0: in camera space.
+                                u.line_options[0] = command.line_screen_space_width ? 1u : 0u;
                             }
                             for (unsigned col = 0; col < 4; ++col)
                                 for (unsigned row = 0; row < 4; ++row)

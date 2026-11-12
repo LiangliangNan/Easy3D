@@ -325,6 +325,9 @@ namespace easy3d {
                                                                                       : graphics::LineStyle::plain;
                     result.line_width = l->line_width();
                     result.line_radius = Drawable::impostor_radius(cam, l->line_width());
+                    // Plain lines are expanded in camera space (a world-space half-width) or in
+                    // screen space (a constant pixel width); the client selects the mode.
+                    result.line_screen_space_width = setting::lines_drawable_screen_space_width;
                     result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
                     result.projection = cam.projectionMatrix();
                     result.sphere_light = vec3(setting::light_position);

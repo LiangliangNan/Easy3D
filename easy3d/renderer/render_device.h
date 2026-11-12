@@ -325,6 +325,11 @@ namespace easy3d {
             // Plain lines use framebuffer-pixel widths. Width one retains native line
             // rasterization; other widths use butt-capped triangle ribbons, without joins.
             float line_width = 1; ///< Plain-line width in framebuffer pixels.
+            // A plain line is expanded either in camera space (a world-space half-width, so its
+            // width on screen changes with the distance to the camera) or in screen space (a
+            // constant framebuffer-pixel width). Screen space is the default; the scene adapter
+            // follows setting::lines_drawable_screen_space_width.
+            bool line_screen_space_width = true; ///< Expand plain lines in screen space.
             // Filled triangles are pushed away from the camera, as the OpenGL viewer
             // does with glPolygonOffset, so coplanar line drawables stay visible.
             // Ignored for other topologies and overlays.

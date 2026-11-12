@@ -23,6 +23,18 @@ endforeach()
         set_tests_properties(viewer.offscreen PROPERTIES LABELS desktop)
     endif()
 
+    # Shared plain-line stroke parity: the same scene and the same expectations
+    # run on both backends, each through its own capture path.
+    add_executable(easy3d_plain_line_parity_test plain_line_parity_test.cpp)
+    target_link_libraries(easy3d_plain_line_parity_test PRIVATE easy3d::viewer)
+    if(Easy3D_ENABLE_VULKAN)
+        add_test(NAME vulkan.plainlineparity COMMAND easy3d_plain_line_parity_test)
+        set_tests_properties(vulkan.plainlineparity PROPERTIES TIMEOUT 120 LABELS desktop)
+    else()
+        add_test(NAME opengl.plainlineparity COMMAND easy3d_plain_line_parity_test)
+        set_tests_properties(opengl.plainlineparity PROPERTIES TIMEOUT 120 LABELS desktop)
+    endif()
+
     add_executable(easy3d_viewer_query_test viewer_query_test.cpp)
     target_link_libraries(easy3d_viewer_query_test PRIVATE easy3d::viewer 3rd_glfw)
     add_executable(easy3d_viewer_events_test viewer_events_test.cpp)

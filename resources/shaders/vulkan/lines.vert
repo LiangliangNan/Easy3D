@@ -16,6 +16,7 @@ layout(set=1,binding=0,std140) uniform Impostor {
     vec4 dimensions; vec4 viewport_origin; // viewport width, height, unused, world-space radius
     vec4 light; // view-space direction; w = 3 cylinder, 4 cone
     vec4 clip_planes[2]; vec4 clip_info;
+    bool line_screen_space_width; // 1: expand the plain line in screen space, 0: in camera space
 } shape;
 layout(location=0) flat out vec3 base;
 layout(location=1) flat out vec3 end;
