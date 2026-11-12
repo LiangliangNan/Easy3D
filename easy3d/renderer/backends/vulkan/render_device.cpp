@@ -1917,6 +1917,257 @@ namespace easy3d {
                 }
             };
 
+            class LinkedListsBuilder {
+                Context &c_;
+                std::unique_ptr<LinkedLists> &lists_;
+                std::unique_ptr<Oit> &oit_;
+                VkDescriptorPool descriptor_pool_;
+                VkDescriptorSetLayout oit_lists_descriptors_;
+                VkPipelineLayout oit_lists_layout_;
+                VkPipelineLayout oit_resolve_layout_;
+
+            public:
+                LinkedListsBuilder(Context &context,
+                                   std::unique_ptr<LinkedLists> &lists,
+                                   std::unique_ptr<Oit> &oit,
+                                   VkDescriptorPool descriptor_pool,
+                                   VkDescriptorSetLayout lists_descriptors,
+                                   VkPipelineLayout lists_layout,
+                                   VkPipelineLayout resolve_layout)
+                    : c_(context), lists_(lists), oit_(oit), descriptor_pool_(descriptor_pool),
+                      oit_lists_descriptors_(lists_descriptors), oit_lists_layout_(lists_layout),
+                      oit_resolve_layout_(resolve_layout) {}
+
+                void ensure(uint32_t width, uint32_t height, unsigned max_fragments) {
+                    const uint32_t node_count = width * height * std::max(1u, max_fragments);
+                    if (lists_ && lists_->width == width && lists_->height == height &&
+                        lists_->node_count == node_count)
+                        return;
+                    lists_.reset(new LinkedLists(c_));
+                    lists_->width = width;
+                    lists_->height = height;
+                    lists_->node_count = node_count;
+                    lists_->pool = descriptor_pool_;
+                    const VkDeviceSize head_bytes = VkDeviceSize(width) * height * 4;
+                    const VkDeviceSize node_bytes = VkDeviceSize(node_count) * 32;
+                    lists_->head.init(head_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                      false);
+                    lists_->nodes.init(node_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, false);
+                    lists_->counter.init(4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                         false);
+                    lists_->counter_readback.init(4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+                    lists_->params.init(16, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+                    uint32_t parameters[4] = {node_count, width, height, 0};
+                    lists_->params.transfer(parameters, sizeof(parameters), true);
+
+                    {
+                        // The build fragment shader appends its fragments to storage buffers and
+                        // discards its color output. The dummy attachment keeps the pass equal to
+                        // the OpenGL build FBO (which also allocates a color buffer): a pass with
+                        // no attachments at all makes lavapipe drop the masked color-attachment
+                        // writes of the picking draws that follow it.
+                        lists_->build_target.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+                                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+                        VkAttachmentDescription attachment{};
+                        attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+                        attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                        attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                        attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                        attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                        attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                        attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                        VkAttachmentReference build_color = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+                        VkSubpassDescription subpass{};
+                        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+                        subpass.colorAttachmentCount = 1;
+                        subpass.pColorAttachments = &build_color;
+                        VkSubpassDependency dependencies[2] = {};
+                        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+                        dependencies[0].dstSubpass = 0;
+                        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT |
+                                                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT |
+                                                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                        dependencies[1].srcSubpass = 0;
+                        dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+                        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                        dependencies[1].srcAccessMask =
+                            VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                        dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+                        VkRenderPassCreateInfo info{};
+                        info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+                        info.attachmentCount = 1;
+                        info.pAttachments = &attachment;
+                        info.subpassCount = 1;
+                        info.pSubpasses = &subpass;
+                        info.dependencyCount = 2;
+                        info.pDependencies = dependencies;
+                        check(c_.vkCreateRenderPass(c_.device, &info, nullptr, &lists_->build_pass),
+                              "create linked lists build pass");
+                        VkFramebufferCreateInfo fi{};
+                        fi.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+                        fi.renderPass = lists_->build_pass;
+                        fi.attachmentCount = 1;
+                        fi.pAttachments = &lists_->build_target.view;
+                        fi.width = width;
+                        fi.height = height;
+                        fi.layers = 1;
+                        check(c_.vkCreateFramebuffer(c_.device, &fi, nullptr, &lists_->build_framebuffer),
+                              "create linked lists framebuffer");
+                    }
+
+                    VkDescriptorSetAllocateInfo allocation{};
+                    allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                    allocation.descriptorPool = descriptor_pool_;
+                    allocation.descriptorSetCount = 1;
+                    allocation.pSetLayouts = &oit_lists_descriptors_;
+                    check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &lists_->set),
+                          "allocate linked lists descriptors");
+                    const VkDescriptorBufferInfo buffers[4] = {{lists_->head.handle, 0, head_bytes},
+                                                               {lists_->nodes.handle, 0, node_bytes},
+                                                               {lists_->counter.handle, 0, 4},
+                                                               {lists_->params.handle, 0, 16}};
+                    VkWriteDescriptorSet writes[4] = {};
+                    for (unsigned i = 0; i < 4; ++i) {
+                        writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        writes[i].dstSet = lists_->set;
+                        writes[i].dstBinding = i;
+                        writes[i].descriptorCount = 1;
+                        writes[i].descriptorType =
+                            i == 3 ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        writes[i].pBufferInfo = &buffers[i];
+                    }
+                    c_.vkUpdateDescriptorSets(c_.device, 4, writes, 0, nullptr);
+
+                    VkShaderModule modules[4] = {};
+                    try {
+                        VkShaderModuleCreateInfo mi{};
+                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                        mi.codeSize = sizeof(scene_vert);
+                        mi.pCode = scene_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]),
+                              "create linked lists vertex shader");
+                        mi.codeSize = sizeof(oit_linked_lists_build_frag);
+                        mi.pCode = oit_linked_lists_build_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]),
+                              "create linked lists build shader");
+                        mi.codeSize = sizeof(oit_quad_vert);
+                        mi.pCode = oit_quad_vert;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]),
+                              "create linked lists quad shader");
+                        mi.codeSize = sizeof(oit_linked_lists_resolve_frag);
+                        mi.pCode = oit_linked_lists_resolve_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]),
+                              "create linked lists resolve shader");
+                        VkPipelineShaderStageCreateInfo stages[2] = {};
+                        for (unsigned i = 0; i < 2; ++i) {
+                            stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                            stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
+                            stages[i].pName = "main";
+                        }
+                        VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
+                        VkVertexInputAttributeDescription attributes[] = {
+                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
+                            {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
+                            {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
+                            {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
+                            {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
+                            {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
+                        VkPipelineVertexInputStateCreateInfo vertex{};
+                        vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                        vertex.vertexBindingDescriptionCount = 1;
+                        vertex.pVertexBindingDescriptions = &binding;
+                        vertex.vertexAttributeDescriptionCount = 6;
+                        vertex.pVertexAttributeDescriptions = attributes;
+                        VkPipelineInputAssemblyStateCreateInfo assembly{};
+                        assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+                        assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                        VkPipelineViewportStateCreateInfo viewport{};
+                        viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+                        viewport.viewportCount = 1;
+                        viewport.scissorCount = 1;
+                        VkPipelineRasterizationStateCreateInfo raster{};
+                        raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+                        raster.polygonMode = VK_POLYGON_MODE_FILL;
+                        raster.cullMode = VK_CULL_MODE_NONE;
+                        raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+                        raster.lineWidth = 1;
+                        raster.depthBiasEnable = VK_TRUE;
+                        VkPipelineMultisampleStateCreateInfo multisample{};
+                        multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+                        multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+                        VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                                           VK_DYNAMIC_STATE_DEPTH_BIAS};
+                        VkPipelineDynamicStateCreateInfo dynamic{};
+                        dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+                        dynamic.dynamicStateCount = 3;
+                        dynamic.pDynamicStates = dynamic_states;
+                        VkPipelineDepthStencilStateCreateInfo depth_state{};
+                        depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+                        VkPipelineColorBlendStateCreateInfo blending{};
+                        blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+                        VkGraphicsPipelineCreateInfo info{};
+                        info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+                        info.stageCount = 2;
+                        info.pStages = stages;
+                        info.pVertexInputState = &vertex;
+                        info.pInputAssemblyState = &assembly;
+                        info.pViewportState = &viewport;
+                        info.pRasterizationState = &raster;
+                        info.pMultisampleState = &multisample;
+                        info.pDepthStencilState = &depth_state;
+                        info.pColorBlendState = &blending;
+                        info.pDynamicState = &dynamic;
+
+                        // Build: scene geometry, every fragment appends a node. The color
+                        // attachment only receives the shader's discarded dummy output.
+                        stages[0].module = modules[0];
+                        stages[1].module = modules[1];
+                        VkPipelineColorBlendAttachmentState build_attachment{};
+                        build_attachment.colorWriteMask = 0xf;
+                        blending.attachmentCount = 1;
+                        blending.pAttachments = &build_attachment;
+                        info.renderPass = lists_->build_pass;
+                        info.layout = oit_lists_layout_;
+                        check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                                           &lists_->build_pipeline),
+                              "create linked lists build pipeline");
+
+                        // Resolve: full-screen triangle replacing the accumulation image.
+                        stages[0].module = modules[2];
+                        stages[1].module = modules[3];
+                        vertex.vertexBindingDescriptionCount = 0;
+                        vertex.pVertexBindingDescriptions = nullptr;
+                        vertex.vertexAttributeDescriptionCount = 0;
+                        vertex.pVertexAttributeDescriptions = nullptr;
+                        VkPipelineColorBlendAttachmentState replace{};
+                        replace.colorWriteMask = 0xf;
+                        blending.attachmentCount = 1;
+                        blending.pAttachments = &replace;
+                        info.renderPass = oit_->reset_pass;
+                        info.layout = oit_resolve_layout_;
+                        check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
+                                                           &lists_->resolve_pipeline),
+                              "create linked lists resolve pipeline");
+                    } catch (...) {
+                        for (auto module : modules)
+                            if (module)
+                                c_.vkDestroyShaderModule(c_.device, module, nullptr);
+                        throw;
+                    }
+                    for (auto module : modules)
+                        if (module)
+                            c_.vkDestroyShaderModule(c_.device, module, nullptr);
+                }
+            };
+
             class Presentation {
                 Context &c_;
                 std::unique_ptr<Swapchain> swapchain_;
@@ -4196,232 +4447,9 @@ namespace easy3d {
                 // renders into the shared Oit accumulation image (reset_pass), so the scene
                 // composite over-blends it exactly like a peeled result.
                 void ensure_linked_lists(uint32_t width, uint32_t height, unsigned max_fragments) {
-                    const uint32_t node_count = width * height * std::max(1u, max_fragments);
-                    if (lists_ && lists_->width == width && lists_->height == height &&
-                        lists_->node_count == node_count)
-                        return;
-                    lists_.reset(new LinkedLists(c_));
-                    lists_->width = width;
-                    lists_->height = height;
-                    lists_->node_count = node_count;
-                    lists_->pool = descriptor_pool_;
-                    const VkDeviceSize head_bytes = VkDeviceSize(width) * height * 4;
-                    const VkDeviceSize node_bytes = VkDeviceSize(node_count) * 32;
-                    lists_->head.init(head_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                      false);
-                    lists_->nodes.init(node_bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, false);
-                    lists_->counter.init(4, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                         false);
-                    lists_->counter_readback.init(4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
-                    lists_->params.init(16, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
-                    uint32_t parameters[4] = {node_count, width, height, 0};
-                    lists_->params.transfer(parameters, sizeof(parameters), true);
-
-                    {
-                        // The build fragment shader appends its fragments to storage buffers and
-                        // discards its color output. The dummy attachment keeps the pass equal to
-                        // the OpenGL build FBO (which also allocates a color buffer): a pass with
-                        // no attachments at all makes lavapipe drop the masked color-attachment
-                        // writes of the picking draws that follow it.
-                        lists_->build_target.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
-                                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-                        VkAttachmentDescription attachment{};
-                        attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
-                        attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-                        attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                        attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-                        attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                        attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-                        attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                        attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                        VkAttachmentReference build_color = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-                        VkSubpassDescription subpass{};
-                        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-                        subpass.colorAttachmentCount = 1;
-                        subpass.pColorAttachments = &build_color;
-                        VkSubpassDependency dependencies[2] = {};
-                        dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-                        dependencies[0].dstSubpass = 0;
-                        dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT |
-                                                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                        dependencies[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT |
-                                                        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                        dependencies[1].srcSubpass = 0;
-                        dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-                        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                                                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-                        dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-                        dependencies[1].srcAccessMask =
-                            VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-                        dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-                        VkRenderPassCreateInfo info{};
-                        info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-                        info.attachmentCount = 1;
-                        info.pAttachments = &attachment;
-                        info.subpassCount = 1;
-                        info.pSubpasses = &subpass;
-                        info.dependencyCount = 2;
-                        info.pDependencies = dependencies;
-                        check(c_.vkCreateRenderPass(c_.device, &info, nullptr, &lists_->build_pass),
-                              "create linked lists build pass");
-                        VkFramebufferCreateInfo fi{};
-                        fi.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-                        fi.renderPass = lists_->build_pass;
-                        fi.attachmentCount = 1;
-                        fi.pAttachments = &lists_->build_target.view;
-                        fi.width = width;
-                        fi.height = height;
-                        fi.layers = 1;
-                        check(c_.vkCreateFramebuffer(c_.device, &fi, nullptr, &lists_->build_framebuffer),
-                              "create linked lists framebuffer");
-                    }
-
-                    VkDescriptorSetAllocateInfo allocation{};
-                    allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                    allocation.descriptorPool = descriptor_pool_;
-                    allocation.descriptorSetCount = 1;
-                    allocation.pSetLayouts = &oit_lists_descriptors_;
-                    check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &lists_->set),
-                          "allocate linked lists descriptors");
-                    const VkDescriptorBufferInfo buffers[4] = {{lists_->head.handle, 0, head_bytes},
-                                                               {lists_->nodes.handle, 0, node_bytes},
-                                                               {lists_->counter.handle, 0, 4},
-                                                               {lists_->params.handle, 0, 16}};
-                    VkWriteDescriptorSet writes[4] = {};
-                    for (unsigned i = 0; i < 4; ++i) {
-                        writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writes[i].dstSet = lists_->set;
-                        writes[i].dstBinding = i;
-                        writes[i].descriptorCount = 1;
-                        writes[i].descriptorType =
-                            i == 3 ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                        writes[i].pBufferInfo = &buffers[i];
-                    }
-                    c_.vkUpdateDescriptorSets(c_.device, 4, writes, 0, nullptr);
-
-                    VkShaderModule modules[4] = {};
-                    try {
-                        VkShaderModuleCreateInfo mi{};
-                        mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-                        mi.codeSize = sizeof(scene_vert);
-                        mi.pCode = scene_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]),
-                              "create linked lists vertex shader");
-                        mi.codeSize = sizeof(oit_linked_lists_build_frag);
-                        mi.pCode = oit_linked_lists_build_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]),
-                              "create linked lists build shader");
-                        mi.codeSize = sizeof(oit_quad_vert);
-                        mi.pCode = oit_quad_vert;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]),
-                              "create linked lists quad shader");
-                        mi.codeSize = sizeof(oit_linked_lists_resolve_frag);
-                        mi.pCode = oit_linked_lists_resolve_frag;
-                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]),
-                              "create linked lists resolve shader");
-                        VkPipelineShaderStageCreateInfo stages[2] = {};
-                        for (unsigned i = 0; i < 2; ++i) {
-                            stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-                            stages[i].stage = i == 0 ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_FRAGMENT_BIT;
-                            stages[i].pName = "main";
-                        }
-                        VkVertexInputBindingDescription binding = {0, sizeof(GpuVertex), VK_VERTEX_INPUT_RATE_VERTEX};
-                        VkVertexInputAttributeDescription attributes[] = {
-                            {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, position)},
-                            {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
-                            {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
-                            {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
-                            {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
-                            {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
-                        VkPipelineVertexInputStateCreateInfo vertex{};
-                        vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                        vertex.vertexBindingDescriptionCount = 1;
-                        vertex.pVertexBindingDescriptions = &binding;
-                        vertex.vertexAttributeDescriptionCount = 6;
-                        vertex.pVertexAttributeDescriptions = attributes;
-                        VkPipelineInputAssemblyStateCreateInfo assembly{};
-                        assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-                        assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-                        VkPipelineViewportStateCreateInfo viewport{};
-                        viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-                        viewport.viewportCount = 1;
-                        viewport.scissorCount = 1;
-                        VkPipelineRasterizationStateCreateInfo raster{};
-                        raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-                        raster.polygonMode = VK_POLYGON_MODE_FILL;
-                        raster.cullMode = VK_CULL_MODE_NONE;
-                        raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-                        raster.lineWidth = 1;
-                        raster.depthBiasEnable = VK_TRUE;
-                        VkPipelineMultisampleStateCreateInfo multisample{};
-                        multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-                        multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-                        VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
-                                                           VK_DYNAMIC_STATE_DEPTH_BIAS};
-                        VkPipelineDynamicStateCreateInfo dynamic{};
-                        dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-                        dynamic.dynamicStateCount = 3;
-                        dynamic.pDynamicStates = dynamic_states;
-                        VkPipelineDepthStencilStateCreateInfo depth_state{};
-                        depth_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-                        VkPipelineColorBlendStateCreateInfo blending{};
-                        blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-                        VkGraphicsPipelineCreateInfo info{};
-                        info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-                        info.stageCount = 2;
-                        info.pStages = stages;
-                        info.pVertexInputState = &vertex;
-                        info.pInputAssemblyState = &assembly;
-                        info.pViewportState = &viewport;
-                        info.pRasterizationState = &raster;
-                        info.pMultisampleState = &multisample;
-                        info.pDepthStencilState = &depth_state;
-                        info.pColorBlendState = &blending;
-                        info.pDynamicState = &dynamic;
-
-                        // Build: scene geometry, every fragment appends a node. The color
-                        // attachment only receives the shader's discarded dummy output.
-                        stages[0].module = modules[0];
-                        stages[1].module = modules[1];
-                        VkPipelineColorBlendAttachmentState build_attachment{};
-                        build_attachment.colorWriteMask = 0xf;
-                        blending.attachmentCount = 1;
-                        blending.pAttachments = &build_attachment;
-                        info.renderPass = lists_->build_pass;
-                        info.layout = oit_lists_layout_;
-                        check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
-                                                           &lists_->build_pipeline),
-                              "create linked lists build pipeline");
-
-                        // Resolve: full-screen triangle replacing the accumulation image.
-                        stages[0].module = modules[2];
-                        stages[1].module = modules[3];
-                        vertex.vertexBindingDescriptionCount = 0;
-                        vertex.pVertexBindingDescriptions = nullptr;
-                        vertex.vertexAttributeDescriptionCount = 0;
-                        vertex.pVertexAttributeDescriptions = nullptr;
-                        VkPipelineColorBlendAttachmentState replace{};
-                        replace.colorWriteMask = 0xf;
-                        blending.attachmentCount = 1;
-                        blending.pAttachments = &replace;
-                        info.renderPass = oit_->reset_pass;
-                        info.layout = oit_resolve_layout_;
-                        check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
-                                                           &lists_->resolve_pipeline),
-                              "create linked lists resolve pipeline");
-                    } catch (...) {
-                        for (auto module : modules)
-                            if (module)
-                                c_.vkDestroyShaderModule(c_.device, module, nullptr);
-                        throw;
-                    }
-                    for (auto module : modules)
-                        if (module)
-                            c_.vkDestroyShaderModule(c_.device, module, nullptr);
+                    LinkedListsBuilder(c_, lists_, oit_, descriptor_pool_, oit_lists_descriptors_,
+                                       oit_lists_layout_, oit_resolve_layout_)
+                        .ensure(width, height, max_fragments);
                 }
                 void update_oit_composite(TransparencyMethod method) {
                     VkDescriptorImageInfo images[2] = {

@@ -109,7 +109,8 @@
       - [x] Extract scene render-pass recording into `ScenePassEncoder`, including opaque/transparent scene draws, compositing, and overlays; the prepared draw data and synchronous command-buffer flow are unchanged.
       - [x] Extract shadow and AO command recording into `ShadowPassEncoder` and `AmbientOcclusionPassEncoder`; preserve their render-pass and image-barrier ordering.
       - [x] Extract OIT command recording into `OitPassEncoder`; `VulkanDevice` retains target creation and descriptor-cache setup.
-      - [ ] Continue by extracting OIT resource construction and frame orchestration from `VulkanDevice`; multi-frame submission and staging/suballocation remain deferred pending evidence from frame preparation or dynamic-upload workloads.
+      - [x] Extract linked-list OIT buffer, build-pass, descriptor, and pipeline construction into `LinkedListsBuilder`; `VulkanDevice` retains ownership of the linked-list resources and their descriptor-pool lifetime.
+      - [ ] Continue by extracting the remaining OIT resource construction and frame orchestration from `VulkanDevice`; multi-frame submission and staging/suballocation remain deferred pending evidence from frame preparation or dynamic-upload workloads.
     - [ ] Improve both backends based on 'docs/vulkan-migration-assessment.md'
       - [x] Finding 1 image-diff harness completed (see above); Finding 4 overflow diagnostics and controlled point benchmark recorded. Finding 2 constructor hazard is documented and deliberately has no deprecated compatibility overload: old positional calls must be migrated to the current constructor order. Both Viewer constructors emit the legacy-context-version advisory, and `docs/vulkan.md` describes the silent reinterpretation. Finding 3 modularization is ongoing; Finding 5 Windows/platform validation remains open.
 
