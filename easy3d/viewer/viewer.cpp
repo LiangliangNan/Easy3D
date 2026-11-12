@@ -1001,7 +1001,9 @@ namespace easy3d {
                     if (!drawable_pivot_)
                         drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
                     // The pivot cross is ten logical pixels long and one logical pixel wide;
-                    // both backends draw it in framebuffer pixels. Screen-space lines are
+                    // both backends draw it in framebuffer pixels, so the arm is 10 * dpi and
+                    // the ribbon width is dpi (one logical pixel; a fixed width of one would be
+                    // a thinner device-pixel hairline on HiDPI). Screen-space lines are
                     // corner-based (texel (i, j) spans [i, i+1) x [j, j+1)), so center the
                     // ribbon on the marked pixel's center instead of its corner.
                     const float dpi = dpi_scaling();
@@ -1295,7 +1297,7 @@ namespace easy3d {
             input_.key = key;
         return false;
     }
-} // namespace easy3d
+} // namespace easy3dd
 
 
 #ifdef EASY3D_HAS_VULKAN
@@ -1852,7 +1854,9 @@ namespace easy3d {
         commands.insert(commands.end(), hint_commands_.begin(), hint_commands_.end());
         if (pivot) {
             // The pivot cross is ten logical pixels long and one logical pixel wide;
-            // both backends draw it in framebuffer pixels. Screen-space lines are
+            // both backends draw it in framebuffer pixels, so the arm is 10 * dpi and
+            // the ribbon width is dpi (one logical pixel; a fixed width of one would be
+            // a thinner device-pixel hairline on HiDPI). Screen-space lines are
             // corner-based (texel (i, j) spans [i, i+1) x [j, j+1)), so center the
             // ribbon on the marked pixel's center instead of its corner.
             const float x = (pivot_pixel_.x + 0.5f) * dpi, y = (pivot_pixel_.y + 0.5f) * dpi, size = 10.0f * dpi;

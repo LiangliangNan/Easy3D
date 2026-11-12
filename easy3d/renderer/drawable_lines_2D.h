@@ -71,12 +71,16 @@ namespace easy3d {
         /**
          * \brief Get the line width in framebuffer pixels.
          * \return Current line width (default 1). Must be positive and finite.
+         * \details The width is relative to the actual framebuffer, not to the viewport passed to
+         *      update_vertex_buffer(). For a DPI-independent overlay pass dpi_scaling() here and
+         *      framebuffer dimensions there; a width of one is a device-pixel hairline.
          */
         float line_width() const { return line_width_; }
 
         /**
          * \brief Set the framebuffer-pixel line width.
          * \param width Positive finite width in pixels.
+         * \details See line_width() for how this relates to the update_vertex_buffer() viewport.
          */
         void set_line_width(float width);
         ///@}
@@ -87,13 +91,16 @@ namespace easy3d {
         /**
          * \brief Creates/Updates the vertex buffer.
          * \param vertices The vertices of the line segments, represented in screen coordinates.
-         * \param width The width of the screen/viewport.
-         * \param height The height of the screen/viewport.
+         * \param width The width of the screen/viewport, in the same pixels as `vertices`.
+         * \param height The height of the screen/viewport, in the same pixels as `vertices`.
          * \param dynamic If true, the buffer is dynamic and can be updated.
          * \details Coordinates are normalized using the supplied viewport. Resizing scales their
          *      relative placement, matching the OpenGL implementation. Vulkan renders variable-width
          *      triangle ribbons as camera-independent overlays, without scene depth or picking IDs.
          *      Attach to a native host before uploading so CPU buffers are selected in dual builds.
+         *      Pass framebuffer dimensions together with framebuffer-pixel coordinates (and a
+         *      framebuffer-pixel line width, see line_width()) to draw a DPI-independent overlay;
+         *      logical coordinates with a DPI-scaled width would mix two pixel spaces.
          * \attention In the current implementation, each pair of consecutive vertices represent a line. Thus for
          *      polylines or polygons, the shared vertices has to be duplicated in the vertex buffer. This is not
          *      optimal in terms of memory usage, but it is easier to implement and use.

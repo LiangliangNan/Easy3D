@@ -15,7 +15,9 @@ layout(push_constant) uniform Draw {
 } draw;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 viewport_origin; // viewport width, height, pixel width, world-space radius
+    // viewport width, height (framebuffer pixels); plain-line width (framebuffer pixels,
+    // not logical pixels); world-space radius (camera-space expansion only).
+    vec4 dimensions; vec4 viewport_origin;
     vec4 light; // shared uniform layout; unused by ribbons
     vec4 clip_planes[2]; vec4 clip_info;
     bool line_screen_space_width; // 1: expand the plain line in screen space, 0: in camera space

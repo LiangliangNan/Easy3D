@@ -308,7 +308,10 @@ namespace easy3d {
                 clipping_planes; ///< Up to two view-space halfspaces retaining dot(plane, [position,1]) >= 0; overlays ignore them.
             bool discard_clipped_primitives = false; ///< Reject a primitive if any control vertex is outside.
             // Plain points use framebuffer-pixel diameters. Spheres and surfels use view-space radii,
-            // after transforming their centers; model scaling does not scale the radius.
+            // after transforming their centers; model scaling does not scale the radius. Both point
+            // and line sizes below are framebuffer pixels at this level: screen-space overlay
+            // commands from graphics::shape already arrive that way, while drawable sizes are
+            // logical and scaled by the host before submission.
             PointStyle point_style = PointStyle::plain; ///< Point rendering style.
             float point_size = 1;                       ///< Plain-point diameter in framebuffer pixels.
             // Plain points are sized in pixels and never read this field, so it stays unused for them.

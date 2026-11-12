@@ -4,8 +4,8 @@
 uniform samplerBuffer positions;
 uniform usamplerBuffer indices;
 uniform bool indexed;
-uniform vec2 viewport;
-uniform float line_width;
+uniform vec2 viewport;      // Framebuffer size in pixels (the actual glViewport).
+uniform float line_width;   // Ribbon width in framebuffer pixels, not logical pixels.
 uniform float depth;
 void main() {
     int first = gl_InstanceID*2;

@@ -8195,6 +8195,24 @@ failed three desktop tests while the OpenGL job passed. Each had a distinct caus
   ms/frame/FPS figures are unchanged; the run is marked `(budget-limited)` when the time budget,
   not the frame count, ended it.
 
+**Documentation.** The mixed units that caused the overlay regression are now stated where they are
+read and used. `graphics::shape::draw_quad_wire()`, `draw_lines_2d()` and `draw_lines_3d()`
+(`easy3d/renderer/shape.h`) document that `width`/`height` define the pixel viewport the coordinates
+are normalized against and that `line_width` is in that same pixel space, that a DPI-independent
+overlay passes framebuffer dimensions with framebuffer-pixel coordinates and widths, and that a
+width of one is a device-pixel hairline rather than one logical pixel. `draw_lines_2d()`'s
+implementation says the same at the offset computation. `LinesDrawable2D::line_width()`,
+`set_line_width()` and `update_vertex_buffer()` state that the width is relative to the actual
+framebuffer, that the viewport and the vertices share one pixel space, and that logical coordinates
+with a DPI-scaled width would mix two spaces. `graphics::DrawCommand` (`render_device.h`) states
+the layer boundary: point and line sizes are framebuffer pixels at the device level — screen-space
+overlay commands from `graphics::shape` already arrive that way, while drawable sizes are logical
+and scaled by the host before submission. Both `Viewer` pivot call sites record why the width is
+`dpi_scaling()` (one logical pixel, so the marker keeps its apparent size) and why the geometry is
+shifted to the texel center. The two ribbon shaders name their uniforms' units: `line_width` and
+`viewport` in `screen_space_lines.vert`, and the `dimensions` vector in `wide_lines.vert` (viewport
+size, plain width in framebuffer pixels, world-space radius for the camera-space expansion only).
+
 **Validation.** Vulkan Debug (`cmake-build-debug`) full serial CTest 147/147 and OpenGL Release
 (`build-opengl`) full serial CTest 107/107 on macOS, including `vulkan.tutorial704`,
 `vulkan.interactionoverlay` and `viewer.pointbenchmark`; in the Vulkan Debug tree the benchmark

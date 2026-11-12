@@ -621,6 +621,8 @@ graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments,const vec4
         const float length=delta.norm();
         if (!std::isfinite(length)) throw std::invalid_argument("non-finite screen line");
         if (!length) continue;
+        // The offset is half the width in the same pixel space as the endpoints, so the
+        // width must use that space too (framebuffer pixels for a framebuffer-space call).
         const vec2 offset=vec2(-delta.y,delta.x)*(line_width*.5f/length);
         quad(vertices,segments[i]-offset,segments[i+1]-offset,segments[i+1]+offset,segments[i]+offset);
     }

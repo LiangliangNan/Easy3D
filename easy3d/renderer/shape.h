@@ -399,10 +399,18 @@ graphics::DrawCommand draw_ambient_occlusion(unsigned width, unsigned height,
 graphics::DrawCommand draw_shadow(unsigned width, unsigned height, const mat4& shadow_matrix,
                                   float darkness, float softness, float light_near, float light_far,
                                   unsigned shadow_map_size);
+// Screen-space helpers: `width`/`height` define the pixel viewport the coordinates are
+// normalized against, and `line_width` is in that same pixel space - all three must
+// share one unit. Callers drawing a DPI-independent overlay pass the framebuffer
+// dimensions together with framebuffer-pixel coordinates and widths (that is, logical
+// values multiplied by the DPI scale), so the result keeps its apparent size on HiDPI
+// displays. A width of one framebuffer pixel is a device-pixel hairline, not one
+// logical pixel.
 graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,
                                    unsigned width, unsigned height, float line_width = 1);
+// `line_width` is in the pixel space of `width`/`height`, as for draw_lines_2d().
 graphics::DrawCommand draw_lines_3d(const std::vector<vec3>& segments,const std::vector<vec3>& colors,
                                    const mat4& mvp,unsigned width,unsigned height,float line_width = 1);
 // Depth-tested RGB box guide. Uses the same create_box() corner geometry as
