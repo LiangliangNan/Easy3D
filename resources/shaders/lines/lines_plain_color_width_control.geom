@@ -59,14 +59,12 @@ in Data {
     float clipped;
 } DataIn[];
 
-out vec3  gOutPoint;
 out vec4  gOutColor;
 out float gOutClipped;
 flat out int line_id;
 
 void emit_vertex(vec3 point, vec4 position, vec4 color, float clipped)
 {
-    gOutPoint = point;
     gl_Position = position;
     gOutColor = color;
     gOutClipped = clipped;
@@ -98,7 +96,6 @@ void main()
         if (lo > hi) {
             // The whole segment is behind the eye.
             for (int i = 0; i < 4; ++i) {
-                gOutPoint = vec3(0);
                 gOutColor = vec4(0);
                 gOutClipped = 0.0;
                 gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -119,7 +116,6 @@ void main()
         float length_pixels = length(delta);
         if (length_pixels <= 0.0) {
             for (int i = 0; i < 4; ++i) {
-                gOutPoint = vec3(0);
                 gOutColor = vec4(0);
                 gOutClipped = 0.0;
                 gl_Position = vec4(2.0, 2.0, 2.0, 1.0);

@@ -8455,3 +8455,58 @@ is required or deliberate:
 **Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL Release
 (`build-opengl`) 107/107, both green. The only source change is a comment in `oit_peel.frag`; the
 generated SPIR-V is unchanged.
+
+### 2026-11-12 — W10 batch 75: the plain wide line takes its depth from the rasterizer in both backends
+
+**Scope.** The batch-74 audit found that the OpenGL plain wide line wrote `gl_FragDepth` in its
+fragment shader while the native Vulkan ribbon did not. The two backends therefore paid different
+costs for the same stroke. The behavior is now unified on the Vulkan one, which is the cheaper and
+the simpler of the two.
+
+- *What changed* (OpenGL only): `resources/shaders/lines/lines_plain_color_width_control.frag` and
+  `lines_plain_texture_width_control.frag` no longer compute the depth from the `gOutPoint` /
+  `gPoint` varying, and their geometry shaders no longer pass that varying. The `PROJ` uniform
+  stays in the geometry shaders, which still need it to place the ribbon.
+- *What it saves*: a 4x4 matrix-vector multiply and a divide for every fragment of a stroke, the
+  `gOutPoint` varying that had to be interpolated and delivered per fragment, and the early depth
+  testing that the depth write used to disable in OpenGL.
+- *The rendered depth does not change.* The rasterizer interpolates the post-divide depth linearly in
+  screen space, and that value equals the depth of the perspective-correct interpolated camera-space
+  point, which is what the shader computed. A numerical probe over a receding triangle (camera-space
+  distances 1, 3 and 8) confirmed the two to a maximum difference of 0.0. The one case where the
+  old shader was wrong rather than merely redundant is a stroke whose expanded corner falls behind
+  the near plane: the old shader reported the depth of the unclipped corner, the rasterizer reports
+  the depth of the clipped stroke.
+- *The depth-write behavior is now the same in both backends for every geometry class*:
+
+  | Geometry | OpenGL | Vulkan |
+  |---|---|---|
+  | plain points | no depth write | no depth write |
+  | sphere and surfel impostors | writes the impostor surface depth | writes the impostor surface depth |
+  | plain wide lines | no depth write | no depth write |
+  | cylinder and cone impostors | writes the impostor surface depth | writes the impostor surface depth |
+  | triangles | no depth write | no depth write |
+  | depth-peeling pass | writes, deliberately | writes, deliberately |
+  | eye-dome-lighting compose | restores the stored depth | leaves the depth buffer untouched |
+
+  The last row is the same net effect reached differently: the OpenGL compose is a full-screen
+  blended quad that would overwrite the depth buffer, so it puts the stored depth back, while the
+  Vulkan compose renders with the depth test and the depth writes disabled.
+
+**Measured result (2026-11-12, macOS, OpenGL Release).** A grid of 160,000 wide line segments in a
+1600x900 window with 4 samples, measured before and after the change (the shaders are loaded at
+runtime, so both variants run against the same build):
+
+| Stroke width | Before | After | Change |
+|---|---|---|---|
+| 10 px | 2.31 ms/frame (433 fps) | 1.87 ms/frame (535 fps) | -19% |
+| 30 px | 3.16 ms/frame (316 fps) | 2.13 ms/frame (470 fps) | -33% |
+| 60 px | 4.30 ms/frame (233 fps) | 2.66 ms/frame (376 fps) | -38% |
+
+The saving grows with the stroke width, because the removed work was per covered fragment: the
+matrix multiplication ran for every fragment of every stroke, and the depth write kept the shader
+running for the fragments that the depth test rejects.
+
+**Validation.** macOS, serial CTest: OpenGL Release (`build-opengl`) 107/107 and Vulkan Debug
+(`cmake-build-debug`) 147/147, both green. The OpenGL change touches four shader files only; the
+Vulkan tree is unaffected by it.

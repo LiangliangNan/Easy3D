@@ -30,8 +30,6 @@
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-uniform mat4 PROJ;
-
 uniform sampler2D	textureID;
 
 uniform bool highlight;
@@ -41,7 +39,6 @@ uniform int  highlight_id_max;
 uniform bool selected = false;
 uniform vec4 	highlight_color;
 
-in  vec3 gPoint;
 in  vec2 gOutTexcoord;
 in float gOutClipped;
 flat in int line_id;
@@ -63,7 +60,5 @@ void main()
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);
 
-    // compute the depth
-    vec4 pos = PROJ * vec4(gPoint, 1.0);
-    gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5;
+    // The depth comes from the rasterizer, as in the colored variant.
 }

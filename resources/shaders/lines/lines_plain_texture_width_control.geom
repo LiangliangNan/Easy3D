@@ -57,14 +57,12 @@ uniform vec4 clippingPlane1;
 in  vec2 vOutTexcoord[];
 in  float vOutClipped[];
 
-out vec3  gPoint;
 out vec2  gOutTexcoord;
 out float gOutClipped;
 flat out int line_id;
 
 void emit_vertex(vec3 point, vec4 position, vec2 texcoord, float clipped)
 {
-    gPoint = point;
     gl_Position = position;
     gOutTexcoord = texcoord;
     gOutClipped = clipped;
@@ -96,7 +94,6 @@ void main()
         if (lo > hi) {
             // The whole segment is behind the eye.
             for (int i = 0; i < 4; ++i) {
-                gPoint = vec3(0);
                 gOutTexcoord = vec2(0);
                 gOutClipped = 0.0;
                 gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -117,7 +114,6 @@ void main()
         float length_pixels = length(delta);
         if (length_pixels <= 0.0) {
             for (int i = 0; i < 4; ++i) {
-                gPoint = vec3(0);
                 gOutTexcoord = vec2(0);
                 gOutClipped = 0.0;
                 gl_Position = vec4(2.0, 2.0, 2.0, 1.0);

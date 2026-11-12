@@ -1,8 +1,14 @@
-big disparity in FPS: OpenGL ~120 fps, Vulkan ～7 fps, release mode.
-tested on Tutorial_201_Viewer_default, loading data "/resources/data/pump.ptx"
+This file is only for my record, you should ignore this file!!!
 
 
-Also test on large meshes.
+
+
+Now another big disparity in FPS: OpenGL ~50 fps, Vulkan ～5 fps, debug mode.
+Tested on Tutorial_201_Viewer_default, loading data "/resources/data/huge_mesh.ply" (#face: 19131876, #vertex: 9565940)
+
+
+
+
 
 
 

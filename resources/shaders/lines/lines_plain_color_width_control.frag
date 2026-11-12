@@ -30,8 +30,6 @@
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-uniform mat4 PROJ;
-
 uniform bool highlight;
 uniform int  highlight_id_min;
 uniform int  highlight_id_max;
@@ -39,7 +37,6 @@ uniform int  highlight_id_max;
 uniform bool selected = false;
 uniform vec4 	highlight_color;
 
-in vec3  gOutPoint;
 in vec4  gOutColor;
 in float gOutClipped;
 flat in int line_id;
@@ -60,7 +57,9 @@ void main()
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);
 
-    // compute the depth
-    vec4 pos = PROJ * vec4(gOutPoint, 1.0);
-    gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5;
+    // The depth comes from the rasterizer. The geometry shader already places the
+    // ribbon at the depth of the line, so the interpolated depth is the depth of the
+    // stroke itself; writing it again per fragment would only cost a matrix
+    // multiplication and disable early depth testing. This is also what the native
+    // Vulkan ribbon does.
 }
