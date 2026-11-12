@@ -8220,3 +8220,33 @@ finished in 23-24 s locally with both paths budget-limited, and in the OpenGL Re
 The guard is not observable on macOS: removing it and re-running Tutorial 704 still passed, because
 the measured radius stayed positive (`1.59e-10`), while the Linux rounding produced zero. The
 Linux/Mesa rerun of `vulkan.yml` remains the gate for these three tests.
+
+### 2026-11-12 — W10 batch 70: target-to-camera sizing is not the DPI scale; grid lines follow the target
+
+**Scope.** `Viewer::draw_commands()` scales drawable point/line sizes by
+`width / camera.screen_width()`. That ratio equals `dpi_scaling()` only when the target is the
+window framebuffer (live frames, picking, depth reads). `snapshot_frame()` renders at the requested
+output size while the camera keeps its logical size, so the ratio is output/logical and plain sizes
+grow with the image; a `MultiViewer` cell combines the integer `cell_bounds` of the target with
+those of the logical window, so its ratio is target-cell/logical-cell and only approximately the DPI
+scale. The implementation comment, the `viewer.h` "Vulkan command assembly" section
+(`draw_commands()` and `frame_commands()`), the `MultiViewer::draw_commands()` override and the
+OpenGL analogue `Drawable::viewport_pixel_scale()` now state this and warn against substituting
+`dpi_scaling()`.
+
+The same audit found the grid division lines, the one overlay that used `dpi_scaling()` while its
+endpoints were already in target pixels: Vulkan passed `dpi_scaling()` to
+`graphics::shape::draw_lines_2d(points, ..., width, height, ...)`, and OpenGL left the
+`LinesDrawable2D` at its default one-framebuffer-pixel width. Both backends now derive the width
+from the actual target, `division_line_width(target_width, Viewer::width()) = target/logical`:
+the DPI scale for a window and output/logical for a rescaled snapshot or capture. OpenGL sets it
+from the current viewport in `MultiViewer::draw()` and from the offscreen target in
+`MultiViewer::draw_scene()` (used by captures and depth queries); Vulkan uses it for the cached
+division command. A grid line is now one logical pixel wide at every resolution in both backends;
+before, OpenGL drew a device-pixel hairline on HiDPI and both backends thinned the grid in scaled
+captures.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL Release
+(`build-opengl`) 107/107, both green, including `vulkan.multiview` and `opengl.multiview`, which
+toggle the division lines and compare the captures. `easy3d/util/version.h` is unchanged.
+Linux/Mesa, Windows hardware and CI remain separate gates.

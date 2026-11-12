@@ -1308,9 +1308,14 @@ namespace easy3d {
         std::vector<graphics::DrawCommand> commands;
         const auto &planes = impl_->active_clipping_planes();
         // Drawable point/line sizes are logical pixels; the device rasterizes plain
-        // points/lines in framebuffer pixels. Scale by the target-to-camera ratio
-        // (the DPI scale for a window, 1 for a pixel canvas). Impostor radii are
-        // world-space and already carry the logical sizing through world_pixel_ratio().
+        // points/lines in framebuffer pixels. Scale by the target-to-camera ratio,
+        // not dpi_scaling(): it is the DPI scale only when the target is the window
+        // framebuffer (live frames, picking, depth reads). A file snapshot captures
+        // at output size while the camera keeps its logical size, so the ratio is
+        // output/logical and keeps plain sizes in proportion; a MultiViewer cell's
+        // integer cell_bounds make it target-cell/logical-cell, approximately the
+        // DPI scale. Impostor radii are world-space and already carry the logical
+        // sizing through world_pixel_ratio().
         const float pixel_scale = cam.screen_width() > 0 ? float(width) / float(cam.screen_width()) : 1.0f;
         auto append = [&](const std::shared_ptr<Drawable> &d, uint32_t id, const std::shared_ptr<Model> &model,
                           bool selected, bool depth_bias = false) {

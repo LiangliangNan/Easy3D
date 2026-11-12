@@ -1,72 +1,27 @@
 
 
+The "VULKAN" backend GitHub workflow vulkan.yml still failed (OpenGL backend passed).
 
-
-
-
-
-
-
-
-
-
-
-
-Qoder CN is currently solving GitHub workflow error (the changes are stashed):
-
-The "VULKAN" backend GitHub workflow vulkan.yml failed (OpenGL backend passed).
-
-The "Render without a display using lavapipe" step passed, but "Test configured window backend" failed with error:
-37/89 Test  #37: vulkan.tutorial703 ...............   Passed    0.38 sec
-      Start  38: vulkan.tutorial704
-38/89 Test  #38: vulkan.tutorial704 ...............***Failed    0.30 sec
-
-E 12/11/2026 08:08:43.485 viewer.cpp:613] Viewer failed: point size and sphere radius must be finite and positive
-      Start  39: vulkan.tutorial801
-39/89 Test  #39: vulkan.tutorial801 ...............   Passed    0.30 sec
-      Start  40: vulkan.tutorial802
-
-72/89 Test  #90: vulkan.usage .....................   Passed    1.02 sec
+71/89 Test  #89: vulkan.manipulation ..............   Passed    0.42 sec
+      Start  90: vulkan.usage
+72/89 Test  #90: vulkan.usage .....................   Passed    0.84 sec
       Start  91: vulkan.interactionoverlay
-73/89 Test  #91: vulkan.interactionoverlay ........***Failed   32.89 sec
-FAIL: pivot cross did not match the original black marker
-      Start  92: vulkan.window
-74/89 Test  #92: vulkan.window ....................   Passed   21.33 sec
+73/89 Test  #91: vulkan.interactionoverlay ........***Failed   23.86 sec
+FAIL: region boundary is not solid blue within one pixel of its edge
 
 
-89/89 Test #142: python.rendering .................   Passed    1.34 sec
-97% tests passed, 3 tests failed out of 89
+99% tests passed, 1 tests failed out of 89
+
 Label Time Summary:
-desktop    = 323.84 sec*proc (89 tests)
-Total Test time (real) = 323.91 sec
+desktop    = 187.56 sec*proc (89 tests)
+
+Total Test time (real) = 187.60 sec
+
 The following tests FAILED:
-	 38 - vulkan.tutorial704 (Failed)                       desktop
 	 91 - vulkan.interactionoverlay (Failed)                desktop
-	 97 - viewer.pointbenchmark (Timeout)                   desktop
 Errors while running CTest
-Error: Process completed with exit code 8.
 
 
-
-When Qoder CN is back: restore the stashed changes and ask:
-
-Your execution was unexpectedly stop. From existing changes made, I found an inconsistency in your changed code:
-In the OpenGL backend, you use logical pixels (DPI-independent) and set_line_width(dpi_scaling()).
-                    const float size = 10.0f; // arm in logical pixels (DPI-independent), matching the Vulkan overlay
-                    // LinesDrawable2D uses the same corner-based projection as the Vulkan overlay,
-                    // so shift by half a logical pixel to center the ribbon on the marked texel.
-                    const std::vector<vec2> points = {vec2(x - size + 0.5f, y + 0.5f), vec2(x + size + 0.5f, y + 0.5f), vec2(x + 0.5f, y - size + 0.5f),
-                                                      vec2(x + 0.5f, y + size + 0.5f)};
-                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
-                    drawable_pivot_->set_line_width(dpi_scaling());
-but for the Vulkan backend,  coordinates have already been multiplied by 0.5f (The opengl backend doesn't), then  set line width to dpi:
-            const float x = (pivot_pixel_.x + 0.5f) * dpi, y = (pivot_pixel_.y + 0.5f) * dpi, size = 10 * dpi;
-            commands.push_back(graphics::shape::draw_lines_2d(
-                {vec2(x - size, y), vec2(x + size, y), vec2(x, y - size), vec2(x, y + size)}, vec4(0, 0, 0, 1),
-                framebuffer_width(), framebuffer_height(), dpi));
-
-The logic here should be consistent. 
-Please go ahead continue.
 
 
 

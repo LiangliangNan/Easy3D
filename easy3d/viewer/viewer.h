@@ -1049,6 +1049,17 @@ public:
 
 	    // Scene commands for one camera and output size, recording in sources which
 	    // model or standalone drawable produced each command.
+	    //
+	    // `width`/`height` are the pixel size of the render target - the framebuffer
+	    // size for a live frame, the requested capture size during snapshot_frame(),
+	    // and a MultiViewer cell's share of either for its cell cameras - never the
+	    // logical window size. Drawable point/line sizes are logical, so this method
+	    // multiplies them by width / camera.screen_width(): that ratio is the DPI
+	    // scale only when the target is the window framebuffer. For a file snapshot
+	    // it is output/logical (sizes must grow with the image) and for a
+	    // MultiViewer cell it is target-cell/logical-cell (integer cell_bounds make
+	    // it only approximately the DPI scale). Do not replace this ratio with
+	    // dpi_scaling(). Impostor radii are world-space and need no scaling.
 	    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
 	                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
 
@@ -1056,6 +1067,8 @@ public:
 	    // set, the Viewer HUD overlays, with overlay viewports scaled from the
 	    // window to the requested output size. Live frames and captures include
 	    // the HUD; file snapshots do not, matching the OpenGL snapshot.
+	    // `width`/`height` have the same target-pixel meaning, and the same
+	    // target-to-camera sizing rule, as draw_commands().
 	    std::vector<graphics::DrawCommand> frame_commands(const Camera& camera, int width, int height,
 	                                                      std::vector<DrawSource>* sources = nullptr,
 	                                                      bool include_hud = true) const;

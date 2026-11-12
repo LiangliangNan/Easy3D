@@ -232,7 +232,8 @@ namespace easy3d {
 #else
         // Assembles one cell's scene commands for the requested output size,
         // appending the cached division lines; Viewer::draw_frame() repeats this
-        // per cell instead of issuing a single scene pass.
+        // per cell instead of issuing a single scene pass. The output size is in
+        // target pixels, not logical window pixels (see Viewer::draw_commands()).
         std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
                                                        std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
 #endif

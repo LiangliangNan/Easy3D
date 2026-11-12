@@ -66,6 +66,13 @@ ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
     const int x=int(int64_t(col)*width/cols), y=int(int64_t(row)*height/rows);
     return ivec4(x,y,int(int64_t(col+1)*width/cols)-x,int(int64_t(row+1)*height/rows)-y);
 }
+// Grid lines are one logical pixel wide. Both a LinesDrawable2D width and a
+// screen-space draw command width are target pixels, so convert through the
+// logical window width: this is the DPI scale for a window-sized target and
+// output/logical for a higher-resolution snapshot or capture.
+float division_line_width(int target_width,int logical_width) {
+    return logical_width>0 ? float(target_width)/float(logical_width) : 1.0f;
+}
 void configure_cell(Camera& cell,const Camera& source,int width,int height) {
     cell.set_screen_width_and_height(width,height);
     cell.set_projection_matrix(source.projection_matrix());
@@ -220,12 +227,15 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         }
     }
     if(division_visible()) {
+        // Cached for one target size; the ribbon is one logical pixel wide, so its
+        // target-pixel width follows the target (DPI for a window, output/logical
+        // for a snapshot).
         if(division_commands_.empty() || division_width_!=width || division_height_!=height) {
             std::vector<vec2> points;
             for(int r=1;r<num_rows_;++r) {const float y=float(int64_t(r)*height/num_rows_);points.push_back(vec2(0,y));points.push_back(vec2(width,y));}
             for(int c=1;c<num_cols_;++c) {const float x=float(int64_t(c)*width/num_cols_);points.push_back(vec2(x,0));points.push_back(vec2(x,height));}
             division_commands_.clear();
-            if(!points.empty()) division_commands_.push_back(graphics::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,dpi_scaling()));
+            if(!points.empty()) division_commands_.push_back(graphics::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,division_line_width(width,Viewer::width())));
             division_width_=width;division_height_=height;
         }
         result.insert(result.end(),division_commands_.begin(),division_commands_.end());
@@ -297,8 +307,11 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         glScissor(viewport[0],viewport[1],viewport[2],viewport[3]);
 
         // draw the division of views
-        if (drawable_division_->is_visible())
+        if (drawable_division_->is_visible()) {
+            // The drawable width is in target pixels; keep the grid one logical pixel wide.
+            drawable_division_->set_line_width(division_line_width(viewport[2], width()));
             drawable_division_->draw(camera());
+        }
         draw_overlays(false);
     }
 
@@ -363,7 +376,11 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
     }
     if(guides && division_visible()) {
         glViewport(0,0,fw,fh);glScissor(0,0,fw,fh);
-        glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);drawable_division_->draw(&snapshot);
+        glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);
+        // Same target-pixel width rule; fw is the current render target, not
+        // necessarily the window framebuffer (captures may be larger).
+        drawable_division_->set_line_width(division_line_width(fw,width()));
+        drawable_division_->draw(&snapshot);
         glEnable(GL_DEPTH_TEST);glDepthMask(GL_TRUE);
     }
 }

@@ -439,7 +439,10 @@ namespace easy3d {
         // scale for a snapshot (1 when the camera reports no width). Plain points and
         // lines rasterize in framebuffer pixels, so their logical sizes are multiplied
         // by this factor before glPointSize()/glLineWidth(); impostor radii are
-        // world-space and need no such scaling.
+        // world-space and need no such scaling. This is the same target-to-camera ratio
+        // that the Vulkan draw_commands() applies as pixel_scale; it equals
+        // dpi_scaling() only when the target is the window framebuffer, so do not
+        // substitute dpi_scaling() for it.
         static float viewport_pixel_scale(const Camera& camera);
 #endif
 
