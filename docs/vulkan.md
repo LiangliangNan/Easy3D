@@ -8358,3 +8358,42 @@ behavior-preserving: the token streams of `frame.h`, `frame.cpp`, `constraint.h`
 comments and identifiers are normalized. A repo-wide grep outside `3rd_party/` finds no camelCase
 `Frame`, `ManipulatedFrame`, `ManipulatedCameraFrame` or constraint spelling left, and the Python
 bindings expose no camelCase name.
+
+### 2026-11-12 — W10 batch 73: the Vulkan plain-point path keeps early depth testing
+
+**Scope.** Tutorial 201 with `resources/data/pump.ptx` ran at about 7 fps on Vulkan against about
+120 fps on OpenGL (release builds, macOS). The scene holds about 2.9 million points in five scans,
+so the point path dominated the frame. The OpenGL backend draws those points with
+`points/points_plain_color`, which never writes `gl_FragDepth` and therefore keeps early depth
+testing. The Vulkan backend drew plain points and impostor points with one fragment shader
+(`vulkan/points.frag`) that wrote `gl_FragDepth` unconditionally, including for plain points. Any
+depth write in a fragment shader disables early depth testing for that draw, so the dense cloud paid
+for the fragments it could have rejected before shading.
+
+- *New shader* `resources/shaders/vulkan/points_plain.frag`: the plain-point fragment shader. It
+  keeps the color, texture, per-vertex color, material lighting and selection tint of the previous
+  plain branch and writes no depth, so early depth testing stays enabled.
+- *`resources/shaders/vulkan/points.frag`* is now the impostor shader only (spheres and surfels).
+  It still writes `gl_FragDepth`, because the impostor surface depth differs from the proxy geometry
+  depth, exactly like the OpenGL `points/points_spheres_sprite_color` shader.
+- *Pipeline layout* (`backends/vulkan/render_device.cpp`): the point pipelines are now distinct per
+  style. The native-point and expanded-plain-point pipelines use the plain shader; a new pipeline
+  (index 6) serves the expanded impostor points with the impostor shader, and the scene pass selects
+  it by `point_style`. The OpenGL backend already separates the two cases by program, so the two
+  backends now have the same structure.
+- *Unchanged*: the point vertex shader, the cylinder and cone impostor paths, the wide-line and
+  line impostor shaders (they already had one pipeline per style), the CPU extraction and the
+  geometry upload paths, which the profiling showed were executed once, not per frame.
+
+**Measured result (2026-11-12, macOS, release).** `resources/data/pump.ptx` in an 1600x900 window
+with 4 samples:
+
+| Backend | Before | After |
+|---|---|---|
+| Vulkan | 602 ms/frame (1.7 fps) | 8.3 ms/frame (120.7 fps) |
+| OpenGL | 7.5 ms/frame (133.4 fps) | 7.5 ms/frame (133.4 fps) |
+
+The offscreen path improved from 145 ms/frame to 5.7 ms/frame. The two backends now agree.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL Release
+(`build-opengl`) 107/107, both green.

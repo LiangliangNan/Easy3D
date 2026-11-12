@@ -3,27 +3,24 @@
 #include "material.glsl"
 layout(set=0,binding=0) uniform sampler2D image_texture;
 
+// Impostor points (spheres and surfels). The impostor surface depth differs from
+// the proxy geometry depth, so this shader writes gl_FragDepth, which disables
+// early depth testing for the impostor path only. Plain points use the separate
+// plain-point shader, which keeps early depth testing.
 layout(location=0) in vec4 vertex_color;
 layout(location=1) in vec2 uv;
 layout(location=2) flat in uvec2 id;
 layout(location=3) flat in vec3 center;
 layout(location=4) flat in uint lighting;
 layout(location=5) flat in vec3 surfel_normal;
+layout(location=6) flat in vec4 selection_tint;
+layout(location=7) in vec3 world_position;
+layout(location=8) in vec3 world_normal_out;
 layout(location=0) out vec4 out_color;
 layout(location=1) out uvec2 out_id;
-layout(location=6) flat in vec4 selection_tint;
-layout(location=7) flat in vec3 world_position;
-layout(location=8) flat in vec3 world_normal_out;
 void main() {
     out_color = vertex_color * texture(image_texture,uv);
     out_id = id;
-    gl_FragDepth = gl_FragCoord.z;
-    if (material.light.w == 0) {
-        if(material.shading.x!=0 && lighting!=0)
-            out_color=shade_material(out_color,world_normal_out,world_position,
-                dot(world_normal_out,material.eye.xyz-world_position)<0);
-        out_color.rgb=mix(out_color.rgb,selection_tint.rgb,selection_tint.a);return;
-    }
     vec2 ndc = (gl_FragCoord.xy - material.viewport_origin.xy) / material.dimensions.xy * 2 - 1;
     ndc.y = -ndc.y;
     vec4 a = material.inverse_projection * vec4(ndc,-1,1);

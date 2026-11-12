@@ -1,29 +1,20 @@
+big disparity in FPS: OpenGL ~120 fps, Vulkan ～7 fps, release mode.
+tested on Tutorial_201_Viewer_default, loading data "/resources/data/pump.ptx"
+
+
+Also test on large meshes.
+
+
+
+
+Reformat code in shape.h/.cpp: std::logic_error("OpenGL shape drawing is unavailable in Vulkan".)
+
 One residual note: Vulkan has a single impostor pipeline for textured and colored lines. OpenGL has two distinct pipelines.
-
-
 
 
 TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
 
 RenderDevice is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations, including VertexArrayObject).
-
-
-
-
-PTX loading: instead of creating multiple point clouds, creating a single PointCloud model holds multiple PointsDrawables
-
-
-
-Ask this in different stages of the migration:
-The Vulkan migration is most complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or become redundant after small modification/adaptation. Investigate which classes (and/or their members) have the potential to become redundant and thus can be removed.
-
-Reformat code in shape.h/.cpp: std::logic_error("OpenGL shape drawing is unavailable in Vulkan".)
-
-
-
-
-Remove/Check dpi_scaling() uses in all tutorials:
-  e.g., Tutorial_205_RealCamera, calculate_image_rect(). Comments also need updates.
 
 
 The same drawable in different backends have different controls (meaning there are many member variables/functions for handing the same thing in different backends):
@@ -37,16 +28,33 @@ This might be relevant to this in ToDo.md: After correctness and performance bas
 
 
 
+Ask this in different stages of the migration:
+The Vulkan migration is most complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or become redundant after small modification/adaptation. Investigate which classes (and/or their members) have the potential to become redundant and thus can be removed.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Remove/Check dpi_scaling() uses in all tutorials:
+  e.g., Tutorial_205_RealCamera, calculate_image_rect(). Comments also need updates.
 
 
 Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and and_drawable. Should they also return a shared_ptr (instead of raw pointer)? 
 I am also considering many classes and functions like SurfaceMeshIO::load(file_name), GraphIO::load(file_name), PointCloudIO::load(file_name)... and many other places.
 
-
-
-Use snake-case for the following classes:
-Constraint, Frame, ManipulatedFrame, 
 
 
 Random colors are bright, distinct (see Jianwei's paper). Test on segmentation/components/faces, and text rendering tutorial.

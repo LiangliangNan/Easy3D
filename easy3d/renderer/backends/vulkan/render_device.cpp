@@ -49,6 +49,7 @@ namespace easy3d {
 #include "scene_frag.inc"
 #include "points_vert.inc"
 #include "points_frag.inc"
+#include "points_plain_frag.inc"
 #include "lines_vert.inc"
 #include "lines_frag.inc"
 #include "wide_lines_vert.inc"
@@ -728,7 +729,7 @@ namespace easy3d {
                 PassKind kind;
                 VkSampleCountFlagBits samples;
                 VkRenderPass handle = VK_NULL_HANDLE;
-                VkPipeline pipelines[6] = {};
+                VkPipeline pipelines[7] = {};
                 VkPipeline overlay_pipeline = VK_NULL_HANDLE;
                 VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
                 VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
@@ -2007,7 +2008,7 @@ namespace easy3d {
                           "create linked lists resolve pipeline layout");
                 }
                 void create_pipelines(RenderPass &pass) {
-                    VkShaderModule modules[18] = {};
+                    VkShaderModule modules[19] = {};
                     try {
                         VkShaderModuleCreateInfo mi{};
                         mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -2025,6 +2026,10 @@ namespace easy3d {
                         mi.pCode = points_frag;
                         check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]),
                               "create point fragment shader");
+                        mi.codeSize = sizeof(points_plain_frag);
+                        mi.pCode = points_plain_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[18]),
+                              "create plain point fragment shader");
                         mi.codeSize = sizeof(lines_vert);
                         mi.pCode = lines_vert;
                         check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]),
@@ -2194,10 +2199,10 @@ namespace easy3d {
                         VkSpecializationMapEntry point_entry = {0, 0, sizeof(native_point)};
                         VkSpecializationInfo point_specialization = {1, &point_entry, sizeof(native_point),
                                                                      &native_point};
-                        for (unsigned i = 0; i < 6; ++i) {
+                        for (unsigned i = 0; i < 7; ++i) {
                             if (i == 2) {
                                 stages[0].module = modules[2];
-                                stages[1].module = modules[3];
+                                stages[1].module = modules[18];
                                 stages[0].pSpecializationInfo = &point_specialization;
                                 point_bindings[0].inputRate = point_bindings[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
                                 vertex.vertexBindingDescriptionCount = 2;
@@ -2209,7 +2214,7 @@ namespace easy3d {
                                 point_bindings[0].inputRate = point_bindings[1].inputRate =
                                     VK_VERTEX_INPUT_RATE_INSTANCE;
                                 stages[0].module = modules[2];
-                                stages[1].module = modules[3];
+                                stages[1].module = modules[18];
                                 binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
                                 vertex.vertexBindingDescriptionCount = 2;
                                 vertex.pVertexBindingDescriptions = point_bindings;
@@ -2233,6 +2238,23 @@ namespace easy3d {
                                 vertex.pVertexAttributeDescriptions = wide_attrs;
                                 ms.sampleShadingEnable = VK_FALSE;
                                 ms.minSampleShading = 0;
+                            }
+                            if (i == 6) {
+                                // Expanded impostor points (spheres and surfels). Only this
+                                // point path writes gl_FragDepth, because the impostor surface
+                                // depth differs from the proxy geometry depth, so only it loses
+                                // early depth testing.
+                                stages[0].module = modules[2];
+                                stages[1].module = modules[3];
+                                stages[0].pSpecializationInfo = nullptr;
+                                point_bindings[0].inputRate = point_bindings[1].inputRate =
+                                    VK_VERTEX_INPUT_RATE_INSTANCE;
+                                binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                                vertex.vertexBindingDescriptionCount = 2;
+                                vertex.pVertexBindingDescriptions = point_bindings;
+                                vertex.pVertexAttributeDescriptions = point_attrs;
+                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
+                                ms.minSampleShading = 1;
                             }
                             assembly.topology = topologies[i >= 3 ? 0 : i];
                             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
@@ -3186,7 +3208,8 @@ namespace easy3d {
                                                                                           : 2;
                         const bool expanded = expanded_impostor(d) && !d.transparent;
                         if (expanded)
-                            pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
+                            pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4)
+                                          : (d.point_style == PointStyle::plain ? 3 : 6);
                         draw_scene(draw, pass.pipelines[pipeline], expanded);
                     }
                     // Order-independent methods already resolved the transparent surfaces into
