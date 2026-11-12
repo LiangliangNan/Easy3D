@@ -4467,6 +4467,76 @@ namespace easy3d {
                 }
                 // Order-independent transparency targets are created on first use and
                 // recreated with the scene target. Both methods stay single sampled.
+                class OitDescriptorCache {
+                    Context &c_;
+                    std::unique_ptr<Oit> &oit_;
+                    VkDescriptorPool descriptor_pool_;
+                    VkDescriptorSetLayout oit_scene_descriptors_;
+                    VkSampler *samplers_;
+
+                public:
+                    OitDescriptorCache(Context &context,
+                                       std::unique_ptr<Oit> &oit,
+                                       VkDescriptorPool descriptor_pool,
+                                       VkDescriptorSetLayout scene_descriptors,
+                                       VkSampler *samplers)
+                        : c_(context), oit_(oit), descriptor_pool_(descriptor_pool),
+                          oit_scene_descriptors_(scene_descriptors), samplers_(samplers) {}
+
+                    void update_composite(TransparencyMethod method) {
+                        VkDescriptorImageInfo images[2] = {
+                            {samplers_[0], oit_->color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+                            {samplers_[0], method == TransparencyMethod::average ? oit_->count.view : oit_->color.view,
+                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}};
+                        VkWriteDescriptorSet writes[2] = {};
+                        for (unsigned i = 0; i < 2; ++i) {
+                            writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            writes[i].dstSet = oit_->composite_set;
+                            writes[i].dstBinding = i;
+                            writes[i].descriptorCount = 1;
+                            writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                            writes[i].pImageInfo = &images[i];
+                        }
+                        c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
+                    }
+
+                    VkDescriptorSet peel_set(const Prepared &draw, unsigned previous) {
+                        const auto key = std::make_pair(draw.texture, previous);
+                        const auto found = oit_->peel_sets.find(key);
+                        if (found != oit_->peel_sets.end())
+                            return found->second;
+                        VkDescriptorSet set = VK_NULL_HANDLE;
+                        VkDescriptorSetAllocateInfo allocation{};
+                        allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                        allocation.descriptorPool = descriptor_pool_;
+                        allocation.descriptorSetCount = 1;
+                        allocation.pSetLayouts = &oit_scene_descriptors_;
+                        check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &set),
+                              "allocate transparency peel descriptors");
+                        unsigned sampler_index = 0;
+                        if (auto source = draw.texture->source.lock())
+                            sampler_index = (source->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
+                                            (source->sampler().filter == TextureFilter::linear ? 1 : 0);
+                        const VkImageView previous_view =
+                            previous == 2 ? oit_->start_depth.view : oit_->depth(previous).view;
+                        VkDescriptorImageInfo images[2] = {
+                            {samplers_[sampler_index], draw.texture->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
+                            {samplers_[0], previous_view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
+                        VkWriteDescriptorSet writes[2] = {};
+                        for (unsigned i = 0; i < 2; ++i) {
+                            writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                            writes[i].dstSet = set;
+                            writes[i].dstBinding = i == 0 ? 0 : 3;
+                            writes[i].descriptorCount = 1;
+                            writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                            writes[i].pImageInfo = &images[i];
+                        }
+                        c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
+                        oit_->peel_sets.emplace(key, set);
+                        return set;
+                    }
+                };
+
                 void ensure_oit(uint32_t width, uint32_t height) {
                     OitResourcesBuilder(c_, oit_, descriptor_pool_, layout_, oit_peel_layout_,
                                         oit_composite_layout_, oit_composite_descriptors_, samplers_[0])
@@ -4482,55 +4552,12 @@ namespace easy3d {
                         .ensure(width, height, max_fragments);
                 }
                 void update_oit_composite(TransparencyMethod method) {
-                    VkDescriptorImageInfo images[2] = {
-                        {samplers_[0], oit_->color.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-                        {samplers_[0], method == TransparencyMethod::average ? oit_->count.view : oit_->color.view,
-                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL}};
-                    VkWriteDescriptorSet writes[2] = {};
-                    for (unsigned i = 0; i < 2; ++i) {
-                        writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writes[i].dstSet = oit_->composite_set;
-                        writes[i].dstBinding = i;
-                        writes[i].descriptorCount = 1;
-                        writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        writes[i].pImageInfo = &images[i];
-                    }
-                    c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
+                    OitDescriptorCache(c_, oit_, descriptor_pool_, oit_scene_descriptors_, samplers_)
+                        .update_composite(method);
                 }
                 VkDescriptorSet oit_peel_set(const Prepared &draw, unsigned previous) {
-                    const auto key = std::make_pair(draw.texture, previous);
-                    const auto found = oit_->peel_sets.find(key);
-                    if (found != oit_->peel_sets.end())
-                        return found->second;
-                    VkDescriptorSet set = VK_NULL_HANDLE;
-                    VkDescriptorSetAllocateInfo allocation{};
-                    allocation.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                    allocation.descriptorPool = descriptor_pool_;
-                    allocation.descriptorSetCount = 1;
-                    allocation.pSetLayouts = &oit_scene_descriptors_;
-                    check(c_.vkAllocateDescriptorSets(c_.device, &allocation, &set),
-                          "allocate transparency peel descriptors");
-                    unsigned sampler_index = 0;
-                    if (auto source = draw.texture->source.lock())
-                        sampler_index = (source->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
-                                        (source->sampler().filter == TextureFilter::linear ? 1 : 0);
-                    const VkImageView previous_view =
-                        previous == 2 ? oit_->start_depth.view : oit_->depth(previous).view;
-                    VkDescriptorImageInfo images[2] = {
-                        {samplers_[sampler_index], draw.texture->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-                        {samplers_[0], previous_view, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL}};
-                    VkWriteDescriptorSet writes[2] = {};
-                    for (unsigned i = 0; i < 2; ++i) {
-                        writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        writes[i].dstSet = set;
-                        writes[i].dstBinding = i == 0 ? 0 : 3;
-                        writes[i].descriptorCount = 1;
-                        writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                        writes[i].pImageInfo = &images[i];
-                    }
-                    c_.vkUpdateDescriptorSets(c_.device, 2, writes, 0, nullptr);
-                    oit_->peel_sets.emplace(key, set);
-                    return set;
+                    return OitDescriptorCache(c_, oit_, descriptor_pool_, oit_scene_descriptors_, samplers_)
+                        .peel_set(draw, previous);
                 }
 
                 class OitPassEncoder {
