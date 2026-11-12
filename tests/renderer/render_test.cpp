@@ -669,10 +669,10 @@ int main(int argc, char**) {
         rejects([] { Image(0, 1, {}); });
         rejects([] { Geometry(std::vector<Vertex>(3), {}, Topology::triangles, {UINT32_MAX}); });
         rejects([&] { device->render(0, 10, {}); });
-        DrawCommand far, near;
-        far.geometry = triangle(0.5f, vec4(0, 1, 0, 1)); far.object_id = 9;
-        near.geometry = triangle(-0.5f, vec4(1, 0, 0, 1)); near.object_id = 21;
-        const auto image = device->render(64, 64, {near, far}, vec4(0, 0, 1, 1));
+        DrawCommand far_command, near_command;
+        far_command.geometry = triangle(0.5f, vec4(0, 1, 0, 1)); far_command.object_id = 9;
+        near_command.geometry = triangle(-0.5f, vec4(1, 0, 0, 1)); near_command.object_id = 21;
+        const auto image = device->render(64, 64, {near_command, far_command}, vec4(0, 0, 1, 1));
         const auto center = 32 * 64 + 32;
         require(image.rgba[center * 4] == 255 && image.rgba[center * 4 + 1] == 0, "depth occlusion/color mismatch");
         require(std::abs(image.depth[center] - 0.25f) < 0.00001f, "camera depth conversion mismatch");
@@ -686,10 +686,10 @@ int main(int argc, char**) {
         for (unsigned count = 1; count <= 64; count <<= 1)
             if (device->supported_sample_counts() & count) std::cout << ' ' << count;
         std::cout << '\n';
-        rejects([&] { device->render(64, 64, {near}, vec4(0), 0); });
-        rejects([&] { device->render(64, 64, {near}, vec4(0), 3); });
+        rejects([&] { device->render(64, 64, {near_command}, vec4(0), 0); });
+        rejects([&] { device->render(64, 64, {near_command}, vec4(0), 3); });
         if (device->supported_sample_counts() & 4) {
-            auto aa = device->render(64, 64, {near, far}, vec4(0, 0, 1, 1), 4);
+            auto aa = device->render(64, 64, {near_command, far_command}, vec4(0, 0, 1, 1), 4);
             require(aa.ids[center].object == 21 && aa.ids[center].primitive == 173, "MSAA changed center picking IDs");
             unsigned edge_pixels = 0;
             for (size_t i = 0; i < aa.ids.size(); ++i) {
@@ -703,7 +703,7 @@ int main(int argc, char**) {
             // Exercise pipeline/target caching while switching sample count and extent.
             for (unsigned i = 0; i < 8; ++i) {
                 const unsigned w = 63 + i, h = 49 + i;
-                const auto frame = device->render(w, h, {near}, vec4(0), i % 2 ? 1 : 4);
+                const auto frame = device->render(w, h, {near_command}, vec4(0), i % 2 ? 1 : 4);
                 require(frame.ids[(h / 2) * w + w / 2].object == 21, "sample-count/resize transition lost geometry");
             }
         }
@@ -714,52 +714,52 @@ int main(int argc, char**) {
         texture_samplers(*device);
         overlays(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
-        near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
-        near.color = vec4(1, 1, 1, 1);
-        near.geometry = triangle(-0.5f, vec4(1, 1, 1, 1));
-        auto textured = device->render(64, 64, {near});
+        near_command.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
+        near_command.color = vec4(1, 1, 1, 1);
+        near_command.geometry = triangle(-0.5f, vec4(1, 1, 1, 1));
+        auto textured = device->render(64, 64, {near_command});
         require(textured.rgba[center * 4 + 1] == 255 && textured.rgba[center * 4] == 0, "texture upload/binding mismatch");
-        near.texture.reset();
-        textured = device->render(64, 64, {near});
+        near_command.texture.reset();
+        textured = device->render(64, 64, {near_command});
         require(textured.rgba[center * 4] == 255 && textured.rgba[center * 4 + 1] == 255, "white fallback descriptor mismatch");
-        near.lighting = true;
-        near.normal_matrix(0, 0) = 0; near.normal_matrix(0, 2) = 1;
-        near.normal_matrix(2, 0) = -1; near.normal_matrix(2, 2) = 0;
-        auto lit = device->render(64, 64, {near});
+        near_command.lighting = true;
+        near_command.normal_matrix(0, 0) = 0; near_command.normal_matrix(0, 2) = 1;
+        near_command.normal_matrix(2, 0) = -1; near_command.normal_matrix(2, 2) = 0;
+        auto lit = device->render(64, 64, {near_command});
         const float diffuse = 0.2f + 0.8f * 0.3f / std::sqrt(1.34f);
         require(std::abs(float(lit.rgba[center * 4]) - diffuse * 255) < 2, "normal transform/lighting layout mismatch");
-        near.lighting = false; near.normal_matrix = mat3::identity();
+        near_command.lighting = false; near_command.normal_matrix = mat3::identity();
         // Immutable geometry can be realized on two independently owned devices.
         auto second = create_vulkan_device(validation, validation);
-        require(second->render(64, 64, {near}).ids[center].object == 21, "cross-device snapshot reuse failed");
+        require(second->render(64, 64, {near_command}).ids[center].object == 21, "cross-device snapshot reuse failed");
         for (unsigned i = 0; i < 20; ++i) {
-            near.geometry = triangle(0, vec4(float(i % 2), 0, 1, 1));
-            auto resized = device->render(31 + i, 23 + i, {near});
+            near_command.geometry = triangle(0, vec4(float(i % 2), 0, 1, 1));
+            auto resized = device->render(31 + i, 23 + i, {near_command});
             require(resized.rgba.size() == size_t(31 + i) * (23 + i) * 4, "resize storage mismatch");
             require(resized.ids[(resized.height / 2) * resized.width + resized.width / 2].object == 21, "updated geometry missing");
         }
         std::vector<Vertex> points(1);
         points[0].position = vec3(0, 0, 0);
-        near.geometry = std::make_shared<Geometry>(points, std::vector<uint32_t>{}, Topology::points);
-        auto primitives = device->render(32, 32, {near});
+        near_command.geometry = std::make_shared<Geometry>(points, std::vector<uint32_t>{}, Topology::points);
+        auto primitives = device->render(32, 32, {near_command});
         bool point = false;
         for (auto id : primitives.ids) point |= id.object == 21;
         require(point, "point pipeline did not draw");
         if (device->supported_sample_counts() & 4) {
-            const auto aa = device->render(32, 32, {near}, vec4(1), 4);
+            const auto aa = device->render(32, 32, {near_command}, vec4(1), 4);
             for (size_t i = 0; i < aa.ids.size(); ++i)
                 require(aa.ids[i].object == primitives.ids[i].object && std::abs(aa.depth[i] - primitives.depth[i]) < 1e-5f,
                         "point picking changed with MSAA");
         }
         points.push_back(points[0]);
         points[0].position.x = -0.8f; points[1].position.x = 0.8f;
-        near.geometry = std::make_shared<Geometry>(points, std::vector<uint32_t>{}, Topology::lines);
-        primitives = device->render(32, 32, {near});
+        near_command.geometry = std::make_shared<Geometry>(points, std::vector<uint32_t>{}, Topology::lines);
+        primitives = device->render(32, 32, {near_command});
         unsigned line = 0;
         for (auto id : primitives.ids) line += id.object == 21;
         require(line >= 20, "line pipeline did not draw");
         if (device->supported_sample_counts() & 4) {
-            const auto aa = device->render(32, 32, {near}, vec4(1), 4);
+            const auto aa = device->render(32, 32, {near_command}, vec4(1), 4);
             for (size_t i = 0; i < aa.ids.size(); ++i)
                 require(aa.ids[i].object == primitives.ids[i].object && std::abs(aa.depth[i] - primitives.depth[i]) < 1e-5f,
                         "line picking changed with MSAA");

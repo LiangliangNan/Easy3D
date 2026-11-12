@@ -412,4 +412,33 @@ else()
     set_tests_properties(opengl.capture PROPERTIES LABELS desktop TIMEOUT 120)
 endif()
 
+if(Easy3D_ENABLE_VULKAN)
+    # These tests call GLFW directly. The viewer module keeps GLFW private,
+    # which is not transitive when consumers link the shared viewer library.
+    foreach(target IN ITEMS
+            easy3d_vulkan_animation_test
+            easy3d_vulkan_camera_path_test
+            easy3d_vulkan_clipping_plane_test
+            easy3d_vulkan_collision_test
+            easy3d_vulkan_corner_axes_test
+            easy3d_vulkan_cross_section_test
+            easy3d_vulkan_frame_rate_test
+            easy3d_vulkan_image_viewer_test
+            easy3d_vulkan_interaction_overlay_test
+            easy3d_vulkan_manipulation_test
+            easy3d_vulkan_multithread_test
+            easy3d_vulkan_obj_viewer_test
+            easy3d_vulkan_picker_viewer_test
+            easy3d_vulkan_point_selection_viewer_test
+            easy3d_vulkan_real_camera_test
+            easy3d_vulkan_scan_viewer_test
+            easy3d_vulkan_text_viewer_test
+            easy3d_vulkan_usage_test
+            easy3d_vulkan_viewer_camera_path_test
+            easy3d_vulkan_window_test
+            easy3d_imgui_viewer_test)
+        target_link_libraries(${target} PRIVATE 3rd_glfw)
+    endforeach()
+endif()
+
 include(../properties.cmake)
