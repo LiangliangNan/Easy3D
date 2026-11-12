@@ -36,7 +36,9 @@
 
 namespace easy3d {
 
+#ifndef EASY3D_HAS_VULKAN
     class LinesDrawable;
+#endif
 
     /**
      * \brief A collection of functions for rendering basic shapes
@@ -44,6 +46,7 @@ namespace easy3d {
      */
     namespace shape {
 
+#ifndef EASY3D_HAS_VULKAN
         /// \name Functions for drawing
         // @{
 
@@ -177,6 +180,7 @@ namespace easy3d {
          */
         void draw_box_wire(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool abstracted = false);
         // @}
+#endif
 
 
 

@@ -8,18 +8,12 @@ implemented for both configured backends. Mapple is intentionally OpenGL-only;
 the Qt/wx viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
-**Status after local Z-click transition cleanup:** core feature implementation
-for the agreed shared surface is substantially complete. Viewer-triggered focus
-and fit use the existing `Camera::interpolate_to_look_at()` and
-`Camera::interpolate_to_fit_scene()` APIs on both backends; the Viewer does not
-maintain a second interpolator for these actions. The updated
-validation-enabled `vulkan.input` test checks that focus animation progresses
-and reaches its target. Earlier local Vulkan and OpenGL full-suite results are
-recorded below; they predate this cleanup. Clean Release builds and installed
-package consumers for both backends also passed locally on macOS. A controlled
-OpenGL/Vulkan point-cloud benchmark now profiles the portable expanded-point
-fallback locally (batch 45). Migration completion remains gated on Linux and
-Windows evidence and a successful run of the restored CI workflow.
+**Status after batch 76:** core feature implementation for the agreed shared
+surface is substantially complete. The latest local macOS full-suite results
+are Vulkan Debug 141/141, Vulkan Release 141/141, OpenGL Debug 107/107, and
+OpenGL Release 107/107. The `vulkan.yml` workflow is present, but its latest
+GitHub runs were cancelled during Build before tests or package-consumer checks;
+Linux/Mesa and Windows hardware validation remain open gates.
 See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
@@ -55,6 +49,21 @@ and user-friendly, and which is the best practice. **When this happens, prompt o
 to the user to make the decision** — present the candidate implementations with their
 tradeoffs and let the user choose; do not silently pick one backend's behavior as the
 reference. Record the chosen semantics and the reasoning in the batch section below.
+
+**Backend architecture policy (2026-11-12).** Unify backend-independent behavior and
+state, not backend implementation objects. OpenGL and Vulkan may use different pipelines
+and resource models when that keeps each backend simpler. Consolidate implementations
+only when their behavior is equivalent and sharing demonstrably reduces maintenance
+cost without regressing correctness or performance; architectural symmetry alone is not
+a reason to merge them.
+
+**Documentation scope (2026-11-12).** Document supported public contracts, backend
+limitations, intentional differences, and the shared-versus-backend-specific
+architecture. Keep detailed shader, pipeline, and private-helper mechanics in code or
+maintainer notes when they affect correctness; do not present internal implementation
+details as supported API. Keep current status and acceptance gates synchronized with
+`ToDo.md`; do not present historical batch logs as current status or duplicate them as
+current guidance.
 
 **P1. Same class names, same files.** A class has the same name and lives in the same
 `.h`/`.cpp` pair for both backends, as in `main`: `Viewer` in `viewer.h/.cpp`,
@@ -486,59 +495,35 @@ not outstanding migration ports.
 
 The migration is **not yet validated complete**:
 
-* On the local working tree based on `563d35ec`, the configured
-  `cmake-build-debug` Vulkan build completed and the full 144-test CTest run
-  passed. That run included the earlier frame-driven Z-click transition
-  implementation. After the current cleanup restored the existing Camera
-  interpolation APIs, the rebuilt validation-enabled `vulkan.input` test
-  passed (1/1), checking progress and arrival at the target. `vulkan.window`
-  also passed in the full run and five consecutive repeat runs.
-* A fresh OpenGL Debug configuration (`Easy3D_ENABLE_VULKAN=OFF`,
-  `Easy3D_BUILD_TESTS=ON`, optional Python/CGAL/Qt/ffmpeg dependencies off)
-  built successfully and passed all 104 CTests, including retained tutorial
-  smoke tests and `opengl.viewerloop`.
-* On 2026-11-09, clean Release Vulkan and OpenGL configurations were built and
-  installed to temporary prefixes. Installed-package consumers compiled for
-  both; all three Vulkan consumers and both OpenGL consumers ran successfully.
-  This local macOS check is separate from the GitHub Linux/Mesa jobs and
-  Windows hardware validation.
-* The installed consumers compile the common `Viewer`, `MultiViewer`, and
-  `OffScreen` APIs with each backend's explicit options type. The shared
-  consumer also checks that installed Vulkan targets export
-  `EASY3D_HAS_VULKAN` and OpenGL targets do not.
-* The shared `viewer.offscreen` regression now checks deterministic unlit
-  triangle color agreement between file snapshot and capture (one-channel
-  tolerance), valid center depth/object ID, preservation of scene IDs after
-  resize, and primitive-ID behavior in both backend configurations. It passed
-  in Vulkan and OpenGL Debug builds on 2026-11-09. OpenGL currently reports
-  `UINT32_MAX` for the center primitive ID while Vulkan reports primitive 0;
-  this known capability difference is asserted explicitly. Picking, interactive
-  behavior, and DPI parity now have shared deterministic checks too:
-  `portable_pick`, the shared `input_test.cpp` (`vulkan.input`/`opengl.input`),
-  and `viewer_query` plus the `viewer.pointbenchmark` DPI assertions all pass on
-  both backends (2026-11-09). A systematic effect/snapshot image-diff harness
-  remains optional follow-up (assessment Finding 1).
-* `vulkan.interactionoverlay` passed in that local run. Its selection-border
-  assertion now accepts a solid-blue border within one pixel of the ideal edge,
-  accounting for line-rasterization placement while still checking solid color.
-  The prior Linux baseline was 68/69; rerun it on the target Linux/Mesa runner
-  and record the disposition before closing the platform-specific gate.
-* The successful local run used the existing `cmake-build-debug` cache
-  (Vulkan, CGAL, and Python bindings enabled); it was not a clean configure.
-  Clean dependency-matrix builds and other platform configurations remain
-  separate validation gates.
-* The tracker records Mac suite results from 2026-11-08 (OpenGL 105/105,
-  MoltenVK 139/139, OpenGL+Qt 104/104, Vulkan Debug 144/144); these are recorded
-  results, not a fresh run in this audit. Windows Vulkan hardware and
-  cross-platform package-consumer checks remain unverified.
-* The archived Vulkan/OpenGL GitHub workflow has been restored to
-  `.github/workflows/vulkan.yml`. It has not yet run on GitHub, so automated
-  Linux/Mesa coverage and installed-package consumer results remain unverified.
-* The supported tutorial-facing API is intended to be shared, but the installed
-  API is not symbol-identical: some `Viewer` members are Vulkan-only. The
-  constructor order/default also changed, so some old positional calls can
-  compile with different meanings. Resolve the compatibility policy and verify
-  consumers as tracked in `ToDo.md`.
+* The latest local macOS full-suite results are recorded in the batch-76
+  tracker entry (2026-11-12): Vulkan Debug and Release each passed 141/141;
+  OpenGL Debug and Release each passed 107/107. The Vulkan trees were configured
+  without optional Qt/CGAL/FFmpeg/Python extras, so their test count differs from
+  the IDE-owned tree. These local runs do not establish Linux/Mesa or Windows
+  behavior.
+* The shared `viewer.offscreen` regression checks unlit triangle color
+  agreement, depth/object ID, ID preservation after resize, and the known
+  OpenGL/Vulkan primitive-ID capability difference. Shared checks also cover
+  picking, interaction, and DPI behavior. A systematic cross-backend
+  image-diff harness for effect-heavy and snapshot workloads remains open in
+  `ToDo.md`.
+* `vulkan.interactionoverlay` and other recent regressions pass locally on
+  macOS; the prior Linux/Mesa result was 68/69. Reproduce the failure and record
+  the disposition on the intended Linux runner before closing that platform
+  gate.
+* `.github/workflows/vulkan.yml` is present and includes configured-backend,
+  lavapipe, SPIR-V, and installed-package consumer jobs. The latest run for
+  `f8bd274c` ([#43256663038](https://github.com/LiangliangNan/Easy3D/actions/runs/43256663038))
+  was cancelled during Build; the later validation and consumer jobs were
+  skipped. It therefore supplies no Linux/Mesa or package-consumer result.
+* Clean macOS installed-package consumers for both backends passed on
+  2026-11-09. Linux/Windows package consumers and Windows Vulkan hardware remain
+  unverified.
+* The supported tutorial-facing API is intended to be shared but is not
+  symbol-identical: some `Viewer` members are Vulkan-only. Constructor order
+  and defaults also changed, so old positional calls can compile with different
+  meanings. Compatibility policy and consumer coverage remain tracked in
+  `ToDo.md`.
 
 The tracked Mac measurement of approximately 80 FPS for the native
 `largePoints` RealCamera path at 3200×1834, 4× MSAA, and zero validation errors
@@ -554,6 +539,25 @@ The migration completion checklist is maintained in `ToDo.md`. It separates
 correctness and platform acceptance gates from follow-up maintainability and
 performance improvements. Do not treat the old U1–U6/W10 work-order snapshots
 below as current.
+
+**Renderer cleanup after batch 76.** The Vulkan-only immediate shape stubs that
+only threw exceptions are removed, and the dependent manipulator frame-drawing
+API is explicitly OpenGL-only. Corner-axis visibility is shared Viewer state.
+The built-in HUD on both backends now uses `graphics::TextLayoutEngine`; OpenGL
+realizes its commands with `opengl::OverlayRenderer`. The immediate
+`easy3d::TextRenderer` remains for Mapple and is no longer used by Viewer.
+Focused input/HUD checks pass on OpenGL and Vulkan, with the Vulkan text-viewer
+regression passing as well.
+
+The line-shader audit does not justify merging OpenGL's colored and textured
+cylinder/cone variants yet: their fragment inputs and some lighting/alpha
+semantics differ, so consolidating them before parity is demonstrated would
+change behavior rather than remove duplication safely. `VertexArrayObject`
+also remains active: Drawable buffer uploads, immediate shape helpers,
+`TextRenderer`, and the Python binding depend on it. `RenderDevice` is the
+Vulkan scene-execution interface; OpenGL currently reuses its command types for
+overlays, not as a full device backend. Broader device unification and
+modularization remain gated on measured correctness/performance baselines.
 
 ## Historical implementation status (2026-11-04; superseded)
 
@@ -1735,8 +1739,11 @@ native text; native Qt/wx host integration remains a migration gate.
 `graphics::TextLayoutEngine` rasterizes trusted TrueType/OpenType font files on the
 CPU using the bundled stb_truetype, without a graphics context. It returns a
 `graphics::TextLayout` containing ordinary overlay commands, ink bounds, the last
-line's advance and line height. It is separate from the retained immediate
-OpenGL `easy3d::TextRenderer`; legacy GL callbacks are not emulated.
+line's advance and line height. Viewer uses this engine for its built-in HUD on
+both backends: Vulkan submits the commands through `RenderDevice`, while OpenGL
+realizes them through `OverlayRenderer`. The immediate OpenGL
+`easy3d::TextRenderer` remains available to Mapple and other existing clients,
+but is not the Viewer HUD implementation; legacy GL callbacks are not emulated.
 
 ```cpp
 #include <easy3d/renderer/text_layout.h>

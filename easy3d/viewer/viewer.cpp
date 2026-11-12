@@ -70,6 +70,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/resource.h>
+#include <easy3d/renderer/text_layout.h>
 #ifdef EASY3D_HAS_VULKAN
 // vulkan.h must precede glfw3.h (first pulled in by viewer_loop.h): GLFW declares
 // glfwCreateWindowSurface only when VK_VERSION_1_0 is defined.
@@ -84,7 +85,6 @@
 #include <easy3d/renderer/transparency.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/ambient_occlusion.h>
-#include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/backends/vulkan/drawable.h>
 #include <easy3d/renderer/backends/vulkan/clipping_plane.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
@@ -99,7 +99,6 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/util/timer.h>
@@ -107,6 +106,86 @@
 #include <easy3d/core/matrix.h>
 #endif
 
+
+namespace easy3d {
+    void Viewer::ensure_text_layout_engine() const {
+        if (fonts_tried_)
+            return;
+        fonts_tried_ = true;
+        try {
+            text_layout_.reset(new graphics::TextLayoutEngine);
+            text_layout_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
+            text_layout_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
+        } catch (const std::exception &e) {
+            text_layout_.reset();
+            LOG(WARNING) << "Viewer HUD font unavailable: " << e.what();
+        }
+    }
+
+    bool Viewer::update_hud_text(std::vector<graphics::DrawCommand> &commands) const {
+        const float dpi = dpi_scaling();
+        const bool viewport_changed = hint_dpi_ != dpi || framebuffer_width() != hint_width_ ||
+                                      framebuffer_height() != hint_height_ || rendered_show_logo_ != show_easy3d_logo_;
+        const bool hint_changed =
+            viewport_changed || rendered_hint_ != hint_ || rendered_show_frame_rate_ != show_frame_rate_;
+        const std::string frame_rate_text = show_frame_rate_ ? framerate_ : std::string();
+        const bool frame_rate_changed = viewport_changed || rendered_frame_rate_ != frame_rate_text;
+        const bool changed = hint_changed || frame_rate_changed;
+
+        if (changed) {
+            if (show_easy3d_logo_ || !hint_.empty() || !frame_rate_text.empty())
+                ensure_text_layout_engine();
+            if (viewport_changed) {
+                logo_commands_.clear();
+                if (text_layout_ && show_easy3d_logo_) {
+                    graphics::TextOptions options;
+                    options.size = 15 * dpi;
+                    options.x = 20 * dpi;
+                    options.y = 22.5f * dpi;
+                    logo_commands_ =
+                        text_layout_->layout("Easy3D", framebuffer_width(), framebuffer_height(), options).commands;
+                }
+                rendered_show_logo_ = show_easy3d_logo_;
+            }
+            if (hint_changed) {
+                hint_commands_.clear();
+                if (text_layout_ && !hint_.empty()) {
+                    graphics::TextOptions options;
+                    options.font = 1;
+                    options.size = 15 * dpi;
+                    options.x = 35 * dpi;
+                    options.y = 22.5f * (1 + int(show_frame_rate_) + int(show_easy3d_logo_)) * dpi;
+                    options.color = vec4(0, 0, 1, 1);
+                    hint_commands_ =
+                        text_layout_->layout(hint_, framebuffer_width(), framebuffer_height(), options).commands;
+                }
+                rendered_hint_ = hint_;
+                rendered_show_frame_rate_ = show_frame_rate_;
+            }
+            if (frame_rate_changed) {
+                frame_rate_commands_.clear();
+                if (text_layout_ && !frame_rate_text.empty()) {
+                    graphics::TextOptions options;
+                    options.font = 1;
+                    options.size = 15 * dpi;
+                    options.x = 20 * dpi;
+                    options.y = 22.5f * (1 + int(show_easy3d_logo_)) * dpi;
+                    frame_rate_commands_ =
+                        text_layout_->layout(frame_rate_text, framebuffer_width(), framebuffer_height(), options).commands;
+                }
+                rendered_frame_rate_ = frame_rate_text;
+            }
+            hint_width_ = framebuffer_width();
+            hint_height_ = framebuffer_height();
+            hint_dpi_ = dpi;
+        }
+
+        commands = logo_commands_;
+        commands.insert(commands.end(), frame_rate_commands_.begin(), frame_rate_commands_.end());
+        commands.insert(commands.end(), hint_commands_.begin(), hint_commands_.end());
+        return changed;
+    }
+} // namespace easy3d
 
 #ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
@@ -1280,12 +1359,7 @@ namespace easy3d {
             if (plane->is_enabled())
                 plane->set_cross_section(!plane->cross_section());
         } else if (modifiers == 0 && key == KEY_A) {
-#ifdef EASY3D_HAS_VULKAN
             show_corner_axes_ = !show_corner_axes_;
-#else
-            if (drawable_axes_)
-                drawable_axes_->set_visible(!drawable_axes_->is_visible());
-#endif
         } else if (modifiers == 0 && key == KEY_R) {
 #ifdef EASY3D_HAS_VULKAN
             LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
@@ -1756,19 +1830,6 @@ namespace easy3d {
         }
         set_viewer_annotations(std::move(commands));
     }
-    void Viewer::ensure_text_renderer() const {
-        if (fonts_tried_)
-            return;
-        fonts_tried_ = true;
-        try {
-            texter_.reset(new graphics::TextLayoutEngine);
-            texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
-            texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
-        } catch (const std::exception &e) {
-            texter_.reset();
-            LOG(WARNING) << "Viewer HUD font unavailable: " << e.what();
-        }
-    }
     void Viewer::draw_corner_axes() const {
         if (!show_corner_axes_) {
             set_viewer_3d_overlays({});
@@ -1805,58 +1866,10 @@ namespace easy3d {
         draw_corner_axes();
         const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now() < pivot_expires_;
         const float dpi = dpi_scaling();
-        const bool viewport_changed = hint_dpi_ != dpi || framebuffer_width() != hint_width_ ||
-                                      framebuffer_height() != hint_height_ || rendered_show_logo_ != show_easy3d_logo_;
-        const bool hint_changed =
-            viewport_changed || rendered_hint_ != hint_ || rendered_show_frame_rate_ != show_frame_rate_;
-        const std::string frame_rate_text = show_frame_rate_ ? framerate_ : std::string();
-        const bool frame_rate_changed = viewport_changed || rendered_frame_rate_ != frame_rate_text;
-        if (!force && !hint_changed && !frame_rate_changed && pivot == pivot_hint_visible_)
+        std::vector<graphics::DrawCommand> commands;
+        const bool text_changed = update_hud_text(commands);
+        if (!force && !text_changed && pivot == pivot_hint_visible_)
             return;
-        if (show_easy3d_logo_ || !hint_.empty() || !frame_rate_text.empty())
-            ensure_text_renderer();
-        if (viewport_changed || force) {
-            logo_commands_.clear();
-            if (texter_ && show_easy3d_logo_) {
-                graphics::TextOptions options;
-                options.size = 15 * dpi;
-                options.x = 20 * dpi;
-                options.y = 22.5f * dpi;
-                logo_commands_ = texter_->layout("Easy3D", framebuffer_width(), framebuffer_height(), options).commands;
-            }
-            rendered_show_logo_ = show_easy3d_logo_;
-        }
-        if (hint_changed) {
-            hint_commands_.clear();
-            if (texter_ && !hint_.empty()) {
-                graphics::TextOptions options;
-                options.font = 1;
-                options.size = 15 * dpi;
-                options.x = 35 * dpi;
-                options.y = 22.5f * (1 + int(show_frame_rate_) + int(show_easy3d_logo_)) * dpi;
-                options.color = vec4(0, 0, 1, 1);
-                hint_commands_ = texter_->layout(hint_, framebuffer_width(), framebuffer_height(), options).commands;
-            }
-            rendered_hint_ = hint_;
-            hint_dpi_ = dpi;
-            rendered_show_frame_rate_ = show_frame_rate_;
-        }
-        if (frame_rate_changed) {
-            frame_rate_commands_.clear();
-            if (texter_ && !frame_rate_text.empty()) {
-                graphics::TextOptions options;
-                options.font = 1;
-                options.size = 15 * dpi;
-                options.x = 20 * dpi;
-                options.y = 22.5f * (1 + int(show_easy3d_logo_)) * dpi;
-                frame_rate_commands_ =
-                    texter_->layout(frame_rate_text, framebuffer_width(), framebuffer_height(), options).commands;
-            }
-            rendered_frame_rate_ = frame_rate_text;
-        }
-        std::vector<graphics::DrawCommand> commands = logo_commands_;
-        commands.insert(commands.end(), frame_rate_commands_.begin(), frame_rate_commands_.end());
-        commands.insert(commands.end(), hint_commands_.begin(), hint_commands_.end());
         if (pivot) {
             // The pivot cross is ten logical pixels long and one logical pixel wide;
             // both backends draw it in framebuffer pixels, so the arm is 10 * dpi and
@@ -1885,8 +1898,6 @@ namespace easy3d {
         }
         set_viewer_overlays(std::move(commands));
         pivot_hint_visible_ = pivot;
-        hint_width_ = framebuffer_width();
-        hint_height_ = framebuffer_height();
     }
     graphics::FrameImage Viewer::capture() const {
         return capture(samples());
@@ -2254,7 +2265,8 @@ namespace easy3d {
         camera_.reset();
         drawable_axes_.reset();
         drawable_pivot_.reset();
-        texter_.reset();
+        text_layout_.reset();
+        hud_overlay_renderer_.reset();
         overlay_renderer_.reset();
         point_selector_.reset();
 
@@ -2293,15 +2305,14 @@ namespace easy3d {
         glfwGetFramebufferSize(window_, &fw, &fh);
         glViewport(0, 0, fw, fh);
 
-        // create TextRenderer renderer and load default fonts
-        texter_ = std::unique_ptr<TextRenderer>(new TextRenderer(dpi_scaling()));
-        texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
-        texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
+        ensure_text_layout_engine();
 
         initialized_ = true;
         print_usage();
     }
     void Viewer::draw_corner_axes() const {
+        if (!show_corner_axes_)
+            return;
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
@@ -2335,9 +2346,6 @@ namespace easy3d {
             drawable_axes_->update_color_buffer(colors);
             drawable_axes_->set_property_coloring(State::VERTEX);
         }
-        if (!drawable_axes_->is_visible())
-            return;
-
         // The viewport is changed to fit the lower left corner.
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -2395,26 +2403,19 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     void Viewer::post_draw() {
-        if (texter_ && texter_->num_fonts() >= 2) {
-            const float font_size = 15.0f;
-            float x = 20.0f * dpi_scaling();
-            float y = 0.0f;
-            // draw the Easy3D logo and GPU time
-            if (show_easy3d_logo_) {
-                y += font_size * 1.5f * dpi_scaling();
-                texter_->draw("Easy3D", x, y, font_size, 0);
-            }
-
-            // draw the framerate
-            if (show_frame_rate_) {
-                y += font_size * 1.5f * dpi_scaling();
-                texter_->draw(framerate_, x, y, font_size, 1);
-            }
-
-            if (!hint_.empty()) {
-                x += font_size * dpi_scaling();
-                y += font_size * 1.5f * dpi_scaling();
-                texter_->draw(hint_, x, y, font_size, TextRenderer::ALIGN_LEFT, 1, vec3(0, 0, 1));
+        std::vector<graphics::DrawCommand> text_commands;
+        update_hud_text(text_commands);
+        const bool has_text = !text_commands.empty();
+        if (!hud_overlay_renderer_ && has_text)
+            hud_overlay_renderer_.reset(new opengl::OverlayRenderer);
+        if (hud_overlay_renderer_) {
+            for (auto &command : text_commands)
+                command.overlay = true;
+            hud_overlay_renderer_->set(std::move(text_commands), true);
+            if (has_text) {
+                opengl::QueryState state;
+                state.prepare(framebuffer_width(), framebuffer_height());
+                hud_overlay_renderer_->draw(true, framebuffer_width(), framebuffer_height(), overlay_tile_, {});
             }
         }
 
@@ -2447,47 +2448,6 @@ namespace easy3d {
 
         draw_corner_axes();
         draw_overlays(true);
-    }
-    void Viewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
-        auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        const auto &points = mesh->points();
-        for (auto f : mesh->faces()) {
-            int count = 0;
-            vec3 c(0, 0, 0);
-            for (auto v : mesh->vertices(f)) {
-                c += points[v.idx()];
-                ++count;
-            }
-            c /= count;
-
-            const vec3 p = world_to_pixel(c);
-            const float x = p.x;
-            const float y = framebuffer_height() - p.y;
-
-            float depth = 1.0f;
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);
-            easy3d_debug_log_gl_error glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT,
-                                                   GL_FLOAT, &depth);
-            easy3d_debug_log_gl_error if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
-                texter->draw(std::to_string(f.idx()), x, p.y, 16, font_id, color);
-        }
-    }
-    void Viewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
-        auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        const auto &points = mesh->points();
-        for (std::size_t id = 0; id < points.size(); ++id) {
-            const vec3 &v = points[id];
-            const vec3 p = world_to_pixel(v);
-            const float x = p.x;
-            const float y = framebuffer_height() - p.y;
-
-            float depth = 1.0f;
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);
-            easy3d_debug_log_gl_error glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT,
-                                                   GL_FLOAT, &depth);
-            easy3d_debug_log_gl_error if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
-                texter->draw(std::to_string(id), x, p.y, 16, font_id, color);
-        }
     }
     void Viewer::draw() const {
 #if 0
@@ -2556,12 +2516,6 @@ namespace easy3d {
                 d->draw(camera());
         }
 
-#if 0 // draw face labels and vertex labels
-        if (dynamic_cast<SurfaceMesh *>(current_model()) && texter_ && texter_->num_fonts() > 1) {
-            draw_face_labels(current_model(), texter_, 1, vec3(0, 0, 1));
-            draw_vertex_labels(current_model(), texter_, 1, vec3(0, 1, 0));
-        }
-#endif
 #endif
 
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)

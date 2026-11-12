@@ -12,6 +12,8 @@
     - [x] Shared annotations on both backends; Tutorials 202/306/309 share image, text and GUI presentation.
     - [x] Independent 3D HUD depth and diffuse/material lighting on both backends; preserve MSAA, scene queries and scaled/transparent snapshots.
     - [x] Shared shape builders and Manipulator guide API; Tutorials 207/405/506 use shared annotations and GPU depth previews.
+    - [x] Post-batch-76 Viewer cleanup: remove throwing Vulkan immediate-shape stubs, share corner-axis visibility, and use `TextLayoutEngine` for both Viewer HUDs; retain `TextRenderer` for Mapple. OpenGL/Vulkan HUD input regressions pass.
+    - [x] Audit apparent renderer removals: retain `VertexArrayObject` and `TextRenderer` for active clients; keep OpenGL colored/textured line variants separate pending semantic parity. Broad `RenderDevice` unification/modularization remains baseline-gated below.
     - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
     - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
     - [x] Shared GPU point selection and Tutorial 403; OpenGL aliases rendering VBO positions, Vulkan retains SSBO compute, selection recolors attributes only.
