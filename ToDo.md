@@ -113,7 +113,7 @@
       - [x] Extract average/peeling target, render-pass, framebuffer, pipeline, and composite-set construction into `OitResourcesBuilder`; `VulkanDevice` retains OIT resource ownership and descriptor-pool lifetime.
       - [x] Extract linked-list OIT buffer, build-pass, descriptor, and pipeline construction into `LinkedListsBuilder`; `VulkanDevice` retains ownership of the linked-list resources and their descriptor-pool lifetime.
       - [x] Extract OIT composite descriptor updates and peel descriptor-set allocation/cache operations into `OitDescriptorCache`; cached sets remain owned by `Oit`.
-      - [ ] Continue by extracting OIT frame orchestration from `VulkanDevice`; multi-frame submission and staging/suballocation remain deferred pending evidence from frame preparation or dynamic-upload workloads.
+      - [x] Extract OIT activation and post-submit overflow capture into `OitFrameCoordinator`; preserve shadow → OIT → prepass/AO → scene ordering. Multi-frame submission and staging/suballocation remain deferred pending evidence from frame preparation or dynamic-upload workloads.
     - [ ] Improve both backends based on 'docs/vulkan-migration-assessment.md'
       - [x] Finding 1 image-diff harness completed (see above); Finding 4 overflow diagnostics and controlled point benchmark recorded. Finding 2 constructor hazard is documented and deliberately has no deprecated compatibility overload: old positional calls must be migrated to the current constructor order. Both Viewer constructors emit the legacy-context-version advisory, and `docs/vulkan.md` describes the silent reinterpretation. Finding 3 modularization is ongoing; Finding 5 Windows/platform validation remains open.
 

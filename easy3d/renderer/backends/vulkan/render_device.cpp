@@ -4904,19 +4904,39 @@ namespace easy3d {
                     AmbientOcclusionPassEncoder(c_, *ao_, ao_layout_, ao_horizons_, ao_denoise_, *target_)
                         .dispatch(cmd);
                 }
+                class OitFrameCoordinator {
+                    VulkanDevice &device_;
+
+                public:
+                    explicit OitFrameCoordinator(VulkanDevice &device) : device_(device) {}
+
+                    void encode(VkCommandBuffer cmd, const std::vector<Prepared> &draws) {
+                        device_.oit_dropped_ = 0;
+                        // Accumulate or peel transparent surfaces before the scene pass composites them.
+                        device_.oit_active_ = device_.oit_method_ != TransparencyMethod::sorted &&
+                                              std::any_of(draws.begin(), draws.end(),
+                                                          [](const Prepared &draw) { return draw.command.transparent; });
+                        if (device_.oit_active_)
+                            device_.encode_oit(cmd, draws);
+                    }
+
+                    void capture_overflow() {
+                        // The submission fence has already waited, so the counter copy is complete.
+                        if (device_.oit_active_ && device_.oit_method_ == TransparencyMethod::linked_lists &&
+                            device_.lists_) {
+                            uint32_t attempts = 0;
+                            device_.lists_->counter_readback.transfer(&attempts, sizeof(attempts), false);
+                            device_.oit_dropped_ =
+                                attempts > device_.lists_->node_count ? attempts - device_.lists_->node_count : 0;
+                        }
+                    }
+                };
                 void encode(VkCommandBuffer cmd,
                             const std::vector<Prepared> &draws,
                             const vec4 &background,
                             bool capture = true) {
                     encode_shadow(cmd, draws);
-                    oit_dropped_ = 0;
-                    // Accumulate or peel the transparent surfaces first; the scene pass then
-                    // composites the result over its opaque geometry.
-                    oit_active_ = oit_method_ != TransparencyMethod::sorted &&
-                                  std::any_of(draws.begin(), draws.end(),
-                                              [](const Prepared &d) { return d.command.transparent; });
-                    if (oit_active_)
-                        encode_oit(cmd, draws);
+                    OitFrameCoordinator(*this).encode(cmd, draws);
                     // Ambient occlusion and multisampled previews both read the center-sample
                     // depth, which only the single-sample picking pass produces.
                     const bool prepass =
@@ -4952,14 +4972,6 @@ namespace easy3d {
                                       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT,
                                       VK_ACCESS_TRANSFER_READ_BIT);
                 }
-                // The submission fence has already waited, so the counter copy is complete.
-                void capture_oit_overflow() {
-                    if (oit_active_ && oit_method_ == TransparencyMethod::linked_lists && lists_) {
-                        uint32_t attempts = 0;
-                        lists_->counter_readback.transfer(&attempts, sizeof(attempts), false);
-                        oit_dropped_ = attempts > lists_->node_count ? attempts - lists_->node_count : 0;
-                    }
-                }
                 FrameImage render(uint32_t width,
                                   uint32_t height,
                                   const std::vector<DrawCommand> &commands,
@@ -4975,7 +4987,7 @@ namespace easy3d {
                     auto result = capture_frame(c_, *target_, [&](VkCommandBuffer cmd) {
                         encode(cmd, draws, background);
                     });
-                    capture_oit_overflow();
+                    OitFrameCoordinator(*this).capture_overflow();
                     return result;
                 }
                 ScenePixel sample_pixel(uint32_t width,
@@ -5022,7 +5034,7 @@ namespace easy3d {
                     return presentation_->present(
                         width, height, target_->color.handle,
                         [&](VkCommandBuffer cmd) { encode(cmd, draws, background, false); },
-                        [&] { capture_oit_overflow(); });
+                        [&] { OitFrameCoordinator(*this).capture_overflow(); });
                 }
             };
         } // namespace
