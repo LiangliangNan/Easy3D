@@ -1994,6 +1994,250 @@ namespace easy3d {
                 }
             };
 
+            bool expanded_lines(const DrawCommand &d) {
+                return d.geometry->topology() == Topology::lines &&
+                       (d.line_style != LineStyle::plain || d.line_width != 1);
+            }
+
+            bool native_point(const Context &c, const DrawCommand &d) {
+                return d.geometry->topology() == Topology::points && d.point_style == PointStyle::plain &&
+                       c.large_points && d.point_size >= c.min_point_size && d.point_size <= c.max_point_size;
+            }
+
+            bool expanded_impostor(const Context &c, const DrawCommand &d) {
+                return expanded_lines(d) || (d.geometry->topology() == Topology::points &&
+                                             (d.point_style != PointStyle::plain || !native_point(c, d)));
+            }
+
+            class ScenePassEncoder {
+                Context &c_;
+                VkPipelineLayout layout_;
+                VkDescriptorSet impostor_set_;
+                VkPipelineLayout oit_composite_layout_;
+                Oit *oit_;
+                bool oit_active_;
+                TransparencyMethod oit_method_;
+                VkBuffer transparent_indices_;
+
+            public:
+                ScenePassEncoder(Context &context,
+                                 VkPipelineLayout layout,
+                                 VkDescriptorSet impostor_set,
+                                 VkPipelineLayout oit_composite_layout,
+                                 Oit *oit,
+                                 bool oit_active,
+                                 TransparencyMethod oit_method,
+                                 VkBuffer transparent_indices)
+                    : c_(context), layout_(layout), impostor_set_(impostor_set),
+                      oit_composite_layout_(oit_composite_layout), oit_(oit), oit_active_(oit_active),
+                      oit_method_(oit_method), transparent_indices_(transparent_indices) {}
+
+                template <typename Prepared>
+                void encode(VkCommandBuffer cmd,
+                            const std::vector<Prepared> &draws,
+                            const vec4 &background,
+                            const Target &target,
+                            const RenderPass &pass,
+                            VkFramebuffer framebuffer,
+                            const VkOffset2D *pixel = nullptr) {
+                    const auto width = target.width, height = target.height;
+                    VkClearValue clear[4] = {};
+                    if (pass.kind == PassKind::ids) {
+                        clear[0].color.uint32[0] = clear[0].color.uint32[1] = UINT32_MAX;
+                        clear[1].depthStencil.depth = 1;
+                    } else {
+                        for (unsigned i = 0; i < 4; ++i)
+                            clear[0].color.float32[i] = background[i];
+                        if (pass.kind == PassKind::multisample_color)
+                            clear[1].depthStencil.depth = 1;
+                        else {
+                            clear[1].color.uint32[0] = clear[1].color.uint32[1] = UINT32_MAX;
+                            clear[2].depthStencil.depth = 1;
+                        }
+                        clear[3].depthStencil.depth = 1;
+                    }
+                    VkRenderPassBeginInfo begin{};
+                    begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+                    begin.renderPass = pass.handle;
+                    begin.framebuffer = framebuffer;
+                    begin.renderArea = pixel ? VkRect2D{*pixel, {1, 1}} : VkRect2D{{0, 0}, {width, height}};
+                    begin.clearValueCount = pass.kind == PassKind::ids ? 2 : pass.independent_depth ? 4 : 3;
+                    begin.pClearValues = clear;
+                    c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+                    VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+                    const VkRect2D scissor = begin.renderArea;
+                    c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                    c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                    const auto set_view = [&](const DrawCommand &d) {
+                        const auto &r = d.viewport;
+                        VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+                        VkRect2D s{{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
+                        if (pixel) {
+                            if (pixel->x < s.offset.x || pixel->y < s.offset.y ||
+                                uint32_t(pixel->x - s.offset.x) >= s.extent.width ||
+                                uint32_t(pixel->y - s.offset.y) >= s.extent.height)
+                                return false;
+                            s = scissor;
+                        }
+                        c_.vkCmdSetViewport(cmd, 0, 1, &v);
+                        c_.vkCmdSetScissor(cmd, 0, 1, &s);
+                        return true;
+                    };
+                    const auto bind_scene = [&](const Prepared &draw, VkPipeline pipeline) {
+                        const auto &d = draw.command;
+                        if (!set_view(d))
+                            return false;
+                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                        // Vulkan depth bias mirrors glPolygonOffset(0.5, -0.0001): the slope
+                        // factor matches and the constant factor takes the OpenGL unit value.
+                        // Picking keeps the unbiased surfaces, as the OpenGL picker does.
+                        if (d.depth_bias && !d.transparent && pass.kind != PassKind::ids)
+                            c_.vkCmdSetDepthBias(cmd, -0.0001f, 0.0f, 0.5f);
+                        else
+                            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_,
+                                                   1, &draw.uniform_offset);
+                        VkDeviceSize offset = 0;
+                        if (draw.geometry->points) {
+                            VkBuffer buffers[] = {draw.geometry->points->buffer.handle, draw.geometry->buffer.handle};
+                            VkDeviceSize offsets[] = {0, 0};
+                            c_.vkCmdBindVertexBuffers(cmd, 0, 2, buffers, offsets);
+                        } else
+                            c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1,
+                                                   &draw.texture->set, 0, nullptr);
+                        Push push{};
+                        for (unsigned col = 0; col < 4; ++col)
+                            for (unsigned row = 0; row < 4; ++row)
+                                push.mvp[col * 4 + row] = d.model_view_projection(row, col);
+                        for (unsigned i = 0; i < 4; ++i)
+                            push.color[i] = d.color[i];
+                        push.object = d.object_id;
+                        push.lighting = d.lighting ? 1 : 0;
+                        for (unsigned col = 0; col < 3; ++col)
+                            for (unsigned row = 0; row < 3; ++row)
+                                push.normal[col * 3 + row] = d.normal_matrix(row, col);
+                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                        return true;
+                    };
+                    const auto draw_scene = [&](const Prepared &draw, VkPipeline pipeline, bool expanded) {
+                        if (!bind_scene(draw, pipeline))
+                            return;
+                        if (expanded)
+                            c_.vkCmdDraw(cmd, 6,
+                                         expanded_lines(draw.command) ? draw.geometry->count / 2 : draw.geometry->count,
+                                         0, 0);
+                        else
+                            c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+                    };
+                    for (const auto &draw : draws) {
+                        const auto &d = draw.command;
+                        if (d.overlay)
+                            continue;
+                        // Transparent surfaces use the blended pipeline after all opaque geometry.
+                        if (d.transparent && pass.kind != PassKind::ids)
+                            continue;
+                        unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0
+                                            : d.geometry->topology() == Topology::lines   ? 1
+                                                                                          : 2;
+                        const bool expanded = expanded_impostor(c_, d) && !d.transparent;
+                        if (expanded)
+                            pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4)
+                                          : (d.point_style == PointStyle::plain ? 3 : 6);
+                        draw_scene(draw, pass.pipelines[pipeline], expanded);
+                    }
+                    // Order-independent methods already resolved the transparent surfaces into
+                    // their own targets; the scene pass then only records their IDs and depth.
+                    const VkPipeline transparent_pass = oit_active_ ? pass.oit_id_pipeline : pass.transparent_pipeline;
+                    if (transparent_pass) {
+                        std::vector<const Prepared *> transparent;
+                        for (const auto &draw : draws)
+                            if (draw.command.transparent)
+                                transparent.push_back(&draw);
+                        // Far to near, so straight-alpha compositing matches the visible surface order.
+                        std::stable_sort(
+                            transparent.begin(), transparent.end(),
+                            [](const Prepared *a, const Prepared *b) { return a->sort_depth > b->sort_depth; });
+                        for (const Prepared *draw : transparent) {
+                            if (!bind_scene(*draw, transparent_pass))
+                                continue;
+                            if (draw->index_count) {
+                                c_.vkCmdBindIndexBuffer(cmd, transparent_indices_,
+                                                        VkDeviceSize(draw->index_offset) * sizeof(uint32_t),
+                                                        VK_INDEX_TYPE_UINT32);
+                                c_.vkCmdDrawIndexed(cmd, draw->index_count, 1, 0, 0, 0);
+                            } else
+                                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+                        }
+                    }
+                    // Composite the accumulated transparency over the opaque scene. Both
+                    // methods store premultiplied color and over-blend it here, so the
+                    // picking attachment keeps the nearest surface.
+                    if (oit_active_ && pass.kind != PassKind::ids && pass.oit_average_pipeline) {
+                        VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+                        const VkRect2D scissor = {{0, 0}, {width, height}};
+                        c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                        c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                        c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                             oit_method_ == TransparencyMethod::average ? pass.oit_average_pipeline
+                                                                                        : pass.oit_peel_pipeline);
+                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0, 1,
+                                                   &oit_->composite_set, 0, nullptr);
+                        c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+                    }
+                    if (pass.kind != PassKind::ids) {
+                        const unsigned phases = pass.independent_depth ? 3 : 2;
+                        for (unsigned phase = 0; phase < phases; ++phase) {
+                            c_.vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+                            for (const auto &draw : draws) {
+                                const auto &d = draw.command;
+                                if (!d.overlay)
+                                    continue;
+                                const unsigned draw_phase = d.overlay_depth_test          ? 0
+                                                            : d.overlay_independent_depth ? 1
+                                                                                          : phases - 1;
+                                if (draw_phase != phase)
+                                    continue;
+                                set_view(d);
+                                c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                                const auto pipeline = d.shadow                ? pass.shadow_pipeline
+                                                      : d.ambient_occlusion   ? pass.ssao_pipeline
+                                                      : d.eye_dome_lighting   ? pass.edl_pipeline
+                                                      : d.scene_depth_texture ? pass.depth_texture_pipeline
+                                                      : phase == 0            ? pass.depth_overlay_pipeline
+                                                      : phase == phases - 1   ? pass.overlay_pipeline
+                                                                              : pass.hud_3d_pipeline;
+                                c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+                                VkDeviceSize offset = 0;
+                                c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+                                const auto texture_set =
+                                    (d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow)
+                                        ? target.depth_set
+                                        : draw.texture->set;
+                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1,
+                                                           &texture_set, 0, nullptr);
+                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1,
+                                                           &impostor_set_, 1, &draw.uniform_offset);
+                                Push push{};
+                                for (unsigned col = 0; col < 4; ++col)
+                                    for (unsigned row = 0; row < 4; ++row)
+                                        push.mvp[col * 4 + row] = d.model_view_projection(row, col);
+                                for (unsigned i = 0; i < 4; ++i)
+                                    push.color[i] = d.color[i];
+                                push.lighting = d.lighting ? 1 : 0;
+                                for (unsigned col = 0; col < 3; ++col)
+                                    for (unsigned row = 0; row < 3; ++row)
+                                        push.normal[col * 3 + row] = d.normal_matrix(row, col);
+                                c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                                c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+                            }
+                        }
+                    }
+                    c_.vkCmdEndRenderPass(cmd);
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -2898,18 +3142,6 @@ namespace easy3d {
                 GpuTexture &texture(const std::shared_ptr<const Image> &data) {
                     return resources_->texture(data);
                 }
-                static bool expanded_lines(const DrawCommand &d) {
-                    return d.geometry->topology() == Topology::lines &&
-                           (d.line_style != LineStyle::plain || d.line_width != 1);
-                }
-                bool native_point(const DrawCommand &d) const {
-                    return d.geometry->topology() == Topology::points && d.point_style == PointStyle::plain &&
-                           c_.large_points && d.point_size >= c_.min_point_size && d.point_size <= c_.max_point_size;
-                }
-                bool expanded_impostor(const DrawCommand &d) const {
-                    return expanded_lines(d) || (d.geometry->topology() == Topology::points &&
-                                                 (d.point_style != PointStyle::plain || !native_point(d)));
-                }
                 struct Prepared {
                     DrawCommand command;
                     GpuGeometry *geometry;
@@ -3412,201 +3644,10 @@ namespace easy3d {
                                  const RenderPass &pass,
                                  VkFramebuffer framebuffer,
                                  const VkOffset2D *pixel = nullptr) {
-                    const auto width = target.width, height = target.height;
-                    VkClearValue clear[4] = {};
-                    if (pass.kind == PassKind::ids) {
-                        clear[0].color.uint32[0] = clear[0].color.uint32[1] = UINT32_MAX;
-                        clear[1].depthStencil.depth = 1;
-                    } else {
-                        for (unsigned i = 0; i < 4; ++i)
-                            clear[0].color.float32[i] = background[i];
-                        if (pass.kind == PassKind::multisample_color)
-                            clear[1].depthStencil.depth = 1;
-                        else {
-                            clear[1].color.uint32[0] = clear[1].color.uint32[1] = UINT32_MAX;
-                            clear[2].depthStencil.depth = 1;
-                        }
-                        clear[3].depthStencil.depth = 1;
-                    }
-                    VkRenderPassBeginInfo begin{};
-                    begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-                    begin.renderPass = pass.handle;
-                    begin.framebuffer = framebuffer;
-                    begin.renderArea = pixel ? VkRect2D{*pixel, {1, 1}} : VkRect2D{{0, 0}, {width, height}};
-                    begin.clearValueCount = pass.kind == PassKind::ids ? 2 : pass.independent_depth ? 4 : 3;
-                    begin.pClearValues = clear;
-                    c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                    VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-                    const VkRect2D scissor = begin.renderArea;
-                    c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                    c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                    const auto set_view = [&](const DrawCommand &d) {
-                        const auto &r = d.viewport;
-                        VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
-                        VkRect2D s{{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
-                        if (pixel) {
-                            if (pixel->x < s.offset.x || pixel->y < s.offset.y ||
-                                uint32_t(pixel->x - s.offset.x) >= s.extent.width ||
-                                uint32_t(pixel->y - s.offset.y) >= s.extent.height)
-                                return false;
-                            s = scissor;
-                        }
-                        c_.vkCmdSetViewport(cmd, 0, 1, &v);
-                        c_.vkCmdSetScissor(cmd, 0, 1, &s);
-                        return true;
-                    };
-                    const auto bind_scene = [&](const Prepared &draw, VkPipeline pipeline) {
-                        const auto &d = draw.command;
-                        if (!set_view(d))
-                            return false;
-                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-                        // Vulkan depth bias mirrors glPolygonOffset(0.5, -0.0001): the slope
-                        // factor matches and the constant factor takes the OpenGL unit value.
-                        // Picking keeps the unbiased surfaces, as the OpenGL picker does.
-                        if (d.depth_bias && !d.transparent && pass.kind != PassKind::ids)
-                            c_.vkCmdSetDepthBias(cmd, -0.0001f, 0.0f, 0.5f);
-                        else
-                            c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_,
-                                                   1, &draw.uniform_offset);
-                        VkDeviceSize offset = 0;
-                        if (draw.geometry->points) {
-                            VkBuffer buffers[] = {draw.geometry->points->buffer.handle, draw.geometry->buffer.handle};
-                            VkDeviceSize offsets[] = {0, 0};
-                            c_.vkCmdBindVertexBuffers(cmd, 0, 2, buffers, offsets);
-                        } else
-                            c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1,
-                                                   &draw.texture->set, 0, nullptr);
-                        Push push{};
-                        for (unsigned col = 0; col < 4; ++col)
-                            for (unsigned row = 0; row < 4; ++row)
-                                push.mvp[col * 4 + row] = d.model_view_projection(row, col);
-                        for (unsigned i = 0; i < 4; ++i)
-                            push.color[i] = d.color[i];
-                        push.object = d.object_id;
-                        push.lighting = d.lighting ? 1 : 0;
-                        for (unsigned col = 0; col < 3; ++col)
-                            for (unsigned row = 0; row < 3; ++row)
-                                push.normal[col * 3 + row] = d.normal_matrix(row, col);
-                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-                        return true;
-                    };
-                    const auto draw_scene = [&](const Prepared &draw, VkPipeline pipeline, bool expanded) {
-                        if (!bind_scene(draw, pipeline))
-                            return;
-                        if (expanded)
-                            c_.vkCmdDraw(cmd, 6,
-                                         expanded_lines(draw.command) ? draw.geometry->count / 2 : draw.geometry->count,
-                                         0, 0);
-                        else
-                            c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
-                    };
-                    for (const auto &draw : draws) {
-                        const auto &d = draw.command;
-                        if (d.overlay)
-                            continue;
-                        // Transparent surfaces use the blended pipeline after all opaque geometry.
-                        if (d.transparent && pass.kind != PassKind::ids)
-                            continue;
-                        unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0
-                                            : d.geometry->topology() == Topology::lines   ? 1
-                                                                                          : 2;
-                        const bool expanded = expanded_impostor(d) && !d.transparent;
-                        if (expanded)
-                            pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4)
-                                          : (d.point_style == PointStyle::plain ? 3 : 6);
-                        draw_scene(draw, pass.pipelines[pipeline], expanded);
-                    }
-                    // Order-independent methods already resolved the transparent surfaces into
-                    // their own targets; the scene pass then only records their IDs and depth.
-                    const VkPipeline transparent_pass = oit_active_ ? pass.oit_id_pipeline : pass.transparent_pipeline;
-                    if (transparent_pass) {
-                        std::vector<const Prepared *> transparent;
-                        for (const auto &draw : draws)
-                            if (draw.command.transparent)
-                                transparent.push_back(&draw);
-                        // Far to near, so straight-alpha compositing matches the visible surface order.
-                        std::stable_sort(
-                            transparent.begin(), transparent.end(),
-                            [](const Prepared *a, const Prepared *b) { return a->sort_depth > b->sort_depth; });
-                        for (const Prepared *draw : transparent) {
-                            if (!bind_scene(*draw, transparent_pass))
-                                continue;
-                            if (draw->index_count) {
-                                c_.vkCmdBindIndexBuffer(cmd, transparent_indices_->handle,
-                                                        VkDeviceSize(draw->index_offset) * sizeof(uint32_t),
-                                                        VK_INDEX_TYPE_UINT32);
-                                c_.vkCmdDrawIndexed(cmd, draw->index_count, 1, 0, 0, 0);
-                            } else
-                                c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
-                        }
-                    }
-                    // Composite the accumulated transparency over the opaque scene. Both
-                    // methods store premultiplied color and over-blend it here, so the
-                    // picking attachment keeps the nearest surface.
-                    if (oit_active_ && pass.kind != PassKind::ids && pass.oit_average_pipeline) {
-                        VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-                        const VkRect2D scissor = {{0, 0}, {width, height}};
-                        c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                        c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                        c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                             oit_method_ == TransparencyMethod::average ? pass.oit_average_pipeline
-                                                                                        : pass.oit_peel_pipeline);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0, 1,
-                                                   &oit_->composite_set, 0, nullptr);
-                        c_.vkCmdDraw(cmd, 3, 1, 0, 0);
-                    }
-                    if (pass.kind != PassKind::ids) {
-                        const unsigned phases = pass.independent_depth ? 3 : 2;
-                        for (unsigned phase = 0; phase < phases; ++phase) {
-                            c_.vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
-                            for (const auto &draw : draws) {
-                                const auto &d = draw.command;
-                                if (!d.overlay)
-                                    continue;
-                                const unsigned draw_phase = d.overlay_depth_test          ? 0
-                                                            : d.overlay_independent_depth ? 1
-                                                                                          : phases - 1;
-                                if (draw_phase != phase)
-                                    continue;
-                                set_view(d);
-                                c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                                const auto pipeline = d.shadow                ? pass.shadow_pipeline
-                                                      : d.ambient_occlusion   ? pass.ssao_pipeline
-                                                      : d.eye_dome_lighting   ? pass.edl_pipeline
-                                                      : d.scene_depth_texture ? pass.depth_texture_pipeline
-                                                      : phase == 0            ? pass.depth_overlay_pipeline
-                                                      : phase == phases - 1   ? pass.overlay_pipeline
-                                                                              : pass.hud_3d_pipeline;
-                                c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-                                VkDeviceSize offset = 0;
-                                c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-                                const auto texture_set =
-                                    (d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow)
-                                        ? target.depth_set
-                                        : draw.texture->set;
-                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1,
-                                                           &texture_set, 0, nullptr);
-                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1,
-                                                           &impostor_set_, 1, &draw.uniform_offset);
-                                Push push{};
-                                for (unsigned col = 0; col < 4; ++col)
-                                    for (unsigned row = 0; row < 4; ++row)
-                                        push.mvp[col * 4 + row] = d.model_view_projection(row, col);
-                                for (unsigned i = 0; i < 4; ++i)
-                                    push.color[i] = d.color[i];
-                                push.lighting = d.lighting ? 1 : 0;
-                                for (unsigned col = 0; col < 3; ++col)
-                                    for (unsigned row = 0; row < 3; ++row)
-                                        push.normal[col * 3 + row] = d.normal_matrix(row, col);
-                                c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-                                c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
-                            }
-                        }
-                    }
-                    c_.vkCmdEndRenderPass(cmd);
+                    ScenePassEncoder encoder(
+                        c_, layout_, impostor_set_, oit_composite_layout_, oit_.get(), oit_active_, oit_method_,
+                        transparent_indices_ ? transparent_indices_->handle : VK_NULL_HANDLE);
+                    encoder.encode(cmd, draws, background, target, pass, framebuffer, pixel);
                 }
                 // Order-independent transparency targets are created on first use and
                 // recreated with the scene target. Both methods stay single sampled.
