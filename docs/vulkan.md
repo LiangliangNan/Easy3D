@@ -557,17 +557,19 @@ regression passing as well.
 
 **`RenderDevice` modularization (batch 77).** GPU point, geometry and texture
 caches now have a `GpuResources` owner, color/picking render-pass caches are
-grouped in `PassCache`, and full-frame/pixel readback is centralized in
-synchronous capture helpers. The focused `vulkan.resourcelifetime` test runs
-with synchronization validation, reuses geometry and image addresses after
-source destruction, exercises frame and pixel capture plus target resize, then
-repeats device teardown. Window presentation and swapchain ownership now live
-in a `Presentation` helper, which owns swapchain recreation, image acquisition,
-blitting, and queue presentation. Pass construction/encoding remains in
-`VulkanDevice`. The existing fence wait and one-command-buffer model are
-unchanged. Profiling found no current basis for multiple frames in flight or
-staging/suballocation, so both remain deferred unless frame-preparation or
-recurring dynamic-upload workloads show a measurable need.
+grouped in `PassCache`, which now owns color and picking pass lookup/construction
+while `VulkanDevice` supplies pipeline creation. Full-frame/pixel readback is
+centralized in synchronous capture helpers. The focused
+`vulkan.resourcelifetime` test runs with synchronization validation, reuses
+geometry and image addresses after source destruction, exercises frame and
+pixel capture plus target resize, then repeats device teardown. Window
+presentation and swapchain ownership now live in a `Presentation` helper, which
+owns swapchain recreation, image acquisition, blitting, and queue presentation.
+Pass encoding remains in `VulkanDevice`. The existing fence wait and
+one-command-buffer model are unchanged. Profiling found no current basis for
+multiple frames in flight or staging/suballocation, so both remain deferred
+unless frame-preparation or recurring dynamic-upload workloads show a
+measurable need.
 
 The line-shader audit does not justify merging OpenGL's colored and textured
 cylinder/cone variants yet: their fragment inputs and some lighting/alpha

@@ -1013,6 +1013,40 @@ namespace easy3d {
             struct PassCache {
                 std::map<unsigned, std::unique_ptr<RenderPass>> color;
                 std::unique_ptr<RenderPass> picking;
+
+                template <typename CreatePipelines>
+                RenderPass &get_color(Context &c,
+                                      unsigned samples,
+                                      bool independent_depth,
+                                      bool depth_preview,
+                                      const CreatePipelines &create_pipelines) {
+                    const unsigned key = samples | (independent_depth ? 128u : 0u) | (depth_preview ? 256u : 0u);
+                    auto found = color.find(key);
+                    if (found != color.end())
+                        return *found->second;
+                    std::unique_ptr<RenderPass> pass(
+                        new RenderPass(c, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
+                                       static_cast<VkSampleCountFlagBits>(samples)));
+                    pass->independent_depth = independent_depth;
+                    pass->depth_preview = depth_preview;
+                    pass->init();
+                    create_pipelines(*pass);
+                    auto *result = pass.get();
+                    color.emplace(key, std::move(pass));
+                    return *result;
+                }
+
+                template <typename CreatePipelines>
+                RenderPass &get_picking(Context &c, const CreatePipelines &create_pipelines) {
+                    if (!picking) {
+                        std::unique_ptr<RenderPass> pass(new RenderPass(c, PassKind::ids, VK_SAMPLE_COUNT_1_BIT));
+                        pass->init();
+                        create_pipelines(*pass);
+                        picking = std::move(pass);
+                    }
+                    return *picking;
+                }
+
                 void clear() {
                     color.clear();
                     picking.reset();
@@ -2204,29 +2238,11 @@ namespace easy3d {
                                                     " is unsupported by this device");
                 }
                 RenderPass &color_pass(unsigned samples, bool independent_depth = false, bool depth_preview = false) {
-                    const unsigned key = samples | (independent_depth ? 128u : 0u) | (depth_preview ? 256u : 0u);
-                    auto found = passes_.color.find(key);
-                    if (found != passes_.color.end())
-                        return *found->second;
-                    std::unique_ptr<RenderPass> pass(
-                        new RenderPass(c_, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
-                                       static_cast<VkSampleCountFlagBits>(samples)));
-                    pass->independent_depth = independent_depth;
-                    pass->depth_preview = depth_preview;
-                    pass->init();
-                    create_pipelines(*pass);
-                    auto *result = pass.get();
-                    passes_.color.emplace(key, std::move(pass));
-                    return *result;
+                    return passes_.get_color(c_, samples, independent_depth, depth_preview,
+                                             [this](RenderPass &pass) { create_pipelines(pass); });
                 }
                 RenderPass &picking_pass() {
-                    if (!passes_.picking) {
-                        std::unique_ptr<RenderPass> pass(new RenderPass(c_, PassKind::ids, VK_SAMPLE_COUNT_1_BIT));
-                        pass->init();
-                        create_pipelines(*pass);
-                        passes_.picking = std::move(pass);
-                    }
-                    return *passes_.picking;
+                    return passes_.get_picking(c_, [this](RenderPass &pass) { create_pipelines(pass); });
                 }
                 void create_ao_pipelines() {
                     VkDescriptorSetLayoutBinding binding[5] = {};
