@@ -56,9 +56,9 @@ int main(int argc,char**) {
                 const unsigned height=width;
 
                 // Two halves at very different depths meet at the vertical center.
-                auto near=quad(-1,-1,0,1,-.8f,vec4(.8f,.8f,.8f,1));near.object_id=3;
-                auto far=quad(0,-1,1,1,.6f,vec4(.8f,.8f,.8f,1));far.object_id=4;
-                const std::vector<DrawCommand> scene{near,far};
+                auto near_surface=quad(-1,-1,0,1,-.8f,vec4(.8f,.8f,.8f,1));near_surface.object_id=3;
+                auto far_surface=quad(0,-1,1,1,.6f,vec4(.8f,.8f,.8f,1));far_surface.object_id=4;
+                const std::vector<DrawCommand> scene{near_surface,far_surface};
                 const auto base=device->render(width,height,scene,vec4(0),samples);
                 const auto shaded=device->render(width,height,lit(scene,width,height),vec4(0),samples);
                 same_picking(base,shaded);
