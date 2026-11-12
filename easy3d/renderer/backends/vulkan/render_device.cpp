@@ -1215,6 +1215,94 @@ namespace easy3d {
                 uint32_t width = 0, height = 0;
                 bool initialized = false;
                 explicit Ao(Context &context) : c(context), parameters(context) {}
+
+                void ensure(VkDescriptorPool pool,
+                            VkDescriptorSetLayout descriptors,
+                            uint32_t target_width,
+                            uint32_t target_height) {
+                    if (!set) {
+                        VkDescriptorSetAllocateInfo ai{};
+                        ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                        ai.descriptorPool = pool;
+                        ai.descriptorSetCount = 1;
+                        ai.pSetLayouts = &descriptors;
+                        check(c.vkAllocateDescriptorSets(c.device, &ai, &set),
+                              "allocate ambient-occlusion descriptors");
+                        parameters.init(sizeof(AoParameters), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+                    }
+                    if (width == target_width && height == target_height)
+                        return;
+                    VkFormatProperties properties;
+                    c.vkGetPhysicalDeviceFormatProperties(c.physical, VK_FORMAT_R32_SFLOAT, &properties);
+                    if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
+                        throw std::runtime_error("ambient occlusion requires R32F storage images");
+                    raw.reset(new GpuImage(c));
+                    raw->init(target_width, target_height, VK_FORMAT_R32_SFLOAT,
+                              VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+                    blurred.reset(new GpuImage(c));
+                    blurred->init(target_width, target_height, VK_FORMAT_R32_SFLOAT,
+                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                  VK_IMAGE_ASPECT_COLOR_BIT);
+                    width = target_width;
+                    height = target_height;
+                    initialized = false;
+                }
+
+                void update(VkSampler sampler,
+                            VkImageView depth_view,
+                            VkDescriptorSet composite_set,
+                            const mat4 &projection,
+                            float radius,
+                            float bias) {
+                    AoParameters values{};
+                    const mat4 inverse_projection = inverse(projection);
+                    for (unsigned col = 0; col < 4; ++col)
+                        for (unsigned row = 0; row < 4; ++row) {
+                            values.projection[col * 4 + row] = projection(row, col);
+                            values.inverse_projection[col * 4 + row] = inverse_projection(row, col);
+                        }
+                    values.shape[0] = radius;
+                    values.shape[1] = bias;
+                    values.shape[2] = float(width);
+                    values.shape[3] = float(height);
+                    parameters.transfer(&values, sizeof(values), true);
+
+                    // The scene composite samples the denoised term from its depth set.
+                    VkDescriptorImageInfo composite{sampler, blurred->view,
+                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+                    VkWriteDescriptorSet write{};
+                    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    write.dstSet = composite_set;
+                    write.dstBinding = 2;
+                    write.descriptorCount = 1;
+                    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    write.pImageInfo = &composite;
+                    c.vkUpdateDescriptorSets(c.device, 1, &write, 0, nullptr);
+
+                    VkDescriptorImageInfo depth{sampler, depth_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+                    VkDescriptorImageInfo raw_sampled{sampler, raw->view, VK_IMAGE_LAYOUT_GENERAL};
+                    VkDescriptorImageInfo raw_storage{VK_NULL_HANDLE, raw->view, VK_IMAGE_LAYOUT_GENERAL};
+                    VkDescriptorImageInfo blurred_storage{VK_NULL_HANDLE, blurred->view, VK_IMAGE_LAYOUT_GENERAL};
+                    VkDescriptorBufferInfo buffer{parameters.handle, 0, sizeof(AoParameters)};
+                    VkWriteDescriptorSet writes[5] = {};
+                    for (unsigned i = 0; i < 5; ++i) {
+                        writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        writes[i].dstSet = set;
+                        writes[i].dstBinding = i;
+                        writes[i].descriptorCount = 1;
+                    }
+                    writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    writes[0].pImageInfo = &depth;
+                    writes[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                    writes[1].pImageInfo = &raw_storage;
+                    writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    writes[2].pImageInfo = &raw_sampled;
+                    writes[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+                    writes[3].pImageInfo = &blurred_storage;
+                    writes[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    writes[4].pBufferInfo = &buffer;
+                    c.vkUpdateDescriptorSets(c.device, 5, writes, 0, nullptr);
+                }
             };
             struct GpuVertex {
                 float position[3], normal[3], color[4], texcoord[2], highlight[4];
@@ -3841,31 +3929,8 @@ namespace easy3d {
                 void ensure_ao(uint32_t width, uint32_t height) {
                     if (!ao_) {
                         ao_.reset(new Ao(c_));
-                        VkDescriptorSetAllocateInfo ai{};
-                        ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-                        ai.descriptorPool = descriptor_pool_;
-                        ai.descriptorSetCount = 1;
-                        ai.pSetLayouts = &ao_descriptors_;
-                        check(c_.vkAllocateDescriptorSets(c_.device, &ai, &ao_->set),
-                              "allocate ambient-occlusion descriptors");
-                        ao_->parameters.init(sizeof(AoParameters), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
                     }
-                    if (ao_->width == width && ao_->height == height)
-                        return;
-                    VkFormatProperties properties;
-                    c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R32_SFLOAT, &properties);
-                    if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT))
-                        throw std::runtime_error("ambient occlusion requires R32F storage images");
-                    ao_->raw.reset(new GpuImage(c_));
-                    ao_->raw->init(width, height, VK_FORMAT_R32_SFLOAT,
-                                   VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-                    ao_->blurred.reset(new GpuImage(c_));
-                    ao_->blurred->init(width, height, VK_FORMAT_R32_SFLOAT,
-                                       VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                       VK_IMAGE_ASPECT_COLOR_BIT);
-                    ao_->width = width;
-                    ao_->height = height;
-                    ao_->initialized = false;
+                    ao_->ensure(descriptor_pool_, ao_descriptors_, width, height);
                 }
                 void create_descriptors() {
                     VkDescriptorSetLayoutBinding binding[3] = {};
@@ -4275,56 +4340,8 @@ namespace easy3d {
                             shadow_bound_size_ = shadow_map_->size;
                         }
                         if (ao_active_) {
-                            AoParameters parameters{};
-                            const mat4 inverse_projection = inverse(ao_projection_);
-                            for (unsigned col = 0; col < 4; ++col)
-                                for (unsigned row = 0; row < 4; ++row) {
-                                    parameters.projection[col * 4 + row] = ao_projection_(row, col);
-                                    parameters.inverse_projection[col * 4 + row] = inverse_projection(row, col);
-                                }
-                            parameters.shape[0] = ao_radius_;
-                            parameters.shape[1] = ao_bias_;
-                            parameters.shape[2] = float(width);
-                            parameters.shape[3] = float(height);
-                            ao_->parameters.transfer(&parameters, sizeof(parameters), true);
-
-                            // The composite samples the denoised term from the depth set.
-                            VkDescriptorImageInfo composite{samplers_[0], ao_->blurred->view,
-                                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-                            VkWriteDescriptorSet write{};
-                            write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                            write.dstSet = target_->depth_set;
-                            write.dstBinding = 2;
-                            write.descriptorCount = 1;
-                            write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            write.pImageInfo = &composite;
-                            c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
-
-                            VkDescriptorImageInfo depth{samplers_[0], target_->depth.view,
-                                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
-                            VkDescriptorImageInfo raw_sampled{samplers_[0], ao_->raw->view, VK_IMAGE_LAYOUT_GENERAL};
-                            VkDescriptorImageInfo raw_storage{VK_NULL_HANDLE, ao_->raw->view, VK_IMAGE_LAYOUT_GENERAL};
-                            VkDescriptorImageInfo blurred_storage{VK_NULL_HANDLE, ao_->blurred->view,
-                                                                  VK_IMAGE_LAYOUT_GENERAL};
-                            VkDescriptorBufferInfo buffer{ao_->parameters.handle, 0, sizeof(AoParameters)};
-                            VkWriteDescriptorSet writes[5] = {};
-                            for (unsigned i = 0; i < 5; ++i) {
-                                writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                                writes[i].dstSet = ao_->set;
-                                writes[i].dstBinding = i;
-                                writes[i].descriptorCount = 1;
-                            }
-                            writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            writes[0].pImageInfo = &depth;
-                            writes[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-                            writes[1].pImageInfo = &raw_storage;
-                            writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                            writes[2].pImageInfo = &raw_sampled;
-                            writes[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-                            writes[3].pImageInfo = &blurred_storage;
-                            writes[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                            writes[4].pBufferInfo = &buffer;
-                            c_.vkUpdateDescriptorSets(c_.device, 5, writes, 0, nullptr);
+                            ao_->update(samplers_[0], target_->depth.view, target_->depth_set, ao_projection_,
+                                        ao_radius_, ao_bias_);
                         }
                     }
                     const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));

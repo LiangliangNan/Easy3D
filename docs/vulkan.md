@@ -557,9 +557,10 @@ caches now have a `GpuResources` owner, color/picking render-pass caches are
 grouped in `PassCache`, which now owns color and picking pass lookup/construction
 while `PipelineBuilder` constructs graphics pipelines and `RenderPass` retains
 their handles. Ambient-occlusion descriptor-layout and compute-pipeline setup
-now lives in `AmbientOcclusionPipelineBuilder`; `VulkanDevice` retains ownership
-and teardown of those handles and the AO images/descriptors. Full-frame/pixel readback is
-centralized in synchronous capture helpers. The focused
+now lives in `AmbientOcclusionPipelineBuilder`. `Ao` manages its target images,
+uniform buffer, descriptor-set allocation and per-frame writes; `VulkanDevice`
+retains pipeline-handle and descriptor-pool ownership. Full-frame/pixel
+readback is centralized in synchronous capture helpers. The focused
 `vulkan.resourcelifetime` test runs with synchronization validation, reuses
 geometry and image addresses after source destruction, exercises frame and
 pixel capture plus target resize, then repeats device teardown. Window
