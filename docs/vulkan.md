@@ -8405,3 +8405,53 @@ The offscreen path improved from 145 ms/frame to 5.7 ms/frame. The two backends 
 (`build-opengl`) 107/107, both green. `vulkan.crosssection` failed once during a loaded run and passes
 in isolation; it is the known load-sensitive desktop test (it also failed in the pre-change run of the
 same session), not a regression from this batch.
+
+### 2026-11-12 — W10 batch 74: audit of the remaining depth writes in the Vulkan shaders
+
+**Scope.** Batch 73 fixed the plain-point path, which wrote `gl_FragDepth` unconditionally and so
+disabled early depth testing for every point. The question was whether any other Vulkan shader has
+the same defect. Every fragment shader in `resources/shaders/vulkan/` was reviewed for a depth write
+and for a `discard`.
+
+**Result: no other shader has the defect.** The backend has exactly three depth writes, and each one
+is required or deliberate:
+
+| Shader | Write | Verdict |
+|---|---|---|
+| `points.frag` | `gl_FragDepth = depth` | Required. The impostor surface depth differs from the proxy geometry depth, so the impostor path must write it. The OpenGL counterpart `points/points_spheres_sprite_color` writes the same value. |
+| `lines.frag` | `gl_FragDepth = depth` | Required, same reason: the cylinder and cone impostors write the depth of the ray/surface intersection. The OpenGL counterparts `lines/lines_cylinders_*` and `lines/lines_cones_*` write it too. |
+| `oit_peel.frag` | `gl_FragDepth = gl_FragCoord.z` | Deliberate, kept. The value is a no-op (`gl_FragCoord.z` is the depth the rasterizer produced), but the write keeps the late depth test, so the shader's epsilon rejection runs before the depth write. See below. |
+
+- *The peel pass needs the late depth test.* Each peel layer clears its depth attachment to 1.0 and
+  renders the transparent surfaces with `VK_COMPARE_OP_LESS` and depth writes enabled; the resulting
+  depth image is then sampled as the `previous_depth` of the next layer. The shader rejects the
+  fragments at or in front of the previous layer with `discard`. Those rejected fragments are *nearer*
+  than the fragments that belong to the current layer, so if the depth were written before the shader
+  ran, a rejected fragment could write its depth first and then hide the layer's own fragment, and the
+  peeled layer would depend on the fragment order. The write makes the ordering deterministic. The
+  OpenGL counterpart `transparency/dual_depth_peeling_peel_rendering.frag` writes the same value, so
+  the two backends stay in step. The reason is now recorded in the shader, so the write is not removed
+  as a redundant assignment later.
+- *The paths without a depth write keep early depth testing*: the plain points
+  (`points_plain.frag`, batch 73), the plain wide lines (`wide_lines.frag`), the triangles
+  (`scene.frag`) and the full-screen passes. None of them discards either, so their fragments are
+  rejected before shading.
+- *The `discard` statements are confined to the impostor shaders* (`points.frag`, `lines.frag`), where
+  they are inherent to the ray/surface intersection, and to the transparency passes
+  (`oit_peel.frag`, `oit_average_composite.frag`), whose pipelines have the depth test disabled.
+- *The plain wide line differs in cost, not in appearance.* The OpenGL wide line writes
+  `gl_FragDepth = 0.5 * (pos.z / pos.w) + 0.5` in its fragment shader, computed from the `gOutPoint`
+  varying, so every fragment of the stroke pays a matrix-vector multiply and a divide, and the write
+  also disables early depth testing in OpenGL (the same rule as Vulkan). The Vulkan ribbon takes the
+  depth from the rasterizer and writes none, so it pays nothing and keeps early depth testing. The
+  two backends agree on the depth value: in the camera-space expansion the OpenGL geometry shader
+  passes the *expanded* corner as `gOutPoint`, the very point it projected, so the recomputed depth is
+  the rasterized one; in the screen-space expansion it passes the centerline point, and the rasterized
+  ribbon depth is constant across the stroke there as well. The only residual difference is the
+  interpolation nuance (the OpenGL shader evaluates the depth of the perspective-correct centerline
+  point, the rasterizer interpolates linearly in screen space). The OpenGL side was left as it is:
+  changing it would be a behavior change in the other backend, not a fix.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 and OpenGL Release
+(`build-opengl`) 107/107, both green. The only source change is a comment in `oit_peel.frag`; the
+generated SPIR-V is unchanged.

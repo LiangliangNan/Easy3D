@@ -34,6 +34,13 @@ void main() {
     //      false grouping but doesn't eliminate seams. Works well for surfaces that are slightly separated but less
     //      effective for true intersections.
     if (gl_FragCoord.z <= previous + 0.000001) discard;
+    // The written value is a no-op (gl_FragCoord.z is the depth the rasterizer
+    // produced), but the write itself is deliberate: it keeps the late depth test,
+    // so the rejection above happens before the depth write. The rejected
+    // fragments are nearer than the fragments that belong to this layer, so with
+    // early depth testing one of them could write its depth first and then hide
+    // the layer's own fragment, which would make the peeled layer depend on the
+    // fragment order. The OpenGL peel shader writes the same value.
     gl_FragDepth = gl_FragCoord.z;
     vec4 color = vertex_color * texture(image_texture, uv);
     if (material.shading.x != 0 && world_normal_out.w != 0)
