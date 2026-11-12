@@ -571,9 +571,11 @@ render-pass, framebuffer, pipeline, and composite-set construction now live in
 descriptor-pool lifetime. `OitDescriptorCache` updates composite descriptors
 and allocates/caches peel descriptors, with the cache entries still owned by
 `Oit`. `OitFrameCoordinator` decides whether OIT is active for a frame, records
-the OIT passes in the existing shadow → OIT → prepass/AO → scene sequence, and
-reads linked-list overflow after submission completes. `VulkanDevice` retains
-the broader frame orchestration. The existing fence wait and one-command-buffer
+the OIT passes, and reads linked-list overflow after submission completes.
+`FrameEncoder` coordinates shadow, OIT, an optional picking/depth prepass, AO,
+the scene pass, and optional picking capture, including their depth transitions.
+`VulkanDevice` retains draw preparation, command submission, and
+capture/presentation ownership. The existing fence wait and one-command-buffer
 model are unchanged. Profiling found no current basis for multiple frames in
 flight or staging/suballocation, so both remain deferred unless frame-preparation
 or recurring dynamic-upload workloads show a measurable need.

@@ -4931,46 +4931,66 @@ namespace easy3d {
                         }
                     }
                 };
+                class FrameEncoder {
+                    VulkanDevice &device_;
+
+                public:
+                    explicit FrameEncoder(VulkanDevice &device) : device_(device) {}
+
+                    void encode(VkCommandBuffer cmd,
+                                const std::vector<Prepared> &draws,
+                                const vec4 &background,
+                                bool capture) {
+                        device_.encode_shadow(cmd, draws);
+                        OitFrameCoordinator(device_).encode(cmd, draws);
+                        // Ambient occlusion and multisampled previews both read the center-sample
+                        // depth, which only the single-sample picking pass produces.
+                        const bool prepass = device_.target_->id_pass &&
+                                             (device_.ao_active_ ||
+                                              (device_.target_->color_pass.depth_preview &&
+                                               device_.target_->samples > 1));
+                        if (prepass) {
+                            device_.encode_pass(cmd, draws, background, *device_.target_,
+                                                *device_.target_->id_pass, device_.target_->id_framebuffer);
+                            image_barrier(
+                                device_.c_, cmd, device_.target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                device_.ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                                                   : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                                VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT |
+                                    VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                device_.ao_active_ ? (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+                                                      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
+                                                   : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT,
+                                VK_ACCESS_SHADER_READ_BIT);
+                        }
+                        if (device_.ao_active_)
+                            device_.dispatch_ao(cmd);
+                        device_.encode_pass(cmd, draws, background, *device_.target_,
+                                            device_.target_->color_pass, device_.target_->framebuffer);
+                        // Picking uses center-sample IDs/depth independently of antialiased color.
+                        // This works even when an integer format supports no multisampling, and
+                        // requires neither depth-resolve extensions nor averaging integer IDs.
+                        if (capture && device_.target_->id_pass && !prepass)
+                            device_.encode_pass(cmd, draws, background, *device_.target_,
+                                                *device_.target_->id_pass, device_.target_->id_framebuffer);
+                        if (prepass && device_.target_->samples > 1)
+                            image_barrier(
+                                device_.c_, cmd, device_.target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
+                                device_.ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                                                   : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT,
+                                VK_ACCESS_TRANSFER_READ_BIT);
+                    }
+                };
                 void encode(VkCommandBuffer cmd,
                             const std::vector<Prepared> &draws,
                             const vec4 &background,
                             bool capture = true) {
-                    encode_shadow(cmd, draws);
-                    OitFrameCoordinator(*this).encode(cmd, draws);
-                    // Ambient occlusion and multisampled previews both read the center-sample
-                    // depth, which only the single-sample picking pass produces.
-                    const bool prepass =
-                        target_->id_pass && (ao_active_ || (target_->color_pass.depth_preview && target_->samples > 1));
-                    if (prepass) {
-                        encode_pass(cmd, draws, background, *target_, *target_->id_pass, target_->id_framebuffer);
-                        image_barrier(
-                            c_, cmd, target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
-                            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                            ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                                       : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT |
-                                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                            ao_active_ ? (VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
-                                       : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT,
-                            VK_ACCESS_SHADER_READ_BIT);
-                    }
-                    if (ao_active_)
-                        dispatch_ao(cmd);
-                    encode_pass(cmd, draws, background, *target_, target_->color_pass, target_->framebuffer);
-                    // Picking uses center-sample IDs/depth independently of antialiased color.
-                    // This works even when an integer format supports no multisampling, and
-                    // requires neither depth-resolve extensions nor averaging integer IDs.
-                    if (capture && target_->id_pass && !prepass)
-                        encode_pass(cmd, draws, background, *target_, *target_->id_pass, target_->id_framebuffer);
-                    if (prepass && target_->samples > 1)
-                        image_barrier(c_, cmd, target_->depth.handle, VK_IMAGE_ASPECT_DEPTH_BIT,
-                                      ao_active_ ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                                                 : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
-                                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                                      VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                                      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT,
-                                      VK_ACCESS_TRANSFER_READ_BIT);
+                    FrameEncoder(*this).encode(cmd, draws, background, capture);
                 }
                 FrameImage render(uint32_t width,
                                   uint32_t height,
