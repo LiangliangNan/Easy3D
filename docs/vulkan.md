@@ -8250,3 +8250,37 @@ captures.
 (`build-opengl`) 107/107, both green, including `vulkan.multiview` and `opengl.multiview`, which
 toggle the division lines and compare the captures. `easy3d/util/version.h` is unchanged.
 Linux/Mesa, Windows hardware and CI remain separate gates.
+
+### 2026-11-12 — W10 batch 71: Vulkan line impostors use the drawable material (OpenGL specular parity)
+
+**Scope.** Reported disparity: OpenGL cylinder/cone impostors look shiny, Vulkan's did not. The
+OpenGL `lines_cylinders_color.frag` and `lines_cones_color.frag` shade with the drawable `Material`
+block (`ambient`, `specular`, `shininess`), the shared view-space `eLightPos`, and a Phong term:
+`df = max(|N·L|, 0)` for the cylinder (two-sided) and `max(N·L, 0)` for the cone (one-sided),
+`sf = max(N·H, 0)^shininess` when `df > 0`, and `color·df + specular·sf + ambient`. Vulkan's
+`lines.frag` only scaled the color by `0.2 + 0.8·|N·L|`, and `DrawableRenderer::command()` filled the
+material fields only for point and triangle commands, so line commands kept the declared defaults
+and could never produce the highlight.
+
+`DrawableRenderer::command()` now sets `material_lighting`, `ambient`, `specular` and `shininess`
+from `d.material()`, plus `eye = (0,0,0)` and `light = setting::light_position`, for cylinder/cone
+commands; both are camera-space, matching the coordinate system the OpenGL shaders shade in.
+`lines.frag` now includes the shared `material.glsl` layout instead of redeclaring the uniform
+block prefix, and reproduces the OpenGL model exactly: `|N·L|` for the cylinder, `max(N·L, 0)` for
+the cone, `max(N·H, 0)^shininess` specular, and the same final sum. Commands that do not enable
+material lighting keep the previous `0.2 + 0.8|N·L|` fallback. Selection and primitive-range
+tinting still apply after shading. The view direction is `normalize(-hit)` (the eye is the origin
+in camera space), the same convention as the Vulkan sphere/surfel and mesh paths; OpenGL uses the
+constant `(0,0,1)` in orthographic projection. Vulkan's single impostor pipeline also serves
+textured lines, so textured cylinders get the color shader's two-sided term; the OpenGL *texture*
+cylinder shader uses the one-sided term (the color and texture variants already differed there).
+
+`tests/viewer/scene_test.cpp` previously checked only a brightness floor for a camera-facing
+impostor, which the diffuse-only fallback satisfied. It now also renders a dark impostor with
+ambient 0 and specular 1 and requires a pixel above 150; the fallback tops out around 25, so the
+check fails without the material path.
+
+**Validation.** macOS, serial CTest: Vulkan Debug (`cmake-build-debug`) 147/147 (including
+`vulkan.scene`, which exercises the new material/specular check, and `vulkan.tutorial302`), and
+OpenGL Release (`build-opengl`) 107/107, both green. The OpenGL tree is unchanged by this batch.
+`easy3d/util/version.h` is unchanged. Linux/Mesa, Windows hardware and CI remain separate gates.

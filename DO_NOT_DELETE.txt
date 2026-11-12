@@ -1,5 +1,9 @@
 
 
+
+
+
+
 The "VULKAN" backend GitHub workflow vulkan.yml still failed (OpenGL backend passed).
 
 71/89 Test  #89: vulkan.manipulation ..............   Passed    0.42 sec
@@ -28,6 +32,7 @@ Errors while running CTest
 
 
 
+One residual note: Vulkan has a single impostor pipeline for textured and colored lines. OpenGL has two distinct pipelines.
 
 
 

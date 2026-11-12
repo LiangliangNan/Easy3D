@@ -1,10 +1,7 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#include "material.glsl"
 layout(set=0,binding=0) uniform sampler2D image_texture;
-layout(set=1,binding=0,std140) uniform Impostor {
-    mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 viewport_origin; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
-    bool line_screen_space_width; // 1: expand the plain line in screen space, 0: in camera space
-} shape;
 layout(location=0) flat in vec3 base;
 layout(location=1) flat in vec3 end;
 layout(location=2) flat in vec4 base_color;
@@ -30,16 +27,16 @@ void main() {
     float length_axis = length(segment);
     if (length_axis <= 0) discard;
     vec3 axis = segment/length_axis;
-    vec2 ndc = (gl_FragCoord.xy-shape.viewport_origin.xy)/shape.dimensions.xy*2-1; ndc.y=-ndc.y;
-    vec4 near_point = shape.inverse_projection*vec4(ndc,-1,1);
-    vec4 far_point = shape.inverse_projection*vec4(ndc,1,1);
+    vec2 ndc = (gl_FragCoord.xy-material.viewport_origin.xy)/material.dimensions.xy*2-1; ndc.y=-ndc.y;
+    vec4 near_point = material.inverse_projection*vec4(ndc,-1,1);
+    vec4 far_point = material.inverse_projection*vec4(ndc,1,1);
     vec3 origin = near_point.xyz/near_point.w;
     vec3 direction = normalize(far_point.xyz-origin*far_point.w);
     vec3 offset = origin-base;
     float oz = dot(offset,axis), dz = dot(direction,axis);
     vec3 radial_origin = offset-oz*axis, radial_direction = direction-dz*axis;
-    float radius = shape.dimensions.w; // world-space radius of the cylinder/cone
-    bool cone = shape.light.w == 4;
+    float radius = material.dimensions.w; // world-space radius of the cylinder/cone
+    bool cone = material.light.w == 4;
     float slope = cone ? radius/length_axis : 0;
     float k = slope*slope, h = length_axis-oz;
     float a = dot(radial_direction,radial_direction)-k*dz*dz;
@@ -84,9 +81,9 @@ void main() {
     }
     if (surface < 0 || nearest < 0) discard;
     vec3 hit = origin+nearest*direction;
-    for (int i=0;i<int(shape.clip_info.x);++i)
-        if (dot(shape.clip_planes[i],vec4(hit,1))<0) discard;
-    vec4 clip = shape.projection*vec4(hit,1);
+    for (int i=0;i<int(material.clip_info.x);++i)
+        if (dot(material.clip_planes[i],vec4(hit,1))<0) discard;
+    vec4 clip = material.projection*vec4(hit,1);
     float depth = 0.5*(clip.z/clip.w+1);
     if (clip.w <= 0 || depth < 0 || depth > 1) discard;
     gl_FragDepth = depth;
@@ -101,7 +98,23 @@ void main() {
             if (dot(normal,normal) == 0) normal=axis; // cone tip
             else normal=normalize(normal);
         }
-        out_color.rgb *= 0.2+0.8*abs(dot(normal,normalize(shape.light.xyz)));
+        if (material.shading.x != 0) {
+            // Same model as the OpenGL cylinder/cone shaders: the drawable
+            // material supplies ambient and a Phong specular from the shared
+            // camera-space light. The cylinder is lit from both sides, the cone
+            // only from its outside, matching the OpenGL diffuse terms.
+            vec3 n = normalize(normal);
+            vec3 view_dir = normalize(material.eye.xyz-hit);
+            vec3 light_dir = normalize(material.material_light.xyz);
+            float df = cone ? max(dot(n,light_dir),0) : abs(dot(n,light_dir));
+            float sf = 0;
+            if (df > 0) {
+                sf = max(dot(normalize(light_dir+view_dir),n),0);
+                sf = pow(sf,material.shading.w);
+            }
+            out_color.rgb = out_color.rgb*df + material.specular.rgb*sf + material.ambient.rgb;
+        } else
+            out_color.rgb *= 0.2+0.8*abs(dot(normal,normalize(material.light.xyz)));
     }
     out_color.rgb = mix(out_color.rgb,selection_tint.rgb,selection_tint.a);
 }

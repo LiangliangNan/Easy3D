@@ -220,6 +220,18 @@ int main(int argc, char**) {
                         "line impostor lighting depends on camera orientation");
         }
         require(front > 180, "camera-facing line impostor surface is unlit");
+        // The impostor is shaded with the drawable material: a dark surface must
+        // still show the Phong specular highlight (ambient plus diffuse alone
+        // stays near the unlit color).
+        segments->set_uniform_coloring(vec4(0.1f, 0.1f, 0.1f, 1));
+        segments->set_material(State::Material(vec4(0.0f), vec4(1.0f), 24));
+        const auto glossy = renderer.capture();
+        unsigned brightest = 0;
+        for (size_t i = 0; i < glossy.ids.size(); ++i)
+            if (glossy.ids[i].object != UINT32_MAX)
+                brightest = std::max(brightest, unsigned(glossy.rgba[4 * i]));
+        require(brightest > 150, "line impostor ignores the material specular highlight");
+        segments->set_uniform_coloring(vec4(1, 1, 1, 1));
         renderer.camera()->set_up_vector(vec3(0, 1, 0));
         renderer.camera()->set_view_direction(vec3(0, 0, -1));
         renderer.fit_screen();

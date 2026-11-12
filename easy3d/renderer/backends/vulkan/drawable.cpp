@@ -338,6 +338,17 @@ namespace easy3d {
                     result.model_view = cam.model_view_matrix() * d.manipulated_matrix();
                     result.projection = cam.projection_matrix();
                     result.sphere_light = vec3(setting::light_position);
+                    if (result.line_style != graphics::LineStyle::plain) {
+                        // The OpenGL cylinder/cone shaders light the impostor with the
+                        // drawable material. They shade in camera space, so the eye is
+                        // the origin and the view-space light is used directly.
+                        result.material_lighting = true;
+                        result.ambient = d.material().ambient;
+                        result.specular = d.material().specular;
+                        result.shininess = d.material().shininess;
+                        result.eye = vec3(0);
+                        result.light = vec3(setting::light_position);
+                    }
                 }
                 result.model_view_projection = cam.model_view_projection_matrix() * d.manipulated_matrix();
                 if (!clipping_planes.empty()) {

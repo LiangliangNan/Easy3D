@@ -204,7 +204,7 @@ void TutorialRealCamera::update_cameras_drawable(bool ground_truth) {
         cameras_drawable_ = new LinesDrawable("cameras");
         add_drawable(std::shared_ptr<LinesDrawable>(cameras_drawable_)); // add the camera drawable to the viewer
         cameras_drawable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-        cameras_drawable_->set_line_width(4.0f);
+        cameras_drawable_->set_line_width(1.0f);
     }
 
     std::vector<vec3> vertices;
