@@ -13,70 +13,231 @@ concurrency:
 
 jobs:
   render:
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.backend }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - backend: "VULKAN"
+          - os: ubuntu-24.04
+            backend: "VULKAN"
             vulkan: "ON"
-          - backend: "OPENGL"
+            python: "ON"
+          - os: ubuntu-24.04
+            backend: "OPENGL"
             vulkan: "OFF"
+            python: "ON"
+          - os: windows-2022
+            backend: "VULKAN"
+            vulkan: "ON"
+            python: "OFF"
+          - os: windows-2022
+            backend: "OPENGL"
+            vulkan: "OFF"
+            python: "OFF"
+          - os: macos-15
+            backend: "VULKAN"
+            vulkan: "ON"
+            python: "OFF"
+          - os: macos-15
+            backend: "OPENGL"
+            vulkan: "OFF"
+            python: "OFF"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Dependencies
+
+      - name: Dependencies (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build libboost-dev libvulkan-dev \
             mesa-vulkan-drivers vulkan-validationlayers glslang-tools spirv-tools \
-            python3-dev patchelf libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev xvfb xauth
-      - name: Configure
+            python3-dev patchelf libgl1-mesa-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev xvfb xauth
+
+      - name: Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Install official LunarG Vulkan SDK (macOS)
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        run: |
+          set -euo pipefail
+          version=1.4.363.1
+          archive="$RUNNER_TEMP/vulkansdk-macos-$version.zip"
+          curl -fL "https://sdk.lunarg.com/sdk/download/$version/mac/vulkansdk-macos-$version.zip" -o "$archive"
+          printf '%s  %s\n' \
+            a65c707cf0a32bf8c2ca6b9af1985b7af61dbadfc19b352dae51a323f3a547a6 "$archive" \
+            | shasum -a 256 -c -
+          unzip -q "$archive" -d "$RUNNER_TEMP"
+          installer="$RUNNER_TEMP/vulkansdk-macOS-$version.app/Contents/MacOS/vulkansdk-macOS-$version"
+          test -x "$installer"
+          "$installer" --accept-licenses --default-answer --confirm-command install
+          sdk="$HOME/VulkanSDK/$version/macOS"
+          test -d "$sdk"
+          echo "VULKAN_SDK=$sdk" >> "$GITHUB_ENV"
+          echo "$sdk/bin" >> "$GITHUB_PATH"
+
+      - name: Configure MoltenVK (macOS)
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        run: |
+          driver="$(find "$VULKAN_SDK" -path '*/icd.d/MoltenVK_icd.json' -print -quit)"
+          layers="$(find "$VULKAN_SDK" -path '*/explicit_layer.d' -type d -print -quit)"
+          test -n "$driver"
+          test -n "$layers"
+          echo "VK_DRIVER_FILES=$driver" >> "$GITHUB_ENV"
+          echo "VK_LAYER_PATH=$layers" >> "$GITHUB_ENV"
+
+      - name: Install official LunarG Vulkan SDK (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = '1.4.363.1'
+          $installer = Join-Path $env:RUNNER_TEMP "vulkansdk-windows-$version.exe"
+          $url = "https://sdk.lunarg.com/sdk/download/$version/windows/vulkansdk-windows-X64-$version.exe"
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $expectedHash = 'c02932bd9a968b22d404536108adaacac908c081cd6b0113f5bfefc523dd0a6a'
+          if ((Get-FileHash $installer -Algorithm SHA256).Hash -ne $expectedHash) {
+            throw 'The downloaded LunarG Vulkan SDK checksum did not match'
+          }
+          $sdk = "C:\VulkanSDK\$version"
+          $process = Start-Process -FilePath $installer -Wait -PassThru -ArgumentList @(
+            '--root', $sdk, '--accept-licenses', '--default-answer', '--confirm-command', 'install'
+          )
+          if ($process.ExitCode -ne 0) {
+            throw "LunarG Vulkan SDK installer failed with exit code $($process.ExitCode)"
+          }
+          "VULKAN_SDK=$sdk" >> $env:GITHUB_ENV
+          "$sdk\Bin" >> $env:GITHUB_PATH
+
+      - name: Build pinned SwiftShader ICD (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $revision = '708e9e77773860bbb2ad9bb2d61b451de4b84e31'
+          git init swiftshader
+          git -C swiftshader remote add origin https://github.com/google/swiftshader.git
+          git -C swiftshader fetch --depth 1 origin $revision
+          git -C swiftshader checkout --detach FETCH_HEAD
+          git -C swiftshader submodule update --init third_party/llvm-10.0
+          cmake -S swiftshader -B swiftshader-build `
+            -G "Visual Studio 17 2022" -A x64 -T host=x64 `
+            -DSWIFTSHADER_BUILD_TESTS=OFF -DSWIFTSHADER_BUILD_BENCHMARKS=OFF
+          cmake --build swiftshader-build --target vk_swiftshader --config Release --parallel 1
+          $manifest = Get-ChildItem swiftshader-build -Filter vk_swiftshader_icd.json -Recurse |
+            Select-Object -First 1
+          if (-not $manifest) {
+            throw 'SwiftShader ICD manifest was not produced'
+          }
+          "VK_DRIVER_FILES=$($manifest.FullName)" >> $env:GITHUB_ENV
+
+      - name: Configure (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
-            -DEasy3D_BUILD_PYTHON_BINDINGS=ON
-      - name: Build
+            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }}
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
+            -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
+            -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
+            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }}
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          if ('${{ matrix.vulkan }}' -eq 'ON') {
+            if (-not $env:VULKAN_SDK) {
+              throw 'Vulkan SDK installation directory was not found'
+            }
+          }
+          cmake -S . -B build-vulkan -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" `
+            -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} `
+            -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON `
+            -DEasy3D_BUILD_PYTHON_BINDINGS=${{ matrix.python }}
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cmake --build build-vulkan --config Release --parallel 2
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
         run: cmake --build build-vulkan --parallel 2
-      - name: Validate SPIR-V
-        if: matrix.backend == 'VULKAN'
+
+      - name: Validate SPIR-V (Ubuntu and macOS)
+        if: matrix.backend == 'VULKAN' && runner.os != 'Windows'
         run: |
           for shader in build-vulkan/easy3d/renderer/backends/vulkan/*.spv; do
             spirv-val --target-env vulkan1.2 "$shader"
           done
-      - name: Render without a display using lavapipe
-        if: matrix.backend == 'VULKAN'
+
+      - name: Validate SPIR-V (Windows)
+        if: matrix.backend == 'VULKAN' && runner.os == 'Windows'
         run: |
-          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
-          test -n "$VK_DRIVER_FILES"
+          $validator = Join-Path $env:VULKAN_SDK 'Bin/spirv-val.exe'
+          Get-ChildItem build-vulkan/easy3d/renderer/backends/vulkan/*.spv |
+            ForEach-Object {
+              & $validator --target-env vulkan1.2 $_.FullName
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            }
+
+      - name: Run tests without a display (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          if [ "${{ matrix.backend }}" = "VULKAN" ]; then
+            export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+            test -n "$VK_DRIVER_FILES"
+          fi
           unset DISPLAY WAYLAND_DISPLAY
           ctest --test-dir build-vulkan --output-on-failure -LE desktop
-      - name: Test configured window backend
+
+      - name: Test configured window backend (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
-          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          if [ "${{ matrix.backend }}" = "VULKAN" ]; then
+            export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+            test -n "$VK_DRIVER_FILES"
+          fi
           xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
             ctest --test-dir build-vulkan --output-on-failure -L desktop
-      - name: Build and run an installed-package consumer
+
+      - name: Test (Windows and macOS)
+        if: runner.os != 'Linux'
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release
+
+      - name: Build and run an installed-package consumer (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
           cmake --install build-vulkan
           cmake -S tests/viewer/installed -B installed-consumer -G Ninja \
             -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake" \
             -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE
           cmake --build installed-consumer
-          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
-          unset DISPLAY WAYLAND_DISPLAY
           if [ "${{ matrix.backend }}" = "VULKAN" ]; then
+            export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+            test -n "$VK_DRIVER_FILES"
+            unset DISPLAY WAYLAND_DISPLAY
             ./installed-consumer/installed_vulkan_consumer
             ./installed-consumer/installed_offscreen_consumer
           else
             xvfb-run -a ./installed-consumer/installed_offscreen_consumer
           fi
-          xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' ./installed-consumer/installed_viewer_consumer
-      - uses: actions/upload-artifact@v4
+          xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
+            ./installed-consumer/installed_viewer_consumer
+
+      - uses: actions/upload-artifact@v7
         if: always() && matrix.backend == 'VULKAN'
         with:
-          name: vulkan-capture
+          name: vulkan-capture-${{ matrix.os }}
           path: build-vulkan/tests/artifacts/vulkan.scene/vulkan-bunny.png
