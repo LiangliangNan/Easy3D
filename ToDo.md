@@ -108,6 +108,7 @@
       - [x] Extract window presentation and swapchain ownership into `Presentation`; it now handles swapchain recreation, image acquisition, blitting, and queue presentation. The synchronous draw-fence wait and recreation-only device-idle wait are unchanged.
       - [x] Move color/picking render-pass lookup and construction into `PassCache`; graphics pipelines are created by `PipelineBuilder`, while `RenderPass` retains pipeline ownership.
       - [x] Move ambient-occlusion descriptor-layout and compute-pipeline setup into `AmbientOcclusionPipelineBuilder`; `Ao` manages target images, its uniform buffer, descriptor-set allocation, and per-frame writes, while `VulkanDevice` retains pipeline-handle and descriptor-pool ownership.
+      - [x] Move OIT descriptor-set layout creation into `OitDescriptorLayoutBuilder`; `VulkanDevice` retains descriptor-layout handle ownership and pool lifetime.
       - [x] Extract scene render-pass recording into `ScenePassEncoder`, including opaque/transparent scene draws, compositing, and overlays; the prepared draw data and synchronous command-buffer flow are unchanged.
       - [x] Extract shadow and AO command recording into `ShadowPassEncoder` and `AmbientOcclusionPassEncoder`; preserve their render-pass and image-barrier ordering.
       - [x] Extract OIT command recording into `OitPassEncoder`; resource initialization is delegated to the OIT builders, while `VulkanDevice` retains descriptor-cache setup.

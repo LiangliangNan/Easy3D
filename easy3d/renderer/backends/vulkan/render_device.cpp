@@ -1539,6 +1539,63 @@ namespace easy3d {
                             c_.vkDestroyShaderModule(c_.device, module, nullptr);
                 }
             };
+            class OitDescriptorLayoutBuilder {
+                Context &c_;
+                VkDescriptorSetLayout &scene_;
+                VkDescriptorSetLayout &composite_;
+                VkDescriptorSetLayout &lists_;
+
+            public:
+                OitDescriptorLayoutBuilder(Context &context,
+                                           VkDescriptorSetLayout &scene,
+                                           VkDescriptorSetLayout &composite,
+                                           VkDescriptorSetLayout &lists)
+                    : c_(context), scene_(scene), composite_(composite), lists_(lists) {}
+
+                void create() {
+                    VkDescriptorSetLayoutCreateInfo li{};
+                    li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                    VkDescriptorSetLayoutBinding peel_bindings[2] = {};
+                    peel_bindings[0].binding = 0;
+                    peel_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    peel_bindings[0].descriptorCount = 1;
+                    peel_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    peel_bindings[1] = peel_bindings[0];
+                    peel_bindings[1].binding = 3;
+                    li.bindingCount = 2;
+                    li.pBindings = peel_bindings;
+                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &scene_),
+                          "create transparency peel descriptor layout");
+
+                    VkDescriptorSetLayoutBinding composite_bindings[2] = {};
+                    composite_bindings[0].binding = 0;
+                    composite_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                    composite_bindings[0].descriptorCount = 1;
+                    composite_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    composite_bindings[1] = composite_bindings[0];
+                    composite_bindings[1].binding = 1;
+                    li.bindingCount = 2;
+                    li.pBindings = composite_bindings;
+                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &composite_),
+                          "create transparency composite descriptor layout");
+
+                    VkDescriptorSetLayoutBinding lists_bindings[4] = {};
+                    for (unsigned i = 0; i < 3; ++i) {
+                        lists_bindings[i].binding = i;
+                        lists_bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        lists_bindings[i].descriptorCount = 1;
+                        lists_bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    }
+                    lists_bindings[3].binding = 3;
+                    lists_bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    lists_bindings[3].descriptorCount = 1;
+                    lists_bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    li.bindingCount = 4;
+                    li.pBindings = lists_bindings;
+                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &lists_),
+                          "create linked lists descriptor layout");
+                }
+            };
             class PipelineBuilder {
                 Context &c_;
                 VkPipelineLayout layout_;
@@ -4241,47 +4298,9 @@ namespace easy3d {
                     li.pBindings = &binding[0];
                     check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_),
                           "create impostor descriptor layout");
-                    // Peel geometry samples the frame texture and the previous layer depth.
-                    VkDescriptorSetLayoutBinding peel_bindings[2] = {};
-                    peel_bindings[0].binding = 0;
-                    peel_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    peel_bindings[0].descriptorCount = 1;
-                    peel_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    peel_bindings[1] = peel_bindings[0];
-                    peel_bindings[1].binding = 3;
-                    li.bindingCount = 2;
-                    li.pBindings = peel_bindings;
-                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_scene_descriptors_),
-                          "create transparency peel descriptor layout");
-                    // The scene composite samples the accumulation and the fragment count.
-                    VkDescriptorSetLayoutBinding composite_bindings[2] = {};
-                    composite_bindings[0].binding = 0;
-                    composite_bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    composite_bindings[0].descriptorCount = 1;
-                    composite_bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    composite_bindings[1] = composite_bindings[0];
-                    composite_bindings[1].binding = 1;
-                    li.bindingCount = 2;
-                    li.pBindings = composite_bindings;
-                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_composite_descriptors_),
-                          "create transparency composite descriptor layout");
-                    // Linked lists OIT: head/node/counter storage buffers plus a small uniform
-                    // buffer carrying the node capacity and viewport dimensions.
-                    VkDescriptorSetLayoutBinding lists_bindings[4] = {};
-                    for (unsigned i = 0; i < 3; ++i) {
-                        lists_bindings[i].binding = i;
-                        lists_bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                        lists_bindings[i].descriptorCount = 1;
-                        lists_bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    }
-                    lists_bindings[3].binding = 3;
-                    lists_bindings[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    lists_bindings[3].descriptorCount = 1;
-                    lists_bindings[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-                    li.bindingCount = 4;
-                    li.pBindings = lists_bindings;
-                    check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &oit_lists_descriptors_),
-                          "create linked lists descriptor layout");
+                    OitDescriptorLayoutBuilder(c_, oit_scene_descriptors_, oit_composite_descriptors_,
+                                               oit_lists_descriptors_)
+                        .create();
                     VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8200},
                                                     {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1},
                                                     {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4},

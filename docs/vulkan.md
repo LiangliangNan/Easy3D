@@ -560,7 +560,11 @@ their handles. Ambient-occlusion descriptor-layout and compute-pipeline setup
 now lives in `AmbientOcclusionPipelineBuilder`. `Ao` manages its target images,
 uniform buffer, descriptor-set allocation and per-frame writes; `VulkanDevice`
 retains pipeline-handle and descriptor-pool ownership. Full-frame/pixel
-readback is centralized in synchronous capture helpers. The focused
+readback is centralized in synchronous capture helpers. `OitDescriptorLayoutBuilder`
+creates the peel, composite, and linked-list descriptor-set layouts; their
+handles and the descriptor pool remain owned by `VulkanDevice`. The concise
+pipeline-layout setup remains there because it assembles layouts directly from
+these device-owned handles. The focused
 `vulkan.resourcelifetime` test runs with synchronization validation, reuses
 geometry and image addresses after source destruction, exercises frame and
 pixel capture plus target resize, then repeats device teardown. Window
