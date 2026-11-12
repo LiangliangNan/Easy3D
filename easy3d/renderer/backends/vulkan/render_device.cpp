@@ -3572,6 +3572,70 @@ namespace easy3d {
                 }
             };
 
+            class ClippedGeometryCache {
+                struct Entry {
+                    std::weak_ptr<const Geometry> source;
+                    std::vector<vec4> planes;
+                    mat4 model_view;
+                    mat3 normal;
+                    bool lighting = false, discard = false, analytic = false, baked = false, material = false;
+                    std::shared_ptr<const Geometry> geometry;
+                };
+                std::map<const Geometry *, Entry> entries_;
+
+            public:
+                void prune() {
+                    for (auto it = entries_.begin(); it != entries_.end();) {
+                        if (it->second.source.expired())
+                            it = entries_.erase(it);
+                        else
+                            ++it;
+                    }
+                }
+
+                DrawCommand apply(const DrawCommand &input) {
+                    auto command = input;
+                    command.clipping_planes = normalize_clipping_planes(input.clipping_planes);
+                    if (command.overlay || command.clipping_planes.empty())
+                        return command;
+                    for (unsigned c = 0; c < 4; ++c)
+                        for (unsigned r = 0; r < 4; ++r)
+                            if (!std::isfinite(command.model_view(r, c)))
+                                throw std::invalid_argument("non-finite clipping model-view");
+                    if (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
+                        command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1)
+                        throw std::invalid_argument("clipping requires an affine model-view transform");
+                    const bool analytic =
+                        (command.geometry->topology() == Topology::points &&
+                         command.point_style != PointStyle::plain) ||
+                        (command.geometry->topology() == Topology::lines && command.line_style != LineStyle::plain);
+                    if (command.geometry->topology() == Topology::points ||
+                        (analytic && !command.discard_clipped_primitives))
+                        return command;
+                    auto &entry = entries_[input.geometry.get()];
+                    if (entry.source.lock() != input.geometry || entry.planes != command.clipping_planes ||
+                        entry.model_view != command.model_view || entry.normal != command.normal_matrix ||
+                        entry.lighting != command.lighting || entry.material != command.material_lighting ||
+                        entry.discard != command.discard_clipped_primitives || entry.analytic != analytic) {
+                        auto result = internal::clip_draw(command);
+                        entry.source = input.geometry;
+                        entry.planes = command.clipping_planes;
+                        entry.model_view = command.model_view;
+                        entry.normal = command.normal_matrix;
+                        entry.material = command.material_lighting;
+                        entry.lighting = command.lighting;
+                        entry.discard = command.discard_clipped_primitives;
+                        entry.analytic = analytic;
+                        entry.geometry = result.geometry;
+                        entry.baked = command.lighting && !result.lighting;
+                    }
+                    command.geometry = entry.geometry;
+                    if (entry.baked)
+                        command.lighting = false;
+                    return command;
+                }
+            };
+
             class VulkanDevice final : public RenderDevice {
                 Context c_;
                 std::string name_;
@@ -3613,56 +3677,7 @@ namespace easy3d {
                 uint32_t shadow_bound_size_ = 0;
                 std::unique_ptr<Presentation> presentation_;
                 std::shared_ptr<const Image> white_;
-                struct ClipEntry {
-                    std::weak_ptr<const Geometry> source;
-                    std::vector<vec4> planes;
-                    mat4 model_view;
-                    mat3 normal;
-                    bool lighting = false, discard = false, analytic = false, baked = false, material = false;
-                    std::shared_ptr<const Geometry> geometry;
-                };
-                std::map<const Geometry *, ClipEntry> clipped_;
-                DrawCommand clipped(const DrawCommand &input) {
-                    auto command = input;
-                    command.clipping_planes = normalize_clipping_planes(input.clipping_planes);
-                    if (command.overlay || command.clipping_planes.empty())
-                        return command;
-                    for (unsigned c = 0; c < 4; ++c)
-                        for (unsigned r = 0; r < 4; ++r)
-                            if (!std::isfinite(command.model_view(r, c)))
-                                throw std::invalid_argument("non-finite clipping model-view");
-                    if (command.model_view(3, 0) != 0 || command.model_view(3, 1) != 0 ||
-                        command.model_view(3, 2) != 0 || command.model_view(3, 3) != 1)
-                        throw std::invalid_argument("clipping requires an affine model-view transform");
-                    const bool analytic =
-                        (command.geometry->topology() == Topology::points &&
-                         command.point_style != PointStyle::plain) ||
-                        (command.geometry->topology() == Topology::lines && command.line_style != LineStyle::plain);
-                    if (command.geometry->topology() == Topology::points ||
-                        (analytic && !command.discard_clipped_primitives))
-                        return command;
-                    auto &entry = clipped_[input.geometry.get()];
-                    if (entry.source.lock() != input.geometry || entry.planes != command.clipping_planes ||
-                        entry.model_view != command.model_view || entry.normal != command.normal_matrix ||
-                        entry.lighting != command.lighting || entry.material != command.material_lighting ||
-                        entry.discard != command.discard_clipped_primitives || entry.analytic != analytic) {
-                        auto result = internal::clip_draw(command);
-                        entry.source = input.geometry;
-                        entry.planes = command.clipping_planes;
-                        entry.model_view = command.model_view;
-                        entry.normal = command.normal_matrix;
-                        entry.material = command.material_lighting;
-                        entry.lighting = command.lighting;
-                        entry.discard = command.discard_clipped_primitives;
-                        entry.analytic = analytic;
-                        entry.geometry = result.geometry;
-                        entry.baked = command.lighting && !result.lighting;
-                    }
-                    command.geometry = entry.geometry;
-                    if (entry.baked)
-                        command.lighting = false;
-                    return command;
-                }
+                ClippedGeometryCache clipped_;
 
             public:
                 // Separate initialization ensures all members are destroyed if any Vulkan step throws.
@@ -4164,12 +4179,7 @@ namespace easy3d {
                                         throw std::invalid_argument("non-finite ambient-occlusion projection");
                     }
                     // The preceding call's fence has completed. Retire expired resources now.
-                    for (auto it = clipped_.begin(); it != clipped_.end();) {
-                        if (it->second.source.expired())
-                            it = clipped_.erase(it);
-                        else
-                            ++it;
-                    }
+                    clipped_.prune();
                     resources_->prune();
                     if (!pixel_query) {
                         ao_active_ = false;
@@ -4325,7 +4335,7 @@ namespace easy3d {
                     for (const auto &original : commands) {
                         if (pixel_query && original.overlay)
                             continue;
-                        auto command = clipped(original);
+                        auto command = clipped_.apply(original);
                         auto &g = geometry(command.geometry);
                         if (!g.count)
                             continue;
