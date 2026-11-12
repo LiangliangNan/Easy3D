@@ -65,7 +65,15 @@ namespace easy3d {
     }
     const Drawable::BufferData& Drawable::cpu_buffers() {
         if (!cpu_buffers_) throw std::logic_error("CPU buffers were not enabled");
-        if (update_needed_ || (!num_vertices_ && (model_ || update_func_))) {
+        // Extract the buffers once, then only when an update is requested. The test
+        // must not depend on the extracted vertex count: a drawable may legitimately
+        // produce no vertex at all (e.g. the lock markers of a mesh without locked
+        // vertices), and such a drawable would then be re-extracted on every call,
+        // which for a large model means rescanning it every frame. A drawable whose
+        // buffers were uploaded by the client is not extracted from the model either,
+        // matching the OpenGL backend, where the guard is the existence of the GPU
+        // buffer rather than its vertex count.
+        if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
             update_buffers_internal();
             update_needed_ = false;
         }
@@ -74,8 +82,8 @@ namespace easy3d {
 
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
-              update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
-              texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
+              update_needed_(false), buffers_ready_(false), update_func_(nullptr), vertex_buffer_(0),
+              color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
 #ifndef EASY3D_HAS_VULKAN
         opengl_initialize();
 #else
@@ -143,6 +151,7 @@ namespace easy3d {
 
         num_vertices_ = 0;
         num_indices_ = 0;
+        buffers_ready_ = false;
         bbox_.clear();
     }
 
@@ -180,6 +189,7 @@ namespace easy3d {
             update_func_(model_, this);
         else
             buffer::update(model_, this);
+        buffers_ready_ = true;
 
         LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "updating rendering buffers for drawable '" << name()
                                                 << "' took " << w.time_string();
@@ -197,6 +207,10 @@ namespace easy3d {
         ++point_revision_;
         opengl_update_vertex_buffer(vertices, dynamic);
 #endif
+        // The buffers now exist, whether they come from the model or from the client.
+        // The model must not overwrite them afterwards, matching the OpenGL backend,
+        // where the GPU buffer exists as soon as it has been uploaded.
+        buffers_ready_ = true;
     }
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {

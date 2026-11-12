@@ -24,6 +24,15 @@ See [Migration completion status](#migration-completion-status) and the
 checkable work list in `ToDo.md`. Historical implementation notes below are not
 the current status.
 
+**Build trees.** The IDE (CLion) owns `cmake-build-debug` and `cmake-build-release`
+and reconfigures them, which can flip `Easy3D_ENABLE_VULKAN` to `OFF` and leave a
+tree without the Vulkan backend (the Vulkan tests then abort at startup with
+`dyld: Symbol not found: EyeDomeLighting::frame_params`). The migration work uses
+its own trees next to them: `build-vulkan-debug`, `build-vulkan-release`,
+`build-opengl-debug` and `build-opengl` (all configured with
+`-DEasy3D_ENABLE_VULKAN=ON` or `OFF` explicitly). Do not build in, or reconfigure,
+the IDE-owned trees.
+
 ## Migration principles (highest priority)
 
 *Revision 2026-10-31.* These principles take precedence over every other statement in
@@ -8510,3 +8519,66 @@ running for the fragments that the depth test rejects.
 **Validation.** macOS, serial CTest: OpenGL Release (`build-opengl`) 107/107 and Vulkan Debug
 (`cmake-build-debug`) 147/147, both green. The OpenGL change touches four shader files only; the
 Vulkan tree is unaffected by it.
+
+### 2026-11-12 — W10 batch 76: the Vulkan backend no longer re-extracts the rendering buffers every frame
+
+**Scope.** Tutorial 201 with `resources/data/huge_mesh.ply` (9,565,940 vertices, 19,131,876 faces)
+ran at about 5 fps on Vulkan against about 50 fps on OpenGL in a debug build. The two release
+builds agreed (both about 30 fps), so the defect was hidden behind the GPU cost in release and
+only showed up in a debug build.
+
+**Root cause.** `Drawable::cpu_buffers()` decided whether the rendering buffers still had to be
+extracted with
+
+```cpp
+if (update_needed_ || (!num_vertices_ && (model_ || update_func_))) {
+```
+
+The vertex count was the proxy for "the buffers have been produced". The OpenGL backend does not
+have that problem: it extracts in `Drawable::draw()`, whose guard is `vertex_buffer_ == 0`, and the
+GPU buffer exists as soon as the extraction ran, even when it holds no vertex.
+
+The `locks` drawable of a `SurfaceMesh` (the markers of the locked vertices) is the case that
+breaks. `buffer::internal::update_mesh_locked_vertices()` collects the locked vertices, and when
+the mesh has none the drawable legitimately ends up with zero vertices. The vertex count therefore
+stays zero, the guard stays true, and the buffers were extracted again on every call. Every
+extraction rescans the whole model (`for (auto v : model->vertices())`) to look for the locked
+vertices, so with 9.5 million vertices that scan *was* the frame: the profile attributed the whole
+debug frame to `Drawable::update_buffers_internal()` → `update_uniform_colors()` →
+`SurfaceMesh::update_vertex_normals()`, and the vertex and index copies showed up as `__bzero` and
+`memmove`.
+
+**Fix** (`easy3d/renderer/drawable.{h,cpp}`). The state of the rendering buffers is tracked
+explicitly now. `Drawable` carries a `buffers_ready_` flag, reset by `clear()` and set as soon as
+the buffers exist — when the model extraction produced them and when the client uploaded them —
+and the guard reads
+
+```cpp
+if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
+```
+
+This matches the OpenGL backend exactly: extract once, then only when an update is requested. The
+update path is unchanged — `Drawable::update()` (and `Renderer::update()`, which client code calls
+after changing a model) still forces a new extraction, so the lock markers still follow the model.
+Setting the flag on a client upload matters too: the OpenGL backend never overwrites a draw-local
+buffer with the model's, because the GPU buffer exists as soon as the client uploaded it, and the
+picking test ("custom draw-local source was confused with default face provenance") covers exactly
+that contract.
+
+**Measured result (2026-11-12, macOS).** `resources/data/huge_mesh.ply` in a 1600x900 window with
+4 samples:
+
+| Build | OpenGL | Vulkan before | Vulkan after |
+|---|---|---|---|
+| Debug | 32.79 ms/frame (30.5 fps) | 210.61 ms/frame (4.75 fps) | **27.60 ms/frame (36.2 fps)** |
+| Release | 32.78 ms/frame (30.5 fps) | 32.61 ms/frame (30.7 fps) | **27.76 ms/frame (36.0 fps)** |
+
+The point cloud case is unchanged (`resources/data/pump.ptx`: Vulkan 8.36 ms/frame in debug and
+8.39 ms in release, OpenGL 7.51 ms), because the point drawables do produce vertices and their
+guard already cleared.
+
+**Validation.** macOS, serial CTest, in the migration's own build trees: Vulkan Debug
+(`build-vulkan-debug`) 141/141, Vulkan Release (`build-vulkan-release`) 141/141, OpenGL Debug
+(`build-opengl-debug`) 107/107 and OpenGL Release (`build-opengl`) 107/107, all green. The Vulkan
+trees hold fewer tests than the IDE-owned `cmake-build-debug` because they are configured without
+the Qt, CGAL, FFmpeg and Python extras.

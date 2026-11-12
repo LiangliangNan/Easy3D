@@ -458,6 +458,7 @@ namespace easy3d {
         std::size_t num_indices_;   //!< The number of indices.
 
         bool update_needed_;        //!< Whether an update is needed.
+        bool buffers_ready_;        //!< Whether the rendering buffers have been produced at least once.
         std::function<void(Model*, Drawable*)> update_func_;    //!< The update function.
 
         unsigned int vertex_buffer_;    //!< The vertex buffer ID.

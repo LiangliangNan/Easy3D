@@ -13,29 +13,21 @@ Tested on Tutorial_201_Viewer_default, loading data "/resources/data/huge_mesh.p
 
 
 
-Reformat code in shape.h/.cpp: std::logic_error("OpenGL shape drawing is unavailable in Vulkan".)
-
-One residual note: Vulkan has a single impostor pipeline for textured and colored lines. OpenGL has two distinct pipelines.
-
-
-TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
-
-RenderDevice is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations, including VertexArrayObject).
-
-
-The same drawable in different backends have different controls (meaning there are many member variables/functions for handing the same thing in different backends):
+(1) Reformat code in shape.h/.cpp. Many functions have "std::logic_error("OpenGL shape drawing is unavailable in Vulkan", and these functions are useless and should should be deleted.
+(2) Vulkan has a single impostor pipeline for textured and colored lines. OpenGL has two distinct pipelines (not sure if good to merge).
+(3) TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
+(4) RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations, including VertexArrayObject. But don't know if it is worth to do so).
+(5)The same drawable in different backends have different controls (meaning there could be many member variables/functions for handing the same thing in different backends), for example in Viewer class :
 #ifdef EASY3D_HAS_VULKAN
-            show_corner_axes_ = !show_corner_axes_;
+            show_corner_axes_ = !show_corner_axes_;  // visibility controlled by member variable show_corner_axes_
 #else
             if (drawable_axes_)
                 drawable_axes_->set_visible(!drawable_axes_->is_visible());
 #endif
-This might be relevant to this in ToDo.md: After correctness and performance baselines are established, modularize Vulkan `render_device.cpp` along resource/pass/capture responsibilities and add focused lifetime/synchronization tests.
 
+This might be relevant to this ToDo item in ToDo.md: After correctness and performance baselines are established, modularize Vulkan `render_device.cpp` along resource/pass/capture responsibilities and add focused lifetime/synchronization tests.
 
-
-Ask this in different stages of the migration:
-The Vulkan migration is most complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or become redundant after small modification/adaptation. Investigate which classes (and/or their members) have the potential to become redundant and thus can be removed.
+(6) The Vulkan migration is most complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or could become redundant and be deleted after small modification/adaptation. Investigate which classes (and/or their members) have the potential to be removed.
 
 
 
