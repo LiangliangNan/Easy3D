@@ -458,7 +458,7 @@ namespace easy3d {
         std::size_t num_indices_;   //!< The number of indices.
 
         bool update_needed_;        //!< Whether an update is needed.
-        bool buffers_ready_;        //!< Whether the rendering buffers have been produced at least once.
+        bool buffers_ready_;        //!< Whether the rendering buffers exist: produced by the model extraction or uploaded by the client. Only the Vulkan backend reads it; the OpenGL one tests the existence of the GPU buffer instead.
         std::function<void(Model*, Drawable*)> update_func_;    //!< The update function.
 
         unsigned int vertex_buffer_;    //!< The vertex buffer ID.

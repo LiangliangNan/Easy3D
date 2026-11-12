@@ -60,5 +60,8 @@ void main()
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);
 
-    // The depth comes from the rasterizer, as in the colored variant.
+    // The depth comes from the rasterizer, as in the colored variant: the geometry
+    // shader places the ribbon at the depth of the stroke's own geometry, so the
+    // interpolated depth is already the depth of the stroke. This is also what the
+    // native Vulkan ribbon does.
 }

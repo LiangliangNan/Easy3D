@@ -57,9 +57,9 @@ void main()
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);
 
-    // The depth comes from the rasterizer. The geometry shader already places the
-    // ribbon at the depth of the line, so the interpolated depth is the depth of the
-    // stroke itself; writing it again per fragment would only cost a matrix
-    // multiplication and disable early depth testing. This is also what the native
-    // Vulkan ribbon does.
+    // The depth comes from the rasterizer: the geometry shader places the ribbon at
+    // the depth of the stroke's own geometry, so the interpolated depth is already
+    // the depth of the stroke. Writing it again per fragment would only cost a
+    // matrix multiplication and disable early depth testing. This is also what the
+    // native Vulkan ribbon does.
 }
