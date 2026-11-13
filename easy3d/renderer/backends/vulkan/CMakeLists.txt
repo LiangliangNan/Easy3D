@@ -2,7 +2,7 @@ find_package(Vulkan REQUIRED)
 find_program(Easy3D_GLSLANG_VALIDATOR NAMES glslangValidator
         HINTS "$ENV{VULKAN_SDK}/bin" "$ENV{VULKAN_SDK}/Bin")
 if(NOT Easy3D_GLSLANG_VALIDATOR)
-    message(FATAL_ERROR "The Vulkan backend requires glslangValidator at build time (Vulkan SDK or glslang-tools). Installed applications do not require it.")
+    message(FATAL_ERROR "The Vulkan backend requires glslangValidator at build time (Vulkan SDK or glslang-tools). You can download and install the Vulkan SDK from here: https://vulkan.lunarg.com/sdk/home")
 endif()
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan")
