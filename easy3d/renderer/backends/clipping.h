@@ -29,9 +29,18 @@
 #define EASY3D_RENDERER_BACKENDS_CLIPPING_H
 
 #include <easy3d/renderer/render_device.h>
+#include <array>
+#include <vector>
 namespace easy3d {
     namespace graphics {
         namespace internal {
+            // A halfspace in the geometry's own space, kept in the double precision the CPU clip
+            // arithmetic uses so that a cache key can compare it without losing a bit.
+            using ClipPlane = std::array<double, 4>;
+            // The halfspaces exactly as clip_draw() tests them: the camera-free object-space ones
+            // when the scene host supplied them, otherwise the view-space ones pulled back through
+            // model_view. The clip cache keys on these, so both must derive them alike.
+            std::vector<ClipPlane> object_clip_planes(const DrawCommand &command);
             DrawCommand clip_draw(const DrawCommand &command);
         }
     } // namespace graphics

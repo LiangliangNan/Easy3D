@@ -3719,8 +3719,7 @@ namespace easy3d {
             class ClippedGeometryCache {
                 struct Entry {
                     std::weak_ptr<const Geometry> source;
-                    std::vector<vec4> planes;
-                    mat4 model_view;
+                    std::vector<internal::ClipPlane> object_planes;
                     mat3 normal;
                     bool lighting = false, discard = false, analytic = false, baked = false, material = false;
                     std::shared_ptr<const Geometry> geometry;
@@ -3756,15 +3755,18 @@ namespace easy3d {
                     if (command.geometry->topology() == Topology::points ||
                         (analytic && !command.discard_clipped_primitives))
                         return command;
+                    // Keying on the object-space halfspaces instead of the view-space planes and
+                    // model_view keeps an orbit from discarding the cut: the camera cancels out of
+                    // them exactly, and clip_draw() tests these same values.
+                    const auto object_planes = internal::object_clip_planes(command);
                     auto &entry = entries_[input.geometry.get()];
-                    if (entry.source.lock() != input.geometry || entry.planes != command.clipping_planes ||
-                        entry.model_view != command.model_view || entry.normal != command.normal_matrix ||
+                    if (entry.source.lock() != input.geometry || entry.object_planes != object_planes ||
+                        entry.normal != command.normal_matrix ||
                         entry.lighting != command.lighting || entry.material != command.material_lighting ||
                         entry.discard != command.discard_clipped_primitives || entry.analytic != analytic) {
                         auto result = internal::clip_draw(command);
                         entry.source = input.geometry;
-                        entry.planes = command.clipping_planes;
-                        entry.model_view = command.model_view;
+                        entry.object_planes = object_planes;
                         entry.normal = command.normal_matrix;
                         entry.material = command.material_lighting;
                         entry.lighting = command.lighting;

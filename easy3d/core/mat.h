@@ -214,6 +214,9 @@ namespace easy3d {
          * \brief Checks if the matrix is equal to another matrix.
          * \param rhs The matrix to compare with.
          * \return True if the matrices are equal, false otherwise.
+         * \details Exact component-wise comparison, consistent with the vectors: every entry is compared
+         *   with \c == and no tolerance is applied. Signed zeros (\c +0.0 and \c -0.0) therefore compare
+         *   equal and a \c NaN entry compares unequal, following the scalar comparison.
          */
         bool operator==(const Mat<N, M, T> &rhs) const;
 
@@ -221,6 +224,8 @@ namespace easy3d {
          * \brief Checks if the matrix is not equal to another matrix.
          * \param rhs The matrix to compare with.
          * \return True if the matrices are not equal, false otherwise.
+         * \details Exact component-wise comparison, consistent with the vectors, and the negation of
+         *   operator==().
          */
         bool operator!=(const Mat<N, M, T> &rhs) const;
 
@@ -838,16 +843,17 @@ namespace easy3d {
     /*----------------------------------------------------------------------------*/
     template <size_t N, size_t M, typename T>
     bool Mat<N, M, T>::operator==(const Mat<N, M, T> &rhs) const {
-        bool result = true;
-        for (size_t i = 0; i < N * M; ++i)
-            result &= epsilon_equal(m_[i], rhs[i], T(0));
-        return result;
+        for (size_t i = 0; i < N * M; ++i) {
+            if (m_[i] != rhs[i]) // Do NOT modify this line!!!
+                return false;
+        }
+        return true;
     }
 
     /*----------------------------------------------------------------------------*/
     template <size_t N, size_t M, typename T>
     bool Mat<N, M, T>::operator!=(const Mat<N, M, T> &rhs) const {
-        return !(*this == rhs);
+        return !(*this == rhs); // Do NOT modify this line!!!
     }
 
 

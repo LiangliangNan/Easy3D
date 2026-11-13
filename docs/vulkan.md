@@ -2120,8 +2120,8 @@ front surface is removed. Closed cut surfaces/back-hit rendering remain future
 work. Geometric cut boundaries use normal rasterizer MSAA, without requiring
 `shaderClipDistance`, geometry shaders or sample-rate shading for plain geometry.
 
-The device caches derived geometric snapshots by source and clipping/transform/
-lighting policy. Prepared commands retain their effective geometry throughout
+The device caches derived geometric snapshots by source, by the object-space
+halfspaces the clip actually tests, and by lighting policy. Prepared commands retain their effective geometry throughout
 submission; independent draws sharing one source can use different cut volumes.
 Expired clipping snapshots retire with the existing fenced resource caches.
 Clipping rebuilds and uploads are synchronous; large meshes with moving planes
@@ -2129,7 +2129,12 @@ can incur CPU/upload costs. Stable settings reuse the cached cut geometry.
 Low-level `graphics::DrawCommand::clipping_planes` are **view-space** equations;
 when clipping is active, provide an affine `model_view` mapping the geometry into
 that view space, consistently with its MVP. The scene adapter performs world-to-
-view conversion and honors model manipulation. Original primitive IDs survive
+view conversion and honors model manipulation. It also records the same halfspaces
+in the geometry's own space in `graphics::DrawCommand::object_clipping_planes`,
+and those camera-free equations are what the cache keys on, so orbiting the camera
+reuses the cached cut instead of rebuilding and re-uploading it; a caller that
+supplies only view-space planes gets them pulled back through `model_view`, which
+carries no camera term beyond floating-point rounding. Original primitive IDs survive
 clipping, so raw readback, range highlights and `pick()` source-face mappings
 continue to identify the original primitives rather than generated cut pieces.
 
@@ -8859,3 +8864,106 @@ reloading the head. `vulkan.transparency` passes on the NVIDIA RTX 3090 with and
 without validation, still passes on lavapipe, and the 28 SPIR-V modules pass
 `spirv-val --target-env vulkan1.2`. The OpenGL shader compiles with
 `glslangValidator` and the OpenGL Debug suite passes 108/108.
+
+### 2026-11-13 — Windows Tutorial 307 clipping performance: always-false matrix equality
+
+**Symptom.** `Tutorial_307_CrossSection` reported about 6 FPS on Vulkan and about
+120 FPS on OpenGL on a Windows machine (NVIDIA GeForce RTX 2080 Ti); on macOS the
+Vulkan build reached only about 36 FPS. Measured directly with a hidden 1024x768
+`Viewer`, `resources/data/bunny.ply` (15447 vertices, 30779 faces), 30 timed
+`draw_frame()` calls per scenario in Release: 1.6 ms/frame with clipping off and
+22.7 ms/frame with the clipping plane enabled, i.e. the cut itself dominated the
+frame.
+
+**Root cause.** `Mat::operator==` accumulated
+`result &= epsilon_equal(m_[i], rhs[i], T(0))`, and `epsilon_equal(x, y, eps)` is
+`abs(x - y) < eps`, so no pair of matrices ever compared equal - not even two
+identical ones. The defect dates back to 49a65eed (2024-12-22) and was harmless
+until `ClippedGeometryCache` put `model_view` and `normal_matrix` in its key, which
+then missed on every frame. Each miss re-ran the CPU clip, produced a brand-new
+`graphics::Geometry`, allocated a new Vulkan buffer for it because `GpuResources`
+keys geometry by pointer, and uploaded it synchronously.
+
+**Fix.** `Mat::operator==` is now the exact component-wise comparison that
+`Vec<N, T>` has always used, and `operator!=` negates it. A tolerance is the wrong
+tool here: a cache key must imply bit-identical output, which is what equality on
+this path is for; `Vec` documents the same convention, and `vec2`/`vec3`/`vec4` and
+the matrix types share these operators. The only in-library consumers of the two
+matrix operators are the clip-cache key clauses, so the change is confined to that
+behavior. Both `mat.h` and `vec.h` document the exact component-wise semantics
+(signed zeros compare equal, a NaN component compares unequal) and guard the
+comparison lines against being softened into an epsilon test again.
+
+**Camera-independent cache key.** The remaining 22.5 ms/frame when only the camera
+moved came from keying on view-space planes: the adapter converts world planes with
+`transpose(inverse(cam.model_view_matrix()))`, so an orbit changed the key although
+the cut did not move. `graphics::DrawCommand` now also carries
+`object_clipping_planes`, filled by the scene adapter as
+`transpose(manipulated_matrix()) * plane_world`, and
+`internal::object_clip_planes()` returns the halfspaces that `clip_draw()` actually
+tests - those, or for low-level callers that set only view-space planes, the same
+planes pulled back through the affine `model_view`. `clip_draw()` and the cache
+share this one derivation, and the key no longer contains `model_view`. The two
+derivations describe the same halfspace: with `MV = M_cam * M_model` and
+`p_view = M_cam^-T * p_world`, the pullback is `MV^T * p_view = M_model^T * p_world`,
+so the camera cancels exactly. Checked numerically over 256 random combinations of
+rotated/non-uniformly-scaled/translated models, cameras and planes: the normalized
+planes agreed within 2.0e-6 and 4096 point-side tests produced no sign flip.
+
+**Result.** Same probe, same machine: clipping on with a static camera 22.7 to
+1.6 ms/frame, cross-section slab 17.3 to 1.5 ms/frame, and orbiting the camera 22.5
+to 1.46 ms/frame.
+
+**Why dragging the plane still lagged, and the debug build.** With the plane
+dragged, the cut genuinely changes every frame, so the cache misses by design.
+Measured in Release the frame then cost 21.6 ms, but the reported ~6 FPS came from a
+**Debug** build of the same code, where the identical scenario measures 175 ms/frame:
+135 ms of it is `clip_draw()` alone, isolated by calling it directly on the model's
+geometry (30,779 triangles, 34,872 cut vertices out). The loop allocated a polygon
+vector per primitive - two `std::vector<Vertex>` allocations plus growth reallocations
+for every triangle, about 185,000 allocations per frame - and recomputed
+`normalize(vec3(.3f, .5f, 1))` for every vertex while baking lighting. `clip_draw()`
+now keeps two reused scratch buffers (`polygon`/`clipped`, swapped instead of
+re-allocated), reserves its output to the input vertex count, resolves the source
+vertices and primitive IDs through references hoisted out of the loop, and normalizes
+the light direction once. The arithmetic is unchanged, so the cut geometry is
+bit-identical.
+
+Release drag: 21.6 to 8.81 ms/frame (~113 FPS, matching the ~120 FPS reported on
+macOS), with `clip_draw()` alone at 1.97 ms. Debug drag: 175 to 61.9 ms/frame, with
+`clip_draw()` alone at 36.5 ms. The remaining ~23 ms per Debug frame is the geometry
+rebuild itself: a new `graphics::Geometry` per miss means a new entry in
+`GpuResources`, so the clipped vertices are re-packed and a new Vulkan buffer pair is
+created, uploaded and retired every frame. Reusing one buffer across rebuilds is the
+next step if debug-build interaction needs to improve; it is not required for release
+performance.
+
+**Validation.** Vulkan headless (`-LE desktop`) 54/55 and OpenGL headless 36/36 in
+`build-vulkan-release` and `build-opengl-release`. The single failure, `vulkan.text`
+("UTF-8 codepoints, including non-BMP, were split into bytes"), reproduces with the
+pre-fix binary: no `/utf-8` flag is passed to MSVC and `tests/renderer/text_test.cpp`
+carries no BOM, so the `u8"Aé中😀"` literal is mis-decoded under the local ANSI
+codepage. The 24 `desktop`-label Vulkan tests abort with SIGSEGV in this session and
+crash identically with the pre-fix Debug binary built at 16:35 the same day, so they
+are environmental rather than a regression here; the Linux records above show the
+same tests green in a real desktop session. The `ClippedGeometryCache` and
+`clip_draw()` changes are covered headlessly by `vulkan.clipping`, which asserts the
+cut vertex counts, retained primitive IDs and images, and by
+`vulkan.clippingplane`; they pass in both Debug and Release. In Debug the
+CPU-bound `algo.point_cloud_normal_estimation` test exceeds its timeout, unrelated to
+clipping.
+
+**A probe abort that did not reproduce.** Mid-session, the scratch probe died inside
+the first `draw_frame()` after `ClippingPlane::set_enabled(false)` had followed camera
+motion, with no diagnostic and no glog file. Once the library and the probe were
+rebuilt consistently, twelve sequences covering that order and its variations -
+clipping untouched, camera motion only, drag then static, drag then disabled, drag
+then disabled plus orbit, enable/disable without dragging, orbit before clipping, the
+two-plane slab, and dragging the plane far enough that the cut empties the model -
+all finished cleanly. `clip_draw()` returning zero vertices is already handled: the
+upload path skips buffer creation when `count` is zero, so an empty cut draws nothing
+rather than mapping a zero-size buffer. The likely cause was the probe executable and
+`easy3d.dll` built at different times across the `DrawCommand` change, which grows the
+struct by one `std::vector<vec4>`; the two then disagree about the object layout. That
+is a hazard for any partial rebuild after this commit, not a library defect, and it is
+the same class of failure recorded above for a picking executable.

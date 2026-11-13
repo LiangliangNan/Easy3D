@@ -305,6 +305,13 @@ namespace easy3d {
             // analytic impostors clip their actual front surface. Overlays ignore planes.
             std::vector<vec4>
                 clipping_planes; ///< Up to two view-space halfspaces retaining dot(plane, [position,1]) >= 0; overlays ignore them.
+            // Optional camera-free form of the planes above, already pulled back into the
+            // geometry's own space by the scene host. When non-empty the geometric CPU clip
+            // uses them, so moving the camera no longer changes the clip and its cache
+            // survives an orbit. Left empty by low-level callers that only set view-space
+            // planes, which are then pulled back through model_view as before.
+            std::vector<vec4>
+                object_clipping_planes; ///< Up to two halfspaces in the geometry's local space; empty means derive them from clipping_planes and model_view.
             bool discard_clipped_primitives = false; ///< Reject a primitive if any control vertex is outside.
             // Plain points use framebuffer-pixel diameters. Spheres and surfels use view-space radii,
             // after transforming their centers; model scaling does not scale the radius. Both point

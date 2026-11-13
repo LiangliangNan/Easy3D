@@ -54,6 +54,23 @@ namespace easy3d {
             return result;
         }
         namespace internal {
+            std::vector<ClipPlane> object_clip_planes(const DrawCommand &command) {
+                std::vector<ClipPlane> result;
+                if (!command.object_clipping_planes.empty()) {
+                    for (const auto &p : command.object_clipping_planes)
+                        result.push_back({double(p[0]), double(p[1]), double(p[2]), double(p[3])});
+                    return result;
+                }
+                for (const auto &p : command.clipping_planes) {
+                    ClipPlane local{};
+                    for (unsigned col = 0; col < 4; ++col)
+                        for (unsigned row = 0; row < 4; ++row)
+                            local[col] += double(command.model_view(row, col)) * p[row];
+                    result.push_back(local);
+                }
+                return result;
+            }
+
             DrawCommand clip_draw(const DrawCommand &source) {
                 DrawCommand result = source;
                 if (source.overlay || source.clipping_planes.empty())
@@ -69,14 +86,8 @@ namespace easy3d {
                     return result;
                 const bool bake =
                     source.lighting && !source.material_lighting && !analytic && topology != Topology::points;
-                std::vector<std::array<double, 4>> planes;
-                for (const auto &p : source.clipping_planes) {
-                    std::array<double, 4> local{};
-                    for (unsigned col = 0; col < 4; ++col)
-                        for (unsigned row = 0; row < 4; ++row)
-                            local[col] += double(source.model_view(row, col)) * p[row];
-                    planes.push_back(local);
-                }
+                // The clip cache keys on exactly these halfspaces, so both paths derive them here.
+                const std::vector<ClipPlane> planes = object_clip_planes(source);
                 auto distance = [](const Vertex &v, const std::array<double, 4> &p) {
                     return p[0] * v.position.x + p[1] * v.position.y + p[2] * v.position.z + p[3];
                 };
@@ -94,19 +105,29 @@ namespace easy3d {
                     return v;
                 };
                 const auto &indices = geometry.indices();
-                const auto count = indices.empty() ? geometry.vertices().size() : indices.size();
+                const auto &source_vertices = geometry.vertices();
+                const auto &primitive_ids = geometry.primitive_ids();
+                const bool indexed = !indices.empty();
+                const auto count = indexed ? indices.size() : source_vertices.size();
                 std::vector<Vertex> vertices;
                 std::vector<uint32_t> ids;
+                vertices.reserve(count);
+                ids.reserve(count / stride);
+                // Reusing the polygon scratch buffers matters: one allocation per primitive
+                // dominated the cost of dragging the plane.
+                std::vector<Vertex> polygon, clipped;
+                polygon.reserve(2 * stride + 4);
+                clipped.reserve(2 * stride + 4);
+                const vec3 bake_light = normalize(vec3(.3f, .5f, 1));
                 for (size_t i = 0; i < count; i += stride) {
-                    std::vector<Vertex> polygon;
+                    polygon.clear();
                     bool rejected = false;
                     for (unsigned j = 0; j < stride; ++j) {
-                        auto v = geometry.vertices()[indices.empty() ? i + j : indices[i + j]];
+                        auto v = source_vertices[indexed ? indices[i + j] : i + j];
                         if (bake) {
                             const auto n = source.normal_matrix * v.normal;
                             if (dot(n, n) > 0) {
-                                const float diffuse =
-                                    .2f + .8f * std::abs(dot(normalize(n), normalize(vec3(.3f, .5f, 1))));
+                                const float diffuse = .2f + .8f * std::abs(dot(normalize(n), bake_light));
                                 for (unsigned c = 0; c < 3; ++c)
                                     v.color[c] *= diffuse;
                             }
@@ -116,8 +137,7 @@ namespace easy3d {
                                 rejected = true;
                         polygon.push_back(v);
                     }
-                    const auto id =
-                        geometry.primitive_ids().empty() ? uint32_t(i / stride) : geometry.primitive_ids()[i / stride];
+                    const auto id = primitive_ids.empty() ? uint32_t(i / stride) : primitive_ids[i / stride];
                     if (source.discard_clipped_primitives || stride == 1) {
                         if (!rejected) {
                             vertices.insert(vertices.end(), polygon.begin(), polygon.end());
@@ -148,7 +168,7 @@ namespace easy3d {
                         for (const auto &p : planes) {
                             if (polygon.empty())
                                 break;
-                            std::vector<Vertex> clipped;
+                            clipped.clear();
                             auto a = polygon.back();
                             auto da = distance(a, p);
                             for (const auto &b : polygon) {
@@ -160,7 +180,7 @@ namespace easy3d {
                                 a = b;
                                 da = db;
                             }
-                            polygon = std::move(clipped);
+                            polygon.swap(clipped);
                         }
                         for (size_t j = 1; j + 1 < polygon.size(); ++j) {
                             vertices.push_back(polygon[0]);

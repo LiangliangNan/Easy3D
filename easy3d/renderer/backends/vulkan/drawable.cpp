@@ -356,6 +356,12 @@ namespace easy3d {
                     const auto plane_transform = transpose(inverse(cam.model_view_matrix()));
                     for (const auto &plane : clipping_planes)
                         result.clipping_planes.push_back(plane_transform * plane);
+                    // Feeding the model matrix alone, instead of pulling the view-space
+                    // planes back through model_view, keeps the CPU clip and its cache
+                    // bit-identical while the camera moves.
+                    const mat4 object_transform = transpose(d.manipulated_matrix());
+                    for (const auto &plane : clipping_planes)
+                        result.object_clipping_planes.push_back(object_transform * plane);
                     result.discard_clipped_primitives = d.plane_clip_discard_primitive();
                 }
                 if (d.lighting())

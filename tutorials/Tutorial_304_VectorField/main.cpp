@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     drawable->set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
 
     // Set the line width (in pixels) so the glyphs stay visible at any zoom level.
-    drawable->set_line_width(3.0f);
+    drawable->set_line_width(1.0f);
 
     // Also show the standard "edges" (hidden by default) to make the faceting explicit.
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);

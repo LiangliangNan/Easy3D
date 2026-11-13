@@ -36,3 +36,5 @@ tests/cross_backend/__pycache__/image_diff.cpython-312.pyc
 /build-opengl-release
 /build-opengl-python
 /build-parity-images
+/.clip-probe
+/MyDebug

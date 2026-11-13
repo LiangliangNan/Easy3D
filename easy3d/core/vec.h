@@ -1129,26 +1129,31 @@ namespace easy3d {
         return false;
     }
 
-    /// Test exact componentwise equality.
+    /// Test exact component-wise equality.
     /// \param a First vector.
     /// \param b Second vector.
     /// \return True if every corresponding component compares equal.
+    /// \details Exact component-wise comparison for all vector types (vec2/vec3/vec4 and their
+    ///   dvec*/ivec*/uvec* variants in types.h): every component is compared with \c == and no tolerance
+    ///   is applied. Signed zeros (\c +0.0 and \c -0.0) therefore compare equal and a \c NaN component
+    ///   compares unequal, following the scalar comparison.
     template <size_t N, class T>
     bool operator==(const Vec<N,T> &a, const Vec<N,T> &b) {
         for (size_t i = 0; i < N; i++) {
-            if (a[i] != b[i]) return false;
+            if (a[i] != b[i]) return false; // Do NOT modify this line!!!
         }
         return true;
     }
 
-    /// Test exact componentwise inequality.
+    /// Test exact component-wise inequality.
     /// \param a First vector.
     /// \param b Second vector.
     /// \return True if any corresponding component differs.
+    /// \details Exact component-wise comparison, consistent with operator==(), which this function negates.
     template <size_t N, class T>
     bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b) {
         for (size_t i = 0; i < N; i++) {
-            if (a[i] != b[i]) return true;
+            if (a[i] != b[i]) return true; // Do NOT modify this line!!!
         }
         return false;
     }
