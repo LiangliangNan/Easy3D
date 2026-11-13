@@ -37,10 +37,15 @@ void main() {
     nodes[node_index].color = vec4(color.rgb * alpha, alpha);
     nodes[node_index].depth = gl_FragCoord.z;
     // Push onto the pixel list. The loop retries until this invocation wins the
-    // head slot, so concurrent fragments on one pixel form a correct chain.
-    int old_head;
-    do {
-        old_head = head[pixel_index];
+    // head slot, so concurrent fragments on one pixel form a correct chain. The
+    // retry uses the value returned by the compare-and-swap instead of reloading
+    // head[]: a non-atomic load inside the loop may be hoisted by the compiler,
+    // which turns a lost race into an infinite loop on some drivers.
+    int old_head = head[pixel_index];
+    for (;;) {
         nodes[node_index].next = old_head;
-    } while (atomicCompSwap(head[pixel_index], old_head, int(node_index)) != old_head);
+        int previous = atomicCompSwap(head[pixel_index], old_head, int(node_index));
+        if (previous == old_head) break;
+        old_head = previous;
+    }
 }

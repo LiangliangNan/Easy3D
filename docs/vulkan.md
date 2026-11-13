@@ -8820,3 +8820,42 @@ propagates `HAS_BOOST` as `EASY3D_TEST_HAS_BOOST` (added in
 `tests/algo/CMakeLists.txt`). Without Boost the test still calls `reorient()`
 and expects its documented failure, so the dependency-error path stays
 covered while normal estimation itself is tested in every configuration.
+
+**IDE test runs and validation-layer discovery.** An IDE-driven "All CTest"
+run failed 42 of 149 tests with `VK_LAYER_KHRONOS_validation was requested but
+is unavailable`, although the same tests passed in shell-driven trees. On this
+machine the Khronos layer is installed by the SDK, not under the system loader
+directories, and an IDE test runner does not source the SDK setup script, so
+the layer manifest was invisible. `tests/CMakeLists.txt` now locates
+`VkLayer_khronos_validation.json` at configure time, considering
+`VK_LAYER_PATH`, `$VULKAN_SDK/share/vulkan/explicit_layer.d` and
+`$VULKAN_SDK/Bin`, the SDK root inferred from the `glslc` executable found by
+`find_package(Vulkan)`, and the platform layer directories, with
+`Easy3D_VALIDATION_LAYER_DIR` as an explicit cache override.
+`tests/properties.cmake` then sets `VK_LAYER_PATH` on every registered test, so
+each CTest entry carries the directory regardless of the environment it
+inherits. A missing layer still fails the validation tests instead of silently
+disabling validation.
+
+**All-options Debug run and the NVIDIA linked-list OIT hang.** A fresh Debug
+tree with every option enabled (shared libraries, tutorials, documentation,
+tests, Python bindings, CGAL, Qt, FFmpeg and Vulkan) passed 148/148 with the
+Vulkan environment removed from the test process. The IDE tree registers one
+additional test, `algo.point_cloud_plane_extraction`, which already passed.
+
+The only remaining failure was `vulkan.transparency`, which drives the headless
+render device on the NVIDIA GPU rather than on lavapipe. The device was lost
+during the first per-pixel linked-list render, and the kernel logged
+`NVRM: Xid ... CTX SWITCH TIMEOUT`, i.e. a shader that never completed. The OIT
+build shader pushed a node with
+`do { old_head = head[pixel]; ... } while (atomicCompSwap(...) != old_head)`.
+The non-atomic head load inside the retry loop can be hoisted by the shader
+compiler, so an invocation that loses the race to another fragment at the same
+pixel keeps comparing against a stale value forever. Both the Vulkan
+(`resources/shaders/vulkan/oit_linked_lists_build.frag`) and the OpenGL
+(`resources/shaders/transparency/per_pixel_linked_lists_oit_build.frag`) build
+shaders now retry with the value returned by `atomicCompSwap` instead of
+reloading the head. `vulkan.transparency` passes on the NVIDIA RTX 3090 with and
+without validation, still passes on lavapipe, and the 28 SPIR-V modules pass
+`spirv-val --target-env vulkan1.2`. The OpenGL shader compiles with
+`glslangValidator` and the OpenGL Debug suite passes 108/108.

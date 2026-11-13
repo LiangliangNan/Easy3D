@@ -187,12 +187,16 @@ void main(void)
     nodes[node_index].depth = gl_FragCoord.z;
 
     // Insert at the head of this pixel's linked list using atomic compare-and-swap.
-    // The loop retries if another fragment modified the head between our read and write.
-    int old_head;
-    do {
-        old_head = head[pixel_index];
+    // The retry uses the value returned by the swap instead of reloading head[]:
+    // a non-atomic load inside the loop can be hoisted by the compiler, turning
+    // a lost race into an infinite loop.
+    int old_head = head[pixel_index];
+    for (;;) {
         nodes[node_index].next = old_head;
-    } while (atomicCompSwap(head[pixel_index], old_head, int(node_index)) != old_head);
+        int previous = atomicCompSwap(head[pixel_index], old_head, int(node_index));
+        if (previous == old_head) break;
+        old_head = previous;
+    }
 
     fragOutput = vec4(0.0);
 }
