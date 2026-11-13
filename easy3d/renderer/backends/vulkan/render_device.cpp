@@ -5232,15 +5232,6 @@ namespace easy3d {
             };
         } // namespace
         std::unique_ptr<RenderDevice>
-        create_vulkan_device(bool validation, bool sync_validation, const std::string &device_name) {
-            return create_vulkan_device(validation, sync_validation, device_name, true);
-        }
-        std::unique_ptr<RenderDevice>
-        create_vulkan_device(bool validation, bool sync_validation, const std::string &device_name,
-                             bool use_native_large_points) {
-            return create_vulkan_device(validation, sync_validation, device_name, use_native_large_points, false);
-        }
-        std::unique_ptr<RenderDevice>
         create_vulkan_device(bool validation, bool sync_validation, const std::string &device_name,
                              bool use_native_large_points, bool profiling) {
             std::unique_ptr<VulkanDevice> device(new VulkanDevice);

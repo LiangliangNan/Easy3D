@@ -544,24 +544,36 @@ namespace easy3d {
             virtual std::uint32_t oit_dropped_fragments() const = 0;
         };
 
-        // Implemented by the renderer Vulkan backend. Throws if devices or requested
-        // validation facilities are unavailable. Sync validation implies validation;
-        // device_name optionally filters physical devices by name substring.
-        // use_native_large_points controls the optional largePoints feature; false forces
-        // portable expanded-point rendering. profiling enables a CPU/API timing report
-        // when the device is destroyed; EASY3D_VULKAN_PROFILE enables it process-wide.
+        /**
+         * \brief Creates a headless Vulkan render device.
+         * \param validation Enables the Khronos validation layer and debug reporting. The default is \c false.
+         * \param sync_validation Enables synchronization validation; this also enables \p validation. The default is
+         *      \c false.
+         * \param device_name Optional substring that the selected physical-device name must contain. An empty string
+         *      allows any compatible device.
+         * \param use_native_large_points Uses the optional Vulkan \c largePoints feature when the selected device
+         *      supports it. Set to \c false to force portable expanded-point rendering. Defaults to \c true.
+         * \param profiling Enables CPU/API timing output when the device is destroyed. The process-wide
+         *      \c EASY3D_VULKAN_PROFILE environment variable also enables profiling. Defaults to \c false.
+         * \return An owning pointer to the initialized render device. Destroy the device before destroying any
+         *      Vulkan instance or loader resources supplied by the application; this factory creates and owns its
+         *      own instance and loader.
+         * \throws std::runtime_error If Vulkan initialization fails, no compatible Vulkan 1.2 device is available,
+         *      a requested validation layer/feature is unavailable, or required device capabilities are missing.
+         * \details This factory creates a device without a presentation surface, suitable for offscreen rendering,
+         *      selection, and other headless operations. Window presentation is not supported by the returned
+         *      device. The backend is available only in Easy3D builds configured with Vulkan support.
+         *
+         * The parameters are optional and ordered from commonly used diagnostics/device selection to less common
+         * rendering and profiling controls. For example, \c create_vulkan_device() uses defaults, while
+         * \c create_vulkan_device(true, true) enables both validation layers.
+         * \see create_vulkan_window_device()
+         */
         std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false,
                                                            bool sync_validation = false,
-                                                           const std::string &device_name = {});
-        std::unique_ptr<RenderDevice> create_vulkan_device(bool validation,
-                                                           bool sync_validation,
-                                                           const std::string &device_name,
-                                                           bool use_native_large_points);
-        std::unique_ptr<RenderDevice> create_vulkan_device(bool validation,
-                                                           bool sync_validation,
-                                                           const std::string &device_name,
-                                                           bool use_native_large_points,
-                                                           bool profiling);
+                                                           const std::string &device_name = {},
+                                                           bool use_native_large_points = true,
+                                                           bool profiling = false);
 
     } // namespace graphics
 } // namespace easy3d
