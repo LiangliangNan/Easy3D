@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2001-2005 by Computer Graphics Group, RWTH Aachen
  * Copyright (C) 2011-2013 by Graphics & Geometry Group, Bielefeld University
@@ -20,7 +20,7 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_CORE_PROPERTIES_H
 #define EASY3D_CORE_PROPERTIES_H

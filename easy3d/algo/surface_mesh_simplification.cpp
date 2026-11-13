@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2020-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2011-2020 the Polygon Mesh Processing Library developers.
  *
@@ -7,7 +7,7 @@
  *      https://github.com/pmp-library/pmp-library
  * The original code was distributed under a MIT-style license, see
  *      https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt
- ********************************************************************/
+ \endcond */
 
 #include <easy3d/algo/surface_mesh_simplification.h>
 

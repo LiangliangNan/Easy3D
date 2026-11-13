@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2000-2005 INRIA - Project ALICE
  *
@@ -6,7 +6,7 @@
  * modifications and enhancement:
  *      https://gforge.inria.fr/forum/forum.php?forum_id=11459
  * The original code was distributed under the GNU GPL license.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_UTIL_STRING_H
 #define EASY3D_UTIL_STRING_H

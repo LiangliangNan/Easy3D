@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_UTIL_VERSION_H
 #define EASY3D_UTIL_VERSION_H
@@ -59,7 +59,7 @@ namespace easy3d {
 #define EASY3D_VERSION_NR 1020601
 
 /// Easy3D release date encoded as \c YYYYMMDD.
-#define EASY3D_RELEASE_DATE 20261112
+#define EASY3D_RELEASE_DATE 20261113
 
 
 #endif  // EASY3D_UTIL_VERSION_H

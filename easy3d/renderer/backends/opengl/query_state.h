@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -23,9 +22,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
+
+
 #ifndef EASY3D_RENDERER_BACKENDS_OPENGL_QUERY_STATE_H
 #define EASY3D_RENDERER_BACKENDS_OPENGL_QUERY_STATE_H
+
 #include <easy3d/renderer/opengl.h>
 #include <vector>
 namespace easy3d {

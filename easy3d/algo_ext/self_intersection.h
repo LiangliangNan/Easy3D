@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2018-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2015 Alec Jacobson <alecjacobson@gmail.com>
  *
@@ -6,7 +6,7 @@
  * modifications and enhancement:
  *      https://libigl.github.io/
  * The original code was distributed under the Mozilla Public License v2.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_ALGO_EXT_SELF_INTERSECTION_H
 #define EASY3D_ALGO_EXT_SELF_INTERSECTION_H

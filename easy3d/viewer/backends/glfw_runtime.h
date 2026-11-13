@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -23,9 +22,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
+
+
 #ifndef EASY3D_VIEWER_BACKENDS_GLFW_RUNTIME_H
 #define EASY3D_VIEWER_BACKENDS_GLFW_RUNTIME_H
+
 #include <memory>
 #include <string>
 #include <vector>

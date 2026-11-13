@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -23,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 // Copyright (C) 2026 Liangliang Nan
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/backends/clipping.h>

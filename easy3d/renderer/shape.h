@@ -1,4 +1,4 @@
-﻿/********************************************************************
+﻿/** \cond LICENSE
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
@@ -22,7 +22,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_RENDERER_SHAPE_H
 #define EASY3D_RENDERER_SHAPE_H
@@ -184,7 +184,7 @@ namespace easy3d {
 
 
 
-        /// \name Functions for creating basic shapes (data preparation)
+        /// \name Functions for creating basic shapes (data preparation) for rendering
         // @{
 
         /**
@@ -200,7 +200,7 @@ namespace easy3d {
 
         /**
          * \brief Generates data for a unit circle as a set of line segments.
-	 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
+	     * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
          * \param slices The number of subdivisions.
          * \param points The points to be returned.
          * @param indices The indices of the points.

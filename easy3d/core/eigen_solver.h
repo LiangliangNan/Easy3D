@@ -1,4 +1,4 @@
-/********************************************************************
+/** \cond LICENSE
  * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) Copyright(c) 2000, 2001. Magic Software, Inc.
  *
@@ -7,7 +7,7 @@
  *      http://www.magic-software.com
  * The original code was under the "FREE SOURCE CODE" licence
  *      http://www.magic-software.com/License/free.pdf
- ********************************************************************/
+ \endcond */
 
 #ifndef EASY3D_CORE_EIGEN_SOLVER_H
 #define EASY3D_CORE_EIGEN_SOLVER_H
