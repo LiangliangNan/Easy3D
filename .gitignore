@@ -33,3 +33,6 @@ tests/cross_backend/__pycache__/image_diff.cpython-312.pyc
 /build-parity-run-3
 /build-parity-run-4
 /build-parity-verify2
+/build-opengl-release
+/build-opengl-python
+/build-parity-images

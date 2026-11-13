@@ -865,9 +865,12 @@ re-profiled at ~80 FPS (HUD `fps: 83 (12.0 ms/frame)`; 320 presented frames / 4.
 ~70 FPS at 1600×1200 (the visible window was clamped to the display height). Decided 2026-11-08: W10's actionable remainder is closed — Mapple stays OpenGL-only
 (untouched, a deliberate exception to the all-applications-on-Vulkan goal) and Python is
 core-only (the backend-neutral viewer/drawable surface is complete; the stale `unused/`
-bindings are deliberately removed, no revival). Still open: the Linux
+bindings are deliberately removed, no revival). Still open at that time: the Linux
 `vulkan.interactionoverlay` border check (W6, 68/69), and the RealCamera
-expanded-point fallback profiling on MoltenVK. `VulkanOptions::use_native_large_points = false`
+expanded-point fallback profiling on MoltenVK. Both were closed afterwards — the CI
+and local Linux runs pass the interaction-overlay test, and the fallback profiling
+and controlled point benchmark are recorded in ToDo.md — so this paragraph records
+the 2026-11-08 state, not the current one. `VulkanOptions::use_native_large_points = false`
 and `vulkan.pointfallback` now provide a deterministic way to exercise the portable path and
 check primitive coverage on this device; this is not yet a RealCamera performance profile
 or a controlled OpenGL/Vulkan benchmark. The same triage is
@@ -1389,14 +1392,20 @@ validation-enabled `vulkan.input` test passed (1/1) and verified that the camera
 reaches its target using the existing Camera interpolation API. `vulkan.window`
 also passed in the earlier full run and five consecutive repeats.
 
-The prior Linux `vulkan.interactionoverlay` baseline (68/69) remains to be
-reproduced on the intended Mesa/CI environment. The test now allows the solid
-selection border to rasterize within one pixel of its ideal edge; this passed on
-the current macOS MoltenVK build, but that does not close the Linux-specific item.
-Portable expanded-point fallback profiling on MoltenVK without `largePoints`,
-Windows Vulkan hardware validation, and Linux/Windows package-consumer checks
-remain outstanding. There is no controlled, same-scene OpenGL-versus-Vulkan
-performance or image-comparison result yet.
+The 2026-11-13 Linux Debug/Release pass completed in dedicated trees: Vulkan
+142/142 in both configurations and OpenGL 108/108 in both, with SPIR-V, Doxygen,
+installed consumers, Python bindings and the cross-backend image comparison
+green; see the Linux Debug/Release validation section below for the two defects
+it exposed and fixed.
+
+The Linux `vulkan.interactionoverlay` baseline (68/69) is closed: the test now
+allows the solid selection border to rasterize within one pixel of its ideal
+edge, and the hosted Mesa/Xvfb run plus the 2026-11-13 local Linux suites pass
+it. Portable expanded-point fallback profiling is recorded with the controlled
+point benchmark, and cross-backend image parity is recorded in the section
+above. Linux package-consumer checks pass in CI and in the local Release pass;
+Windows Vulkan hardware validation and Windows package-consumer checks remain
+outstanding. A controlled GPU-timestamp comparison remains open.
 
 The archived Vulkan/OpenGL workflow is restored at
 `.github/workflows/tests.yml`. Run `42612100874` was not started because
@@ -8659,7 +8668,7 @@ the Qt, CGAL, FFmpeg and Python extras.
 snapshot/effects test under OpenGL and Vulkan and compares plain rendering,
 ambient occlusion, soft shadows, average transparency (both uniform-color and
 textured/material cases), and scaled 4x MSAA.
-Images are 640x480 except the scaled-MSAA case at 1280x960. RGB comparisons use
+Images are 320x240 except the scaled-MSAA case at 640x480. RGB comparisons use
 three complementary bounds: mean absolute channel error, p99 per-pixel maximum
 channel error, and fraction of pixels whose maximum channel error exceeds 16.
 The comparator reports all three and applies these workload-specific limits:
@@ -8684,6 +8693,14 @@ composite this effect differently; the explicit 4% bound prevents that known
 approximation from being mistaken for RGB failure while still detecting a
 wider regression.
 
+On the Linux/lavapipe Release comparison (2026-11-13, Vulkan validation
+enabled), mean RGB errors were 0.005 (plain), 0.178 (AO), 0.498 (soft
+shadows), 0.369 (uniform-color average transparency), 0.234
+(textured/material average transparency), and 0.379 (scaled MSAA), all below
+their limits. Soft-shadow alpha mismatched on 2.1354% of pixels, matching the
+macOS result. This confirms the tolerance table on a second driver and
+platform.
+
 The average-transparency comparison exposed a real implementation choice:
 Vulkan's original pass used the same texture and material-lighting semantics as
 its regular scene and depth-peeling passes, while OpenGL's legacy average pass
@@ -8696,12 +8713,13 @@ uniform color to isolate effect differences; an additional textured workload
 uses partially transparent texels plus front- and back-facing surfaces to
 exercise the material path. Both `opengl.snapshoteffects` and
 `vulkan.snapshoteffects` pass locally. The Ubuntu workflow runs the paired image
-comparison under Xvfb with lavapipe; a hosted workflow result is still needed
-to validate that CI path. Validation-enabled local runs also print repeated
+comparison under Xvfb with lavapipe, and the hosted run `43315089551` passed
+that step. Validation-enabled local runs on macOS print repeated
 `VK_ERROR_FEATURE_NOT_PRESENT` messages about blending on
 `VK_FORMAT_R32G32_UINT`, although the test's validation-error counter remains
 zero. Treat this discrepancy as unresolved rather than as evidence of
-warning-free validation.
+warning-free validation. The 2026-11-13 Linux/lavapipe run with validation
+enabled did not repeat those messages.
 
 **Submission and staging decision.** Profiling can be enabled per viewer with
 `VulkanOptions::profiling = true`, or process-wide with
@@ -8736,3 +8754,69 @@ synchronous submission and capture, which retain simple lifetime semantics
 and deterministic snapshots; revisit multi-frame submission or staging reuse
 with GPU timestamp or frame-preparation/dynamic-upload evidence. The OIT
 overflow diagnostic is already implemented and tested.
+
+### 2026-11-13 — Linux Debug/Release validation and resize settling
+
+**Scope and environment.** The full suite ran on Linux for both backends in
+dedicated trees (`build-vulkan-debug`, `build-vulkan-release`,
+`build-opengl-debug`, `build-opengl-release`); the IDE-owned `cmake-build-*`
+trees were neither configured nor built. The machine has Ubuntu 24.04, Vulkan
+SDK 1.4.363.1 with the Khronos and synchronization validation layers, an NVIDIA
+RTX 3090 on X11 (`DISPLAY=:1`) for windowed tests, and lavapipe
+(`lvp_icd.json`) for Vulkan tests without a display. Builds were warning-free.
+
+**Result.** Vulkan Debug 142/142 (54 headless, 88 desktop) and Vulkan Release
+142/142 (54 + 88); OpenGL Debug 108/108 (35 + 73) and OpenGL Release 108/108
+(35 + 73). All 28 SPIR-V shaders pass `spirv-val --target-env vulkan1.2`. The
+Doxygen build reports no warnings. Release packages installed to
+`/tmp/easy3d-install-{vulkan,opengl}` and the installed consumer projects
+configure, build and run: the Vulkan headless consumers on lavapipe with the
+validation layer enabled through the environment, the Vulkan Viewer/MultiViewer
+consumer on X11/NVIDIA, and both OpenGL consumers on X11. `tests/cross_backend/image_diff.py` passes with
+validation enabled on lavapipe (numbers in the cross-backend section above).
+
+Both Python-binding configurations were also built from the bundled
+`3rd_party/pybind11` (`build-vulkan-python` and `build-opengl-python`, Release).
+The module imports from each tree, renders a `SurfaceMesh` through `OffScreen`
+to PNG at 101x77 and again after resize, and a windowed `Viewer` runs two
+frames and snapshots at 181x151. The Vulkan `OffScreen` check ran headless on
+lavapipe with the validation layer enabled through the environment; the
+windowed Vulkan and OpenGL checks ran on X11/NVIDIA. Both binding builds are
+warning-free: the `Mat(const float*)` constructors, which pybind11 cannot
+convert from Python because it has no raw-pointer converter, are no longer
+bound. numpy is not installed on this machine, so the bindings' numpy-array
+conversion paths were not exercised.
+
+**Resize settling.** The first Vulkan Debug run failed eleven windowed tests
+that assert resize notifications (`vulkan.multiview`, `vulkan.events`,
+`vulkan.pointselectionviewer`, `vulkan.crosssection`, `vulkan.corneraxes`,
+`vulkan.realcamera`, `vulkan.depthmap`, `vulkan.manipulation`,
+`vulkan.interactionoverlay`, `vulkan.textviewer`, `vulkan.imageviewer`), and
+the OpenGL event test failed for the same reason. X11 window managers apply
+`glfwSetWindowSize()` asynchronously, and hidden or unmapped windows may never
+receive `ConfigureNotify`. The Vulkan frame loop polled only the framebuffer
+size, so it could adopt the new physical size while `width_`/`height_` and the
+`post_resize()` notification stayed at the old logical size; a later frame saw
+no further change and the notification was lost. The OpenGL loop already
+polled the logical size but the event test asserted the request immediately
+after one frame.
+
+`Viewer::draw_frame()` now polls both `viewer_size()` and
+`framebuffer_size()`, adopts the live logical size, and notifies when either
+differs, so a temporarily stale logical size is corrected on the next frame.
+`Viewer::resize()` waits up to 200 ms in 10 ms `glfwWaitEventsTimeout()`
+steps for the platform to report the requested logical size, which makes the
+common case deterministic without blocking indefinitely. The event test
+permits one window-system round trip and stops as soon as the hook reports the
+requested 193x157. These are platform-settling changes: the logical/DPI
+contract and framebuffer-pixel callbacks are unchanged.
+
+**Optional-Boost normal estimation.** `algo.point_cloud_normal_estimation`
+failed on both backends in trees configured without Boost Graph because the
+test required `PointCloudNormals::reorient()`, which has always required that
+optional dependency. The test now always validates estimation and unit-length
+normals, and runs and requires reorientation only when the algo target
+propagates `HAS_BOOST` as `EASY3D_TEST_HAS_BOOST` (added in
+`tests/algo/CMakeLists.txt`). Without Boost the test still calls `reorient()`
+and expects its documented failure, so the dependency-error path stays
+covered while normal estimation itself is tested in every configuration.

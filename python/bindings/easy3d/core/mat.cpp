@@ -17,8 +17,6 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def( pybind11::init( [](){ return new easy3d::Mat<3UL,3UL,float>(); } ) );
         cl.def( pybind11::init<float>(), pybind11::arg("s") );
 
-        cl.def( pybind11::init<const float *>(), pybind11::arg("m") );
-
         cl.def( pybind11::init( [](easy3d::Mat<3UL,3UL,float> const &o){ return new easy3d::Mat<3UL,3UL,float>(o); } ) );
         cl.def_static("identity", (class easy3d::Mat<3, 3, float> (*)()) &easy3d::Mat<3, 3, float>::identity, "C++: easy3d::Mat<3, 3, float>::identity() --> class easy3d::Mat<3, 3, float>");
         cl.def_static("num_rows", &easy3d::Mat<3, 3, float>::num_rows, "C++: easy3d::Mat<3, 3, float>::num_rows() const --> unsigned long");
@@ -51,8 +49,6 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         pybind11::class_<easy3d::Mat<4UL,4UL,float>, std::shared_ptr<easy3d::Mat<4UL,4UL,float>>> cl(m, "Mat_4UL_4UL_float_t", "");
         cl.def( pybind11::init( [](){ return new easy3d::Mat<4UL,4UL,float>(); } ) );
         cl.def( pybind11::init<float>(), pybind11::arg("s") );
-
-        cl.def( pybind11::init<const float *>(), pybind11::arg("m") );
 
         cl.def_static("identity", (class easy3d::Mat<4, 4, float> (*)()) &easy3d::Mat<4, 4, float>::identity, "C++: easy3d::Mat<4, 4, float>::identity() --> class easy3d::Mat<4, 4, float>");
         cl.def_static("num_rows", &easy3d::Mat<4, 4, float>::num_rows, "C++: easy3d::Mat<4, 4, float>::num_rows() const --> unsigned long");
@@ -90,8 +86,6 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def( pybind11::init<const class easy3d::Mat<3, 3, float> &>(), pybind11::arg("rhs") );
 
         cl.def( pybind11::init<float, float, float, float, float, float, float, float, float>(), pybind11::arg("s00"), pybind11::arg("s01"), pybind11::arg("s02"), pybind11::arg("s10"), pybind11::arg("s11"), pybind11::arg("s12"), pybind11::arg("s20"), pybind11::arg("s21"), pybind11::arg("s22") );
-
-        cl.def( pybind11::init<const float *>(), pybind11::arg("m") );
 
         cl.def( pybind11::init<const class easy3d::Vec<3, float> &, const class easy3d::Vec<3, float> &, const class easy3d::Vec<3, float> &>(), pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("z") );
 
@@ -138,8 +132,6 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def( pybind11::init<const class easy3d::Mat<4, 4, float> &>(), pybind11::arg("rhs") );
 
         cl.def( pybind11::init<float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float>(), pybind11::arg("s00"), pybind11::arg("s01"), pybind11::arg("s02"), pybind11::arg("s03"), pybind11::arg("s10"), pybind11::arg("s11"), pybind11::arg("s12"), pybind11::arg("s13"), pybind11::arg("s20"), pybind11::arg("s21"), pybind11::arg("s22"), pybind11::arg("s23"), pybind11::arg("s30"), pybind11::arg("s31"), pybind11::arg("s32"), pybind11::arg("s33") );
-
-        cl.def( pybind11::init<const float *>(), pybind11::arg("m") );
 
         cl.def( pybind11::init<const class easy3d::Vec<4, float> &, const class easy3d::Vec<4, float> &, const class easy3d::Vec<4, float> &, const class easy3d::Vec<4, float> &>(), pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("z"), pybind11::arg("w") );
 

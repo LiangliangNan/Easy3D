@@ -495,8 +495,19 @@ namespace easy3d {
     void Viewer::resize(int w, int h) {
         if (w <= 0 || h <= 0)
             throw std::invalid_argument("window dimensions must be positive");
-        if (window_)
-            glfwSetWindowSize(window_, w, h);
+        if (!window_)
+            return;
+        glfwSetWindowSize(window_, w, h);
+        // Window systems may apply the request asynchronously (X11 with a window
+        // manager), so a frame rendered immediately after this call could use the
+        // old size. Wait a bounded time for the platform to report the request.
+        for (int i = 0; i < 20; ++i) {
+            int ww, wh;
+            glfwGetWindowSize(window_, &ww, &wh);
+            if (ww == w && wh == h)
+                break;
+            glfwWaitEventsTimeout(0.01);
+        }
     }
 
     void Viewer::framebuffer_size(int &w, int &h) const {
@@ -615,10 +626,18 @@ namespace easy3d {
         if (w <= 0 || h <= 0)
             return false;
 #ifdef EASY3D_HAS_VULKAN
-        if (framebuffer_width_ != w || framebuffer_height_ != h) {
+        // Hidden windows may not receive size callbacks (e.g., X11 never reports
+        // ConfigureNotify for unmapped windows), so poll both the logical and the
+        // framebuffer size. The logical size can also lag the framebuffer by one
+        // window-system round trip, so a framebuffer-only change must not cache a
+        // stale logical size: the next frame then reports the settled value.
+        int lw = 0, lh = 0;
+        viewer_size(lw, lh);
+        if (lw != width_ || lh != height_ || framebuffer_width_ != w || framebuffer_height_ != h) {
             resize_render_target(w, h);
             cancel_interaction();
-            viewer_size(width_, height_);
+            width_ = lw;
+            height_ = lh;
             notify_resize();
         }
 #else

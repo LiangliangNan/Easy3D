@@ -207,7 +207,11 @@ void frames_and_input(bool validation) {
     const char* file="callbacks-drop.ply"; const auto models=v->models().size();
     e.drop(e.window,1,&file); require(v->drops==1 && v->models().size()==models,"consumed drop reached model loading");
     v->consume=false; e.drop(e.window,1,&file); require(v->drops==2 && v->models().size()==models+1,"unhandled drop did not load model");
-    v->resize(193,157); require(v->run_frames(1)==0,"render after hook resize failed");
+    v->resize(193,157);
+    // The logical size can trail the framebuffer by one window-system round trip
+    // (X11 with a window manager), so let the host report the settled value.
+    for (int i = 0; i < 100 && v->resize_w != 193; ++i)
+        require(v->run_frames(1)==0,"render after hook resize failed");
     require(v->resizes>=1 && v->resize_w==193 && v->resize_h==157,"logical resize notification missing");
     const auto resize_count=v->resizes;
     auto framebuffer=glfwSetFramebufferSizeCallback(e.window,nullptr); glfwSetFramebufferSizeCallback(e.window,framebuffer);

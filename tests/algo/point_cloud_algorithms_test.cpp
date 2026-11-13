@@ -54,19 +54,31 @@ bool test_algo_point_cloud_normal_estimation() {
     PointCloudNormals algo;
 
     std::cout << "estimating point cloud normals..." << std::endl;
-    if (algo.estimate(cloud, 16)) {
-        std::cout << "reorienting point cloud normals..." << std::endl;
-        if (algo.reorient(cloud, 16)) {
-            const auto normals=cloud->get_vertex_property<vec3>("v:normal");
-            test::require(bool(normals),"normal estimation did not create normals");
-            for(auto v:cloud->vertices()) test::require(std::isfinite(normals[v].length()) && std::abs(normals[v].length()-1)<1e-3f,"estimated normal is not unit length");
+    if (!algo.estimate(cloud, 16)) {
+        delete cloud;
+        return false;
+    }
+    const auto normals = cloud->get_vertex_property<vec3>("v:normal");
+    if (!normals) {
+        delete cloud;
+        return false;
+    }
+    for (auto v : cloud->vertices()) {
+        if (!(std::isfinite(normals[v].length()) && std::abs(normals[v].length() - 1) < 1e-3f)) {
             delete cloud;
-            return true;
+            return false;
         }
     }
 
+    std::cout << "reorienting point cloud normals..." << std::endl;
+#ifdef EASY3D_TEST_HAS_BOOST
+    const bool reoriented = algo.reorient(cloud, 16);
+#else
+    // Reorientation has always required the optional Boost Graph dependency.
+    const bool reoriented = !algo.reorient(cloud, 16);
+#endif
     delete cloud;
-    return false;
+    return reoriented;
 }
 
 
