@@ -368,8 +368,8 @@ namespace easy3d {
                 return glfwCreateWindowSurface(instance, handle, nullptr, result);
             };
             return graphics::create_vulkan_window_device(surface, options.validation, options.sync_validation,
-                                                         options.device_name, options.use_native_large_points,
-                                                         options.profiling);
+                                                         options.profiling, options.use_native_large_points,
+                                                         options.device_name);
         }
         int modifiers() const {
             return detail::GlfwRuntime::modifiers(handle);
@@ -1473,8 +1473,8 @@ namespace easy3d {
           show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
         resize_render_target(width, height);
         impl_->device =
-            graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name,
-                                           options.use_native_large_points, options.profiling);
+            graphics::create_vulkan_device(options.validation, options.sync_validation, options.profiling,
+                                           options.use_native_large_points, options.device_name);
         camera()->set_type(Camera::PERSPECTIVE);
         camera()->set_up_vector(vec3(0, 0, 1));
         camera()->set_view_direction(vec3(-1, 0, 0));

@@ -549,12 +549,12 @@ namespace easy3d {
          * \param validation Enables the Khronos validation layer and debug reporting. The default is \c false.
          * \param sync_validation Enables synchronization validation; this also enables \p validation. The default is
          *      \c false.
-         * \param device_name Optional substring that the selected physical-device name must contain. An empty string
-         *      allows any compatible device.
-         * \param use_native_large_points Uses the optional Vulkan \c largePoints feature when the selected device
-         *      supports it. Set to \c false to force portable expanded-point rendering. Defaults to \c true.
          * \param profiling Enables CPU/API timing output when the device is destroyed. The process-wide
          *      \c EASY3D_VULKAN_PROFILE environment variable also enables profiling. Defaults to \c false.
+         * \param use_native_large_points Uses the optional Vulkan \c largePoints feature when the selected device
+         *      supports it. Set to \c false to force portable expanded-point rendering. Defaults to \c true.
+         * \param device_name Optional substring that the selected physical-device name must contain. An empty string
+         *      allows any compatible device.
          * \return An owning pointer to the initialized render device. Destroy the device before destroying any
          *      Vulkan instance or loader resources supplied by the application; this factory creates and owns its
          *      own instance and loader.
@@ -571,9 +571,9 @@ namespace easy3d {
          */
         std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false,
                                                            bool sync_validation = false,
-                                                           const std::string &device_name = {},
+                                                           bool profiling = false,
                                                            bool use_native_large_points = true,
-                                                           bool profiling = false);
+                                                           const std::string &device_name = {});
 
     } // namespace graphics
 } // namespace easy3d

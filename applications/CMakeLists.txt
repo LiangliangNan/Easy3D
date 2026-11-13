@@ -1,6 +1,6 @@
 if (Easy3D_ENABLE_QT)
     if (Easy3D_ENABLE_VULKAN) # Mapple is OpenGL only
-        message(WARNING "Vulkan is enabled but Mapple only has OpenGL backend. To built Mapple, set 'Easy3D_ENABLE_VULKAN' to OFF.")
+        message(WARNING "Vulkan is enabled but Mapple currently only supports OpenGL. To built Mapple with OpenGL, set 'Easy3D_ENABLE_VULKAN' to OFF.")
     else ()
         add_subdirectory(Mapple)
     endif ()

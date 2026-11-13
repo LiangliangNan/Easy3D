@@ -78,11 +78,11 @@ namespace easy3d {
          * \param validation Enable the Khronos validation layer and debug reporting.
          * \param sync_validation Also enable synchronization validation; this implies
          *        \p validation.
-         * \param device_name Optional substring that the selected Vulkan device name
-         *        must contain. An empty string allows any compatible device.
+         * \param profiling Enable CPU/API timing output when the device is destroyed.
          * \param use_native_large_points Use the optional largePoints feature when
          *        available; false forces portable expanded-point rendering.
-         * \param profiling Enable CPU/API timing output when the device is destroyed.
+         * \param device_name Optional substring that the selected Vulkan device name
+         *        must contain. An empty string allows any compatible device.
          * \return An owning render device. Destroy it before destroying the native
          * window supplied to the callback.
          * \throws std::invalid_argument If the surface callback is empty.
@@ -97,9 +97,9 @@ namespace easy3d {
         std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
                                                                   bool validation = false,
                                                                   bool sync_validation = false,
-                                                                  const std::string &device_name = {},
+                                                                  bool profiling = false,
                                                                   bool use_native_large_points = true,
-                                                                  bool profiling = false);
+                                                                  const std::string &device_name = {});
     } // namespace graphics
 } // namespace easy3d
 #endif

@@ -191,7 +191,7 @@ void scene_clipping(const VulkanOptions& options) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false); VulkanOptions options; options.validation=options.sync_validation=argc>1;
-        auto device=create_vulkan_device(options.validation, options.sync_validation, options.device_name);
+        auto device=create_vulkan_device(options.validation, options.sync_validation, false, true, options.device_name);
         polygon_clipping(*device); point_line_clipping(*device); analytic_clipping(*device);
         require(device->validation_errors()==0,"clipping device validation errors"); scene_clipping(options);
         std::cout << "PASS: halfspaces/slabs, interpolation, original IDs, whole primitives, line/point policy, analytic surface clipping, MSAA, world transforms and face picking\n";

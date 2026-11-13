@@ -29,7 +29,7 @@ std::shared_ptr<SurfaceMesh> quad(float z=0) {
 }
 void shader_highlights(const VulkanOptions& options) {
     using namespace graphics;
-    auto device=create_vulkan_device(options.validation, options.sync_validation, options.device_name);
+    auto device=create_vulkan_device(options.validation, options.sync_validation, false, true, options.device_name);
     for (int style=0;style<8;++style) {
         DrawCommand draw; draw.object_id=77; draw.lighting=true;
         draw.viewport=ivec4(4, 7, 55, 51);
