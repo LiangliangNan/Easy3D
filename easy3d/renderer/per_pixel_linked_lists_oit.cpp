@@ -25,10 +25,10 @@
  \endcond */
 
 /**
- * @file per_pixel_linked_lists_oit.cpp
- * @brief Implementation of per-pixel linked lists order-independent transparency.
+ * \file per_pixel_linked_lists_oit.cpp
+ * \brief Implementation of per-pixel linked lists order-independent transparency.
  *
- * @details This file implements the PerPixelLinkedListsOIT class, which provides perfect
+ * \details This file implements the PerPixelLinkedListsOIT class, which provides perfect
  *      order-independent transparency using per-pixel linked lists. The implementation
  *      follows the algorithm described in:
  *

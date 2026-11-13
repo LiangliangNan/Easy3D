@@ -47,7 +47,7 @@ namespace easy3d
          *                  "All Files (*.*)", "*"
          *              };
          * \param multiple Allow choosing multiple files if it is true.
-         * @returns The selected file names.
+         * \returns The selected file names.
          */
         std::vector<std::string> open(
                 const std::string& title,
@@ -67,8 +67,8 @@ namespace easy3d
          *                          "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
          *                          "All Files (*.*)", "*"
          *                      };
-         * @return The selected file name (empty if no file was selected).
-         * @todo   A filter needs only one string (the filter can be extracted from the string).
+         * \return The selected file name (empty if no file was selected).
+         * \todo   A filter needs only one string (the filter can be extracted from the string).
          */
         std::string open(
                 const std::string& title = "Please choose a file to open",
@@ -90,7 +90,7 @@ namespace easy3d
          *              };
          * \param confirm_overwrite If set true (default value), prompt a confirm dialog if a
 		 *						    file with the same name already exists.
-         * @return The chosen file name (empty if no file name was chosen).
+         * \return The chosen file name (empty if no file name was chosen).
          */
         std::string save(
                 const std::string& title = "Please choose a file name",
@@ -105,7 +105,7 @@ namespace easy3d
          * \brief Open a folder dialog.
          * \param title The title of the dialog, e.g., "Please choose a folder".
          * \param default_path The suggested file path, e.g., /project/data/"
-         * @return The chosen folder (empty if no folder was chosen).
+         * \return The chosen folder (empty if no folder was chosen).
          */
         std::string open_folder(
                 const std::string& title = "Please choose a folder",
@@ -141,10 +141,10 @@ namespace easy3d
         };
 
         /**
-         * @brief Notification.
-         * @param title The title of the notification dialog.
-         * @param message The message string.
-         * @param type The notification type. Default is 'info'. See 'Type'.
+         * \brief Notification.
+         * \param title The title of the notification dialog.
+         * \param message The message string.
+         * \param type The notification type. Default is 'info'. See 'Type'.
          */
 
         void notify(
@@ -156,12 +156,12 @@ namespace easy3d
         // -----------------------------------------------------------------------------
 
         /**
-         * @brief Message box.
-         * @param title The title of the message box.
-         * @param message The message string.
-         * @param choice The options for the user. Default is 'ok_cancel'. See 'Choice'.
-         * @param type The message type. Default is 'info'. See 'Type'.
-         * @return The user's response. See "Response'.
+         * \brief Message box.
+         * \param title The title of the message box.
+         * \param message The message string.
+         * \param choice The options for the user. Default is 'ok_cancel'. See 'Choice'.
+         * \param type The message type. Default is 'info'. See 'Type'.
+         * \return The user's response. See "Response'.
          */
         Response message(
                 const std::string& title,

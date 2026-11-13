@@ -164,13 +164,51 @@ namespace easy3d {
          */
         vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft = true);
 
-        /// Invert a finite nonsingular matrix, throwing std::invalid_argument otherwise.
+        /**
+         * \brief Inverts a finite, nonsingular matrix.
+         * \param matrix The matrix to invert.
+         * \return The inverse of \p matrix.
+         * \throws std::invalid_argument If the matrix contains non-finite values, is singular, or its inverse is non-finite.
+         */
         mat4 checked_inverse(const mat4& matrix);
-        /// Unproject continuous coordinates using a precomputed inverse, with the same viewport convention as project().
+
+        /**
+         * \brief Maps window coordinates to object coordinates using a precomputed inverse transform.
+         * \param win Window coordinates; depth is in the normalized [0, 1] range.
+         * \param inverse_mvp Inverse of the model-view-projection matrix.
+         * \param viewport Viewport origin \c (x,y) and positive width and height, in the same coordinate system as
+         *      \p win.
+         * \param lowerleft If \c true, the viewport origin is at the lower-left; if \c false, it is at the upper-left.
+         * \return The corresponding object-space coordinates.
+         * \throws std::invalid_argument If coordinates or the matrix are non-finite, the viewport has non-positive
+         *      dimensions, or the transformed homogeneous coordinate is invalid.
+         * \note Use this overload when the inverse is reused for multiple points. Its viewport and origin convention
+         *      match \ref project().
+         */
         vec3 unproject_inverse(const vec3& win, const mat4& inverse_mvp, const int viewport[4], bool lowerleft = true);
-        /// Scale a continuous coordinate between positive extents without rounding or clipping.
+
+        /**
+         * \brief Scales a continuous coordinate between two coordinate spaces with the same origin.
+         * \param value Coordinate in the source space.
+         * \param source_extent Positive extent of the source space.
+         * \param target_extent Positive extent of the target space.
+         * \return \p value multiplied by \p target_extent / \p source_extent, without rounding or clipping.
+         * \throws std::invalid_argument If \p value is non-finite, either extent is non-positive, or the result is
+         *      non-finite.
+         */
         double scale_coordinate(double value, int source_extent, int target_extent);
-        /// Scale and floor to the containing pixel index; out-of-extent coordinates are not clipped.
+
+        /**
+         * \brief Scales a coordinate and returns the index of the pixel containing it.
+         * \param value Coordinate in the source space.
+         * \param source_extent Positive extent of the source space.
+         * \param target_extent Positive extent of the target space.
+         * \return The floor of the scaled coordinate. Values outside the target extent are not clipped.
+         * \throws std::invalid_argument If \p value is non-finite, either extent is non-positive, or scaling produces a
+         *      non-finite result.
+         * \throws std::out_of_range If the resulting pixel index cannot be represented by \c int.
+         * \note For example, a source coordinate of 2.5 in an extent of 4 maps to pixel index 5 in an extent of 8.
+         */
         int pixel_index(double value, int source_extent, int target_extent);
 
         // --------------------------------------------------------------------------------------------------

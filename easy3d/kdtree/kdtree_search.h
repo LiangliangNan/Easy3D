@@ -112,7 +112,7 @@ namespace easy3d {
         virtual void find_closest_k_points(const vec3 &p, int k, std::vector<int> &neighbors) const = 0;
         /// @}
 
-        /// @name Fixed radius search
+        /// \name Fixed radius search
         /// @{
 
         /**

@@ -168,7 +168,7 @@ namespace easy3d {
         typedef std::unordered_map<Vertex, std::vector<Vertex>, Vertex::Hash> CopyRecord;
 
         // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
-        // @param h The halfedge pointing to the non-manifold vertex.
+        // \param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
         std::size_t resolve_non_manifold_vertex(Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record);
 

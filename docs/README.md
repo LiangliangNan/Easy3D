@@ -44,6 +44,19 @@ without running the root CMake project or modifying its version header.
 To choose a different output location, pass
 `-DPROJECT_BINARY_DIR=/absolute/path/to/output` before `-P`.
 
+## C++ API documentation style
+
+Document public types with their role and intended scope. For each public
+function, describe its observable behavior and document every parameter and
+return value; also state ownership, units, valid ranges, side effects, errors,
+or lifetime requirements when they are part of the contract. Document public
+data members with their meaning and any relevant default or valid range.
+Prefer concise Doxygen blocks using `\brief`, `\details`, `\tparam`, `\param`,
+`\return`, `\throws`, `\note`, and `\see` consistently. Explain contracts rather
+than restating names or implementation steps, and keep backend limitations and
+intentional differences explicit. The Doxygen build checks for missing
+parameter and return documentation.
+
 ## Build the Python documentation and tutorials
 
 With Python 3.12, run from the repository root:

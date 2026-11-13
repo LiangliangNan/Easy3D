@@ -137,9 +137,9 @@ namespace easy3d {
     }
 
     /**
-     * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
-     * @param a The starting point for finding the next power of 2.
-     * @return value^2.
+     * \brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
+     * \param a The starting point for finding the next power of 2.
+     * \return value^2.
      * Example:
      *      next_pow2(50);  // returns 64
      *      next_pow2(64);  // returns 64

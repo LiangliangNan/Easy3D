@@ -188,7 +188,7 @@ namespace easy3d {
         void begin_contour();
 
         /**
-         * @brief Add a vertex of a contour to the tessellator.
+         * \brief Add a vertex of a contour to the tessellator.
          * \param data The vertex data.
          */
         void add_vertex(const Vertex &data);

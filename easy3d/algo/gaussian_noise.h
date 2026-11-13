@@ -40,18 +40,18 @@ namespace easy3d {
 
         /**
          * \brief Add Gaussian noise (that has a normal distribution) to the surface mesh.
-         * @param mesh The surface mesh.
-         * @param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
+         * \param mesh The surface mesh.
+         * \param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
          *              within one standard deviation of the mean (mathematically, μ ± σ, where μ is the arithmetic
          *              mean), about 95 percent are within two standard deviations (μ ± 2σ).
-         * @param preserve_boundary Preserve the surface boundary if set to true.
+         * \param preserve_boundary Preserve the surface boundary if set to true.
          */
         static void apply(SurfaceMesh *mesh, float sigma, bool preserve_boundary = false);
 
         /**
          * \brief Add Gaussian noise (that has a normal distribution) to a point cloud.
-         * @param cloud The point cloud.
-         * @param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
+         * \param cloud The point cloud.
+         * \param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
          *              within one standard deviation of the mean (mathematically, μ ± σ, where μ is the arithmetic
          *              mean), about 95 percent are within two standard deviations (μ ± 2σ).
          */

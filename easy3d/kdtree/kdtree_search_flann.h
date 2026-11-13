@@ -57,7 +57,7 @@ namespace easy3d {
 
         /**
          * \brief Specifies the maximum number of leaves to visit when searching for neighbors.
-         * @param chk The maximum number of leaves to visit.
+         * \param chk The maximum number of leaves to visit.
          * A higher value for this parameter would give better search precision, but also take more time.
          * For all leaves to be checked use the value FLANN_CHECKS_UNLIMITED. If automatic configuration was used when
          * the index was created, the number of checks required to achieve the specified precision was also computed,
@@ -115,7 +115,7 @@ namespace easy3d {
         ) const override;
         /// @}
 
-        /// @name Fixed radius search
+        /// \name Fixed radius search
         /// @{
 
         /**

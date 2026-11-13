@@ -143,7 +143,7 @@
       - [x] mesh fairing → `Tutorial_803_Mesh_Fairing` (Ctrl+A minimize area / Ctrl+C minimize curvature, via `SurfaceMeshFairing`; noise added at startup)
       - [x] mesh remeshing → `Tutorial_805_Mesh_Remeshing` (Ctrl+U uniform / Ctrl+A adaptive, via `SurfaceMeshRemeshing`)
 
-  - [ ] Complete Easy3D documentation and correct errors (typos, logic issues, language issues, consistency issues, reference issues...)
+  - [x] Complete and standardize Easy3D public API documentation (2026-11-13): all public API headers under `easy3d/` pass a strict Doxygen audit, including parameter and return documentation; Doxygen command aliases are normalized to the library's `\` syntax, and the documentation build now enforces parameter/return coverage.
   - [x] Fix Doxygen link warnings by using explicit GitHub links for the Vulkan migration and test guides; verified a clean Doxygen 1.12.0 generation.
   - [ ] Lasso selection of only visible mesh faces.
   - [ ] Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).

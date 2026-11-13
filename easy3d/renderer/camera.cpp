@@ -1043,7 +1043,7 @@ namespace easy3d {
         if (convert)
             set_orientation(q);  // this already includes the conversion
         else {
-            /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
+            /// \attention The camera coordinates of computer vision goes X right, Y down, Z forward,
             ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
             ///               So we need to invert both Y and Z axes.
             mat3 flip(1.0);
@@ -1083,7 +1083,7 @@ namespace easy3d {
         //
         mat34 Rt = mat34(1.0f) * mat4::translation(t) * mat4(R); // rotation first, then translation
         if (convert) {
-            /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
+            /// \attention The camera coordinates in computer vision goes X right, Y down, Z forward,
             ///               while the camera coordinates in OpenGL goes X right, Y up, Z inward.
             ///               So we need to invert both Y and Z axes.
 #if 1

@@ -37,17 +37,17 @@ namespace easy3d {
 
     /**
      * Compute the determinant of a square matrix.
-     * @param A The input matrix.
-     * @return The determinant of A.
+     * \param A The input matrix.
+     * \return The determinant of A.
      */
     double determinant(const MATRIX &A);
 
 
     /**
      * Compute the inverse of a square matrix. This is a wrapper around Eigen's inverse function.
-     * @param A The input matrix.
-     * @param invA The inverse of A.
-     * @return false if failed (failure is reported only if the input matrix is not square).
+     * \param A The input matrix.
+     * \param invA The inverse of A.
+     * \return false if failed (failure is reported only if the input matrix is not square).
      *      Upon return, invA carries the inverse of A.
      */
     bool inverse(const MATRIX &A, MATRIX &invA);
@@ -55,8 +55,8 @@ namespace easy3d {
 
     /**
      * Compute the inverse of a square matrix. This is a wrapper around Eigen's inverse function.
-     * @param A The input matrix.
-     * @return The inverse of A.
+     * \param A The input matrix.
+     * \return The inverse of A.
      */
     MATRIX inverse(const MATRIX &A);
 
@@ -71,14 +71,14 @@ namespace easy3d {
      *
      * The singular value decomposition always exists, so the decomposition will never fail.
      *
-     * @param A The input matrix to be decomposed, which can have an arbitrary size.
-     * @param U The left side M by M orthogonal matrix.
-     * @param S The middle M by N diagonal matrix, with zero elements outside its main diagonal.
-     * @param V The right side N by N orthogonal matrix V.
+     * \param A The input matrix to be decomposed, which can have an arbitrary size.
+     * \param U The left side M by M orthogonal matrix.
+     * \param S The middle M by N diagonal matrix, with zero elements outside its main diagonal.
+     * \param V The right side N by N orthogonal matrix V.
      *
      * Upon return, U, S, and V carry the result of the SVD decomposition.
      *
-     * @attention V is returned (instead of V^T).
+     * \attention V is returned (instead of V^T).
      */
     void svd_decompose(const MATRIX &A, MATRIX &U, MATRIX &S, MATRIX &V);
 
@@ -86,10 +86,10 @@ namespace easy3d {
     /**
      * Solve a linear system (Ax=b) in the least squares sense.
      *
-     * @param A The m-by-n (m >= n) coefficient matrix.
-     * @param b The right-hand constant vector (m dimensional).
-     * @param x The result of the system was successfully solved (m dimensional).
-     * @return false if failed. If true, x carries the least-squares solution to the linear system.
+     * \param A The m-by-n (m >= n) coefficient matrix.
+     * \param b The right-hand constant vector (m dimensional).
+     * \param x The result of the system was successfully solved (m dimensional).
+     * \return false if failed. If true, x carries the least-squares solution to the linear system.
      */
     bool solve_least_squares(const MATRIX &A, const std::vector<double> &b, std::vector<double> &x);
 

@@ -109,8 +109,8 @@ namespace easy3d {
         void set_selected(bool b);
 
         /**
-         * @brief Invalidates the rendering buffers of the model and thus updates the rendering (delayed in rendering).
-         * @details This method triggers an update of the rendering buffers of all the drawables of the model to which
+         * \brief Invalidates the rendering buffers of the model and thus updates the rendering (delayed in rendering).
+         * \details This method triggers an update of the rendering buffers of all the drawables of the model to which
          *      this renderer is attached. The effect is equivalent to calling Drawable::update() functions for all
          *      the drawables of this model.
          * todo: for better performance, it is wise to update only the affected drawables and buffers.
@@ -146,24 +146,24 @@ namespace easy3d {
 
         /**
          * Create a new points drawable and add it to this renderer.
-         * @param name The name of the points drawable to be created.
-         * @return The created points drawable. If a points drawable with 'name' already exists, the creation will be
+         * \param name The name of the points drawable to be created.
+         * \return The created points drawable. If a points drawable with 'name' already exists, the creation will be
          *         ignored and the existing drawable is returned.
          */
         PointsDrawable *add_points_drawable(const std::string &name);
 
         /**
          * Create a new lines drawable and add it to this renderer.
-         * @param name The name of the lines drawable to be created.
-         * @return The created lines drawable. If a lines drawable with 'name' already exists, the creation will be
+         * \param name The name of the lines drawable to be created.
+         * \return The created lines drawable. If a lines drawable with 'name' already exists, the creation will be
          *         ignored and the existing drawable is returned.
          */
         LinesDrawable *add_lines_drawable(const std::string &name);
 
         /**
          * Create a new triangles drawable and add it to this renderer.
-         * @param name The name of the triangles drawable to be created.
-         * @return The created triangles drawable. If a triangles drawable with 'name' already exists, the creation will
+         * \param name The name of the triangles drawable to be created.
+         * \return The created triangles drawable. If a triangles drawable with 'name' already exists, the creation will
          *         be ignored and the existing drawable is returned.
          */
         TrianglesDrawable *add_triangles_drawable(const std::string &name);
@@ -189,10 +189,10 @@ namespace easy3d {
     public:
 
         /**
-         * @brief Generates random colors for visualizing face-based segmentation of a SurfaceMesh.
-         * @param mesh The surface mesh.
-         * @param segments The face property storing the segmentation of the surface mesh.
-         * @param colors The face property to store the colors. Must be allocated before hand.
+         * \brief Generates random colors for visualizing face-based segmentation of a SurfaceMesh.
+         * \param mesh The surface mesh.
+         * \param segments The face property storing the segmentation of the surface mesh.
+         * \param colors The face property to store the colors. Must be allocated before hand.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
          */
@@ -204,10 +204,10 @@ namespace easy3d {
         );
 
         /**
-         * @brief Generates random colors for visualizing vertex-based segmentation of a SurfaceMesh.
-         * @param mesh The surface mesh.
-         * @param segments The vertex property storing the segmentation of the surface mesh.
-         * @param colors The vertex property to store the colors. Must be allocated before hand.
+         * \brief Generates random colors for visualizing vertex-based segmentation of a SurfaceMesh.
+         * \param mesh The surface mesh.
+         * \param segments The vertex property storing the segmentation of the surface mesh.
+         * \param colors The vertex property to store the colors. Must be allocated before hand.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
          */
@@ -219,12 +219,12 @@ namespace easy3d {
         );
 
         /**
-         * @brief Generates random colors for visualizing the segmentation of a PointCloud.
-         * @param cloud  The point cloud.
-         * @param segments  The vertex property storing the segmentation of the point cloud.
+         * \brief Generates random colors for visualizing the segmentation of a PointCloud.
+         * \param cloud  The point cloud.
+         * \param segments  The vertex property storing the segmentation of the point cloud.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
-         * @param colors The vertex property to store the colors. Must be allocated before hand.
+         * \param colors The vertex property to store the colors. Must be allocated before hand.
          */
         template<typename FT>
         static void color_from_segmentation(
@@ -235,8 +235,8 @@ namespace easy3d {
 
     private:
         /*
-         * @brief Create default drawables for rendering.
-         * @details This method creates defaults drawables for rendering a model. The supported default drawables are
+         * \brief Create default drawables for rendering.
+         * \details This method creates defaults drawables for rendering a model. The supported default drawables are
          *              - PointCloud: "vertices".
          *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
          *              - Graph: "vertices", "edges".
@@ -250,8 +250,8 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
         /*
-         * @brief Set the default rendering state of the "vertices" drawable of a point cloud.
-         * @details The default rendering state is determined by the availability of the vertex properties.
+         * \brief Set the default rendering state of the "vertices" drawable of a point cloud.
+         * \details The default rendering state is determined by the availability of the vertex properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
          *              1. per-vertex color: in "v:color";
@@ -263,8 +263,8 @@ namespace easy3d {
         void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
 
         /*
-         * @brief Set the default rendering state of the "faces" drawable of a surface mesh.
-         * @details The default rendering state is determined by the availability of the vertex/face properties.
+         * \brief Set the default rendering state of the "faces" drawable of a surface mesh.
+         * \details The default rendering state is determined by the availability of the vertex/face properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
          *              1. per-face color: in "f:color";
@@ -279,8 +279,8 @@ namespace easy3d {
         void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
 
         /*
-         * @brief Set the default rendering state of the "vertices" drawable of a graph.
-         * @details The default rendering state is determined by the availability of the vertex properties.
+         * \brief Set the default rendering state of the "vertices" drawable of a graph.
+         * \details The default rendering state is determined by the availability of the vertex properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
          *              1. per-vertex color: in "v:color";

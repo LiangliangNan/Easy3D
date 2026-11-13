@@ -101,7 +101,7 @@ namespace easy3d {
         Frame &operator=(const Frame &frame);
 
     public:
-        /*! @name World coordinates position and orientation */
+        /*! \name World coordinates position and orientation */
         //@{
 
         /**
@@ -158,7 +158,7 @@ namespace easy3d {
         //@}
 
     public:
-        /*! @name Local translation and rotation w/r reference Frame */
+        /*! \name Local translation and rotation w/r reference Frame */
         //@{
 
         /**
@@ -221,7 +221,7 @@ namespace easy3d {
         quat rotation() const { return q_; }
 
     public:
-        /*! @name Frame hierarchy */
+        /*! \name Frame hierarchy */
         //@{
         /**
          * \brief Returns the reference Frame.
@@ -255,7 +255,7 @@ namespace easy3d {
         bool setting_as_reference_frame_will_create_a_loop(const Frame* const frame) const;
         //@}
 
-        /*! @name Frame modification */
+        /*! \name Frame modification */
         //@{
 
         /**
@@ -305,7 +305,7 @@ namespace easy3d {
         void project_on_line(const vec3 &origin, const vec3 &direction);
         //@}
 
-        /*! @name Coordinate system transformation of 3D coordinates */
+        /*! \name Coordinate system transformation of 3D coordinates */
         //@{
 
         /**
@@ -348,7 +348,7 @@ namespace easy3d {
         vec3 coordinates_of_from(const vec3 &src, const Frame *const from) const;
         //@}
 
-        /*! @name Coordinate system transformation of vectors */
+        /*! \name Coordinate system transformation of vectors */
         // A frame is as a new coordinate system, defined with respect to a reference
         // frame (the world coordinate system by default, see the "Composition of
         // frame" section).
@@ -415,7 +415,7 @@ namespace easy3d {
         vec3 transform_of_from(const vec3 &src, const Frame *const from) const;
         //@}
 
-        /*! @name Constraint on the displacement */
+        /*! \name Constraint on the displacement */
         //@{
         /**
          * \brief Returns the current constraint applied to the Frame.
@@ -433,7 +433,7 @@ namespace easy3d {
         //@}
 
 
-        /*! @name Associated matrices */
+        /*! \name Associated matrices */
         //@{
     public:
         /**
@@ -454,7 +454,7 @@ namespace easy3d {
 
         //@}
 
-        /*! @name Inversion of the transformation */
+        /*! \name Inversion of the transformation */
         //@{
         /**
          * \brief Returns the inverse of the Frame.

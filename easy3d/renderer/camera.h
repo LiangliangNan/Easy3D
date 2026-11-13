@@ -174,7 +174,7 @@ namespace easy3d {
             ORTHOGRAPHIC    ///< Orthographic camera.
         };
 
-        /*! @name Position and orientation */
+        /*! \name Position and orientation */
         //@{
     public:
         /**
@@ -314,7 +314,7 @@ namespace easy3d {
         void set_view_direction(const vec3 &direction) const;
         //@}
 
-        /*! @name Positioning tools */
+        /*! \name Positioning tools */
     public:
         /**
          * \brief Make the camera look at a target.
@@ -635,7 +635,7 @@ namespace easy3d {
         }
         //@}
 
-        /*! @name Scene radius and center */
+        /*! \name Scene radius and center */
         //@{
     public:
         /**
@@ -741,7 +741,7 @@ namespace easy3d {
          */
         mat4 model_view_projection_matrix() const;
 
-        /*! @name World to Camera coordinate systems conversions */
+        /*! \name World to Camera coordinate systems conversions */
         //@{
     public:
         /**
@@ -758,7 +758,7 @@ namespace easy3d {
         vec3 world_coordinates_of(const vec3 &src) const;
         //@}
 
-        /*! @name 2D screen to 3D world coordinate systems conversions */
+        /*! \name 2D screen to 3D world coordinate systems conversions */
         //@{
     public:
         /**

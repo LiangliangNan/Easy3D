@@ -710,7 +710,7 @@ namespace easy3d {
 
     private: //---------------------------------------------- allocate new elements
 
-        /// @brief allocate a new vertex, resize vertex properties accordingly.
+        /// \brief allocate a new vertex, resize vertex properties accordingly.
         Vertex new_vertex()
         {
             vprops_.push_back();

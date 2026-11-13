@@ -104,7 +104,7 @@ namespace easy3d {
         ) const override;
         /// @}
 
-        /// @name Fixed radius search
+        /// \name Fixed radius search
         /// @{
 
         /**

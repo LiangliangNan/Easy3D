@@ -80,7 +80,7 @@ namespace easy3d {
          */
         ManipulatedCameraFrame &operator=(const ManipulatedCameraFrame &mcf);
 
-        /*! @name Pivot point */
+        /*! \name Pivot point */
         //@{
         /**
          * \brief Returns the point the ManipulatedCameraFrame pivots around, which is the
@@ -100,7 +100,7 @@ namespace easy3d {
         void set_pivot_point(const vec3 &point) { pivot_point_ = point; }
         //@}
 
-        /*! @name Camera manipulation */
+        /*! \name Camera manipulation */
         //@{
     public:
         /**
@@ -121,7 +121,7 @@ namespace easy3d {
         void set_zooms_on_pivot_point(bool enabled) { zooms_on_pivot_point_ = enabled; }
         //@}
 
-        /*! @name Frame manipulation */
+        /*! \name Frame manipulation */
         //@{
         /**
          * \brief Rotates the frame based on mouse movement.

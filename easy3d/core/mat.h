@@ -39,7 +39,7 @@ namespace easy3d {
 
 
     /**
-     * @attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
+     * \attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
      **/
     //#define MATRIX_ROW_MAJOR
 
@@ -1775,15 +1775,15 @@ namespace easy3d {
 
         /**
          * \brief Static constructor return a 2D uniform scale matrix.
-         * @param s x, y scale (uniform).
+         * \param s x, y scale (uniform).
          * \return Uniform 2D scale matrix.
          */
         static Mat2<T> scale(T s);
 
         /**
          * \brief Static constructor return a 2D non-uniform scale matrix.
-         * @param x x scale.
-         * @param y y scale.
+         * \param x x scale.
+         * \param y y scale.
          * \return Non-uniform 2D scale matrix.
          */
         static Mat2<T> scale(T x, T y);
@@ -1986,17 +1986,17 @@ namespace easy3d {
 
         /**
          * \brief Static constructor returning a 3D non-uniform scale matrix.
-         * @param x x scale.
-         * @param y y scale.
-         * @param z z scale.
+         * \param x x scale.
+         * \param y y scale.
+         * \param z z scale.
          * \return Non-uniform 3D scale matrix.
          */
         static Mat3<T> scale(T x, T y, T z);
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
-         * @param axis: Axis of rotation. This MUST be normalized.
-         * @param angle: Angle of rotation in radians. Positive values of angle
+         * \param axis: Axis of rotation. This MUST be normalized.
+         * \param angle: Angle of rotation in radians. Positive values of angle
          *      rotate counter-clockwise about axis as per the right-hand rule.
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
@@ -2008,7 +2008,7 @@ namespace easy3d {
          * \brief Static constructor returning a 3D rotation matrix defined by the axis–angle
          *      representation. Both the axis and the angle are represented by a vector
          *      codirectional with the rotation axis whose length is the rotation angle.
-         * @param axis_angle: direction is the axis and length is the angle (in radian)
+         * \param axis_angle: direction is the axis and length is the angle (in radian)
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *      rotation is about the axis passing through the origin.
          * \return Rotation matrix.
@@ -2025,10 +2025,10 @@ namespace easy3d {
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
          *      The three rotations are applied successively.
-         * @param x Rotation angle around X, in radians.
-         * @param y Rotation angle around Y, in radians.
-         * @param z Rotation angle around Z, in radians.
-         * @param order: the order of the rotations to be applied. 1 first and 3 for last.
+         * \param x Rotation angle around X, in radians.
+         * \param y Rotation angle around Y, in radians.
+         * \param z Rotation angle around Z, in radians.
+         * \param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
          * \return Rotation matrix.
          * \return Rotation matrix.

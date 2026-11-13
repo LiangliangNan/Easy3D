@@ -44,13 +44,13 @@ namespace easy3d {
 
         /**
          * \brief Query the average spacing of a point cloud.
-         * @param cloud The point cloud.
-         * @param k The number of nearest points used.
-         * @param accurate True to use every point to get an accurate calculation; false to obtain aa approximate
+         * \param cloud The point cloud.
+         * \param k The number of nearest points used.
+         * \param accurate True to use every point to get an accurate calculation; false to obtain aa approximate
          *                 measure, which uses only a subset (i.e., less than samples) of the points.
-         * @param samples  Use less than this number of points for the calculation.
-         * @param kdtree   A kdtree defined on this point cloud. If null, a new kdtree will be built and used.
-         * @return The average space of the point cloud.
+         * \param samples  Use less than this number of points for the calculation.
+         * \param kdtree   A kdtree defined on this point cloud. If null, a new kdtree will be built and used.
+         * \return The average space of the point cloud.
          */
         static float
         average_space(PointCloud *cloud, KdTreeSearch *kdtree = nullptr, int k = 6, bool accurate = false,
@@ -63,23 +63,23 @@ namespace easy3d {
          * \brief Simplification of a point cloud using a regular grid covering the bounding box of the points. Simplification
          * is done by keeping a representative point (chosen arbitrarily) for each cell of the grid. This is non-uniform
          * simplification since the representative point is chosen arbitrarily.
-         * @param cloud The point cloud.
-         * @param cell_size The size of the cells of the grid.
-         * @return The indices of points to be deleted.
+         * \param cloud The point cloud.
+         * \param cell_size The size of the cells of the grid.
+         * \return The indices of points to be deleted.
          */
         static std::vector<PointCloud::Vertex> grid_simplification(PointCloud *cloud, float cell_size);
 
         //----- uniform simplification (specifying distance threshold) ------------------------------------
 
         /**
-         * @brief Uniformly downsample a point cloud based on a distance criterion. This function can also be used for
+         * \brief Uniformly downsample a point cloud based on a distance criterion. This function can also be used for
          *        removing duplicate points of a point cloud.
-         * @param cloud: The point cloud.
-         * @param epsilon: The minimum allowed distance between points. Two points with a distance smaller than this
+         * \param cloud: The point cloud.
+         * \param epsilon: The minimum allowed distance between points. Two points with a distance smaller than this
          *                 value are considered identical. After simplification, the distance of any point pair is
          *                 larger than this value.
-         * @param kdtree   A kdtree defined on this point cloud. If null, a new kdtree will be built and used.
-         * @return The indices of points to be deleted.
+         * \param kdtree   A kdtree defined on this point cloud. If null, a new kdtree will be built and used.
+         * \return The indices of points to be deleted.
          */
         static std::vector<PointCloud::Vertex>
         uniform_simplification(PointCloud *cloud, float epsilon, KdTreeSearch *kdtree = nullptr);
@@ -87,10 +87,10 @@ namespace easy3d {
         //----- uniform simplification (specifying expected point number) ---------------------------------
 
         /**
-         * @brief Uniformly downsample a point cloud given the expected point number.
-         * @param cloud: The point cloud.
-         * @param num:   The expected point number, which must be less than or equal to the original point number.
-         * @return The indices of points to be deleted.
+         * \brief Uniformly downsample a point cloud given the expected point number.
+         * \param cloud: The point cloud.
+         * \param num:   The expected point number, which must be less than or equal to the original point number.
+         * \return The indices of points to be deleted.
          */
         static std::vector<PointCloud::Vertex> uniform_simplification(PointCloud *cloud, unsigned int num);
     };

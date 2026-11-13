@@ -53,17 +53,17 @@ namespace easy3d {
         /**
          * Constructor. It internally initializes the collider (by building the AABB trees) for subsequent
          * efficient collision detection.
-         * @param mesh0 The first mesh (must be triangle mesh).
-         * @param mesh1 The second mesh (must be triangle mesh).
+         * \param mesh0 The first mesh (must be triangle mesh).
+         * \param mesh1 The second mesh (must be triangle mesh).
          */
         Collider(SurfaceMesh* mesh0, SurfaceMesh* mesh1);
         ~Collider();
 
         /**
          * Performs collision detection.
-         * @param t0 The transformation of the first mesh.
-         * @param t1 The transformation of the second mesh.
-         * @return The intersecting face pairs.
+         * \param t0 The transformation of the first mesh.
+         * \param t1 The transformation of the second mesh.
+         * \return The intersecting face pairs.
          */
         std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > detect(const mat4& t0, const mat4& t1) const;
 

@@ -81,45 +81,45 @@ namespace easy3d {
     namespace opengl {
 
         /**
-         * @brief Checks the last OpenGL error.
-         * @param file The file name where the error occurred.
-         * @param function The function name where the error occurred.
-         * @param line The line number where the error occurred.
-         * @param os The output stream to write the error message. Default is std::cerr.
-         * @return false if an error indeed occurred.
-         * @see check_frame_buffer_error.
+         * \brief Checks the last OpenGL error.
+         * \param file The file name where the error occurred.
+         * \param function The function name where the error occurred.
+         * \param line The line number where the error occurred.
+         * \param os The output stream to write the error message. Default is std::cerr.
+         * \return false if an error indeed occurred.
+         * \see check_frame_buffer_error.
          */
         bool check_gl_error(const std::string& file, const std::string& function, int line, std::ostream& os = std::cerr);
 
         /**
-         * @brief Checks the last framebuffer error.
-         * @param file The file name where the error occurred.
-         * @param function The function name where the error occurred.
-         * @param line The line number where the error occurred.
-         * @param os The output stream to write the error message. Default is std::cerr.
-         * @return false if an error indeed occurred.
-         * @see check_gl_error.
+         * \brief Checks the last framebuffer error.
+         * \param file The file name where the error occurred.
+         * \param function The function name where the error occurred.
+         * \param line The line number where the error occurred.
+         * \param os The output stream to write the error message. Default is std::cerr.
+         * \return false if an error indeed occurred.
+         * \see check_gl_error.
          */
         bool check_frame_buffer_error(const std::string& file, const std::string& function, int line, std::ostream& os = std::cerr);
 
         /**
-         * @brief Checks if there was an OpenGL error. If there was an error, the error message will be stored in "msg".
-         * @param msg The error message.
-         * @return false if an error occurred.
-         * @see frame_buffer_error.
+         * \brief Checks if there was an OpenGL error. If there was an error, the error message will be stored in "msg".
+         * \param msg The error message.
+         * \return false if an error occurred.
+         * \see frame_buffer_error.
          */
         bool gl_error(std::string& msg);
         /**
-         * @brief Checks if there was a framebuffer error. If there was an error, the error message will be stored in "msg".
-         * @param msg The error message.
-         * @return false if an error occurred.
-         * @see frame_buffer_error.
+         * \brief Checks if there was a framebuffer error. If there was an error, the error message will be stored in "msg".
+         * \param msg The error message.
+         * \return false if an error occurred.
+         * \see frame_buffer_error.
          */
         bool frame_buffer_error(std::string& msg);
 
         /**
-         * @brief Set up a debug callback for OpenGL.
-         * @note This has effect only if the working OpenGL version is >= 4.3.
+         * \brief Set up a debug callback for OpenGL.
+         * \note This has effect only if the working OpenGL version is >= 4.3.
          */
         void setup_gl_debug_callback();
 

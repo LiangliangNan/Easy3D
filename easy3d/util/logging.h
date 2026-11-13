@@ -33,19 +33,19 @@
 
 /// To have LOG_IF_EVERY_N
 /// Example: LOG_IF_EVERY_N(5, i < 20, WARNING) << "Log if (i < 10) for every 5, i = " << i << ", " << COUNTER;
-/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_EVERY_N'.
+/// \attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_EVERY_N'.
 #define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
     CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 /// To have LOG_IF_FIRST_N
 /// Example: LOG_IF_FIRST_N(5, i < 20, WARNING) << "Log if (i < 10) for first 5, i = " << i << ", " << COUNTER;
-/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_FIRST_N'.
+/// \attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_FIRST_N'.
 #define LOG_IF_FIRST_N(n, condition, LEVEL)  if (condition) \
     CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 /// For logging the counter number
 /// Example: LOG_N_TIMES(3, ERROR) << "failed creating texture" << ". " << COUNTER;
-/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_N_TIMES'.
+/// \attention This 'COUNTER' macro should be placed on the same line as 'LOG_N_TIMES'.
 #define COUNTER     ELPP_COUNTER->hitCounts()
 
 
@@ -56,15 +56,15 @@ namespace easy3d {
     namespace logging {
 
         /**
-         * @brief Initializes the logging module.
-         * @param info_to_stdout Whether \c INFO messages are written to standard output.
-         * @param warning_to_stdcout Whether \c WARNING messages are written to standard output.
-         * @param error_to_stdcout Whether \c ERROR and \c FATAL messages are written to standard output.
-         * @param verbose_to_stdcout Whether \c VLOG messages are written to standard output.
-		 * @param log_file Log destination: empty disables file logging; \c "default" selects an application-named
+         * \brief Initializes the logging module.
+         * \param info_to_stdout Whether \c INFO messages are written to standard output.
+         * \param warning_to_stdcout Whether \c WARNING messages are written to standard output.
+         * \param error_to_stdcout Whether \c ERROR and \c FATAL messages are written to standard output.
+         * \param verbose_to_stdcout Whether \c VLOG messages are written to standard output.
+		 * \param log_file Log destination: empty disables file logging; \c "default" selects an application-named
          *                 log file; any other value is treated as a path.
-         * @param verbosity_threshold Maximum verbose logging level, in the range [0, 9].
-         * @note Initialization is optional. Calling it more than once leaves the existing configuration unchanged.
+         * \param verbosity_threshold Maximum verbose logging level, in the range [0, 9].
+         * \note Initialization is optional. Calling it more than once leaves the existing configuration unchanged.
          */
         void initialize(
                 bool info_to_stdout = false,

@@ -114,7 +114,7 @@ namespace easy3d {
         /** Virtual destructor. Clears the keyframe path. */
         virtual ~KeyFrameInterpolator();
 
-        /*! @name Path creation and modification*/
+        /*! \name Path creation and modification*/
         //@{
     public:
         /**
@@ -177,7 +177,7 @@ namespace easy3d {
         void delete_path();
         //@}
 
-        /*! @name Associated Frame */
+        /*! \name Associated Frame */
         //@{
     public:
         /**
@@ -198,7 +198,7 @@ namespace easy3d {
         void set_frame(Frame* const frame) { frame_ = frame; }
         //@}
 
-        /*! @name Access keyframe and path parameters */
+        /*! \name Access keyframe and path parameters */
         //@{
     public:
         /**
@@ -270,7 +270,7 @@ namespace easy3d {
         float last_time() const;
         //@}
 
-        /*! @name Interpolation parameters */
+        /*! \name Interpolation parameters */
         //@{
     public:
 
@@ -331,7 +331,7 @@ namespace easy3d {
         void set_frame_rate(int fps);
         //@}
 
-        /*! @name Interpolation */
+        /*! \name Interpolation */
         //@{
     public:
         /**
@@ -390,7 +390,7 @@ namespace easy3d {
         const std::vector<Frame>& interpolate();
         //@}
 
-        /*! @name Path drawing */
+        /*! \name Path drawing */
         //@{
     public:
 
@@ -413,7 +413,7 @@ namespace easy3d {
 
         //@}
 
-        /*! @name File io */
+        /*! \name File io */
         //@{
     public:
         /**

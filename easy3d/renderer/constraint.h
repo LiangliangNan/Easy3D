@@ -250,7 +250,7 @@ namespace easy3d {
 		\endcode */
 		enum Type { FREE, AXIS, PLANE, FORBIDDEN };
 
-		/*! @name Translation constraint */
+		/*! \name Translation constraint */
 		//@{
 		/*! Overloading of Constraint::constrain_translation(). Empty.
 		 * \param translation Proposed translation, unchanged by this implementation.
@@ -309,7 +309,7 @@ namespace easy3d {
 		};
 		//@}
 
-		/*! @name Rotation constraint */
+		/*! \name Rotation constraint */
 		//@{
 		/*! Overloading of Constraint::constrain_rotation(). Empty.
 		 * \param rotation Proposed rotation, unchanged by this implementation.

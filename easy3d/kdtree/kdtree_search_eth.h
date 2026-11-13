@@ -104,7 +104,7 @@ namespace easy3d {
         ) const override;
         /// @}
 
-        /// @name Fixed radius search
+        /// \name Fixed radius search
         /// @{
 
         /**
@@ -134,7 +134,7 @@ namespace easy3d {
         /// @}
 
 
-        /// @name Cylinder range search
+        /// \name Cylinder range search
         /// @{
 
         /**
@@ -178,7 +178,7 @@ namespace easy3d {
         /// @}
 
 
-        /// @name Cone range search
+        /// \name Cone range search
         /// @{
 
         /**

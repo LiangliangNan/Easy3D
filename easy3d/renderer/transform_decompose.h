@@ -55,11 +55,11 @@ namespace easy3d {
     namespace transform {
 
         /**
-         * @brief Decomposes a transformation matrix (M = translation * rotation * scaling) into its original components.
-         *  @param M The input transformation matrix.
-         *  @param scaling The output scaling for the x, y, z axes
-         *  @param rotation The output rotation.
-         *  @param translation The output translation for the x, y, z axes
+         * \brief Decomposes a transformation matrix (M = translation * rotation * scaling) into its original components.
+         *  \param M The input transformation matrix.
+         *  \param scaling The output scaling for the x, y, z axes
+         *  \param rotation The output rotation.
+         *  \param translation The output translation for the x, y, z axes
          * \note This function cannot handle skew and perspective transformation. See the overloaded function with skew and perspective.
          * \todo Add functions that extract single components, i.e.,
          *      - Quat extract_rotation(const mat4& M);
@@ -69,10 +69,10 @@ namespace easy3d {
         void decompose(const mat4& M, vec3& scaling, mat3& rotation, vec3& translation);
 
         /**
-         * @brief Decomposes a transformation matrix without scaling (M = translation * rotation) into its original components.
-         * @param M The input transformation matrix.
-         * @param rotation The output rotation.
-         * @param translation The output translation for the x, y, z axes
+         * \brief Decomposes a transformation matrix without scaling (M = translation * rotation) into its original components.
+         * \param M The input transformation matrix.
+         * \param rotation The output rotation.
+         * \param translation The output translation for the x, y, z axes
          * \note This function cannot handle scaling, skew, and perspective transformation. See the overloaded function with scaling, skew, and perspective.
          * \todo Add functions that extract single components, i.e.,
          *      - Quat  extract_rotation(const mat4& M);

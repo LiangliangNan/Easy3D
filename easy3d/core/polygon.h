@@ -66,8 +66,8 @@ namespace easy3d {
         GenericPolygon(InputIterator first, InputIterator last);
 
         /**
-         * @brief Checks if the polygon has a clockwise orientation (right-hand rule).
-         * @details This method determines the orientation of a polygon based on the sign of its signed area:
+         * \brief Checks if the polygon has a clockwise orientation (right-hand rule).
+         * \details This method determines the orientation of a polygon based on the sign of its signed area:
          *              - negative: clockwise
          *              - positive: counterclockwise
          * \return True when the vertex order is clockwise.

@@ -46,7 +46,7 @@ namespace easy3d {
          * \param font_file The full path name to a TrueType font file (normally with a "ttf" extension).
          * \param quality This parameter controls the smoothness of the curved corners. A greater value results in a
          *      smoother transitions but more vertices. The suggested value is 4.
-         * @note The font will be used in all subsequent generation until being modified by calling to set_font().
+         * \note The font will be used in all subsequent generation until being modified by calling to set_font().
          */
         explicit TextMesher(const std::string &font_file, unsigned short quality = 4);
         /**
@@ -57,7 +57,7 @@ namespace easy3d {
         /**
          * \brief Change the font.
          * \param font_file The full path name to a TrueType font file (normally with a "ttf" extension).
-         * @note The font will be used in all subsequent generation until being modified by calling to set_font().
+         * \note The font will be used in all subsequent generation until being modified by calling to set_font().
          */
         void set_font(const std::string &font_file);
 
@@ -69,7 +69,7 @@ namespace easy3d {
          * \param font_size The size of the font.
          * \param height The height (in the Z direction) of the 3D model.
          * \param collision_free If true, the final mesh will be free of intersections between characters.
-         * @return The generated triangular surface mesh.
+         * \return The generated triangular surface mesh.
          */
         SurfaceMesh *
         generate(const std::string &text, float x, float y, int font_size, float height, bool collision_free = false);
@@ -137,7 +137,7 @@ namespace easy3d {
          * \param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
          * \param font_size The size of the font.
          * \param contours The contours of this character.
-         * @note All generated contours are in CCW orientation, but they may have intersections.
+         * \note All generated contours are in CCW orientation, but they may have intersections.
          */
         bool _generate_contours(int codepoint, float &x, float &y, int font_size, std::vector<Polygon2> &contours);
 

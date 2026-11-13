@@ -76,7 +76,7 @@ namespace easy3d {
 		ManipulatedFrame &operator=(const ManipulatedFrame &mf);
 
 
-		/*! @name Manipulation sensitivity */
+		/*! \name Manipulation sensitivity */
 		//@{
 	public:
 		/**
@@ -147,7 +147,7 @@ namespace easy3d {
 		float wheel_sensitivity() const { return wheel_sensitivity_; }
 		//@}
 
-		/*! @name Frame manipulation */
+		/*! \name Frame manipulation */
 		//@{
 	public:
 		/**

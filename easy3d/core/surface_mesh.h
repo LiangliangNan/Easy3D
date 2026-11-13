@@ -2541,13 +2541,13 @@ namespace easy3d {
         bool is_stitch_ok(Halfedge h0, Halfedge h1);
 
         /**
-         * @brief Stitch two boundary halfedges.
-         * @param h0 First boundary halfedge.
-         * @param h1 Second boundary halfedge.
+         * \brief Stitch two boundary halfedges.
+         * \param h0 First boundary halfedge.
+         * \param h1 Second boundary halfedge.
          * \details Precondition: both halfedges are on the border and point in reversed
          *      directions.
-         * @attention Stitching two halfedges changes the topology and geometry significantly, thus it may result in a
-         *      non-manifold mesh, client code must check if this operation can be executed. @see is_stitch_ok().
+         * \attention Stitching two halfedges changes the topology and geometry significantly, thus it may result in a
+         *      non-manifold mesh, client code must check if this operation can be executed. \see is_stitch_ok().
          */
         void stitch(Halfedge h0, Halfedge h1);
 

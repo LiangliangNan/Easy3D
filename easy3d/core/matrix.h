@@ -55,16 +55,16 @@ namespace easy3d {
         /**
          * Copy constructor (i.e., construct a matrix from another matrix). The new matrix will be the same as the input
          * matrix.
-         * @param A Input matrix.
+         * \param A Input matrix.
          */
         Matrix(const Matrix<FT> &A);
 
         /**
          * Construct a matrix by specifying its dimension (i.e., number of rows and number of columns) and initialize
          * all entries to zero.
-         * @param rows Number of rows
-         * @param cols Number of columns.
-         * @param x Default value of each element of the matrix.
+         * \param rows Number of rows
+         * \param cols Number of columns.
+         * \param x Default value of each element of the matrix.
          */
         Matrix(int rows, int cols, const FT &x = FT(0));
 
@@ -72,10 +72,10 @@ namespace easy3d {
          * Construct a matrix by specifying its dimension (i.e., number of rows and number of columns) and initialize
          * the matrix from an array. The first row of the matrix will be initialized by the first cols elements of
          * the array. Then the second row will be initialized by the next cols elements of the array, and so on.
-         * @param rows Number of rows
-         * @param cols Number of columns.
-         * @param array An array containing at least (rows * cols) elements.
-         * @attention: Matrices are stored internally as row-major.
+         * \param rows Number of rows
+         * \param cols Number of columns.
+         * \param array An array containing at least (rows * cols) elements.
+         * \attention: Matrices are stored internally as row-major.
          */
         Matrix(int rows, int cols, const std::vector<FT> &array);
 
@@ -84,11 +84,11 @@ namespace easy3d {
          * Construct a matrix by specifying its dimension (i.e., number of rows and number of columns) and initialize
          * the matrix from an array. The first row of the matrix will be initialized by the first cols elements of
          * the array. Then the second row will be initialized by the next cols elements of the array, and so on.
-         * @param rows Number of rows
-         * @param cols Number of columns.
-         * @param array The pointer to the first element of an array used to initialize the matrix. It must have at
+         * \param rows Number of rows
+         * \param cols Number of columns.
+         * \param array The pointer to the first element of an array used to initialize the matrix. It must have at
          *      least (rows * cols) elements.
-         * @attention: Matrices are stored internally as row-major.
+         * \attention: Matrices are stored internally as row-major.
          */
         Matrix(int rows, int cols, const FT *array);
 
@@ -189,7 +189,7 @@ namespace easy3d {
         void load_zero();
 
         /// Make this matrix diagonal with the requested diagonal value.
-        /// @note This function also allow to set the elements on the diagonal to have values other than 1.
+        /// \note This function also allow to set the elements on the diagonal to have values other than 1.
         void load_identity(FT v = FT(1));
 
         /// Set all elements to a random value (in the range [0.0, 1.0])
@@ -345,7 +345,7 @@ namespace easy3d {
     Matrix<FT> random(int row, int col);
 
     /// Generate an unity/identity matrix (i.e., all elements on the diagonal have a value of 1).
-    /// @note This function also allow to set the elements on the diagonal to have values other than 1.
+    /// \note This function also allow to set the elements on the diagonal to have values other than 1.
     template<typename FT>
     Matrix<FT> identity(int N, const FT& v = FT(1));
 

@@ -224,10 +224,10 @@ namespace easy3d {
         /**
          * \brief Detects and remeshes the intersecting faces.
          * \pre mesh.is_triangle_mesh().
-         * @param mesh The input mesh. If self-intersection exists, it carries the remeshed model. Otherwise, it remains
+         * \param mesh The input mesh. If self-intersection exists, it carries the remeshed model. Otherwise, it remains
          *             unchanged.
-         * @param stitch If true, stitch the borders.
-         * @return \c true if remesh actually occurred (i.e., self-intersection was detected).
+         * \param stitch If true, stitch the borders.
+         * \return \c true if remesh actually occurred (i.e., self-intersection was detected).
          */
         static bool remesh_self_intersections(SurfaceMesh *mesh, bool stitch = true);
         //@}
@@ -242,10 +242,10 @@ namespace easy3d {
          * \details If \p mesh is closed, the clipped part can be closed too if the named parameter \p clip_volume
          *          is set to \c true.
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
-         * @param mesh The input triangle mesh.
-         * @param plane The clipping plane whose negative side defines the half-space to intersect \p mesh with.
-         * @param clip_volume If true, the clipped part will be closed.
-         * @return \c true if the output surface mesh is manifold. If \c false is returned, \p mesh is only refined
+         * \param mesh The input triangle mesh.
+         * \param plane The clipping plane whose negative side defines the half-space to intersect \p mesh with.
+         * \param clip_volume If true, the clipped part will be closed.
+         * \return \c true if the output surface mesh is manifold. If \c false is returned, \p mesh is only refined
          *         by the intersection with the plane.
          */
         static bool clip(SurfaceMesh *mesh, const Plane3 &plane, bool clip_volume = false);
@@ -254,17 +254,17 @@ namespace easy3d {
          * \brief Splits a triangle mesh by a plane.
          * \details It adds intersection edges of \p mesh and \p plane in \p mesh and duplicates those edges.
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
-         * @param mesh The input triangle mesh.
-         * @param plane The plane that will be used to split \p mesh.
+         * \param mesh The input triangle mesh.
+         * \param plane The plane that will be used to split \p mesh.
          */
         static void split(SurfaceMesh *mesh, const Plane3 &plane);
 
         /**
          * \brief Computes the intersection of a plane with a triangle surface mesh.
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
-         * @param mesh The input triangle mesh.
-         * @param plane The plane to intersect the triangle surface mesh with.
-         * @return The intersecting polylines. Each resulting polyline \p P is oriented such that for two consecutive
+         * \param mesh The input triangle mesh.
+         * \param plane The plane to intersect the triangle surface mesh with.
+         * \return The intersecting polylines. Each resulting polyline \p P is oriented such that for two consecutive
          *         points \p p and \p q in \p P, the normal vector of the face(s) containing the segment pq,
          *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of
          *         each face is chosen to point on the side of the face where its sequence of vertices is seen
@@ -278,9 +278,9 @@ namespace easy3d {
         /**
          * \brief Computes the intersection of a set of planes with a triangle surface mesh.
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
-         * @param mesh The input triangle mesh.
-         * @param planes The set of planes to intersect the triangle surface mesh with.
-         * @return The intersecting polylines by all the planes. The \c i_th entry denotes the polylines created by
+         * \param mesh The input triangle mesh.
+         * \param planes The set of planes to intersect the triangle surface mesh with.
+         * \return The intersecting polylines by all the planes. The \c i_th entry denotes the polylines created by
          *         the \c i_th plane. Each resulting polyline \p P is oriented such that for two consecutive
          *         points \p p and \p q in \p P, the normal vector of the face(s) containing the segment pq,
          *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of

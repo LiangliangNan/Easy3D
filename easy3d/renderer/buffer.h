@@ -53,9 +53,9 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers of a drawable. Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \brief Update render buffers of a drawable. Coloring determined by the drawable's coloring scheme.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(Model* model, Drawable* drawable);
         //@}
@@ -65,19 +65,19 @@ namespace easy3d {
         // PointCloud -------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a point cloud.
+         * \brief Update render buffers for the default "vertices" drawable of a point cloud.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(PointCloud* model, PointsDrawable* drawable);
 
         /**
-         * @brief Update render buffers for a vector field defined on a point cloud.
-         * @param model     The model.
-         * @param drawable  The drawable.
-         * @param field The name of the vector field.
-         * @param scale The length scale of the vectors is w.r.t. (0.01 * radius) of the model's bounding sphere.
+         * \brief Update render buffers for a vector field defined on a point cloud.
+         * \param model     The model.
+         * \param drawable  The drawable.
+         * \param field The name of the vector field.
+         * \param scale The length scale of the vectors is w.r.t. (0.01 * radius) of the model's bounding sphere.
          */
         void update(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale);
         //@}
@@ -88,36 +88,36 @@ namespace easy3d {
         // SurfaceMesh ------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a surface mesh.
+         * \brief Update render buffers for the default "vertices" drawable of a surface mesh.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
          void update(SurfaceMesh* model, PointsDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "edges" drawable of a surface mesh.
+         * \brief Update render buffers for the default "edges" drawable of a surface mesh.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(SurfaceMesh* model, LinesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "faces" drawable of a surface mesh.
+         * \brief Update render buffers for the default "faces" drawable of a surface mesh.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(SurfaceMesh* model, TrianglesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for a vector field defined on a surface mesh.
-         * @param model     The model.
-         * @param drawable  The The drawable for visualizing the vector field.
-         * @param field The name of the vector field.
-         * @param location The location where the vector field is defined.
-         * @param scale The scale of the vector length w.r.t. half of the average edge length of the surface mesh.
+         * \brief Update render buffers for a vector field defined on a surface mesh.
+         * \param model     The model.
+         * \param drawable  The The drawable for visualizing the vector field.
+         * \param field The name of the vector field.
+         * \param location The location where the vector field is defined.
+         * \param scale The scale of the vector length w.r.t. half of the average edge length of the surface mesh.
          */
         void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);
         //@}
@@ -128,19 +128,19 @@ namespace easy3d {
         // Graph ------------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a graph.
+         * \brief Update render buffers for the default "vertices" drawable of a graph.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(Graph* model, PointsDrawable* drawable);
 
 
         /**
-         * @brief Update render buffers for the default "edges" drawable of a graph.
+         * \brief Update render buffers for the default "edges" drawable of a graph.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(Graph* model, LinesDrawable* drawable);
         //@}
@@ -152,38 +152,38 @@ namespace easy3d {
         // PolyMesh ------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a polyhedral mesh.
+         * \brief Update render buffers for the default "vertices" drawable of a polyhedral mesh.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(PolyMesh* model, PointsDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "edges" drawable of a polyhedral mesh.
+         * \brief Update render buffers for the default "edges" drawable of a polyhedral mesh.
          * Coloring determined by the drawable's coloring scheme.
-         * @param model     The model.
-         * @param drawable  The drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
          */
         void update(PolyMesh* model, LinesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "faces" drawables of a polyhedral mesh.
-         * @note Interior and boundary faces are rendered using two drawables. Thus, this function has an extra
+         * \brief Update render buffers for the default "faces" drawables of a polyhedral mesh.
+         * \note Interior and boundary faces are rendered using two drawables. Thus, this function has an extra
          *      parameter to specify for which drawable the renderer buffers are be updated.
-         * @param model     The model.
-         * @param drawable  The drawable.
-         * @param border  \c true for the boundary drawable and \c false for the interior drawable.
+         * \param model     The model.
+         * \param drawable  The drawable.
+         * \param border  \c true for the boundary drawable and \c false for the interior drawable.
          */
         void update(PolyMesh* model, TrianglesDrawable* drawable, bool border);
 
         /**
-         * @brief Update render buffers for a vector field defined on a polyhedral mesh.
-         * @param model     The model.
-         * @param drawable  The drawable for visualizing the vector field.
-         * @param field The name of the vector field.
-         * @param location The location where the vector field is defined.
-         * @param scale The scale of the vector length w.r.t. half of the average edge length of the polyhedral mesh.
+         * \brief Update render buffers for a vector field defined on a polyhedral mesh.
+         * \param model     The model.
+         * \param drawable  The drawable for visualizing the vector field.
+         * \param field The name of the vector field.
+         * \param location The location where the vector field is defined.
+         * \param scale The scale of the vector length w.r.t. half of the average edge length of the polyhedral mesh.
          * \note Only the vector fields on border faces, border vertices, and border edges are supported.
          */
         void update(PolyMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);

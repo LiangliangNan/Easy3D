@@ -123,7 +123,7 @@ namespace easy3d {
 
     private:
         // -------------------------------------------------------------------------
-        /// @name Class tools
+        /// \name Class tools
         // -------------------------------------------------------------------------
         BoundaryType left_, right_;
         T left_value_, right_value_;

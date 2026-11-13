@@ -54,7 +54,7 @@ namespace easy3d {
      *          if its associated \c Model is \c null.
      *          The rendering states of a drawable can be accessed/modified through the functions provided in its
      *          parent class State.
-     * @sa State, Renderer, PointsDrawable, LinesDrawable, TrianglesDrawable, and LinesDrawable2D.
+     * \sa State, Renderer, PointsDrawable, LinesDrawable, TrianglesDrawable, and LinesDrawable2D.
      */
 
     class Drawable : public State {
