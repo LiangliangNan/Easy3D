@@ -38,3 +38,7 @@ tests/cross_backend/__pycache__/image_diff.cpython-312.pyc
 /build-parity-images
 /.clip-probe
 /MyDebug
+/build-installed-opengl
+/build-installed-vulkan
+/build-installed-opengl-dbg
+/build-installed-vulkan-dbg

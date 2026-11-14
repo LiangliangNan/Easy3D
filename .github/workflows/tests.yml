@@ -260,33 +260,87 @@ jobs:
               --vulkan build-parity-vulkan/bin/easy3d_backend_image_diff_test \
               --output-dir build-parity-images --validation
 
-      # Hosted Windows and macOS runners cannot create the OpenGL desktop contexts
-      # required by the desktop-labelled tests.
+      # Hosted Windows runners expose neither a Vulkan ICD nor a desktop OpenGL
+      # driver, so no rendering test can run there. macOS is not so limited: the
+      # Vulkan job runs its windowed tests through MoltenVK. Whether the deprecated
+      # GL stack still yields a context on the hosted VM is not something to assert
+      # from a comment, so the probe below runs the desktop-labelled suite and only
+      # reports - drop continue-on-error once it is green and merge it into the step
+      # above.
       - name: Test OpenGL without desktop contexts (Windows and macOS)
         if: runner.os != 'Linux' && matrix.backend == 'OPENGL'
         shell: bash -l {0}
         run: ctest --test-dir build-vulkan --output-on-failure -C Release -LE desktop
 
-      # MoltenVK reports unsupported integer-attachment blending and hangs this test.
-      - name: Test Vulkan on macOS (excluding unsupported transparency path)
-        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^(vulkan\.transparency|algo\.point_cloud_normal_estimation)$'
+      - name: Probe desktop OpenGL contexts (macOS)
+        if: runner.os == 'macOS' && matrix.backend == 'OPENGL'
+        continue-on-error: true
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release -L desktop
 
-      # The Windows runner has no Vulkan ICD; run every test that does not require
-      # Vulkan rendering or a desktop context.
+      # The same question on Windows, measured with one bounded case instead of the
+      # whole desktop suite: viewer.offscreen carries a 120 s CTest timeout, so a
+      # runner without a GL driver fails fast rather than stalling the job. Drop
+      # continue-on-error and fold it into -L desktop if it ever turns green.
+      - name: Probe desktop OpenGL contexts (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
+        continue-on-error: true
+        shell: bash -l {0}
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release -R '^viewer\.offscreen$'
+
+      # MoltenVK reports unsupported integer-attachment blending and hangs this test,
+      # so only it stays excluded. algo.point_cloud_normal_estimation used to be
+      # excluded here as well: with Boost's graph it ran tens of minutes on a hosted
+      # runner against a 180 s timeout, and it now uses the Boost-free MST path
+      # (3.2 s Release measured locally on 2026-11-14).
+      - name: Test Vulkan on macOS
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^vulkan\.transparency$'
+
+      # Records what the runner actually exposes, so the exclusions above stay
+      # verifiable from the log instead of resting on this comment.
+      - name: Report Vulkan devices (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        continue-on-error: true
+        shell: bash -l {0}
+        run: '"$VULKAN_SDK/Bin/vulkaninfo.exe" --summary'
+
+      # The hosted Windows runner has no Vulkan ICD, so this job runs every test that
+      # does not require Vulkan rendering or a desktop context. The point-cloud normal
+      # case is no longer in the list: the reason for dropping it was the Boost-based
+      # reference it used to run, not the platform, and that reference is gone.
       - name: Test non-graphics suite (Windows Vulkan)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         shell: bash -l {0}
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -LE desktop -E '^(vulkan\.|viewer\.offscreen|algo\.point_cloud_normal_estimation$)'
+        run: ctest --test-dir build-vulkan --output-on-failure -C Release -LE desktop -E '^(vulkan\.|viewer\.offscreen)'
 
-      - name: Build and run an installed-package consumer (Ubuntu)
-        if: runner.os == 'Linux'
+      # The exported package is exercised on every OS: install it, then configure and
+      # build a consumer with find_package(Easy3D CONFIG). Only the device-dependent
+      # binaries are run, and only where the runner can provide a device - Windows
+      # stops here because it has none, and the macOS OpenGL job waits for the probe
+      # above to say whether a GL context exists.
+      - name: Install package and build consumer (Unix)
+        if: runner.os != 'Windows'
         run: |
           cmake --install build-vulkan
           cmake -S tests/viewer/installed -B installed-consumer -G Ninja \
             -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake" \
             -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE
           cmake --build installed-consumer
+
+      - name: Install package and build consumer (Windows)
+        if: runner.os == 'Windows'
+        shell: bash -l {0}
+        run: |
+          cmake --install build-vulkan --config Release
+          cmake -S tests/viewer/installed -B installed-consumer \
+            -G "Visual Studio 17 2022" -A x64 \
+            -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake" \
+            -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE
+          cmake --build installed-consumer --config Release
+
+      - name: Run installed-package consumers (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
           if [ "${{ matrix.backend }}" = "VULKAN" ]; then
             export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
             test -n "$VK_DRIVER_FILES"
@@ -298,6 +352,13 @@ jobs:
           fi
           xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
             ./installed-consumer/installed_viewer_consumer
+
+      - name: Run installed-package consumers (macOS)
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        run: |
+          ./installed-consumer/installed_vulkan_consumer
+          ./installed-consumer/installed_offscreen_consumer
+          ./installed-consumer/installed_viewer_consumer
 
       - uses: actions/upload-artifact@v7
         if: always() && matrix.backend == 'VULKAN' && runner.os != 'Windows'

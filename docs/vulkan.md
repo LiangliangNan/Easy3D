@@ -9181,9 +9181,67 @@ test; its remaining tests were not re-run. `viewer.pointbenchmark` passed in all
 which is a property of the desktop as much as of the build: it needs a 1600x917 logical window and
 fails the size assertion on a shorter display. One intermediate Release run reported
 `vulkan.tutorial601` as `BAD_COMMAND` because the test binary was still being replaced when the
-suite reached it; it passed standalone and in the clean full run recorded above. Files:
+suite reached it; it passed standalone and in the clean full run recorded above.
+
+GitHub Actions validated the same commit the same day: run 12 of the `Test Easy3D` workflow, head SHA `4e3292f7`,
+completed success at 2026-11-14T12:11:54Z across all six matrix jobs (Ubuntu, Windows and macOS, each with both
+backends). Ubuntu and macOS now run `algo.point_cloud_normal_estimation` and `algo.point_cloud_plane_extraction` with
+the Boost condition gone, and the two MSVC Debug skips no longer exist to hide anything. Files:
 `easy3d/core/graph.{h,cpp}`, `easy3d/algo/graph_minimum_spanning_tree.{h,cpp}`,
 `easy3d/algo/point_cloud_normals.cpp`, `easy3d/algo/CMakeLists.txt`,
 `tests/core/graph_test.cpp`, `tests/algo/graph_minimum_spanning_tree_test.cpp`,
 `tests/algo/{CMakeLists.txt,point_cloud_algorithms_test.cpp,surface_mesh_algorithms_test.cpp}`,
 `tests/viewer/{CMakeLists.txt,cloud_tutorials_test.cpp}`, `tests/README.md`.
+
+### 2026-11-14 — CI coverage: the workflow runs what the runner can run
+
+Run 12 of the `Test Easy3D` workflow (`43591618065`, head `4e3292f7`) finished success at 12:11:54Z with all six matrix
+jobs green - Ubuntu, Windows and macOS, each once with Vulkan and once with OpenGL. With that baseline, every exclusion in
+`.github/workflows/tests.yml` was re-read against what the runners actually provide rather than against the comment that
+introduced it, and only one of the three standing claims survived.
+
+**No Vulkan device on the hosted Windows image: true.** The `windows-2022` image specification lists no Vulkan runtime, no
+Mesa and no GPU or display adapter (only the Visual Studio `Graphics` components), and the LunarG SDK installer the job runs
+brings loader, headers, glslang, SPIR-V tools and the validation layers - not a device driver. `VK_DRIVER_FILES` appears in the
+workflow only for Linux (`lvp_icd*.json`, lavapipe) and macOS (`MoltenVK_icd.json`), so the Windows Vulkan job cannot render
+anything and keeps `vulkan.*`, `viewer.offscreen` and the desktop label excluded. That is now visible rather than asserted: the
+job runs `"$VULKAN_SDK/Bin/vulkaninfo.exe" --summary` as a non-blocking step, so an image that ever gains an ICD says so in the
+log.
+
+**Hosted runners cannot create desktop OpenGL contexts: only true of Windows.** The sentence covered both non-Linux platforms,
+yet the adjacent macOS job runs windowed tests labelled `desktop` through MoltenVK and passes - the Cocoa side of the runner is
+fine, and it is the GL driver that was assumed missing. The macOS OpenGL job now runs the full `-L desktop` suite
+non-blocking; once the log shows it green, `continue-on-error` comes off and the step merges into the real one. Windows gets the
+same measurement with one bounded case (`-R '^viewer\.offscreen$'`, a 120 s CTest timeout), so the answer costs a couple of
+minutes instead of a suite and a hang cannot stall the job.
+
+**`algo.point_cloud_normal_estimation` taking twelve to eighteen minutes: obsolete.** That figure belonged to the reference it
+used to run - Boost's graph over the kdtree - and not to the platform. Locally on 2026-11-14 the case measured 3.2 s in Release
+and 55.1 s in Debug against its 180 s timeout, so it is back in the macOS Vulkan and Windows Vulkan suites; the only remaining
+macOS exclusion is `vulkan.transparency`, which MoltenVK hangs on. Linux needed nothing: its two ctest invocations partition the
+suite by the `desktop` label, so nothing is skipped there.
+
+**The installed package is now exercised on all three systems.** `cmake --install` plus configuring and building
+`tests/viewer/installed` against the tree used to run only on Linux; Windows and macOS now install and build the consumers too,
+which is what catches export regressions (no `easy3d::vulkan` target, no retired `easy3d/graphics` headers, correct
+`Easy3D_RESOURCE_DIR`). Running them stays where a device exists: unchanged on Linux, and added for the macOS Vulkan job, whose
+consumers get MoltenVK and find the libraries through the absolute `CMAKE_INSTALL_RPATH` recorded at configure time. Windows
+builds without running, for the reason above.
+
+**The Windows consumers were verified locally first: 10/10.** `installed_vulkan_consumer`, `installed_offscreen_consumer` and
+`installed_viewer_consumer` ran against a real ICD on an RTX 2080 Ti - Vulkan 3/3 in Release and 3/3 in Debug, OpenGL 2/2 in
+each, since a Vulkan build is the only one that registers the Vulkan consumer. The trees were `build-installed-{vulkan,opengl}`
+and `build-installed-{vulkan,opengl}-dbg`, configured with `-DCMAKE_INSTALL_PREFIX=<repo>/build-installed-*/pkg`, shared libs
+on, CGAL and FFMPEG off, Qt 6.11 and wx 3.3 found under `D:\dev`; installed with `cmake --install --config Release|Debug`; the
+consumers configured with `-DEasy3D_DIR=<pkg>/lib/CMake -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE`, built with the VS generator
+and run with `pkg/bin` on `PATH`. Each reported `Found components (shared libraries): viewer;renderer;gui`, rendered and wrote
+`installed_output.png`; OpenGL Debug's viewer printed the benign GLSL "recompiled based on GL state" performance notice.
+That run also surfaced a packaging fact: `Easy3D_INSTALL_LIB_DIR` and its siblings are non-`FORCE` cache variables holding
+absolute paths under `CMAKE_INSTALL_PREFIX` (`CMakeLists.txt:77-81`), so `cmake --install <tree> --prefix <other>` cannot move
+an install - it tried to create `C:\Program Files\Easy3D\2.6.1/resources/fonts` and failed. A relocated package needs those
+variables set at configure time, which is exactly what the CI job does with its own `${{ github.workspace }}/install` prefix.
+
+Two coverage gaps were left open deliberately. CI builds Release only, while local validation now runs Debug as well; adding
+Debug legs is a matter of build minutes, not of what the runners can do. And the Windows jobs still cannot render at all until
+the image ships a driver - a software ICD would need a third-party Windows Mesa build, and even then only offscreen work would
+run, since lavapipe has no Windows presentation backend.
