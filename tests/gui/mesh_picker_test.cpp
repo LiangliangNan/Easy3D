@@ -10,6 +10,7 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
+#include <tests/viewer/test_window.h>   // ensure_test_glfw()
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
@@ -182,6 +183,7 @@ void rendered_tests() {
 
 #ifndef EASY3D_HAS_VULKAN
     // Each picker owns a context-local framebuffer and restores the caller state.
+    ensure_test_glfw();
     glfwMakeContextCurrent(viewer.window());
     GLuint pack=0;glGenBuffers(1,&pack);glBindBuffer(GL_PIXEL_PACK_BUFFER,pack);
     glBufferData(GL_PIXEL_PACK_BUFFER,128,nullptr,GL_STATIC_DRAW);glPixelStorei(GL_PACK_ROW_LENGTH,7);glPixelStorei(GL_PACK_SKIP_ROWS,2);

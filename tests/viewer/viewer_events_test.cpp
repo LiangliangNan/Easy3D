@@ -32,6 +32,7 @@ struct Events {
     GLFWdropfun drop;
     GLFWwindowfocusfun focus;
     explicit Events(GLFWwindow* w) : window(w) {
+        ensure_test_glfw();
         cursor=glfwSetCursorPosCallback(w,nullptr); glfwSetCursorPosCallback(w,cursor);
         button=glfwSetMouseButtonCallback(w,nullptr); glfwSetMouseButtonCallback(w,button);
         scroll=glfwSetScrollCallback(w,nullptr); glfwSetScrollCallback(w,scroll);

@@ -9,7 +9,9 @@
 #include <easy3d/renderer/shape.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/image_io.h>
+#include <tests/viewer/test_window.h>   // ensure_test_glfw()
 #ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #endif
@@ -76,9 +78,18 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
     const auto original=request.points;require(a.select_points(request)==std::vector<uint32_t>{1},"offscreen GPU lasso selection failed");
     points->update_color_buffer({vec3(1,0,0),vec3(0,0,1)});require(a.point_resource(points.get())==original,"offscreen color update replaced shared positions");
 #ifndef EASY3D_HAS_VULKAN
-    glfwMakeContextCurrent(window.window());const auto previous=glfwGetCurrentContext();
+    // "The caller's context stays current" is only observable from inside that context:
+    // glfwGetCurrentContext() reports the record kept by whichever GLFW copy reads it, and a
+    // test executable links its own copy of the static library. A context-local binding says
+    // the same thing where it can be seen - it is still there only if the calls below handed
+    // this context back.
+    ensure_test_glfw();
+    glfwMakeContextCurrent(window.window());
+    GLuint marker=0;glGenBuffers(1,&marker);glBindBuffer(GL_PIXEL_PACK_BUFFER,marker);
     verify(a,mesh,0);a.point_resource(points.get());a.select_points(request);a.set_overlays({overlay});
-    require(glfwGetCurrentContext()==previous,"offscreen query/selection changed the caller context");
+    GLint current=0;glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING,&current);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER,0);glDeleteBuffers(1,&marker);
+    require(GLuint(current)==marker,"offscreen query/selection changed the caller context");
 #endif
     a.resize(173,133);require(window.run_frames(2)==0,"interleaved native viewer did not render");
     require(a.width()==173 && a.height()==133 && a.framebuffer_width()==173 && a.dpi_scaling()==1,"offscreen fixed pixel canvas changed after native callbacks");

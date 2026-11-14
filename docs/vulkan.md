@@ -517,8 +517,11 @@ The migration is **not yet validated complete**:
   lavapipe, cross-backend image comparison, and installed-package consumers.
   Windows passed both backend builds; Vulkan also passed SPIR-V and non-graphics
   tests. macOS passed both backend jobs, with the Vulkan job excluding the
-  unsupported transparency path. Windows Vulkan graphics/hardware testing and
-  Windows installed-package consumers remain unverified.
+  unsupported transparency path. On Windows hardware the local suite now covers
+  both backends in both configurations, with `viewer.pointbenchmark` the only
+  failure and only because its 1600x917 window does not fit the current 1600x900
+  desktop (2026-11-14, see the Windows full-suite validation section below).
+  Windows installed-package consumers are still unverified.
 * The successful workflow commit is an ancestor of the current branch but
   predates the recent OIT modularization commits; the current branch still needs
   a workflow run before those refactors are considered cross-platform validated.
@@ -1207,7 +1210,8 @@ Vulkan correctness, not GPU performance or macOS portability.
 On macOS use a Vulkan SDK with MoltenVK and a matching loader/ICD. Follow the SDK's
 runtime environment/bundling instructions. This implementation requests Vulkan
 1.2 and checks target-format support. The point/impostor stage has been tested on this Mac with MoltenVK 1.4.2
-and Apple M4 Pro. Windows hardware execution remains outstanding.
+and Apple M4 Pro. On Windows hardware both backends pass their full local suite (see the
+2026-11-14 section below); installed-package consumers there are still unverified.
 
 ## Interactive Vulkan window
 
@@ -1403,9 +1407,13 @@ allows the solid selection border to rasterize within one pixel of its ideal
 edge, and the hosted Mesa/Xvfb run plus the 2026-11-13 local Linux suites pass
 it. Portable expanded-point fallback profiling is recorded with the controlled
 point benchmark, and cross-backend image parity is recorded in the section
-above. Linux package-consumer checks pass in CI and in the local Release pass;
-Windows Vulkan hardware validation and Windows package-consumer checks remain
-outstanding. A controlled GPU-timestamp comparison remains open.
+above. Linux package-consumer checks pass in CI and in the local Release pass. Windows
+hardware now has the full local suite behind it in both backends and both
+configurations, which also closed the last OpenGL-only failures in this branch;
+`viewer.pointbenchmark` is the single exception and fails only because its 1600x917
+window does not fit the 1600x900 desktop it was run on. Windows installed-package
+consumers and a CI rerun on the current commits remain outstanding. A controlled
+GPU-timestamp comparison remains open.
 
 The archived Vulkan/OpenGL workflow is restored at
 `.github/workflows/tests.yml`. Run `42612100874` was not started because
@@ -8967,3 +8975,118 @@ rather than mapping a zero-size buffer. The likely cause was the probe executabl
 struct by one `std::vector<vec4>`; the two then disagree about the object layout. That
 is a hazard for any partial rebuild after this commit, not a library defect, and it is
 the same class of failure recorded above for a picking executable.
+
+### 2026-11-14 — Windows full-suite validation: per-module GLFW and a leaking pick probe
+
+**Symptom.** A full CTest run of this branch in the IDE-owned Windows Debug tree failed
+27 of 149 tests. Most fell to `90a8524e`: the `/utf-8` compile flag for `vulkan.text`, the
+two MSVC-Debug algorithm steps that no timeout can await
+(`algo.point_cloud_normal_estimation`, `algo.surface_mesh_remove_overlapping_faces`), the
+`Transparency` registry that each image had duplicated, and `ensure_test_glfw()` for the
+Vulkan tests plus the fatal `glfwInit()` in `Tutorial_202_Viewer_imgui`. Split into
+per-backend standalone trees, the run then came down to six OpenGL-only failures, identical
+in Debug and Release on NVIDIA hardware - `opengl.events`, `opengl.input`,
+`opengl.meshpicker`, `opengl.portablepick`, `opengl.query` and `opengl.viewerloop` - while
+the Vulkan tree was already green. No library regression was implicated: all six are
+input-driven or read-back tests that reach into GLFW themselves.
+
+**Root cause: a test executable links its own, uninitialized GLFW.** The vendored
+`3rd_glfw` is a private static dependency of `easy3d_viewer`, so a test that compiles
+`GLFW/glfw3.h` into its own image gets a second copy of the library's global state. Linux
+and macOS resolve GLFW to one instance; on Windows the test's copy is never initialized and
+every public call returns through `_GLFW_REQUIRE_INIT_OR_RETURN` without touching the
+window. `glfwSetKeyCallback()` then hands back a null host callback, so the synthetic input
+driven from it faults, and `glfwMakeContextCurrent()` silently leaves the library's context
+current. This is issue #178, the same defect that `90a8524e` made fatal in
+`Tutorial_202_Viewer_imgui`.
+
+**Fix (test side only).** `ensure_test_glfw()` in `tests/viewer/test_window.h` was a
+Vulkan-only helper; it now sits outside the backend guard and both builds get it, together
+with the `TestWindow`/`TestHost` helpers that stayed inside. Seven tests call it once
+before touching GLFW: `viewer_events_test`, `viewer_loop_test`, `input_test`,
+`mesh_picker_test`, `viewer_query_test`, `offscreen_query_test` and `point_benchmark_test`.
+It initializes the module-local copy, which makes those calls act on the window the library
+created; the two instances register
+separate window classes, so this is safe and the library's own GLFW state is untouched.
+
+**`opengl.query` needed a different assertion, not just initialization.** It proved the
+context it saw was the one the library created by comparing `glfwGetCurrentContext()`
+against the window handle. GLFW keeps that in a per-module TLS slot
+(`_glfwPlatformGetTls(&_glfw.contextSlot)`), so across images the two values can never
+agree and the assertion was not makeable from the test. It now establishes the same
+property from inside the GL state machine: the test makes its own window current, plants a
+context-local marker (a buffer bound to `GL_PIXEL_PACK_BUFFER`), runs the query and checks
+that the marker is still bound. Passing means the query returned to this context, without
+asserting anything about another module's bookkeeping.
+
+**`opengl.portablepick`: the probe leaked, not the picking.** The failure looked like a
+rendering defect. `exercise()` deliberately makes the surrounding GL state hostile -
+`glViewport(3, 4, 31, 27)`, `glDepthFunc(GL_GREATER)` and
+`glColorMask(GL_FALSE, GL_TRUE, GL_FALSE, GL_TRUE)` - and asserts that a pick did not
+overwrite it, which `opengl::QueryState` guarantees by restoring the *caller's* viewport,
+depth function and colour mask. That restoration is correct host behaviour and is the
+point of the assertion; it also means the caller owns that state, and the probe only gave
+back the copy buffer, the texture and the active unit. From then on the process drew with
+the red and blue channels write-masked off, the next Viewer iteration inherited the mask
+through the shared context, and every later snapshot came out with a green background and
+black impostor spheres. The state-leak assertion had passed all along - precisely because
+nothing was cleaned up - so the diagnostic pointed at the renderer while the bug was in the
+test. The probe now saves and restores the three states it perturbs.
+
+A second lesson from the same phase: a masked channel keeps whatever memory the allocator
+handed back, so the frozen snapshots could look correct whenever they recycled the
+previous iteration's image. Only the textured sphere, which the test deliberately moves to
+another pixel region, exposed it. Confirming that meant decoding the PNGs and comparing
+histograms and bounding boxes against the analytic silhouette rather than eyeballing them.
+
+**Header-only `Transparency` is not reachable under the one-file constraint.** The
+per-camera registry must be one object for the whole process. A function-local static in an
+inline function is duplicated per image, and a C++17 `inline static` data member does not
+help either: MSVC folds those COMDATs within one image only, so the viewer would still
+register in the `easy3d_renderer` copy while a host translation unit looks up its private
+one - the always-empty lookup that produced the original failure. Sharing the map needs the
+library's export macro, i.e. an edit outside `transparency.h`, so
+`renderers()`/`set_frame_renderer()`/`render_frame()` stay in `transparency.cpp` as
+`90a8524e` committed them.
+
+**Two more places where the same boundary made a check blind.** `offscreen_query_test`
+asserted that offscreen queries leave the caller's context current by comparing
+`glfwGetCurrentContext()` before and after - per module, so on Windows it compared one empty
+slot against itself. It now plants a context-local buffer binding around the calls, the same
+substitution as `opengl.query`, and passes in Debug and Release on both backends.
+
+`point_benchmark_test` asks for uncapped presentation, and there the boundary is more than a
+matter of reading state: `glfwSwapInterval` resolves the context through the *requesting*
+module's TLS slot (`context.c`: `window = _glfwPlatformGetTls(&_glfw.contextSlot)`, then
+`GLFW_NO_CURRENT_CONTEXT` when it is empty), and that slot is only ever written by
+`window->context.makeCurrent`, a function compiled into the module that created the window.
+So even after `ensure_test_glfw()`, the call from a test executable on Windows reports
+"Cannot set swap interval without a current OpenGL or OpenGL ES context" and does nothing,
+while the context really is current at the driver level. The benchmark therefore ran
+vsync-locked on Windows and render-bound everywhere else. It now applies
+`wglSwapIntervalEXT` to the current context on Windows and keeps `glfwSwapInterval(0)`
+elsewhere, where one GLFW instance serves the whole process. Measured on the same fountain
+workload at 1280x720 with 4x MSAA: 604 frames in 10 s (16.57 ms/frame) against 10433 frames
+(0.959 ms/frame) uncapped, so the Windows OpenGL timings recorded before this change were
+display-bound and are not comparable with the Linux or Vulkan numbers.
+
+**A display-size dependency found in the re-run.** `viewer.pointbenchmark` requires a
+1600x917 logical window and asserts it. On a 1600x900 desktop the window manager returns
+1600x881 and the test fails with "logical window size differs from the requested size"
+identically on both backends, so it is a machine setting rather than a backend difference.
+It is the only test in the suite that needs a window near full-screen height; the next
+largest is 241x181.
+
+**Validation.** With those two changes, the four local configurations are green apart from
+the window-size case above: `build-vulkan-release` 142/143 in Release (172.2 s) and 142/143
+in Debug (347.3 s), `build-opengl-release` 108/109 in Release (91.3 s) and 108/109 in Debug
+(230.3 s), with `viewer.pointbenchmark` the single failure in each and every other test
+passing; the same trees recorded 143/143 and 109/109 earlier the same day, while the desktop
+was still tall enough for its window. Every test registered through `tests/CMakeLists.txt`
+gets `--validation`, which in these tests enables validation and synchronization validation
+together, and the graphics tests assert zero validation errors. The fixes touch nine files,
+all under `tests/`: `test_window.h`, `viewer_events_test.cpp`, `viewer_loop_test.cpp`,
+`input_test.cpp`, `mesh_picker_test.cpp`, `viewer_query_test.cpp`, `offscreen_query_test.cpp`,
+`portable_pick_test.cpp` and `point_benchmark_test.cpp`. No library source is involved, and
+`opengl::QueryState` keeps its restore-the-caller's-state contract: the host is meant to hand
+that state back, which is exactly what the probe had failed to account for.

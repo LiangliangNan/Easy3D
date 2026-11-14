@@ -4,7 +4,6 @@
 
 #include <easy3d/viewer/viewer.h>
 
-#ifdef EASY3D_HAS_VULKAN   // Vulkan tests only; the shared tests build this header in both configurations
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
@@ -15,16 +14,21 @@ namespace easy3d {
 // itself links its own copy of the static library. On Windows that copy was never
 // initialized and every public GLFW function returns without touching the window
 // (_GLFW_REQUIRE_INIT_OR_RETURN), so glfwSetKeyCallback(window, nullptr) hands back a null
-// host callback and the synthetic input driven from it faults. Initializing the local copy
-// makes these calls work on the window the library created; the two modules register
-// separate window classes, so this is safe and is the same workaround
-// Tutorial_202_Viewer_imgui applies. Linux and macOS resolve GLFW to one instance.
+// host callback, glfwMakeContextCurrent() keeps the library's context current, and the
+// synthetic input driven from the callbacks faults. Initializing the local copy makes these
+// calls work on the window the library created; the two modules register separate window
+// classes, so this is safe and is the same workaround Tutorial_202_Viewer_imgui applies.
+// Linux and macOS resolve GLFW to one instance.
 inline void ensure_test_glfw() {
 #if defined(_WIN32) && defined(_MSC_VER)
     if (!glfwInit())
         throw std::runtime_error("glfwInit failed for the test executable's GLFW copy");
 #endif
 }
+}
+
+#ifdef EASY3D_HAS_VULKAN   // The helpers below pass Vulkan device options to the viewer
+namespace easy3d {
 
 // Window and device settings of a test. The viewer constructors take them as separate parameters.
 struct TestWindow {

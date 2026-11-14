@@ -56,6 +56,7 @@ int main(int argc,char**) {
         InputViewer v("Input parity", 241, 181, 1);
         v.hide();
 #endif
+        ensure_test_glfw();
         auto key=glfwSetKeyCallback(v.window(),nullptr); glfwSetKeyCallback(v.window(),key);
         auto press=[&](int k,int mods=0){key(v.window(),k,0,GLFW_PRESS,mods);};
         auto release=[&](int k){key(v.window(),k,0,GLFW_RELEASE,0);};

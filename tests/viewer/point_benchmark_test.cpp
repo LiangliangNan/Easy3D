@@ -5,6 +5,10 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
+#include <tests/viewer/test_window.h>   // ensure_test_glfw()
+#if !defined(EASY3D_HAS_VULKAN) && defined(_WIN32)
+#include <easy3d/renderer/opengl.h>     // wglGetProcAddress
+#endif
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <chrono>
@@ -38,11 +42,22 @@ void measure(Viewer &v, const char *path) {
     v.camera()->set_view_direction(vec3(0, 0, -1));
     v.camera()->show_entire_scene();
 #ifndef EASY3D_HAS_VULKAN
-    // The OpenGL host enables vsync; uncapped presentation keeps the comparison render-bound.
-    const auto previous = glfwGetCurrentContext();
+    // The OpenGL host enables vsync; uncapped presentation keeps the comparison render-bound
+    // instead of display-bound. These calls only reach the window once this executable's own
+    // copy of the static GLFW is initialized, and the window is left current, because this
+    // module's record of what is current says nothing about the library's.
+    ensure_test_glfw();
     glfwMakeContextCurrent(v.window());
+#ifdef _WIN32
+    // Not glfwSwapInterval: it looks the current context up in the requesting module's own
+    // slot, which only the module that created the context fills, so here on Windows it only
+    // reports GLFW_NO_CURRENT_CONTEXT. The context is current at the driver level, so the
+    // extension entry point is applied to it directly.
+    if (auto* swap_interval = reinterpret_cast<BOOL(WINAPI*)(int)>(wglGetProcAddress("wglSwapIntervalEXT")))
+        swap_interval(0);
+#else
     glfwSwapInterval(0);
-    glfwMakeContextCurrent(previous);
+#endif
 #endif
     // Warm-up only needs to reach a steady state; keeping it small bounds the run on a
     // software rasterizer, where every frame is expensive.

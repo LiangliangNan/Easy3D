@@ -31,7 +31,7 @@ TestWindow options(bool validation) {
 #endif
 struct LoopViewer : TestHost {
 #ifdef EASY3D_TEST_OPENGL_VIEWER
-    explicit LoopViewer(bool) : TestHost("Frame loop", 151, 117, 4) { manual_.clear(); }
+    explicit LoopViewer(bool) : TestHost("Frame loop", 151, 117, 4) { ensure_test_glfw(); manual_.clear(); }
 #else
     explicit LoopViewer(bool validation) : LoopViewer(options(validation)) {}
     explicit LoopViewer(const TestWindow& o) : TestHost("Frame loop", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device) { manual_.clear(); }

@@ -108,6 +108,7 @@ void check(unsigned samples, bool validation) {
 #ifndef EASY3D_HAS_VULKAN
         GLuint ubo = 0, pbo = 0;
         {
+            ensure_test_glfw();
             glfwMakeContextCurrent(v->window());
             glGenBuffers(1, &ubo);
             glBindBuffer(GL_UNIFORM_BUFFER, ubo);
@@ -230,9 +231,20 @@ void check(unsigned samples, bool validation) {
         auto other = std::make_shared<Viewer>("Portable camera queries other", 181, 151, 4);
         other->hide();
         glfwMakeContextCurrent(other->window());
+        // Mark this context with context-local state: the binding below can only still be
+        // found if the query returned to this context. glfwGetCurrentContext() cannot tell
+        // the test anything here, because it reports the record kept by the GLFW copy it is
+        // linked into, and a test executable links its own copy of the static library.
+        GLuint marker = 0;
+        glGenBuffers(1, &marker);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, marker);
         bool restored = false;
         v->point_under_pixel(v->width() / 2, v->height() / 2, restored);
-        require(restored && glfwGetCurrentContext() == other->window(),
+        GLint current = 0;
+        glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &current);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        glDeleteBuffers(1, &marker);
+        require(restored && GLuint(current) == marker,
                 "query failed to restore another current context");
         require(other->draw_frame(), "query broke another shared viewer");
     }

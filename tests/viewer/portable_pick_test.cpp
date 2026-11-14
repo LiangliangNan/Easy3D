@@ -48,6 +48,9 @@ void exercise(Viewer& v) {
     GLuint copy_buffer;glGenBuffers(1,&copy_buffer);glBindBuffer(GL_COPY_READ_BUFFER,copy_buffer);
     glBufferData(GL_COPY_READ_BUFFER,16,nullptr,GL_STATIC_DRAW);
     GLuint texture;glGenTextures(1,&texture);glActiveTexture(GL_TEXTURE3);glBindTexture(GL_TEXTURE_2D,texture);
+    GLint saved_viewport[4];GLboolean saved_mask[4];GLint saved_depth_func=0;
+    glGetIntegerv(GL_VIEWPORT,saved_viewport);glGetBooleanv(GL_COLOR_WRITEMASK,saved_mask);
+    glGetIntegerv(GL_DEPTH_FUNC,&saved_depth_func);
     glViewport(3,4,31,27);glDepthFunc(GL_GREATER);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);
 #endif
     auto result=hit(v,vec3(-.6f,.2f,.5f));
@@ -61,6 +64,12 @@ void exercise(Viewer& v) {
             "picking leaked OpenGL state");
     glBindBuffer(GL_COPY_READ_BUFFER,0);glDeleteBuffers(1,&copy_buffer);
     glBindTexture(GL_TEXTURE_2D,0);glDeleteTextures(1,&texture);glActiveTexture(GL_TEXTURE0);
+    // The host keeps the caller's state, so the probe must hand back what it found: the
+    // remaining phases of this test render into the same context and would otherwise run
+    // with the red and blue channels write-masked off.
+    glViewport(saved_viewport[0],saved_viewport[1],saved_viewport[2],saved_viewport[3]);
+    glDepthFunc(saved_depth_func);
+    glColorMask(saved_mask[0],saved_mask[1],saved_mask[2],saved_mask[3]);
 #endif
     require(result.model==close,"picking followed model insertion order instead of depth");
     require(result.drawable.get()==close->renderer()->get_triangles_drawable("faces"),"picked drawable differs");
