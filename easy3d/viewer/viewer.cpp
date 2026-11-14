@@ -1381,21 +1381,7 @@ namespace easy3d {
                     output << "model is a graph. #vertex: " + std::to_string(m->n_vertices())
                               << ", #edge: " + std::to_string(m->n_edges()) << std::endl;
                 }
-                if (!model->renderer()->points_drawables().empty()) {
-                    output << "points drawables:\n";
-                    for (auto d : model->renderer()->points_drawables())
-                        d->buffer_stats(output);
-                }
-                if (!model->renderer()->lines_drawables().empty()) {
-                    output << "lines drawables:\n";
-                    for (auto d : model->renderer()->lines_drawables())
-                        d->buffer_stats(output);
-                }
-                if (!model->renderer()->triangles_drawables().empty()) {
-                    output << "triangles drawables:\n";
-                    for (auto d : model->renderer()->triangles_drawables())
-                        d->buffer_stats(output);
-                }
+
                 model->property_stats(output);
             }
         } else if (modifiers == MODIF_ALT && key == KEY_C) {

@@ -44,6 +44,31 @@ struct ClipboardRestore {
     }
     ~ClipboardRestore() { glfwSetClipboardString(window,value.c_str()); }
 };
+// Copying and pasting the camera go through glfwSetClipboardString/glfwGetClipboardString, so
+// that roundtrip depends on an OS service rather than on Easy3D behaviour. A macOS runner whose
+// GUI session cannot reach the pasteboard reports GLFW_FEATURE_UNAVAILABLE ("Cocoa: Failed to
+// retrieve string from pasteboard", CI run 13 on macos-15), and with nothing readable there is
+// no roundtrip left to assert. Echoing a sentinel first keeps the checks required wherever the
+// clipboard works and names the platform, instead of the camera, where it does not. A capturing
+// lambda is not a C callback, so the GLFW reason goes through these file-scope helpers.
+static std::string g_clipboard_error;
+static void capture_clipboard_error(int, const char* description) { g_clipboard_error = description ? description : "?"; }
+static bool clipboard_usable(GLFWwindow* window) {
+    ensure_test_glfw();
+    const char* sentinel = "__easy3d_clipboard_probe__";
+    g_clipboard_error.clear();
+    auto previous = glfwSetErrorCallback(capture_clipboard_error);
+    glfwSetClipboardString(window, sentinel);
+    const char* echoed = glfwGetClipboardString(window);
+    const bool usable = echoed && std::string(echoed) == sentinel;
+    glfwSetErrorCallback(previous);
+    if (!usable) {
+        std::string reason = g_clipboard_error.empty() ? "sentinel not echoed" : g_clipboard_error;
+        if (!g_clipboard_error.empty() && echoed) reason += " (read back \"" + std::string(echoed) + "\")";
+        std::cout << "note: platform clipboard unavailable (" << reason << "), skipping the camera copy/paste roundtrip\n";
+    }
+    return usable;
+}
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
@@ -175,7 +200,7 @@ int main(int argc,char**) {
         v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()!=pos,"focus loss left a held constraint active");
         v.mouse_release_event(20,50,Viewer::BUTTON_RIGHT,0);
-        {
+        if (clipboard_usable(v.window())) {
             ClipboardRestore clipboard(v.window());
             const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
             v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);

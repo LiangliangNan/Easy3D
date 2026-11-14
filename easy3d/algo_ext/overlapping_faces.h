@@ -74,14 +74,12 @@ namespace easy3d {
          *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
          *         the same edge geometry), and partially overlap.
          * \param mesh The input surface mesh.
-         * \param folding_faces \c true also to remove folding faces.
          * \param dist_threshold Two vertices are considered coincident if their distance is smaller than it.
          * \return The number of faces that have been deleted.
          * \pre mesh.is_triangle_mesh().
          */
         unsigned int remove(
                 SurfaceMesh *mesh,
-                bool folding_faces = false,
                 double dist_threshold = 1e-6
         );
 

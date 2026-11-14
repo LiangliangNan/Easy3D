@@ -185,7 +185,7 @@ namespace easy3d {
     }
 
 
-    unsigned int OverlappingFaces::remove(SurfaceMesh *input, bool delete_folding_faces, double dist_threshold)
+    unsigned int OverlappingFaces::remove(SurfaceMesh *input, double dist_threshold)
     {
         // remove faces may leave the mesh in an invalid state (e.g., non-manifold)
         // so we use the manifold builder to construct the final mesh.

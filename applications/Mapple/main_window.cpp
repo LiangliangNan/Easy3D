@@ -1403,7 +1403,7 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
 	LOG(INFO) << "removing overlapping faces...";
 
     unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
-    unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
+    unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh);
     if (num_degenerate + num_overlapping > 0) {
         mesh->renderer()->update();
         viewer_->update();

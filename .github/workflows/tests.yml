@@ -179,6 +179,7 @@ jobs:
           cmake -S . -B build-vulkan -G "Visual Studio 17 2022" -A x64 \
             -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
             -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=OFF \
             -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
@@ -261,21 +262,17 @@ jobs:
               --output-dir build-parity-images --validation
 
       # Hosted Windows runners expose neither a Vulkan ICD nor a desktop OpenGL
-      # driver, so no rendering test can run there. macOS is not so limited: the
-      # Vulkan job runs its windowed tests through MoltenVK. Whether the deprecated
-      # GL stack still yields a context on the hosted VM is not something to assert
-      # from a comment, so the probe below runs the desktop-labelled suite and only
-      # reports - drop continue-on-error once it is green and merge it into the step
-      # above.
+      # driver, so no rendering test can run there. macOS is not so limited for
+      # Vulkan - its job runs the windowed tests through MoltenVK - but its OpenGL
+      # job is, and that was measured rather than assumed: running the whole
+      # desktop-labelled suite there on 2026-11-14 (run 13) gave 74/74 failures,
+      # every one of them at context creation with "NSGL: Failed to find a suitable
+      # pixel format". The desktop suite stays out of the macOS OpenGL job because
+      # the hosted arm64 VM has no desktop GL, not because of an old comment.
       - name: Test OpenGL without desktop contexts (Windows and macOS)
         if: runner.os != 'Linux' && matrix.backend == 'OPENGL'
         shell: bash -l {0}
         run: ctest --test-dir build-vulkan --output-on-failure -C Release -LE desktop
-
-      - name: Probe desktop OpenGL contexts (macOS)
-        if: runner.os == 'macOS' && matrix.backend == 'OPENGL'
-        continue-on-error: true
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -L desktop
 
       # The same question on Windows, measured with one bounded case instead of the
       # whole desktop suite: viewer.offscreen carries a 120 s CTest timeout, so a
@@ -296,18 +293,26 @@ jobs:
         if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
         run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^vulkan\.transparency$'
 
-      # Records what the runner actually exposes, so the exclusions above stay
-      # verifiable from the log instead of resting on this comment.
+      # Records what the runner actually exposes, so the exclusions below stay
+      # verifiable from the log instead of resting on this comment. VULKAN_SDK holds
+      # Windows separators, and Git Bash will not exec a path that mixes them with
+      # forward ones, so the SDK root is converted first.
       - name: Report Vulkan devices (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         continue-on-error: true
         shell: bash -l {0}
-        run: '"$VULKAN_SDK/Bin/vulkaninfo.exe" --summary'
+        run: |
+          sdk="$(cygpath -u "$VULKAN_SDK")"
+          "$sdk/Bin/vulkaninfo.exe" --summary
+          echo 'ICD manifests shipped by the runner:'
+          ls -1 "$sdk/Bin/data/icd.d" /c/Windows/System32/vulkan/icd.d 2>/dev/null || echo 'none found in the SDK or system directories'
+        timeout-minutes: 2
 
-      # The hosted Windows runner has no Vulkan ICD, so this job runs every test that
-      # does not require Vulkan rendering or a desktop context. The point-cloud normal
-      # case is no longer in the list: the reason for dropping it was the Boost-based
-      # reference it used to run, not the platform, and that reference is gone.
+      # Until the probe above prints a device, this job assumes Vulkan rendering is
+      # unavailable and runs every test that needs neither a Vulkan device nor a
+      # desktop context. The point-cloud normal case is no longer in the list: the
+      # reason for dropping it was the Boost-based reference it used to run, not the
+      # platform, and that reference is gone.
       - name: Test non-graphics suite (Windows Vulkan)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         shell: bash -l {0}

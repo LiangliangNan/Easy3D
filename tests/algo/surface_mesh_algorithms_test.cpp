@@ -660,7 +660,7 @@ bool test_surface_mesh_remove_overlapping_faces() {
     test::require(duplicates.size() == 1 && foldings.size() == 1, "the overlapping faces were misclassified");
 
     const unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
-    const unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
+    const unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh);
     std::cout << "done. " << num_degenerate << " degenerate, " << num_overlapping << " overlapping faces removed"
               << std::endl;
 

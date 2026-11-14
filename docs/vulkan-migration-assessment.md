@@ -62,15 +62,15 @@ The helpers remain in the Vulkan implementation translation unit; this work has 
 
 The linked-list OIT path now exposes dropped-fragment counts, and tests assert overflow and non-overflow behavior. Recent measurements also found and fixed two substantive performance defects: plain Vulkan points had unnecessarily disabled early depth testing, and empty SurfaceMesh lock drawables caused repeated CPU buffer extraction. The recorded huge-mesh measurements show the latter correction bringing Vulkan debug frame time from about 211 ms to about 28 ms in the measured workload.
 
-The renderer still submits synchronously and waits on a fence, with one frame in flight and individual resource allocations. However, profiling found command recording and static-scene staging allocation small compared with synchronous execution, and staging uploads were not recurring in the timed loop. A later native-versus-expanded point profile measured similar throughput where an earlier benchmark showed a large gap. The profiler reports CPU/API wall timings, not GPU timestamps.
+The renderer still submits synchronously and waits on a fence, with one frame in flight and individual resource allocations. However, profiling found command recording and static-scene staging allocation small compared with synchronous execution, and staging uploads were not recurring in the timed loop. The native-versus-expanded point discrepancy is now resolved for the current code: a 2026-11-14 Windows run on an RTX 2080 Ti reported `largePoints` enabled and disabled for the two paths, recorded 223 and 211 FPS at identical rasterized coverage, and put the entire difference in fence time with CPU recording within 3% — timings above the display refresh, so uncapped presentation rather than vsync. The expanded path's extra cost is one-time staging creation (72.5 ms against 1.96 ms). The profiler still reports CPU/API wall timings, not GPU timestamps.
 
-**Disposition:** retain the simple synchronous lifetime model. Do not implement frames in flight, staging reuse/suballocation, or allocator redesign without repeatable GPU-aware evidence showing a bottleneck. Re-run a controlled fallback benchmark before drawing conclusions about native/fallback throughput. Revisit fixed capacities only when a concrete workload reaches them.
+**Disposition:** retain the simple synchronous lifetime model. Do not implement frames in flight, staging reuse/suballocation, or allocator redesign without repeatable GPU-aware evidence showing a bottleneck. The controlled fallback benchmark has now been re-run with verified path selection (2026-11-14, `docs/vulkan.md`), so native-versus-expanded conclusions may be drawn from it: the portable path costs 5-8% of frame time on that hardware, and the point-fallback discrepancy is no longer a reason to doubt the synchronous model. Revisit fixed capacities only when a concrete workload reaches them.
 
 ### 5. Platform and packaging validation — final material acceptance gap
 
 The known Linux overlay failure is closed by a successful lavapipe/Xvfb CI run. The workflow is active and the recorded six-job matrix passed on macOS, Windows, and Ubuntu. Linux installed-consumer checks passed. Windows build/SPIR-V/non-graphics checks passed, but the workflow did not execute Vulkan graphics on Windows hardware or validate Windows installed-package consumers. More importantly, the latest successful full matrix predates the audited OIT and modularization changes.
 
-**Disposition:** run the active CI workflow on the current migration head, then validate Windows Vulkan graphics/hardware and Windows installed-package consumers. Keep the platform gate open until those results are recorded. The historical CI run is useful evidence but not a substitute for testing the current revision.
+**Disposition:** closed on 2026-11-14. CI run 12 executed on the migration head with all six matrix jobs green, Windows Vulkan graphics ran on supported hardware in Debug and Release, and the installed-package consumers were built and run there for both backends. `ToDo.md` and `docs/vulkan.md` record the results, including what the hosted Windows runner still cannot do. Keep the gate open for future revisions: a change to the packaging or backend code reopens it until the current revision is tested.
 
 ### 6. Product scope and known differences — keep bounded
 
@@ -80,10 +80,10 @@ Mapple is an intentional OpenGL-only application. Qt/wx viewer tutorials were re
 
 ## Recommended next steps
 
-1. **Run the active backend CI matrix on the current migration head.** This is the highest-priority check because the most recent all-platform run predates the latest modularization.
-2. **Close the Windows-only gaps.** Execute Vulkan graphics tests on supported Windows hardware and build/install representative consumers for both backends on Windows.
-3. **Record and triage current platform results.** Update `ToDo.md` and `docs/vulkan.md`; investigate any regressions rather than broadening the migration scope preemptively.
-4. **Resolve the point-fallback measurement discrepancy before optimizing it.** Repeat the matched workload with verified path selection and stable timing; use GPU timestamps or an equivalent GPU-aware measurement before attributing the result to rendering throughput.
+1. **Run the active backend CI matrix on the current migration head.** *Closed 2026-11-14: workflow run 12, head `4e3292f7`, all six matrix jobs success.* The Windows jobs still cannot render - the hosted image exposes no Vulkan ICD and no desktop GL driver, which the workflow now measures with non-blocking probes rather than asserting.
+2. **Close the Windows-only gaps.** *Closed 2026-11-14: the graphics and hardware suites ran on an RTX 2080 Ti in both backends and both configurations, and the three installed-package consumers ran there 10/10 over Debug and Release.*
+3. **Record and triage current platform results.** *Done 2026-11-14 in `ToDo.md` and `docs/vulkan.md`; investigate regressions as they appear rather than broadening migration scope.*
+4. **Resolve the point-fallback measurement discrepancy before optimizing it.** *Closed 2026-11-14: the matched workload repeated on Windows hardware with `largePoints` reported per path and timings above the display refresh, so the gap is 5-8% rather than 6.5x; the cause of the 2026-11-09 reading is still unidentified, and GPU timestamps remain the missing instrument for anything finer.*
 5. **Leave `VulkanDevice` at the current coordination boundary.** Pursue asynchronous submission, staging pools, or further source-file decomposition only when a measured bottleneck or a clear independent ownership boundary justifies the added complexity.
 
 ## Overall comparison

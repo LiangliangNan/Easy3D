@@ -188,12 +188,6 @@ namespace easy3d {
         void set_source_faces(const std::vector<int>& faces);
 
         /**
-         * \brief Prints statistics of the buffers to an output stream.
-         * \param output The output stream (e.g., std::cout).
-         */
-        void buffer_stats(std::ostream &output) const;
-
-        /**
          * \brief Returns the vertex buffer ID.
          * \return The vertex buffer ID.
          */

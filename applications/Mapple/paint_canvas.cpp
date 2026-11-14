@@ -838,23 +838,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
 						  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 			}
-
-            if (!currentModel()->renderer()->points_drawables().empty()) {
-                output << "points drawables:\n";
-                for (auto d : currentModel()->renderer()->points_drawables())
-                    d->buffer_stats(output);
-            }
-            if (!currentModel()->renderer()->lines_drawables().empty()) {
-                output << "lines drawables:\n";
-                for (auto d : currentModel()->renderer()->lines_drawables())
-                    d->buffer_stats(output);
-            }
-            if (!currentModel()->renderer()->triangles_drawables().empty()) {
-                output << "triangles drawables:\n";
-                for (auto d : currentModel()->renderer()->triangles_drawables())
-                    d->buffer_stats(output);
-            }
-
 			currentModel()->property_stats(output);
 		}
     } else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {

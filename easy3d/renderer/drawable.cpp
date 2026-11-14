@@ -106,31 +106,6 @@ namespace easy3d {
     }
 
 
-    void Drawable::buffer_stats(std::ostream &output) const {
-        output << "\t" << name() << std::endl;
-        if (vertex_buffer()) {
-            output << "\t\tvertex buffer:     " << num_vertices_ << " vertices, "
-                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
-        }
-        if (normal_buffer()) {
-            output << "\t\tnormal buffer:     " << num_vertices_ << " normals, "
-                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
-        }
-        if (color_buffer()) {
-            output << "\t\tcolor buffer:      " << num_vertices_ << " colors, "
-                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
-        }
-        if (texcoord_buffer()) {
-            output << "\t\ttexcoord buffer:   " << num_vertices_ << " texcoords, "
-                   << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
-        }
-        if (element_buffer()) {
-            output << "\t\tindex buffer:      " << num_indices_ << " indices, "
-                   << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
-        }
-    }
-
-
     void Drawable::update() {
         bbox_.clear();
         update_needed_ = true;

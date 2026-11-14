@@ -7247,6 +7247,8 @@ contract on both backends: logical size equals the requested 1600×917, framebuf
 and `dpi_scaling == framebuffer/logical`. Coverage caveat: OpenGL's capture ID pass
 rasterizes points smaller than the timed color pass, so its ID-pass covered-pixel count
 (141695) differs; the timed color pass renders 5 px on both backends, so the timing is fair.
+The 6.5x figure did not survive: the 2026-11-14 entry remeasures both paths on Windows hardware
+with the profile line confirming which path the device took, and the gap there is 5-8%.
 
 **Shared parity tests.** `tests/viewer/input_test.cpp` was Vulkan-only and is now shared
 (`vulkan.input` with validation args / `opengl.input` plain). It loads two distinct meshes
@@ -8758,7 +8760,9 @@ approximately 120 FPS for both. This conflicts with the earlier controlled
 record in this document (about 100 FPS native and 14-16 FPS expanded). The
 cause of the discrepancy is unresolved, so these runs do not establish equal
 point-path performance and should not replace the earlier record as a
-cross-path conclusion.
+cross-path conclusion. The 2026-11-14 Windows remeasurement closes the question for the current
+code: with `largePoints` reported per path and timings far above the display refresh, native and
+expanded differ by 5-8%, not by the 6.5x the 2026-11-09 record showed.
 
 The static-scene profile shows no demonstrated benefit from adding frames in
 flight or staging suballocation: CPU command recording was a small portion of
@@ -9213,7 +9217,8 @@ yet the adjacent macOS job runs windowed tests labelled `desktop` through Molten
 fine, and it is the GL driver that was assumed missing. The macOS OpenGL job now runs the full `-L desktop` suite
 non-blocking; once the log shows it green, `continue-on-error` comes off and the step merges into the real one. Windows gets the
 same measurement with one bounded case (`-R '^viewer\.offscreen$'`, a 120 s CTest timeout), so the answer costs a couple of
-minutes instead of a suite and a hang cannot stall the job.
+minutes instead of a suite and a hang cannot stall the job. Run 13 measured the macOS half, and the answer went the other way:
+see the next entry.
 
 **`algo.point_cloud_normal_estimation` taking twelve to eighteen minutes: obsolete.** That figure belonged to the reference it
 used to run - Boost's graph over the kdtree - and not to the platform. Locally on 2026-11-14 the case measured 3.2 s in Release
@@ -9245,3 +9250,135 @@ Two coverage gaps were left open deliberately. CI builds Release only, while loc
 Debug legs is a matter of build minutes, not of what the runners can do. And the Windows jobs still cannot render at all until
 the image ships a driver - a software ICD would need a third-party Windows Mesa build, and even then only offscreen work would
 run, since lavapipe has no Windows presentation backend.
+
+### 2026-11-14 — run 13: the two probes answered, and the new steps found two workflow bugs
+
+**The run.** CI run 13 (`43612147450`, head `917abf00`) was the first execution of the wider workflow. Four of six jobs
+passed; the two that did not were the entry's own probes and new steps giving an answer, plus one failure that turned out to
+belong to the runner rather than to Easy3D.
+
+**Hosted macOS has no desktop OpenGL, after all.** The macOS desktop-GL probe reported `0% tests passed, 74 tests failed out
+of 74`, every failure at context creation: `GLFW Error 65543 The requested client API version is not available: NSGL: Failed to
+find a suitable pixel format` followed by `could not create an OpenGL 3.2 context!`. So the sentence the probe was written to
+question was correct, and the probe is gone: the macOS OpenGL job keeps its `-LE desktop` partition and the claim in the step
+comment now points at a logged measurement instead of an assumption. The Windows bounded probe is still in place, since its
+answer was not in the log excerpt the failure came with.
+
+**The Windows Vulkan device probe never measured anything.** It ran as `"$VULKAN_SDK/Bin/vulkaninfo.exe" --summary` under
+`shell: bash -l {0}`, and `$VULKAN_SDK` is `C:\VulkanSDK\1.4.363.1`: Git Bash passes that mixed-separator string through
+literally and exec fails with `No such file or directory`, exit 127. The step now converts the root with `cygpath -u`, prints
+the summary, and lists the ICD manifests in the SDK and in `C:/Windows/System32/vulkan/icd.d`, with a 2-minute ceiling so a
+loader that hangs on a missing driver cannot stall the job. Note what this means for the claim it was meant to support: the
+"no Vulkan ICD on the hosted Windows image" statement still rests on the image specification and the SDK's contents, not on
+`vulkaninfo`, which has never actually run there.
+
+**Windows OpenGL failed in the step this audit added, for a reason that predates it.** `cmake --install build-vulkan --config
+Release` ended with `Error copying file ".../lib/cmake/Easy3D-2.6.1-targets.cmake" to "C:/Program Files/Easy3D/2.6.1/..."`:
+of the four configure steps, only the Windows OpenGL one passed no `-DCMAKE_INSTALL_PREFIX`, so the install went to the default
+`C:\Program Files` and the runner's permissions refused it. The same failure mode had already been seen locally (the
+non-`FORCE` `Easy3D_INSTALL_*` variables recorded above), and the fix is one line - that configure now sets the same
+`${{ github.workspace }}/install` prefix as the other three.
+
+**`vulkan.input` failed on the runner, not in the code.** The macOS Vulkan job finished at 148/149, the sole failure being
+`vulkan.input` with `GLFW error 65545: Cocoa: Failed to retrieve string from pasteboard` and then
+`FAIL: clipboard camera roundtrip failed`. The head commit that run tested changed only `.github/workflows/tests.yml`,
+`.gitignore`, `ToDo.md` and `docs/vulkan.md` - no viewer, no test - so the roundtrip cannot have regressed between the green
+run 12 and this one. The check needs an OS service: `Viewer` copies the camera with `glfwSetClipboardString` and pastes with
+`glfwGetClipboardString` (`easy3d/viewer/viewer.cpp:999,1003`), and on that runner the pasteboard read returned nothing for
+Easy3D to paste. The test now echoes a sentinel through the same two calls first: where the clipboard answers, the roundtrip
+and the invalid-clipboard check stay required; where it does not, the test prints why and continues. Both executables were
+rebuilt and run on Windows afterwards and still exercised the roundtrip - neither printed the skip notice - so the guard
+loosens nothing that was measurable.
+
+**What run 13 proved about the widened coverage.** `algo.point_cloud_normal_estimation` ran inside its 180 s on both the
+Windows and the macOS Vulkan jobs - it was the re-added case, and the only failure in either of those suites was the clipboard
+test - so the two-minute local Release measurement does transfer to hosted runners. `Run installed-package consumers (macOS)`
+passed, making the three consumers a CI-checked thing rather than only a locally checked one. Both remain to be re-confirmed on
+the next run, which also carries the install-prefix fix.
+
+### 2026-11-14 — point paths remeasured on Windows hardware: the native-vs-fallback discrepancy resolves
+
+**The question left open.** The 2026-11-09 record had the portable expanded-point fallback at
+65-70 ms/frame against about 10 ms/frame for the native path, and a later macOS profile reported
+roughly 120 FPS for both. Both figures stayed in this document because neither run verified which
+path the device actually took while rendering, so no conclusion about relative throughput was
+allowed (`docs/vulkan-migration-assessment.md` remaining-work item 4 asked for exactly that: the
+matched workload, verified path selection, stable timing).
+
+**Environment.** Windows, NVIDIA GeForce RTX 2080 Ti, display at 60 Hz, `build-vulkan-release`
+Release, `easy3d_point_benchmark_test.exe` run directly with no validation arguments, fountain
+point cloud (479 187 points at 5 px), 1600x917 logical and framebuffer (`dpi 1`), 4x MSAA.
+
+| run | native | expanded | ID-pass coverage |
+| --- | --- | --- | --- |
+| plain A | - | 2129 frames / 10.00 s = 212.9 FPS | 176 556 px |
+| plain B | 2184 / 10.0007 s = 218.4 FPS | 2085 / 10.0005 s = 208.5 FPS | 176 556 px both |
+| profiled | 2231 / 10.0036 s = 223.0 FPS | 2108 / 10.0057 s = 210.7 FPS | 176 556 px both |
+
+`EASY3D_VULKAN_PROFILE=1` settles the path question the earlier records could not: the native line
+ends `largePoints=enabled` and the fallback line `largePoints=disabled`, on
+`device=NVIDIA GeForce RTX 2080 Ti`. Both are far above the 60 Hz refresh rate, so presentation is
+not clamping the numbers - the backend takes `VK_PRESENT_MODE_MAILBOX_KHR` when the platform offers
+it ([render_device.cpp:2538](../easy3d/renderer/backends/vulkan/render_device.cpp)), which is the
+condition the macOS figures were gathered under and could not be confirmed there.
+
+**Where the time goes.** Native: 2241 submissions, 2626.1 ms `execute()` wall, of which 2414.0 ms
+was fence waiting, with 85.0 ms command recording and 101.8 ms `vkQueueSubmit()` on the CPU.
+Expanded: 2118 submissions, 2831.5 ms wall, 2614.1 ms fence, 87.8 ms record, 102.7 ms submit. CPU
+work per path is therefore within 3% of itself and about 7% of the wall time; the whole difference
+between the paths is fence time, i.e. GPU execution: about 8% more per frame at identical rasterized
+coverage, not 6.5x. The expanded path's own cost sits in setup - staging create 72.5 ms against
+1.96 ms native, because a point becomes four vertices and two triangles - charged once across the
+six allocations that the whole 2108-frame run reports, which is what "staging uploads do not recur
+in the timed loop" means in numbers.
+
+**What is now established and what is not.** Current code costs roughly 5-8% of frame time to take
+the portable path on this GPU at this resolution, and the fallback is the right default where
+`largePoints` or the point-size range is unavailable. The 2026-11-09 65-70 ms reading is not
+reproducible here and its cause remains unidentified; the two changes that would explain a
+per-frame cost disappearing are the `DrawBufferCache` extraction (buffer growth, allocation,
+descriptor updates and synchronous transfers) and the always-false matrix-equality clipping fix
+recorded on 2026-11-13, both of which remove repeated work - a hypothesis this run does not test,
+since checking it means building the 2026-11-09 revision. The machine and framebuffer also differ
+from the macOS record (3200x1834 on Apple hardware). The earlier figure stays in this document as
+what was measured on that date, with the note below it that the current code does not reproduce it.
+
+### 2026-11-14 — `remove_overlapping_faces()` loses its unused knob; `buffer_stats()` is settled as unimplementable
+
+**`delete_folding_faces` removed, not implemented.** `OverlappingFaces::remove()` declared the
+parameter and never read it: folding pairs were deleted in an unconditional loop
+([overlapping_faces.cpp:216](../easy3d/algo_ext/overlapping_faces.cpp)), so the argument documented
+a choice the code did not offer. The semantics question resolves in favor of deletion - a folding
+pair is two coplanar triangles sharing an edge and partially overlapping, which is precisely what
+the caller asked to remove - so the parameter is gone from both
+`OverlappingFaces::remove()` and `Surfacer::remove_overlapping_faces()`, leaving
+`(mesh, dist_threshold = 1e-6)`.
+
+The removal is a signature change in the middle of the parameter list, which is where silent
+rebinding lives: a caller that still writes `remove_overlapping_faces(mesh, true)` now passes
+`true` as the distance threshold, converts to `1.0`, and compiles. Both existing call sites were
+updated in the same change (`applications/Mapple/main_window.cpp:1406` and
+`tests/algo/surface_mesh_algorithms_test.cpp:663`), and a repo-wide search found no others - no
+Python binding, tutorial, or documentation references the argument.
+`algo.surface_mesh_remove_overlapping_faces` passes in 0.52 s in `build-vulkan-cgal` Release with
+the same duplicate and folding counts removed as before, so the behavior change is exactly the
+disappearance of a no-op.
+
+**`Drawable::buffer_stats()` under Vulkan is not implementable as the open item asked.** The item
+offered two options; the code rules out both. A Vulkan drawable holds no buffers: the backend's
+`drawable.h` exposes only `DrawableRenderer` with an opaque `Impl`, allocation sizes are consumed
+where `VkBufferCreateInfo::size` is set (`render_device.cpp:499-513`) and are not kept per drawable,
+and the count is not even one - a point drawable binds two vertex buffers
+(`render_device.cpp:3466-3471`) while the picking pass reuses the same geometry through other
+descriptor sets. Option 1 would therefore add a device-wide accounting API and a widened
+backend-neutral interface whose only consumer is a diagnostic print, and the number it prints would
+describe the cache policy, not the drawable. Option 2 would print something false: today's
+`buffer_stats()` multiplies CPU element counts by `sizeof` (`easy3d/renderer/drawable.cpp:109`), and
+on the expanded-point path the GPU holds four vertices plus indices per point, so a Drawable-side
+total understates exactly the case the fallback exists for - the same class of hazard as the legacy
+positional `Viewer` constructor, an interface that compiles and reports a confident wrong number.
+The OpenGL side is not more truthful either: it is the same formula, so both backends already agree
+on the geometry bytes they can see, and nothing reachable is missing. The item is closed as
+IMPOSSIBLE with that reasoning in `ToDo.md`; if a genuine memory report is ever wanted, build it as
+a device-level diagnostic (`VulkanDevice` totals, `GL_BUFFER_SIZE` on OpenGL), not a per-drawable
+statistic.

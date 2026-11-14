@@ -547,9 +547,9 @@ namespace easy3d {
     }
 
 
-    unsigned int Surfacer::remove_overlapping_faces(SurfaceMesh *mesh, bool folding_faces, double dist_threshold) {
+    unsigned int Surfacer::remove_overlapping_faces(SurfaceMesh *mesh, double dist_threshold) {
         OverlappingFaces rdf;
-        return rdf.remove(mesh, folding_faces, dist_threshold);
+        return rdf.remove(mesh, dist_threshold);
     }
 
 
