@@ -62,7 +62,7 @@ namespace easy3d {
      * based on the distance between the relative position of the receiver point, an approximation of the blocker,
      * and the area light. It produces perceptually plausible soft shadows that harden on contact.
      *
-     * Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same
+     * Optimization tips: rendering with multi-effects (e.g., shadowing, AO) can benefit from sharing the same
      * geometry pass.
      *
      * \see Shadow

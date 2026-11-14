@@ -80,9 +80,9 @@ void bind_easy3d_renderer_state(pybind11::module_& m)
 		cl.def("set_texture_repeat", (void (easy3d::State::*)(float)) &easy3d::State::set_texture_repeat, "C++: easy3d::State::set_texture_repeat(float) --> void", pybind11::arg("r"));
 		cl.def("texture_fractional_repeat", (float (easy3d::State::*)() const) &easy3d::State::texture_fractional_repeat, "Controls the texture repeat at a finer level: 100 fractional repeat == 1 repeat. \n\nC++: easy3d::State::texture_fractional_repeat() const --> float");
 		cl.def("set_texture_fractional_repeat", (void (easy3d::State::*)(float)) &easy3d::State::set_texture_fractional_repeat, "C++: easy3d::State::set_texture_fractional_repeat(float) --> void", pybind11::arg("fr"));
-		cl.def("is_ssao_enabled", (bool (easy3d::State::*)() const) &easy3d::State::is_ssao_enabled, "C++: easy3d::State::is_ssao_enabled() const --> bool");
-		cl.def("enable_ssao", (void (easy3d::State::*)(bool)) &easy3d::State::enable_ssao, "C++: easy3d::State::enable_ssao(bool) --> void", pybind11::arg("b"));
-		cl.def("set_ssao_texture", (void (easy3d::State::*)(unsigned int)) &easy3d::State::set_ssao_texture, "C++: easy3d::State::set_ssao_texture(unsigned int) --> void", pybind11::arg("tex"));
+		cl.def("is_ao_enabled", (bool (easy3d::State::*)() const) &easy3d::State::is_ao_enabled, "C++: easy3d::State::is_ao_enabled() const --> bool");
+		cl.def("enable_ao", (void (easy3d::State::*)(bool)) &easy3d::State::enable_ao, "C++: easy3d::State::enable_ao(bool) --> void", pybind11::arg("b"));
+		cl.def("set_ao_texture", (void (easy3d::State::*)(unsigned int)) &easy3d::State::set_ao_texture, "C++: easy3d::State::set_ao_texture(unsigned int) --> void", pybind11::arg("tex"));
 		cl.def("clamp_range", (bool (easy3d::State::*)() const) &easy3d::State::clamp_range, "Clamp the value range of a scalar field. \n\nC++: easy3d::State::clamp_range() const --> bool");
 		cl.def("set_clamp_range", (void (easy3d::State::*)(bool)) &easy3d::State::set_clamp_range, "C++: easy3d::State::set_clamp_range(bool) --> void", pybind11::arg("b"));
 		cl.def("clamp_lower", (float (easy3d::State::*)() const) &easy3d::State::clamp_lower, "Clamp the lower side of the value range of a scalar field. Value is in [0, 1] (i.e., 0% to 100%).\n\nC++: easy3d::State::clamp_lower() const --> float");

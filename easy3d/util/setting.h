@@ -88,18 +88,17 @@ namespace easy3d {
         extern EASY3D_UTIL_EXPORT float material_shininess;
 
         // Effects
-        /// \brief Radius of the SSAO (Screen Space Ambient Occlusion) effect.
-        /// \details This variable controls the radius of the SSAO effect, which determines the area around each pixel where occlusion is calculated.
-        extern EASY3D_UTIL_EXPORT float effect_ssao_radius;
-        /// \brief Intensity of the SSAO (Screen Space Ambient Occlusion) effect.
-        /// \details This variable controls the intensity of the SSAO effect, which determines how dark the occluded areas appear.
-        extern EASY3D_UTIL_EXPORT float effect_ssao_intensity;
-        /// \brief Bias of the SSAO (Screen Space Ambient Occlusion) effect.
-        /// \details This variable controls the bias of the SSAO effect, which helps reduce artifacts by offsetting the occlusion calculation.
-        extern EASY3D_UTIL_EXPORT float effect_ssao_bias;
-        /// \brief Sharpness of the SSAO (Screen Space Ambient Occlusion) effect.
-        /// \details This variable controls the sharpness of the SSAO effect, which determines how sharp or smooth the occlusion edges appear.
-        extern EASY3D_UTIL_EXPORT float effect_ssao_sharpness;
+        /// \brief Sample radius of the ambient occlusion effect, as a fraction of the scene bounding-sphere radius.
+        /// \details The horizon search is limited to this radius around each pixel. Values in the range
+        ///      [0.02, 0.1] are typical: larger values capture broader occlusion but blur out contact shadows.
+        extern EASY3D_UTIL_EXPORT float effect_ao_radius_ratio;
+        /// \brief Strength of the darkening of the ambient occlusion effect, in [0, 1].
+        /// \details 0 leaves the surface untouched, and 1 applies the full occlusion term.
+        extern EASY3D_UTIL_EXPORT float effect_ao_intensity;
+        /// \brief Depth bias of the ambient occlusion effect, in view-space units.
+        /// \details The smallest elevation above the tangent plane that still counts as an occluder,
+        ///      which suppresses self-occlusion of nearly coplanar samples.
+        extern EASY3D_UTIL_EXPORT float effect_ao_bias;
 
         /// \brief Whether EDL (Eye-Dome Lighting) effect is enabled.
         /// \details This variable enables or disables the EDL effect, which enhances depth perception by adding shading to the scene.

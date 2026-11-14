@@ -40,8 +40,9 @@ namespace easy3d {
 
     namespace {
         struct FrameParams {
-            float radius;
+            float radius_ratio;
             float bias;
+            float intensity;
             mat4 projection;
         };
 
@@ -53,8 +54,9 @@ namespace easy3d {
 
     AmbientOcclusion::AmbientOcclusion(Camera* cam)
         : camera_(cam)
-        , radius_(0.5f)
+        , radius_ratio_(0.045f)
         , bias_(0.005f)
+        , intensity_(1.0f)
     {
     }
 
@@ -67,8 +69,9 @@ namespace easy3d {
         if (!camera_)
             return;
         FrameParams p{};
-        p.radius = std::max(camera_->scene_radius() * radius_, 1e-4f);
+        p.radius_ratio = radius_ratio_;
         p.bias = bias_;
+        p.intensity = std::max(0.0f, std::min(intensity_, 1.0f));
         p.projection = camera_->projection_matrix();
         frames()[camera_] = p;
     }
@@ -78,12 +81,14 @@ namespace easy3d {
             frames().erase(camera_);
     }
 
-    bool AmbientOcclusion::frame_params(const Camera* camera, float& radius, float& bias, mat4& projection) {
+    bool AmbientOcclusion::frame_params(const Camera* camera, float& radius_ratio, float& bias, float& intensity,
+                                        mat4& projection) {
         auto it = frames().find(camera);
         if (it == frames().end())
             return false;
-        radius = it->second.radius;
+        radius_ratio = it->second.radius_ratio;
         bias = it->second.bias;
+        intensity = it->second.intensity;
         projection = it->second.projection;
         return true;
     }
@@ -111,17 +116,18 @@ namespace easy3d {
 
     AmbientOcclusion::AmbientOcclusion(Camera* cam)
         : camera_(cam)
-        , radius_(0.5f)
+        , radius_ratio_(0.045f)
         , bias_(0.005f)
+        , intensity_(1.0f)
         , projection_fbo_(nullptr)
-        , ssao_fbo_(nullptr)
+        , ao_fbo_(nullptr)
     {
     }
 
 
     AmbientOcclusion::~AmbientOcclusion() {
         delete projection_fbo_;
-        delete ssao_fbo_;
+        delete ao_fbo_;
 
 		easy3d_debug_log_gl_error
     }
@@ -143,12 +149,12 @@ namespace easy3d {
 
         // Liangliang: using multsamples (i.e., 4) causes black screen in my macbook laptop.
         //             the bad call is at glReadPixels() with GL_UNSIGNED_BYTE.
-        if (ssao_fbo_ == nullptr) {
-            ssao_fbo_ = new FramebufferObject(w, h, 0);
-            ssao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for ssao result
-            ssao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for blur result
+        if (ao_fbo_ == nullptr) {
+            ao_fbo_ = new FramebufferObject(w, h, 0);
+            ao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for ao result
+            ao_fbo_->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR); // for blur result
         }
-        ssao_fbo_->ensure_size(w, h);
+        ao_fbo_->ensure_size(w, h);
     }
 
 
@@ -168,7 +174,7 @@ namespace easy3d {
 
         projection_fbo_->release();
 
-        ssao_pass();
+        ao_pass();
         blur_pass();
         compose();
     }
@@ -195,21 +201,21 @@ namespace easy3d {
         }
         projection_fbo_->release();
 
-        ssao_pass();
+        ao_pass();
 
         blur_pass();
 
-        return ssao_texture();
+        return ao_texture();
     }
 
 
-    unsigned int AmbientOcclusion::ssao_texture() const {
-         return ssao_fbo_->color_texture(1);
+    unsigned int AmbientOcclusion::ao_texture() const {
+         return ao_fbo_->color_texture(1);
     }
 
 
-    void AmbientOcclusion::ssao_pass() {
-        static const std::string name = "ssao/ssao";
+    void AmbientOcclusion::ao_pass() {
+        static const std::string name = "ao/ao";
         ShaderProgram* program = ShaderManager::get_program(name);
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
@@ -221,15 +227,14 @@ namespace easy3d {
         if (!program)
             return;
 
-        ssao_fbo_->bind(); easy3d_debug_log_gl_error
-        ssao_fbo_->activate_draw_buffer(0); easy3d_debug_log_gl_error
+        ao_fbo_->bind(); easy3d_debug_log_gl_error
+        ao_fbo_->activate_draw_buffer(0); easy3d_debug_log_gl_error
         glClear(GL_COLOR_BUFFER_BIT);
 
         program->bind(); easy3d_debug_log_gl_error
-
         program->set_uniform("invPROJ", inverse(camera_->projection_matrix()));
         program->set_uniform("PROJ", camera_->projection_matrix());
-        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_, 1e-4f));
+        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_ratio_, 1e-4f));
         program->set_uniform("bias", bias_);
         program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
 
@@ -238,16 +243,16 @@ namespace easy3d {
 
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
-        ssao_fbo_->release();
+        ao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFER
-        ssao_fbo_->snapshot_color(0, "/tmp/ssao_raw.png");
+        ao_fbo_->snapshot_color(0, "/tmp/ao_raw.png");
 #endif
      }
 
 
     void AmbientOcclusion::blur_pass() {
-        static const std::string blur = "ssao/blur";
+        static const std::string blur = "ao/blur";
         ShaderProgram* program = ShaderManager::get_program(blur);
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
@@ -259,22 +264,23 @@ namespace easy3d {
         if (!program)
             return;
 
-        ssao_fbo_->bind(); easy3d_debug_log_gl_error
-        ssao_fbo_->activate_draw_buffer(1);
+        ao_fbo_->bind(); easy3d_debug_log_gl_error
+        ao_fbo_->activate_draw_buffer(1);
         glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_log_gl_error
 
         program->bind(); easy3d_debug_log_gl_error
         program->set_uniform("invPROJ", inverse(camera_->projection_matrix()));
-        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_, 1e-4f));
+        program->set_uniform("radius", std::max(camera_->scene_radius() * radius_ratio_, 1e-4f));
+        program->set_uniform("intensity", std::max(0.0f, std::min(intensity_, 1.0f)));
         program->bind_texture("scene_depth", projection_fbo_->depth_texture(), 0);
-        program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 1);
+        program->bind_texture("aoInput", ao_fbo_->color_texture(0), 1);
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
-        ssao_fbo_->release();
+        ao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFER
-        ssao_fbo_->snapshot_color(1, "/tmp/ssao_blur.png");
+        ao_fbo_->snapshot_color(1, "/tmp/ao_blur.png");
 #endif
     }
 
@@ -282,7 +288,7 @@ namespace easy3d {
     void AmbientOcclusion::compose() {
         // The generic multiply-compose pass also used by eye-dome lighting:
         // output = scene color * mix(shade1, shade2, 0.3). Both scale textures are
-        // the blurred SSAO result, so the mix reduces to that single factor.
+        // the blurred AO result, so the mix reduces to that single factor.
         static const std::string name = "edl/edl_compose";
         ShaderProgram* program = ShaderManager::get_program(name);
         if (!program) {
@@ -301,7 +307,7 @@ namespace easy3d {
         const GLboolean blend = glIsEnabled(GL_BLEND);
 
         program->bind(); easy3d_debug_log_gl_error
-        const unsigned int ao = ssao_texture();
+        const unsigned int ao = ao_texture();
         program->bind_texture("s2_S1", ao, 2);
         program->bind_texture("s2_S2", ao, 1);
         program->bind_texture("s2_C", projection_fbo_->color_texture(), 0);

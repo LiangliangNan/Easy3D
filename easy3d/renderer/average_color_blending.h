@@ -89,7 +89,7 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using average color blending.
-     * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
+     * \details Optimization tip: rendering with multi-effects (e.g., shadowing, AO) can benefit from using a shared
      *      geometry pass.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
      * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT

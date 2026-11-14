@@ -25,8 +25,17 @@
  \endcond */
 
 #include "viewer.h"
+#include <algorithm>
+
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/algo/surface_mesh_ambient_occlusion.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/state.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
@@ -35,14 +44,20 @@ using namespace easy3d;
 // \cond
 
 TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string &title) : Viewer(title) {
+    // Look from a viewpoint so the effect is better perceived
+    camera()->set_view_direction(vec3(-1, -1, -1));
+
     // Create the effect and bind it to this viewer's camera: the occlusion sampling uses the
     // camera's projection to reason about the depth buffer in screen space.
     ao_ = new AmbientOcclusion(camera());
     // Start with the effect visible so the depth cues are obvious on launch.
     ao_enabled_ = true;
+    baked_ = false;
 
     // hint_ is shown in the viewer HUD; it tells the user which keys control the effect.
-    hint_ = "Press 'space' to switch on/off ambient occlusion\n" "Press 'up/down' to increase/decrease the radius";
+    hint_ = "Press 'space' to switch on/off ambient occlusion\n"
+            "Press 'up/down' to increase/decrease the radius\n"
+            "Press 'b' to bake ambient occlusion into vertex colors";
 }
 
 TutorialAmbientOcclusion::~TutorialAmbientOcclusion() {
@@ -64,28 +79,53 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
     } else if (key == KEY_DOWN) {
         // Decrease the sampling radius (finer, tighter occlusion), clamped to a small positive value.
         if (ao_enabled_) {
-            float r = ao_->radius();
-            if (r > 0)
-                ao_->set_radius(r - 0.1f);
-            // make sure it is valid
-            if (ao_->radius() <= 0)
-                ao_->set_radius(0.1f);
-            std::cout << "radius: " << ao_->radius() << std::endl;
+            ao_->set_radius_ratio(std::max(0.01f, ao_->radius_ratio() - 0.01f));
+            std::cout << "radius ratio: " << ao_->radius_ratio() << std::endl;
             update();
         }
         return true;
     } else if (key == KEY_UP) {
-        // Increase the sampling radius (broader, softer occlusion), clamped to 1.0.
+        // Increase the sampling radius (broader, softer occlusion), clamped to 0.3.
         if (ao_enabled_) {
-            float r = ao_->radius();
-            if (r > 0)
-                ao_->set_radius(r + 0.1f);
-            // make sure it is valid
-            if (ao_->radius() >= 1.0f)
-                ao_->set_radius(1.0f);
-            std::cout << "radius: " << ao_->radius() << std::endl;
+            ao_->set_radius_ratio(std::min(0.3f, ao_->radius_ratio() + 0.01f));
+            std::cout << "radius ratio: " << ao_->radius_ratio() << std::endl;
             update();
         }
+        return true;
+    } else if (key == KEY_B) {
+        // Bake ambient occlusion into vertex colors. The baked term is view independent:
+        // rotating the camera does not change it, which is what figures need. The
+        // screen-space effect is switched off while the baked term is shown.
+        auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
+        if (!mesh) {
+            LOG(INFO) << "the current model is not a surface mesh";
+            return true;
+        }
+        auto drawable = mesh->renderer()->get_triangles_drawable("faces");
+        if (!baked_) {
+            if (!mesh->is_triangle_mesh()) {
+                mesh->triangulate();
+                LOG(WARNING) << "input is not a triangle mesh (triangulated for baking AO)";
+            }
+
+            auto ao = SurfaceMeshAmbientOcclusion::bake(mesh);
+            SurfaceMeshAmbientOcclusion::colorize(mesh, ao, vec3(0.8f));
+            if (drawable) {
+                drawable->set_property_coloring(State::VERTEX, "v:color");
+                drawable->update();
+            }
+            baked_ = true;
+            ao_enabled_ = false;
+        } else {
+            if (drawable) {
+                drawable->set_uniform_coloring(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+                drawable->update();
+            }
+            baked_ = false;
+            ao_enabled_ = true;
+            LOG(INFO) << "removed the baked ambient occlusion";
+        }
+        update();
         return true;
     } else
         return Viewer::key_press_event(key, modifiers);

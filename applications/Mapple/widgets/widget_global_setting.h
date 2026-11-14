@@ -56,11 +56,10 @@ private slots:
     void setClippingPlaneColor();
     void setEnableCrossSection(bool);
     void setCrossSectionThickness(double);
-    void setSSAOAlgorithm(int);
-    void setSSAORadius(int);
-    void setSSAOIntensity(int);
-    void setSSAOBias(int);
-    void setSSAOSharpness(int);
+    void setEnableAO(bool);
+    void setAORadiusRatio(int);
+    void setAOIntensity(int);
+    void setAOBias(int);
     void setEyeDomeLighting(bool);
     void setTransparency(bool);
     void setShadow(bool);

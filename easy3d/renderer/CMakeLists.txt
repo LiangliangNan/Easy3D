@@ -194,11 +194,11 @@ set(${module}_resources
         ../../resources/shaders/shadow/soft_shadow_generate.frag
         ../../resources/shaders/shadow/soft_shadow_rendering.vert
         ../../resources/shaders/shadow/soft_shadow_rendering.frag
-        # ssao
-        ../../resources/shaders/ssao/blur.vert
-        ../../resources/shaders/ssao/blur.frag
-        ../../resources/shaders/ssao/ssao.vert
-        ../../resources/shaders/ssao/ssao.frag
+        # ao
+        ../../resources/shaders/ao/blur.vert
+        ../../resources/shaders/ao/blur.frag
+        ../../resources/shaders/ao/ao.vert
+        ../../resources/shaders/ao/ao.frag
         # transparency
         ../../resources/shaders/transparency/average_color_blend.vert
         ../../resources/shaders/transparency/average_color_blend.frag

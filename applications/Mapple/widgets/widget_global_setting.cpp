@@ -27,6 +27,8 @@
 
 #include "widget_global_setting.h"
 
+#include <algorithm>
+
 #include <QColorDialog>
 
 #include <easy3d/core/model.h>
@@ -57,16 +59,10 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     ui_->setupUi(this);
     viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
 
-    // SSAO
-    ui_->comboBoxSSAOAlgorithm->addItem("None");
-    ui_->comboBoxSSAOAlgorithm->addItem("Classic");
-    ui_->comboBoxSSAOAlgorithm->addItem("HBO");
-    ui_->comboBoxSSAOAlgorithm->addItem("HBO+");
-    ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
-    ui_->horizontalSliderSSAORadius->setValue(setting::effect_ssao_radius * 100);
-    ui_->horizontalSliderSSAOIntensity->setValue(setting::effect_ssao_intensity * 100);
-    ui_->horizontalSliderSSAOBias->setValue(setting::effect_ssao_bias * 100);
-    ui_->horizontalSliderSSAOSharpness->setValue(setting::effect_ssao_sharpness * 100);
+    // AO
+    ui_->horizontalSliderAORadiusRatio->setValue(setting::effect_ao_radius_ratio * 1000);
+    ui_->horizontalSliderAOIntensity->setValue(setting::effect_ao_intensity * 1000);
+    ui_->horizontalSliderAOBias->setValue(setting::effect_ao_bias * 1000);
 
     // EDL
     ui_->checkBoxEyeDomeLighting->setChecked(setting::effect_edl_enabled);
@@ -111,11 +107,10 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
             QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
     ui_->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
 
-    connect(ui_->comboBoxSSAOAlgorithm, SIGNAL(currentIndexChanged(int)), this, SLOT(setSSAOAlgorithm(int)));
-    connect(ui_->horizontalSliderSSAORadius, SIGNAL(valueChanged(int)), this, SLOT(setSSAORadius(int)));
-    connect(ui_->horizontalSliderSSAOIntensity, SIGNAL(valueChanged(int)), this, SLOT(setSSAOIntensity(int)));
-    connect(ui_->horizontalSliderSSAOBias, SIGNAL(valueChanged(int)), this, SLOT(setSSAOBias(int)));
-    connect(ui_->horizontalSliderSSAOSharpness, SIGNAL(valueChanged(int)), this, SLOT(setSSAOSharpness(int)));
+    connect(ui_->checkBoxAOEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableAO(bool)));
+    connect(ui_->horizontalSliderAORadiusRatio, SIGNAL(valueChanged(int)), this, SLOT(setAORadiusRatio(int)));
+    connect(ui_->horizontalSliderAOIntensity, SIGNAL(valueChanged(int)), this, SLOT(setAOIntensity(int)));
+    connect(ui_->horizontalSliderAOBias, SIGNAL(valueChanged(int)), this, SLOT(setAOBias(int)));
 
     connect(ui_->checkBoxEyeDomeLighting, SIGNAL(toggled(bool)), this, SLOT(setEyeDomeLighting(bool)));
     connect(ui_->checkBoxTransparency, SIGNAL(toggled(bool)), this, SLOT(setTransparency(bool)));
@@ -212,51 +207,45 @@ void WidgetGlobalSetting::setCrossSectionThickness(double w) {
 }
 
 
-void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
-    viewer_->enableSsao(algo != 0);
-    if (algo != 0 && ui_->checkBoxTransparency->isChecked()) // ssao and transparency cannot co-exist
+void WidgetGlobalSetting::setEnableAO(bool b) {
+    viewer_->enableAo(b);
+    if (b && ui_->checkBoxTransparency->isChecked()) // ao and transparency cannot co-exist
         ui_->checkBoxTransparency->setChecked(false);
-
-    if (algo != 0 && ui_->checkBoxShadow->isChecked())
+    if (b && ui_->checkBoxShadow->isChecked())
         ui_->checkBoxShadow->setChecked(false);
 
     viewer_->update();
     disableUnavailableOptions();
-    if (algo != 0)
-        LOG(INFO) << "SSAO enabled";
+    if (b)
+        LOG(INFO) << "AO enabled";
     else
-        LOG(INFO) << "SSAO disabled";
+        LOG(INFO) << "AO disabled";
 }
 
 
-void WidgetGlobalSetting::setSSAORadius(int v) {
-    if (viewer_->ssao()) {
-        viewer_->ssao()->set_radius(v / 100.0f);
+void WidgetGlobalSetting::setAORadiusRatio(int v) {
+    if (viewer_->ao()) {
+        setting::effect_ao_radius_ratio = v / 1000.0f;
+        viewer_->ao()->set_radius_ratio(setting::effect_ao_radius_ratio);
         viewer_->update();
     }
 }
 
 
-void WidgetGlobalSetting::setSSAOIntensity(int v) {
-    if (viewer_->ssao()) {
-//    viewer_->ssao()->set_intensity(v / 100.0f);
-//    viewer_->update();
-    }
-}
-
-
-void WidgetGlobalSetting::setSSAOBias(int v) {
-    if (viewer_->ssao()) {
-        viewer_->ssao()->set_bias(v / 100.0f);
+void WidgetGlobalSetting::setAOIntensity(int v) {
+    if (viewer_->ao()) {
+        setting::effect_ao_intensity = v / 1000.0f;
+        viewer_->ao()->set_intensity(setting::effect_ao_intensity);
         viewer_->update();
     }
 }
 
 
-void WidgetGlobalSetting::setSSAOSharpness(int v) {
-    if (viewer_->ssao()) {
-//    viewer_->ssao()->set_sharpness(v / 100.0f);
-//    viewer_->update();
+void WidgetGlobalSetting::setAOBias(int v) {
+    if (viewer_->ao()) {
+        setting::effect_ao_bias = v / 1000.0f;
+        viewer_->ao()->set_bias(setting::effect_ao_bias);
+        viewer_->update();
     }
 }
 
@@ -280,8 +269,8 @@ void WidgetGlobalSetting::setTransparency(bool b) {
     if (b && ui_->checkBoxEyeDomeLighting->isChecked())
         ui_->checkBoxEyeDomeLighting->setChecked(false);  // transparency and EDL cannot co-exist
 
-    if (b && ui_->comboBoxSSAOAlgorithm->currentIndex() != 0)
-        ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+    if (b && ui_->checkBoxAOEnable->isChecked())
+        ui_->checkBoxAOEnable->setChecked(false);
 
     viewer_->enableTransparency(b);
     viewer_->update();
@@ -297,8 +286,8 @@ void WidgetGlobalSetting::setShadow(bool b) {
     if (b && ui_->checkBoxEyeDomeLighting->isChecked())
         ui_->checkBoxEyeDomeLighting->setChecked(false);  // shadow and EDL cannot co-exist
 
-    if (b && ui_->comboBoxSSAOAlgorithm->currentIndex() != 0)
-        ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+    if (b && ui_->checkBoxAOEnable->isChecked())
+        ui_->checkBoxAOEnable->setChecked(false);
 
     viewer_->enableShadow(b);
     viewer_->update();
@@ -367,16 +356,14 @@ void WidgetGlobalSetting::disableUnavailableOptions() {
     bool can_change_crosssection_thickness = visible && (ui_->checkBoxCrossSectionEnable->isChecked());
     ui_->doubleSpinBoxCrossSectionThickness->setEnabled(can_change_crosssection_thickness);
 
-    // SSAO
-    visible = (ui_->comboBoxSSAOAlgorithm->currentIndex() != 0);
-    ui_->labelSSAORadius->setEnabled(visible);
-    ui_->horizontalSliderSSAORadius->setEnabled(visible);
-    ui_->labelSSAOIntensity->setEnabled(visible);
-    ui_->horizontalSliderSSAOIntensity->setEnabled(visible);
-    ui_->labelSSAOBias->setEnabled(visible);
-    ui_->horizontalSliderSSAOBias->setEnabled(visible);
-    ui_->labelSSAOSharpness->setEnabled(visible);
-    ui_->horizontalSliderSSAOSharpness->setEnabled(visible);
+    // AO
+    visible = (ui_->checkBoxAOEnable->isChecked());
+    ui_->labelAORadiusRatio->setEnabled(visible);
+    ui_->horizontalSliderAORadiusRatio->setEnabled(visible);
+    ui_->labelAOIntensity->setEnabled(visible);
+    ui_->horizontalSliderAOIntensity->setEnabled(visible);
+    ui_->labelAOBias->setEnabled(visible);
+    ui_->horizontalSliderAOBias->setEnabled(visible);
 
     // shadow
     visible = ui_->checkBoxShadow->isChecked();

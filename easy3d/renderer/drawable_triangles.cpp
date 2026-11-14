@@ -104,7 +104,7 @@ namespace easy3d {
                 ->set_uniform("distinct_back_color", distinct_back_color())
                 ->set_uniform("backside_color", back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
-                ->set_uniform("ssaoEnabled", is_ssao_enabled())
+                ->set_uniform("aoEnabled", is_ao_enabled())
                 ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("default_color", color())
                 ->set_block_uniform("Material", "ambient", material().ambient)
@@ -126,12 +126,12 @@ namespace easy3d {
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
 
-        if (is_ssao_enabled())
-            program->bind_texture("ssaoTexture", ssao_texture_, 1);
+        if (is_ao_enabled())
+            program->bind_texture("aoTexture", ao_texture_, 1);
         else
-            program->set_uniform("ssaoTexture", 0);
+            program->set_uniform("aoTexture", 0);
         gl_draw();
-        if (is_ssao_enabled())
+        if (is_ao_enabled())
             program->release_texture();
 
         program->release_texture();

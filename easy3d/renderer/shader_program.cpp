@@ -682,12 +682,6 @@ namespace easy3d {
 
 
 	void ShaderProgram::bind() const {
-        // glValidateProgram() is meant to be called directly before a
-        // draw call (i.e., glDraw*()) with that shader bound and all
-        // the bindings (VAO, textures) set. Its purpose is to ensure
-        // that the shader can execute given the current GL state.
-//        if (!is_program_valid())
-//            LOG(ERROR) << "program exists but not valid";
 		glUseProgram(program_);
         // Indexed bindings belong to the context, not the program. Restore them
         // after scoped readbacks or when rendering in another shared context.
@@ -698,7 +692,7 @@ namespace easy3d {
 
         // A sampler2D must reference a complete texture. Drivers (Apple's in
         // particular) warn and sample zero when the unit is left unbound, even
-        // if the shader's texturing/SSAO branch is disabled. Callers bind their
+        // if the shader's texturing/AO branch is disabled. Callers bind their
         // real textures after bind(), so defaulting every sampler unit to a
         // neutral 1x1 texture here keeps paths that never bind one (corner
         // axes, widgets) silent without any call-site handling.

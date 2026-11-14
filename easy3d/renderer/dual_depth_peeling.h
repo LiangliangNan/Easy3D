@@ -147,7 +147,7 @@ namespace easy3d {
      *              Dual depth peeling won't work with a multisample FBO, so for better rendering quality, it is
      *              possible to add a "Fast Approximate Anti-Aliasing" (FXAA) step for post antialiasing.
      *
-     *          Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the
+     *          Optimization tips: rendering with multi-effects (e.g., shadowing, AO) can benefit from sharing the
      *          same geometry pass.
      *
      * \sa AverageColorBlending

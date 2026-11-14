@@ -12,16 +12,24 @@ layout(set = 0, binding = 1, r32f) uniform image2D ao_result;
 layout(set = 0, binding = 4, std140) uniform AoParameters {
     mat4 projection;
     mat4 inverse_projection;
-    vec4 shape; // view-space radius, bias, width, height
+    vec4 shape; // view-space radius, bias, strength, unused
 } ao;
 
-const int SLICE_COUNT = 8;
-const int STEP_COUNT = 8;
+// Twelve slices and twelve steps keep the estimate smooth at typical window
+// sizes; the step stride is clamped in screen space, so the effective number
+// of steps adapts to the projected size of the kernel.
+const int SLICE_COUNT = 12;
+const int STEP_COUNT = 12;
+// Consecutive samples stay at least this many pixels apart. Sampling the full
+// radius with a fixed number of steps leaves gaps near the center pixel, which
+// shows up as concentric rings.
+const float MIN_STEP_PIXELS = 1.5;
 
-float hash12(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
+// Interleaved gradient noise (Jimenez 2014). Compared with a white-noise hash
+// its spectrum is low-frequency along diagonals, so the per-pixel rotation of
+// the slices is spread out evenly instead of appearing as high-frequency grain.
+float interleaved_gradient_noise(vec2 pixel) {
+    return fract(52.9829189 * fract(dot(pixel, vec2(0.06711056, 0.00583715))));
 }
 
 // View-space position from a depth sample. The scene vertex shader negates y,
@@ -107,7 +115,7 @@ void main() {
 
     float radius = ao.shape.x;
     float bias = ao.shape.y;
-    float jitter = hash12(vec2(pixel));
+    float jitter = interleaved_gradient_noise(vec2(pixel));
 
     vec4 center_clip = ao.projection * vec4(center, 1.0);
     if (center_clip.w <= 0.0) {
@@ -134,9 +142,12 @@ void main() {
             continue;
         vec2 direction = span / distance / size; // uv offset per pixel
 
+        float stride = max(MIN_STEP_PIXELS, distance / float(STEP_COUNT));
         float horizon_positive = 0.0, horizon_negative = 0.0;
         for (int step_index = 0; step_index < STEP_COUNT; ++step_index) {
-            float offset = distance * (float(step_index) + 0.5) / float(STEP_COUNT);
+            float offset = (float(step_index) + 0.5) * stride;
+            if (offset > distance)
+                break;
             horizon_positive = max(horizon_positive, horizon_sine(uv + direction * offset, center, normal, radius, bias));
             horizon_negative = max(horizon_negative, horizon_sine(uv - direction * offset, center, normal, radius, bias));
         }

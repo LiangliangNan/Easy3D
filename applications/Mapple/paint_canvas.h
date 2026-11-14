@@ -137,8 +137,8 @@ public:
 
 public:
 
-    easy3d::AmbientOcclusion *ssao() { return ssao_; }
-    void enableSsao(bool b);
+    easy3d::AmbientOcclusion *ao() { return ao_; }
+    void enableAo(bool b);
 
     easy3d::Shadow *shadow() { return shadow_; }
     void enableShadow(bool b);
@@ -328,7 +328,7 @@ protected:
 
     //----------------- filters -------------------
 
-    easy3d::AmbientOcclusion* ssao_;
+    easy3d::AmbientOcclusion* ao_;
 
     easy3d::Transparency* transparency_;
 

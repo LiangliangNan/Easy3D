@@ -52,7 +52,7 @@ public:
     ~TutorialAmbientOcclusion() override;
 
 protected:
-    // Handles 'space' (toggle) and 'up'/'down' (radius); forwards other keys to Viewer.
+    // Handles 'space' (toggle), 'up'/'down' (radius), and 'b' (bake); forwards other keys to Viewer.
     bool key_press_event(int key, int modifiers) override;
     // Renders the scene, applying ambient occlusion when enabled (see viewer.cpp).
     void draw() const override;
@@ -61,6 +61,7 @@ private:
     easy3d::AmbientOcclusion
         *ao_;         //!< The owned ambient occlusion effect (created with new, deleted in the destructor).
     bool ao_enabled_; //!< Whether the effect is currently applied; toggled with the space key.
+    bool baked_;      //!< Whether the mesh currently shows the baked (vertex-color) occlusion instead.
 };
 
 #endif // EASY3D_TUTORIAL_AMBIENT_OCCLUSION_H

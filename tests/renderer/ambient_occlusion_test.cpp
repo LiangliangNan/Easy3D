@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -24,9 +25,9 @@ size_t pixel(const FrameImage& frame,unsigned x,unsigned y) {
     return (size_t(y)*frame.width+x)*4;
 }
 std::vector<DrawCommand> shaded(std::vector<DrawCommand> scene,unsigned width,unsigned height,
-                                float radius=0.2f,float bias=0.005f) {
+                                float radius=0.2f,float bias=0.005f,float intensity=1.0f) {
     scene.insert(scene.begin(),easy3d::graphics::shape::draw_ambient_occlusion(
-        width,height,radius,bias,mat4::identity()));
+        width,height,radius,bias,intensity,mat4::identity()));
     return scene;
 }
 int main(int argc,char**) {
@@ -34,26 +35,27 @@ int main(int argc,char**) {
         const bool validation = argc > 1;
         auto device=create_vulkan_device(validation, validation);
 
-        const auto helper=easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,0.01f,mat4::identity());
+        const auto helper=easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,0.01f,1.0f,mat4::identity());
         require(helper.overlay && helper.ambient_occlusion && !helper.eye_dome_lighting &&
                 !helper.scene_depth_texture && !helper.overlay_depth_test &&
                 !helper.overlay_independent_depth,"invalid ambient-occlusion command flags");
-        require(helper.color==vec4(0.5f,0.01f,0,1),"ambient-occlusion parameters are not carried by the command");
+        require(helper.color==vec4(0.5f,0.01f,1,1),"ambient-occlusion parameters are not carried by the command");
         for (unsigned i=0;i<4;++i)
             for (unsigned j=0;j<4;++j)
                 require(helper.projection(i,j)==mat4::identity()(i,j),
                         "ambient-occlusion projection was not preserved");
         require(helper.geometry && helper.geometry->topology()==Topology::triangles,
                 "ambient-occlusion command is not a triangle quad");
-        for (unsigned mode=0;mode<4;++mode) {
+        for (unsigned mode=0;mode<5;++mode) {
             bool rejected=false;
             try {
-                if (mode==0) easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.0f,0.005f,mat4::identity());
-                else if (mode==1) easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,-0.1f,mat4::identity());
-                else if (mode==2) easy3d::graphics::shape::draw_ambient_occlusion(0,30,0.5f,0.005f,mat4::identity());
+                if (mode==0) easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.0f,0.005f,1.0f,mat4::identity());
+                else if (mode==1) easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,-0.1f,1.0f,mat4::identity());
+                else if (mode==2) easy3d::graphics::shape::draw_ambient_occlusion(0,30,0.5f,0.005f,1.0f,mat4::identity());
+                else if (mode==3) easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,0.005f,1.5f,mat4::identity());
                 else {
                     mat4 bad=mat4::identity();bad(0,0)=std::nanf("");
-                    easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,0.005f,bad);
+                    easy3d::graphics::shape::draw_ambient_occlusion(40,30,0.5f,0.005f,1.0f,bad);
                 }
             } catch (const std::invalid_argument&) {rejected=true;}
             require(rejected,"invalid ambient-occlusion frame parameters were accepted");
@@ -98,6 +100,20 @@ int main(int argc,char**) {
                     require(std::abs(int(occluded.rgba[far_px+c])-int(base.rgba[far_base+c]))<=1,
                             "ambient occlusion shaded a surface in front of an occluder");
 
+                // The dithered slices are recovered by the bilateral filter, so the
+                // term must not oscillate from pixel to pixel on a flat surface.
+                auto factor=[&](unsigned x,unsigned y){
+                    const auto i=pixel(occluded,x,y), b=pixel(base,x,y);
+                    return base.rgba[b] ? float(occluded.rgba[i])/float(base.rgba[b]) : 1.0f;
+                };
+                float max_step=0.0f;
+                for (unsigned x=2;x+1<width;++x) {
+                    if (x+6>width/2 && x<width/2+6)
+                        continue; // the silhouette ramp is expected to change quickly
+                    max_step=std::max(max_step,std::abs(factor(x+1,height/2)-factor(x,height/2)));
+                }
+                require(max_step<0.08f,"ambient occlusion is not smooth across a flat surface");
+
                 // A flat full-screen surface and the background keep their colors.
                 auto flat=quad(-1,-1,1,1,-.4f,vec4(.8f,.8f,.8f,1));flat.object_id=5;
                 const std::vector<DrawCommand> flat_scene{flat};
@@ -126,13 +142,13 @@ int main(int argc,char**) {
             }
         }
 
-        auto invalid=easy3d::graphics::shape::draw_ambient_occlusion(33,33,0.5f,0.005f,mat4::identity());
+        auto invalid=easy3d::graphics::shape::draw_ambient_occlusion(33,33,0.5f,0.005f,1.0f,mat4::identity());
         for (unsigned mode=0;mode<6;++mode) {
             invalid.overlay=mode!=0;
             invalid.overlay_depth_test=mode==1;
             invalid.overlay_independent_depth=mode==2;
             invalid.texture=mode==3 ? std::make_shared<Image>(1,1,std::vector<unsigned char>(4,255)) : nullptr;
-            invalid.color=mode==4 ? vec4(0,0,0,1) : mode==5 ? vec4(0.5f,-1,0,1) : vec4(0.5f,0.005f,0,1);
+            invalid.color=mode==4 ? vec4(0,0,0,1) : mode==5 ? vec4(0.5f,-1,0,1) : vec4(0.5f,0.005f,1,1);
             bool rejected=false;
             try {device->render(33,33,{invalid});} catch (const std::invalid_argument&) {rejected=true;}
             require(rejected,"invalid ambient-occlusion flags were accepted");

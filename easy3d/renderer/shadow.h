@@ -40,7 +40,7 @@ namespace easy3d {
     // Code can be simplified by omitting frustum and use the Camera class instead.
     // check line 611, void Camera::set_fov_to_fit_scene(), in camera.cpp.
 
-    // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
+    // Optimization tips: rendering with multi-effects (e.g., shadowing, AO)
     // can benefit from sharing the same geometry pass.
 
 #ifdef EASY3D_HAS_VULKAN

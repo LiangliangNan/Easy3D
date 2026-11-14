@@ -316,20 +316,20 @@ namespace easy3d {
         void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; }
 
         /**
-         * \brief Checks if SSAO is enabled.
-         * \return \c true if SSAO is enabled, \c false otherwise.
+         * \brief Checks if AO is enabled.
+         * \return \c true if AO is enabled, \c false otherwise.
          */
-        bool is_ssao_enabled() const { return ssao_enabled_; }
+        bool is_ao_enabled() const { return ao_enabled_; }
         /**
-         * \brief Enables or disables SSAO.
-         * \param b \c true to enable SSAO, \c false to disable.
+         * \brief Enables or disables AO.
+         * \param b \c true to enable AO, \c false to disable.
          */
-        void enable_ssao(bool b) { ssao_enabled_ = b; }
+        void enable_ao(bool b) { ao_enabled_ = b; }
         /**
-         * \brief Sets the SSAO texture.
-         * \param tex The SSAO texture.
+         * \brief Sets the AO texture.
+         * \param tex The AO texture.
          */
-        void set_ssao_texture(unsigned int tex) { ssao_texture_ = tex; }
+        void set_ao_texture(unsigned int tex) { ao_texture_ = tex; }
 
         /**
          * \brief Checks if the value range of a scalar field is clamped.
@@ -464,8 +464,8 @@ namespace easy3d {
         // Control at a finer level: 100 fractional repeat == 1 repeat.
         float texture_fractional_repeat_;
 
-        bool ssao_enabled_;
-        unsigned int ssao_texture_;
+        bool ao_enabled_;
+        unsigned int ao_texture_;
 
         bool clamp_range_;
         float clamp_lower_;

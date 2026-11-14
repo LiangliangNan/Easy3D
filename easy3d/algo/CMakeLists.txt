@@ -18,6 +18,7 @@ set(${module}_headers
         polygon_partition.h
         surface_mesh_components.h
         surface_mesh_curvature.h
+        surface_mesh_ambient_occlusion.h
         surface_mesh_enumerator.h
         surface_mesh_factory.h
         surface_mesh_fairing.h
@@ -56,6 +57,7 @@ set(${module}_sources
         polygon_partition.cpp
         surface_mesh_components.cpp
         surface_mesh_curvature.cpp
+        surface_mesh_ambient_occlusion.cpp
         surface_mesh_enumerator.cpp
         surface_mesh_factory.cpp
         surface_mesh_fairing.cpp

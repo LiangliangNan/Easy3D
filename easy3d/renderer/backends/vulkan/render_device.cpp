@@ -61,7 +61,7 @@ namespace easy3d {
 #include "hud_frag.inc"
 #include "depth_texture_frag.inc"
 #include "edl_frag.inc"
-#include "ssao_frag.inc"
+#include "ao_frag.inc"
 #include "ao_gtao_comp.inc"
 #include "ao_blur_comp.inc"
 #include "shadow_vert.inc"
@@ -785,7 +785,7 @@ namespace easy3d {
                 VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
                 VkPipeline depth_texture_pipeline = VK_NULL_HANDLE;
                 VkPipeline edl_pipeline = VK_NULL_HANDLE;
-                VkPipeline ssao_pipeline = VK_NULL_HANDLE;
+                VkPipeline ao_pipeline = VK_NULL_HANDLE;
                 VkPipeline shadow_pipeline = VK_NULL_HANDLE;
                 VkPipeline transparent_pipeline = VK_NULL_HANDLE;
                 // Depth-tested picking pass for order-independent transparent surfaces.
@@ -811,8 +811,8 @@ namespace easy3d {
                         c.vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
                     if (edl_pipeline)
                         c.vkDestroyPipeline(c.device, edl_pipeline, nullptr);
-                    if (ssao_pipeline)
-                        c.vkDestroyPipeline(c.device, ssao_pipeline, nullptr);
+                    if (ao_pipeline)
+                        c.vkDestroyPipeline(c.device, ao_pipeline, nullptr);
                     if (shadow_pipeline)
                         c.vkDestroyPipeline(c.device, shadow_pipeline, nullptr);
                     if (transparent_pipeline)
@@ -1203,8 +1203,7 @@ namespace easy3d {
 
             struct AoParameters {
                 float projection[16], inverse_projection[16], shape[4];
-            };
-            // Screen-space ambient occlusion computed from a depth prepass: two compute
+            };            // Screen-space ambient occlusion computed from a depth prepass: two compute
             // dispatches produce the horizon-based term and its bilateral denoise.
             struct Ao {
                 Context &c;
@@ -1252,7 +1251,8 @@ namespace easy3d {
                             VkDescriptorSet composite_set,
                             const mat4 &projection,
                             float radius,
-                            float bias) {
+                            float bias,
+                            float intensity) {
                     AoParameters values{};
                     const mat4 inverse_projection = inverse(projection);
                     for (unsigned col = 0; col < 4; ++col)
@@ -1262,8 +1262,8 @@ namespace easy3d {
                         }
                     values.shape[0] = radius;
                     values.shape[1] = bias;
-                    values.shape[2] = float(width);
-                    values.shape[3] = float(height);
+                    values.shape[2] = intensity;
+                    values.shape[3] = 0.0f;
                     parameters.transfer(&values, sizeof(values), true);
 
                     // The scene composite samples the denoised term from its depth set.
@@ -1660,8 +1660,8 @@ namespace easy3d {
                             mi.pCode = edl_frag;
                             check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[12]),
                                   "create eye-dome-lighting fragment shader");
-                            mi.codeSize = sizeof(ssao_frag);
-                            mi.pCode = ssao_frag;
+                            mi.codeSize = sizeof(ao_frag);
+                            mi.pCode = ao_frag;
                             check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[13]),
                                   "create ambient-occlusion fragment shader");
                             mi.codeSize = sizeof(shadow_frag);
@@ -1983,7 +1983,7 @@ namespace easy3d {
                                       "create eye-dome-lighting overlay pipeline");
                                 stages[1].module = modules[13];
                                 check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
-                                                                   &pass.ssao_pipeline),
+                                                                   &pass.ao_pipeline),
                                       "create ambient-occlusion overlay pipeline");
                                 stages[1].module = modules[14];
                                 blending.attachmentCount = 1;
@@ -3567,7 +3567,7 @@ namespace easy3d {
                                 set_view(d);
                                 c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
                                 const auto pipeline = d.shadow                ? pass.shadow_pipeline
-                                                      : d.ambient_occlusion   ? pass.ssao_pipeline
+                                                      : d.ambient_occlusion   ? pass.ao_pipeline
                                                       : d.eye_dome_lighting   ? pass.edl_pipeline
                                                       : d.scene_depth_texture ? pass.depth_texture_pipeline
                                                       : phase == 0            ? pass.depth_overlay_pipeline
@@ -3826,6 +3826,9 @@ namespace easy3d {
                                                           !std::isfinite(command.color.y) || command.color.y < 0))
                             throw std::invalid_argument(
                                 "ambient occlusion requires a positive radius and a non-negative bias");
+                        if (command.ambient_occlusion &&
+                            (!std::isfinite(command.color.z) || command.color.z < 0 || command.color.z > 1))
+                            throw std::invalid_argument("ambient occlusion intensity must be in [0, 1]");
                         if (command.shadow && (!command.overlay || command.overlay_depth_test ||
                                                command.overlay_independent_depth || command.texture))
                             throw std::invalid_argument("shadow requires a flat overlay without an image texture");
@@ -4252,7 +4255,7 @@ namespace easy3d {
                 std::unique_ptr<Ao> ao_;
                 bool ao_active_ = false;
                 mat4 ao_projection_ = mat4::identity();
-                float ao_radius_ = 0.5f, ao_bias_ = 0.005f;
+                float ao_radius_ = 0.5f, ao_bias_ = 0.005f, ao_intensity_ = 1.0f;
                 VkDescriptorSetLayout oit_scene_descriptors_ = VK_NULL_HANDLE;
                 VkDescriptorSetLayout oit_composite_descriptors_ = VK_NULL_HANDLE;
                 VkPipelineLayout oit_peel_layout_ = VK_NULL_HANDLE, oit_composite_layout_ = VK_NULL_HANDLE;
@@ -4575,6 +4578,7 @@ namespace easy3d {
                             ao_projection_ = command.projection;
                             ao_radius_ = command.color.x;
                             ao_bias_ = command.color.y;
+                            ao_intensity_ = command.color.z;
                             break;
                         }
                         if (ao_active_)
@@ -4585,7 +4589,7 @@ namespace easy3d {
                                      [this](RenderPass &pass) { create_pipelines(pass); });
                         if (ao_active_) {
                             ao_->update(samplers_[0], target_->depth.view, target_->depth_set, ao_projection_,
-                                        ao_radius_, ao_bias_);
+                                        ao_radius_, ao_bias_, ao_intensity_);
                         }
                     }
                     const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));

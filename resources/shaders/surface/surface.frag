@@ -34,9 +34,9 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
-// SSAO
-uniform sampler2D   ssaoTexture;
-uniform bool        ssaoEnabled = false;
+// AO
+uniform sampler2D   aoTexture;
+uniform bool        aoEnabled = false;
 
 uniform bool        lighting = true;
 // two sides
@@ -134,9 +134,9 @@ void main(void) {
             sf = pow(sf, shininess);
         }
 
-        if (ssaoEnabled) {
-            vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
-            float coeff = texture(ssaoTexture, texCoord).r;
+        if (aoEnabled) {
+            vec2 texCoord = gl_FragCoord.xy / textureSize(aoTexture, 0);
+            float coeff = texture(aoTexture, texCoord).r;
             outputF = vec4((color.xyz * df + specular * sf + ambient) * coeff, color.a);
         }
         else

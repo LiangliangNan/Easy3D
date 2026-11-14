@@ -158,8 +158,8 @@ namespace easy3d {
                 if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
                     d.coloring_method() != State::TEXTURED && d.coloring_method() != State::SCALAR_FIELD)
                     throw std::logic_error("unknown drawable coloring method");
-                if (d.color().w != 1 || d.is_ssao_enabled())
-                    throw std::logic_error("opacity and SSAO are not yet ported");
+                if (d.color().w != 1 || d.is_ao_enabled())
+                    throw std::logic_error("opacity and AO are not yet ported");
                 if (auto *p = dynamic_cast<PointsDrawable *>(&d)) {
                     if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE &&
                         p->impostor_type() != PointsDrawable::SURFEL)

@@ -68,26 +68,45 @@ namespace easy3d {
         virtual ~AmbientOcclusion();
 
         /**
-         * \brief Sets the sample radius (in view-space units, scaled by the scene radius). Typical value is in range [0, 4].
-         * \param r The sample radius
+         * \brief Sets the sample radius as a fraction of the scene bounding-sphere radius.
+         * \details The default is 0.045. Values in the range [0.02, 0.1] are typical: larger
+         *      values capture broader occlusion but blur out contact shadows, and values above
+         *      0.3 start to darken whole surfaces rather than creases and contacts.
+         * \param ratio The sample radius relative to the scene radius (must be positive)
          */
-        void  set_radius(float r) { radius_ = r; }
+        void  set_radius_ratio(float ratio) { radius_ratio_ = ratio; }
         /**
-         * \brief Returns the sample radius.
-         * \return The sample radius
+         * \brief Returns the sample radius as a fraction of the scene bounding-sphere radius.
+         * \return The sample radius relative to the scene radius
          */
-        float radius() const { return radius_; }
+        float radius_ratio() const { return radius_ratio_; }
 
         /**
-         * \brief Sets the bias. Default value is 0.005.
+         * \brief Sets the depth bias (in view-space units). Default value is 0.005.
+         * \details The bias is the smallest elevation above the tangent plane that still counts
+         *      as an occluder. It suppresses self-occlusion of nearly coplanar samples and should
+         *      be small compared with the world-space radius (radius_ratio() times the scene radius).
          * \param b The bias value
          */
         void  set_bias(float b) { bias_ = b; }
         /**
-         * \brief Returns the bias.
+         * \brief Returns the depth bias.
          * \return The bias value
          */
         float bias() const { return bias_; }
+
+        /**
+         * \brief Sets the strength of the darkening, in [0, 1]. Default value is 1.
+         * \details The strength interpolates between no darkening (0) and the full occlusion
+         *      term (1). It scales the effect without changing the sampled neighborhood.
+         * \param s The strength
+         */
+        void  set_intensity(float s) { intensity_ = s; }
+        /**
+         * \brief Returns the strength of the darkening.
+         * \return The strength value
+         */
+        float intensity() const { return intensity_; }
 
         /**
          * \brief Begins the ambient occlusion rendering process. In Vulkan the models are not
@@ -103,20 +122,23 @@ namespace easy3d {
         /**
          * \brief Returns the frame parameters published by begin() for the registered camera.
          * \param camera The camera whose frame parameters are requested.
-         * \param radius Receives the sample radius (already scaled by the scene radius).
+         * \param radius_ratio Receives the sample radius as a fraction of the scene bounding-sphere radius.
          * \param bias Receives the bias value.
+         * \param intensity Receives the strength of the darkening.
          * \param projection Receives the camera projection matrix.
          * \return True if parameters were published for the camera; false otherwise.
          */
-        static bool frame_params(const Camera* camera, float& radius, float& bias, mat4& projection);
+        static bool frame_params(const Camera* camera, float& radius_ratio, float& bias, float& intensity,
+                                 mat4& projection);
 
     protected:
         // The camera whose scene is shaded with ambient occlusion.
         Camera* camera_;
 
-        // Effect parameters: sample radius (scaled by the scene radius) and depth bias.
-        float	radius_;
+        // Effect parameters: sample radius relative to the scene radius, depth bias, strength.
+        float	radius_ratio_;
         float	bias_;
+        float	intensity_;
 
     private:
         //copying disabled
@@ -156,26 +178,45 @@ namespace easy3d {
         virtual ~AmbientOcclusion();
 
         /**
-         * \brief Sets the sample radius (in view-space units, scaled by the scene radius). Typical value is in range [0, 4].
-         * \param r The sample radius
+         * \brief Sets the sample radius as a fraction of the scene bounding-sphere radius.
+         * \details The default is 0.045. Values in the range [0.02, 0.1] are typical: larger
+         *      values capture broader occlusion but blur out contact shadows, and values above
+         *      0.3 start to darken whole surfaces rather than creases and contacts.
+         * \param ratio The sample radius relative to the scene radius (must be positive)
          */
-        void  set_radius(float r) { radius_ = r; }
+        void  set_radius_ratio(float ratio) { radius_ratio_ = ratio; }
         /**
-         * \brief Returns the sample radius.
-         * \return The sample radius
+         * \brief Returns the sample radius as a fraction of the scene bounding-sphere radius.
+         * \return The sample radius relative to the scene radius
          */
-        float radius() const { return radius_; }
+        float radius_ratio() const { return radius_ratio_; }
 
         /**
-         * \brief Sets the bias. Default value is 0.005.
+         * \brief Sets the depth bias (in view-space units). Default value is 0.005.
+         * \details The bias is the smallest elevation above the tangent plane that still counts
+         *      as an occluder. It suppresses self-occlusion of nearly coplanar samples and should
+         *      be small compared with the world-space radius (radius_ratio() times the scene radius).
          * \param b The bias value
          */
         void  set_bias(float b) { bias_ = b; }
         /**
-         * \brief Returns the bias.
+         * \brief Returns the depth bias.
          * \return The bias value
          */
         float bias() const { return bias_; }
+
+        /**
+         * \brief Sets the strength of the darkening, in [0, 1]. Default value is 1.
+         * \details The strength interpolates between no darkening (0) and the full occlusion
+         *      term (1). It scales the effect without changing the sampled neighborhood.
+         * \param s The strength
+         */
+        void  set_intensity(float s) { intensity_ = s; }
+        /**
+         * \brief Returns the strength of the darkening.
+         * \return The strength value
+         */
+        float intensity() const { return intensity_; }
 
         /**
          * \brief Begins the ambient occlusion rendering process. Subsequent drawing targets an
@@ -201,27 +242,27 @@ namespace easy3d {
          * \brief Returns the generated ambient occlusion texture ID
          * \return The ambient occlusion texture ID
          */
-        unsigned int ssao_texture() const;
+        unsigned int ao_texture() const;
 
     protected:
         /**
          * \brief Initializes the ambient occlusion with the given width and height
          * \details Creates/resizes the projection FBO (color + depth texture) and the
-         *      SSAO FBO (two R32F textures for the raw and blurred occlusion term).
+         *      AO FBO (two R32F textures for the raw and blurred occlusion term).
          * \param w The width
          * \param h The height
          */
         void init(int w, int h);
         /**
-         * \brief Performs the SSAO pass
-         * \details Runs the horizon-based ssao/ssao shader on a full-screen quad, reading the
-         *      projection depth, and writes the raw occlusion term to the first SSAO attachment.
+         * \brief Performs the AO pass
+         * \details Runs the horizon-based ao/ao shader on a full-screen quad, reading the
+         *      projection depth, and writes the raw occlusion term to the first AO attachment.
          */
-        void ssao_pass();
+        void ao_pass();
         /**
          * \brief Performs the blur pass
-         * \details Filters the raw occlusion texture with the depth-aware ssao/blur shader
-         *      into the second SSAO color attachment.
+         * \details Filters the raw occlusion texture with the depth-aware ao/blur shader
+         *      into the second AO color attachment.
          */
         void blur_pass();
         /**
@@ -234,13 +275,14 @@ namespace easy3d {
         // The camera whose scene is shaded with ambient occlusion.
         Camera* camera_;
 
-        // Effect parameters: sample radius (scaled by the scene radius) and depth bias.
-        float	radius_;
+        // Effect parameters: sample radius relative to the scene radius, depth bias, strength.
+        float	radius_ratio_;
         float	bias_;
+        float	intensity_;
 
         // Offscreen render targets.
         FramebufferObject*	projection_fbo_; ///< The framebuffer object for the projected scene
-        FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
+        FramebufferObject*	ao_fbo_;  ///< The framebuffer object for AO pass
 
         int width_;     ///< The projection buffer width
         int height_;    ///< The projection buffer height

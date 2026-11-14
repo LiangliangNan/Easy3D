@@ -520,10 +520,12 @@ graphics::DrawCommand draw_eye_dome_lighting(unsigned width,unsigned height,
     return result;
 }
 graphics::DrawCommand draw_ambient_occlusion(unsigned width,unsigned height,
-                                             float radius,float bias,const mat4& projection) {
+                                             float radius,float bias,float intensity,const mat4& projection) {
     if (!width || !height || !std::isfinite(radius) || radius <= 0 ||
         !std::isfinite(bias) || bias < 0)
         throw std::invalid_argument("ambient occlusion requires positive dimensions, a positive radius and a non-negative bias");
+    if (!std::isfinite(intensity) || intensity < 0 || intensity > 1)
+        throw std::invalid_argument("ambient occlusion intensity must be in [0, 1]");
     for (unsigned col=0;col<4;++col)
         for (unsigned row=0;row<4;++row)
             if (!std::isfinite(projection(row,col)))
@@ -535,7 +537,7 @@ graphics::DrawCommand draw_ambient_occlusion(unsigned width,unsigned height,
     for (unsigned i=0;i<4;++i) {vertices[i].position=points[i];vertices[i].texcoord=uv[i];}
     graphics::DrawCommand result;
     result.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
-    result.color=vec4(radius,bias,0,1);
+    result.color=vec4(radius,bias,intensity,1);
     result.projection=projection;
     result.overlay=result.ambient_occlusion=true;
     result.model_view_projection=graphics::screen_space_projection(width,height);

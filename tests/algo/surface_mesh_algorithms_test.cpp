@@ -34,6 +34,7 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
+#include <easy3d/algo/surface_mesh_ambient_occlusion.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_fairing.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
@@ -767,10 +768,78 @@ bool test_surface_mesh_slice() {
 
 
 
+bool test_algo_surface_mesh_ambient_occlusion() {
+    // A floor at z=0 (x in [-10, -0.05]) and a tall wall at x=0. A floor vertex
+    // next to the wall sees half of its hemisphere blocked (AO ~ 0.5); a floor
+    // vertex farther from the wall than the search radius sees the open sky
+    // (AO = 1). The 200-wide wall keeps the side edges out of the kernel.
+    // The vertices sit 0.05 from the wall, a hundredth of the search radius,
+    // so the truncated kernel still covers essentially the full half-hemisphere.
+    SurfaceMesh mesh;
+    auto add_quad = [&mesh](const vec3 &a, const vec3 &b, const vec3 &c, const vec3 &d) {
+        const auto v0 = mesh.add_vertex(a), v1 = mesh.add_vertex(b);
+        const auto v2 = mesh.add_vertex(c), v3 = mesh.add_vertex(d);
+        mesh.add_triangle(v0, v1, v2);
+        mesh.add_triangle(v0, v2, v3);
+    };
+    add_quad(vec3(-10, -10, 0), vec3(-0.05f, -10, 0), vec3(-0.05f, 10, 0), vec3(-10, 10, 0));
+    add_quad(vec3(0, -100, 0), vec3(0, -100, 10), vec3(0, 100, 10), vec3(0, 100, 0));
+
+    SurfaceMeshAmbientOcclusion::Parameters parameters;
+    parameters.radius_ratio = 0.05f; // bounding-sphere radius ~100 -> radius ~5
+    parameters.sample_count = 1024;
+    parameters.thread_count = 1;
+    auto ao = SurfaceMeshAmbientOcclusion::bake(&mesh, parameters);
+    test::require(ao, "the bake did not produce a valid occlusion property");
+
+    std::vector<std::pair<int, float> > first;
+    for (auto v : mesh.vertices()) {
+        const vec3 p = mesh.points()[v.idx()];
+        if (p.z != 0 || p.x == 0) // keep the floor vertices only
+            continue;
+        if (p.x == -0.05f)
+            test::require(std::abs(ao[v] - 0.5f) < 0.03f,
+                          "a vertex next to a blocking wall was not occluded by about half");
+        else if (p.x == -10.0f)
+            test::require(ao[v] > 0.999f, "a vertex beyond the search radius was occluded");
+        first.emplace_back(v.idx(), ao[v]);
+    }
+    test::require(!first.empty(), "the test mesh has no floor vertices");
+
+    // The bake is deterministic and does not depend on the thread count.
+    parameters.thread_count = 4;
+    auto ao_parallel = SurfaceMeshAmbientOcclusion::bake(&mesh, parameters);
+    for (const auto &value : first)
+        test::require(ao_parallel[SurfaceMesh::Vertex(value.first)] == value.second,
+                      "the bake is not deterministic");
+
+    // colorize() writes albedo * occlusion into "v:color".
+    SurfaceMeshAmbientOcclusion::colorize(&mesh, ao_parallel, vec3(0.5f, 0.25f, 1.0f));
+    auto colors = mesh.get_vertex_property<vec3>("v:color");
+    test::require(colors, "colorize() did not create the vertex colors");
+    for (auto v : mesh.vertices()) {
+        const vec3 expected = vec3(0.5f, 0.25f, 1.0f) * ao_parallel[v];
+        test::require(length(colors[v] - expected) < 1e-6f, "colorize() wrote a wrong color");
+    }
+
+    // A non-triangle mesh is rejected.
+    SurfaceMesh quad;
+    const auto q0 = quad.add_vertex(vec3(0, 0, 0)), q1 = quad.add_vertex(vec3(1, 0, 0));
+    const auto q2 = quad.add_vertex(vec3(1, 1, 0)), q3 = quad.add_vertex(vec3(0, 1, 0));
+    quad.add_face({q0, q1, q2, q3});
+    bool rejected = false;
+    try { SurfaceMeshAmbientOcclusion::bake(&quad); }
+    catch (const std::invalid_argument &) { rejected = true; }
+    test::require(rejected, "a non-triangle mesh was accepted");
+    return true;
+}
+
+
 int main(int argc,char** argv) { return test::run("surface_mesh algorithms",[&] {
     test::require(argc==2,"expected a registered algorithm case");
     const std::map<std::string,std::function<bool()>> cases{
         {"test_algo_surface_mesh_components",test_algo_surface_mesh_components},
+        {"test_algo_surface_mesh_ambient_occlusion",test_algo_surface_mesh_ambient_occlusion},
         {"test_algo_surface_mesh_topology",test_algo_surface_mesh_topology},
         {"test_algo_surface_mesh_curvature",test_algo_surface_mesh_curvature},
         {"test_algo_surface_mesh_enumerator",test_algo_surface_mesh_enumerator},

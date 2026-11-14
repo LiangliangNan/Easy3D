@@ -115,7 +115,7 @@ namespace easy3d {
      *      An opaque pass may have been performed right after the initialization.
      *
      *      Optimization tips:
-     *          Rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same geometry pass.
+     *          Rendering with multi-effects (e.g., shadowing, AO) can benefit from sharing the same geometry pass.
      *
      *      Example usage:
      *          \code

@@ -35,14 +35,19 @@
 in vec2 TexCoords;
 
 uniform sampler2D scene_depth;
-uniform sampler2D ssaoInput;
+uniform sampler2D aoInput;
 uniform mat4 invPROJ;
 
 uniform float radius;
+uniform float intensity;
 
 out float FragColor;
 
-const int RADIUS = 2;
+// A 4x4 grid covers about four pixels of neighborhood with sixteen taps, which
+// is enough to remove the residual slice rotation of the GTAO pass without
+// blurring across creases.
+const int TAPS = 4;
+const float SPATIAL_SIGMA = 2.0;
 
 vec3 view_position(vec2 coord, float depth) {
     vec4 p = invPROJ * vec4(coord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
@@ -86,9 +91,11 @@ void main() {
 
     float plane_tolerance = 0.05 * radius;
     float sum = 0.0, weight = 0.0;
-    for (int y = -RADIUS; y <= RADIUS; ++y) {
-        for (int x = -RADIUS; x <= RADIUS; ++x) {
-            vec2 coord = TexCoords + vec2(x, y) * texel;
+    for (int y = 0; y < TAPS; ++y) {
+        for (int x = 0; x < TAPS; ++x) {
+            // Grid points spaced 1.5 pixels apart, covering +-2.25 pixels.
+            vec2 offset = (vec2(x, y) + 0.5 - 0.5 * float(TAPS)) * 1.5;
+            vec2 coord = TexCoords + offset * texel;
             if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0)
                 continue;
             float neighbor_depth = texture(scene_depth, coord).r;
@@ -96,11 +103,14 @@ void main() {
                 continue; // background
             vec3 neighbor = view_position(coord, neighbor_depth);
             float plane = exp(-abs(dot(neighbor - center, normal)) / plane_tolerance);
-            float w = exp(-float(x * x + y * y) / 8.0) * plane;
-            sum += texture(ssaoInput, coord).r * w;
+            float w = exp(-dot(offset, offset) / (SPATIAL_SIGMA * SPATIAL_SIGMA)) * plane;
+            sum += texture(aoInput, coord).r * w;
             weight += w;
         }
     }
 
-    FragColor = weight > 0.0 ? sum / weight : 1.0;
+    float ao = weight > 0.0 ? sum / weight : 1.0;
+    // The strength scales the darkening, not the occluded fraction, so 0 leaves
+    // the surface untouched and 1 applies the full AO term.
+    FragColor = clamp(mix(1.0, ao, intensity), 0.0, 1.0);
 }

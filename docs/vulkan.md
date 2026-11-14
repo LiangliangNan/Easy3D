@@ -837,7 +837,7 @@ of this document.
   were removed with the tutorials in batch 42). U5 tutorial cleanup is effectively complete
   (remaining conditionals mirror the base constructor options type or warn about macOS GL
   limits); U5/U6 residue is deliberate tutorial behavior choices.
-- **W10** Mapple, remaining Python API/tutorial coverage, shadows parity (the Qt/wx tutorials were removed in batch 42). Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. W10's actionable remainder was resolved by design decision on 2026-11-08: Mapple stays OpenGL-only and untouched (a deliberate exception; see the migration goal), and Python is core-only — the backend-neutral `Viewer`/`MultiViewer`/`OffScreen` and drawable/renderer surface is complete and validated on both backends, while the stale auto-generated `python/bindings/unused/` tree (old SSAO `generate()→GL texture`, `screen_to_opengl()`, GL-only internals) is deliberately removed with no revival. The Qt/wx tutorials were removed in batch 42.
+- **W10** Mapple, remaining Python API/tutorial coverage, shadows parity (the Qt/wx tutorials were removed in batch 42). Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Batch 29 simplifies that path: the offscreen frame state moved out of `viewer.h` into `Viewer::Impl` behind a single private `snapshot_frame()` hook, file snapshots now exclude the Viewer HUD (logo, hint, frame rate, corner axes) exactly as the OpenGL snapshot does, and the public `snapshot()`/`render()` background defaults to the current viewer color (0) instead of white (1) on both backends, so a default Tutorial 502 snapshot no longer shows the pale shadow receiver against a white clear. W10's actionable remainder was resolved by design decision on 2026-11-08: Mapple stays OpenGL-only and untouched (a deliberate exception; see the migration goal), and Python is core-only — the backend-neutral `Viewer`/`MultiViewer`/`OffScreen` and drawable/renderer surface is complete and validated on both backends, while the stale auto-generated `python/bindings/unused/` tree (old AO `generate()→GL texture`, `screen_to_opengl()`, GL-only internals) is deliberately removed with no revival. The Qt/wx tutorials were removed in batch 42.
 
 U1–U4 are complete. U5 and the independent U6 source/build cleanup are effectively complete
 (batch 39 closes the file responsibility audit); the residue is deliberate tutorial behavior
@@ -4361,7 +4361,7 @@ aliases, backend-specific host filenames or new selection macros.
 
 | Existing classes/files | OpenGL | Vulkan |
 | --- | --- | --- |
-| `AmbientOcclusion` | Depth-only horizon-based GTAO fragment pass and normal-aware blur; a standalone `generate()` still draws the models into the projection buffer (batch 24) | Single-sample depth+ID prepass, GTAO and denoise compute dispatches, AO-texture composite overlay; `begin()/end()` publishes camera-keyed radius/bias/projection (batches 15, 24) |
+| `AmbientOcclusion` | Depth-only horizon-based GTAO fragment pass and normal-aware blur; a standalone `generate()` still draws the models into the projection buffer (batches 24, 78) | Single-sample depth+ID prepass, GTAO and denoise compute dispatches, AO-texture composite overlay; `begin()/end()` publishes camera-keyed radius/bias/intensity/projection (batches 15, 24, 78) |
 | `EyeDomeLighting` | Original implementation | Depth-based multiplicative overlay; camera-keyed near/far/scene size (batch 14) |
 | `Shadow`, `SoftShadow` | Original implementations | Depth-only light-space shadow map plus a PCSS full-screen overlay; `begin()/end()` publishes camera-keyed surfaces and frame parameters (batch 16) |
 | `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw straight-alpha triangles sorted far-to-near per drawable and per triangle (batch 18); true accumulation/peeling pending |
@@ -5728,7 +5728,7 @@ tutorial. All 121 MoltenVK tests and all 90 OpenGL tests pass on this Mac
 validation. The U3 table entry that lists `EyeDomeLighting` without a Vulkan
 counterpart is superseded by this batch.
 
-### 2026-11-05 — W10 batch 15: depth-based SSAO and Tutorial 501
+### 2026-11-05 — W10 batch 15: depth-based AO and Tutorial 501
 
 `DrawCommand` has an `ambient_occlusion` overlay flag. Like EDL, such a command
 must be a flat overlay (no scene-depth testing, independent depth or image
@@ -5736,7 +5736,7 @@ texture) and travel with a full-screen quad using the depth-texture UV
 convention. Its color carries `(view-space radius, bias)` and `projection` is the
 scene's OpenGL-convention camera projection; `Push` is unchanged.
 
-The Vulkan effect is depth-only: the new `ssao.frag` reconstructs view positions
+The Vulkan effect is depth-only: the new `ao.frag` reconstructs view positions
 from this frame's center-sample scene depth and derives view-space normals with
 screen-space derivatives, so no second scene or G-buffer pass is needed. It
 builds a tangent frame per pixel and probes a 16-sample cosine-weighted
@@ -5757,12 +5757,12 @@ entry. `Viewer::draw()` reads the active parameters and prepends the AO command
 to the frame, so the legacy `begin(); draw(); end();` pattern works unchanged and
 AO composes with EDL in one frame without shading ordinary overlays.
 
-On OpenGL the original geometry/SSAO/blur algorithm is kept. `begin()` sizes the
+On OpenGL the original geometry/AO/blur algorithm is kept. `begin()` sizes the
 existing offscreen targets from the current viewport, runs the geometry pass and
-binds a projection target for `Viewer::draw()`; `end()` runs SSAO and the blur,
+binds a projection target for `Viewer::draw()`; `end()` runs AO and the blur,
 then composes the scene color with the blurred AO factor through the existing
 `edl/edl_compose` multiply shader, restoring depth/blend state and the
-previously bound framebuffer. The tutorial's SSAO debug preview is dropped, and
+previously bound framebuffer. The tutorial's AO debug preview is dropped, and
 AO now also applies to annotations drawn inside `Viewer::draw()`.
 `Tutorial_501_AmbientOcclusion` calls `Viewer::draw()` between `begin()` and
 `end()` on both backends and is enabled in both tutorial builds and native smoke
@@ -6080,8 +6080,8 @@ using straight-alpha blending. The blurred image returns to
 back to `GENERAL` before the compute dispatches; validation is clean with the
 AO test.
 
-On OpenGL `ssao/ssao.frag` performs the same slices from the depth texture of
-the projection buffer and `ssao/blur.frag` applies the same bilateral filter to
+On OpenGL `ao/ao.frag` performs the same slices from the depth texture of
+the projection buffer and `ao/blur.frag` applies the same bilateral filter to
 the same reconstructed positions and normals, so the two backends agree without
 kernel or noise textures. The extra geometry pass and the two RGB32F
 position/normal targets are gone: one depth fetch replaces the ~24 bytes of
@@ -6183,7 +6183,7 @@ standalone drawables. All 91 OpenGL tests and all 127 MoltenVK tests pass at
 
 Apple's driver logs `GLD_TEXTURE_INDEX_2D is unloadable ... using zero texture`
 whenever a shader has an active `sampler2D` whose unit holds no complete
-texture, even if the uniform's branch (`use_texture`, `ssaoEnabled`) is
+texture, even if the uniform's branch (`use_texture`, `aoEnabled`) is
 disabled. Commit 4133d9f2 silenced this at the three affected call sites (the
 surface-shader draw, the Mapple corner axes, the checker-sphere widget), which
 meant every new use of such a shader needed the same boilerplate.
@@ -6476,7 +6476,7 @@ while the Vulkan snapshot of the same scene was continuous. The cause was the
 OpenGL snapshot's tiling: an output larger than the window was rendered as a grid
 of window-sized tiles, each with its own shifted sub-frustum and its own cropped
 depth buffer. Ambient occlusion reconstructs positions and normals from that depth
-and marches horizon slices across it; `ssao.frag`'s `horizon_sine()` returns zero
+and marches horizon slices across it; `ao.frag`'s `horizon_sine()` returns zero
 for samples outside `[0,1]`, so a pixel near a tile border cannot see the geometry
 in the neighboring tile and its occlusion drops, drawing a seam along every tile
 edge. Vulkan never had the artifact because it renders the whole image in one
@@ -6496,7 +6496,7 @@ offscreen FBO whenever the output fits the GL limits, matching Vulkan:
   window size. The whole-image path therefore saves the current `GL_VIEWPORT`,
   sets `glViewport(0, 0, sub_w, sub_h)` after binding the tile, and restores the
   saved viewport in cleanup. The AO FBOs size themselves from the viewport, so they
-  now match the full image and the effect is continuous. `ssao.frag` derives its
+  now match the full image and the effect is continuous. `ao.frag` derives its
   texel size from `textureSize(scene_depth, 0)`, so it is self-consistent at any FBO
   size and needed no shader change.
 
@@ -7576,7 +7576,7 @@ into the base class's Vulkan frame data.
 
 **`renderer/ambient_occlusion.h`, `eye_dome_lighting.h`, `transparency.h`, `dual_depth_peeling.h`,
 `per_pixel_linked_lists_oit.h`, `average_color_blending.h`.** Functions grouped before data in every
-class; each pass (`ssao_pass`/`blur_pass`/`compose`, EDL `shade_high`/`shade_low`/`blur_low`/`compose`,
+class; each pass (`ao_pass`/`blur_pass`/`compose`, EDL `shade_high`/`shade_low`/`blur_low`/`compose`,
 DDP `init_depth_buffers`/`peel`/`blend_final_image`/occlusion-query helpers, PPLL `build_lists`/
 `resolve`) gained a how-it-works note, and cached resources are labelled. In `dual_depth_peeling.h`
 one pass had widened the peeling state from `private` to `protected`; that was restored to `private`
@@ -9663,3 +9663,70 @@ the next run is the proof that the removal changed only what gets downloaded. Th
 `find_package(Vulkan)` - the backend travels as `Easy3D_ENABLE_VULKAN` in the installed config
 (`cmake/Easy3DConfig.cmake.in:59`), and the consumer branches on it - so the flag only produced
 CMake's unused-variable warning in the OpenGL job's consumer build, which correctly has two targets.
+
+### 2026-11-14 — batch 78: GTAO quality pass and a baked ambient occlusion
+
+**Scope.** The horizon-based GTAO that batch 24 introduced was structurally right but its sampling
+was too sparse for publication figures: eight slices of eight steps left an unsampled disc around
+the center pixel (concentric rings on flat surfaces), a white-noise hash rotated the slices
+per pixel (high-frequency grain that reads as hatching), the 5x5 box denoise could not remove
+either, and the radius default (0.5 scene radii) was about an order of magnitude larger than
+contact occlusion needs.
+Both backends now use 12 slices x 12 steps with the screen-space step stride clamped to a
+1.5-pixel minimum (`stride = max(1.5, distance / 12)`, stopping once the offset exceeds the
+projected radius), interleaved gradient noise (Jimenez 2014) for the slice rotation, and a 4x4
+depth/normal-aware bilateral denoise (16 taps at 1.5-pixel spacing, spatial sigma 2, a 0.05-radius
+plane tolerance) in place of the box. `resources/shaders/ao/{ao,blur}.frag` and
+`resources/shaders/vulkan/{ao_gtao,ao_blur}.comp` carry the same algorithm; the OpenGL pass now
+also skips slices whose projected endpoint is behind the camera, matching the Vulkan guard.
+
+**API.** The radius is exposed as a scene-radius fraction: `set_radius_ratio()`/`radius_ratio()`
+(default 0.045, replacing the world-space `set_radius()`), so a fixed ratio keeps the same
+visual size across scene scales. A new `set_intensity()` (0-1, default 1) scales darkening, not
+the occluded fraction, in the blur output on both backends. `frame_params()` publishes the
+radius ratio, bias, intensity and projection under the same names as the class API, and the
+viewer resolves the ratio against the scene radius before the AO command carries
+`(radius, bias, intensity, 1)` in its `color` slot (width/height are gone); `shape[3]` is now
+unused, and `shape::draw_ambient_occlusion()` validates the intensity range. Mapple's GTAO
+panel binds the radius and intensity sliders and hides the sharpness control, which GTAO does
+not have (the setting remains for file compatibility).
+
+The effect is now named `ao` throughout (the former `ssao` spelling): the public `State` API
+(`enable_ao()`, `is_ao_enabled()`, `set_ao_texture()`) and its Python bindings, the
+`AmbientOcclusion` internals (`ao_pass()`, `ao_texture()`, `ao_fbo_`), the shader directory
+`resources/shaders/ao/` and the `aoEnabled`/`aoTexture`/`aoInput` uniforms, the Vulkan overlay
+shader `ao.frag` and its pipeline, the `effect_ao_radius_ratio`/`effect_ao_intensity`/
+`effect_ao_bias` settings (the radius setting also gained the `_ratio` suffix and documentation
+in the class's terms), and Mapple's `enableAo()`/`ao()` and AO widget names. Existing `.ini`
+files still carry the old keys, so the loader warns and those effects fall back to the defaults.
+
+**Baked alternative.** `easy3d/algo/surface_mesh_ambient_occlusion.{h,cpp}` adds a view-independent
+bake for figures: it builds an Opcode AABB tree (`RayCollider`, two-sided, closest hit, max
+distance = the search radius), casts cosine-weighted hemisphere rays per vertex from a
+Van der Corput sample set rotated by a per-vertex hash, and stores the escaping fraction in the
+float vertex property "v:ao"; `colorize()` maps it to "v:color". The ray sequence of a vertex
+depends only on its index, so the result is identical for any thread count; degenerate triangles
+are skipped, and a non-triangle or empty mesh is rejected with `std::invalid_argument`. Tutorial
+501 gains 'b' to toggle the bake against the screen-space effect, and its docs now describe both
+implementations.
+
+**Validation.** 2026-11-14, macOS. Vulkan `cmake-build-debug` 151/151 serial; two window tests
+flaked once on the loaded machine (`vulkan.imgui` failed to open its File menu after 1.94 s and
+`vulkan.portableselection` timed out) and both passed on an idle rerun (5.47 s and 0.56 s), so the
+suite is green at the final source. OpenGL `build-opengl-check` 111/111 serial (63 s). The focused
+checks: `vulkan.ambientocclusion` still verifies the frame-parameter contract, adds intensity 1.5
+to the rejected values, and bounds the per-pixel step across a flat shaded surface to 0.08;
+`algo.surface_mesh_ambient_occlusion` (new) checks a floor vertex one hundredth of a radius from
+a wall against the analytic half-hemisphere value (AO ~0.5 within 0.03), a vertex beyond the
+radius at 1.0, exact equality across 1- and 4-thread bakes, `colorize()` = albedo x AO, and the
+non-triangle rejection; `vulkan.tutorial501`/`opengl.tutorial501` and both backends'
+`snapshoteffects` pass. Visually, offscreen snapshots of a room-and-sphere scene were compared with
+AO on and off and with the baked result: the corner and contact darkening is smooth and shows no
+rings, hatching or spokes at the defaults, and the bake matches it without view dependence.
+The `ao` rename was re-validated afterwards: both serial suites are green again (Vulkan 151/151,
+OpenGL 111/111), and Mapple's release tree (`cmake-build-release`, Qt on, Vulkan off) builds,
+which covers the renamed `.ui` widgets and slots. `easy3d/util/version.h` is unchanged.
+
+**What this leaves.** Mapple still builds on the OpenGL backend only, as decided in W10; the bake is
+not exposed in the Python bindings or Mapple UI yet, and it is not wired into the tutorial's
+offline figure export. Both are follow-ups, not regressions.

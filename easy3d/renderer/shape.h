@@ -392,11 +392,13 @@ graphics::DrawCommand draw_depth_texture(const Rect& rect, unsigned width, unsig
 graphics::DrawCommand draw_eye_dome_lighting(unsigned width, unsigned height,
                                              float z_near, float z_far, float scene_size);
 // Full-screen ambient-occlusion pass over this frame's scene depth. The radius is
-// in view-space units, and projection is the scene's OpenGL-convention camera
-// projection. The returned overlay darkens occluded surfaces and precedes ordinary
-// flat overlays so it does not shade them.
+// in view-space units, projection is the scene's OpenGL-convention camera
+// projection, and intensity scales the darkening from 0 (off) to 1 (full). The
+// returned overlay darkens occluded surfaces and precedes ordinary flat overlays
+// so it does not shade them.
 graphics::DrawCommand draw_ambient_occlusion(unsigned width, unsigned height,
-                                             float radius, float bias, const mat4& projection);
+                                             float radius, float bias, float intensity,
+                                             const mat4& projection);
 // Full-screen shadow pass over this frame's scene depth and shadow map. The matrix
 // maps camera clip space to shadow texture coordinates; the returned overlay
 // multiplies surfaces by visibility and precedes ordinary flat overlays.

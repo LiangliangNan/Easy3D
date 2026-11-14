@@ -49,24 +49,35 @@
  * blocks part of the incoming hemisphere, so it receives less light and should look darker;
  * a point on an exposed convex region receives almost full ambient light. Darkening occluded
  * regions gives a strong cue of shape, depth, and contact — even with no explicit light source.
- * Easy3D computes this in screen space (a GTAO-style pass): the scene depth is rendered first,
- * then a post-process samples the neighborhood of each pixel in the depth buffer to estimate
- * how much of the hemisphere is blocked, and multiplies the shaded color by the resulting
- * per-pixel occlusion factor. The "radius" parameter sets the world-space extent of that
- * neighborhood: a larger radius yields broader, softer occlusion; a smaller radius emphasizes
- * fine creases. See the AmbientOcclusion class for the implementation.
+ * Easy3D offers two complementary implementations.
+ *
+ * The first one is computed in screen space (a GTAO-style pass): the scene depth is rendered
+ * first, then a post-process samples the neighborhood of each pixel in the depth buffer to
+ * estimate how much of the hemisphere is blocked, and multiplies the shaded color by the
+ * resulting per-pixel occlusion factor. The "radius ratio" parameter sets the world-space
+ * extent of that neighborhood as a fraction of the scene radius: a larger ratio yields broader,
+ * softer occlusion; a smaller ratio emphasizes fine creases. See the AmbientOcclusion class.
+ *
+ * The second one is a per-vertex bake by hemisphere ray casting
+ * (SurfaceMeshAmbientOcclusion::bake()). It is view independent and deterministic, so the
+ * shading of a surface does not change while the camera moves, which is what figures in
+ * scientific publications need. Press 'b' to bake the current model once and display the
+ * occlusion through its vertex colors.
  *
  * <b>Easy3D API</b>
  * - Viewer: the interactive viewer; subclass it and override draw() (to insert the effect) and
  *   key_press_event() (to control it).
- * - AmbientOcclusion: the effect. begin()/end() bracket the scene render; radius()/set_radius()
- *   tune the sampling extent.
+ * - AmbientOcclusion: the screen-space effect. begin()/end() bracket the scene render;
+ *   radius_ratio()/set_radius_ratio() tune the sampling extent as a fraction of the scene radius.
+ * - SurfaceMeshAmbientOcclusion: the baked alternative. bake() casts hemisphere rays per vertex
+ *   and stores the occlusion in "v:ao"; colorize() turns it into vertex colors.
  * - DrawableTriangles: the surface drawable; set_uniform_coloring() assigns a constant material
  *   color so that the shading variation comes purely from the occlusion, not from texture.
  *
  * <b>Running it</b>
  * Press 'space' to toggle ambient occlusion on/off and compare the depth cues; press 'up'/'down'
- * to increase/decrease the occlusion radius (the current value is printed to the console).
+ * to increase/decrease the occlusion radius ratio (the current value is printed to the console);
+ * press 'b' to bake the occlusion into vertex colors and compare the view-independent result.
  *
  * The header file of the viewer class:
  * \include{lineno} Tutorial_501_AmbientOcclusion/viewer.h

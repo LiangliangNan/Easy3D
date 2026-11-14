@@ -1704,11 +1704,15 @@ namespace easy3d {
                                                          shadow.darkness, shadow.softness, shadow.light_near,
                                                          shadow.light_far, shadow.shadow_map_size));
         }
-        float radius, bias;
+        float radius_ratio, bias, intensity;
         mat4 projection;
-        if (AmbientOcclusion::frame_params(camera(), radius, bias, projection))
+        if (AmbientOcclusion::frame_params(camera(), radius_ratio, bias, intensity, projection)) {
+            // The AO pass samples in view-space units, so the scene-relative ratio
+            // is resolved against the scene bounding sphere here.
+            const float radius = std::max(camera()->scene_radius() * radius_ratio, 1e-4f);
             commands.insert(commands.begin(), graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height),
-                                                                                      radius, bias, projection));
+                                                                                      radius, bias, intensity, projection));
+        }
         float z_near, z_far, scene_size;
         if (EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
             commands.insert(commands.begin(), graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
@@ -2418,7 +2422,7 @@ namespace easy3d {
             ->set_uniform("smooth_shading", true)
             ->set_uniform("wLightPos", wLightPos)
             ->set_uniform("wCamPos", wCamPos)
-            ->set_uniform("ssaoEnabled", false)
+            ->set_uniform("aoEnabled", false)
             ->set_uniform("per_vertex_color", true)
             ->set_uniform("distinct_back_color", false)
             ->set_block_uniform("Material", "ambient", setting::material_ambient)

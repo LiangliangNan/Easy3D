@@ -47,10 +47,9 @@ namespace easy3d {
         float material_shininess = 64.0f;
 
         // effect
-        float effect_ssao_radius = 2.0f;
-        float effect_ssao_intensity = 1.5f;
-        float effect_ssao_bias = 0.1f;
-        float effect_ssao_sharpness = 40.0f;
+        float effect_ao_radius_ratio = 0.045f;
+        float effect_ao_intensity = 1.0f;
+        float effect_ao_bias = 0.01f;
         bool effect_edl_enabled = false;
         bool effect_transparency_enabled = false;
         bool effect_shadow_enabled = false;
@@ -208,10 +207,9 @@ namespace easy3d {
             ENCODE("global", material_shininess)    // specular power
 
             // effect
-            ENCODE("effect", effect_ssao_radius)
-            ENCODE("effect", effect_ssao_intensity)
-            ENCODE("effect", effect_ssao_bias)
-            ENCODE("effect", effect_ssao_sharpness)
+            ENCODE("effect", effect_ao_radius_ratio)
+            ENCODE("effect", effect_ao_intensity)
+            ENCODE("effect", effect_ao_bias)
             ENCODE("effect", effect_shadow_light_distance)
             ENCODE("effect", effect_shadow_softness)
             ENCODE("effect", effect_shadow_darkness)
@@ -325,10 +323,9 @@ namespace easy3d {
             DECODE("global", material_shininess)    // specular power
 
             // effect
-            DECODE("effect", effect_ssao_radius)
-            DECODE("effect", effect_ssao_intensity)
-            DECODE("effect", effect_ssao_bias)
-            DECODE("effect", effect_ssao_sharpness)
+            DECODE("effect", effect_ao_radius_ratio)
+            DECODE("effect", effect_ao_intensity)
+            DECODE("effect", effect_ao_bias)
             DECODE("effect", effect_shadow_light_distance)
             DECODE("effect", effect_shadow_softness)
             DECODE("effect", effect_shadow_darkness)

@@ -111,7 +111,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , picked_vertex_index_(-1)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
-        , ssao_(nullptr)
+        , ao_(nullptr)
 {
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::StrongFocus);
@@ -150,7 +150,7 @@ void PaintCanvas::cleanup() {
     delete walkThrough();
     delete drawable_axes_;
     delete drawable_manip_sphere_;
-    delete ssao_;
+    delete ao_;
     delete shadow_;
     delete transparency_;
     delete edl_;
@@ -1222,7 +1222,7 @@ void PaintCanvas::drawCornerAxes() {
     const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-    program->set_uniform("ssaoTexture", 0);
+    program->set_uniform("aoTexture", 0);
     program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the corner axes
             ->set_uniform("MANIP", mat4::identity())
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
@@ -1231,7 +1231,7 @@ void PaintCanvas::drawCornerAxes() {
             ->set_uniform("smooth_shading", true)
             ->set_uniform("wLightPos", wLightPos)
             ->set_uniform("wCamPos", wCamPos)
-            ->set_uniform("ssaoEnabled", false)
+            ->set_uniform("aoEnabled", false)
             ->set_uniform("per_vertex_color", true)
             ->set_uniform("distinct_back_color", false)
             ->set_block_uniform("Material", "ambient", setting::material_ambient)
@@ -1403,25 +1403,25 @@ void PaintCanvas::postDraw() {
 }
 
 
-void PaintCanvas::enableSsao(bool b) {
+void PaintCanvas::enableAo(bool b) {
     if (b) {
-        if (!ssao_)
-            ssao_ = new AmbientOcclusion(camera_);
+        if (!ao_)
+            ao_ = new AmbientOcclusion(camera_);
     }
     else {
-        delete ssao_;
-        ssao_ = nullptr;
+        delete ao_;
+        ao_ = nullptr;
     }
 
     for (const auto m : models_) {
         for (auto d : m->renderer()->lines_drawables()) {
-            d->enable_ssao(b);
+            d->enable_ao(b);
         }
         for (auto d : m->renderer()->points_drawables()) {
-            d->enable_ssao(b);
+            d->enable_ao(b);
         }
         for (auto d : m->renderer()->triangles_drawables()) {
-            d->enable_ssao(b);
+            d->enable_ao(b);
         }
     }
 }
@@ -1898,7 +1898,7 @@ void PaintCanvas::draw() {
         return;
 
     easy3d_debug_log_gl_error
-    // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
+    // Optimization tips: rendering with multi-effects (e.g., shadowing, AO)
     // can benefit from sharing the same geometry pass.
 
     std::vector<TrianglesDrawable *> surfaces;
@@ -1919,17 +1919,17 @@ void PaintCanvas::draw() {
         transparency()->draw(surfaces); easy3d_debug_log_gl_error
         return;
     }
-    else if (ssao()) {
-        auto ssao_texture = ssao()->generate(models());
+    else if (ao()) {
+        auto ao_texture = ao()->generate(models());
         for (const auto m : models_) {
             if (!m->renderer()->is_visible())
                 continue;
             for (auto d : m->renderer()->lines_drawables())
-                d->set_ssao_texture(ssao_texture);
+                d->set_ao_texture(ao_texture);
             for (auto d : m->renderer()->points_drawables())
-                d->set_ssao_texture(ssao_texture);
+                d->set_ao_texture(ao_texture);
             for (auto d : m->renderer()->triangles_drawables())
-                d->set_ssao_texture(ssao_texture);
+                d->set_ao_texture(ao_texture);
         }
     }
 

@@ -44,13 +44,21 @@ uniform float bias;
 
 out float FragColor;
 
-const int SLICE_COUNT = 8;
-const int STEP_COUNT = 8;
+// Twelve slices and twelve steps keep the estimate smooth at typical window
+// sizes; the step stride is clamped in screen space, so the effective number
+// of steps adapts to the projected size of the kernel.
+const int SLICE_COUNT = 12;
+const int STEP_COUNT = 12;
+// Consecutive samples stay at least this many pixels apart. Sampling the full
+// radius with a fixed number of steps leaves gaps near the center pixel, which
+// shows up as concentric rings.
+const float MIN_STEP_PIXELS = 1.5;
 
-float hash12(vec2 p) {
-    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-    p3 += dot(p3, p3.yzx + 33.33);
-    return fract((p3.x + p3.y) * p3.z);
+// Interleaved gradient noise (Jimenez 2014). Compared with a white-noise hash
+// its spectrum is low-frequency along diagonals, so the per-pixel rotation of
+// the slices is spread out evenly instead of appearing as high-frequency grain.
+float interleaved_gradient_noise(vec2 pixel) {
+    return fract(52.9829189 * fract(dot(pixel, vec2(0.06711056, 0.00583715))));
 }
 
 // View-space position from a depth sample.
@@ -86,10 +94,13 @@ vec3 surface_normal(vec2 coord, vec3 center, vec2 texel) {
     return dot(normal, center) > 0.0 ? -normal : normal; // face the camera
 }
 
-// Texture coordinates of a view-space position in this framebuffer.
-vec2 project(vec3 position) {
+// Texture coordinates of a view-space position in this framebuffer. Returns
+// false when the position is behind the camera, where the projection has no
+// meaningful screen position.
+bool project(vec3 position, out vec2 coord) {
     vec4 p = PROJ * vec4(position, 1.0);
-    return p.xy / p.w * 0.5 + 0.5;
+    coord = p.xy / p.w * 0.5 + 0.5;
+    return p.w > 0.0;
 }
 
 // Sine of the elevation of an occluder above the tangent plane, or zero when
@@ -132,23 +143,33 @@ void main() {
     tangent = normalize(tangent);
     vec3 bitangent = cross(normal, tangent);
 
-    float jitter = hash12(gl_FragCoord.xy);
-    vec2 center_uv = project(center);
+    float jitter = interleaved_gradient_noise(gl_FragCoord.xy);
+    vec2 center_uv;
+    if (!project(center, center_uv)) {
+        FragColor = 1.0;
+        return;
+    }
     float visibility = 0.0;
     for (int slice = 0; slice < SLICE_COUNT; ++slice) {
         float phi = (float(slice) + jitter) * (6.28318530718 / float(SLICE_COUNT));
         vec3 omega = tangent * cos(phi) + bitangent * sin(phi);
 
         // Screen-space extent of the half-slice: the radius projected along omega.
-        vec2 span = (project(center + omega * radius) - center_uv) * size;
+        vec2 edge_uv;
+        if (!project(center + omega * radius, edge_uv))
+            continue;
+        vec2 span = (edge_uv - center_uv) * size;
         float distance = length(span);
         if (distance < 1.0)
             continue;
         vec2 direction = span / distance / size;
 
+        float stride = max(MIN_STEP_PIXELS, distance / float(STEP_COUNT));
         float horizon_positive = 0.0, horizon_negative = 0.0;
         for (int step_index = 0; step_index < STEP_COUNT; ++step_index) {
-            float offset = distance * (float(step_index) + 0.5) / float(STEP_COUNT);
+            float offset = (float(step_index) + 0.5) * stride;
+            if (offset > distance)
+                break;
             horizon_positive = max(horizon_positive, horizon_sine(TexCoords + direction * offset, center, normal));
             horizon_negative = max(horizon_negative, horizon_sine(TexCoords - direction * offset, center, normal));
         }

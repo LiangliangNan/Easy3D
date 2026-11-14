@@ -234,7 +234,7 @@ void WidgetCheckerSphere::paintGL() {
 
     const mat4 lightManip = mat4::translation(lightPos_.xyz());
     program->bind();
-    program->set_uniform("ssaoTexture", 0);
+    program->set_uniform("aoTexture", 0);
     program->set_uniform("MVP_MANIP", MVP * lightManip)
             ->set_uniform("MANIP", lightManip)
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
@@ -244,7 +244,7 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("two_sides_lighting", false)
             ->set_uniform("distinct_back_color", false)
             ->set_uniform("smooth_shading", true)
-            ->set_uniform("ssaoEnabled", false)
+            ->set_uniform("aoEnabled", false)
             ->set_uniform("per_vertex_color", true)
             ->set_block_uniform("Material", "ambient", setting::material_ambient)
             ->set_block_uniform("Material", "specular", setting::material_specular)
