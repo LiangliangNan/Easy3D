@@ -200,20 +200,24 @@ int main(int argc,char**) {
         v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()!=pos,"focus loss left a held constraint active");
         v.mouse_release_event(20,50,Viewer::BUTTON_RIGHT,0);
-        if (clipboard_usable(v.window())) {
+        {
+            // Capture the clipboard before the probe writes its sentinel, so the RAII helper
+            // puts back what was there rather than leaving the sentinel behind.
             ClipboardRestore clipboard(v.window());
-            const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
-            v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
-            // Vulkan pastes immediately; OpenGL animates to the saved view over 0.5 s. Both
-            // must restore it, so drive frames until arrival rather than assuming one timing.
-            const auto paste_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
-            while ((v.camera()->position()-copied).norm()>=1e-5f && std::chrono::steady_clock::now()<paste_deadline) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
-                v.draw_frame();
+            if (clipboard_usable(v.window())) {
+                const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
+                v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+                // Vulkan pastes immediately; OpenGL animates to the saved view over 0.5 s. Both
+                // must restore it, so drive frames until arrival rather than assuming one timing.
+                const auto paste_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+                while ((v.camera()->position()-copied).norm()>=1e-5f && std::chrono::steady_clock::now()<paste_deadline) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                    v.draw_frame();
+                }
+                require((v.camera()->position()-copied).norm()<1e-5f,"clipboard camera roundtrip failed");
+                glfwSetClipboardString(v.window(),"bad camera"); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+                require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
             }
-            require((v.camera()->position()-copied).norm()<1e-5f,"clipboard camera roundtrip failed");
-            glfwSetClipboardString(v.window(),"bad camera"); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
-            require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
         }
         press(InputViewer::KEY_O,Viewer::MODIF_CTRL); press(InputViewer::KEY_S,Viewer::MODIF_CTRL); press(InputViewer::KEY_S);
         require(v.opened==1 && v.saved==1 && v.snapshots==1,"file shortcuts did not dispatch virtual hooks");

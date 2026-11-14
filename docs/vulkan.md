@@ -9222,8 +9222,9 @@ see the next entry.
 
 **`algo.point_cloud_normal_estimation` taking twelve to eighteen minutes: obsolete.** That figure belonged to the reference it
 used to run - Boost's graph over the kdtree - and not to the platform. Locally on 2026-11-14 the case measured 3.2 s in Release
-and 55.1 s in Debug against its 180 s timeout, so it is back in the macOS Vulkan and Windows Vulkan suites; the only remaining
-macOS exclusion is `vulkan.transparency`, which MoltenVK hangs on. Linux needed nothing: its two ctest invocations partition the
+and 55.1 s in Debug against its 180 s timeout, so it is back in the macOS Vulkan and Windows Vulkan suites. The only remaining
+macOS exclusion was `vulkan.transparency`, on the inherited note that MoltenVK hangs on it; that half of the note had never been
+measured on a runner, and the last entry of this file re-measures it. Linux needed nothing: its two ctest invocations partition the
 suite by the `desktop` label, so nothing is skipped there.
 
 **The installed package is now exercised on all three systems.** `cmake --install` plus configuring and building
@@ -9253,7 +9254,7 @@ run, since lavapipe has no Windows presentation backend.
 
 ### 2026-11-14 — run 13: the two probes answered, and the new steps found two workflow bugs
 
-**The run.** CI run 13 (`43612147450`, head `917abf00`) was the first execution of the wider workflow. Four of six jobs
+**The run.** CI run 13 (`43596232789`, head `917abf00`) was the first execution of the wider workflow. Four of six jobs
 passed; the two that did not were the entry's own probes and new steps giving an answer, plus one failure that turned out to
 belong to the runner rather than to Easy3D.
 
@@ -9382,3 +9383,62 @@ on the geometry bytes they can see, and nothing reachable is missing. The item i
 IMPOSSIBLE with that reasoning in `ToDo.md`; if a genuine memory report is ever wanted, build it as
 a device-level diagnostic (`VulkanDevice` totals, `GL_BUFFER_SIZE` on OpenGL), not a per-drawable
 statistic.
+
+### 2026-11-14 — run 14 closes both failures, and the three open measurements are made readable
+
+**The run.** CI run 14 (`43602568326`, head `25d3c604`) completed `success` with all six matrix jobs
+green, so each of run 13's two failures is closed by its own fix rather than by the absence of a
+repeat: `OPENGL (windows-2022)` got past the install step that had been refused by aiming at
+`C:\Program Files`, and `VULKAN (macos-15)` finished the suite that had ended 148/149 on the
+pasteboard. Two other run-13 claims were re-checked in the same job list rather than assumed: the
+Windows Vulkan `Test non-graphics suite` step carries no `continue-on-error`, so its `success`
+re-confirms that `algo.point_cloud_normal_estimation` holds inside its 180 s on a hosted Windows
+runner without anyone opening a log, and `Report Vulkan devices (Windows)` completed instead of
+exiting 127, which tells us the `cygpath` fix let `vulkaninfo` run - not yet what it printed.
+
+**What a green step can and cannot mean.** The probe answers were the remaining business, and run 14
+showed why they were unreadable: Actions job logs are 403 without a token, the public check-run
+annotations only carry `Process completed with exit code N` for a failing step, and a
+`continue-on-error` step reports conclusion `success` whether its command passed or failed - run 14's
+`Probe desktop OpenGL contexts (Windows)` is exactly such a step, and the word tells nothing. So each
+measurement step now states its own verdict as a workflow-command annotation, which appears in the
+public annotation list and in the job and PR UI: `::notice::` names the exclusion the workflow should
+drop, `::warning::` names the one that stays. All three bash blocks parse with `bash -n`, the file is
+valid YAML at 33 steps, and the device extraction was tested offline against a captured summary both
+with a device and without one:
+
+- Windows desktop OpenGL: the bounded `viewer.offscreen` probe prints its verdict around the existing
+  `ctest` call.
+- Windows Vulkan devices: `vulkaninfo --summary` is teed to `$RUNNER_TEMP/vulkaninfo-summary.txt`, the
+  `deviceName` fields are pulled out with `sed -n 's/.*deviceName *= *//p' | paste -sd, -`, and the
+  annotation lists them or reports that the runner exposes none. The ICD manifest listing stays in the
+  log for whoever can read it.
+- macOS linked-list OIT: a new non-blocking step, described next.
+
+**`vulkan.transparency` on MoltenVK: inherited claim, locally re-measured.** The macOS exclusion
+comment had recorded that MoltenVK "hangs" this test - a note that arrived with the archived
+workflow and was never measured on a runner. Locally on 2026-11-14 the test passes in well under a
+second, repeatedly, with `--validation` (0.3 s running the binary, 0.8 s through CTest): the device
+takes MoltenVK `driverInfo = 1.4.2` through loader 1.4.363 with `VK_LAYER_KHRONOS_validation`
+1.4.363, the same loader-and-layer generation the CI job installs from LunarG SDK 1.4.363.1. A hang
+was not reproduced here, so the sentence is no longer a reason for the exclusion; what is still open
+is whether the SDK's own MoltenVK build behaves the same, and that is the environment the inherited
+note described, so the workflow now asks it directly with `ctest -R '^vulkan\.transparency$'` under
+`continue-on-error` and a 5-minute ceiling (the test's own CTest property is 120 s, and the ceiling
+only keeps a hung loader from holding the job). Until that annotation says the test passed, the `-E`
+stays; when it does, the `-E` and the probe are both deleted. The 2026-11-14 audit entry above, which
+asserted the hang, now points here instead.
+
+**The clipboard probe clobbered the developer's pasteboard.** `clipboard_usable()` asserts a
+roundtrip of its own sentinel, so it writes and reads the system clipboard; `ClipboardRestore` puts
+back what it found. In the first version of the guard the probe ran before the guard was
+constructed, so on a runner whose pasteboard works the restore captured the sentinel and then pasted
+the sentinel back - the user's clipboard ends the test holding `__easy3d_clipboard_probe__` instead
+of what they copied. The scope now opens with the guard and the probe runs inside it. Verified on
+macOS, where the roundtrip is measurable: `pbcopy` of a distinctive string, `vulkan.input` passes in
+2.15 s (Debug, validation on, printing no skip notice, so the assertions really ran), and `pbpaste`
+afterwards returns the original string.
+
+**A wrong run id in the previous entry.** Run 13 was cited there as `43612147450`, which returns 404.
+The API maps `run_number` 13 to `43596232789` (head `917abf00`, conclusion `failure`, four of six
+jobs green), and that is the number the entry carries now.

@@ -276,36 +276,73 @@ jobs:
 
       # The same question on Windows, measured with one bounded case instead of the
       # whole desktop suite: viewer.offscreen carries a 120 s CTest timeout, so a
-      # runner without a GL driver fails fast rather than stalling the job. Drop
-      # continue-on-error and fold it into -L desktop if it ever turns green.
+      # runner without a GL driver fails fast rather than stalling the job. The verdict
+      # is posted as an annotation because a continue-on-error step always reads green
+      # in the job summary and the raw log needs a signed-in reader. Drop
+      # continue-on-error and fold it into -L desktop once the annotation says green.
       - name: Probe desktop OpenGL contexts (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
         continue-on-error: true
         shell: bash -l {0}
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -R '^viewer\.offscreen$'
+        run: |
+          if ctest --test-dir build-vulkan --output-on-failure -C Release -R '^viewer\.offscreen$'; then
+            echo '::notice::desktop OpenGL works on the Windows runner: fold this case into -L desktop and drop the exclusion'
+          else
+            echo '::warning::desktop OpenGL unavailable on the Windows runner: the step above keeps -LE desktop'
+          fi
 
-      # MoltenVK reports unsupported integer-attachment blending and hangs this test,
-      # so only it stays excluded. algo.point_cloud_normal_estimation used to be
-      # excluded here as well: with Boost's graph it ran tens of minutes on a hosted
-      # runner against a 180 s timeout, and it now uses the Boost-free MST path
-      # (3.2 s Release measured locally on 2026-11-14).
+      # MoltenVK's integer-attachment-blending warning is long documented and harmless; the
+      # "hangs this test" half of the note came from the archived workflow and was never
+      # re-measured here. Locally on 2026-11-14 (MoltenVK 1.4.2, --validation, repeated runs)
+      # the test passes in 0.3 s, so the exclusion is probed rather than inherited: the step
+      # below runs exactly the excluded test non-blocking and posts its verdict as an
+      # annotation, because a continue-on-error step always reads green in the job summary
+      # and the raw log needs a signed-in reader. When that annotation says passed, this -E
+      # and the probe itself both go away. algo.point_cloud_normal_estimation used to be
+      # excluded here as well: with Boost's graph it ran tens of minutes on a hosted runner
+      # against a 180 s timeout, and it now uses the Boost-free MST path (3.2 s Release
+      # measured locally on 2026-11-14).
       - name: Test Vulkan on macOS
         if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
         run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^vulkan\.transparency$'
 
+      # The runner's MoltenVK and validation layers come from the LunarG SDK, which is the
+      # environment the inherited note described, so the answer has to be measured there.
+      # The test carries its own 120 s CTest timeout and this ceiling keeps a hung loader
+      # from holding the job.
+      - name: Probe linked-list OIT on the SDK MoltenVK (macOS)
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        continue-on-error: true
+        run: |
+          if ctest --test-dir build-vulkan --output-on-failure -C Release -R '^vulkan\.transparency$'; then
+            echo '::notice::vulkan.transparency passes on the SDK MoltenVK: drop the -E exclusion above and this probe'
+          else
+            echo '::warning::vulkan.transparency does not pass on the SDK MoltenVK: the -E exclusion above stays'
+          fi
+        timeout-minutes: 5
+
       # Records what the runner actually exposes, so the exclusions below stay
       # verifiable from the log instead of resting on this comment. VULKAN_SDK holds
       # Windows separators, and Git Bash will not exec a path that mixes them with
-      # forward ones, so the SDK root is converted first.
+      # forward ones, so the SDK root is converted first. The verdict is also posted as an
+      # annotation, because a continue-on-error step always reads green in the job summary
+      # and the raw log needs a signed-in reader.
       - name: Report Vulkan devices (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         continue-on-error: true
         shell: bash -l {0}
         run: |
           sdk="$(cygpath -u "$VULKAN_SDK")"
-          "$sdk/Bin/vulkaninfo.exe" --summary
+          summary="$RUNNER_TEMP/vulkaninfo-summary.txt"
+          "$sdk/Bin/vulkaninfo.exe" --summary | tee "$summary"
           echo 'ICD manifests shipped by the runner:'
           ls -1 "$sdk/Bin/data/icd.d" /c/Windows/System32/vulkan/icd.d 2>/dev/null || echo 'none found in the SDK or system directories'
+          devices="$(sed -n 's/.*deviceName *= *//p' "$summary" | paste -sd, -)"
+          if [ -n "$devices" ]; then
+            echo "::notice::the runner exposes Vulkan device(s) [$devices]: measure the vulkan.* tests below instead of excluding them"
+          else
+            echo "::warning::the runner exposes no Vulkan device: the step below keeps -LE desktop and the vulkan.* exclusion"
+          fi
         timeout-minutes: 2
 
       # Until the probe above prints a device, this job assumes Vulkan rendering is
@@ -321,8 +358,10 @@ jobs:
       # The exported package is exercised on every OS: install it, then configure and
       # build a consumer with find_package(Easy3D CONFIG). Only the device-dependent
       # binaries are run, and only where the runner can provide a device - Windows
-      # stops here because it has none, and the macOS OpenGL job waits for the probe
-      # above to say whether a GL context exists.
+      # stops here because it has none, and the macOS OpenGL job cannot run them
+      # either: its desktop-suite probe measured 74/74 failures at context creation
+      # ("NSGL: Failed to find a suitable pixel format", run 13), so no GL consumer
+      # can start there. The macOS Vulkan job has MoltenVK and runs all three.
       - name: Install package and build consumer (Unix)
         if: runner.os != 'Windows'
         run: |
