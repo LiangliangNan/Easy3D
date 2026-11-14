@@ -9605,4 +9605,61 @@ serially 110/110 in 60.16 s. That tree is a different configuration from the IDE
 count is not compared with theirs, but it does give this machine the macOS OpenGL suite record the
 previous entry named as missing. `easy3d/util/version.h` is unchanged and the workflow parses as
 YAML. What the next CI run adds: the device verdict without the layer ambiguity, the tool's actual
-output, and the first `FAIL:` line should the macOS suite fail again.
+output, and the first `FAIL:` line should the macOS suite fail again - run 17 delivered the first
+two and kept the suite green (next entry).
+
+**This closes the migration checklist's cross-platform validation item.** The hardware evidence
+already recorded stands as the validation: Windows NVIDIA suites in both configurations and both
+backends, with the installed-package consumers 10/10; Linux Debug/Release trees with the Release
+consumers on X11/NVIDIA and the Vulkan consumers headless on lavapipe under validation, plus the
+cross-backend image comparison; the macOS Vulkan suite (150/150 at its best serial run) and the
+minimal OpenGL tree above. The hosted runners add CI coverage wherever their drivers allow it and,
+where they do not, the exclusions now rest on annotations rather than on a comment - which is a
+statement about the runners, not about the platforms.
+
+### 2026-11-14 — run 17: hosted Windows has no Vulkan ICD, measured through the library
+
+**The run.** Run 17 (`43625335582`, head `10b088b8`, created 18:12:58Z) needed two attempts. The
+first had `OPENGL (macos-15)` fail inside `Set up job` after three seconds, with
+`Failed to load actions/checkout/v7/action.yml` and a manifest template parse error - the runner's
+action download, not the code - while its other five jobs were green; the successful attempt's macOS
+OpenGL job then queued until 18:57:29, 44 minutes behind the macOS arm64 backlog, and all six jobs
+are green (Ubuntu Vulkan 10m45s, Ubuntu OpenGL 15m08s, macOS Vulkan 17m32s, macOS OpenGL 13m01s,
+Windows OpenGL 21m57s, Windows Vulkan 22m15s). A re-run replaces the check runs, and the
+workflow-command annotations stay attached to the first attempt's, so the verdicts below are quoted
+from there; both attempts ran the same commit.
+
+**The device question is answered.** Run 16's probe went through the CTest registration, which passes
+`--validation`, so it could not tell a runner without a device from a runner without the validation
+layer. `10b088b8` runs `easy3d_vulkan_resource_lifetime_test.exe` directly, and it fails with
+`FAIL: create Vulkan 1.2 instance failed (VkResult -9)`, which is the test's own message and now
+appears as the annotation. `-9` is `VK_ERROR_INCOMPATIBLE_DRIVER`: the loader reports that no ICD
+supplies a driver for the instance request (`vkCreateInstance` at
+`easy3d/renderer/backends/vulkan/render_device.cpp:282`, thrown through `check_initialization()` at
+`:85`). With the layer out of the request, that is a statement about the device: hosted Windows has
+the loader the SDK installs and no Vulkan driver behind it.
+
+**The other three verdicts are unchanged.** `vulkaninfo` was found this time -
+`/c/VulkanSDK/1.4.363.1/Bin/vulkaninfoSDK.exe`, the candidate `10b088b8` added - and exited 1 without
+building a device summary, consistent with the library's finding. `vulkan.transparency` still does
+not pass on the SDK MoltenVK, so the `-E` exclusion stays, now measured in two consecutive runs; and
+Windows desktop OpenGL is still unavailable (`WGL 65542`), so `-LE desktop` stays. The hosted Windows
+Vulkan job therefore runs no rendering test, and that now rests on an error code from the runner
+rather than on the image specification.
+
+**What this closes.** The cross-platform validation item's last open thread. Every exclusion the
+workflow still applies is backed by a measurement made on the runner - three of them by an
+annotation from the latest run, and the macOS OpenGL `-LE desktop` by run 13's 74/74, whose probe was
+removed once it had answered. The measurement steps stay: they cost seconds, they are the only place
+a verdict survives a log that needs a token, and they will report the day an image ships a driver.
+
+**A workflow simplification after this run.** wxWidgets is no longer installed on either platform and
+`wxWidgets_ROOT_DIR` is gone from both Windows configure steps: the wx GUI tutorial was removed in
+batch 42, and nothing in `easy3d`, `tests`, `tutorials`, `python`, `mapple` or the top-level CMake
+files references wxWidgets any more (only the stale `cmake-build-debug` tree still carries generated
+files for the old target). Configure and build never consumed the package, so nothing should move;
+the next run is the proof that the removal changed only what gets downloaded. The same round removed
+`CMAKE_DISABLE_FIND_PACKAGE_Vulkan` from both consumer configure steps: nothing on that path calls
+`find_package(Vulkan)` - the backend travels as `Easy3D_ENABLE_VULKAN` in the installed config
+(`cmake/Easy3DConfig.cmake.in:59`), and the consumer branches on it - so the flag only produced
+CMake's unused-variable warning in the OpenGL job's consumer build, which correctly has two targets.
