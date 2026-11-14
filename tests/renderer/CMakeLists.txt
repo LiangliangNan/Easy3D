@@ -6,6 +6,10 @@ if(Easy3D_ENABLE_VULKAN)
     add_test(NAME vulkan.resourcelifetime COMMAND easy3d_vulkan_resource_lifetime_test ${validation_args})
     set_tests_properties(vulkan.resourcelifetime PROPERTIES TIMEOUT 120)
     add_executable(easy3d_vulkan_text_test text_test.cpp)
+    # text_test.cpp checks a UTF-8 fixture and its literals are UTF-8 only when
+    # MSVC reads the source as UTF-8; the default ANSI codepage silently
+    # double-encodes them.
+    target_compile_options(easy3d_vulkan_text_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
     target_link_libraries(easy3d_vulkan_text_test PRIVATE easy3d::renderer easy3d::util)
     add_test(NAME vulkan.text COMMAND easy3d_vulkan_text_test ${validation_args})
     set_tests_properties(vulkan.text PROPERTIES TIMEOUT 120)

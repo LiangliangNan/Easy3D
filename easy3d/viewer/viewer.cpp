@@ -308,7 +308,7 @@ namespace easy3d {
             "  'v':                     Toggle vertices visibility                         \n"
             "  'l':                     Toggle locked vertices visibility                  \n"
             "  'm':                     Toggle smooth shading (for SurfaceMesh)            \n"
-            "  'd':                     Print model properties                             \n"
+            "  'd':                     Print model information                            \n"
             "  Space:                   Align camera with world axes                       \n"
             "  Escape / Alt + F4:       Close viewer                                       \n"
             "-------------------------------------------------------------------";
@@ -1362,8 +1362,42 @@ namespace easy3d {
             if (d)
                 d->set_visible(!d->is_visible());
         } else if (key == KEY_D && modifiers == 0) {
-            if (current_model())
-                current_model()->property_stats(std::cout);
+            auto model = current_model();
+            if (model) {
+                std::ostream& output = std::cout;
+                output << "----------- " << file_system::simple_name(model->name()) << " -----------\n";
+                if (dynamic_cast<SurfaceMesh*>(model)) {
+                    auto m = dynamic_cast<SurfaceMesh*>(model);
+                    output << "model is a surface mesh. #face: " << std::to_string(m->n_faces())
+                              << ", #vertex: " + std::to_string(m->n_vertices())
+                              << ", #edge: " + std::to_string(m->n_edges()) << std::endl;
+                }
+                else if (dynamic_cast<PointCloud*>(model)) {
+                    auto m = dynamic_cast<PointCloud*>(model);
+                    output << "model is a point cloud. #vertex: " + std::to_string(m->n_vertices()) << std::endl;
+                }
+                else if (dynamic_cast<Graph*>(model)) {
+                    auto m = dynamic_cast<Graph*>(model);
+                    output << "model is a graph. #vertex: " + std::to_string(m->n_vertices())
+                              << ", #edge: " + std::to_string(m->n_edges()) << std::endl;
+                }
+                if (!model->renderer()->points_drawables().empty()) {
+                    output << "points drawables:\n";
+                    for (auto d : model->renderer()->points_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!model->renderer()->lines_drawables().empty()) {
+                    output << "lines drawables:\n";
+                    for (auto d : model->renderer()->lines_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!model->renderer()->triangles_drawables().empty()) {
+                    output << "triangles drawables:\n";
+                    for (auto d : model->renderer()->triangles_drawables())
+                        d->buffer_stats(output);
+                }
+                model->property_stats(output);
+            }
         } else if (modifiers == MODIF_ALT && key == KEY_C) {
             // toggle clipping plane
             auto *plane = ClippingPlane::instance();

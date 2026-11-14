@@ -128,8 +128,9 @@
       - [ ] Windows Vulkan graphics/hardware tests and installed-package consumers remain unverified; rerun CI on the later OIT modularization commits before treating the current branch as validated.
     - [ ] Improve both backends based on 'docs/vulkan-migration-assessment.md'
       - [x] Finding 1 image-diff harness completed (see above); Finding 4 overflow diagnostics and controlled point benchmark recorded. Finding 2 constructor hazard is documented and deliberately has no deprecated compatibility overload: old positional calls must be migrated to the current constructor order. Both Viewer constructors emit the legacy-context-version advisory, and `docs/vulkan.md` describes the silent reinterpretation. Finding 3 modularization is complete at the current ownership/coordinator boundary; Finding 5 Windows/platform validation remains open.
-
-
+    - [ ] With Vulkan, Drawable::buffer_stats(std::ostream &output) should report the number of buffers and their total size. But the current `Drawable` design does not track the buffer count, and the GPU cache is owned by `VulkanDevice`, so the buffer count and size are not available to `Drawable`. Which option is better?
+      - Option 1: The Vulkan backend should expose a new API to query the GPU cache for its buffer count and total size, and `Drawable::buffer_stats()` should call that API to report the information.
+      - Option 2: The Vulkan backend should maintain a count of the buffers and their total size in `Drawable`, and `Drawable::buffer_stats()` should report that information directly. Then unify the OpenGL backend to do the same, so that `Drawable::buffer_stats()` has a consistent behavior across both backends, or remove it from the OpenGL backend as well.
 
 - Some other planned tasks
   - [x] Add tutorials for algorithms (batch 43): organized into the 6xx (2D/polygon) and 8xx (surface mesh) groups; all eight built and smoke-tested on both backends.

@@ -59,12 +59,19 @@ ViewerImGui::ViewerImGui(const std::string &title,
 #else
                          const OpenGLOptions &options
 #endif
-    )
-    : Viewer(title, width, height, samples, full_screen, visible, resizable, options) {
+    ) : Viewer(title, width, height, samples, full_screen, visible, resizable, options)
+{
+    // Liangliang: the internal glfw won't be shared across dll boundaries (Linux and macOS resolve GLFW to one instance).
+    //      See https://github.com/LiangliangNan/Easy3D/issues/178
+    // Details: The vendored GLFW is a private dependency of easy3d_viewer, so an inherited viewer that calls GLFW
+    //      itself links its own copy of the static library. On Windows that copy was never initialized and every
+    //      public GLFW function returns without touching the window (_GLFW_REQUIRE_INIT_OR_RETURN), so
+    //      glfwSetKeyCallback(window, nullptr) hands back a null host callback and the synthetic input driven
+    //      from it faults. Initializing the local copy makes these calls work on the window the library created; the
+    //      two modules register separate window classes, so this is safe. .
 #if defined(_WIN32) && defined(_MSC_VER)
-        // Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)
-        // see https://github.com/LiangliangNan/Easy3D/issues/178
-        glfwInit();
+        if (!glfwInit())
+            throw std::runtime_error("glfwInit failed for ViewerImGui's GLFW copy");
 #endif
 }
 

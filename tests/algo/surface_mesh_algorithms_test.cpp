@@ -631,6 +631,12 @@ bool test_surface_mesh_remesh_self_intersections() {
 }
 
 bool test_surface_mesh_remove_overlapping_faces() {
+#if defined(EASY3D_TEST_SKIP_OVERLAPPING_FACES)
+    // Over fifteen minutes in MSVC Debug for a run that takes 0.17s optimized;
+    // see tests/algo/CMakeLists.txt.
+    std::cout << "overlapping-face removal skipped (MSVC Debug)" << std::endl;
+    return true;
+#endif
     const std::string file = resource::directory() + "/data/house/house.obj";
     SurfaceMesh *mesh = SurfaceMeshIO::load(file);
     if (!mesh) {

@@ -27,6 +27,7 @@ set(renderer_sources
         per_pixel_linked_lists_oit.cpp
         shadow.cpp
         soft_shadow.cpp
+        transparency.cpp
 )
 
 list(APPEND renderer_headers

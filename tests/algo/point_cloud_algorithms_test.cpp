@@ -71,7 +71,12 @@ bool test_algo_point_cloud_normal_estimation() {
     }
 
     std::cout << "reorienting point cloud normals..." << std::endl;
-#ifdef EASY3D_TEST_HAS_BOOST
+#if defined(EASY3D_TEST_SKIP_REORIENT)
+    // Over half an hour in MSVC Debug for a step that takes 3.4s optimized;
+    // see tests/algo/CMakeLists.txt.
+    std::cout << "reorientation skipped (MSVC Debug)" << std::endl;
+    const bool reoriented = true;
+#elif defined(EASY3D_TEST_HAS_BOOST)
     const bool reoriented = algo.reorient(cloud, 16);
 #else
     // Reorientation has always required the optional Boost Graph dependency.

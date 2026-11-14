@@ -7,6 +7,13 @@ add_executable(easy3d_point_cloud_algorithms_test point_cloud_algorithms_test.cp
 target_link_libraries(easy3d_point_cloud_algorithms_test PRIVATE easy3d::algo easy3d::kdtree easy3d::fileio)
 if("HAS_BOOST" IN_LIST algo_definitions)
     target_compile_definitions(easy3d_point_cloud_algorithms_test PRIVATE EASY3D_TEST_HAS_BOOST)
+    if(MSVC)
+        # MSVC Debug turns the Boost MST reorientation of this 35k-point cloud
+        # into a half-hour step (3.4s with optimization), which no timeout
+        # should await. The other configurations keep covering it.
+        target_compile_definitions(easy3d_point_cloud_algorithms_test PRIVATE
+                $<$<CONFIG:Debug>:EASY3D_TEST_SKIP_REORIENT>)
+    endif()
 endif()
 add_test(NAME algo.point_cloud_normal_estimation COMMAND easy3d_point_cloud_algorithms_test test_algo_point_cloud_normal_estimation)
 set_tests_properties(algo.point_cloud_normal_estimation PROPERTIES TIMEOUT 180)
@@ -85,5 +92,11 @@ endif()
 if(TARGET easy3d_algo_ext)
     target_link_libraries(easy3d_surface_mesh_algorithms_test PRIVATE easy3d::algo_ext)
     target_compile_definitions(easy3d_surface_mesh_algorithms_test PRIVATE HAS_CGAL)
+    if(MSVC)
+        # CGAL's intersection filters are worse than Boost's here: 0.17s
+        # optimized, over fifteen minutes unoptimized, so Debug skips the step.
+        target_compile_definitions(easy3d_surface_mesh_algorithms_test PRIVATE
+                $<$<CONFIG:Debug>:EASY3D_TEST_SKIP_OVERLAPPING_FACES>)
+    endif()
 endif()
 include(../properties.cmake)

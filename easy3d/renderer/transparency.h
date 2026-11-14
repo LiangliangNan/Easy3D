@@ -78,28 +78,22 @@ namespace easy3d {
          * \param renderer The callback invoked to render a transparency frame;
          *      a null callback unregisters the camera.
          */
-        static void set_frame_renderer(const Camera* camera, FrameRenderer renderer) {
-            if (renderer) renderers()[camera] = std::move(renderer);
-            else renderers().erase(camera);
-        }
+        static void set_frame_renderer(const Camera* camera, FrameRenderer renderer);
 
     protected:
         // Dispatch a transparency frame to the renderer registered for the camera
         // (looked up in renderers()); throws std::logic_error if none is registered.
         static void render_frame(const Camera* camera, const std::vector<TrianglesDrawable*>& surfaces,
-                                 int method, int peels) {
-            auto it = renderers().find(camera);
-            if (it == renderers().end())
-                throw std::logic_error("transparency requires a Viewer or OffScreen frame");
-            it->second(surfaces, method, peels);
-        }
+                                 int method, int peels);
 
     private:
-        // The per-camera registry of frame renderers (a function-local static map).
-        static std::map<const Camera*, FrameRenderer>& renderers() {
-            static std::map<const Camera*, FrameRenderer> value;
-            return value;
-        }
+        // The per-camera registry of frame renderers. These three functions are defined in
+        // transparency.cpp so the whole process shares one map: a function-local static in an
+        // inline function is duplicated in every module that instantiates it, and on Windows
+        // the viewer would register in the easy3d_renderer copy while a scene host calling
+        // effect->draw() from its own translation unit looked up its private copy - an
+        // always-empty lookup.
+        static std::map<const Camera*, FrameRenderer>& renderers();
     };
 
 }
