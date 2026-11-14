@@ -10,6 +10,9 @@
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/texture.h>
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
+#endif
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <fstream>
@@ -73,8 +76,20 @@ struct EffectViewer : Viewer {
     mutable int draws = 0;
     bool occlude = false, blend = false, cast_shadow = false;
     std::vector<TrianglesDrawable*> blend_surfaces;
+    // PaintCanvas's sequence: generate the AO term, hand it to the drawables,
+    // then draw. OpenGL only, since generate() exists on that backend alone.
+    bool mapple_ao = false;
     void draw() const override {
         ++draws;
+#ifndef EASY3D_HAS_VULKAN
+        if (mapple_ao && occlusion_) {
+            const unsigned int texture = occlusion_->generate(models_);
+            for (auto* surface : surfaces())
+                surface->set_ao_texture(texture);
+            Viewer::draw();
+            return;
+        }
+#endif
         if (occlude && occlusion_) {
             occlusion_->begin(models_);
             Viewer::draw();
@@ -224,6 +239,55 @@ int main(int argc,char** argv) {
         require(v.device().validation_errors()==0,"snapshot validation errors");
 #endif
         }
+
+#ifndef EASY3D_HAS_VULKAN
+        {
+        // Mapple enables AO on the drawables before any AO term exists, then
+        // hands them the generated texture on every frame. An enabled flag with
+        // a zero texture used to bind an unloadable unit 1, which macOS
+        // reported and which the surface shader sampled as black.
+        EffectViewer v("AO texture handoff",320,240,1,false,false,true,options);
+        v.enable_effects();
+        require(v.add_model(resource::directory()+"/data/room.obj"),"AO handoff scene missing");
+        v.camera()->set_up_vector(vec3(0,1,0));
+        v.camera()->set_view_direction(vec3(0,0,1));
+        v.fit_screen();
+        for (auto* surface : v.surfaces()) {
+            surface->set_coloring_method(State::UNIFORM_COLOR);
+            surface->set_color(vec4(.7f,.5f,.3f,1.0f));
+        }
+        Viewer::poll_events();v.draw_frame();
+        const int fw=v.framebuffer_width(),fh=v.framebuffer_height();
+        require(v.snapshot(output_path(output_dir,"opengl-ao-handoff-plain.png"),1,1,1),
+                "AO handoff plain snapshot failed");
+        const auto plain=read_snapshot(output_path(output_dir,"opengl-ao-handoff-plain.png"),fw,fh);
+        require(v.snapshot(output_path(output_dir,"opengl-ao-handoff-plain-scaled.png"),2,1,1),
+                "scaled AO handoff plain snapshot failed");
+        const auto plain_scaled=read_snapshot(output_path(output_dir,"opengl-ao-handoff-plain-scaled.png"),fw*2,fh*2);
+
+        for (auto* surface : v.surfaces())
+            surface->enable_ao(true);   // the AO texture is still 0
+        while (glGetError()!=GL_NO_ERROR) {}
+        require(v.snapshot(output_path(output_dir,"opengl-ao-handoff-flag-only.png"),1,1,1),
+                "AO flag-only snapshot failed");
+        const auto flagged=read_snapshot(output_path(output_dir,"opengl-ao-handoff-flag-only.png"),fw,fh);
+        require(flagged==plain,"an enabled AO flag without a texture changed the frame");
+        require(glGetError()==GL_NO_ERROR,"the AO flag-only frame left a GL error");
+
+        v.mapple_ao=true;
+        require(v.snapshot(output_path(output_dir,"opengl-ao-handoff.png"),1,1,1),
+                "AO handoff snapshot failed");
+        const auto ao=read_snapshot(output_path(output_dir,"opengl-ao-handoff.png"),fw,fh);
+        require(ao!=plain,"the generated AO term did not reach the frame");
+        // The scaled snapshot re-creates the AO textures, so the drawables hold
+        // ids that no longer exist while generate() rebuilds the term.
+        require(v.snapshot(output_path(output_dir,"opengl-ao-handoff-scaled.png"),2,1,1),
+                "scaled AO handoff snapshot failed");
+        const auto ao_scaled=read_snapshot(output_path(output_dir,"opengl-ao-handoff-scaled.png"),fw*2,fh*2);
+        require(ao_scaled!=plain_scaled,"the re-created AO term did not reach the scaled frame");
+        require(glGetError()==GL_NO_ERROR,"the AO handoff left a GL error");
+        }
+#endif
 
         {
         EffectViewer v("Textured average transparency",320,240,1,false,false,true,options);

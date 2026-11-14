@@ -44,6 +44,7 @@ namespace easy3d {
               property_location_(VERTEX), property_name_("uniform color"), lighting_(true),
               lighting_two_sides_(false), distinct_back_color_(true), back_color_(vec4(1, 0, 0, 1)),
               texture_(nullptr), texture_repeat_(1.0f), texture_fractional_repeat_(0.0f), ao_enabled_(false),
+              ao_texture_(0),
               clamp_range_(true), clamp_lower_(0.05f), clamp_upper_(0.05f), plane_clip_discard_primitive_(false),
               highlight_(false), highlight_range_(-1, -1) {
     }
@@ -57,7 +58,7 @@ namespace easy3d {
               distinct_back_color_(s.distinct_back_color()), back_color_(s.back_color()),
               texture_(s.texture()), texture_repeat_(s.texture_repeat()),
               texture_fractional_repeat_(s.texture_fractional_repeat()),
-              ao_enabled_(s.is_ao_enabled()), clamp_range_(s.clamp_range()),
+              ao_enabled_(s.is_ao_enabled()), ao_texture_(s.ao_texture_), clamp_range_(s.clamp_range()),
               clamp_lower_(s.clamp_lower()), clamp_upper_(s.clamp_upper()),
               material_(s.material()), plane_clip_discard_primitive_(s.plane_clip_discard_primitive()),
               highlight_(s.highlight()), highlight_range_(s.highlight_range()) {
@@ -79,6 +80,7 @@ namespace easy3d {
         texture_repeat_ = s.texture_repeat();
         texture_fractional_repeat_ = s.texture_fractional_repeat();
         ao_enabled_ = s.is_ao_enabled();
+        ao_texture_ = s.ao_texture_;
         clamp_range_ = s.clamp_range();
         clamp_lower_ = s.clamp_lower();
         clamp_upper_ = s.clamp_upper();

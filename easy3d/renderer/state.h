@@ -323,8 +323,11 @@ namespace easy3d {
         /**
          * \brief Enables or disables AO.
          * \param b \c true to enable AO, \c false to disable.
+         * \details Changing the flag withdraws the AO term previously published
+         *      by set_ao_texture(); publish it again after enabling. A drawable
+         *      whose term has not been published yet renders unoccluded.
          */
-        void enable_ao(bool b) { ao_enabled_ = b; }
+        void enable_ao(bool b) { ao_enabled_ = b; set_ao_texture(0); }
         /**
          * \brief Sets the AO texture.
          * \param tex The AO texture.

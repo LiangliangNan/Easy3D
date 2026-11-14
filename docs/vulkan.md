@@ -9710,6 +9710,20 @@ are skipped, and a non-triangle or empty mesh is rejected with `std::invalid_arg
 501 gains 'b' to toggle the bake against the screen-space effect, and its docs now describe both
 implementations.
 
+**AO texture handoff.** `State::ao_texture_` is now initialized, copied and assigned, so a
+drawable never starts with an indeterminate texture id or loses it across state copies.
+`TrianglesDrawable::draw()` consumes an AO term only when both the flag and a non-zero texture
+are present (`use_ao = is_ao_enabled() && ao_texture_ != 0`); otherwise it reports
+`aoEnabled = false` and `aoTexture = 0` and never binds unit 1. `State::enable_ao()` withdraws
+the previously published term (`set_ao_texture(0)`), so toggling AO - as Mapple's `enableAo()`
+does - cannot leave a stale id behind. This removes the macOS driver
+message `POSSIBLE ISSUE: unit 1 GLD_TEXTURE_INDEX_2D is unloadable ...`, which an incomplete
+unit-1 binding produced whenever Mapple enabled AO before a term existed; the surface shader
+sampled that zero texture as black. `opengl.snapshoteffects` gains a handoff case: a flagged
+drawable with a zero texture must render the plain frame and leave `glGetError()` clean, while
+the generated term must reach both the plain and the re-created (scaled) frame. Reverting the
+guard reproduces the driver message and fails the plain-frame equality check.
+
 **Validation.** 2026-11-14, macOS. Vulkan `cmake-build-debug` 151/151 serial; two window tests
 flaked once on the loaded machine (`vulkan.imgui` failed to open its File menu after 1.94 s and
 `vulkan.portableselection` timed out) and both passed on an idle rerun (5.47 s and 0.56 s), so the
@@ -9725,7 +9739,10 @@ AO on and off and with the baked result: the corner and contact darkening is smo
 rings, hatching or spokes at the defaults, and the bake matches it without view dependence.
 The `ao` rename was re-validated afterwards: both serial suites are green again (Vulkan 151/151,
 OpenGL 111/111), and Mapple's release tree (`cmake-build-release`, Qt on, Vulkan off) builds,
-which covers the renamed `.ui` widgets and slots. `easy3d/util/version.h` is unchanged.
+which covers the renamed `.ui` widgets and slots. The AO texture handoff fix was validated
+afterwards as well: OpenGL `build-opengl-check` 111/111 serial and a fresh Vulkan
+`build-vulkan-check` (Release, Qt off, 145 tests) 145/145 serial, with the new handoff case
+failing on the pre-fix code. `easy3d/util/version.h` is unchanged.
 
 **What this leaves.** Mapple still builds on the OpenGL backend only, as decided in W10; the bake is
 not exposed in the Python bindings or Mapple UI yet, and it is not wired into the tutorial's

@@ -93,6 +93,11 @@ namespace easy3d {
         // needs be padded when using uniform blocks
         const mat3 NORMAL = transform::normal_matrix(MANIP);
 
+        // An enabled flag without a texture means the term is not available yet
+        // (the first frame, or the texture was just recreated). Sampling it would
+        // bind an incomplete texture unit, which macOS reports as unloadable.
+        const bool use_ao = is_ao_enabled() && ao_texture_ != 0;
+
         program->bind();
         program->set_uniform("MANIP", MANIP)
                 ->set_uniform("MVP_MANIP", MVP_MANIP)
@@ -104,7 +109,7 @@ namespace easy3d {
                 ->set_uniform("distinct_back_color", distinct_back_color())
                 ->set_uniform("backside_color", back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
-                ->set_uniform("aoEnabled", is_ao_enabled())
+                ->set_uniform("aoEnabled", use_ao)
                 ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("default_color", color())
                 ->set_block_uniform("Material", "ambient", material().ambient)
@@ -126,12 +131,12 @@ namespace easy3d {
         ClippingPlane::instance()->set_program(program);
         ClippingPlane::instance()->set_discard_primitives(program, plane_clip_discard_primitive());
 
-        if (is_ao_enabled())
+        if (use_ao)
             program->bind_texture("aoTexture", ao_texture_, 1);
         else
             program->set_uniform("aoTexture", 0);
         gl_draw();
-        if (is_ao_enabled())
+        if (use_ao)
             program->release_texture();
 
         program->release_texture();
