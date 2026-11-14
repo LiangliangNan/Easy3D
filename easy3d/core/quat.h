@@ -742,7 +742,7 @@ namespace easy3d {
             // Spherical interpolation
             FT angle = std::acos(std::fabs(cosAngle));
             FT sinAngle = std::sin(angle);
-            c1 = std::sin(angle * (1.0 - t)) / sinAngle;
+            c1 = std::sin(angle * (FT(1.0) - t)) / sinAngle;
             c2 = std::sin(angle * t) / sinAngle;
         }
 

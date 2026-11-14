@@ -28,8 +28,8 @@ struct Grid : MultiViewer {
     using Viewer::mouse_release_event;
     ivec4 bounds(int row,int col) const {
         const int w=framebuffer_width(),h=framebuffer_height();
-        int x=int(int64_t(col)*w/columns()),y=int(int64_t(row)*h/rows());
-        return ivec4(x,y,int(int64_t(col+1)*w/columns())-x,int(int64_t(row+1)*h/rows())-y);
+        const int x=col*w/columns(),y=row*h/rows();
+        return ivec4(x,y,(col+1)*w/columns()-x,(row+1)*h/rows()-y);
     }
     // pick() takes logical window coordinates; bounds() is in framebuffer pixels.
     Viewer::PickResult pick_cell(const ivec4& vp) const {

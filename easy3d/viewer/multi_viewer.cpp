@@ -63,15 +63,23 @@ struct CellScissor {
 #endif
 // Top-left pixel bounds. Integer boundaries cover odd/HiDPI extents without gaps.
 ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
-    const int x=int(int64_t(col)*width/cols), y=int(int64_t(row)*height/rows);
-    return ivec4(x,y,int(int64_t(col+1)*width/cols)-x,int(int64_t(row+1)*height/rows)-y);
+    const int x=col*width/cols, y=row*height/rows;
+    return ivec4(x,y,(col+1)*width/cols-x,(row+1)*height/rows-y);
+}
+// Endpoints of the internal grid boundaries of a width x height target, one pair
+// per boundary, in the target's own pixels.
+std::vector<vec2> division_lines(int rows,int cols,int width,int height) {
+    std::vector<vec2> points;
+    for(int r=1;r<rows;++r) {const float y=static_cast<float>(r*height/rows);points.push_back(vec2(0,y));points.push_back(vec2(static_cast<float>(width),y));}
+    for(int c=1;c<cols;++c) {const float x=static_cast<float>(c*width/cols);points.push_back(vec2(x,0));points.push_back(vec2(x,static_cast<float>(height)));}
+    return points;
 }
 // Grid lines are one logical pixel wide. Both a LinesDrawable2D width and a
 // screen-space draw command width are target pixels, so convert through the
 // logical window width: this is the DPI scale for a window-sized target and
 // output/logical for a higher-resolution snapshot or capture.
 float division_line_width(int target_width,int logical_width) {
-    return logical_width>0 ? float(target_width)/float(logical_width) : 1.0f;
+    return logical_width>0 ? static_cast<float>(target_width)/static_cast<float>(logical_width) : 1.0f;
 }
 void configure_cell(Camera& cell,const Camera& source,int width,int height) {
     cell.set_screen_width_and_height(width,height);
@@ -139,9 +147,7 @@ void MultiViewer::update_division() {
 #endif
         views_[r][c].viewport=bounds;
     }
-    std::vector<vec2> points;
-    for(int r=1;r<num_rows_;++r) {const float y=float(int64_t(r)*height()/num_rows_);points.push_back(vec2(0,y));points.push_back(vec2(width(),y));}
-    for(int c=1;c<num_cols_;++c) {const float x=float(int64_t(c)*width()/num_cols_);points.push_back(vec2(x,0));points.push_back(vec2(x,height()));}
+    const auto points=division_lines(num_rows_,num_cols_,width(),height());
     drawable_division_->update_vertex_buffer(points,width(),height(),true);
 }
 bool MultiViewer::delete_model(Model* model) {
@@ -183,8 +189,8 @@ vec3 MultiViewer::window_to_world(const vec3& window) const {
     if(!std::isfinite(window.x) || !std::isfinite(window.y) || !std::isfinite(window.z) || width()<=0 || height()<=0)
         throw std::invalid_argument("invalid multi-view unprojection");
     int row=num_rows_-1,col=num_cols_-1;
-    for(int r=0;r<num_rows_;++r) if(window.y < int64_t(r+1)*height()/num_rows_) {row=r;break;}
-    for(int c=0;c<num_cols_;++c) if(window.x < int64_t(c+1)*width()/num_cols_) {col=c;break;}
+    for(int r=0;r<num_rows_;++r) if(window.y < static_cast<float>((r+1)*height()/num_rows_)) {row=r;break;}
+    for(int c=0;c<num_cols_;++c) if(window.x < static_cast<float>((c+1)*width()/num_cols_)) {col=c;break;}
     const auto vp=cell_bounds(row,col,num_rows_,num_cols_,width(),height());
     Camera cell(*camera());cell.frame()->set_pivot_point(camera()->pivot_point());
     configure_cell(cell,*camera(),vp.z,vp.w);
@@ -194,7 +200,7 @@ vec3 MultiViewer::window_to_world(const vec3& window) const {
 bool MultiViewer::snapshot() const {
     std::string name=current_model()?file_system::replace_extension(current_model()->name(),"png"):"untitled.png";
     const auto file=dialog::save("Please choose a file name",name,{"Image Files (*.png *.jpg *.bmp *.tga)","*.png *.jpg *.bmp *.tga","All Files (*.*)","*"},true);
-    return !file.empty() && snapshot(file,1,samples(), 0);
+    return !file.empty() && snapshot(file,1,samples(),0);
 }
 #ifdef EASY3D_HAS_VULKAN
 std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,int width,int height,
@@ -219,9 +225,9 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
                     std::find(view.models.begin(),view.models.end(),source.model.get())!=view.models.end();
                 if(!assigned_model && std::find(view.drawables.begin(),view.drawables.end(),source.drawable.get())==view.drawables.end()) continue;
                 if(mapped.size()>=UINT32_MAX) throw std::length_error("too many multi-view picking sources");
-                if(sources) {command.object_id=uint32_t(mapped.size());mapped.push_back(source);}
-                else if(source.model) command.object_id=uint32_t(std::find(models_.begin(),models_.end(),source.model)-models_.begin());
-                else command.object_id=uint32_t(models_.size()+size_t(std::find(drawables_.begin(),drawables_.end(),source.drawable)-drawables_.begin()));
+                if(sources) {command.object_id=static_cast<uint32_t>(mapped.size());mapped.push_back(source);}
+                else if(source.model) command.object_id=static_cast<uint32_t>(std::find(models_.begin(),models_.end(),source.model)-models_.begin());
+                else command.object_id=static_cast<uint32_t>(models_.size()+static_cast<std::size_t>(std::find(drawables_.begin(),drawables_.end(),source.drawable)-drawables_.begin()));
             }
             command.viewport=vp;result.push_back(std::move(command));
         }
@@ -231,9 +237,7 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         // target-pixel width follows the target (DPI for a window, output/logical
         // for a snapshot).
         if(division_commands_.empty() || division_width_!=width || division_height_!=height) {
-            std::vector<vec2> points;
-            for(int r=1;r<num_rows_;++r) {const float y=float(int64_t(r)*height/num_rows_);points.push_back(vec2(0,y));points.push_back(vec2(width,y));}
-            for(int c=1;c<num_cols_;++c) {const float x=float(int64_t(c)*width/num_cols_);points.push_back(vec2(x,0));points.push_back(vec2(x,height));}
+            const auto points=division_lines(num_rows_,num_cols_,width,height);
             division_commands_.clear();
             if(!points.empty()) division_commands_.push_back(graphics::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,division_line_width(width,Viewer::width())));
             division_width_=width;division_height_=height;
@@ -243,77 +247,77 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     return result;
 }
 #else
-    void MultiViewer::draw() const {
-        CellScissor clip;
-        // remember the viewer port, later we will have to restore it after drawing each view
-        ivec4 viewport;
-        glGetIntegerv(GL_VIEWPORT, viewport);
+void MultiViewer::draw() const {
+    CellScissor clip;
+    // remember the viewer port, later we will have to restore it after drawing each view
+    ivec4 viewport;
+    glGetIntegerv(GL_VIEWPORT, viewport);
 
-        // ------------------------------------------------------------
+    // ------------------------------------------------------------
 
-        for (const auto& row : views_) {
-            for (const auto& view : row) {
-                const auto &vp = view.viewport;
-                if(vp[2]<=0 || vp[3]<=0) continue;
-                glViewport(vp[0], vp[1], vp[2], vp[3]);
-                glScissor(vp[0],vp[1],vp[2],vp[3]);
-                for (const auto& owned: models_) {
-                    const auto* m=owned.get();
-                    if (std::find(view.models.begin(),view.models.end(),m)==view.models.end() || !m->renderer() || !m->renderer()->is_visible())
-                        continue;
+    for (const auto& row : views_) {
+        for (const auto& view : row) {
+            const auto &vp = view.viewport;
+            if(vp[2]<=0 || vp[3]<=0) continue;
+            glViewport(vp[0], vp[1], vp[2], vp[3]);
+            glScissor(vp[0],vp[1],vp[2],vp[3]);
+            for (const auto& owned: models_) {
+                const auto* m=owned.get();
+                if (std::find(view.models.begin(),view.models.end(),m)==view.models.end() || !m->renderer() || !m->renderer()->is_visible())
+                    continue;
 
-                    // Let's check if edges and surfaces are both shown. If true, we
-                    // make the depth coordinates of the surface smaller, so that displaying
-                    // the mesh and the surface together does not cause Z-fighting.
-                    std::size_t count = 0;
-                    for (auto d: m->renderer()->lines_drawables()) {
-                        if (d->is_visible()) {
-                            d->draw(camera());
-                            ++count;
-                        }
+                // Let's check if edges and surfaces are both shown. If true, we
+                // make the depth coordinates of the surface smaller, so that displaying
+                // the mesh and the surface together does not cause Z-fighting.
+                std::size_t count = 0;
+                for (auto d: m->renderer()->lines_drawables()) {
+                    if (d->is_visible()) {
+                        d->draw(camera());
+                        ++count;
                     }
-
-                    for (auto d: m->renderer()->points_drawables()) {
-                        if (d->is_visible())
-                            d->draw(camera());
-                    }
-
-                    if (count > 0) {
-                        glEnable(GL_POLYGON_OFFSET_FILL);
-                        glPolygonOffset(0.5f, -0.0001f);
-                    }
-                    for (auto d: m->renderer()->triangles_drawables()) {
-                        if (d->is_visible())
-                            d->draw(camera());
-                    }
-                    if (count > 0)
-                        glDisable(GL_POLYGON_OFFSET_FILL);
                 }
 
-                for (const auto d: view.drawables) {
+                for (auto d: m->renderer()->points_drawables()) {
                     if (d->is_visible())
                         d->draw(camera());
                 }
 
-                // draw the transparent clipping plane
-                ClippingPlane::instance()->draw(camera());
+                if (count > 0) {
+                    glEnable(GL_POLYGON_OFFSET_FILL);
+                    glPolygonOffset(0.5f, -0.0001f);
+                }
+                for (auto d: m->renderer()->triangles_drawables()) {
+                    if (d->is_visible())
+                        d->draw(camera());
+                }
+                if (count > 0)
+                    glDisable(GL_POLYGON_OFFSET_FILL);
             }
+
+            for (const auto d: view.drawables) {
+                if (d->is_visible())
+                    d->draw(camera());
+            }
+
+            // draw the transparent clipping plane
+            ClippingPlane::instance()->draw(camera());
         }
-
-        // ------------------------------------------------------------
-
-        // restore viewport.
-        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        glScissor(viewport[0],viewport[1],viewport[2],viewport[3]);
-
-        // draw the division of views
-        if (drawable_division_->is_visible()) {
-            // The drawable width is in target pixels; keep the grid one logical pixel wide.
-            drawable_division_->set_line_width(division_line_width(viewport[2], width()));
-            drawable_division_->draw(camera());
-        }
-        draw_overlays(false);
     }
+
+    // ------------------------------------------------------------
+
+    // restore viewport.
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    glScissor(viewport[0],viewport[1],viewport[2],viewport[3]);
+
+    // draw the division of views
+    if (drawable_division_->is_visible()) {
+        // The drawable width is in target pixels; keep the grid one logical pixel wide.
+        drawable_division_->set_line_width(division_line_width(viewport[2], width()));
+        drawable_division_->draw(camera());
+    }
+    draw_overlays(false);
+}
 
 
 
@@ -321,8 +325,8 @@ void MultiViewer::prepare_pick_view(int x,int y,int width,int height) const {
     // x/y and width/height are framebuffer pixels (the primitive-ID pass target).
     if(x<0 || y<0 || x>=width || y>=height) {glDisable(GL_SCISSOR_TEST);glViewport(0,0,width,height);return;}
     int row=num_rows_-1,col=num_cols_-1;
-    for(int r=0;r<num_rows_;++r) if(y < int64_t(r+1)*height/num_rows_) {row=r;break;}
-    for(int c=0;c<num_cols_;++c) if(x < int64_t(c+1)*width/num_cols_) {col=c;break;}
+    for(int r=0;r<num_rows_;++r) if(y < (r+1)*height/num_rows_) {row=r;break;}
+    for(int c=0;c<num_cols_;++c) if(x < (c+1)*width/num_cols_) {col=c;break;}
     const auto& vp=views_[row][col].viewport;
     if(vp.z<=0 || vp.w<=0) {glDisable(GL_SCISSOR_TEST);glViewport(0,0,width,height);return;}
     glEnable(GL_SCISSOR_TEST);
@@ -397,20 +401,24 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
     return false;
 }
 bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,bool expand) const {
+    // Cell partitioning multiplies a target dimension by a row/column index, so the
+    // target must stay inside int with the layout factor included: checking only that
+    // the target itself fits would still allow (cols-1)*width to overflow.
+    const int max_target_width=std::numeric_limits<int>::max()/num_cols_,max_target_height=std::numeric_limits<int>::max()/num_rows_;
     if(!std::isfinite(scale) || scale<=0 || count<=0 || count>64 || (count&(count-1)) || bg<0 || bg>2 ||
-       double(framebuffer_width())*scale>std::numeric_limits<int>::max() || double(framebuffer_height())*scale>std::numeric_limits<int>::max()) return false;
+       framebuffer_width()*static_cast<double>(scale)>max_target_width || framebuffer_height()*static_cast<double>(scale)>max_target_height) return false;
     auto* self=const_cast<MultiViewer*>(this);
     if(!initialized_) { self->init(); self->initialized_=true; }
-    const int w=int(std::ceil(framebuffer_width()*double(scale))),h=int(std::ceil(framebuffer_height()*double(scale)));
+    const int w=static_cast<int>(std::ceil(framebuffer_width()*static_cast<double>(scale))),h=static_cast<int>(std::ceil(framebuffer_height()*static_cast<double>(scale)));
     const mat4 original=camera()->projection_matrix();const bool active=snapshot_active_;
     const double z_near=camera()->z_near(), z_far=camera()->z_far();float x,y;
-    if(camera()->type()==Camera::PERSPECTIVE) {y=float(z_near*std::tan(camera()->field_of_view()*.5));x=float(y*camera()->aspect_ratio());}
+    if(camera()->type()==Camera::PERSPECTIVE) {y=static_cast<float>(z_near*std::tan(camera()->field_of_view()*.5));x=static_cast<float>(y*camera()->aspect_ratio());}
     else camera()->get_ortho_width_height(x,y);
-    const double output_aspect=(double(w)/num_cols_)/(double(h)/num_rows_);
-    if((expand && output_aspect>double(x)/y) || (!expand && output_aspect<double(x)/y)) x=float(output_aspect*y);
-    else y=float(x/output_aspect);
+    const double output_aspect=(static_cast<double>(w)/num_cols_)/(static_cast<double>(h)/num_rows_);
+    if((expand && output_aspect>static_cast<double>(x)/y) || (!expand && output_aspect<static_cast<double>(x)/y)) x=static_cast<float>(output_aspect*y);
+    else y=static_cast<float>(x/output_aspect);
     self->camera()->set_projection_matrix(camera()->type()==Camera::PERSPECTIVE
-        ? transform::frustum(-x,x,-y,y,float(z_near),float(z_far)) : transform::ortho(-x,x,-y,y,float(z_near),float(z_far)));
+        ? transform::frustum(-x,x,-y,y,static_cast<float>(z_near),static_cast<float>(z_far)) : transform::ortho(-x,x,-y,y,static_cast<float>(z_near),static_cast<float>(z_far)));
     snapshot_active_=true;bool result=false;
 #ifdef EASY3D_HAS_VULKAN
     try {result=Viewer::snapshot(file,scale,count,bg,expand);}
@@ -431,7 +439,7 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
             std::vector<unsigned char> rgba;
             if(target.read_color(0,rgba,GL_RGBA,true)) {
                 for(size_t i=0;i<rgba.size();i+=4) if(rgba[i+3] && rgba[i+3]<255)
-                    for(unsigned c=0;c<3;++c) rgba[i+c]=static_cast<unsigned char>(std::min(255u,(unsigned(rgba[i+c])*255+rgba[i+3]/2)/rgba[i+3]));
+                    for(unsigned c=0;c<3;++c) rgba[i+c]=static_cast<unsigned char>(std::min(255u,(static_cast<unsigned>(rgba[i+c])*255+rgba[i+3]/2)/rgba[i+3]));
                 result=ImageIO::save(file,rgba,w,h,4);
             }
         } else result=target.snapshot_color(0,file);
