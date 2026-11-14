@@ -9539,3 +9539,70 @@ it is recorded rather than done.
 trees that had one lost their caches, the CI `macos-15` OpenGL job runs only the non-`desktop` subset
 (hosted macOS has no desktop GL, measured above), and the newest local OpenGL macOS record is still
 2026-11-06. That is a rebuild, not a validation, and it is the remaining gap on this machine.
+
+### 2026-11-14 — runs 15 and 16: a macOS failure that did not repeat, and what the four probes said
+
+**The two runs.** Run 15 (`43608472063`, head `ef544084`, created 15:07:38Z) ended `failure` on one
+job: `VULKAN (macos-15)` failed at step 26, `Test Vulkan on macOS` (job 15:07:41 -> 15:26:52, the
+suite step itself 15:22:15 -> 15:26:46), where ctest exited 8 - its test-failure bit - and the other
+five jobs were green (Ubuntu Vulkan 17m21s, Ubuntu OpenGL 12m12s, Windows Vulkan 14m58s, Windows
+OpenGL 19m38s, macOS OpenGL 14m02s). Run 16 (`43615841956`, head `3d51bdb3`, created 16:29:07Z) is
+green in all six: Ubuntu Vulkan 11m01s, Ubuntu OpenGL 13m12s, macOS OpenGL 18m30s, macOS Vulkan
+21m10s, Windows Vulkan 22m31s and Windows OpenGL 23m28s.
+
+**What is known about the macOS failure, and what is not.** The public annotation carried nothing but
+`Process completed with exit code 8`, and a job log is 403 without a token, so the test name comes
+from the reader's own copy of the step log (`vulkan.input (Failed)`) and nothing more. The test at
+run 15 differed from run 14's, which had passed the same job, by exactly one hunk: `70bf760d` moved
+`ClipboardRestore` ahead of the `clipboard_usable()` echo in `tests/viewer/input_test.cpp`, which
+changes what the guard puts back - the previous entry records that the old order left the sentinel on
+the developer's pasteboard - not what the test reads, because the echo writes and reads the same
+sentinel before the roundtrip either way and the assertions are unchanged. So the failure is either a
+clipboard transient in the CI GUI session, whose pasteboard run 13's log had already shown failing
+(`GLFW_FEATURE_UNAVAILABLE`, "Cocoa: Failed to retrieve string from pasteboard"), or a flake in
+another assertion of the same test; a single occurrence does not separate them.
+
+**`MODIF_CTRL` is not the cause.** On Apple it is `0x0008` (`easy3d/viewer/viewer_input.h:139`), which
+is GLFW's `GLFW_MOD_SUPER`, and the suspicion was that the test's synthetic Ctrl+C/V disagrees with
+what the runtime delivers. It cannot: the test's `press()` calls the window's own GLFW key callback
+with `Viewer::MODIF_CTRL` (`tests/viewer/input_test.cpp:123`), and `Viewer::key_press_event()`
+compares `modifiers == MODIF_CTRL` against that same enum (`easy3d/viewer/viewer.cpp:1293`), so one
+constant sits on both sides of the comparison on every platform. The platform value matters only to a
+physical keyboard, and GLFW reports the platform shortcut key as the same bit.
+
+**The four probe verdicts.** Run 16 is the first run that carries all four annotations:
+
+- macOS OIT: `vulkan.transparency does not pass on the SDK MoltenVK: the -E exclusion above stays`.
+  The exclusion is now measured on the environment it names. `70bf760d` added the probe, and run 15
+  skipped it because its `if:` inherited `success()` from the failed suite - hence `!cancelled()` in
+  `3d51bdb3`. The local MoltenVK 1.4.2 result (0.3 s under validation, repeated) does not transfer
+  to the SDK's own build.
+- Windows Vulkan devices: the annotation says `no vulkaninfo executable found`, names
+  `VULKAN_SDK=C:\VulkanSDK\1.4.363.1`, the directory it searched (`/c/VulkanSDK/1.4.363.1/Bin`) and
+  the entries it saw there (`[vulkaninfoSDK.exe]`). Run 15's exit 127 was a filename, not a missing
+  SDK: the tool ships as `vulkaninfoSDK.exe`.
+- Windows device probe: the annotation says `vulkan.resourcelifetime does not pass on the Windows
+  runner`. The probe ran the CTest registration, which passes
+  `--validation`, and `create_vulkan_device()` throws when validation is requested and
+  `VK_LAYER_KHRONOS_validation` is absent
+  (`easy3d/renderer/backends/vulkan/render_device.cpp:239`); a runner without a device and a runner
+  without the layer fail with the same annotation, and `ctest -R` prints the same warning whether
+  the test ran and failed or matched nothing. The row answers neither question.
+- Windows desktop OpenGL: the annotation says `desktop OpenGL unavailable on the Windows runner`:
+  the same WGL 65542 that ended `viewer.offscreen` in 0.16 s in run 15.
+
+**The round that follows is uncommitted.** The device probe executes
+`easy3d_vulkan_resource_lifetime_test.exe` directly, located with `find`, without `--validation`, and
+annotates the first `FAIL:` line, so its verdict is about the device and a missing binary is reported
+as itself; `vulkaninfoSDK.exe` joins the candidate list, and a non-zero `vulkaninfo` exits with its
+own warning; the macOS suite annotation carries the first five `FAIL:` lines, which is the line run
+15 could not show; and the input test keeps its own copy of the pasteboard text, because GLFW frees
+the buffer on the next get or set, and asserts the camera roundtrip only when what the app copied is
+the current view, so a platform that cannot serve the write leg prints a note instead of losing the
+test. Locally, on the Vulkan Debug tree `vulkan.input` passes in 3.37 s, and a new minimal Release
+OpenGL tree (`build-opengl-check`, tests ON, tutorials/Python/CGAL/Qt/FFmpeg OFF) runs its full suite
+serially 110/110 in 60.16 s. That tree is a different configuration from the IDE-owned ones, so its
+count is not compared with theirs, but it does give this machine the macOS OpenGL suite record the
+previous entry named as missing. `easy3d/util/version.h` is unchanged and the workflow parses as
+YAML. What the next CI run adds: the device verdict without the layer ambiguity, the tool's actual
+output, and the first `FAIL:` line should the macOS suite fail again.

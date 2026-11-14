@@ -318,7 +318,10 @@ jobs:
           cat "$log"
           if [ "$status" -ne 0 ]; then
             failed="$(sed -n '/The following tests FAILED:/,$p' "$log" | sed -n 's/^[[:space:]]*[0-9][0-9]* - \([^ ]*\) .*/\1/p' | paste -sd, - || true)"
-            echo "::warning::macOS Vulkan suite failed (ctest exit $status): ${failed:-no test names in the summary}"
+            # The assertion itself lives only in the step log, which needs a signed-in reader, so
+            # the first FAIL lines are carried in the annotation as well.
+            reasons="$(grep -m 5 '^FAIL:' "$log" | cut -c1-300 | paste -sd'; ' - || true)"
+            echo "::warning::macOS Vulkan suite failed (ctest exit $status): ${failed:-no test names in the summary}${reasons:+ | $reasons}"
           fi
           exit "$status"
 
@@ -340,9 +343,9 @@ jobs:
         timeout-minutes: 5
 
       # Records what the runner actually exposes, so the exclusion below stays verifiable without
-      # a signed-in reader. VULKAN_SDK is set on the image (run 15 printed C:\VulkanSDK\1.4.363.1),
-      # but its Bin holds no vulkaninfo.exe: this step execed the converted path anyway and the job
-      # recorded only exit 127, so the one question it existed to answer went unanswered again.
+      # a signed-in reader. VULKAN_SDK is set on the image (C:\VulkanSDK\1.4.363.1), but its Bin
+      # holds the tool under the SDK name, vulkaninfoSDK.exe, not vulkaninfo.exe: run 15 execed
+      # the plain path anyway, recorded only exit 127, and the question went unanswered again.
       # Paths are now checked before use, the directory that was searched is named inside the
       # annotation, and a missing tool is not reported as a missing device - the step after this
       # one measures the device through Easy3D's own Vulkan code instead.
@@ -356,7 +359,7 @@ jobs:
             sdk="$(cygpath -u "$sdk")" || sdk="${VULKAN_SDK:-}"
           fi
           info=""
-          for c in "${sdk:+$sdk/Bin}/vulkaninfo.exe" "${sdk:+$sdk/Bin}/vulkaninfo-sdk.exe"; do
+          for c in "${sdk:+$sdk/Bin}/vulkaninfo.exe" "${sdk:+$sdk/Bin}/vulkaninfoSDK.exe"; do
             if [ -f "$c" ]; then info="$c"; break; fi
           done
           if [ -z "$info" ]; then
@@ -381,17 +384,28 @@ jobs:
 
       # A Vulkan device, measured through the library rather than through whatever tools the image
       # happens to ship: one test that needs a device and no window, run outside the exclusion
-      # below. vulkan.resourcelifetime carries a 120 s CTest timeout, so a runner with no device
-      # fails at creation instead of stalling the job.
-      - name: Probe a Vulkan device through the suite (Windows)
+      # below. CTest registers it with --validation, which would turn a missing validation layer
+      # into a failed device probe, so the binary is run without the flag here; the first FAIL line
+      # is posted as an annotation so the verdict is legible without a signed-in reader.
+      - name: Probe a Vulkan device through the library (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         continue-on-error: true
         shell: bash -l {0}
         run: |
-          if ctest --test-dir build-vulkan --output-on-failure -C Release -R '^vulkan\.resourcelifetime$'; then
-            echo '::notice::vulkan.resourcelifetime passes on the Windows runner: drop the vulkan.* half of the exclusion below and this probe'
+          exe="$(find build-vulkan -name 'easy3d_vulkan_resource_lifetime_test.exe' -print -quit)"
+          if [ -z "$exe" ]; then
+            echo '::warning::easy3d_vulkan_resource_lifetime_test.exe was not built: the device question stays open'
+            exit 0
+          fi
+          log="$RUNNER_TEMP/vulkan-device-probe.log"
+          if "$exe" > "$log" 2>&1; then
+            cat "$log"
+            echo '::notice::the device test passes without --validation on the Windows runner: drop the vulkan.* half of the exclusion below and this probe'
           else
-            echo '::warning::vulkan.resourcelifetime does not pass on the Windows runner: the exclusion below keeps it for a measured reason'
+            status=$?
+            cat "$log"
+            reason="$(grep -m 1 -E '^FAIL:|^Error|error:' "$log" | cut -c1-300 || true)"
+            echo "::warning::the device test does not pass on the Windows runner (exit $status): ${reason:-no failure line}; the exclusion below stays"
           fi
         timeout-minutes: 5
 

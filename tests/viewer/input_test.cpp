@@ -51,10 +51,10 @@ struct ClipboardRestore {
 // GUI session cannot reach the pasteboard reports GLFW_FEATURE_UNAVAILABLE ("Cocoa: Failed to
 // retrieve string from pasteboard", CI run 13 on macos-15), and with nothing readable there is
 // no roundtrip left to assert. Echoing a sentinel first keeps the checks required wherever the
-// clipboard works and names the platform, instead of the camera, where it does not. The echo is
-// done by this executable's own GLFW image, so it cannot speak for the one the library pastes
-// through; the caller probes that leg separately. A capturing lambda is not a C callback, so the
-// GLFW reason goes through these file-scope helpers.
+// clipboard works and names the platform, instead of the camera, where it does not. The echo only
+// says whether the platform clipboard works at all; the caller measures the library's own read
+// leg directly, because a sentinel that passes does not prove that leg works. A capturing lambda
+// is not a C callback, so the GLFW reason goes through these file-scope helpers.
 static std::string g_clipboard_error;
 static void capture_clipboard_error(int, const char* description) { g_clipboard_error = description ? description : "?"; }
 static bool clipboard_usable(GLFWwindow* window) {
@@ -81,6 +81,20 @@ static std::string camera_text(const vec3& position,const quat& orientation) {
     out << std::setprecision(9) << position.x << ' ' << position.y << ' ' << position.z;
     for (unsigned i=0;i<4;++i) out << ' ' << orientation[i];
     return out.str();
+}
+// The pasteboard buffer belongs to GLFW and is replaced by the next get or set call, so a caller
+// that presses a key before using the text must keep its own copy.
+static std::string clipboard_text(GLFWwindow* window) {
+    const char* text=glfwGetClipboardString(window);
+    return text?std::string(text):std::string();
+}
+// Parses the position prefix of the format copy_view() writes, so the write leg can tell whether
+// the app's copy replaced the pasteboard instead of treating any readable text as its own.
+static bool clipboard_position(const std::string& text,vec3& position) {
+    std::istringstream in(text);
+    for (unsigned i=0;i<3;++i)
+        if (!(in >> position[i]) || !std::isfinite(position[i])) return false;
+    return true;
 }
 // paste_view() animates over 0.5 s, so arrival is driven until it happens rather than assumed to
 // have happened by the time the shortcut returns.
@@ -245,11 +259,18 @@ int main(int argc,char**) {
                     v.camera()->set_position(home);
                     const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
                     // And the write leg, measured the same way: what the app copied has to be
-                    // readable, or there is no roundtrip left to assert about the camera.
-                    const char* written=glfwGetClipboardString(v.window());
-                    if (!written)
-                        std::cout << "note: the app's copy left nothing readable in the pasteboard,"
-                                     " skipping the camera copy/paste roundtrip\n";
+                    // readable and describe the camera it copied, or there is no roundtrip left to
+                    // assert about the camera. Keep a copy because the paste below replaces the
+                    // buffer this text came from.
+                    const std::string written=clipboard_text(v.window());
+                    vec3 written_position(0);
+                    const bool copied_current=clipboard_position(written,written_position) &&
+                                              (written_position-copied).norm()<1e-4f;
+                    if (!copied_current)
+                        std::cout << "note: the app's copy left the pasteboard at \""
+                                  << (written.empty()?"unreadable":written)
+                                  << "\" instead of the current view, so the write leg cannot be"
+                                     " measured here; skipping the camera copy/paste roundtrip\n";
                     else {
                         v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
                         if (!paste_arrives(v,copied)) {
