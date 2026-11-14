@@ -630,37 +630,54 @@ bool test_surface_mesh_remesh_self_intersections() {
     return false;
 }
 
+// A triangle with its own three vertices, so that faces can be stacked on the same
+// positions without sharing anything with the face underneath.
+static void add_triangle(SurfaceMesh *mesh, const vec3 &a, const vec3 &b, const vec3 &c) {
+    const SurfaceMesh::Vertex v0 = mesh->add_vertex(a);
+    const SurfaceMesh::Vertex v1 = mesh->add_vertex(b);
+    const SurfaceMesh::Vertex v2 = mesh->add_vertex(c);
+    mesh->add_face({v0, v1, v2});
+}
+
 bool test_surface_mesh_remove_overlapping_faces() {
-#if defined(EASY3D_TEST_SKIP_OVERLAPPING_FACES)
-    // Over fifteen minutes in MSVC Debug for a run that takes 0.17s optimized;
-    // see tests/algo/CMakeLists.txt.
-    std::cout << "overlapping-face removal skipped (MSVC Debug)" << std::endl;
+    // Six triangles instead of house.obj: the detection cost is dominated by the CGAL
+    // box intersection and the unoptimized build does not finish with ten thousand faces
+    // before the timeout. Here the duplicate pair sits at the origin, the folding pair
+    // (two coplanar triangles sharing the edge from (5,0,0) to (6,0,0), apexes on the same
+    // side) at x = 5, and nothing overlaps with the last two faces.
+    SurfaceMesh *mesh = new SurfaceMesh();
+    add_triangle(mesh, vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0));
+    add_triangle(mesh, vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0));
+    add_triangle(mesh, vec3(5, 0, 0), vec3(6, 0, 0), vec3(5, 1, 0));
+    add_triangle(mesh, vec3(5, 0, 0), vec3(6, 0, 0), vec3(6, 1, 0));
+    add_triangle(mesh, vec3(0, 10, 0), vec3(1, 10, 0), vec3(0, 11, 0));
+    add_triangle(mesh, vec3(10, 10, 0), vec3(11, 10, 0), vec3(10, 11, 0));
+    std::cout << "removing overlapping faces from " << mesh->n_faces() << " triangles..." << std::endl;
+
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > duplicates, foldings;
+    Surfacer::detect_overlapping_faces(mesh, duplicates, foldings);
+    test::require(!duplicates.empty() && !foldings.empty(), "the test case has nothing to remove");
+    test::require(duplicates.size() == 1 && foldings.size() == 1, "the overlapping faces were misclassified");
+
+    const unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
+    const unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
+    std::cout << "done. " << num_degenerate << " degenerate, " << num_overlapping << " overlapping faces removed"
+              << std::endl;
+
+    test::require(num_degenerate == 0, "a valid face was removed as degenerate");
+    test::require(num_overlapping == duplicates.size() + foldings.size(), "one face per overlapping pair was not removed");
+    test::require(mesh->n_faces() == 4, "the faces that do not overlap were not kept");
+
+    duplicates.clear();
+    foldings.clear();
+    Surfacer::detect_overlapping_faces(mesh, duplicates, foldings);
+    test::require(duplicates.empty() && foldings.empty(), "overlapping faces survived the removal");
+
+    test::require(mesh->n_vertices() > 0 && mesh->n_faces() > 0, "algorithm produced an empty surface");
+    for (const auto &p: mesh->points())
+        test::require(std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z), "algorithm produced non-finite geometry");
+    delete mesh;
     return true;
-#endif
-    const std::string file = resource::directory() + "/data/house/house.obj";
-    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
-    if (!mesh) {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
-                  << std::endl;
-        return false;
-    }
-
-    std::cout << "removing overlapping faces..." << std::endl;
-    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
-    unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
-    if (num_degenerate + num_overlapping > 0) {
-        std::cout << "done. " << num_degenerate + num_overlapping << " faces removed (" << num_degenerate
-                  << " degenerate, " << num_overlapping << " overlapping). " << std::endl;
-        test::require(mesh->n_vertices()>0 && mesh->n_faces()>0,"algorithm produced an empty surface");
-    for(const auto& p:mesh->points()) test::require(std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z),"algorithm produced non-finite geometry");
-    delete mesh;
-        return true;
-    }
-
-    test::require(mesh->n_vertices()>0 && mesh->n_faces()>0,"algorithm produced an empty surface");
-    for(const auto& p:mesh->points()) test::require(std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z),"algorithm produced non-finite geometry");
-    delete mesh;
-    return false;
 }
 
 

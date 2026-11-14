@@ -85,12 +85,7 @@ int main(int argc,char**) {
         require(points->cpu_buffers().normals==normals.vector() && points->cpu_buffers().vertices==positions &&
                 points->cpu_buffers().revision>revision,"normal estimation did not refresh native normals");
 #endif
-#ifdef EASY3D_TEST_HAS_BOOST
         require(reorient(&v,cloud.get()),"normal reorientation callback failed");
-#else
-        // Reorientation has always required the optional Boost Graph dependency.
-        require(!reorient(&v,cloud.get()),"unavailable reorientation did not fail cleanly");
-#endif
 #ifdef EASY3D_HAS_VULKAN
         require(points->cpu_buffers().normals==normals.vector(),"reoriented normals were not uploaded");
 #endif

@@ -560,6 +560,10 @@ namespace easy3d {
 	        EdgeAroundVertexCirculator& operator--()
 	        {
 	            assert(graph_);
+	            if (iterator_ == graph_->vconn_[vertex_].edges_.begin()) {	// to behave like a circulator
+	            	iterator_ = end_;
+	            	finished_ = true;
+	            }
 	            --iterator_;
 	            return *this;
 	        }
@@ -665,6 +669,10 @@ namespace easy3d {
 			VertexAroundVertexCirculator& operator--()
 			{
 				assert(graph_);
+				if (iterator_ == graph_->vconn_[vertex_].edges_.begin()) {	// to behave like a circulator
+					iterator_ = end_;
+					finished_ = true;
+				}
 				--iterator_;
 				return *this;
 			}
@@ -766,9 +774,12 @@ namespace easy3d {
 
 		/**
 		 * \brief Add a new edge connecting vertices \c v1 and \c v2.
+		 * \details An edge is unique, connecting two different vertices: adding a duplicate
+		 *		returns the existing edge and adding a self-loop fails.
 		 * \param v1 The first vertex.
 		 * \param v2 The second vertex.
-		 * \return The added edge.
+		 * \return The added (or already existing) edge, or an invalid edge if the vertices are
+		 *		not valid, deleted, or identical.
 		 */
 		Edge add_edge(const Vertex& v1, const Vertex& v2);
 		//@}
@@ -828,6 +839,8 @@ namespace easy3d {
         bool has_garbage() const { return garbage_; }
 		/**
 		 * \brief Removes deleted vertices and edges.
+		 * \details The remaining elements are compacted towards the beginning of the arrays,
+		 *		which invalidates all vertex and edge handles of the graph.
 		 */
 		void collect_garbage();
 
@@ -1232,19 +1245,26 @@ namespace easy3d {
 		 * \brief Finds the edge connecting two vertices.
 		 * \param a The first vertex.
 		 * \param b The second vertex.
-		 * \return The edge connecting the vertices.
+		 * \return The edge connecting the vertices, or an invalid edge if there is no such
+		 *		edge or one of the vertices is not valid.
 		 */
 		Edge find_edge(Vertex a, Vertex b) const;
 
 		/**
 		 * \brief Deletes a vertex from the graph.
+		 * \details The incident edges are deleted as well. Both vertices and edges are only
+		 *		marked as deleted: the space is reclaimed by collect_garbage().
 		 * \param v The vertex to delete.
+		 * \sa delete_edge(), collect_garbage()
 		 */
 		void delete_vertex(Vertex v);
 
 		/**
 		 * \brief Deletes an edge from the graph.
+		 * \details The edge is removed from the adjacency lists of its endpoints and marked as
+		 *		deleted: the space is reclaimed by collect_garbage().
 		 * \param e The edge to delete.
+		 * \sa delete_vertex(), collect_garbage()
 		 */
 		void delete_edge(Edge e);
 		//@}

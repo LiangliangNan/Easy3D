@@ -26,6 +26,8 @@
 
 #include <easy3d/core/graph.h>
 
+#include <algorithm>
+
 
 namespace easy3d {
 
@@ -187,14 +189,6 @@ namespace easy3d {
             for (const auto& p : props)
                 output << "\t" << p << std::endl;
 		}
-
-		props = model_properties();
-		if (!props.empty())
-		{
-            output << "model properties:\n";
-            for (const auto& p : props)
-                output << "\t" << p << std::endl;
-		}
     }
 
 
@@ -209,32 +203,44 @@ namespace easy3d {
     }
 
 
-    Graph::Edge Graph::add_edge(const Vertex& start, const Vertex& end) {
-        assert(start != end);
-        auto e = find_edge(start, end);
+    Graph::Edge Graph::add_edge(const Vertex& v1, const Vertex& v2) {
+        if (!is_valid(v1) || !is_valid(v2) || is_deleted(v1) || is_deleted(v2)) {
+            LOG(WARNING) << "cannot connect an invalid or deleted vertex [" << v1 << ", " << v2 << "]";
+            return Edge();
+        }
+
+        // a self-loop cannot be represented: the circulators and find_edge() assume the two
+        // endpoints of an edge are different vertices.
+        if (v1 == v2) {
+            LOG(WARNING) << "cannot add a self-loop on vertex [" << v1 << "]";
+            return Edge();
+        }
+
+        auto e = find_edge(v1, v2);
         if (e.is_valid()) {
-            LOG(WARNING) << "edge already exists [" << start << ", " <<  end << "]";
-            return e;
-        } else {
-            e = new_edge();
-            econn_[e].source_ = start;
-            econn_[e].target_ = end;
-            vconn_[start].edges_.push_back(e);
-            vconn_[end].edges_.push_back(e);
+            LOG(WARNING) << "edge already exists [" << v1 << ", " << v2 << "]";
             return e;
         }
+
+        e = new_edge();
+        econn_[e].source_ = v1;
+        econn_[e].target_ = v2;
+        vconn_[v1].edges_.push_back(e);
+        vconn_[v2].edges_.push_back(e);
+        return e;
     }
 
 
     //-----------------------------------------------------------------------------
 
 
-    Graph::Edge Graph::find_edge(Vertex start, Vertex end) const
+    Graph::Edge Graph::find_edge(Vertex v1, Vertex v2) const
     {
-        assert(is_valid(start) && is_valid(end));
+        if (!is_valid(v1) || !is_valid(v2))
+            return Edge();
 
-        for (auto e : edges(start)) {
-            if (vertex(e, 0) == end || vertex(e, 1) == end)
+        for (auto e : edges(v1)) {
+            if (vertex(e, 0) == v2 || vertex(e, 1) == v2)
                 return e;
         }
 
@@ -263,37 +269,18 @@ namespace easy3d {
 
     void Graph::delete_vertex(Vertex v)
     {
-        /// todo: implement this function
-        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
-    //    if (vdeleted_[v])  return;
+        if (!is_valid(v) || vdeleted_[v])
+            return;
 
-    //    // collect incident faces
-    //    std::vector<Face> incident_faces;
-    //    incident_faces.reserve(6);
+        // the incident edges cannot survive their vertex: note that the connectivity is
+        // copied because delete_edge() removes the edge from the adjacency list.
+        const std::vector<Edge> incident = vconn_[v].edges_;
+        for (auto e : incident)
+            delete_edge(e);
 
-    //    FaceAroundVertexCirculator fc, fc_end;
-    //    fc = fc_end = faces(v);
-
-    //    if (fc)
-    //    do
-    //    {
-    //        incident_faces.push_back(*fc);
-    //    } while (++fc != fc_end);
-
-    //    // delete incident faces
-    //    std::vector<Face>::iterator fit(incident_faces.begin()),
-    //                                fend(incident_faces.end());
-
-    //    for (; fit != fend; ++fit)
-    //        delete_face(*fit);
-
-    //    // mark v as deleted if not yet done by delete_face()
-    //    if (!vdeleted_[v])
-    //    {
-    //        vdeleted_[v] = true;
-    //        deleted_vertices_++;
-    //        garbage_ = true;
-    //    }
+        vdeleted_[v] = true;
+        deleted_vertices_++;
+        garbage_ = true;
     }
 
 
@@ -302,15 +289,20 @@ namespace easy3d {
 
     void Graph::delete_edge(Edge e)
     {
-        /// todo: implement this function
-        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
-    //    if (edeleted_[e])  return;
+        if (!is_valid(e) || edeleted_[e])
+            return;
 
-    //    Face f0 = face(halfedge(e, 0));
-    //    Face f1 = face(halfedge(e, 1));
+        // unlink the edge from the adjacency lists of its endpoints: unlike the mesh
+        // halfedges, the graph circulators iterate over these lists directly and do not
+        // skip deleted edges.
+        for (unsigned int i = 0; i < 2; ++i) {
+            auto& edges = vconn_[vertex(e, i)].edges_;
+            edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
+        }
 
-    //    if (f0.is_valid()) delete_face(f0);
-    //    if (f1.is_valid()) delete_face(f1);
+        edeleted_[e] = true;
+        deleted_edges_++;
+        garbage_ = true;
     }
 
 
@@ -318,115 +310,92 @@ namespace easy3d {
 
     void Graph::collect_garbage()
     {
-        /// todo: implement this function
-        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
-    //    int  i, i0, i1,
-    //    nV(vertices_size()),
-    //    nE(edges_size()),
-    //    nH(halfedges_size()),
+        if (!garbage_)
+            return;
 
-    //    Vertex    v;
-    //    Halfedge  h;
+        const int nV = static_cast<int>(vertices_size());
+        const int nE = static_cast<int>(edges_size());
 
+        // setup handle mapping: because the mapping is a property, compacting an element
+        // moves its entry along and the entries of the live elements end up being the
+        // handles they get in the compacted graph.
+        auto vmap = add_vertex_property<Vertex>("v:garbage-collection");
+        auto emap = add_edge_property<Edge>("e:garbage-collection");
+        for (int i = 0; i < nV; ++i)
+            vmap[Vertex(i)] = Vertex(i);
+        for (int i = 0; i < nE; ++i)
+            emap[Edge(i)] = Edge(i);
 
-    //    // setup handle mapping
-    //    VertexProperty<Vertex>      vmap = add_vertex_property<Vertex>("v:garbage-collection");
-    //    EdgeProperty<Edge>          emap = add_edge_property<Edge>("e:garbage-collection");
+        // remove deleted vertices
+        int new_nv = nV;
+        if (nV > 0)
+        {
+            int i0 = 0;
+            int i1 = nV - 1;
 
-    //    for (i=0; i<nV; ++i)
-    //        vmap[Vertex(i)] = Vertex(i);
-    //    for (i=0; i<nH; ++i)
-    //        emap[Edge(i)] = Edge(i);
+            while (true)
+            {
+                // find first deleted and last un-deleted
+                while (!vdeleted_[Vertex(i0)] && i0 < i1)  ++i0;
+                while ( vdeleted_[Vertex(i1)] && i0 < i1)  --i1;
+                if (i0 >= i1) break;
 
-    //    // remove deleted vertices
-    //    if (nV > 0)
-    //    {
-    //        i0=0;  i1=nV-1;
+                // swap
+                vprops_.swap(i0, i1);
+            };
 
-    //        while (1)
-    //        {
-    //            // find first deleted and last un-deleted
-    //            while (!vdeleted_[Vertex(i0)] && i0 < i1)  ++i0;
-    //            while ( vdeleted_[Vertex(i1)] && i0 < i1)  --i1;
-    //            if (i0 >= i1) break;
+            // remember new size
+            new_nv = vdeleted_[Vertex(i0)] ? i0 : i0 + 1;
+        }
 
-    //            // swap
-    //            vprops_.swap(i0, i1);
-    //        };
+        // remove deleted edges
+        int new_ne = nE;
+        if (nE > 0)
+        {
+            int i0 = 0;
+            int i1 = nE - 1;
 
-    //        // remember new size
-    //        nV = vdeleted_[Vertex(i0)] ? i0 : i0+1;
-    //    }
+            while (true)
+            {
+                // find first deleted and last un-deleted
+                while (!edeleted_[Edge(i0)] && i0 < i1)  ++i0;
+                while ( edeleted_[Edge(i1)] && i0 < i1)  --i1;
+                if (i0 >= i1) break;
 
+                // swap
+                eprops_.swap(i0, i1);
+            };
 
-    //    // remove deleted edges
-    //    if (nE > 0)
-    //    {
-    //        i0=0;  i1=nE-1;
+            // remember new size
+            new_ne = edeleted_[Edge(i0)] ? i0 : i0 + 1;
+        }
 
-    //        while (1)
-    //        {
-    //            // find first deleted and last un-deleted
-    //            while (!edeleted_[Edge(i0)] && i0 < i1)  ++i0;
-    //            while ( edeleted_[Edge(i1)] && i0 < i1)  --i1;
-    //            if (i0 >= i1) break;
+        // the connectivity stores handles, so it has to be remapped: the adjacency lists
+        // reference edges and the edge endpoints reference vertices
+        for (int i = 0; i < new_ne; ++i) {
+            auto& conn = econn_[Edge(i)];
+            conn.source_ = vmap[conn.source_];
+            conn.target_ = vmap[conn.target_];
+        }
 
-    //            // swap
-    //            eprops_.swap(i0, i1);
-    //            eprops_.swap(2*i0,   2*i1);
-    //        };
+        for (int i = 0; i < new_nv; ++i) {
+            for (auto& e : vconn_[Vertex(i)].edges_)
+                e = emap[e];
+        }
 
-    //        // remember new size
-    //        nE = edeleted_[Edge(i0)] ? i0 : i0+1;
-    //        nH = 2*nE;
-    //    }
+        // remove handle maps
+        remove_vertex_property(vmap);
+        remove_edge_property(emap);
 
-    //    // update vertex connectivity
-    //    for (i=0; i<nV; ++i)
-    //    {
-    //        v = Vertex(i);
-    //        if (!is_isolated(v))
-    //            set_halfedge(v, hmap[edges(v)]);
-    //    }
+        // finally resize arrays
+        vprops_.resize(new_nv);
+        eprops_.resize(new_ne);
+        vprops_.shrink_to_fit();
+        eprops_.shrink_to_fit();
 
-
-    //    // update halfedge connectivity
-    //    for (i=0; i<nH; ++i)
-    //    {
-    //        h = Halfedge(i);
-    //        set_vertex(h, vmap[target(h)]);
-    //        set_next(h, hmap[next(h)]);
-    //        if (!is_border(h))
-    //            set_face(h, fmap[face(h)]);
-    //    }
-
-    //    // remove handle maps
-    //    remove_vertex_property(vmap);
-    //    remove_edge_property(emap);
-
-
-    //    // finally resize arrays
-    //    vprops_.resize(nV); vprops_.free_memory();
-    //    eprops_.resize(nH); eprops_.free_memory();
-
-    //    deleted_vertices_ = deleted_edges_ = 0;
-    //    garbage_ = false;
+        deleted_vertices_ = deleted_edges_ = 0;
+        garbage_ = false;
     }
-
-
-//    std::vector<Graph::Vertex> Graph::vertices(Vertex v) const {
-//        assert(v.is_valid());
-//        std::vector<Graph::Vertex> result;
-//        for (auto e : edges(v)) {
-//            Vertex another = source(e);
-//            if (another != v)
-//                result.push_back(another);
-//            else
-//                result.push_back(target(e));
-//        }
-
-//        return result;
-//    }
 
 
 } // namespace easy3d

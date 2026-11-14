@@ -42,7 +42,7 @@ demo is covered by Tutorial 312 and the joined-worker viewer regression. Dedicat
 viewer/renderer tests additionally assert pixels, depth, IDs and resource sharing.
 The five effect scenes (501–505) run on OpenGL; their Vulkan implementations remain
 migration work. Optional CGAL algorithm cases are registered only when algo_ext is
-built; RANSAC cases require the compiled Boost support. No interactive aggregate `Tests` executable or intentional logging crash
+built. No interactive aggregate `Tests` executable or intentional logging crash
 is retained. The former Python tutorial-loop runner is replaced by CTest and the
 packaged Python regression.
 

@@ -3434,8 +3434,9 @@ The default F1 manual is retained alongside each tutorial's original screen hint
 Normal estimation/reorientation uploads the changed normal buffer through the
 existing drawable API. Tutorial 701 explicitly fits after setting its front-view
 camera direction, keeping the cloud visible in bounded native runs as well as
-OpenGL's normal run loop. Reorientation retains its existing optional Boost Graph
-requirement; the other algorithms do not acquire a new dependency.
+OpenGL's normal run loop. Reorientation is self-contained: it builds the Riemannian
+graph with `Graph` and orients it with `GraphMinimumSpanningTree`, so no external
+graph library is involved; the other algorithms do not acquire a new dependency.
 
 Plane extraction keeps the original RANSAC parameters and segmentation property
 coloring, refreshing the point drawable when labels/colors change. Reconstruction
@@ -3451,8 +3452,9 @@ extract dense cube planes and check visible property-color changes, and
 reconstruct an oriented sphere. Native checks additionally verify normal-buffer
 refresh without changed positions, point provenance, unchanged depth/IDs after
 segmentation, reconstructed mesh face picking and zero validation errors.
-Optional reorientation is checked according to the algorithm library's Boost
-build configuration. The bounded native tutorial tests exercise the original
+Reorientation is checked in every configuration, because the algorithm module now
+provides its own `GraphMinimumSpanningTree`. The bounded native tutorial tests
+exercise the original
 `main()` entry points, including their rendering setup and usage hints.
 
 Verified the minimal tutorial layout on this Mac: the focused OpenGL and Vulkan
@@ -9090,3 +9092,98 @@ all under `tests/`: `test_window.h`, `viewer_events_test.cpp`, `viewer_loop_test
 `portable_pick_test.cpp` and `point_benchmark_test.cpp`. No library source is involved, and
 `opengl::QueryState` keeps its restore-the-caller's-state contract: the host is meant to hand
 that state back, which is exactly what the probe had failed to account for.
+
+### 2026-11-14 — `Graph` gains deletion and garbage collection; reorientation drops Boost
+
+**Why this was in scope.** `Graph::delete_vertex()`, `Graph::delete_edge()` and
+`Graph::collect_garbage()` were `/// todo: implement this function` stubs that only logged a
+request to contact the author, so the class could be built, traversed and saved but never
+edited. The one library user that needs editing, `PointCloudNormals::reorient()`, therefore
+went outside it: it built a `boost::adjacency_list`, ran `boost::prim_minimum_spanning_tree()`
+once per connected component, and was compiled only when `find_package(Boost COMPONENTS graph)`
+succeeded (`HAS_BOOST`). That made a core algorithm depend on an optional third-party library
+and, in an unoptimized MSVC build, it was slow enough that `algo.point_cloud_normal_estimation`
+ran past half an hour against its 180 s timeout - which is why the test files carried
+`EASY3D_TEST_SKIP_REORIENT` and `EASY3D_TEST_HAS_BOOST` gates.
+
+**`Graph` (changes stay in `graph.h`/`graph.cpp`).**
+- `delete_edge()` removes the edge from the adjacency lists of both endpoints before marking it.
+  The circulators iterate over those lists and, unlike the mesh halfedges, do not skip deleted
+  elements, so an edge left in a list would keep reaching callers after it was deleted.
+- `delete_vertex()` deletes the incident edges and then marks the vertex. It copies the adjacency
+  list first, because `delete_edge()` erases from exactly that list.
+- `collect_garbage()` compacts towards the beginning with the two-pointer swap OpenMesh uses. A
+  swap moves one live element back over one deleted one, so each index is transposed at most
+  once and the mapping carried in the temporary `v:garbage-collection`/`e:garbage-collection`
+  properties ends up holding, for every live element, the handle it gets in the compacted graph.
+  The connectivity is then remapped with those two maps - the endpoints of the edges through the
+  vertex map, the adjacency lists through the edge map - the arrays are resized and
+  `shrink_to_fit()`, and the counters and the garbage flag are reset. All handles are
+  invalidated, which the header now states.
+- `add_edge()` rejects invalid or deleted endpoints and self-loops instead of asserting. In a
+  Release build the `assert(start != end)` was gone and a self-loop corrupted the circulators and
+  `find_edge()`, both of which assume an edge's two endpoints differ; a duplicate edge still
+  returns the existing one.
+- `find_edge()` returns an invalid edge for an invalid vertex rather than asserting.
+- `property_stats()` printed the model properties twice.
+- `EdgeAroundVertexCirculator::operator--` and `VertexAroundVertexCirculator::operator--` did not
+  wrap: decrementing at the first element moved one past `begin()`, undefined behaviour, instead
+  of stepping to the last element the way `++` does at the end.
+
+**`GraphMinimumSpanningTree` (`easy3d/algo`).** Lazy Prim over `Graph` with a binary heap: no
+decrease-key, `O((V + E) log V)`, and the cheapest edge reaching each vertex is recorded when it
+is relaxed. It takes one root per connected component and returns the forest as a predecessor
+array (`-1` for a root and for a vertex no root reaches), which is what a consumer such as
+normal reorientation needs and avoids re-deriving the components. Ties are broken by vertex index,
+so the tree depends on the weights and not on the relaxation order; a root is never given a
+predecessor, so the forest keeps one tree per root even under negative weights. It refuses a null
+graph, fewer weights than edges, a non-finite weight (a NaN would silently drop the edges carrying
+it) and roots that are invalid, out of range or deleted.
+
+**`PointCloudNormals::reorient()`** now builds that graph with `Graph` and orients it with the new
+module. The algorithm is unchanged: the Riemannian weight `1 - |n1 . n2|`, the highest point of
+each component roots its tree with its normal forced towards `+Z`, propagation stops being trusted
+across an edge whose normals differ by more than `angle_max = PI/2`, and a point whose k nearest
+neighbours could not be returned keeps the orientation `estimate()` gave it. Boost is gone from
+every CMake file of the project, and with it the `HAS_BOOST` propagation into the tests:
+reorientation is now compiled and checked in every configuration, and
+`algo.point_cloud_plane_extraction` is registered everywhere instead of only where Boost was found.
+
+**The second MSVC-Debug skip, `algo.surface_mesh_remove_overlapping_faces`.** It ran on
+`data/house/house.obj`, and the skip it forced had recorded the figures: 0.17 s optimized against
+over fifteen minutes unoptimized for the 11 262 triangles `OverlappingFaces` puts through CGAL's
+box intersection and exact predicates - more than any test timeout allows. The test now builds six
+triangles: a duplicate
+pair (the same three positions twice, each face with its own vertices, so `do_overlap()` reports it
+as geometrically identical) and a folding pair (coplanar, one shared edge, both apexes on the same
+side of it) far away from each other, plus two faces nothing overlaps with. It asserts the
+classification (one duplicate pair, one folding pair), that exactly one face per pair is removed,
+that the four faces that must survive do, and that a second detection pass finds nothing. The
+previous version only required that at least one face was removed on the shipped model and never
+checked how many, which faces were left, or whether an overlap remained. Note while writing the
+fixture: `OverlappingFaces::remove()` takes `delete_folding_faces` but never reads it, so folding
+faces are removed whatever the caller asks for; the `f:deleted` array it uses as an
+"already processed" guard is the mesh's own deleted-face marks, which `delete_face()` sets, so that
+part behaves as intended. Left as recorded work, not changed by this commit.
+
+**Validation (2026-11-14, Windows/MSVC).** `build-vulkan-release` 144/144 in Release (202.9 s) and
+144/144 in Debug (426.3 s), `build-opengl-release` 110/110 in Release (109.6 s) and 110/110 in
+Debug (302.4 s) - one case more than the 2026-11-14 Windows record in each tree, the new
+`algo.graph_minimum_spanning_tree`. Measured without other load: `core.graph` 0.05 s Debug and
+0.04 s Release, `algo.graph_minimum_spanning_tree` 0.05 s and 0.02 s,
+`algo.point_cloud_normal_estimation` 55.1 s and 3.2 s inside its 180 s timeout, and
+`algo.point_cloud_plane_extraction` 2.0 s and 0.28 s with the Boost condition dropped from its
+registration. The
+CGAL tree `build-vulkan-cgal` is green for every test this change touches in both configurations:
+`algo.surface_mesh_remove_overlapping_faces` in 0.45 s Debug and 0.47 s Release against the
+fifteen-minute run it replaces, all six `algo.point_cloud_*` cases, `core.graph` and the new MST
+test; its remaining tests were not re-run. `viewer.pointbenchmark` passed in all four suites here,
+which is a property of the desktop as much as of the build: it needs a 1600x917 logical window and
+fails the size assertion on a shorter display. One intermediate Release run reported
+`vulkan.tutorial601` as `BAD_COMMAND` because the test binary was still being replaced when the
+suite reached it; it passed standalone and in the clean full run recorded above. Files:
+`easy3d/core/graph.{h,cpp}`, `easy3d/algo/graph_minimum_spanning_tree.{h,cpp}`,
+`easy3d/algo/point_cloud_normals.cpp`, `easy3d/algo/CMakeLists.txt`,
+`tests/core/graph_test.cpp`, `tests/algo/graph_minimum_spanning_tree_test.cpp`,
+`tests/algo/{CMakeLists.txt,point_cloud_algorithms_test.cpp,surface_mesh_algorithms_test.cpp}`,
+`tests/viewer/{CMakeLists.txt,cloud_tutorials_test.cpp}`, `tests/README.md`.
