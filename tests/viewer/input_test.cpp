@@ -15,7 +15,9 @@
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <chrono>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 using namespace easy3d;
@@ -49,8 +51,10 @@ struct ClipboardRestore {
 // GUI session cannot reach the pasteboard reports GLFW_FEATURE_UNAVAILABLE ("Cocoa: Failed to
 // retrieve string from pasteboard", CI run 13 on macos-15), and with nothing readable there is
 // no roundtrip left to assert. Echoing a sentinel first keeps the checks required wherever the
-// clipboard works and names the platform, instead of the camera, where it does not. A capturing
-// lambda is not a C callback, so the GLFW reason goes through these file-scope helpers.
+// clipboard works and names the platform, instead of the camera, where it does not. The echo is
+// done by this executable's own GLFW image, so it cannot speak for the one the library pastes
+// through; the caller probes that leg separately. A capturing lambda is not a C callback, so the
+// GLFW reason goes through these file-scope helpers.
 static std::string g_clipboard_error;
 static void capture_clipboard_error(int, const char* description) { g_clipboard_error = description ? description : "?"; }
 static bool clipboard_usable(GLFWwindow* window) {
@@ -68,6 +72,25 @@ static bool clipboard_usable(GLFWwindow* window) {
         std::cout << "note: platform clipboard unavailable (" << reason << "), skipping the camera copy/paste roundtrip\n";
     }
     return usable;
+}
+// Viewer::copy_view() serializes the camera as three position and four orientation components, and
+// paste_view() refuses anything else; a probe has to speak that exact format to be a test of the
+// clipboard rather than of the parser.
+static std::string camera_text(const vec3& position,const quat& orientation) {
+    std::ostringstream out;
+    out << std::setprecision(9) << position.x << ' ' << position.y << ' ' << position.z;
+    for (unsigned i=0;i<4;++i) out << ' ' << orientation[i];
+    return out.str();
+}
+// paste_view() animates over 0.5 s, so arrival is driven until it happens rather than assumed to
+// have happened by the time the shortcut returns.
+static bool paste_arrives(Viewer& viewer,const vec3& target) {
+    const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
+    while ((viewer.camera()->position()-target).norm()>=1e-5f && std::chrono::steady_clock::now()<deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        viewer.draw_frame();
+    }
+    return (viewer.camera()->position()-target).norm()<1e-5f;
 }
 int main(int argc,char**) {
     try {
@@ -205,18 +228,41 @@ int main(int argc,char**) {
             // puts back what was there rather than leaving the sentinel behind.
             ClipboardRestore clipboard(v.window());
             if (clipboard_usable(v.window())) {
-                const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
-                v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
-                // Vulkan pastes immediately; OpenGL animates to the saved view over 0.5 s. Both
-                // must restore it, so drive frames until arrival rather than assuming one timing.
-                const auto paste_deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
-                while ((v.camera()->position()-copied).norm()>=1e-5f && std::chrono::steady_clock::now()<paste_deadline) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
-                    v.draw_frame();
+                // Paste a view the pasteboard already holds and see whether the app acts on it.
+                // That is the read leg Viewer::paste_view() needs, measured through the library
+                // rather than through this executable's own GLFW image.
+                const auto home=v.camera()->position();
+                const vec3 probe(home.x+2,home.y-1,home.z+3);
+                glfwSetClipboardString(v.window(),camera_text(probe,v.camera()->orientation()).c_str());
+                press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+                if (!paste_arrives(v,probe)) {
+                    const char* held=glfwGetClipboardString(v.window());
+                    std::cout << "note: Ctrl+V did not move the camera to a view the pasteboard holds (\""
+                              << (held?held:"unreadable") << "\", camera " << (v.camera()->position()-probe).norm()
+                              << " away), so the app cannot read the clipboard here; skipping the roundtrip\n";
+                    v.camera()->set_position(home);
+                } else {
+                    v.camera()->set_position(home);
+                    const auto copied=v.camera()->position(); press(InputViewer::KEY_C,Viewer::MODIF_CTRL);
+                    // And the write leg, measured the same way: what the app copied has to be
+                    // readable, or there is no roundtrip left to assert about the camera.
+                    const char* written=glfwGetClipboardString(v.window());
+                    if (!written)
+                        std::cout << "note: the app's copy left nothing readable in the pasteboard,"
+                                     " skipping the camera copy/paste roundtrip\n";
+                    else {
+                        v.camera()->set_position(copied+vec3(1)); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+                        if (!paste_arrives(v,copied)) {
+                            // Both legs work in isolation, so this one is a real defect and says so
+                            // with the pasteboard text that the camera failed to come back from.
+                            std::ostringstream out;
+                            out << "clipboard camera roundtrip failed although the pasteboard held \"" << written << "\"";
+                            throw std::runtime_error(out.str());
+                        }
+                        glfwSetClipboardString(v.window(),"bad camera"); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
+                        require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
+                    }
                 }
-                require((v.camera()->position()-copied).norm()<1e-5f,"clipboard camera roundtrip failed");
-                glfwSetClipboardString(v.window(),"bad camera"); press(InputViewer::KEY_V,Viewer::MODIF_CTRL);
-                require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
             }
         }
         press(InputViewer::KEY_O,Viewer::MODIF_CTRL); press(InputViewer::KEY_S,Viewer::MODIF_CTRL); press(InputViewer::KEY_S);

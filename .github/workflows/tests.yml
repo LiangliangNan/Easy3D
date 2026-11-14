@@ -261,9 +261,12 @@ jobs:
               --vulkan build-parity-vulkan/bin/easy3d_backend_image_diff_test \
               --output-dir build-parity-images --validation
 
-      # Hosted Windows runners expose neither a Vulkan ICD nor a desktop OpenGL
-      # driver, so no rendering test can run there. macOS is not so limited for
-      # Vulkan - its job runs the windowed tests through MoltenVK - but its OpenGL
+      # Hosted Windows runners have no desktop OpenGL driver, now measured there rather than
+      # read off the image specification: the probe below runs viewer.offscreen on run 15 and it
+      # failed in 0.16 s with "GLFW error 65542: WGL: The driver does not appear to support
+      # OpenGL" and "could not create an OpenGL 3.2 context!". Whether the image exposes a Vulkan
+      # device is a separate question and the Vulkan job answers it for itself. macOS is not
+      # limited for Vulkan - its job runs the windowed tests through MoltenVK - but its OpenGL
       # job is, and that was measured rather than assumed: running the whole
       # desktop-labelled suite there on 2026-11-14 (run 13) gave 74/74 failures,
       # every one of them at context creation with "NSGL: Failed to find a suitable
@@ -278,8 +281,9 @@ jobs:
       # whole desktop suite: viewer.offscreen carries a 120 s CTest timeout, so a
       # runner without a GL driver fails fast rather than stalling the job. The verdict
       # is posted as an annotation because a continue-on-error step always reads green
-      # in the job summary and the raw log needs a signed-in reader. Drop
-      # continue-on-error and fold it into -L desktop once the annotation says green.
+      # in the job summary and the raw log needs a signed-in reader. Run 15 took the
+      # warning branch (WGL: the driver does not appear to support OpenGL), so the
+      # exclusion stands; the probe stays because a future image can answer differently.
       - name: Probe desktop OpenGL contexts (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
         continue-on-error: true
@@ -302,16 +306,30 @@ jobs:
       # excluded here as well: with Boost's graph it ran tens of minutes on a hosted runner
       # against a 180 s timeout, and it now uses the Boost-free MST path (3.2 s Release
       # measured locally on 2026-11-14).
+      # Runs the suite but keeps its own verdict legible: a ctest failure otherwise survives here
+      # only as "Process completed with exit code 8", and an Actions job log needs a signed-in
+      # reader. The failing test names are posted as an annotation from CTest's own summary block.
       - name: Test Vulkan on macOS
         if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
-        run: ctest --test-dir build-vulkan --output-on-failure -C Release -E '^vulkan\.transparency$'
+        run: |
+          log="$RUNNER_TEMP/ctest-vulkan-macos.log"
+          status=0
+          ctest --test-dir build-vulkan --output-on-failure -C Release -E '^vulkan\.transparency$' > "$log" 2>&1 || status=$?
+          cat "$log"
+          if [ "$status" -ne 0 ]; then
+            failed="$(sed -n '/The following tests FAILED:/,$p' "$log" | sed -n 's/^[[:space:]]*[0-9][0-9]* - \([^ ]*\) .*/\1/p' | paste -sd, - || true)"
+            echo "::warning::macOS Vulkan suite failed (ctest exit $status): ${failed:-no test names in the summary}"
+          fi
+          exit "$status"
 
       # The runner's MoltenVK and validation layers come from the LunarG SDK, which is the
       # environment the inherited note described, so the answer has to be measured there.
+      # !cancelled() because the step above gates the job but must not gate this measurement:
+      # in run 15 a suite failure skipped this probe along with it, and the question stayed open.
       # The test carries its own 120 s CTest timeout and this ceiling keeps a hung loader
       # from holding the job.
       - name: Probe linked-list OIT on the SDK MoltenVK (macOS)
-        if: runner.os == 'macOS' && matrix.backend == 'VULKAN'
+        if: runner.os == 'macOS' && matrix.backend == 'VULKAN' && !cancelled()
         continue-on-error: true
         run: |
           if ctest --test-dir build-vulkan --output-on-failure -C Release -R '^vulkan\.transparency$'; then
@@ -321,29 +339,61 @@ jobs:
           fi
         timeout-minutes: 5
 
-      # Records what the runner actually exposes, so the exclusions below stay
-      # verifiable from the log instead of resting on this comment. VULKAN_SDK holds
-      # Windows separators, and Git Bash will not exec a path that mixes them with
-      # forward ones, so the SDK root is converted first. The verdict is also posted as an
-      # annotation, because a continue-on-error step always reads green in the job summary
-      # and the raw log needs a signed-in reader.
+      # Records what the runner actually exposes, so the exclusion below stays verifiable without
+      # a signed-in reader. VULKAN_SDK is set on the image (run 15 printed C:\VulkanSDK\1.4.363.1),
+      # but its Bin holds no vulkaninfo.exe: this step execed the converted path anyway and the job
+      # recorded only exit 127, so the one question it existed to answer went unanswered again.
+      # Paths are now checked before use, the directory that was searched is named inside the
+      # annotation, and a missing tool is not reported as a missing device - the step after this
+      # one measures the device through Easy3D's own Vulkan code instead.
       - name: Report Vulkan devices (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
         continue-on-error: true
         shell: bash -l {0}
         run: |
-          sdk="$(cygpath -u "$VULKAN_SDK")"
+          sdk="${VULKAN_SDK:-}"
+          if command -v cygpath >/dev/null 2>&1 && [ -n "$sdk" ]; then
+            sdk="$(cygpath -u "$sdk")" || sdk="${VULKAN_SDK:-}"
+          fi
+          info=""
+          for c in "${sdk:+$sdk/Bin}/vulkaninfo.exe" "${sdk:+$sdk/Bin}/vulkaninfo-sdk.exe"; do
+            if [ -f "$c" ]; then info="$c"; break; fi
+          done
+          if [ -z "$info" ]; then
+            found="$(ls -1 "${sdk:+$sdk/Bin}" 2>/dev/null | grep -i vulkaninfo | paste -sd, - || true)"
+            echo "::warning::no vulkaninfo executable found (VULKAN_SDK=${VULKAN_SDK:-unset}, searched [${sdk:+$sdk/Bin}], vulkaninfo* entries: [${found:-none}]): the device question goes to the probe below"
+            exit 0
+          fi
           summary="$RUNNER_TEMP/vulkaninfo-summary.txt"
-          "$sdk/Bin/vulkaninfo.exe" --summary | tee "$summary"
-          echo 'ICD manifests shipped by the runner:'
-          ls -1 "$sdk/Bin/data/icd.d" /c/Windows/System32/vulkan/icd.d 2>/dev/null || echo 'none found in the SDK or system directories'
-          devices="$(sed -n 's/.*deviceName *= *//p' "$summary" | paste -sd, -)"
+          status=0
+          "$info" --summary > "$summary" 2>&1 || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::vulkaninfo at $info could not build a device summary (exit $status): the exclusion below stays"
+            exit 0
+          fi
+          devices="$(sed -n 's/.*deviceName *= *//p' "$summary" | paste -sd, - || true)"
           if [ -n "$devices" ]; then
-            echo "::notice::the runner exposes Vulkan device(s) [$devices]: measure the vulkan.* tests below instead of excluding them"
+            echo "::notice::the runner exposes Vulkan device(s) [$devices]: measure the vulkan.* tests instead of excluding them"
           else
             echo "::warning::the runner exposes no Vulkan device: the step below keeps -LE desktop and the vulkan.* exclusion"
           fi
         timeout-minutes: 2
+
+      # A Vulkan device, measured through the library rather than through whatever tools the image
+      # happens to ship: one test that needs a device and no window, run outside the exclusion
+      # below. vulkan.resourcelifetime carries a 120 s CTest timeout, so a runner with no device
+      # fails at creation instead of stalling the job.
+      - name: Probe a Vulkan device through the suite (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
+        continue-on-error: true
+        shell: bash -l {0}
+        run: |
+          if ctest --test-dir build-vulkan --output-on-failure -C Release -R '^vulkan\.resourcelifetime$'; then
+            echo '::notice::vulkan.resourcelifetime passes on the Windows runner: drop the vulkan.* half of the exclusion below and this probe'
+          else
+            echo '::warning::vulkan.resourcelifetime does not pass on the Windows runner: the exclusion below keeps it for a measured reason'
+          fi
+        timeout-minutes: 5
 
       # Until the probe above prints a device, this job assumes Vulkan rendering is
       # unavailable and runs every test that needs neither a Vulkan device nor a
