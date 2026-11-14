@@ -5,6 +5,7 @@
 #include <easy3d/util/setting.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <cmath>
 #include <algorithm>
@@ -43,7 +44,29 @@ void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
             require((hit.position-world_at(unsigned(sx),unsigned(sy))).norm()<1e-4f,"picked world point is offset from framebuffer pixel center");
             checked_pick=true;
         }
-    require(checked_pick,"cross-section fixture produced no scene pick");
+    if (!checked_pick) {
+        // The symptom alone cannot be diagnosed after the fact, because pick() returns an
+        // empty result both when the cursor is over nothing and when the picking pass drew
+        // nothing at all. Print the two coordinate systems and the pass's own verdict for
+        // the texel nearest the scene center, so the next occurrence names its cause.
+        int fw=0,fh=0; viewer.framebuffer_size(fw,fh);
+        size_t nearest=0; double best=-1;
+        const double cx=image.width*0.5, cy=image.height*0.5;
+        for (size_t i=0;i<image.ids.size();++i) {
+            if (image.ids[i].object==UINT32_MAX) continue;
+            const double dx=double(i%image.width)-cx, dy=double(i/image.width)-cy, d=dx*dx+dy*dy;
+            if (best<0 || d<best) { best=d; nearest=i; }
+        }
+        const int nx=int(double(nearest%image.width)*viewer.width()/image.width);
+        const int ny=int(double(nearest/image.width)*viewer.height()/image.height);
+        std::ostringstream out;
+        out << "cross-section fixture produced no scene pick: " << hits(image) << " of " << image.width*image.height
+            << " texels covered, window " << viewer.width() << 'x' << viewer.height() << " against framebuffer "
+            << fw << 'x' << fh << ", capture " << image.width << 'x' << image.height << ", nearest covered texel ("
+            << nearest%image.width << ',' << nearest/image.width << ") maps to logical (" << nx << ',' << ny
+            << "), where pick() returned " << (viewer.pick(nx,ny) ? "a surface" : "nothing");
+        throw std::runtime_error(out.str());
+    }
     for (unsigned y=0;y<image.height;++y) for (unsigned x=0;x<image.width;++x) {
         const auto i=size_t(y)*image.width+x; if (image.ids[i].object==UINT32_MAX) continue;
         const vec3 point=world_at(x,y);

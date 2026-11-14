@@ -9442,3 +9442,100 @@ afterwards returns the original string.
 **A wrong run id in the previous entry.** Run 13 was cited there as `43612147450`, which returns 404.
 The API maps `run_number` 13 to `43596232789` (head `917abf00`, conclusion `failure`, four of six
 jobs green), and that is the number the entry carries now.
+
+### 2026-11-14 — local macOS validation: the suite, the parallelism ceiling, and what a staged install cannot do
+
+**Why re-run locally.** Windows hardware and Linux have current local full-suite records; the newest
+macOS one in this file is 2026-11-06, at 127 MoltenVK plus 91 OpenGL tests, and the suite is 150 now -
+after the coordinate unification, the `Camera` rename, the `create_vulkan_device()` parameter
+reordering and the three CI fixes. The `build-opengl*` and `build-vulkan-*` trees left in the repo have
+no `CMakeCache.txt`, so configuring them again would be a rebuild rather than a validation; what
+existed and was current was the Debug Vulkan tree (`cmake-build-debug`: Vulkan, shared libraries,
+tutorials, tests, Python bindings, CGAL, Qt and FFmpeg all ON), and no source file is newer than the
+dylibs it produced.
+
+**Serial full suite: 150 tests, one intermittent failure.** Run A: 149/150 in 244.1 s (the `desktop`
+label alone accounts for 189.75 sec*proc over 89 tests), the single failure `vulkan.crosssection`
+reporting `cross-section fixture produced no scene pick`. Run B, same tree, nothing changed in
+between: 150/150 in 212.1 s. In isolation it is rare rather than absent: of 40 single-test runs, one
+failed - so the in-suite context (1 of the 2 serial full-suite runs) raises the rate without being
+the trigger. The failure is intermittent (Debug with validation and
+synchronization validation on), and has never appeared in the CI macOS job (Release). `check_planes()`
+is reached from four places, and the log does not say which one reported it: the first
+(`cross_section_test.cpp:117`)
+shares its statement with `hits(initial)>100`, so on that path the capture was demonstrably covered;
+the others follow a `KEY_X` slab toggle, a drag-rotate/translate, or a resize to 460x320, where a
+blank or shrunken capture is itself a plausible cause. Which of the four it was is now in the report.
+
+**What the failure could be, and the number that tells them apart.** `Viewer::pick()` has three quiet
+exits: `window_pixel()` can reject the logical-to-framebuffer mapping
+(`easy3d/viewer/viewer.cpp:1602`), `VulkanDevice::sample_pixel()` returns an empty `ScenePixel` when
+`prepare()` yields no draws at all (`easy3d/renderer/backends/vulkan/render_device.cpp:5197`), and a
+`depth >= 1` sample is also empty (`viewer.cpp:1618`). None of them prints anything, and the failing
+window in the log is 60 lines of nothing else: the usage banner, the long-documented MoltenVK
+integer-attachment-blending validation message, and the `FAIL:` line - no device lost, no allocation
+failure. The test therefore now measures the distinction instead of asserting the symptom:
+`tests/viewer/cross_section_test.cpp` prints coverage, both coordinate systems and one direct pick on
+the covered texel nearest the center. No real failure had been seen with it in place when this was
+written - the one that occurred while re-measuring the rate came from a `ctest` invoked through a
+`tail -8`, which discarded the message - so the shape below comes from a healthy capture with the
+branch forced temporarily, then reverted:
+
+```
+cross-section fixture produced no scene pick: 95728 of 403200 texels covered, window 360x280 against
+framebuffer 720x560, capture 720x560, nearest covered texel (360,280) maps to logical (180,140),
+where pick() returned a surface
+```
+
+The point is the reading, not the numbers. A framebuffer that disagrees with the capture implicates
+the mapping; equal sizes with `nothing`
+implicates the picking pass drawing no commands or clearing to the far plane; and `a surface` on the
+single probe while the scan found none means the scan never sampled the texel the probe names. The
+cause is still unidentified; what changed is that the next occurrence arrives with the evidence
+attached, and a recurrence is worth reading in full.
+
+**`-j4` is not a valid way to run this suite on this machine.** The first attempt was a parallel full
+suite, and 46 of 150 failed: 32 of them `desktop`-labelled windowed tests, with CTest's whole symptom
+vocabulary (`Bus error`, `SEGFAULT`, `Subprocess aborted`, `***Timeout`) and one test that never
+started at all (`algo.graph_minimum_spanning_tree`, `***Not Run`). Nothing in the tree had changed,
+the disk had 66 GiB free and the descriptor limit is 1048575, so the only difference from the passing
+runs is concurrency itself: four Debug processes each holding a MoltenVK device with validation *and*
+synchronization validation on a 24 GB host, all of them writing through the one shared test working
+directory (`tests/properties.cmake:5`). Which of those actually produces the crashes was not
+isolated; what survives is the measurement. `-L desktop -j2` gives 89/89 in 161.9 s - which is also
+the `-j2` the 2026-11-05/06 records above were gathered at. A parallel count on this host says about
+the host, not about the code, and local validation here is serial or `-j2`.
+
+**The installed package is usable only at the prefix it was configured with, and the mechanism is now
+named.** The three consumers had never been run from a local macOS install (Windows and Linux did; the
+CI macOS job runs all three). This tree's configured prefix is `/usr/local/Cellar/easy3d/2.6.1`, which
+is root-owned and does not exist, and the packaging fact recorded earlier still holds:
+`cmake --install <tree> --prefix <other>` cannot relocate it because the install directories are
+absolute cache variables by the time the install rules run. `DESTDIR=` staging does produce a complete
+tree, and `find_package` then refuses it: the generated `Easy3DTargets.cmake` carries
+`set(_IMPORT_PREFIX "/usr/local/Cellar/easy3d/2.6.1")` - a hardcoded prefix instead of the usual
+`get_filename_component` chain - plus absolute `INTERFACE_INCLUDE_DIRECTORIES`, an absolute
+`Easy3D_RESOURCE_DIR` and an absolute `IMPORTED_LOCATION_DEBUG` per library, so it looks for
+`/usr/local/Cellar/easy3d/2.6.1/lib/libeasy3d_util.2.6.1.dylib` and reports the package faulty. The
+reason is in `CMakeLists.txt:289-292`: `install(TARGETS ...)` is given `${Easy3D_INSTALL_BIN_DIR}` and
+`${Easy3D_INSTALL_LIB_DIR}`, which are absolute, and an absolute destination is exactly what stops
+CMake from emitting a relocatable export. Pointing those two generated files at the staged prefix
+makes the package behave, and the consumer leg is then evidenced locally: `Found Easy3D (version
+'2.6.1'). Found components (shared libraries): viewer;renderer;gui`, all three executables build, and
+`installed_vulkan_consumer` reports `Installed OffScreen rendered 1301 pixels on Apple M4 Pro` while
+`installed_offscreen_consumer` and `installed_viewer_consumer` each report their configured-backend
+result. Two things follow. The rewrite is a stand-in for the configure-time prefix CI uses, so the
+local result is evidence about the package contents and the runtime, not about a way to skip that
+prefix. And one hardcoded spot survives it: `Easy3DConfig.cmake`'s `Easy3D_INCLUDE_DIRS` and
+`Easy3D_LIBRARY_DIRS` still name the configure-time path, because they come from
+`@CONF_Easy3D_INCLUDE_DIRS@` rather than from `_IMPORT_PREFIX`. Nothing that links through
+`easy3d::viewer` notices, since the include directories arrive via the target interface - but a
+consumer written against those variables instead of the targets would not compile. Making the export
+genuinely relocatable is a packaging decision (relative destinations in `install(TARGETS)`, which
+touches the install layout knobs on every platform) and nothing in the validation matrix needs it, so
+it is recorded rather than done.
+
+**What this leaves for the next local OpenGL run.** Nothing here covers a macOS OpenGL build: the
+trees that had one lost their caches, the CI `macos-15` OpenGL job runs only the non-`desktop` subset
+(hosted macOS has no desktop GL, measured above), and the newest local OpenGL macOS record is still
+2026-11-06. That is a rebuild, not a validation, and it is the remaining gap on this machine.
