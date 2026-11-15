@@ -25,6 +25,8 @@
  \endcond */
 
 #include <algorithm>
+#include <cstdlib>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -414,9 +416,100 @@ namespace easy3d {
             }
 
             if (simple) {
-                // The outer loops share vertices only, which the builder resolves if necessary.
+                // Partition every outer loop into convex polygons. Hertel-Mehlhorn returns an already convex loop
+                // unchanged, so a convex patch still becomes a single polygon face. The projection preserves the
+                // orientation with respect to the patch normal, so counter-clockwise loops stay counter-clockwise.
+                const Plane3 plane(model.position(outer_polys.front().front()), patch_normals[patch_idx]);
+                std::vector<Contour> convex_faces;
+                bool partition_ok = true;
                 for (const auto& poly : outer_polys) {
-                    if (!builder.add_face(remap(poly)).is_valid())
+                    std::vector<vec2> points;
+                    points.reserve(poly.size());
+                    for (auto v: poly)
+                        points.push_back(plane.to_2d(model.position(v)));
+
+                    std::vector<PolygonPartition::Polygon> parts;
+                    if (!PolygonPartition::apply_HM(points, parts) || parts.empty()) {
+                        if (std::getenv("EASY3D_POLYGONIZATION_DEBUG")) {
+                            double twice_area = 0.0;
+                            int reflex = 0, dup_consecutive = 0, collinear = 0, intersections = 0;
+                            for (std::size_t i = 0; i < points.size(); ++i) {
+                                const vec2 &a = points[i];
+                                const vec2 &b = points[(i + 1) % points.size()];
+                                twice_area += static_cast<double>(a.x) * b.y - static_cast<double>(b.x) * a.y;
+                                if (a.x == b.x && a.y == b.y)
+                                    ++dup_consecutive;
+                            }
+                            for (std::size_t i = 0; i < points.size(); ++i) {
+                                const vec2 &a = points[(i + points.size() - 1) % points.size()];
+                                const vec2 &b = points[i];
+                                const vec2 &c = points[(i + 1) % points.size()];
+                                const vec2 e1 = b - a;
+                                const vec2 e2 = c - b;
+                                const float cr = e1.x * e2.y - e1.y * e2.x;
+                                if (cr < 0.0f) ++reflex;
+                                if (cr == 0.0f) ++collinear;
+                            }
+                            auto orient = [](const vec2 &a, const vec2 &b, const vec2 &c) {
+                                const vec2 e1 = b - a;
+                                const vec2 e2 = c - a;
+                                const float cr = e1.x * e2.y - e1.y * e2.x;
+                                return cr > 0.0f ? 1 : (cr < 0.0f ? -1 : 0);
+                            };
+                            for (std::size_t i = 0; i < points.size(); ++i) {
+                                for (std::size_t j = i + 2; j < points.size(); ++j) {
+                                    if (i == 0 && j + 1 == points.size())
+                                        continue;
+                                    const vec2 &a = points[i];
+                                    const vec2 &b = points[(i + 1) % points.size()];
+                                    const vec2 &c = points[j];
+                                    const vec2 &d = points[(j + 1) % points.size()];
+                                    const int o1 = orient(a, b, c);
+                                    const int o2 = orient(a, b, d);
+                                    const int o3 = orient(c, d, a);
+                                    const int o4 = orient(c, d, b);
+                                    if (o1 != o2 && o3 != o4)
+                                        ++intersections;
+                                }
+                            }
+                            LOG(WARNING) << "apply_HM failed: n=" << points.size()
+                                         << " twice_area=" << twice_area << " reflex=" << reflex
+                                         << " collinear=" << collinear << " dup_consecutive=" << dup_consecutive
+                                         << " intersections=" << intersections;
+                            std::ostringstream oss;
+                            for (const auto &p : points)
+                                oss << "(" << p.x << "," << p.y << ") ";
+                            LOG(WARNING) << "  points: " << oss.str();
+                        }
+                        partition_ok = false;
+                        break;
+                    }
+
+                    for (const auto& part : parts) {
+                        Contour ct;
+                        ct.reserve(part.size());
+                        std::vector<vec3> pts;
+                        pts.reserve(part.size());
+                        for (auto id : part) {
+                            ct.push_back(vertex_map[poly[id].idx()]);
+                            // use the 3D positions: the projection can introduce rounding errors that make
+                            // exactly collinear vertices look like a tiny non-zero area
+                            pts.push_back(model.position(poly[id]));
+                        }
+                        if (is_zero_area(pts))
+                            continue;
+                        convex_faces.push_back(ct);
+                    }
+                }
+                if (!partition_ok) {
+                    // the patch cannot be represented by convex polygons; keep its faces
+                    add_original_faces(patch_faces[patch_idx]);
+                    continue;
+                }
+
+                // The outer loops share vertices only, which the builder resolves if necessary.
+                for (const auto& ct : convex_faces) {
+                    if (!builder.add_face(ct).is_valid())
                         LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                 }
             }

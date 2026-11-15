@@ -9854,3 +9854,58 @@ Tutorial 206 keyframe-editing work), OpenGL `build-opengl-check` 111/111 and Vul
 `build-vulkan-check` 145/145 (one `vulkan.imgui` window test failed once under load and passed in
 isolation, then the clean rerun passed), with the tutorial and its camera-path test rebuilt.
 `easy3d/util/version.h` is unchanged.
+
+### 2026-11-15 — batch 81: all merged faces are convex; polygonization documentation matches the implementation
+
+**Scope.** The simple polygonization branch (a patch without holes whose boundary loops are simple)
+used to emit one general polygon face per outer loop, so a concave patch boundary produced a concave
+face. Each outer loop now goes through `PolygonPartition::apply_HM()` (Hertel-Mehlhorn), exactly like
+the patches with holes: the partition returns an already convex loop unchanged, so a convex patch
+still becomes a single face, and a concave loop is split into convex parts. Every face created by
+merging is therefore a convex polygon; a patch whose partition fails still falls back to its original
+faces, which need not be convex. Zero-area parts are filtered with the 3D positions: the 2D
+projection can turn exactly collinear vertices into a tiny non-zero area and let a sliver through,
+which the polygonization test caught as a degenerate face before the filter used the 3D points.
+
+With this change the class's `\todo Support faces with holes (i.e., polygons with multiple contours)`
+is retired: batch 79 already implemented it (holes are normalized with the `Tessellator` and the
+patch is decomposed into convex polygons; the holes stay open and no result face has holes), so the
+batch-79 entry's statement that the todo still stands was wrong. The documentation in
+`surface_mesh_polygonization.h` was rewritten to describe the implementation
+instead of the original plan: patches are formed by comparing the normals of neighboring faces only
+(there is no global planarity test, so a large threshold gives faces that only approximate the
+geometry); each patch is replaced by convex polygons whenever possible; patches with holes or a
+self-touching boundary are first normalized by the CSG operators and the vertices created at
+intersections are added to the mesh; a patch whose boundary cannot be extracted or classified, or
+whose partition fails, keeps its original faces; degenerate faces are those reported by
+`SurfaceMesh::is_degenerate()` (triangles with a zero-length edge or a zero angle, polygons without a
+valid triple); the rebuild discards every property except the vertex positions, removes isolated
+vertices, may duplicate vertices to resolve non-manifold configurations and does not recompute
+normals; borders stay borders. `merge_colinear_edges()` now states that the threshold is the turn
+angle (a straight vertex is 0 degrees), that the vertex is kept when the removal would collapse an
+incident face to zero area or leave it with fewer than three vertices, and that properties survive.
+The enumerator's two threshold parameters now say "nearly coplanar", measure the angle between the
+face normals, and warn that the neighboring-normal comparison lets the normals inside a patch drift.
+The Python binding docstrings are generated and will pick these texts up on the next binding run.
+
+The polygonization test now asserts convexity: `require_manifold_and_clean()` checks every merged
+polygon (valence 4 or more) in its best-fit plane, using the Newell normal computed relative to the
+first vertex so that tiny faces far from the origin do not cancel, and ignores corners whose turn is
+below 1e-3 of the largest corner turn (collinear vertices at float precision).
+
+**Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 111/111 and Vulkan
+`build-vulkan-check` 145/145. `opengl.input` aborted in two consecutive full OpenGL runs and passed
+in isolation (1.76 s) and in the clean full rerun, i.e. the same load/focus flake seen in earlier
+batches, not a change-related failure. A Release probe (CGAL off) ran the polygonizer on the
+reference models and checked the output for degenerate faces, zero-length edges, non-convex faces,
+non-manifold vertices, multiple face fans per vertex and isolated vertices (polygonization only):
+`house.obj` 11262 -> 5212, `domik/domik.obj` 3456 -> 2820, `bunny.ply` 30779 -> 24933,
+`fandisk.off` 12946 -> 2510, `fandisk_quads.off` 764 -> 439, `general_closed.obj` 692 -> 190,
+`general_open.obj` 692 -> 141, `room.obj` 2204 -> 1104, `sphere.obj` 80 -> 80,
+`hemisphere.ply` 3600 -> 2392 and `building.off` 19021 -> 18191; every counter is zero on every
+model. The face counts grow relative to batch 79 (`house.obj` 4561 -> 5212, `domik.obj` 1918 ->
+2820, `bunny.ply` 23968 -> 24933) because concave simple patches are now split into convex faces.
+The only messages are the loader's report for `house.obj`, the two `diffuse texture ignored`
+messages for `domik.obj`, and, on `building.off`, the builder's report that it fixed 5 non-manifold
+vertices by copying them (the documented repair in `end_surface()`); no partition or merge failure
+is reported. `easy3d/util/version.h` is unchanged.

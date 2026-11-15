@@ -162,6 +162,36 @@ static void require_manifold_and_clean(SurfaceMesh *mesh) {
                           "polygonization produced a zero-length edge");
         }
     }
+    // Merged faces must be convex. They are only approximately planar, so each face is checked in its best-fit
+    // plane (the Newell normal). Corners whose cross product is negligible against the largest one are collinear
+    // up to float precision and are not treated as reflex.
+    for (auto f : mesh->faces()) {
+        const auto valence = mesh->valence(f);
+        if (valence < 4)
+            continue;
+        std::vector<vec3> p;
+        p.reserve(valence);
+        for (auto v : mesh->vertices(f))
+            p.push_back(mesh->position(v));
+
+        vec3 normal(0.0f, 0.0f, 0.0f);
+        for (std::size_t i = 0; i < p.size(); ++i)
+            normal += cross(p[i] - p[0], p[(i + 1) % p.size()] - p[0]);
+        if (length(normal) < 1e-12f)
+            continue;  // cannot orient a self-overlapping face
+
+        std::vector<float> corners(p.size());
+        float max_cross = 0.0f;
+        for (std::size_t i = 0; i < p.size(); ++i) {
+            const vec3 &prev = p[(i + p.size() - 1) % p.size()];
+            const vec3 &cur = p[i];
+            const vec3 &next = p[(i + 1) % p.size()];
+            corners[i] = dot(cross(cur - prev, next - cur), normal);
+            max_cross = std::max(max_cross, std::fabs(corners[i]));
+        }
+        for (float c : corners)
+            test::require(c >= -1e-3f * max_cross, "polygonization produced a non-convex face");
+    }
 }
 
 
