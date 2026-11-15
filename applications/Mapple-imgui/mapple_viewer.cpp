@@ -938,6 +938,7 @@ void MappleViewer::forget_model(Model *model) {
     if (hover_model_ == model)
         clear_hover();
     selection_styles_.erase(model);
+    scalar_styles_.erase(model);
     if (counted_model_ == model) {
         counted_model_ = nullptr;
         selection_count_dirty_ = true;

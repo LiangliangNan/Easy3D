@@ -207,6 +207,18 @@ private:
         std::unique_ptr<easy3d::Texture> colormap;  // 2x1: unselected color -> highlight
     };
 
+    // How a drawable's scalar field is colored. The coloring itself lives in the
+    // drawable's state; this keeps the Rendering panel's controls populated across
+    // frames and renderer updates.
+    struct ScalarFieldStyle {
+        int colormap = 0;           // index into the colormap list in ui/panels.cpp
+        bool discrete = false;
+        int stripes = 16;
+        bool clamp = true;          // ignore the value percentiles below when false
+        float clamp_lower = 0.05f;
+        float clamp_upper = 0.05f;
+    };
+
     // Framebuffer-to-window ratio; may differ from dpi_scaling().
     float pixel_ratio() const;
 
@@ -364,6 +376,16 @@ private:
 
     void draw_rendering_panel(float x, float y, float w, float h);
 
+    // Color scheme combo of one drawable (uniform color, a color property, texture
+    // coordinates, or a scalar field) and, for scalar fields, the colormap controls.
+    void draw_color_scheme(easy3d::Model *model, easy3d::Drawable *drawable);
+
+    // The texture of a scalar field style, from the colormap list in ui/panels.cpp.
+    easy3d::Texture *scalar_texture(const ScalarFieldStyle &style) const;
+
+    // Re-applies the colormap and clamping to the drawable's current scalar field.
+    void apply_scalar_style(easy3d::Drawable *drawable, const ScalarFieldStyle &style);
+
     void draw_models_panel(float x, float y, float w, float h);
 
     void draw_log_panel(float x, float y, float w, float h);
@@ -499,6 +521,10 @@ private:
     std::unique_ptr<easy3d::SurfaceMeshPicker> mesh_picker_;
 
     std::map<easy3d::Model *, SelectionStyle> selection_styles_;
+
+    // Keyed by model, then drawable name: a renderer update may recreate drawables
+    // while keeping their names.
+    std::map<easy3d::Model *, std::map<std::string, ScalarFieldStyle>> scalar_styles_;
     const easy3d::Model *counted_model_ = nullptr;
     std::size_t selected_count_ = 0;
     bool selection_count_dirty_ = true;

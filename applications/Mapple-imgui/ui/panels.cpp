@@ -33,8 +33,10 @@
 #include <string>
 #include <vector>
 
+#include <easy3d/core/graph.h>
 #include <easy3d/core/model.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -43,8 +45,11 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/version.h>
 
 #include <3rd_party/imgui/imgui.h>
@@ -84,6 +89,163 @@ const char *level_name(el::Level level) {
         default:
             return "UNKNOWN";
     }
+}
+
+// One entry of the per-drawable color scheme combo. A scheme names a property and
+// how the renderer consumes it.
+struct ColorScheme {
+    std::string label;      // shown in the combo
+    easy3d::State::Method method;
+    easy3d::State::Location location;
+    std::string property;
+};
+
+// Scalar fields supported by the buffer update: the numeric property types plus
+// what the renderer can turn into texture coordinates. Bool selection properties
+// are excluded; the selection has its own display.
+template <class MODEL>
+bool vertex_scalar(const MODEL *model, const std::string &name) {
+    return model->template get_vertex_property<float>(name) ||
+           model->template get_vertex_property<double>(name) ||
+           model->template get_vertex_property<int>(name) ||
+           model->template get_vertex_property<unsigned int>(name) ||
+           model->template get_vertex_property<char>(name) ||
+           model->template get_vertex_property<unsigned char>(name);
+}
+
+template <class MODEL>
+bool edge_scalar(const MODEL *model, const std::string &name) {
+    return model->template get_edge_property<float>(name) ||
+           model->template get_edge_property<double>(name) ||
+           model->template get_edge_property<int>(name) ||
+           model->template get_edge_property<unsigned int>(name) ||
+           model->template get_edge_property<char>(name) ||
+           model->template get_edge_property<unsigned char>(name);
+}
+
+template <class MODEL>
+bool face_scalar(const MODEL *model, const std::string &name) {
+    return model->template get_face_property<float>(name) ||
+           model->template get_face_property<double>(name) ||
+           model->template get_face_property<int>(name) ||
+           model->template get_face_property<unsigned int>(name) ||
+           model->template get_face_property<char>(name) ||
+           model->template get_face_property<unsigned char>(name);
+}
+
+template <class IS_SCALAR>
+void append_schemes(const std::vector<std::string> &names, State::Location location,
+                    const IS_SCALAR &is_scalar, std::vector<ColorScheme> &schemes) {
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        const std::string &name = names[i];
+        ColorScheme scheme;
+        scheme.location = location;
+        scheme.property = name;
+        if (name.find(":color") != std::string::npos) {
+            scheme.label = name;
+            scheme.method = State::COLOR_PROPERTY;
+        } else if (name.find(":texcoord") != std::string::npos) {
+            scheme.label = name;
+            scheme.method = State::TEXTURED;
+        } else if (is_scalar(name)) {
+            scheme.label = "scalar - " + name;
+            scheme.method = State::SCALAR_FIELD;
+        } else
+            continue;
+        schemes.push_back(scheme);
+    }
+}
+
+// The schemes a drawable can be colored by. Faces belong to triangles, edges to
+// lines, vertices to all three; everything comes from the drawable's own model,
+// so a drawable never offers a property its shader cannot read.
+void collect_color_schemes(Model *model, Drawable *drawable, std::vector<ColorScheme> &schemes) {
+    ColorScheme uniform;
+    uniform.label = "Uniform color";
+    uniform.method = State::UNIFORM_COLOR;
+    uniform.location = State::VERTEX;
+    uniform.property = "uniform color";
+    schemes.push_back(uniform);
+
+    const bool triangles = dynamic_cast<TrianglesDrawable *>(drawable) != nullptr;
+    const bool lines = dynamic_cast<LinesDrawable *>(drawable) != nullptr;
+
+    if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
+        append_schemes(mesh->vertex_properties(), State::VERTEX,
+                       [mesh](const std::string &name) { return vertex_scalar(mesh, name); }, schemes);
+        if (lines)
+            append_schemes(mesh->edge_properties(), State::EDGE,
+                           [mesh](const std::string &name) { return edge_scalar(mesh, name); }, schemes);
+        if (triangles) {
+            append_schemes(mesh->face_properties(), State::FACE,
+                           [mesh](const std::string &name) { return face_scalar(mesh, name); }, schemes);
+            append_schemes(mesh->halfedge_properties(), State::HALFEDGE,
+                           [](const std::string &) { return false; }, schemes);
+        }
+    } else if (auto *poly = dynamic_cast<PolyMesh *>(model)) {
+        append_schemes(poly->vertex_properties(), State::VERTEX,
+                       [poly](const std::string &name) { return vertex_scalar(poly, name); }, schemes);
+        if (lines)
+            append_schemes(poly->edge_properties(), State::EDGE,
+                           [poly](const std::string &name) { return edge_scalar(poly, name); }, schemes);
+        if (triangles)
+            append_schemes(poly->face_properties(), State::FACE,
+                           [poly](const std::string &name) { return face_scalar(poly, name); }, schemes);
+    } else if (auto *graph = dynamic_cast<Graph *>(model)) {
+        append_schemes(graph->vertex_properties(), State::VERTEX,
+                       [graph](const std::string &name) { return vertex_scalar(graph, name); }, schemes);
+        if (lines)
+            append_schemes(graph->edge_properties(), State::EDGE,
+                           [graph](const std::string &name) { return edge_scalar(graph, name); }, schemes);
+    } else if (auto *cloud = dynamic_cast<PointCloud *>(model)) {
+        append_schemes(cloud->vertex_properties(), State::VERTEX,
+                       [cloud](const std::string &name) { return vertex_scalar(cloud, name); }, schemes);
+    }
+}
+
+// The combo caption of the drawable's current scheme, matching the labels above.
+std::string scheme_label(const Drawable *drawable) {
+    switch (drawable->coloring_method()) {
+        case State::UNIFORM_COLOR:
+            return "Uniform color";
+        case State::SCALAR_FIELD:
+            return "scalar - " + drawable->property_name();
+        default:
+            return drawable->property_name();
+    }
+}
+
+bool is_current_scheme(const Drawable *drawable, const ColorScheme &scheme) {
+    if (drawable->coloring_method() != scheme.method)
+        return false;
+    if (scheme.method == State::UNIFORM_COLOR)
+        return true;
+    return drawable->property_location() == scheme.location &&
+           drawable->property_name() == scheme.property;
+}
+
+// The colormaps shipped in resources/colormaps; "random" is generated.
+struct ColormapEntry {
+    std::string name;
+    std::string file; // empty for the generated random colormap
+};
+
+const std::vector<ColormapEntry> &colormaps() {
+    static std::vector<ColormapEntry> entries;
+    if (entries.empty()) {
+        const std::string dir = resource::directory() + "/colormaps/";
+        const char *names[] = {"default", "french", "rainbow", "blue_red",
+                               "blue_white", "blue_yellow", "black_white", "random"};
+        for (const char *name : names) {
+            ColormapEntry entry;
+            entry.name = name;
+            if (entry.name != "random")
+                entry.file = dir + entry.name + ".png";
+            if (entry.file.empty() || file_system::is_file(entry.file))
+                entries.push_back(entry);
+        }
+    }
+    return entries;
 }
 
 ImU32 level_color(el::Level level) {
@@ -350,6 +512,8 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
             update();
         }
 
+        draw_color_scheme(model, drawable);
+
         if (triangles) {
             bool smooth = triangles->smooth_shading();
             if (ImGui::Checkbox("Smooth", &smooth)) {
@@ -386,6 +550,117 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     }
 
     ImGui::End();
+}
+
+Texture *MappleViewer::scalar_texture(const ScalarFieldStyle &style) const {
+    const std::vector<ColormapEntry> &entries = colormaps();
+    if (entries.empty())
+        return nullptr;
+    const int index = std::max(0, std::min(style.colormap, static_cast<int>(entries.size()) - 1));
+    const ColormapEntry &entry = entries[index];
+    const int stripes = std::max(1, std::min(style.stripes, 256));
+    if (entry.name == "random")
+        return TextureManager::request(stripes, 256 / stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+    if (style.discrete)
+        return TextureManager::request(entry.file, stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+    return TextureManager::request(entry.file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+}
+
+void MappleViewer::apply_scalar_style(Drawable *drawable, const ScalarFieldStyle &style) {
+    // The property name stays; only the colormap and the value clamping change.
+    drawable->set_scalar_coloring(drawable->property_location(), drawable->property_name(),
+                                  scalar_texture(style), style.clamp_lower, style.clamp_upper);
+    drawable->set_clamp_range(style.clamp);
+    drawable->update();
+}
+
+void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
+    // A background command edits the model's properties on a worker thread, and the
+    // scheme list reads them, so it waits until the job has finished.
+    if (process_job_ && process_job_->target == model) {
+        ImGui::TextDisabled("Color scheme unavailable while processing.");
+        return;
+    }
+
+    std::vector<ColorScheme> schemes;
+    collect_color_schemes(model, drawable, schemes);
+
+    ImGui::TextUnformatted("Color scheme");
+    ImGui::SetNextItemWidth(-1.0f);
+    const std::string preview = scheme_label(drawable);
+    if (ImGui::BeginCombo("##scheme", preview.c_str())) {
+        for (std::size_t i = 0; i < schemes.size(); ++i) {
+            const ColorScheme &scheme = schemes[i];
+            if (!ImGui::Selectable(scheme.label.c_str(), is_current_scheme(drawable, scheme)))
+                continue;
+            if (scheme.method == State::SCALAR_FIELD) {
+                ScalarFieldStyle &style = scalar_styles_[model][drawable->name()];
+                apply_scalar_style(drawable, style);
+            } else {
+                switch (scheme.method) {
+                    case State::UNIFORM_COLOR:
+                        drawable->set_uniform_coloring(drawable->color());
+                        break;
+                    case State::COLOR_PROPERTY:
+                        drawable->set_property_coloring(scheme.location, scheme.property);
+                        break;
+                    case State::TEXTURED:
+                        drawable->set_texture_coloring(scheme.location, scheme.property, nullptr);
+                        break;
+                    default:
+                        break;
+                }
+                drawable->update();
+            }
+            update();
+        }
+        ImGui::EndCombo();
+    }
+
+    if (drawable->coloring_method() != State::SCALAR_FIELD)
+        return;
+
+    ScalarFieldStyle &style = scalar_styles_[model][drawable->name()];
+    bool changed = false;
+
+    const std::vector<ColormapEntry> &entries = colormaps();
+    if (!entries.empty()) {
+        const int index = std::max(0, std::min(style.colormap, static_cast<int>(entries.size()) - 1));
+        if (ImGui::BeginCombo("Colormap", entries[index].name.c_str())) {
+            for (std::size_t i = 0; i < entries.size(); ++i) {
+                if (ImGui::Selectable(entries[i].name.c_str(), static_cast<int>(i) == index)) {
+                    style.colormap = static_cast<int>(i);
+                    changed = true;
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
+
+    if (ImGui::Checkbox("Discrete", &style.discrete))
+        changed = true;
+    if (style.discrete && ImGui::SliderInt("Stripes", &style.stripes, 2, 64))
+        changed = true;
+
+    if (ImGui::Checkbox("Clamp range", &style.clamp))
+        changed = true;
+    if (style.clamp) {
+        int lower = static_cast<int>(std::lround(style.clamp_lower * 100.0f));
+        int upper = static_cast<int>(std::lround(style.clamp_upper * 100.0f));
+        if (ImGui::SliderInt("Lower %", &lower, 0, 99)) {
+            style.clamp_lower = std::min(lower, 99 - upper) / 100.0f;
+            changed = true;
+        }
+        if (ImGui::SliderInt("Upper %", &upper, 0, 99)) {
+            style.clamp_upper = std::min(upper, 99 - lower) / 100.0f;
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        apply_scalar_style(drawable, style);
+        update();
+    }
 }
 
 void MappleViewer::draw_model_info(Model *model) {

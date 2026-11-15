@@ -308,9 +308,9 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 
 The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
 stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
-group (the four Property-menu commands) is migrated; the remaining groups are mesh
-repair/orientation, property manipulation and the rendering panel's color-scheme
-selector, small utilities, and view polish.
+group (the four Property-menu commands) and the rendering panel's color-scheme
+selector are migrated; the remaining groups are mesh repair/orientation, property
+manipulation, small utilities, and view polish.
 
 ## ImGui notes
 
@@ -780,12 +780,55 @@ selector, small utilities, and view polish.
   and the isolated-vertex count for a surface mesh; vertex/edge counts plus the degree
   histogram for a graph.
 - Scope note: the Qt commands only store properties; displaying them goes through the
-  Qt rendering panel's color-scheme selector, which Mapple-imgui does not have yet.
-  The new properties are therefore visible in Model Info, in the saved file and in
-  the Log, not in the viewport, until that rendering-panel gap is migrated.
+  rendering panel's color-scheme selector, which is migrated in the next entry. Until
+  then the new properties were visible in Model Info, in the saved file and in the
+  Log, not in the viewport.
 - Validation (2026-11-15, macOS): `Mapple-imgui` builds in `cmake-build-release`
   (Vulkan), `build-vulkan-check` and `build-opengl-check` (OpenGL); each binary
   launches with `resources/data/bunny.ply` and reports "Mapple UI ready", then was
   stopped. The ImGui window is not scriptable, so the menu commands themselves were
   not exercised; the algorithm calls they wrap are the ones covered by
   `tests/algo/surface_mesh_algorithms_test.cpp`.
+
+### 2026-11-15 — Rendering panel color schemes
+
+- Every drawable in the Rendering panel has a "Color scheme" combo listing what its
+  shader can consume, taken from the drawable's own model: "Uniform color", the
+  `:color` properties, texture coordinates (`:texcoord`), and numeric scalar fields
+  labelled "scalar - <name>". Triangles are offered the face properties, lines the
+  edge properties, and all drawables the vertex properties; surface-mesh triangles
+  also get the halfedge texture coordinates. `Graph` is tested before `PointCloud`,
+  which it derives from. Vector properties (normals) and bool selection properties
+  are not offered: the former are not scalars and the selection has its own display.
+- Selecting a scalar field reveals the colormap controls: the eight bundled colormaps
+  (`default`, `french`, `rainbow`, `blue_red`, `blue_white`, `blue_yellow`,
+  `black_white`, plus the generated `random`), discrete coloring with 2-64 stripes,
+  and value clamping with lower/upper percentiles kept below 100 together. Textures
+  come from `TextureManager`, so identical requests share one texture; a colormap
+  file that is missing falls back to the State's default scalar texture.
+- The chosen style (colormap, discrete/stripes, clamping) is remembered per model and
+  drawable name, so it survives frames and renderer updates that recreate drawables;
+  the coloring itself stays in the drawable's State. Deleting a model drops its
+  entries, like the selection styles.
+- This closes the previous entry's scope note: height fields, curvatures and indexed
+  colors are now viewable, and the combo also presents the `f:chart` segmentation
+  coloring that the renderer applies automatically when a model has one (e.g.
+  `bunny.ply` starts with the faces already scalar-colored).
+- While a background command owns the model the combo is replaced by an "unavailable
+  while processing" line, since the worker can add or remove properties concurrently.
+- Divergences from Qt: Qt spread the same controls over six widgets (scheme, style,
+  discrete, stripes, clamp, two clamp percentages) and offered `f:select`/`e:select`
+  bool fields; the texture-file picker and texture repeat controls are still
+  unmigrated, so textured schemes use the checkerboard texture.
+- Validation (2026-11-15, macOS): builds in `cmake-build-release` (Vulkan),
+  `build-vulkan-check` and `build-opengl-check` (OpenGL). All three launch with
+  `bunny.ply` (surface mesh, already `f:chart` colored) and report "Mapple UI ready";
+  the Vulkan release build additionally launched `graph.ply` (graph), `sphere.plm`
+  (polyhedral mesh) and `polyhedron.bin` (point cloud), covering every model branch
+  of the scheme list.
+  Because the ImGui window is not scriptable, a temporary in-panel probe (removed
+  afterwards) applied all eight colormaps - including the discrete variants - to
+  bunny's `f:chart` and finished with a 20% clamp on both backends; `buffer.cpp`
+  logged "scalar field range [0, 1000] clamped (20%, 20%) to [110, 737]", proving
+  the style reached the texture-coordinate rebuild. The combo clicks themselves were
+  not exercised.
