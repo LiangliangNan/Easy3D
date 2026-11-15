@@ -129,15 +129,38 @@ void MappleViewer::draw_menu_process() {
     if (ImGui::BeginMenu("Surface Mesh", mesh)) {
         if (ImGui::MenuItem("Smooth..."))
             open_process(ProcessOp::MESH_SMOOTH);
+        if (ImGui::MenuItem("Fair..."))
+            open_process(ProcessOp::MESH_FAIRING);
         if (ImGui::MenuItem("Simplify..."))
             open_process(ProcessOp::MESH_SIMPLIFY);
         if (ImGui::MenuItem("Remesh..."))
             open_process(ProcessOp::MESH_REMESH);
         ImGui::Separator();
+        if (ImGui::BeginMenu("Subdivide")) {
+            if (ImGui::MenuItem("Catmull-Clark"))
+                run_process(ProcessOp::MESH_SUBDIVIDE_CC);
+            if (ImGui::MenuItem("Loop"))
+                run_process(ProcessOp::MESH_SUBDIVIDE_LOOP);
+            if (ImGui::MenuItem("Sqrt3"))
+                run_process(ProcessOp::MESH_SUBDIVIDE_SQRT3);
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("Triangulate"))
+            run_process(ProcessOp::MESH_TRIANGULATE);
+        if (ImGui::MenuItem("Dual Mesh"))
+            run_process(ProcessOp::MESH_DUAL);
+        ImGui::Separator();
         if (ImGui::MenuItem("Fill Holes..."))
             open_process(ProcessOp::MESH_FILL_HOLES);
         if (ImGui::MenuItem("Polygonize..."))
             open_process(ProcessOp::MESH_POLYGONIZE);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Connected Components"))
+            run_process(ProcessOp::MESH_COMPONENTS);
+        if (ImGui::MenuItem("Planar Partition"))
+            run_process(ProcessOp::MESH_PLANAR_PARTITION);
+        if (ImGui::MenuItem("Sample Surface..."))
+            open_process(ProcessOp::MESH_SAMPLE);
         ImGui::EndMenu();
     }
 

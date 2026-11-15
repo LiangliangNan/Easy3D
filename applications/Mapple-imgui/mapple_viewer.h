@@ -128,7 +128,10 @@ private:
     enum class ProcessOp {
         NONE,
         PC_ESTIMATE_NORMALS, PC_SIMPLIFY, PC_POISSON, PC_RANSAC,
-        MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE
+        MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE,
+        MESH_FAIRING, MESH_SAMPLE,
+        MESH_COMPONENTS, MESH_PLANAR_PARTITION, MESH_TRIANGULATE, MESH_DUAL,
+        MESH_SUBDIVIDE_CC, MESH_SUBDIVIDE_LOOP, MESH_SUBDIVIDE_SQRT3
     };
 
     // Parameters of the open processing window. Model-dependent values are refreshed
@@ -163,6 +166,8 @@ private:
         float remesh_edge_factor = 1.0f;
         int hole_max_size = 500;
         float polygonize_angle = 1.0f;
+        int fairing_criterion = 0;      // 0: area, 1: curvature, 2: curvature variation
+        int sample_points = 1000000;
     };
 
     // The drawable appearance in effect before the selection view replaced it, so
@@ -196,6 +201,9 @@ private:
     void draw_process_dialog();
 
     void apply_process();
+
+    // Runs a command that needs no parameters directly (no parameter window).
+    void run_process(ProcessOp op);
 
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);

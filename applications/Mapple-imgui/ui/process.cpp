@@ -33,15 +33,23 @@
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/algo/point_cloud_simplification.h>
+#include <easy3d/algo/surface_mesh_components.h>
+#include <easy3d/algo/surface_mesh_enumerator.h>
+#include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
+#include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/algo/surface_mesh_simplification.h>
 #include <easy3d/algo/surface_mesh_smoothing.h>
+#include <easy3d/algo/surface_mesh_subdivision.h>
+#include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/file_system.h>
@@ -72,6 +80,24 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Fill Holes";
         case ProcessOp::MESH_POLYGONIZE:
             return "Polygonize";
+        case ProcessOp::MESH_FAIRING:
+            return "Fair Surface Mesh";
+        case ProcessOp::MESH_SAMPLE:
+            return "Sample Surface";
+        case ProcessOp::MESH_COMPONENTS:
+            return "Connected Components";
+        case ProcessOp::MESH_PLANAR_PARTITION:
+            return "Planar Partition";
+        case ProcessOp::MESH_TRIANGULATE:
+            return "Triangulate";
+        case ProcessOp::MESH_DUAL:
+            return "Dual Mesh";
+        case ProcessOp::MESH_SUBDIVIDE_CC:
+            return "Subdivide (Catmull-Clark)";
+        case ProcessOp::MESH_SUBDIVIDE_LOOP:
+            return "Subdivide (Loop)";
+        case ProcessOp::MESH_SUBDIVIDE_SQRT3:
+            return "Subdivide (Sqrt3)";
         default:
             return "";
     }
@@ -95,8 +121,19 @@ void MappleViewer::open_process(ProcessOp op) {
         process_params_.point_target = static_cast<int>(std::max(1u, cloud->n_vertices() / 2));
     if (op == ProcessOp::MESH_SIMPLIFY && mesh)
         process_params_.simplify_target = static_cast<int>(std::max(4u, mesh->n_vertices() / 2));
+    if (op == ProcessOp::MESH_SAMPLE && mesh)
+        process_params_.sample_points = static_cast<int>(std::max<std::size_t>(1000000, mesh->n_vertices() + 1));
 
     process_op_ = op;
+}
+
+void MappleViewer::run_process(ProcessOp op) {
+    // A parameter window owns the command slot while it is open.
+    if (process_op_ != ProcessOp::NONE)
+        return;
+    open_process(op);
+    if (process_op_ == op)
+        apply_process();
 }
 
 void MappleViewer::draw_process_dialog() {
@@ -205,6 +242,23 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::SliderFloat("Angle threshold", &p.polygonize_angle, 0.1f, 45.0f, "%.2f deg");
                 ImGui::TextDisabled("Coplanar neighboring faces are merged into convex polygons.");
                 ImGui::TextDisabled("The mesh is rebuilt; its properties are discarded.");
+                break;
+
+            case ProcessOp::MESH_FAIRING:
+                ImGui::TextDisabled("Criterion");
+                if (ImGui::RadioButton("Minimize area", p.fairing_criterion == 0))
+                    p.fairing_criterion = 0;
+                if (ImGui::RadioButton("Minimize curvature", p.fairing_criterion == 1))
+                    p.fairing_criterion = 1;
+                if (ImGui::RadioButton("Minimize curvature variation", p.fairing_criterion == 2))
+                    p.fairing_criterion = 2;
+                ImGui::TextDisabled("Fixes the boundary and smooths the interior.");
+                break;
+
+            case ProcessOp::MESH_SAMPLE:
+                ImGui::InputInt("Points", &p.sample_points);
+                ImGui::TextDisabled("Adds a new point cloud sampled over the surface.");
+                ImGui::TextDisabled("Must exceed the current vertex count.");
                 break;
 
             default:
@@ -417,6 +471,113 @@ void MappleViewer::apply_process() {
                 polygonizer.apply(mesh, p.polygonize_angle);
                 LOG(INFO) << "polygonized " << before << " faces into " << mesh->n_faces()
                           << " faces (mesh properties were discarded)";
+            }
+            break;
+
+        case ProcessOp::MESH_FAIRING:
+            if (mesh) {
+                SurfaceMeshFairing fair(mesh);
+                if (p.fairing_criterion == 0) {
+                    fair.minimize_area();
+                    LOG(INFO) << "faired by minimizing surface area";
+                } else if (p.fairing_criterion == 1) {
+                    fair.minimize_curvature();
+                    LOG(INFO) << "faired by minimizing surface curvature";
+                } else {
+                    fair.fair(3);
+                    LOG(INFO) << "faired by minimizing curvature variation";
+                }
+            }
+            break;
+
+        case ProcessOp::MESH_SAMPLE:
+            if (mesh) {
+                const int target = std::max(static_cast<int>(mesh->n_vertices()) + 1, p.sample_points);
+                PointCloud *cloud = SurfaceMeshSampler::apply(mesh, target);
+                if (!cloud) {
+                    LOG(WARNING) << "surface sampling failed";
+                    break;
+                }
+                cloud->set_name(file_system::name_less_extension(mesh->name()) + "_sampled.ply");
+                LOG(INFO) << "sampled " << cloud->n_vertices() << " points from " << mesh->n_faces() << " faces";
+                add_model(cloud);
+            }
+            break;
+
+        case ProcessOp::MESH_COMPONENTS:
+            if (mesh) {
+                const auto components = SurfaceMeshComponent::extract(mesh);
+                auto ids = mesh->face_property<int>("f:components", -1);
+                int id = 0;
+                for (const auto &comp : components) {
+                    for (auto f : comp.faces())
+                        ids[f] = id;
+                    ++id;
+                }
+                auto coloring = mesh->face_property<vec3>("f:color_components", vec3(0.5f));
+                Renderer::color_from_segmentation(mesh, ids, coloring);
+                if (auto *drawable = mesh->renderer() ?
+                                     mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
+                    drawable->set_property_coloring(State::FACE, "f:color_components");
+                selection_styles_.erase(model);
+                skip_selection_display = true;
+                LOG(INFO) << components.size() << " connected component(s)";
+                if (!components.empty())
+                    LOG(INFO) << "largest component has " << components.front().n_faces() << " faces";
+            }
+            break;
+
+        case ProcessOp::MESH_PLANAR_PARTITION:
+            if (mesh) {
+                mesh->update_face_normals();
+                auto ids = mesh->face_property<int>("f:planar_partition", -1);
+                const int num = SurfaceMeshEnumerator::enumerate_planar_components(mesh, ids, 1.0f);
+                auto coloring = mesh->face_property<vec3>("f:color_planar_partition", vec3(0.0f));
+                Renderer::color_from_segmentation(mesh, ids, coloring);
+                if (auto *drawable = mesh->renderer() ?
+                                     mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
+                    drawable->set_property_coloring(State::FACE, "f:color_planar_partition");
+                selection_styles_.erase(model);
+                skip_selection_display = true;
+                LOG(INFO) << num << " planar patch(es) at a 1 degree normal threshold";
+            }
+            break;
+
+        case ProcessOp::MESH_TRIANGULATE:
+            if (mesh) {
+                const auto before = mesh->n_faces();
+                SurfaceMeshTriangulation triangulator(mesh);
+                triangulator.triangulate(SurfaceMeshTriangulation::MIN_AREA);
+                LOG(INFO) << "triangulated " << before << " faces into " << mesh->n_faces() << " triangles";
+            }
+            break;
+
+        case ProcessOp::MESH_DUAL:
+            if (mesh) {
+                const auto before = mesh->n_faces();
+                geom::dual(mesh);
+                LOG(INFO) << "dual mesh: " << before << " -> " << mesh->n_faces()
+                          << " faces (mesh properties were discarded)";
+            }
+            break;
+
+        case ProcessOp::MESH_SUBDIVIDE_CC:
+        case ProcessOp::MESH_SUBDIVIDE_LOOP:
+        case ProcessOp::MESH_SUBDIVIDE_SQRT3:
+            if (mesh) {
+                const auto before = mesh->n_vertices();
+                bool ok = false;
+                if (process_op_ == ProcessOp::MESH_SUBDIVIDE_CC)
+                    ok = SurfaceMeshSubdivision::catmull_clark(mesh);
+                else if (process_op_ == ProcessOp::MESH_SUBDIVIDE_LOOP)
+                    ok = SurfaceMeshSubdivision::loop(mesh);
+                else
+                    ok = SurfaceMeshSubdivision::sqrt3(mesh);
+                if (ok)
+                    LOG(INFO) << "subdivided: " << before << " -> " << mesh->n_vertices()
+                              << " vertices, " << mesh->n_faces() << " faces";
+                else
+                    LOG(WARNING) << "subdivision failed";
             }
             break;
 

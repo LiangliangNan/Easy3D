@@ -178,9 +178,14 @@ through the log panel.
       shown with per-primitive colors in `v:color-segments`) and Poisson reconstruction
       (`PoissonReconstruction`, octree depth, samples per node, optional density trim).
       The reconstruction adds a new model named `<cloud>_poisson.ply`.
+- [x] Surface mesh: fairing (minimize area, curvature, or curvature variation),
+      Catmull-Clark/Loop/Sqrt3 subdivision (direct, scheme chosen in a Subdivide
+      submenu), minimum-area triangulation, dual mesh, connected components and planar
+      partition painted with per-component face colors (`f:color_components`,
+      `f:color_planar_partition`), and uniform surface sampling into a new
+      `<mesh>_sampled.ply` point cloud.
 - [ ] Point cloud: Delaunay 2D/3D.
-- [ ] Surface mesh: connected components, dual mesh, triangulation, subdivision,
-      fairing, parameterization, geodesics, sampling, clipping/slicing.
+- [ ] Surface mesh: parameterization, geodesics, clipping/slicing.
 - [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
       reporting and cancellation instead of blocking the frame.
 
@@ -199,6 +204,12 @@ Phase 2 design notes:
   the mesh and discards its properties, including the selection; a saved selection
   style whose scalar property no longer exists falls back to uniform coloring through
   `buffer::update`'s missing-field path.
+- Commands without parameters (subdivision, triangulation, dual mesh, connected
+  components, planar partition) execute straight from the menu item through
+  `run_process`; only parameterized commands open a window. The painting commands
+  replace the drawable's appearance with their color property, so they drop any saved
+  selection style and skip the post-command selection display refresh that would
+  otherwise repaint the mesh with the selection colormap.
 
 ### Phase 3 — animation, capture, persistence
 
@@ -377,3 +388,18 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - "Model Info" left the Rendering panel and now sits above the Models list, driven by
   the selected model. With several models loaded it describes the highlighted row
   instead of whatever model happened to be active in the rendering panel.
+
+### 2026-11-15 — Phase 2 remaining surface-mesh algorithms
+
+- Surface mesh menu gained fairing (area/curvature/curvature-variation criterion),
+  a Subdivide submenu (Catmull-Clark, Loop, Sqrt3), triangulation, dual mesh,
+  connected components, planar partition, and surface sampling. Sampling adds a new
+  `<mesh>_sampled.ply` point cloud.
+- Commands that need no parameters run directly from the menu through `run_process`;
+  only fairing and sampling open a parameter window.
+- Connected components and planar partition paint faces (`f:color_components`,
+  `f:color_planar_partition`) and drop any saved selection style, like RANSAC, so a
+  later selection refresh cannot overwrite the painting.
+- Validation: both backends build; the OpenGL binary was launched with
+  `general_closed.obj` without startup errors. The commands were not exercised through
+  scripted clicks.

@@ -317,6 +317,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
             update();
         }
         if (back_color) {
+            ImGui::SameLine();
             vec4 color_back = d->back_color();
             if (ImGui::ColorEdit3("##back", color_back.data(), kSwatch)) {
                 d->set_back_color(color_back);
