@@ -5,8 +5,10 @@ Dear ImGui application rendered through Easy3D's backend-neutral overlay path
 (`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
 daily-use workflow.
 
-Status: 2026-11-15 — Phase 0 (shell) complete: builds and runs on both OpenGL and
-Vulkan; panels, menus, log capture and drawable styling work.
+Status: 2026-11-15 — Phase 0 (shell) and Phase 1 (inspection, selection) complete:
+builds and runs on both OpenGL and Vulkan; panels, menus, log capture, drawable styling,
+picking readout, and point/face selection work. The clipping plane is the remaining
+Phase 1 item.
 
 ## Decision
 
@@ -80,6 +82,8 @@ Reuse inventory (verified):
 | Camera clipboard | `Viewer::copy_view/paste_view` (GLFW clipboard) |
 | Active model selection | `Viewer::current_model()`; new `Viewer::set_current_model()` added for panels |
 | HUD toggles | protected `show_corner_axes_`, `show_frame_rate_`, `show_easy3d_logo_` |
+| Point/face selection | `PointCloudPicker`, `SurfaceMeshPicker` (`easy3d::gui`) |
+| Hover primitive readout | `Viewer::pick` → `PickResult` |
 | Log sink | `easy3d::logging::Logger` dispatch callback |
 | ImGui build | `3rd_imgui` target (GLFW backend; OpenGL3 backend excluded under Vulkan) |
 | Settings/layout | not implemented yet; `io.IniFilename` is disabled, so ImGui writes no layout file |
@@ -102,15 +106,43 @@ Reuse inventory (verified):
 Acceptance: open OBJ/PLY, orbit/zoom, switch active model, toggle drawables, restyle,
 snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
 
-### Phase 1 — inspection and interaction
+### Phase 1 — inspection and interaction (this iteration)
 
-- Model data inspection (properties, counts, per-model bounding box).
-- Point/picking readouts in the status bar (coordinates, primitive id/property).
-- Selection tools: move `tools/tool.cpp` hint drawing from immediate GL to
-  `graphics::DrawCommand` so `ToolManager` works on both backends, then wire
-  click/rect/lasso for point clouds and surface meshes.
-- Selection operations (invert, delete selected, show/hide selected).
-- Clipping plane.
+- [x] Model data inspection: the active model's path, vertex/edge/face counts, bounding
+      box, and a collapsible property listing (`Model::property_stats`).
+- [x] Point/picking readouts in the status bar: nearest visible primitive under the
+      pointer (world coordinates, face or point index), highlighted in Click mode only;
+      the query is throttled and uses `Viewer::pick` in logical window coordinates.
+- [x] Selection tools: click/rect/lasso for point clouds and surface meshes written
+      straight to the picker API (`PointCloudPicker`/`SurfaceMeshPicker`) instead of
+      moving `tools/tool.cpp` to the overlay path. The rubber band/lasso is drawn
+      through `graphics::DrawCommand`, so it is backend-neutral.
+- [x] Selection operations: select all, invert, clear, delete selected (with a native
+      confirmation). "Show/hide selected" was considered and left out: in a viewer,
+      hiding selected points/faces hides geometry without a recovery affordance, and
+      delete already covers the destructive case.
+- [ ] Clipping plane.
+
+Phase 1 design notes:
+
+- Selection is stored as `v:select`/`f:select` booleans and displayed by temporarily
+  switching the faces/points drawable to scalar coloring with a 2x1 colormap (texel 0 =
+  the drawable's own color, texel 1 = `setting::highlight_color`). Click/region
+  changes only rewrite the texture-coordinate buffer. The selection display belongs to
+  the selection, not to the tool: switching between Off/Click/Rect/Lasso keeps both the
+  selection and its colors. The drawable's own appearance is saved once and restored
+  when the selection becomes empty (Clear Selection, deselecting everything, or a
+  replacement gesture that hits nothing).
+- Deleting selected faces/points changes the topology, so the whole renderer is
+  invalidated (`Renderer::update()`); otherwise edge/border/vertex drawables would keep
+  drawing the deleted elements.
+- The hover highlight is a picking aid of the Click (pick) mode only; the status-bar
+  readout remains available in the other modes when Pick Readout is enabled.
+- Press/release/drag in selection mode are consumed by the app so the camera never
+  sees them; `Esc` leaves selection mode. Input callbacks only queue work
+  (`pending_pick_`, `pending_region_`, ...) because the graphics context is not
+  guaranteed current during event dispatch; `process_pending_work()` runs at the start
+  of `draw_gui()`, where pickers and textures can safely touch the device.
 
 ### Phase 2 — processing
 
@@ -202,3 +234,55 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   "ImGui notes" above, so Mapple's own menu bar copies the corrected form.
 - Validation: `opengl.imgui` and `vulkan.imgui` regression tests pass; both snapshots
   show the File/View/Help labels uncut.
+
+### 2026-11-15 — Phase 1 inspection and selection
+
+- Active-model inspection in the Rendering panel: path, counts, bounds, and a
+  scrollable property listing.
+- Status-bar pick readout: hovering resolves the nearest visible primitive and reports
+  the model name, face/point index, and world position. In Click mode it also
+  highlights the primitive (`set_highlight_range`, `gl_PrimitiveID` on both backends);
+  Rectangle/Lasso/Off leave the scene untinted. Disable the readout with
+  Select > Pick Readout.
+- Select menu and toolbar toggles for Click/Rect/Lasso; Shift adds, Ctrl removes,
+  plain gestures replace; Esc exits. `Ctrl+A`, `Ctrl+I`, Clear Selection, and
+  Delete Selected (Del, native confirmation) operate on the active model's points or
+  faces. Switching modes keeps the selection and its colors; an empty selection
+  restores the drawable's own appearance.
+- Selection display uses a 2x1 colormap over `v:select`/`f:select`; the drawable's
+  appearance is snapshotted when the first selection is made and restored when the
+  selection becomes empty. Gestures are queued from input callbacks and executed in
+  `draw_gui()`; the rubber band/lasso is overlay geometry clipped to the scene area.
+- Deleting selected primitives invalidates all drawables of the model
+  (`Renderer::update()`), so edges, borders, and vertices are rebuilt with the new
+  topology.
+- `Mapple-imgui` now links `easy3d::gui` for the pickers.
+- Validation: target builds in `build-opengl-check` and `build-vulkan-check`; launched
+  on both backends with `easy3d.ply`/`bunny.ply`. On Vulkan, rect/lasso gestures were
+  exercised against `easy3d.ply` (1836 faces): selecting all and selecting none both
+  logged the expected counts, the status bar showed `Select: <mode> (1836 selected)`,
+  and the selected faces rendered in the highlight color. Click-selection, delete, and
+  leaving selection mode were not scripted in this pass (the desktop was controlled
+  through TeamViewer during validation).
+
+### 2026-11-15 — Phase 1 follow-up fixes
+
+- Deleting selected faces left stale edge/border/vertex buffers, because only the
+  faces drawable was refreshed. The delete path now calls `Renderer::update()` so every
+  drawable rebuilds from the new topology.
+- Hovering highlighted primitives in Off mode. The highlight is now restricted to
+  Click (pick) mode; Rectangle/Lasso/Off only report the readout.
+- Switching Off/Click/Rect/Lasso visually cleared the selection because entering Off
+  restored the saved drawable style. Selection display now persists across tool
+  changes and is restored only when the selection becomes empty (Clear Selection,
+  deselecting everything, or a replace gesture that misses).
+- `refresh_selection_display()` re-applies the scalar selection coloring if a Rendering
+  panel restyle replaced it while the selection was retained.
+- The lasso outline is closed while drawing (the closing segment from the last point to
+  the first) so the region matches how the picker closes the polygon.
+- `Esc` leaves an active selection tool without touching the selection; with no tool
+  active it would reach `Viewer`'s close-on-Esc behavior, so Mapple asks for
+  confirmation before closing the window.
+- Validation: both backends build. Runtime re-checking of these three paths was not
+  scripted (keyboard/mouse injection was unavailable while the desktop was under
+  TeamViewer control).

@@ -26,6 +26,8 @@
 
 #include "../mapple_viewer.h"
 
+#include <string>
+
 #include <easy3d/renderer/camera.h>
 
 #include <3rd_party/imgui/imgui.h>
@@ -86,6 +88,8 @@ void MappleViewer::draw_menu_bar() {
         ImGui::EndMenu();
     }
 
+    draw_menu_select();
+
     if (ImGui::BeginMenu("Help")) {
         if (ImGui::MenuItem("About Mapple"))
             show_about_ = true;
@@ -96,4 +100,37 @@ void MappleViewer::draw_menu_bar() {
     // recording the height locally keeps the layout correct on the first frame too.
     menu_height_ = ImGui::GetWindowHeight();
     ImGui::EndMainMenuBar();
+}
+
+void MappleViewer::draw_menu_select() {
+    if (!ImGui::BeginMenu("Select"))
+        return;
+
+    auto mode_item = [this](const char *label, SelectMode mode, const char *shortcut) {
+        if (ImGui::MenuItem(label, shortcut, select_mode_ == mode))
+            set_select_mode(mode);
+    };
+    mode_item("Off", SelectMode::OFF, "Esc");
+    mode_item("Click", SelectMode::CLICK, nullptr);
+    mode_item("Rectangle", SelectMode::RECT, nullptr);
+    mode_item("Lasso", SelectMode::LASSO, nullptr);
+
+    ImGui::Separator();
+    const bool has_model = current_model() != nullptr;
+    if (ImGui::MenuItem("Select All", "Ctrl+A", false, has_model))
+        select_all_primitives();
+    if (ImGui::MenuItem("Invert Selection", "Ctrl+I", false, has_model))
+        invert_selection();
+    if (ImGui::MenuItem("Clear Selection", nullptr, false, has_model && selection_count() > 0))
+        clear_selection();
+
+    ImGui::Separator();
+    const std::size_t count = selection_count();
+    const std::string label = "Delete Selected (" + std::to_string(count) + ")";
+    if (ImGui::MenuItem(label.c_str(), "Del", false, count > 0))
+        confirm_delete_selected();
+
+    ImGui::Separator();
+    ImGui::MenuItem("Pick Readout", nullptr, &show_pick_readout_);
+    ImGui::EndMenu();
 }

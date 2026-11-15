@@ -27,7 +27,9 @@
 #include "../mapple_viewer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -128,11 +130,33 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
     if (ImGui::Button("Paste View"))
         paste_view();
 
+    // Selection tools are mode toggles: pressing the active one returns to OFF,
+    // where the pointer navigates the scene again.
+    ImGui::SameLine();
+    ImGui::TextDisabled("|");
+    ImGui::SameLine();
+    auto mode_button = [this](const char *label, SelectMode mode) {
+        const bool active = select_mode_ == mode;
+        if (active)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        if (ImGui::Button(label))
+            set_select_mode(active ? SelectMode::OFF : mode);
+        if (active)
+            ImGui::PopStyleColor();
+        ImGui::SameLine();
+    };
+    mode_button("Click", SelectMode::CLICK);
+    mode_button("Rect", SelectMode::RECT);
+    mode_button("Lasso", SelectMode::LASSO);
+
     ImGui::End();
     ImGui::PopStyleVar(2);
 }
 
 void MappleViewer::draw_panels(float x, float y, float w, float h) {
+    // The scene area, in logical units: whatever the panels do not cover. Input
+    // callbacks use it to reject gestures and hover queries over the UI.
+    scene_x_ = scene_y_ = scene_w_ = scene_h_ = 0;
     if (w < 1.0f || h < 1.0f)
         return;
 
@@ -168,6 +192,13 @@ void MappleViewer::draw_panels(float x, float y, float w, float h) {
         draw_splitter("##split-log", x, log_y - split, w, split,
                       false, &log_height_, -1.0f, 80.0f, log_max);
     }
+
+    const float left = x + (show_rendering_panel_ ? left_width_ + split : 0.0f);
+    const float right = x + w - (show_models_panel_ && right_width_ >= 160.0f ? right_width_ + split : 0.0f);
+    scene_x_ = static_cast<int>(std::lround(left));
+    scene_y_ = static_cast<int>(std::lround(y));
+    scene_w_ = std::max(0, static_cast<int>(std::lround(right)) - scene_x_);
+    scene_h_ = static_cast<int>(std::lround(content_h));
 }
 
 void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
@@ -207,6 +238,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
 
     ImGui::TextUnformatted(file_system::simple_name(model->name()).c_str());
     ImGui::Separator();
+    draw_model_info(model);
     Renderer *renderer = model->renderer();
 
     for (const auto &drawable : renderer->triangles_drawables()) {
@@ -324,6 +356,38 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     ImGui::End();
 }
 
+void MappleViewer::draw_model_info(Model *model) {
+    if (!model)
+        return;
+    if (!ImGui::CollapsingHeader("Model Info", ImGuiTreeNodeFlags_DefaultOpen))
+        return;
+
+    ImGui::TextWrapped("Path: %s", model->name().c_str());
+    if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))
+        ImGui::Text("%u vertices, %u edges, %u faces", mesh->n_vertices(), mesh->n_edges(), mesh->n_faces());
+    else if (auto *cloud = dynamic_cast<PointCloud *>(model))
+        ImGui::Text("%u points", cloud->n_vertices());
+
+    const Box3 &box = model->bounding_box();
+    if (box.is_valid()) {
+        const vec3 &min_corner = box.min_point();
+        const vec3 &max_corner = box.max_point();
+        ImGui::Text("Bounds min: (%.3f, %.3f, %.3f)", min_corner.x, min_corner.y, min_corner.z);
+        ImGui::Text("Bounds max: (%.3f, %.3f, %.3f)", max_corner.x, max_corner.y, max_corner.z);
+    }
+
+    std::ostringstream stats;
+    model->property_stats(stats);
+    const std::string properties = stats.str();
+    if (!properties.empty() && ImGui::TreeNode("Properties")) {
+        ImGui::BeginChild("##model-properties", ImVec2(0, 110), false);
+        ImGui::TextUnformatted(properties.c_str());
+        ImGui::EndChild();
+        ImGui::TreePop();
+    }
+    ImGui::Spacing();
+}
+
 void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     begin_panel("Models", x, y, w, h);
     ImGui::TextUnformatted("Models");
@@ -351,6 +415,9 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
             set_current_model(model);
             update();
+            // Selection view follows the active model.
+            if (select_mode_ != SelectMode::OFF)
+                refresh_selection_display(model);
         }
         if (ImGui::BeginPopupContextItem("##model-menu")) {
             if (ImGui::MenuItem("Fit to this model")) {
@@ -407,6 +474,7 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     if (pending_delete_) {
         Model *doomed = pending_delete_;
         pending_delete_ = nullptr;
+        forget_model(doomed);
         if (delete_model(doomed))
             update();
     }
@@ -501,7 +569,31 @@ void MappleViewer::draw_status_bar(float x, float y, float w, float h) {
             ImGui::TextUnformatted(name.c_str());
     }
 
-    const char *hint = "LMB rotate   RMB pan   MMB zoom   F fit";
+    if (select_mode_ != SelectMode::OFF) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("|");
+        ImGui::SameLine();
+        const char *mode = select_mode_ == SelectMode::CLICK ? "Click"
+                         : select_mode_ == SelectMode::RECT  ? "Rectangle"
+                                                             : "Lasso";
+        ImGui::Text("Select: %s", mode);
+        const std::size_t count = selection_count();
+        if (count > 0) {
+            ImGui::SameLine();
+            ImGui::Text("(%d selected)", static_cast<int>(count));
+        }
+    }
+
+    if (!hover_text_.empty()) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("|");
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", hover_text_.c_str());
+    }
+
+    const char *hint = select_mode_ == SelectMode::OFF
+                       ? "LMB rotate   RMB pan   MMB zoom   F fit"
+                       : "LMB select   Shift add   Ctrl remove   Esc exit";
     const float hint_width = ImGui::CalcTextSize(hint).x;
     ImGui::SameLine(ImGui::GetWindowWidth() - hint_width - ImGui::GetStyle().WindowPadding.x);
     ImGui::TextDisabled("%s", hint);

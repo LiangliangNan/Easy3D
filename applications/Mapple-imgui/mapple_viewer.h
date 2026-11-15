@@ -27,17 +27,30 @@
 #ifndef EASY3D_MAPPLE_VIEWER_H
 #define EASY3D_MAPPLE_VIEWER_H
 
+#include <chrono>
 #include <cstddef>
 #include <deque>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
+#include <vector>
 
+#include <easy3d/core/types.h>
+#include <easy3d/renderer/state.h>
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/logging.h>
 
 class ImGuiLayer;
-namespace easy3d { class Model; }
+namespace easy3d {
+    class Drawable;
+    class Model;
+    class PointCloudPicker;
+    class SurfaceMeshPicker;
+    class Texture;
+    namespace graphics { struct DrawCommand; }
+}
 
 
 /**
@@ -93,10 +106,29 @@ protected:
 
     bool char_input_event(unsigned int codepoint) override;
 
+    bool focus_event(bool focused) override;
+
 private:
     struct LogLine {
         el::Level level;
         std::string text;
+    };
+
+    // How a pointer press selects primitives: click, rubber band, or lasso.
+    enum class SelectMode { OFF, CLICK, RECT, LASSO };
+
+    // What a finished selection gesture does with the primitives it touches.
+    enum class SelectAction { REPLACE, ADD, REMOVE };
+
+    // Selection commands that touch drawable buffers; queued from the keyboard.
+    enum class SelectCommand { NONE, SELECT_ALL, CLEAR_SELECTION, INVERT_SELECTION, DELETE_SELECTION };
+
+    // The drawable appearance in effect before the selection view replaced it, so
+    // clearing the selection restores the user's appearance instead of leaving the
+    // model painted with the selection colormap.
+    struct SelectionStyle {
+        easy3d::State state;                        // full drawable state before selection
+        std::unique_ptr<easy3d::Texture> colormap;  // 2x1: unselected color -> highlight
     };
 
     // Framebuffer-to-window ratio; may differ from dpi_scaling().
@@ -107,8 +139,13 @@ private:
     // ui/menu.cpp
     void draw_menu_bar();
 
+    // ui/menu.cpp
+    void draw_menu_select();
+
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
+
+    void draw_model_info(easy3d::Model *model);
 
     void draw_panels(float x, float y, float w, float h);
 
@@ -129,6 +166,67 @@ private:
                        float min_value, float max_value);
 
     void delete_model_confirm(easy3d::Model *model);
+
+    // ---- selection (mapple_viewer.cpp) ----
+
+    // The scene area left free by the menu, toolbar, status bar and panels, in
+    // logical window coordinates; recorded every frame by draw_panels(). A gesture
+    // or hover query only starts inside it.
+    bool point_in_scene(int x, int y) const;
+
+    void set_select_mode(SelectMode mode);
+
+    // Runs work queued by input callbacks: they cannot touch GPU resources because
+    // the graphics context is not guaranteed current during event dispatch. Called
+    // first in draw_gui(), when it is.
+    void process_pending_work();
+
+    // Applies a finished click/region gesture to the current model.
+    void perform_selection(int x, int y, SelectAction action);
+
+    void cancel_selection_gesture();
+
+    void select_region(SelectAction action);
+
+    void select_all_primitives();
+
+    void clear_selection();
+
+    void invert_selection();
+
+    void confirm_delete_selected();
+
+    void delete_selected_primitives();
+
+    // Number of selected faces or points of the current model (cached; see
+    // invalidate_selection_count()).
+    std::size_t selection_count();
+
+    void invalidate_selection_count() { selection_count_dirty_ = true; }
+
+    // Shows the selection as v:select/f:select scalar coloring, remembering the
+    // drawable's previous appearance the first time. Selection changes refresh only
+    // the texture coordinates; a topology change needs a renderer update first.
+    void refresh_selection_display(easy3d::Model *model);
+
+    // Refreshes the selection display, or restores the saved appearance when the
+    // selection became empty.
+    void finish_selection_change(easy3d::Model *model);
+
+    // Restores the appearance saved by refresh_selection_display(), if any.
+    void restore_selection_style(easy3d::Model *model);
+
+    // Drops saved styles and hover references to a model that is about to be deleted.
+    void forget_model(easy3d::Model *model);
+
+    // Hover readout and primitive highlight (throttled; see update_hover()).
+    void update_hover(int x, int y);
+
+    void clear_hover();
+
+    // Appends the rubber-band/lasso hint geometry to the overlay commands; the
+    // caller inserts them before the ImGui geometry so hints stay under the UI.
+    void append_selection_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
 private:
     std::unique_ptr<ImGuiLayer> imgui_;
@@ -153,6 +251,42 @@ private:
 
     easy3d::Model *pending_delete_ = nullptr; // deferred so the Models panel never deletes mid-iteration
     bool mouse_captured_ = false;             // ImGui owned the press; keep the whole gesture away from the scene
+
+    int scene_x_ = 0, scene_y_ = 0, scene_w_ = 0, scene_h_ = 0; // logical, updated every frame
+
+    SelectMode select_mode_ = SelectMode::OFF;
+    bool selecting_ = false;            // a selection gesture is in progress
+    SelectAction select_action_ = SelectAction::REPLACE; // from the press modifiers
+    easy3d::vec2 select_start_ = easy3d::vec2(0); // logical window coordinates
+    easy3d::vec2 select_end_ = easy3d::vec2(0);
+    std::vector<easy3d::vec2> lasso_; // logical window coordinates
+
+    // Deferred work: input callbacks record requests, draw_gui() executes them.
+    bool pending_mode_ = false;
+    SelectMode pending_select_mode_ = SelectMode::OFF;
+    bool pending_pick_ = false;
+    bool pending_region_ = false;
+    int pending_x_ = 0, pending_y_ = 0;
+    SelectAction pending_action_ = SelectAction::REPLACE;
+    SelectCommand pending_command_ = SelectCommand::NONE;
+    bool pending_hover_ = false;
+    int hover_x_ = 0, hover_y_ = 0;
+
+    // Pickers borrow the camera and own backend pick resources; created on first use.
+    std::unique_ptr<easy3d::PointCloudPicker> point_picker_;
+    std::unique_ptr<easy3d::SurfaceMeshPicker> mesh_picker_;
+
+    std::map<easy3d::Model *, SelectionStyle> selection_styles_;
+    const easy3d::Model *counted_model_ = nullptr;
+    std::size_t selected_count_ = 0;
+    bool selection_count_dirty_ = true;
+
+    bool show_pick_readout_ = true;
+    easy3d::Model *hover_model_ = nullptr;       // clears the hover when its model is deleted
+    std::weak_ptr<easy3d::Drawable> hover_drawable_;
+    std::pair<int, int> hover_range_ = {-1, -1}; // highlighted primitives
+    std::string hover_text_;
+    std::chrono::steady_clock::time_point hover_stamp_;
 };
 
 

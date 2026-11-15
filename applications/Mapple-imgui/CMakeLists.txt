@@ -14,6 +14,7 @@ target_include_directories(${name} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${name} PRIVATE
         3rd_imgui
         easy3d::core
+        easy3d::gui
         easy3d::renderer
         easy3d::util
         easy3d::viewer
