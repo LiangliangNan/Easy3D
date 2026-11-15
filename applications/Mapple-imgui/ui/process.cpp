@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <set>
 
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -38,8 +39,10 @@
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo/surface_mesh_hole_filling.h>
+#include <easy3d/algo/surface_mesh_parameterization.h>
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo/surface_mesh_sampler.h>
@@ -47,10 +50,15 @@
 #include <easy3d/algo/surface_mesh_smoothing.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
+#ifdef HAS_CGAL
+#include <easy3d/algo_ext/surfacer.h>
+#endif
+#include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
@@ -105,6 +113,16 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Subdivide (Loop)";
         case ProcessOp::MESH_SUBDIVIDE_SQRT3:
             return "Subdivide (Sqrt3)";
+        case ProcessOp::MESH_PARAMETERIZE:
+            return "Parameterize Surface Mesh";
+        case ProcessOp::MESH_GEODESIC:
+            return "Geodesic Distance";
+        case ProcessOp::MESH_CLIP:
+            return "Clip by Clipping Plane";
+        case ProcessOp::MESH_SPLIT:
+            return "Split by Clipping Plane";
+        case ProcessOp::MESH_SLICE:
+            return "Slice by Clipping Plane";
         default:
             return "";
     }
@@ -267,6 +285,20 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::InputInt("Points", &p.sample_points);
                 ImGui::TextDisabled("Adds a new point cloud sampled over the surface.");
                 ImGui::TextDisabled("Must exceed the current vertex count.");
+                break;
+
+            case ProcessOp::MESH_PARAMETERIZE:
+                ImGui::TextDisabled("Method");
+                if (ImGui::RadioButton("LSCM", p.param_method == 0))
+                    p.param_method = 0;
+                if (ImGui::RadioButton("Discrete harmonic", p.param_method == 1))
+                    p.param_method = 1;
+                ImGui::BeginDisabled(p.param_method != 1);
+                ImGui::Checkbox("Uniform weights", &p.param_uniform_weights);
+                ImGui::EndDisabled();
+                ImGui::Checkbox("Preview with checkerboard", &p.param_preview);
+                ImGui::TextDisabled("Requires a triangle mesh with a boundary.");
+                ImGui::TextDisabled("Stores texture coordinates in v:texcoord.");
                 break;
 
             default:
@@ -596,6 +628,156 @@ void MappleViewer::apply_process() {
                 LOG(INFO) << "sampled " << cloud->n_vertices() << " points from " << mesh->n_faces() << " faces";
                 add_model(cloud);
             }
+            break;
+
+        case ProcessOp::MESH_PARAMETERIZE:
+            if (mesh) {
+                if (!mesh->is_triangle_mesh()) {
+                    LOG(WARNING) << "parameterization requires a triangle mesh (Process > Surface Mesh > Triangulate)";
+                    break;
+                }
+                bool has_boundary = false;
+                for (auto v : mesh->vertices()) {
+                    if (mesh->is_border(v)) {
+                        has_boundary = true;
+                        break;
+                    }
+                }
+                if (!has_boundary) {
+                    LOG(WARNING) << "parameterization requires a boundary (a closed surface has none)";
+                    break;
+                }
+
+                SurfaceMeshParameterization para(mesh);
+                if (p.param_method == 0) {
+                    LOG(INFO) << "parameterization (least squares conformal map)...";
+                    para.lscm();
+                } else {
+                    LOG(INFO) << "parameterization (discrete harmonic, "
+                              << (p.param_uniform_weights ? "uniform" : "cotan") << " weights)...";
+                    para.harmonic(p.param_uniform_weights);
+                }
+
+                if (p.param_preview) {
+                    if (auto *drawable = mesh->renderer() ?
+                                         mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
+                        drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
+                    selection_styles_.erase(model);
+                    skip_selection_display = true;
+                }
+                LOG(INFO) << "texture coordinates stored in v:texcoord";
+            }
+            break;
+
+        case ProcessOp::MESH_GEODESIC:
+            if (mesh) {
+                // Faces are the selection unit of a mesh, so their vertices seed the
+                // distance field; this reuses the existing selection tools.
+                auto selected = mesh->get_face_property<bool>("f:select");
+                std::vector<SurfaceMesh::Vertex> seeds;
+                std::set<SurfaceMesh::Vertex> unique;
+                std::size_t selected_faces = 0;
+                if (selected) {
+                    for (auto f : mesh->faces()) {
+                        if (!selected[f])
+                            continue;
+                        ++selected_faces;
+                        for (auto v : mesh->vertices(f)) {
+                            if (unique.insert(v).second)
+                                seeds.push_back(v);
+                        }
+                    }
+                }
+                if (seeds.empty()) {
+                    LOG(WARNING) << "select one or more faces to seed the geodesic distance";
+                    break;
+                }
+
+                const auto components = SurfaceMeshComponent::extract(mesh);
+                if (components.size() > 1)
+                    LOG(WARNING) << "mesh has " << components.size()
+                                 << " connected components; distances stop at component boundaries";
+
+                SurfaceMeshGeodesic geodesic(mesh);
+                geodesic.compute(seeds);
+                // The selection view would hide the distance coloring, and the seeds
+                // have served their purpose.
+                clear_selection();
+                if (auto *drawable = mesh->renderer() ?
+                                     mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
+                    drawable->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:geodesic:distance");
+                LOG(INFO) << "geodesic distance from " << seeds.size() << " seed vertices ("
+                          << selected_faces << " selected faces)";
+            }
+            break;
+
+        case ProcessOp::MESH_CLIP:
+        case ProcessOp::MESH_SPLIT:
+        case ProcessOp::MESH_SLICE:
+#ifdef HAS_CGAL
+            if (mesh) {
+                if (!mesh->is_triangle_mesh()) {
+                    LOG(WARNING) << process_title(process_op_) << " requires a triangle mesh "
+                                 << "(Process > Surface Mesh > Triangulate first)";
+                    break;
+                }
+                auto *plane = ClippingPlane::instance();
+                if (!plane->is_enabled()) {
+                    LOG(WARNING) << "the clipping plane is not enabled "
+                                 << "(Rendering panel > Clipping Plane)";
+                    break;
+                }
+                const Plane3 cut = plane->plane0();
+
+                if (process_op_ == ProcessOp::MESH_CLIP) {
+                    const auto before = mesh->n_faces();
+                    if (Surfacer::clip(mesh, cut, false))
+                        LOG(INFO) << "clipped with the clipping plane: " << before << " -> "
+                                  << mesh->n_faces() << " faces";
+                    else
+                        LOG(WARNING) << "nothing to clip: the plane does not cut the mesh";
+                } else if (process_op_ == ProcessOp::MESH_SPLIT) {
+                    const auto before = mesh->n_faces();
+                    Surfacer::split(mesh, cut);
+                    LOG(INFO) << "split with the clipping plane: " << before << " -> "
+                              << mesh->n_faces() << " faces";
+                } else {
+                    const auto polylines = Surfacer::slice(mesh, cut);
+                    if (polylines.empty()) {
+                        LOG(WARNING) << "nothing to slice: the plane does not cut the mesh";
+                        break;
+                    }
+                    auto *graph = new Graph;
+                    graph->set_name(file_system::name_less_extension(mesh->name()) + "_slice");
+                    std::size_t num_edges = 0;
+                    for (const auto &polyline : polylines) {
+                        if (polyline.size() < 2)
+                            continue;
+                        // Closed polylines repeat their first point at the end.
+                        const bool closed = (polyline.front() - polyline.back()).length() < 1e-6f;
+                        const std::size_t n = closed ? polyline.size() - 1 : polyline.size();
+                        std::vector<Graph::Vertex> vertices;
+                        vertices.reserve(n);
+                        for (std::size_t i = 0; i < n; ++i)
+                            vertices.push_back(graph->add_vertex(polyline[i]));
+                        for (std::size_t i = 1; i < vertices.size(); ++i) {
+                            graph->add_edge(vertices[i - 1], vertices[i]);
+                            ++num_edges;
+                        }
+                        if (closed && vertices.size() > 2) {
+                            graph->add_edge(vertices.back(), vertices.front());
+                            ++num_edges;
+                        }
+                    }
+                    add_model(graph);
+                    LOG(INFO) << "sliced with the clipping plane: " << polylines.size()
+                              << " polylines, " << num_edges << " edges";
+                }
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
             break;
 
         case ProcessOp::MESH_COMPONENTS:

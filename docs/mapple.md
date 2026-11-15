@@ -188,7 +188,17 @@ through the log panel.
       z) and 3D tetrahedralization (`Delaunay3`; the result is a `PolyMesh`). Both add
       a named model (`<cloud>_delaunay_XY.ply`, `<cloud>_delaunay.ply`) and stop with
       a log warning instead of adding an empty model when the input is degenerate.
-- [ ] Surface mesh: parameterization, geodesics, clipping/slicing.
+- [x] Surface mesh: parameterization (`SurfaceMeshParameterization`; LSCM or discrete
+      harmonic with cotan/uniform weights, UVs in `v:texcoord`, optional checkerboard
+      preview) and geodesic distance seeded by the vertices of the selected faces
+      (`SurfaceMeshGeodesic`, shown as the `v:geodesic:distance` scalar field; the
+      selection is cleared afterward so the distance colors are visible).
+- [x] Surface mesh: clipping, splitting, and slicing by the clipping plane
+      (`Surfacer::clip/split/slice` from `easy3d::algo_ext`, enabled by
+      `Easy3D_ENABLE_CGAL`). Clip/split modify the active mesh in place; slice adds
+      the cut polylines as a new graph model (`<mesh>_slice`). The commands appear
+      only in CGAL-enabled builds and warn when the clipping plane is disabled or
+      the plane misses the mesh.
 - [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
       reporting and cancellation instead of blocking the frame.
 
@@ -208,12 +218,25 @@ Phase 2 design notes:
   style whose scalar property no longer exists falls back to uniform coloring through
   `buffer::update`'s missing-field path.
 - Commands without parameters (subdivision, triangulation, dual mesh, connected
-  components, planar partition, Delaunay 2D/3D) execute straight from the menu item
-  through `run_process`; only parameterized commands open a window. The painting
-  commands
+  components, planar partition, Delaunay 2D/3D, geodesic distance, clipping/splitting/
+  slicing) execute straight from the menu item through `run_process`; only
+  parameterized commands open a window. The painting commands
   replace the drawable's appearance with their color property, so they drop any saved
   selection style and skip the post-command selection display refresh that would
   otherwise repaint the mesh with the selection colormap.
+- Geodesic seeds are the vertices of the selected faces, which reuses the existing
+  selection tools; the command clears the selection afterward so the distance field
+  is visible.
+- Parameterization requires a triangle mesh with a boundary and warns otherwise. The
+  checkerboard preview binds the default texture to `v:texcoord`; editing the faces'
+  Color in the Rendering panel restores uniform coloring.
+- Clipping, splitting, and slicing reuse the Rendering-panel clipping plane
+  (`plane0()`), so the cut matches the guide exactly. Clip keeps the negative side
+  (`clip_volume = false`), split keeps both sides as separate components, and slice
+  adds a graph model whose closed polylines reuse their first vertex (no duplicate or
+  degenerate closing edge). The commands exist only in CGAL-enabled builds and warn
+  when the plane is disabled, the mesh is not triangulated, or the plane misses the
+  mesh.
 
 ### Phase 3 — animation, capture, persistence
 
@@ -421,3 +444,35 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Validation: both backends build; the app was launched with the `bunny.bin` point
   cloud. `algo.point_cloud_delaunay_triangulation_2D` and `_3D` pass in the OpenGL
   tree; the menu commands were not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 2 parameterization and geodesics
+
+- Surface mesh menu gained Parameterize... (LSCM or discrete harmonic with cotan or
+  uniform weights) and Geodesic Distance.
+- Parameterization writes `v:texcoord`, requires a triangle mesh with a boundary, and
+  can preview the result with the default checkerboard texture; editing the faces'
+  Color in the Rendering panel restores uniform coloring.
+- Geodesic distance is seeded by the vertices of the selected faces, reuses the
+  selection tools instead of picking random vertices as the Qt demo did, and clears
+  the selection afterward so the `v:geodesic:distance` scalar field is visible.
+- Validation: both backends build; the app was launched with `general_open.obj`.
+  `algo.surface_mesh_geodesic` and `algo.surface_mesh_parameterization` pass in the
+  OpenGL tree; the menu commands were not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 2 clipping, splitting, and slicing (CGAL enabled)
+
+- Enabled CGAL (6.0.1, `CGAL_DIR=~/Documents/Dev/CGAL-6.0.1/lib/cmake/CGAL`) in both
+  validated trees and linked `easy3d::algo_ext` into Mapple-imgui when that target
+  exists; the commands are compiled out when CGAL is unavailable.
+- Surface mesh menu gained Clip by Clipping Plane, Split by Clipping Plane, and Slice
+  by Clipping Plane. They use the Rendering-panel clipping plane, so the cut is
+  exactly what the guide shows.
+- Clip keeps the negative side (`clip_volume = false`); split cuts the mesh into two
+  components without removing either side; slice adds the cut polylines as a new graph
+  model (`<mesh>_slice`), with closed loops sharing their first vertex.
+- The commands warn (instead of failing silently) when the plane is disabled, the mesh
+  is not triangulated, or the plane misses the mesh.
+- Validation: `algo.surface_mesh_clip`, `algo.surface_mesh_split`, and
+  `algo.surface_mesh_slice` pass with CGAL 6.0.1; both backends build and launch with
+  `general_open.obj`. The linker warns that Homebrew's gmp/mpfr were built for a newer
+  deployment target (environment-specific, not an error).

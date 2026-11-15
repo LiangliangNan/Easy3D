@@ -131,7 +131,9 @@ private:
         MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE,
         MESH_FAIRING, MESH_SAMPLE,
         MESH_COMPONENTS, MESH_PLANAR_PARTITION, MESH_TRIANGULATE, MESH_DUAL,
-        MESH_SUBDIVIDE_CC, MESH_SUBDIVIDE_LOOP, MESH_SUBDIVIDE_SQRT3
+        MESH_SUBDIVIDE_CC, MESH_SUBDIVIDE_LOOP, MESH_SUBDIVIDE_SQRT3,
+        MESH_PARAMETERIZE, MESH_GEODESIC,
+        MESH_CLIP, MESH_SPLIT, MESH_SLICE
     };
 
     // Parameters of the open processing window. Model-dependent values are refreshed
@@ -168,6 +170,9 @@ private:
         float polygonize_angle = 1.0f;
         int fairing_criterion = 0;      // 0: area, 1: curvature, 2: curvature variation
         int sample_points = 1000000;
+        int param_method = 0;           // 0: LSCM, 1: discrete harmonic
+        bool param_uniform_weights = false;
+        bool param_preview = true;
     };
 
     // The drawable appearance in effect before the selection view replaced it, so

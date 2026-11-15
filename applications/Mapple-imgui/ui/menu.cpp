@@ -160,12 +160,26 @@ void MappleViewer::draw_menu_process() {
         if (ImGui::MenuItem("Polygonize..."))
             open_process(ProcessOp::MESH_POLYGONIZE);
         ImGui::Separator();
+        if (ImGui::MenuItem("Parameterize..."))
+            open_process(ProcessOp::MESH_PARAMETERIZE);
+        if (ImGui::MenuItem("Geodesic Distance"))
+            run_process(ProcessOp::MESH_GEODESIC);
+        ImGui::Separator();
         if (ImGui::MenuItem("Connected Components"))
             run_process(ProcessOp::MESH_COMPONENTS);
         if (ImGui::MenuItem("Planar Partition"))
             run_process(ProcessOp::MESH_PLANAR_PARTITION);
         if (ImGui::MenuItem("Sample Surface..."))
             open_process(ProcessOp::MESH_SAMPLE);
+#ifdef HAS_CGAL
+        ImGui::Separator();
+        if (ImGui::MenuItem("Clip by Clipping Plane"))
+            run_process(ProcessOp::MESH_CLIP);
+        if (ImGui::MenuItem("Split by Clipping Plane"))
+            run_process(ProcessOp::MESH_SPLIT);
+        if (ImGui::MenuItem("Slice by Clipping Plane"))
+            run_process(ProcessOp::MESH_SLICE);
+#endif
         ImGui::EndMenu();
     }
 

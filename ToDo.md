@@ -174,7 +174,9 @@
     - [x] Phase 2 processing (first slice): Process menu with point-cloud normals/simplification and mesh smoothing/simplification/remeshing/hole filling/polygonization, each behind a modal parameter window and logged to the Log panel. Reconstruction and the remaining algorithms are still pending.
     - [x] Phase 2 point-cloud reconstruction and primitives: Poisson reconstruction (adds a trimmed/named mesh) and RANSAC primitive extraction with per-primitive coloring. Delaunay 2D/3D and the remaining mesh algorithms are still pending.
     - [x] Phase 2 remaining surface-mesh algorithms: fairing, Catmull-Clark/Loop/Sqrt3 subdivision, triangulation, dual mesh, connected components and planar partition (face coloring), and surface sampling into a new point cloud. Parameterization, geodesics, clipping/slicing, Delaunay, and progress/cancellation for long commands remain.
-    - [x] Phase 2 Delaunay: 2D triangulation on the XY projection (new mesh) and 3D tetrahedralization (new `PolyMesh`), both as new named models. Parameterization, geodesics, clipping/slicing, and progress/cancellation for long commands remain.
+    - [x] Phase 2 Delaunay: 2D triangulation on the XY projection (new mesh) and 3D tetrahedralization (new `PolyMesh`), both as new named models. Clipping/slicing and progress/cancellation for long commands remain.
+    - [x] Phase 2 parameterization and geodesics: LSCM or discrete-harmonic UVs with an optional checkerboard preview, and geodesic distance seeded by the vertices of the selected faces. Progress/cancellation for long commands remains.
+    - [x] Phase 2 clipping, splitting, and slicing: CGAL 6.0.1 enabled in both validated trees; Clip/Split modify the active triangle mesh using the Rendering-panel clipping plane and Slice adds the cut polylines as a new graph model. Progress/cancellation for long commands remains.
 
   - Check if clipper can be used to handle overlapping faces.
   - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).

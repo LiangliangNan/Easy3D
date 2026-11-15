@@ -22,6 +22,11 @@ target_link_libraries(${name} PRIVATE
         easy3d::viewer
         )
 
+if (TARGET easy3d::algo_ext)
+    # Adds the CGAL-backed commands (clipping/splitting/slicing) and defines HAS_CGAL.
+    target_link_libraries(${name} PRIVATE easy3d::algo_ext)
+endif ()
+
 if (Easy3D_ENABLE_VULKAN)
     target_compile_definitions(${name} PRIVATE "APP_TITLE=\"${name} - Vulkan\"")
 else ()
