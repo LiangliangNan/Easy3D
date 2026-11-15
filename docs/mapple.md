@@ -257,7 +257,13 @@ Phase 2 design notes:
 
 ### Phase 3 — animation, capture, persistence
 
-- [ ] Walk-through keyframes using `KeyFrameInterpolator`; camera-path import/export.
+- [x] Camera path: a non-modal Camera Path window (keyframe count, Prev/Next
+      navigation, playback, speed, frame rate, interpolation method, path visibility)
+      plus Camera-menu commands to add (Alt+K), remove the last keyframe, clear the
+      path, play/stop (Ctrl+K), show the path and keyframe cameras (Ctrl+T), and
+      import/export `.kf` files. It drives the viewer's own `KeyFrameInterpolator`, so
+      the viewer shortcuts and the HUD path overlay stay authoritative; the scene
+      remains interactive while the window is open.
 - [ ] Video recording via `RenderDevice` offscreen capture + `easy3d::video`.
 - [x] Snapshot dialog (scale with the resulting pixel size shown, samples, current/
       white/transparent background, frustum expansion), matching the Qt
@@ -562,3 +568,25 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   full-screen client overlay and took three file snapshots: with the overlay set the
   image contains it, after `set_overlays({})` it does not, and after two more frames it
   is back (`kept=1 cleared=0 restored=1`); the probe then removed itself.
+
+### 2026-11-15 — Phase 3 camera path window
+
+- The Camera menu now carries the camera-path commands: Camera Path... (a floating,
+  non-modal window), Add Keyframe (Alt+K), Remove Last Keyframe, Clear Camera Path,
+  Play Camera Path / Stop Playback (Ctrl+K), Show Camera Path (Ctrl+T), and Import/
+  Export Keyframes (.kf). Copy/paste view and the projection choice stay above them.
+- The window shows the keyframe count, a Prev/Next navigator, playback, interpolation
+  speed, frame rate, interpolation method (spline interpolation or fitting), and the
+  path visibility. It drives the viewer's own `KeyFrameInterpolator`; the existing
+  viewer shortcuts therefore stay the single source of truth, and the scene remains
+  interactive while the window is open (unlike the modal process/snapshot dialogs).
+  Closing the window stops playback so the camera does not keep moving unattended;
+  Ctrl+K still toggles it.
+- Showing the path widens the scene radius over the keyframe positions (as Ctrl+T
+  does) so the whole path and the keyframe cameras stay in the depth range, and
+  hiding or clearing it restores the scene bounds. Import expands the radius when the
+  path is already visible.
+- Validation: both backends build and launch with `general_open.obj`; the
+  `KeyFrameInterpolator` interpolation, manual playback and `.kf` round-trip it calls
+  are covered by the viewer camera-path tests (green in both check trees). The menu
+  and window were not exercised through scripted clicks.

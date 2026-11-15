@@ -457,6 +457,10 @@ void MappleViewer::draw_gui() {
     draw_about_window();
     draw_process_dialog();
     draw_snapshot_dialog();
+    // The camera-path window is non-modal, so it stays out while a modal dialog owns
+    // the screen; its state (keyframes, playback) is untouched.
+    if (process_op_ == ProcessOp::NONE && !show_snapshot_dialog_)
+        draw_animation_window();
 }
 
 //------------------------------------------------------------------------

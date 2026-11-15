@@ -264,6 +264,34 @@ private:
 
     void draw_snapshot_dialog();
 
+    // ui/animation.cpp
+
+    // Floating, non-modal window: keyframe count and navigation, playback, and the
+    // keyframe interpolation settings. The scene stays interactive so the user can
+    // move the camera and add keyframes while it is open.
+    void open_animation_window();
+
+    void draw_animation_window();
+
+    void add_camera_keyframe();
+
+    void remove_last_camera_keyframe();
+
+    void clear_camera_path();
+
+    void toggle_camera_path_playback();
+
+    // Stops playback and moves the camera to a keyframe.
+    void goto_camera_keyframe(int index);
+
+    // Shows/hides the camera path and keyframe cameras, widening the scene radius
+    // while visible so the whole path stays in the depth range.
+    void set_camera_path_visible(bool visible);
+
+    void import_camera_path();
+
+    void export_camera_path();
+
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
 
@@ -361,6 +389,9 @@ private:
     bool show_about_ = false;
     bool show_snapshot_dialog_ = false;
     SnapshotParams snapshot_params_;
+
+    bool show_animation_window_ = false;
+    int camera_keyframe_index_ = -1; // keyframe last jumped to, for Prev/Next
 
     float left_width_ = 250.0f;
     float right_width_ = 300.0f;

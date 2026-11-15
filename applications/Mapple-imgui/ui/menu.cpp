@@ -31,6 +31,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 
 #include <3rd_party/imgui/imgui.h>
 
@@ -87,6 +88,31 @@ void MappleViewer::draw_menu_bar() {
             camera()->set_type(Camera::ORTHOGRAPHIC);
             update();
         }
+
+        ImGui::Separator();
+        const int keyframes = static_cast<int>(kfi_->number_of_keyframes());
+        if (ImGui::MenuItem("Camera Path..."))
+            open_animation_window();
+        if (ImGui::MenuItem("Add Keyframe", "Alt+K"))
+            add_camera_keyframe();
+        if (ImGui::MenuItem("Remove Last Keyframe", nullptr, false, keyframes > 0))
+            remove_last_camera_keyframe();
+        if (ImGui::MenuItem("Clear Camera Path", nullptr, false, keyframes > 0))
+            clear_camera_path();
+
+        ImGui::Separator();
+        if (ImGui::MenuItem(kfi_->is_interpolation_started() ? "Stop Playback" : "Play Camera Path", "Ctrl+K",
+                            false, keyframes >= 2))
+            toggle_camera_path_playback();
+        bool path_visible = show_camera_path_;
+        if (ImGui::MenuItem("Show Camera Path", "Ctrl+T", &path_visible))
+            set_camera_path_visible(path_visible);
+
+        ImGui::Separator();
+        if (ImGui::MenuItem("Import Keyframes..."))
+            import_camera_path();
+        if (ImGui::MenuItem("Export Keyframes...", nullptr, false, keyframes > 0))
+            export_camera_path();
         ImGui::EndMenu();
     }
 
