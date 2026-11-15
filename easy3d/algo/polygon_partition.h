@@ -37,8 +37,8 @@ namespace easy3d {
 
     /**
      * \brief Convex partition of polygons.
-     * \details The algorithm assumes simply polygons without self-intersections. For complex unknown structures, you
-     *      may need to use the CSG operators provided in easy3d/algo/tessellator.h to obtain simply polygons first.
+     * \details The algorithm assumes simple polygons without self-intersections. For complex input, you may need to
+     *      use the CSG operators provided in easy3d/algo/tessellator.h to obtain simple polygons first.
      * \class PolygonPartition easy3d/algo/polygon_partition.h
      */
     class PolygonPartition {
@@ -57,7 +57,8 @@ namespace easy3d {
          *      M. Keil, J. Snoeyink, "On the time bound for convex decomposition of simple polygons", 1998.
          *      Time complexity: O(n^3), where n is the number of vertices.
          *      Space complexity: O(n^3).
-         * \param poly An input polygon (without holes). Vertices have to be in the counter-clockwise order.
+         * \param poly An input polygon (without holes, without self-intersections). Vertices have to be in the
+         *      counter-clockwise order.
          * \param parts Resulting list of convex polygons, represented by the vertex indices.
          * \return true on success, false on failure.
          * \sa apply_HM, apply.
@@ -73,7 +74,8 @@ namespace easy3d {
          *      See S. Hertel and K. Mehlhorn. Fast triangulation of simple polygons.
          *          4th Internat. Conf. Found. Comput. Theory, volume 158 of Lecture Notes Comput. Sci.,
          *          pages 207–218. Springer-Verlag, 1983.
-         * \param poly An input polygon (without holes). Vertices have to be in the counter-clockwise order.
+         * \param poly An input polygon (without holes, without self-intersections). Vertices have to be in the
+         *      counter-clockwise order.
          * \param parts Resulting list of convex polygons, represented by the vertex indices.
          * \return true on success, false on failure.
          * \sa apply_OPT, apply.
@@ -81,9 +83,12 @@ namespace easy3d {
         static bool apply_HM(const std::vector<vec2> &poly, std::vector<Polygon> &parts);
 
         /**
-         * \brief Convex partition of a general polygon with an arbitrary number of non-hole and hole contours.
-         * \details This function partitions a list of polygons into convex parts by using the Hertel-Mehlhorn
-         *      algorithm. The algorithm gives at most four times the number of parts as the optimal algorithm.
+         * \brief Convex partition of a set of polygons with an arbitrary number of holes.
+         * \details This function partitions a set of non-hole and hole contours into convex parts by using the
+         *      Hertel-Mehlhorn algorithm. The non-hole contours may be disconnected from each other; each hole is
+         *      merged into the contour that encloses it before partitioning. The contours must be simple (no
+         *      self-intersections) and must not overlap.
+         *      The algorithm gives at most four times the number of parts as the optimal algorithm.
          *      However, in practice it works much better than that and often gives optimal partition.
          *      Time complexity: O(n^2), where n is the number of vertices.
          *      Space complexity: O(n).
@@ -91,10 +96,10 @@ namespace easy3d {
          *          4th Internat. Conf. Found. Comput. Theory, volume 158 of Lecture Notes Comput. Sci.,
          *          pages 207–218. Springer-Verlag, 1983.
          * \param points A set of points.
-         * \param polys A set of non-hole polygons (each represented by the vertex indices). The vertices of all
-         *     non-hole polygons have to be in counter-clockwise order.
-         * \param holes A set of holes (represented by the vertex indices). The vertices of all hole polygons
-         *     have to be in clockwise order.
+         * \param polys A set of non-hole polygons (each represented by vertex indices, without self-intersections).
+         *      The vertices of all non-hole polygons have to be in counter-clockwise order.
+         * \param holes A set of holes (each represented by vertex indices, without self-intersections). The vertices
+         *      of all hole polygons have to be in clockwise order.
          * \param parts Resulting list of convex polygons (represented by the vertex indices).
          * \return true on success, false on failure.
          * \sa apply_OPT, apply_HM.

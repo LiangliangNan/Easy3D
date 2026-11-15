@@ -47,15 +47,17 @@
  * <b>The technique</b>
  * A polygon is convex when every interior angle is at most 180 degrees, i.e. the segment between any
  * two interior points stays inside. A concave (or multiply-connected) polygon can always be cut along
- * diagonals into convex pieces. Easy3D's apply() uses the Hertel-Mehlhorn algorithm: triangulate the
- * polygon, then repeatedly merge two adjacent triangles across a diagonal whenever the merged piece is
- * still convex (equivalently, whenever the diagonal is "inessential" — removing it does not create a
- * reflex vertex). Hertel and Mehlhorn proved this yields at most four times the optimal number of parts,
- * and in practice it is usually optimal; it runs in O(n^2) time and O(n) space. The truly optimal
- * partition (fewest convex pieces) is available as apply_OPT() via the Keil-Snoeyink algorithm, at a
- * higher O(n^3) cost. Holes are handled by treating each hole as an interior contour. The input must be
- * a simple polygon (no self-intersections); for self-intersecting or overlapping contours, first run the
- * CSG operators in easy3d/algo/tessellator.h to obtain simple contours.
+ * diagonals into convex pieces. Easy3D's PolygonPartition::apply() uses the Hertel-Mehlhorn algorithm:
+ * triangulate the polygon, then repeatedly merge two adjacent triangles across a diagonal whenever the
+ * merged piece is still convex (equivalently, whenever the diagonal is "inessential" — removing it does
+ * not create a reflex vertex). Hertel and Mehlhorn proved this yields at most four times the optimal
+ * number of parts, and in practice it is usually optimal; it runs in O(n^2) time and O(n) space. The
+ * truly optimal partition (fewest convex pieces) is available as apply_OPT() via the Keil-Snoeyink
+ * algorithm, at a higher O(n^3) cost, but it accepts only a single contour without holes. In apply(),
+ * each hole contour is first merged into the contour that encloses it, and the resulting hole-free
+ * polygons are partitioned. Each input contour must be simple (no self-intersections); this is a
+ * precondition, not something the partitioner checks. For self-intersecting or overlapping contours,
+ * first run the CSG operators in easy3d/algo/tessellator.h to obtain simple contours.
  * References: S. Hertel and K. Mehlhorn, "Fast triangulation of simple polygons", 1983;
  * M. Keil and J. Snoeyink, "On the time bound for convex decomposition of simple polygons", 1998.
  *
