@@ -9775,17 +9775,18 @@ and hole loops are clockwise; a zero or NaN area makes the patch unclassifiable 
 faces. Convex partition remains the only representation for patches with holes, so the class's
 `\todo Support faces with holes` still stands.
 
-`PolygonPartition` cannot handle holes, self-intersections or overlapping contours, so every patch
-that needs convex partition (holes, or a self-touching boundary even without holes) is first
-normalized with the CSG operators in `tessellator.h`: `Tessellator` with `set_boundary_only(true)`
-and `WINDING_POSITIVE` turns the patch material into simple counter-clockwise outer contours and
-clockwise hole contours. The polygonizer maps the tessellator vertices back to the builder by their
-source index (deduplicating an input vertex that appears in several contours) and adds the
-intersection vertices it creates; vertices left unused by a fallback are removed by
-`end_surface()`. This also fixes the reported `convex partition failed` cases and, on `bunny.ply`,
-a patch whose boundary loop visits a vertex twice: it used to be handed to the builder as one
-polygon with a repeated vertex, which the builder rejected and dropped; it is now normalized and
-split.
+`PolygonPartition` requires every contour to be simple (no self-intersections) and contours must
+not overlap (`apply_HM` and `apply_OPT` also take only one hole-free contour). A patch boundary can
+touch itself and its contours may overlap, so every patch that needs convex partition (holes, or a
+self-touching boundary even without holes) is first normalized with the CSG operators in
+`tessellator.h`: `Tessellator` with `set_boundary_only(true)` and `WINDING_POSITIVE` turns the patch
+material into simple counter-clockwise outer contours and clockwise hole contours. The polygonizer
+maps the tessellator vertices back to the builder by their source index (deduplicating an input
+vertex that appears in several contours) and adds the intersection vertices it creates; vertices
+left unused by a fallback are removed by `end_surface()`. This also fixes the reported
+`convex partition failed` cases and, on `bunny.ply`, a patch whose boundary loop visits a vertex
+twice: it used to be handed to the builder as one polygon with a repeated vertex, which the
+builder rejected and dropped; it is now normalized and split.
 
 Supporting fixes: the builder's vertex map now stores handles instead of assuming that the new
 vertex indices equal the old ones; `SurfaceMesh::is_degenerate()` advances `p0`/`p1`/`p2` when it
@@ -9820,3 +9821,36 @@ degenerate-free output after merging), a synthetic 7x7 annulus with two holes (m
 preserved, exactly three boundary loops, no degenerate face), and `bunny.ply` (the self-touching
 patch, area preserved within 1e-3 relative, so a dropped patch fails the test). `easy3d/util/version.h`
 is unchanged.
+
+### 2026-11-15 — batch 80: PolygonPartition input contract and Tutorial 602 documentation
+
+**Scope.** Documentation-only pass over `easy3d/algo/polygon_partition.h` and
+`tutorials/Tutorial_602_ConvexPartition/main.cpp`, prompted by the batch-79 polygonization work.
+The three entry points now state their contract precisely. `apply_HM()` and `apply_OPT()` take one
+hole-free contour; `apply()` takes non-hole contours plus holes as indices into a shared point
+pool, with counter-clockwise outer and clockwise hole vertices, and its non-hole contours may be
+disconnected from each other. Each hole is merged into the contour that encloses it
+(`TPPLPartition::RemoveHoles`) before Hertel-Mehlhorn runs on the resulting hole-free polygons.
+Every contour must be simple (no self-intersections) and contours must not overlap; this is a
+precondition, not something the implementation checks, so irregular input must first go through
+the CSG operators in `tessellator.h` (`Tessellator`, boundary only, `WINDING_POSITIVE`). The
+class-level "simply polygons" typo was fixed, and the batch-79 sentence claiming that
+`PolygonPartition` cannot handle holes was corrected: `apply()` does handle holes, and what the
+partitioner requires is simple, non-overlapping contours (the single-polygon entries remain
+hole-free). Tutorial 602's technique paragraph now uses the same wording, names
+`PolygonPartition::apply()`, notes that `apply_OPT()` cannot replace it for the tutorial's holey
+rectangle, and identifies simplicity as an unchecked precondition.
+
+**Validation (2026-11-15, macOS).** The statements were checked with a scratch program linked
+against the release library. A clockwise outer contour or counter-clockwise holes make `apply()`
+return false with the library's `convex partition failed` warning; two disjoint squares return two
+parts, confirming that disconnected non-hole contours are supported; a self-intersecting bow-tie
+contour returns true with two parts, confirming that simplicity is a precondition rather than a
+check. The orientation rules and the hole-merging order match `3rd_party/polypartition`, where
+`ConvexPartition_HM(list*)` calls `RemoveHoles()` and then the single-polygon HM; the O(n²) time and
+O(n) space figures are the library's own. The documentation change itself touches no executable;
+the desktop suites were still re-run serially on the working tree (which also carries the
+Tutorial 206 keyframe-editing work), OpenGL `build-opengl-check` 111/111 and Vulkan
+`build-vulkan-check` 145/145 (one `vulkan.imgui` window test failed once under load and passed in
+isolation, then the clean rerun passed), with the tutorial and its camera-path test rebuilt.
+`easy3d/util/version.h` is unchanged.

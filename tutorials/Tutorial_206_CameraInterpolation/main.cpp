@@ -50,17 +50,37 @@
  * result is a real-time fly-through whose speed follows the keyframe spacing. See
  * KeyFrameInterpolator for the interpolation and playback machinery.
  *
+ * <b>Editing the path</b>
+ * The keyframe cameras drawn in the scene are also the editing handles. Click one of them: it becomes
+ * selected and a gizmo appears around it. The easiest way to reposition it is to drag the camera itself:
+ * it slides in the plane of the screen and follows the cursor exactly, so two drags from different
+ * viewing directions place it anywhere in 3D. For a precise move along a single world axis, drag one of
+ * the three arrows (red/green/blue = X/Y/Z); drag a ring to rotate the keyframe around that world axis.
+ * The rings enclose the drawn camera glyph, so the gizmo reads as a frame around the keyframe and keeps
+ * its apparent size while you navigate. The pose is written back with
+ * KeyFrameInterpolator::set_keyframe_position()/set_keyframe_orientation() on every mouse event, so the
+ * interpolated path (the yellow curve) changes while you drag. The handle under the cursor is
+ * highlighted; a ring seen edge-on (or a shaft seen end-on) cannot be followed and is ignored until you
+ * turn the view toward it. Click empty space or press Esc to stop editing; the keyframe keeps its new pose.
+ *
  * <b>Easy3D API</b>
  * - Viewer: already owns a KeyFrameInterpolator (kfi_) bound to the camera's Frame, plus the
  *   show_camera_path_ flag that draws the recorded path and keyframe cameras.
  * - KeyFrameInterpolator: add_keyframe() records a pose; delete_path() clears it; playback is
- *   started/stopped through the Viewer's Ctrl+K shortcut.
+ *   started/stopped through the Viewer's Ctrl+K shortcut; set_keyframe_position() and
+ *   set_keyframe_orientation() edit a keyframe and invalidate the interpolated path.
  * - Camera / Frame: camera()->frame() is the pose captured as a keyframe; scene_radius() is
- *   grown so the whole path stays in view.
+ *   grown so the whole path stays in view; view_direction() defines the screen plane of a free
+ *   drag; world_pixel_ratio() sizes the gizmo; and convert_click_to_line()/projected_coordinates_of()
+ *   turn mouse positions into gizmo drags.
+ * - LinesDrawable: the gizmo is a standalone drawable with per-vertex colors, attached with
+ *   add_drawable().
  *
  * <b>Running it</b>
  * Navigate with the mouse, then press 'k' to add the current view as a keyframe (the path is
- * drawn in the scene). Press 'space' to start/stop the animation, and 'd' to delete the path.
+ * drawn in the scene). Click a green keyframe camera, then drag the camera itself to move it, an
+ * arrow to move it along one axis, or a ring to rotate it. Press 'space' to start/stop the animation,
+ * and 'd' to delete the path. Esc ends editing.
  *
  * The header file of the class:
  * \include{lineno} Tutorial_206_CameraInterpolation/viewer.h
