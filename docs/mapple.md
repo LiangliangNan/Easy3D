@@ -5,9 +5,9 @@ Dear ImGui application rendered through Easy3D's backend-neutral overlay path
 (`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
 daily-use workflow.
 
-Status: 2026-11-15 — Phase 0 (shell) and Phase 1 (inspection, selection, clipping)
-complete: builds and runs on both OpenGL and Vulkan; panels, menus, log capture, drawable
-styling, picking readout, point/face selection, and the clipping plane work.
+Status: 2026-11-15 — Phases 0–1 complete and Phase 2 started: builds and runs on both
+OpenGL and Vulkan; panels, menus, log capture, drawable styling, picking readout,
+point/face selection, the clipping plane, and a first set of processing commands work.
 
 ## Decision
 
@@ -70,6 +70,7 @@ applications/Mapple-imgui/
   imgui_layer.{h,cpp}    ImGui context, font atlas, DPI, ImDrawData -> DrawCommand
   ui/menu.cpp            menu bar and shortcuts
   ui/panels.cpp          toolbar, Models, Rendering, Log, status bar, About
+  ui/process.cpp         Process menu parameter windows and the algorithms they run
 ```
 
 Reuse inventory (verified):
@@ -154,10 +155,44 @@ Phase 1 design notes:
 ### Phase 2 — processing
 
 Expose algorithms as ImGui forms behind logical menus/panels, driven by need rather
-than by the Qt dialog list. Start with the workflows used most: point-cloud
-simplification/normal estimation, surface-mesh smoothing/simplification/remeshing,
-hole filling, reconstruction, polygonization. Parameter forms can be small modal
-windows; results report through the log panel.
+than by the Qt dialog list. Parameter forms can be small modal windows; results report
+through the log panel.
+
+- [x] Process menu with Point Cloud and Surface Mesh submenus; items are enabled only
+      for the matching active model, and the point-cloud/mesh split keeps the
+      "which model type" question out of the UI.
+- [x] Point cloud: estimate normals (`PointCloudNormals::estimate`, neighbors +
+      curvature) and simplify to a target point count
+      (`PointCloudSimplification::uniform_simplification`, followed by
+      `delete_vertex`/`collect_garbage`).
+- [x] Surface mesh: smoothing (`SurfaceMeshSmoothing`, explicit iterations or implicit
+      with the Qt dialog's boundary-aware rescaling), simplification to a target vertex
+      count (`SurfaceMeshSimplification` with aspect ratio 10 and normal deviation 180
+      degrees), uniform remeshing by a factor of the mean edge length
+      (`SurfaceMeshRemeshing`), hole filling by maximum hole size
+      (`SurfaceMeshHoleFilling::fill_holes`), and polygonization by angle threshold
+      (`SurfaceMeshPolygonization`).
+- [ ] Point cloud: RANSAC primitive extraction, Poisson reconstruction, Delaunay 2D/3D.
+- [ ] Surface mesh: connected components, dual mesh, triangulation, subdivision,
+      fairing, parameterization, geodesics, sampling, clipping/slicing.
+- [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
+      reporting and cancellation instead of blocking the frame.
+
+Phase 2 design notes:
+
+- Every command runs synchronously inside `draw_gui()` and logs its duration and the
+  resulting element counts. The shared `ProcessParams` struct keeps the last-used
+  parameters; targets that depend on the model (point/vertex counts) are derived when
+  the window opens.
+- While a parameter window is open it is modal for the scene: mouse, keyboard, and
+  hover queries are consumed before they reach `Viewer`, and a dim rectangle is drawn
+  behind the window.
+- After a command the whole renderer is invalidated (`Renderer::update()`) and the
+  face/vertex normals are recomputed, so drawables and shading match the new geometry;
+  the hover readout and the selection count cache are dropped. Polygonization rebuilds
+  the mesh and discards its properties, including the selection; a saved selection
+  style whose scalar property no longer exists falls back to uniform coloring through
+  `buffer::update`'s missing-field path.
 
 ### Phase 3 — animation, capture, persistence
 
@@ -305,3 +340,15 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   Rectangle/Lasso/Click is selected.
 - Validation: target builds in `build-opengl-check` and `build-vulkan-check`. The
   section was not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 2 processing (first slice)
+
+- Added `ui/process.cpp` and the Process menu. Point cloud: estimate normals, simplify.
+  Surface mesh: smooth, simplify, remesh, fill holes, polygonize. Each opens a small
+  modal parameter window on the active model; results and timings go to the Log panel.
+- `Mapple-imgui` now links `easy3d::algo`.
+- Commands run synchronously in the frame; the parameter window consumes scene input
+  while open. After a command the renderer and the face/vertex normals are refreshed,
+  and the hover/selection state is revalidated.
+- Validation: both backends build; the Vulkan binary was launched with `bunny.ply`
+  without startup errors. Running each command through the UI was not scripted.

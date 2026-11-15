@@ -227,6 +227,9 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_captured_ = imgui_ && imgui_->wants_mouse();
     if (mouse_captured_)
         return true;
+    // The processing window is modal: clicks outside it must not reach the scene.
+    if (process_op_ != ProcessOp::NONE)
+        return true;
 
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
     // gesture so the plane stays movable while a selection tool is active.
@@ -253,6 +256,8 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     const bool captured = mouse_captured_;
     mouse_captured_ = false;
     if (captured)
+        return true;
+    if (process_op_ != ProcessOp::NONE)
         return true;
 
     if (selecting_ && button == BUTTON_LEFT) {
@@ -283,7 +288,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 }
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (mouse_captured_)
+    if (mouse_captured_ || process_op_ != ProcessOp::NONE)
         return true;
 
     if (selecting_) {
@@ -307,6 +312,10 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
         clear_hover();
         return true;
     }
+    if (process_op_ != ProcessOp::NONE) {
+        clear_hover();
+        return true;
+    }
 
     if (show_pick_readout_ && point_in_scene(x, y)) {
         const auto now = std::chrono::steady_clock::now();
@@ -323,13 +332,20 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
 }
 
 bool MappleViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
-    return (imgui_ && imgui_->wants_mouse()) || Viewer::mouse_scroll_event(x, y, dx, dy);
+    return (imgui_ && imgui_->wants_mouse()) || process_op_ != ProcessOp::NONE ||
+           Viewer::mouse_scroll_event(x, y, dx, dy);
 }
 
 bool MappleViewer::key_press_event(int key, int modifiers) {
     if (imgui_ && imgui_->wants_keyboard())
         return true;
 
+    if (process_op_ != ProcessOp::NONE) {
+        // Esc dismisses the processing window; everything else stays with it.
+        if (key == KEY_ESCAPE && modifiers == 0)
+            process_op_ = ProcessOp::NONE;
+        return true;
+    }
     // Escape leaves selection mode. With no selection tool active it would close the
     // window, so ask first: the two meanings are easy to confuse.
     if (key == KEY_ESCAPE && modifiers == 0) {
@@ -398,6 +414,7 @@ void MappleViewer::draw_gui() {
     draw_panels(x, y + toolbar_height, w, std::max(0.0f, h - toolbar_height - status_height));
 
     draw_about_window();
+    draw_process_dialog();
 }
 
 //------------------------------------------------------------------------

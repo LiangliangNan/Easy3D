@@ -123,6 +123,29 @@ private:
     // Selection commands that touch drawable buffers; queued from the keyboard.
     enum class SelectCommand { NONE, SELECT_ALL, CLEAR_SELECTION, INVERT_SELECTION, DELETE_SELECTION };
 
+    // The processing command whose parameter window is open. Each command edits the
+    // active model in place and reports through the Log panel.
+    enum class ProcessOp {
+        NONE,
+        PC_ESTIMATE_NORMALS, PC_SIMPLIFY,
+        MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE
+    };
+
+    // Parameters of the open processing window. Model-dependent values are refreshed
+    // when the window opens.
+    struct ProcessParams {
+        int normals_k = 16;
+        bool compute_curvature = false;
+        int point_target = 0;
+        bool smooth_implicit = false;
+        bool smooth_uniform = false;
+        int smooth_iterations = 10;
+        int simplify_target = 0;
+        float remesh_edge_factor = 1.0f;
+        int hole_max_size = 500;
+        float polygonize_angle = 1.0f;
+    };
+
     // The drawable appearance in effect before the selection view replaced it, so
     // clearing the selection restores the user's appearance instead of leaving the
     // model painted with the selection colormap.
@@ -141,6 +164,19 @@ private:
 
     // ui/menu.cpp
     void draw_menu_select();
+
+    // ui/menu.cpp
+    void draw_menu_process();
+
+    // ui/process.cpp
+
+    void open_process(ProcessOp op);
+
+    // Draws the parameter window of the open processing command; input callbacks keep
+    // the scene navigation away from it while it is open.
+    void draw_process_dialog();
+
+    void apply_process();
 
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
@@ -287,6 +323,11 @@ private:
     std::pair<int, int> hover_range_ = {-1, -1}; // highlighted primitives
     std::string hover_text_;
     std::chrono::steady_clock::time_point hover_stamp_;
+
+    ProcessOp process_op_ = ProcessOp::NONE;
+    ProcessParams process_params_;
+
+    static const char *process_title(ProcessOp op);
 };
 
 

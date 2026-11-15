@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 
 #include <3rd_party/imgui/imgui.h>
@@ -88,6 +90,7 @@ void MappleViewer::draw_menu_bar() {
         ImGui::EndMenu();
     }
 
+    draw_menu_process();
     draw_menu_select();
 
     if (ImGui::BeginMenu("Help")) {
@@ -100,6 +103,40 @@ void MappleViewer::draw_menu_bar() {
     // recording the height locally keeps the layout correct on the first frame too.
     menu_height_ = ImGui::GetWindowHeight();
     ImGui::EndMainMenuBar();
+}
+
+void MappleViewer::draw_menu_process() {
+    if (!ImGui::BeginMenu("Process"))
+        return;
+
+    Model *model = current_model();
+    const bool cloud = dynamic_cast<PointCloud *>(model) != nullptr;
+    const bool mesh = dynamic_cast<SurfaceMesh *>(model) != nullptr;
+
+    if (ImGui::BeginMenu("Point Cloud", cloud)) {
+        if (ImGui::MenuItem("Estimate Normals..."))
+            open_process(ProcessOp::PC_ESTIMATE_NORMALS);
+        if (ImGui::MenuItem("Simplify..."))
+            open_process(ProcessOp::PC_SIMPLIFY);
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Surface Mesh", mesh)) {
+        if (ImGui::MenuItem("Smooth..."))
+            open_process(ProcessOp::MESH_SMOOTH);
+        if (ImGui::MenuItem("Simplify..."))
+            open_process(ProcessOp::MESH_SIMPLIFY);
+        if (ImGui::MenuItem("Remesh..."))
+            open_process(ProcessOp::MESH_REMESH);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Fill Holes..."))
+            open_process(ProcessOp::MESH_FILL_HOLES);
+        if (ImGui::MenuItem("Polygonize..."))
+            open_process(ProcessOp::MESH_POLYGONIZE);
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMenu();
 }
 
 void MappleViewer::draw_menu_select() {

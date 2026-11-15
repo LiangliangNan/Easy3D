@@ -8,11 +8,13 @@ add_executable(${name}
         imgui_layer.cpp
         ui/menu.cpp
         ui/panels.cpp
+        ui/process.cpp
         )
 set_target_properties(${name} PROPERTIES FOLDER "applications")
 target_include_directories(${name} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${name} PRIVATE
         3rd_imgui
+        easy3d::algo
         easy3d::core
         easy3d::gui
         easy3d::renderer
