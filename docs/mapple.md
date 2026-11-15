@@ -172,7 +172,12 @@ through the log panel.
       (`SurfaceMeshRemeshing`), hole filling by maximum hole size
       (`SurfaceMeshHoleFilling::fill_holes`), and polygonization by angle threshold
       (`SurfaceMeshPolygonization`).
-- [ ] Point cloud: RANSAC primitive extraction, Poisson reconstruction, Delaunay 2D/3D.
+- [x] Point cloud: extract primitives (`PrimitivesRansac`, type toggles, the five
+      detector parameters, and an option to use only the selected points; the result is
+      shown with per-primitive colors in `v:color-segments`) and Poisson reconstruction
+      (`PoissonReconstruction`, octree depth, samples per node, optional density trim).
+      The reconstruction adds a new model named `<cloud>_poisson.ply`.
+- [ ] Point cloud: Delaunay 2D/3D.
 - [ ] Surface mesh: connected components, dual mesh, triangulation, subdivision,
       fairing, parameterization, geodesics, sampling, clipping/slicing.
 - [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
@@ -352,3 +357,16 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   and the hover/selection state is revalidated.
 - Validation: both backends build; the Vulkan binary was launched with `bunny.ply`
   without startup errors. Running each command through the UI was not scripted.
+
+### 2026-11-15 — Phase 2 reconstruction and primitive extraction
+
+- Point cloud: Poisson reconstruction (octree depth, samples per node, optional trim
+  by density and island area ratio) adds a new `<cloud>_poisson.ply` mesh and makes it
+  active; primitives via RANSAC (plane/sphere/cylinder/cone/torus, detector parameters,
+  selected-points-only) color the cloud with `v:color-segments`.
+- Both require `v:normal`; the command warns and stops otherwise instead of failing
+  inside the algorithm.
+- RANSAC colors become the cloud's appearance: the saved selection style is dropped so
+  a later selection change cannot repaint over the segmentation.
+- Validation: both backends build. The commands were not exercised through scripted
+  clicks.

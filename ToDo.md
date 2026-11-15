@@ -172,6 +172,7 @@
     - [x] Phase 0 shell (`applications/Mapple-imgui`: menus, toolbar, Rendering/Models/Log panels, status bar, log capture) builds and runs on OpenGL and Vulkan; remaining phases are tracked in docs/mapple.md.
     - [x] Phase 1 inspection/selection: model info and property listing, hover pick readout with primitive highlight, click/rect/lasso point and face selection, select all/invert/clear/delete, and the clipping plane (Rendering panel section; guide and Alt-drag come from `Viewer`).
     - [x] Phase 2 processing (first slice): Process menu with point-cloud normals/simplification and mesh smoothing/simplification/remeshing/hole filling/polygonization, each behind a modal parameter window and logged to the Log panel. Reconstruction and the remaining algorithms are still pending.
+    - [x] Phase 2 point-cloud reconstruction and primitives: Poisson reconstruction (adds a trimmed/named mesh) and RANSAC primitive extraction with per-primitive coloring. Delaunay 2D/3D and the remaining mesh algorithms are still pending.
 
   - Check if clipper can be used to handle overlapping faces.
   - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).

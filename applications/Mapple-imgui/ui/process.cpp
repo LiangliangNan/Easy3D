@@ -30,6 +30,8 @@
 #include <chrono>
 
 #include <easy3d/algo/point_cloud_normals.h>
+#include <easy3d/algo/point_cloud_poisson_reconstruction.h>
+#include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/algo/point_cloud_simplification.h>
 #include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_polygonization.h>
@@ -39,7 +41,10 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/imgui/imgui.h>
@@ -53,6 +58,10 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Estimate Normals";
         case ProcessOp::PC_SIMPLIFY:
             return "Simplify Point Cloud";
+        case ProcessOp::PC_POISSON:
+            return "Poisson Reconstruction";
+        case ProcessOp::PC_RANSAC:
+            return "Extract Primitives";
         case ProcessOp::MESH_SMOOTH:
             return "Smooth Surface Mesh";
         case ProcessOp::MESH_SIMPLIFY:
@@ -75,7 +84,8 @@ void MappleViewer::open_process(ProcessOp op) {
 
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
-    const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS || op == ProcessOp::PC_SIMPLIFY;
+    const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
+                                op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC;
     if ((point_cloud_op && !cloud) || (!point_cloud_op && !mesh))
         return;
 
@@ -131,6 +141,38 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::InputInt("Remaining points", &p.point_target);
                 ImGui::TextDisabled("Keeps a uniform subset of the current points.");
                 break;
+
+            case ProcessOp::PC_POISSON:
+                ImGui::InputInt("Octree depth", &p.poisson_depth);
+                ImGui::InputFloat("Samples per node", &p.poisson_samples, 1.0f, 5.0f, "%.1f");
+                ImGui::Checkbox("Trim result", &p.poisson_trim);
+                ImGui::BeginDisabled(!p.poisson_trim);
+                ImGui::InputFloat("Trim density", &p.poisson_trim_value, 1.0f, 5.0f, "%.1f");
+                ImGui::InputFloat("Island ratio", &p.poisson_island_ratio, 0.001f, 0.01f, "%.4f");
+                ImGui::EndDisabled();
+                ImGui::TextDisabled("Adds a new mesh; requires normals.");
+                ImGui::TextDisabled("Runs synchronously and can take a while.");
+                break;
+
+            case ProcessOp::PC_RANSAC: {
+                ImGui::TextDisabled("Primitive types");
+                ImGui::Checkbox("Plane", &p.ransac_plane);
+                ImGui::SameLine();
+                ImGui::Checkbox("Sphere", &p.ransac_sphere);
+                ImGui::SameLine();
+                ImGui::Checkbox("Cylinder", &p.ransac_cylinder);
+                ImGui::Checkbox("Cone", &p.ransac_cone);
+                ImGui::SameLine();
+                ImGui::Checkbox("Torus", &p.ransac_torus);
+                ImGui::InputInt("Min support", &p.ransac_min_support);
+                ImGui::InputFloat("Distance threshold", &p.ransac_distance, 0.001f, 0.01f, "%.4f");
+                ImGui::InputFloat("Bitmap resolution", &p.ransac_bitmap, 0.005f, 0.01f, "%.3f");
+                ImGui::SliderFloat("Normal threshold", &p.ransac_normal, 0.0f, 1.0f, "%.2f");
+                ImGui::InputFloat("Overlook probability", &p.ransac_overlook, 0.0005f, 0.001f, "%.4f");
+                ImGui::Checkbox("Selected points only", &p.ransac_selected_only);
+                ImGui::TextDisabled("Requires normals; colors points by primitive.");
+                break;
+            }
 
             case ProcessOp::MESH_SMOOTH:
                 if (ImGui::RadioButton("Explicit", !p.smooth_implicit))
@@ -193,6 +235,9 @@ void MappleViewer::apply_process() {
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
     ProcessParams &p = process_params_;
     const auto start = std::chrono::steady_clock::now();
+    // RANSAC replaces the cloud's appearance with segmentation colors, which must
+    // not be overwritten by a selection display refresh afterwards.
+    bool skip_selection_display = false;
 
     switch (process_op_) {
         case ProcessOp::PC_ESTIMATE_NORMALS:
@@ -216,6 +261,91 @@ void MappleViewer::apply_process() {
                 cloud->collect_garbage();
                 LOG(INFO) << "point cloud simplified: " << (before - cloud->n_vertices())
                           << " points removed, " << cloud->n_vertices() << " remain";
+            }
+            break;
+
+        case ProcessOp::PC_POISSON:
+            if (cloud) {
+                if (!cloud->get_vertex_property<vec3>("v:normal")) {
+                    LOG(WARNING) << "poisson reconstruction requires normals (Process > Point Cloud > Estimate Normals)";
+                    break;
+                }
+                PoissonReconstruction recon;
+                recon.set_depth(std::max(5, std::min(14, p.poisson_depth)));
+                recon.set_samples_per_node(std::max(1.0f, p.poisson_samples));
+                SurfaceMesh *result = recon.apply(cloud);
+                if (!result) {
+                    LOG(WARNING) << "poisson reconstruction failed";
+                    break;
+                }
+                if (p.poisson_trim) {
+                    SurfaceMesh *trimmed = PoissonReconstruction::trim(
+                            result, p.poisson_trim_value, p.poisson_island_ratio, false);
+                    if (trimmed) {
+                        delete result;
+                        result = trimmed;
+                    }
+                }
+                result->set_name(file_system::name_less_extension(cloud->name()) + "_poisson.ply");
+                LOG(INFO) << "poisson reconstruction: " << result->n_vertices() << " vertices, "
+                          << result->n_faces() << " faces";
+                add_model(result);
+            }
+            break;
+
+        case ProcessOp::PC_RANSAC:
+            if (cloud) {
+                if (!cloud->get_vertex_property<vec3>("v:normal")) {
+                    LOG(WARNING) << "primitive extraction requires normals (Process > Point Cloud > Estimate Normals)";
+                    break;
+                }
+                PrimitivesRansac ransac;
+                if (p.ransac_plane)
+                    ransac.add_primitive_type(PrimitivesRansac::PLANE);
+                if (p.ransac_sphere)
+                    ransac.add_primitive_type(PrimitivesRansac::SPHERE);
+                if (p.ransac_cylinder)
+                    ransac.add_primitive_type(PrimitivesRansac::CYLINDER);
+                if (p.ransac_cone)
+                    ransac.add_primitive_type(PrimitivesRansac::CONE);
+                if (p.ransac_torus)
+                    ransac.add_primitive_type(PrimitivesRansac::TORUS);
+                if (!p.ransac_plane && !p.ransac_sphere && !p.ransac_cylinder && !p.ransac_cone && !p.ransac_torus) {
+                    LOG(WARNING) << "no primitive type selected";
+                    break;
+                }
+
+                const unsigned int min_support = static_cast<unsigned int>(std::max(3, p.ransac_min_support));
+                int num = 0;
+                if (p.ransac_selected_only) {
+                    auto selected = cloud->get_vertex_property<bool>("v:select");
+                    std::vector<int> indices;
+                    if (selected) {
+                        for (auto v : cloud->vertices())
+                            if (selected[v])
+                                indices.push_back(v.idx());
+                    }
+                    if (indices.size() < 3) {
+                        LOG(WARNING) << "select at least three points before extracting from them";
+                        break;
+                    }
+                    num = ransac.detect(cloud, indices, min_support, p.ransac_distance,
+                                        p.ransac_bitmap, p.ransac_normal, p.ransac_overlook);
+                } else
+                    num = ransac.detect(cloud, min_support, p.ransac_distance,
+                                        p.ransac_bitmap, p.ransac_normal, p.ransac_overlook);
+                LOG(INFO) << num << " primitive(s) extracted";
+
+                if (num > 0) {
+                    auto segments = cloud->vertex_property<int>("v:primitive_index");
+                    auto coloring = cloud->vertex_property<vec3>("v:color-segments", vec3(0.0f));
+                    Renderer::color_from_segmentation(cloud, segments, coloring);
+                    if (auto *drawable = cloud->renderer() ?
+                                         cloud->renderer()->get_points_drawable("vertices", false) : nullptr)
+                        drawable->set_property_coloring(State::VERTEX, "v:color-segments");
+                    selection_styles_.erase(model);
+                    skip_selection_display = true;
+                }
             }
             break;
 
@@ -308,7 +438,8 @@ void MappleViewer::apply_process() {
         model->renderer()->update();
     invalidate_selection_count();
     clear_hover();
-    finish_selection_change(model);
+    if (!skip_selection_display)
+        finish_selection_change(model);
     process_op_ = ProcessOp::NONE;
     update();
 }

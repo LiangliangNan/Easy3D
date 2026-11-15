@@ -118,6 +118,11 @@ void MappleViewer::draw_menu_process() {
             open_process(ProcessOp::PC_ESTIMATE_NORMALS);
         if (ImGui::MenuItem("Simplify..."))
             open_process(ProcessOp::PC_SIMPLIFY);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Extract Primitives (RANSAC)..."))
+            open_process(ProcessOp::PC_RANSAC);
+        if (ImGui::MenuItem("Poisson Reconstruction..."))
+            open_process(ProcessOp::PC_POISSON);
         ImGui::EndMenu();
     }
 

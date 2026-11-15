@@ -127,7 +127,7 @@ private:
     // active model in place and reports through the Log panel.
     enum class ProcessOp {
         NONE,
-        PC_ESTIMATE_NORMALS, PC_SIMPLIFY,
+        PC_ESTIMATE_NORMALS, PC_SIMPLIFY, PC_POISSON, PC_RANSAC,
         MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE
     };
 
@@ -137,6 +137,25 @@ private:
         int normals_k = 16;
         bool compute_curvature = false;
         int point_target = 0;
+
+        int poisson_depth = 8;
+        float poisson_samples = 1.0f;
+        bool poisson_trim = false;
+        float poisson_trim_value = 6.0f;
+        float poisson_island_ratio = 0.001f;
+
+        bool ransac_plane = true;
+        bool ransac_sphere = true;
+        bool ransac_cylinder = true;
+        bool ransac_cone = false;
+        bool ransac_torus = false;
+        int ransac_min_support = 1000;
+        float ransac_distance = 0.005f;
+        float ransac_bitmap = 0.02f;
+        float ransac_normal = 0.8f;
+        float ransac_overlook = 0.001f;
+        bool ransac_selected_only = false;
+
         bool smooth_implicit = false;
         bool smooth_uniform = false;
         int smooth_iterations = 10;
