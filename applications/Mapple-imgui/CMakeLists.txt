@@ -9,6 +9,7 @@ add_executable(${name}
         ui/menu.cpp
         ui/panels.cpp
         ui/process.cpp
+        ui/snapshot.cpp
         )
 set_target_properties(${name} PROPERTIES FOLDER "applications")
 target_include_directories(${name} PRIVATE ${Easy3D_INCLUDE_DIR})

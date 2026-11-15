@@ -241,8 +241,9 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_captured_ = imgui_ && imgui_->wants_mouse();
     if (mouse_captured_)
         return true;
-    // The processing window is modal: clicks outside it must not reach the scene.
-    if (process_op_ != ProcessOp::NONE)
+    // The processing and snapshot windows are modal: clicks outside them must not
+    // reach the scene.
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
         return true;
 
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
@@ -271,7 +272,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     mouse_captured_ = false;
     if (captured)
         return true;
-    if (process_op_ != ProcessOp::NONE)
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
         return true;
 
     if (selecting_ && button == BUTTON_LEFT) {
@@ -302,7 +303,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 }
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (mouse_captured_ || process_op_ != ProcessOp::NONE)
+    if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
         return true;
 
     if (selecting_) {
@@ -326,7 +327,7 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
         clear_hover();
         return true;
     }
-    if (process_op_ != ProcessOp::NONE) {
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_) {
         clear_hover();
         return true;
     }
@@ -347,13 +348,18 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
 
 bool MappleViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
     return (imgui_ && imgui_->wants_mouse()) || process_op_ != ProcessOp::NONE ||
-           Viewer::mouse_scroll_event(x, y, dx, dy);
+           show_snapshot_dialog_ || Viewer::mouse_scroll_event(x, y, dx, dy);
 }
 
 bool MappleViewer::key_press_event(int key, int modifiers) {
     if (imgui_ && imgui_->wants_keyboard())
         return true;
 
+    if (show_snapshot_dialog_) {
+        if (key == KEY_ESCAPE && modifiers == 0)
+            show_snapshot_dialog_ = false;
+        return true;
+    }
     if (process_op_ != ProcessOp::NONE) {
         // A background command owns the slot until it finishes; Esc only asks a
         // cancelable command to stop. Otherwise Esc dismisses the parameter window.
@@ -363,6 +369,12 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
             else
                 process_op_ = ProcessOp::NONE;
         }
+        return true;
+    }
+    // The menu advertises 'S' for Snapshot..., so route it to the dialog instead of
+    // letting Viewer take its own one-shot snapshot.
+    if (key == KEY_S && modifiers == 0) {
+        open_snapshot_dialog();
         return true;
     }
     // Escape leaves selection mode. With no selection tool active it would close the
@@ -444,6 +456,7 @@ void MappleViewer::draw_gui() {
 
     draw_about_window();
     draw_process_dialog();
+    draw_snapshot_dialog();
 }
 
 //------------------------------------------------------------------------

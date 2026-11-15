@@ -257,10 +257,19 @@ Phase 2 design notes:
 
 ### Phase 3 — animation, capture, persistence
 
-- Walk-through keyframes using `KeyFrameInterpolator`; camera-path import/export.
-- Video recording via `RenderDevice` offscreen capture + `easy3d::video`.
-- Snapshot dialog (size, samples, background).
-- App settings and panel layout persistence.
+- [ ] Walk-through keyframes using `KeyFrameInterpolator`; camera-path import/export.
+- [ ] Video recording via `RenderDevice` offscreen capture + `easy3d::video`.
+- [x] Snapshot dialog (scale with the resulting pixel size shown, samples, current/
+      white/transparent background, frustum expansion), matching the Qt
+      `DialogSnapshot`'s capabilities. Saving reuses the native file dialog and
+      `Viewer::snapshot(file, scale, samples, background, expand)`; png/jpg/bmp/tga
+      extensions are validated before rendering. The output contains only the scene:
+      the viewer already drops its HUD, and the dialog drops the app's UI overlays
+      with `set_overlays({})` immediately before capturing (the viewer renders client
+      overlays in snapshots on purpose, e.g. annotations). `pre_draw()` rebuilds them
+      on the next frame, so the window is unaffected. The View menu item, the toolbar
+      button and `S` all open it.
+- [ ] App settings and panel layout persistence.
 
 ### Phase 4 — retire Qt
 
@@ -529,3 +538,27 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Validation: both backends build and launch with `bunny.bin`; the algorithm itself is
   covered by `algo.point_cloud_algorithms` (green in both check trees). The menu command
   was not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 3 snapshot dialog
+
+- View > Snapshot..., the toolbar button, and `S` now open a modal ImGui dialog instead
+  of going straight to the viewer's one-shot native-dialog snapshot. It offers the Qt
+  `DialogSnapshot`'s settings: scale 0.1-8 with the resulting pixel size shown, samples
+  (defaults to the window's), background (current color, white, transparent), and
+  frustum expansion for a different output aspect ratio.
+- Saving uses the native save dialog with the viewer's png/jpg/bmp/tga filters; the
+  extension is validated before rendering and the path (or the failure) is logged.
+- The scene-only capture needs one extra step: the panels, menus and dialog are client
+  overlays, and the viewer's file snapshot renders client overlays on purpose
+  (`opengl.annotations`/`vulkan.annotations`), while only the HUD is dropped. The
+  dialog therefore calls `set_overlays({})` right before `snapshot()`, and `pre_draw()`
+  re-submits the UI on the next frame. An earlier manual save had the UI baked into the
+  image; this is the fix.
+- Like the process window, the dialog blocks scene input, closes on Esc or Cancel, and
+  process commands cannot start while it is open.
+- Validation: both backends build and launch with `general_open.obj`.
+  `Viewer::snapshot(file, scale, samples, background, expand)` is covered by the viewer
+  suites (green in both check trees). A scratch probe on both backends drew a
+  full-screen client overlay and took three file snapshots: with the overlay set the
+  image contains it, after `set_overlays({})` it does not, and after two more frames it
+  is back (`kept=1 cleared=0 restored=1`); the probe then removed itself.

@@ -132,7 +132,7 @@ const char *MappleViewer::process_title(ProcessOp op) {
 }
 
 void MappleViewer::open_process(ProcessOp op) {
-    if (process_job_)
+    if (process_job_ || show_snapshot_dialog_)
         return;
     Model *model = current_model();
     if (!model)

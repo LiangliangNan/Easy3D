@@ -62,7 +62,7 @@ void MappleViewer::draw_menu_bar() {
 
         ImGui::Separator();
         if (ImGui::MenuItem("Snapshot...", "S"))
-            snapshot();
+            open_snapshot_dialog();
 
         ImGui::Separator();
         ImGui::MenuItem("Rendering Panel", nullptr, &show_rendering_panel_);

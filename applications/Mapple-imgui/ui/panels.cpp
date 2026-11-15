@@ -123,7 +123,7 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
         fit_screen();
     ImGui::SameLine();
     if (ImGui::Button("Snapshot"))
-        snapshot();
+        open_snapshot_dialog();
     ImGui::SameLine();
     if (ImGui::Button("Copy View"))
         copy_view();

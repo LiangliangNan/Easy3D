@@ -146,6 +146,13 @@ private:
 
     // Parameters of the open processing window. Model-dependent values are refreshed
     // when the window opens.
+    struct SnapshotParams {
+        float scale = 1.0f;         // image size = framebuffer size * scale
+        int samples = 4;
+        int background = 0;         // 0: current color, 1: white, 2: transparent
+        bool expand = true;         // expand the frustum to the output aspect ratio
+    };
+
     struct ProcessParams {
         int normals_k = 16;
         bool compute_curvature = false;
@@ -252,6 +259,11 @@ private:
     // Modal progress window shown while a background command runs.
     void draw_process_progress();
 
+    // ui/snapshot.cpp
+    void open_snapshot_dialog();
+
+    void draw_snapshot_dialog();
+
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
 
@@ -347,6 +359,8 @@ private:
     bool show_models_panel_ = true;
     bool show_log_panel_ = true;
     bool show_about_ = false;
+    bool show_snapshot_dialog_ = false;
+    SnapshotParams snapshot_params_;
 
     float left_width_ = 250.0f;
     float right_width_ = 300.0f;
