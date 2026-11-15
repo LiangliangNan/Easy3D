@@ -243,6 +243,7 @@ void MappleViewer::draw_menu_bar() {
         ImGui::EndMenu();
     }
 
+    draw_menu_property();
     draw_menu_process();
     draw_menu_select();
 
@@ -338,6 +339,39 @@ void MappleViewer::draw_menu_process() {
         ImGui::EndMenu();
     }
 
+    ImGui::EndMenu();
+}
+
+void MappleViewer::draw_menu_property() {
+    if (!ImGui::BeginMenu("Property"))
+        return;
+
+    Model *model = current_model();
+    const bool mesh = dynamic_cast<SurfaceMesh *>(model) != nullptr;
+    const bool graph = dynamic_cast<Graph *>(model) != nullptr;
+    const bool indexed_colors_supported = mesh || dynamic_cast<PointCloud *>(model) != nullptr;
+
+    if (ImGui::MenuItem("Compute Height Field", nullptr, false, model != nullptr))
+        run_process(ProcessOp::PROP_HEIGHT_FIELD);
+    if (ImGui::MenuItem("Compute Curvatures...", nullptr, false, mesh))
+        open_process(ProcessOp::PROP_CURVATURES);
+
+    ImGui::Separator();
+    if (ImGui::MenuItem("Color from Indexed Colors...", nullptr, false, indexed_colors_supported)) {
+        const std::string default_path = settings_.data_directory.empty()
+                                                 ? resource::directory() + "/data/"
+                                                 : settings_.data_directory;
+        const std::string file = dialog::open("Open indexed colors", default_path,
+                                              {"Indexed colors (*.ic)", "*.ic", "All Files (*.*)", "*"});
+        if (!file.empty()) {
+            process_params_.indexed_colors_file = file;
+            run_process(ProcessOp::PROP_INDEXED_COLORS);
+        }
+    }
+
+    ImGui::Separator();
+    if (ImGui::MenuItem("Topology Statistics", nullptr, false, mesh || graph))
+        run_process(ProcessOp::PROP_TOPOLOGY);
     ImGui::EndMenu();
 }
 

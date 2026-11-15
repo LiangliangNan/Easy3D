@@ -29,7 +29,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <fstream>
 #include <set>
+#include <sstream>
+#include <unordered_map>
 
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -38,6 +41,7 @@
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/algo/point_cloud_simplification.h>
 #include <easy3d/algo/surface_mesh_components.h>
+#include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_fairing.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
@@ -51,6 +55,7 @@
 #include <easy3d/algo/surface_mesh_smoothing.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
+#include <easy3d/algo/surface_mesh_topology.h>
 #ifdef HAS_CGAL
 #include <easy3d/algo_ext/surfacer.h>
 #endif
@@ -70,6 +75,74 @@
 #include <3rd_party/imgui/imgui.h>
 
 using namespace easy3d;
+
+
+namespace {
+
+// Height fields: the coordinates at vertices, edge midpoints and face centroids.
+template <class Mesh>
+void add_vertex_height_field(Mesh *mesh) {
+    auto x = mesh->template vertex_property<float>("v:height_x");
+    auto y = mesh->template vertex_property<float>("v:height_y");
+    auto z = mesh->template vertex_property<float>("v:height_z");
+    for (auto v : mesh->vertices()) {
+        const vec3 &p = mesh->position(v);
+        x[v] = p.x;
+        y[v] = p.y;
+        z[v] = p.z;
+    }
+}
+
+template <class Mesh>
+void add_edge_height_field(Mesh *mesh) {
+    auto x = mesh->template edge_property<float>("e:height_x");
+    auto y = mesh->template edge_property<float>("e:height_y");
+    auto z = mesh->template edge_property<float>("e:height_z");
+    for (auto e : mesh->edges()) {
+        const vec3 &c = 0.5f * (mesh->position(mesh->vertex(e, 0)) + mesh->position(mesh->vertex(e, 1)));
+        x[e] = c.x;
+        y[e] = c.y;
+        z[e] = c.z;
+    }
+}
+
+template <class Mesh>
+void add_face_height_field(Mesh *mesh) {
+    auto x = mesh->template face_property<float>("f:height_x");
+    auto y = mesh->template face_property<float>("f:height_y");
+    auto z = mesh->template face_property<float>("f:height_z");
+    for (auto f : mesh->faces()) {
+        vec3 c(0.0f);
+        float count = 0.0f;
+        for (auto v : mesh->vertices(f)) {
+            c += mesh->position(v);
+            ++count;
+        }
+        c /= count;
+        x[f] = c.x;
+        y[f] = c.y;
+        z[f] = c.z;
+    }
+}
+
+// Averages the face normals onto the edges (the height-field command's companion
+// vector field, matching the Qt app).
+void add_edge_normals(SurfaceMesh *mesh) {
+    mesh->update_face_normals();
+    auto face_normals = mesh->get_face_property<vec3>("f:normal");
+    auto edge_normals = mesh->edge_property<vec3>("e:normal");
+    for (auto e : mesh->edges()) {
+        vec3 n(0.0f);
+        for (int i = 0; i < 2; ++i) {
+            auto f = mesh->face(e, i);
+            if (f.is_valid())
+                n += face_normals[f];
+        }
+        edge_normals[e] = n.normalize();
+    }
+}
+
+} // namespace
 
 
 const char *MappleViewer::process_title(ProcessOp op) {
@@ -126,6 +199,14 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Split by Clipping Plane";
         case ProcessOp::MESH_SLICE:
             return "Slice by Clipping Plane";
+        case ProcessOp::PROP_HEIGHT_FIELD:
+            return "Compute Height Field";
+        case ProcessOp::PROP_CURVATURES:
+            return "Compute Surface Mesh Curvatures";
+        case ProcessOp::PROP_INDEXED_COLORS:
+            return "Color from Indexed Colors";
+        case ProcessOp::PROP_TOPOLOGY:
+            return "Topology Statistics";
         default:
             return "";
     }
@@ -144,7 +225,15 @@ void MappleViewer::open_process(ProcessOp op) {
                                 op == ProcessOp::PC_REORIENT_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
                                 op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC ||
                                 op == ProcessOp::PC_DELAUNAY_2D || op == ProcessOp::PC_DELAUNAY_3D;
-    if ((point_cloud_op && !cloud) || (!point_cloud_op && !mesh))
+    const bool property_op = op == ProcessOp::PROP_HEIGHT_FIELD || op == ProcessOp::PROP_CURVATURES ||
+                             op == ProcessOp::PROP_INDEXED_COLORS || op == ProcessOp::PROP_TOPOLOGY;
+    if ((point_cloud_op && !cloud) || (!point_cloud_op && !property_op && !mesh))
+        return;
+    if (op == ProcessOp::PROP_CURVATURES && !mesh)
+        return;
+    if (op == ProcessOp::PROP_INDEXED_COLORS && !cloud && !mesh)
+        return;
+    if (op == ProcessOp::PROP_TOPOLOGY && !mesh && !dynamic_cast<Graph *>(model))
         return;
 
     // Targets depend on the current model; refresh them so reopening a window always
@@ -312,6 +401,15 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::TextDisabled("Stores texture coordinates in v:texcoord.");
                 break;
 
+            case ProcessOp::PROP_CURVATURES:
+                ImGui::InputInt("Post-smoothing iterations", &p.curvature_smoothing);
+                p.curvature_smoothing = std::max(0, std::min(p.curvature_smoothing, 100));
+                ImGui::Checkbox("Two-ring neighborhood", &p.curvature_two_ring);
+                ImGui::TextDisabled("Adds v:curv-min, v:curv-max, v:curv-mean, v:curv-gauss");
+                ImGui::TextDisabled("and v:curv-max_abs on the vertices.");
+                ImGui::TextDisabled("Runs in the background.");
+                break;
+
             default:
                 break;
         }
@@ -340,6 +438,8 @@ bool MappleViewer::is_long_running(ProcessOp op) {
         case ProcessOp::MESH_SIMPLIFY:
         case ProcessOp::MESH_REMESH:
         case ProcessOp::MESH_SAMPLE:
+            return true;
+        case ProcessOp::PROP_CURVATURES:
             return true;
         default:
             return false;
@@ -997,6 +1097,228 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                     LOG(WARNING) << "subdivision failed";
             }
             break;
+
+        case ProcessOp::PROP_HEIGHT_FIELD: {
+            // Graph derives from PointCloud, so it must be tested first.
+            auto *graph = dynamic_cast<Graph *>(model);
+            auto *poly = dynamic_cast<PolyMesh *>(model);
+            if (mesh) {
+                add_vertex_height_field(mesh);
+                add_edge_height_field(mesh);
+                add_face_height_field(mesh);
+                add_edge_normals(mesh);
+                LOG(INFO) << "height field added: v:/e:/f:height_x/y/z, plus f:normal and e:normal";
+            } else if (graph) {
+                add_vertex_height_field(graph);
+                add_edge_height_field(graph);
+                LOG(INFO) << "height field added: v:/e:height_x/y/z";
+            } else if (cloud) {
+                add_vertex_height_field(cloud);
+                LOG(INFO) << "height field added: v:height_x/y/z";
+            } else if (poly) {
+                add_vertex_height_field(poly);
+                add_edge_height_field(poly);
+                add_face_height_field(poly);
+                poly->update_face_normals();
+                LOG(INFO) << "height field added: v:/e:/f:height_x/y/z, plus f:normal";
+            } else
+                LOG(WARNING) << "the height field requires a point cloud, surface mesh, polyhedral mesh or graph";
+            break;
+        }
+
+        case ProcessOp::PROP_CURVATURES:
+            if (mesh) {
+                SurfaceMeshCurvature analyzer(mesh);
+                analyzer.analyze_tensor(static_cast<unsigned int>(p.curvature_smoothing), p.curvature_two_ring);
+                analyzer.compute_mean_curvature();
+                analyzer.compute_gauss_curvature();
+                analyzer.compute_max_abs_curvature();
+                LOG(INFO) << "curvatures computed for " << mesh->n_vertices() << " vertices (post-smoothing "
+                          << p.curvature_smoothing << " iterations, "
+                          << (p.curvature_two_ring ? "two-ring" : "one-ring") << " neighborhood): v:curv-min, "
+                          << "v:curv-max, v:curv-mean, v:curv-gauss, v:curv-max_abs";
+            }
+            break;
+
+        case ProcessOp::PROP_INDEXED_COLORS: {
+            if (p.indexed_colors_file.empty()) {
+                LOG(WARNING) << "no indexed colors file was chosen";
+                break;
+            }
+            std::ifstream input(p.indexed_colors_file);
+            if (!input.is_open()) {
+                LOG(WARNING) << "could not open file: " << p.indexed_colors_file;
+                break;
+            }
+
+            // Format: a "<v|f>:<property name>" header line, then "<index> <r> <g> <b>"
+            // lines with 0-255 colors. Blank lines and '#' comments are ignored.
+            std::unordered_map<int, vec3> indexed_colors;
+            int location = -1; // 0: vertices, 1: faces
+            std::string indices_name;
+            std::string line;
+            int malformed = 0;
+            while (std::getline(input, line)) {
+                const std::size_t first = line.find_first_not_of(" \t\r");
+                if (first == std::string::npos)
+                    continue;
+                line.erase(0, first);
+                if (line[0] == '#')
+                    continue;
+                if (line.rfind("v:", 0) == 0 || line.rfind("f:", 0) == 0) {
+                    location = (line[0] == 'v') ? 0 : 1;
+                    indices_name = line.substr(0, line.find_first_of(" \t"));
+                    continue;
+                }
+                std::istringstream values(line);
+                int index = 0;
+                vec3 color(0.0f);
+                if (values >> index >> color)
+                    indexed_colors[index] = color / 255.0f;
+                else
+                    ++malformed;
+            }
+
+            if (location < 0) {
+                LOG(WARNING) << "the file does not declare the index property "
+                                "(expected a 'v:<name>' or 'f:<name>' line)";
+                break;
+            }
+            if (indexed_colors.empty()) {
+                LOG(WARNING) << "no indexed colors found in file: " << p.indexed_colors_file;
+                break;
+            }
+            if (malformed > 0)
+                LOG(WARNING) << "ignored " << malformed << " malformed line(s) in " << p.indexed_colors_file;
+
+            // Missing indices are colored black, like the Qt command.
+            if (location == 0 && cloud) {
+                auto indices = cloud->get_vertex_property<int>(indices_name);
+                if (!indices) {
+                    LOG(WARNING) << "no vertex property named '" << indices_name << "'";
+                    break;
+                }
+                auto colors = cloud->vertex_property<vec3>("v:color_indexed");
+                std::size_t missing = 0;
+                for (auto v : cloud->vertices()) {
+                    const auto it = indexed_colors.find(indices[v]);
+                    if (it != indexed_colors.end())
+                        colors[v] = it->second;
+                    else {
+                        colors[v] = vec3(0.0f);
+                        ++missing;
+                    }
+                }
+                LOG(INFO) << "color property 'v:color_indexed' generated from " << indexed_colors.size()
+                          << " indexed colors";
+                if (missing > 0)
+                    LOG(WARNING) << missing << " vertices have indices without a color (colored black)";
+            } else if (location == 0 && mesh) {
+                auto indices = mesh->get_vertex_property<int>(indices_name);
+                if (!indices) {
+                    LOG(WARNING) << "no vertex property named '" << indices_name << "'";
+                    break;
+                }
+                auto colors = mesh->vertex_property<vec3>("v:color_indexed");
+                std::size_t missing = 0;
+                for (auto v : mesh->vertices()) {
+                    const auto it = indexed_colors.find(indices[v]);
+                    if (it != indexed_colors.end())
+                        colors[v] = it->second;
+                    else {
+                        colors[v] = vec3(0.0f);
+                        ++missing;
+                    }
+                }
+                LOG(INFO) << "color property 'v:color_indexed' generated from " << indexed_colors.size()
+                          << " indexed colors";
+                if (missing > 0)
+                    LOG(WARNING) << missing << " vertices have indices without a color (colored black)";
+            } else if (location == 1 && mesh) {
+                auto indices = mesh->get_face_property<int>(indices_name);
+                if (!indices) {
+                    LOG(WARNING) << "no face property named '" << indices_name << "'";
+                    break;
+                }
+                auto colors = mesh->face_property<vec3>("f:color_indexed");
+                std::size_t missing = 0;
+                for (auto f : mesh->faces()) {
+                    const auto it = indexed_colors.find(indices[f]);
+                    if (it != indexed_colors.end())
+                        colors[f] = it->second;
+                    else {
+                        colors[f] = vec3(0.0f);
+                        ++missing;
+                    }
+                }
+                LOG(INFO) << "color property 'f:color_indexed' generated from " << indexed_colors.size()
+                          << " indexed colors";
+                if (missing > 0)
+                    LOG(WARNING) << missing << " faces have indices without a color (colored black)";
+            } else if (location == 1)
+                LOG(WARNING) << "the current model has no faces; the file describes face colors";
+            else
+                LOG(WARNING) << "the current model type is not supported for indexed colors";
+            break;
+        }
+
+        case ProcessOp::PROP_TOPOLOGY: {
+            auto *graph = dynamic_cast<Graph *>(model);
+            if (mesh) {
+                const auto &components = SurfaceMeshComponent::extract(mesh);
+                std::size_t isolated = 0;
+                for (auto v : mesh->vertices()) {
+                    if (mesh->is_isolated(v))
+                        ++isolated;
+                }
+
+                std::ostringstream stream;
+                stream << "model has " << components.size() << " connected component(s)";
+                if (isolated > 0)
+                    stream << " and " << isolated << " isolated vertex/vertices";
+                stream << '\n';
+
+                constexpr std::size_t max_reported = 10;
+                if (components.size() > max_reported)
+                    stream << "    topology of the first " << max_reported << " components:\n";
+                for (std::size_t i = 0; i < std::min(components.size(), max_reported); ++i) {
+                    const SurfaceMeshComponent &comp = components[i];
+                    SurfaceMeshTopology topo(&comp);
+                    std::string type = "unknown";
+                    if (topo.is_sphere())
+                        type = "sphere";
+                    else if (topo.is_disc())
+                        type = "disc";
+                    else if (topo.is_cylinder())
+                        type = "cylinder";
+                    else if (topo.is_torus())
+                        type = "torus";
+                    else if (topo.is_closed())
+                        type = "unknown closed";
+
+                    stream << "        " << i << ": " << type << ", F = " << comp.n_faces()
+                           << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
+                           << ", B = " << topo.number_of_borders();
+                    if (topo.number_of_borders() == 1)
+                        stream << ", border size = " << topo.largest_border_size();
+                    else if (topo.number_of_borders() > 1)
+                        stream << ", largest border size = " << topo.largest_border_size();
+                    stream << '\n';
+                }
+                LOG(INFO) << stream.str();
+            } else if (graph) {
+                std::map<unsigned int, int> degree_count;
+                for (auto v : graph->vertices())
+                    ++degree_count[graph->valence(v)];
+
+                std::ostringstream stream;
+                stream << "graph has " << graph->n_vertices() << " vertices and " << graph->n_edges() << " edges\n";
+                for (const auto &entry : degree_count)
+                    stream << "    number of degree " << entry.first << " vertices: " << entry.second << '\n';
+                LOG(INFO) << stream.str();
+            }
+            break;
+        }
 
         default:
             process_op_ = ProcessOp::NONE;

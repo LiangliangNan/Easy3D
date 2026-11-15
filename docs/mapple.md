@@ -72,7 +72,8 @@ applications/Mapple-imgui/
   imgui_layer.{h,cpp}    ImGui context, font atlas, DPI, ImDrawData -> DrawCommand
   ui/menu.cpp            menu bar and shortcuts
   ui/panels.cpp          toolbar, Models, Rendering, Log, status bar, About
-  ui/process.cpp         Process menu parameter windows and the algorithms they run
+  ui/process.cpp         Process/Property commands: parameter windows and the
+                         algorithms they run
 ```
 
 Reuse inventory (verified):
@@ -304,6 +305,12 @@ Phase 2 design notes:
 
 Verify the acceptance list, migrate remaining workflows, remove `applications/Mapple`
 and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
+
+The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
+stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
+group (the four Property-menu commands) is migrated; the remaining groups are mesh
+repair/orientation, property manipulation and the rendering panel's color-scheme
+selector, small utilities, and view polish.
 
 ## ImGui notes
 
@@ -743,3 +750,42 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   that frame.
 - Validation: both trees build and the app launches. The disabled state during a
   running job or a recording was not exercised through scripted clicks.
+
+### 2026-11-15 — Property menu (inspection commands)
+
+- A `Property` top-level menu sits between Camera and Process, matching the Qt menu
+  order, and exposes the four Qt inspection commands. Each is a `ProcessOp`, so it
+  reuses the parameter window, the background-job/progress path and the Log feedback,
+  and is disabled with the rest of the menu while the UI is busy.
+- **Compute Height Field** writes `v:height_x/y/z` (positions), `e:height_x/y/z` (edge
+  midpoints) and `f:height_x/y/z` (face centroids). Surface meshes additionally get
+  refreshed `f:normal` and edge normals averaged from the adjacent faces (`e:normal`);
+  polyhedral meshes get all three fields plus `f:normal`; point clouds get vertices
+  only; graphs get vertices and edges. Unlike the Qt code, graphs are handled before
+  the point-cloud branch: a `Graph` derives from `PointCloud`, so the Qt graph branch
+  could never run.
+- **Compute Curvatures...** carries the Qt dialog's two parameters (post-smoothing
+  iterations 0-100, default 1; two-ring neighborhood, default on), runs
+  `SurfaceMeshCurvature::analyze_tensor` and then writes `v:curv-min`, `v:curv-max`,
+  `v:curv-mean`, `v:curv-gauss` and `v:curv-max_abs`. It is the one inspection command
+  that runs in the background, since the tensor analysis is the slow part.
+- **Color from Indexed Colors...** reads the Qt `.ic` format - a `v:<name>` or
+  `f:<name>` header naming the index property, then `<index> <r> <g> <b>` lines with
+  0-255 colors, ignoring blank lines and `#` comments - and writes
+  `v:color_indexed`/`f:color_indexed`; indices without a color become black. The Qt
+  implementation only handled point-cloud vertices and logged "not implemented yet"
+  for meshes; the ImGui command also handles surface-mesh vertices and faces.
+- **Topology Statistics** logs the Qt report: connected components (first 10) with
+  their sphere/disc/cylinder/torus classification and F/V/E/B counts, border sizes
+  and the isolated-vertex count for a surface mesh; vertex/edge counts plus the degree
+  histogram for a graph.
+- Scope note: the Qt commands only store properties; displaying them goes through the
+  Qt rendering panel's color-scheme selector, which Mapple-imgui does not have yet.
+  The new properties are therefore visible in Model Info, in the saved file and in
+  the Log, not in the viewport, until that rendering-panel gap is migrated.
+- Validation (2026-11-15, macOS): `Mapple-imgui` builds in `cmake-build-release`
+  (Vulkan), `build-vulkan-check` and `build-opengl-check` (OpenGL); each binary
+  launches with `resources/data/bunny.ply` and reports "Mapple UI ready", then was
+  stopped. The ImGui window is not scriptable, so the menu commands themselves were
+  not exercised; the algorithm calls they wrap are the ones covered by
+  `tests/algo/surface_mesh_algorithms_test.cpp`.

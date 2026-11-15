@@ -145,7 +145,8 @@ private:
         MESH_COMPONENTS, MESH_PLANAR_PARTITION, MESH_TRIANGULATE, MESH_DUAL,
         MESH_SUBDIVIDE_CC, MESH_SUBDIVIDE_LOOP, MESH_SUBDIVIDE_SQRT3,
         MESH_PARAMETERIZE, MESH_GEODESIC,
-        MESH_CLIP, MESH_SPLIT, MESH_SLICE
+        MESH_CLIP, MESH_SPLIT, MESH_SLICE,
+        PROP_HEIGHT_FIELD, PROP_CURVATURES, PROP_INDEXED_COLORS, PROP_TOPOLOGY
     };
 
     // Parameters of the open processing window. Model-dependent values are refreshed
@@ -192,6 +193,10 @@ private:
         int param_method = 0;           // 0: LSCM, 1: discrete harmonic
         bool param_uniform_weights = false;
         bool param_preview = true;
+
+        int curvature_smoothing = 1;    // post-smoothing iterations of the curvature values
+        bool curvature_two_ring = true;
+        std::string indexed_colors_file; // .ic file, read when the command runs
     };
 
     // The drawable appearance in effect before the selection view replaced it, so
@@ -215,6 +220,9 @@ private:
 
     // ui/menu.cpp
     void draw_menu_process();
+
+    // ui/menu.cpp
+    void draw_menu_property();
 
     // ui/process.cpp
 
