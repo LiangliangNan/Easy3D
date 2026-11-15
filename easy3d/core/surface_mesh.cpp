@@ -2240,11 +2240,13 @@ namespace easy3d {
                 auto d1 = p2-p1; auto len1 = d1.length();
                 if (len1 < std::numeric_limits<float>::min()) {
                     h  = next(h);
+                    p0 = p1; p1 = p2; p2 = vpoint_[target(h)];
                     continue;
                 }
                 auto d2 = p0-p1; auto len2 = d2.length();
                 if (len2 < std::numeric_limits<float>::min()) {
                     h  = next(h);
+                    p0 = p1; p1 = p2; p2 = vpoint_[target(h)];
                     continue;
                 }
 
@@ -2252,6 +2254,7 @@ namespace easy3d {
                 angle = geom::to_degrees(std::abs(angle));
                 if (std::abs(angle) < std::numeric_limits<float>::min()) {
                     h  = next(h);
+                    p0 = p1; p1 = p2; p2 = vpoint_[target(h)];
                     continue;
                 }
 

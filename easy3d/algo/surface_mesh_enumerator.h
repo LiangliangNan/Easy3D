@@ -66,11 +66,16 @@ namespace easy3d {
 
         /**
          * \brief Enumerates planar patches.
+         * \details Partitions the faces into edge-connected patches of mutually coplanar faces. Degenerate
+         *      faces are assigned to an adjacent planar patch when possible. Degenerate faces belonging to a
+         *      component without any non-degenerate face keep the id "-1".
          * \param mesh The input mesh.
-         * \param id The vertex property storing the result.
+         * \param id The face property storing the result. Every non-degenerate face receives an id in
+         *      [0, num), where num is the returned value. Callers must handle faces with id "-1".
          * \param angle_threshold Two faces sharing a common edge are considered coplanar if the dihedral angle is
          *      smaller than \p angle_threshold (in degrees).
-         * \return The number of connected components.
+         * \return The number of planar patches.
+         * \attention The face property \p id must be initialized with "-1".
          */
         static int enumerate_planar_components(
                 SurfaceMesh *mesh,

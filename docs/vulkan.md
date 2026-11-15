@@ -9747,3 +9747,76 @@ failing on the pre-fix code. `easy3d/util/version.h` is unchanged.
 **What this leaves.** Mapple still builds on the OpenGL backend only, as decided in W10; the bake is
 not exposed in the Python bindings or Mapple UI yet, and it is not wired into the tutorial's
 offline figure export. Both are follow-ups, not regressions.
+
+### 2026-11-15 — batch 79: polygonization of planar patches with holes, degenerate faces and non-manifold input
+
+**Scope.** `MainWindow::surfaceMeshPolygonization()` crashed on `resources/data/bug/bug.obj`. The
+enumerator documents that an isolated degenerate component keeps the id `-1`, but the polygonizer
+indexed its per-patch arrays (`boundary_edges[id]`, `region_normals[id]`) with that id and walked
+out of bounds. The fix honors the contract instead of hiding it in the enumerator: the enumerator
+is unchanged except for its documentation (the face property, the `[0, num)` range, the `-1`
+contract and the required `-1` initialization), and the polygonizer now owns the whole input
+policy.
+
+Degenerate faces (a zero-length edge, or a collinear polygon enclosing no area) are removed up
+front, because the planar partition cannot merge them and reported them on every pass; they carry
+no area, so no geometry is lost. A patch that cannot be merged (a degenerate boundary loop, a
+failed partition) falls back to its original faces, so a patch is never silently dropped. The
+convex partition and the collinear-edge merge can both produce zero-area slivers; partition parts
+with a zero aspect ratio are filtered, and an edge merge that would collapse an incident face into
+a sliver is refused, so the rebuilt mesh stays free of degenerate faces and the builder keeps it
+manifold.
+
+The patch classification was rewritten. The old code took the longest boundary loop as the outer
+boundary and every other loop as a hole, which is wrong for a patch that touches itself at a
+vertex (several positive loops) and for small holes. Loops are now classified by their signed
+area against the patch normal: material-enclosing loops are outer boundaries (counter-clockwise)
+and hole loops are clockwise; a zero or NaN area makes the patch unclassifiable and keeps its
+faces. Convex partition remains the only representation for patches with holes, so the class's
+`\todo Support faces with holes` still stands.
+
+`PolygonPartition` cannot handle holes, self-intersections or overlapping contours, so every patch
+that needs convex partition (holes, or a self-touching boundary even without holes) is first
+normalized with the CSG operators in `tessellator.h`: `Tessellator` with `set_boundary_only(true)`
+and `WINDING_POSITIVE` turns the patch material into simple counter-clockwise outer contours and
+clockwise hole contours. The polygonizer maps the tessellator vertices back to the builder by their
+source index (deduplicating an input vertex that appears in several contours) and adds the
+intersection vertices it creates; vertices left unused by a fallback are removed by
+`end_surface()`. This also fixes the reported `convex partition failed` cases and, on `bunny.ply`,
+a patch whose boundary loop visits a vertex twice: it used to be handed to the builder as one
+polygon with a repeated vertex, which the builder rejected and dropped; it is now normalized and
+split.
+
+Supporting fixes: the builder's vertex map now stores handles instead of assuming that the new
+vertex indices equal the old ones; `SurfaceMesh::is_degenerate()` advances `p0`/`p1`/`p2` when it
+skips a zero-length edge or a collinear triple in a general polygon (it previously kept testing the
+same triple, so merged polygons were falsely reported and re-split); the polygonizer's private
+members lost the `planar_segments_` handle.
+
+**Validation.** 2026-11-15, macOS, serial CTest. OpenGL `build-opengl-check` 111/111 and Vulkan
+`build-vulkan-check` 145/145 (one `opengl.imgui` window test failed once under load and passed in
+isolation in 2.37 s, then the clean rerun passed). The polygonizer was run on the requested models
+and the output was checked for degenerate faces, zero-length edges, isolated vertices,
+non-manifold vertices and multiple face fans at a vertex (polygonization only, Release, CGAL on):
+`house.obj` 11262 -> 4561 faces, `bug.obj` 10098 -> 4109, `domik/domik.obj` 3456 -> 1918,
+`bunny.ply` 30779 -> 23968; all four have zero degenerate faces, zero zero-length edges, zero
+isolated vertices, zero non-manifold vertices and zero vertices with several face fans. The
+algorithm itself logs no warning or error on these runs: on `house.obj` the only message is the
+loader's report that the input was non-manifold and was fixed (1822 non-manifold vertices, 2094
+non-manifold edges, 2302 isolated vertices), and on `domik.obj` the loader's two "diffuse texture
+ignored" messages (the offline test does not use the texture pipeline). The same checks pass on
+`fandisk.off`, `fandisk_quads.off`, `general_closed.obj`, `general_open.obj`, `room.obj`,
+`sphere.obj`, `hemisphere.ply` and `building.off`; the open polygon soups inherit geometrically
+coincident border edges from the input, which is why Mapple stitches borders before and after
+polygonization (on `bug.obj` the pre/post stitch takes 4109 to 3670 faces and the duplicate
+geometric border edges from 1674 to 128). Mapple's post-stitch can weld a thin sliver into a
+zero-area face (`house.obj`: 18 zero-area faces after the stitch, none of them with a zero-length
+edge); that is CGAL border stitching, not the polygonizer, whose output is clean.
+
+Regression coverage: `algo.surface_mesh_enumerator` now asserts the `-1` contract on an isolated
+degenerate component and that polygonization drops that face and keeps the regular one;
+`algo.surface_mesh_polygonization` adds `house.obj` and `domik.obj` (manifold, single-fan,
+degenerate-free output after merging), a synthetic 7x7 annulus with two holes (merged, area 33
+preserved, exactly three boundary loops, no degenerate face), and `bunny.ply` (the self-touching
+patch, area preserved within 1e-3 relative, so a dropped patch fails the test). `easy3d/util/version.h`
+is unchanged.

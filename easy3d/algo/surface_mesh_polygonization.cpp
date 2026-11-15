@@ -24,16 +24,44 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
+#include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/polygon_partition.h>
+#include <easy3d/algo/tessellator.h>
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/logging.h>
 
 
 namespace easy3d {
+
+    namespace {
+
+        // A polygon with collinear vertices encloses no area. Float rounding can leave a tiny non-zero
+        // Newell vector, so compare the area against the squared longest edge (a dimensionless aspect ratio).
+        bool is_zero_area(const std::vector<vec3> &points) {
+            if (points.size() < 3)
+                return true;
+
+            const vec3 origin = points[0];
+            float max_len2 = 0.0f;
+            vec3 n(0.0f);
+            for (std::size_t i = 0; i < points.size(); ++i) {
+                const vec3 &p = points[i];
+                const vec3 &q = points[(i + 1) % points.size()];
+                const vec3 e = q - p;
+                max_len2 = std::max(max_len2, dot(e, e));
+                n += cross(p - origin, q - origin);
+            }
+            if (!(max_len2 > 0.0f))
+                return true;
+            return 0.5f * length(n) <= 1e-6f * max_len2;
+        }
+
+    }
 
 
     void SurfaceMeshPolygonization::apply(SurfaceMesh *mesh, float angle_threshold) {
@@ -54,224 +82,354 @@ namespace easy3d {
     }
 
 
-    // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
+    // splits a planar patch (outer boundaries and holes) into convex polygons. The patch boundaries are first
+    // normalized with the CSG operators (tessellator.h), because PolygonPartition requires simple contours
+    // without self-intersections or overlaps.
     std::vector<SurfaceMeshPolygonization::Contour>
     SurfaceMeshPolygonization::split_complex_contour(
-            const Contour &outer_poly,                      // the outer polygon represented by a list of SurfaceMesh::Vertex
-            const std::vector<Contour> &input_hole_polys,   // the holes each represented by a list of SurfaceMesh::Vertex
-            const vec3 &normal,                     // the normal of the polygon
-            const SurfaceMesh *mesh) const
+            const std::vector<Contour> &outer_polys,
+            const std::vector<Contour> &hole_polys,
+            const vec3 &normal,
+            const SurfaceMesh *mesh,
+            SurfaceMeshBuilder &builder,
+            const std::vector<SurfaceMesh::Vertex> &vertex_map) const
     {
-        if (input_hole_polys.empty()) {
-            // check if 'vts' has duplicate vertex, if so, returns the first found vertex
-            std::vector<SurfaceMesh::Vertex> tmp = outer_poly;
-            std::sort(tmp.begin(), tmp.end());
-            auto pos = std::adjacent_find(tmp.begin(), tmp.end());
-            if (pos == tmp.end()) // this is a simple contour
-                return {outer_poly};
+        if (outer_polys.empty() || outer_polys.front().empty())
+            return {};
 
-                // if reached here, it is a complex polygon. We do convex partition.
-#ifndef NDEBUG
-            LOG(INFO) << "complex contour: " << outer_poly;
-            LOG(INFO) << "first duplicate vertex: " << *pos;
-#endif
-        }
+        // Resolve self-intersections/overlaps and obtain simple contours. The patch material is on the left of
+        // the outer boundaries, so the positive winding rule extracts exactly the patch interior.
+        Tessellator tessellator;
+        tessellator.set_boundary_only(true);
+        tessellator.begin_polygon(normal);
+        tessellator.set_winding_rule(Tessellator::WINDING_POSITIVE);
+        auto add_contour = [&](const Contour &con) {
+            tessellator.begin_contour();
+            for (auto v: con)
+                tessellator.add_vertex(mesh->position(v), v.idx());
+            tessellator.end_contour();
+        };
+        for (const auto &poly : outer_polys)
+            add_contour(poly);
+        for (const auto &poly : hole_polys)
+            add_contour(poly);
+        tessellator.end_polygon();
 
-        // Note: the "no hole" cases can also be treated as general cases using the same code below.
-        //       But since the "no hole" cases are more common, it is thus preferred to use the OPT algorithm
-        //       (for general cases with holes, only the HM algorithm is available).
-        if (input_hole_polys.empty()) {
-            std::unordered_map<std::size_t, SurfaceMesh::Vertex> index_map;
+        const auto &vertices = tessellator.vertices();
+        const auto &elements = tessellator.elements();
+        if (elements.empty())
+            return {};
 
-            // construct the supporting plane of this planar region
-            Plane3 plane(mesh->position(outer_poly[0]), normal);
-            // project all points onto the supporting plane
-            std::vector<vec2> polygon;
-            for (std::size_t i = 0; i < outer_poly.size(); ++i) {
-                const auto &v = outer_poly[i];
-                const auto &p = mesh->position(v);
-                polygon.push_back(plane.to_2d(p));
-                index_map[i] = v;
-            }
+        // Build the shared vertex pool for PolygonPartition. Vertices of the input mesh are mapped to their
+        // corresponding builder vertices; vertices created at intersections are added to the builder.
+        const Plane3 plane(mesh->position(outer_polys.front().front()), normal);
 
-            std::vector<PolygonPartition::Polygon> parts;
-            if (!PolygonPartition::apply_OPT(polygon, parts)) {
-                LOG(WARNING) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
-#ifndef NDEBUG
-                LOG(WARNING) << "outer loop: " << outer_poly;
-#endif
-                return {};
-            }
+        std::vector<vec2> points;
+        std::vector<SurfaceMesh::Vertex> point_vertices;
+        std::unordered_map<std::size_t, std::size_t> point_index;       // tessellator vertex -> pool index
+        std::unordered_map<int, std::size_t> original_point_index;      // input vertex index -> pool index
+        std::unordered_map<std::size_t, SurfaceMesh::Vertex> new_vertices;
 
-            std::vector<SurfaceMeshPolygonization::Contour> result;
-            for (auto &poly: parts) {
-                std::vector<SurfaceMesh::Vertex> vts;
-                for (const auto &id: poly)
-                    vts.push_back(index_map[id]);
-                result.push_back(vts);
-            }
-            return result;
-        }
-        else {
-            // all the vertex coordinates
-            std::vector<vec2> points;
-            // the SurfaceMesh::Vertex corresponding to the i-th point in "points"
-            std::unordered_map<std::size_t, SurfaceMesh::Vertex> index_map;
+        auto pool_index = [&](std::size_t i) -> std::size_t {
+            auto it = point_index.find(i);
+            if (it != point_index.end())
+                return it->second;
 
-            std::vector<PolygonPartition::Polygon> input_polys; // non-hole polygons, in counter-clockwise order.
-            std::vector<PolygonPartition::Polygon> hole_polys; // hole polygons, in clockwise order.
+            const auto *tv = vertices[i];
+            const vec3 p(static_cast<float>((*tv)[0]), static_cast<float>((*tv)[1]),
+                         static_cast<float>((*tv)[2]));
 
-            // construct the supporting plane of this planar region
-            Plane3 plane(mesh->position(outer_poly[0]), normal);
-
-            // project all points of the outer_polygon onto the supporting plane;
-            // meanwhile, collect the vertex indices of the non-hole polygon
-            PolygonPartition::Polygon nonhole_poly;
-            int vtx_idx = 0;
-            for (std::size_t i = 0; i < outer_poly.size(); ++i) {
-                const auto &v = outer_poly[i];
-                const auto &p = mesh->position(v);
+            std::size_t idx;
+            if (tv->index >= 0) {
+                // the same input vertex can appear in several contours
+                auto original = original_point_index.find(tv->index);
+                if (original != original_point_index.end())
+                    return original->second;
+                idx = points.size();
                 points.push_back(plane.to_2d(p));
-                index_map[vtx_idx] = v;
-                nonhole_poly.push_back(vtx_idx);
-                ++vtx_idx;
+                point_vertices.push_back(vertex_map[tv->index]);
+                original_point_index[tv->index] = idx;
             }
-            input_polys.push_back(nonhole_poly);
-
-            // project all points of the hole-polygons onto the supporting plane;
-            // meanwhile, collect the vertex indices of the hole polygons
-            for (auto& hole : input_hole_polys) {
-                PolygonPartition::Polygon hole_poly;
-                for (std::size_t i = 0; i < hole.size(); ++i) {
-                    const auto &v = hole[i];
-                    const auto &p = mesh->position(v);
-                    points.push_back(plane.to_2d(p));
-                    index_map[vtx_idx] = v;
-                    hole_poly.push_back(vtx_idx);
-                    ++vtx_idx;
+            else {
+                auto created = new_vertices.find(i);
+                SurfaceMesh::Vertex v;
+                if (created != new_vertices.end())
+                    v = created->second;
+                else {
+                    v = builder.add_vertex(p);
+                    new_vertices[i] = v;
                 }
-                hole_polys.push_back(hole_poly);
+                idx = points.size();
+                points.push_back(plane.to_2d(p));
+                point_vertices.push_back(v);
             }
 
-            // now let's do the convex partition
-            std::vector<PolygonPartition::Polygon> parts;
-            if (!PolygonPartition::apply(points, input_polys, hole_polys, parts)) {
-                LOG(WARNING) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
-#ifndef NDEBUG
-                LOG(WARNING) << "outer loop: " << outer_poly;
-                for (const auto& hole : input_hole_polys) {
-                    LOG(WARNING) << "hole: " << hole;
-                }
-#endif
-                return {};
-            }
+            point_index[i] = idx;
+            return idx;
+        };
 
-            std::vector<SurfaceMeshPolygonization::Contour> result;
-            for (auto &poly: parts) {
-                std::vector<SurfaceMesh::Vertex> vts;
-                for (const auto &id: poly)
-                    vts.push_back(index_map[id]);
-                result.push_back(vts);
+        std::vector<PolygonPartition::Polygon> polygons;    // counter-clockwise
+        std::vector<PolygonPartition::Polygon> holes;       // clockwise
+
+        for (const auto &element : elements) {
+            if (element.size() < 3)
+                continue;
+
+            PolygonPartition::Polygon poly;
+            poly.reserve(element.size());
+            for (auto i : element)
+                poly.push_back(pool_index(i));
+
+            // The tessellator returns outer boundaries in counter-clockwise and holes in clockwise order.
+            double twice_area = 0.0;
+            for (std::size_t k = 0; k < poly.size(); ++k) {
+                const vec2 &a = points[poly[k]];
+                const vec2 &b = points[poly[(k + 1) % poly.size()]];
+                twice_area += static_cast<double>(a.x) * b.y - static_cast<double>(b.x) * a.y;
             }
-            return result;
+            if (twice_area > 0.0)
+                polygons.push_back(poly);
+            else if (twice_area < 0.0)
+                holes.push_back(poly);
         }
+
+        if (polygons.empty())
+            return {};
+
+        std::vector<PolygonPartition::Polygon> parts;
+        if (!PolygonPartition::apply(points, polygons, holes, parts)) {
+            LOG(WARNING) << "failed to perform convex partition of a complex polygon (the patch's faces are kept)";
+#ifndef NDEBUG
+            for (const auto &poly : polygons)
+                LOG(WARNING) << "polygon: " << poly;
+            for (const auto &hole : holes)
+                LOG(WARNING) << "hole: " << hole;
+#endif
+            return {};
+        }
+
+        std::vector<Contour> result;
+        result.reserve(parts.size());
+        for (const auto &part : parts) {
+            // The partition can return zero-area slivers when the patch boundary has collinear vertices.
+            Contour ct;
+            ct.reserve(part.size());
+            std::vector<vec3> pts;
+            pts.reserve(part.size());
+            for (auto id : part) {
+                ct.push_back(point_vertices[id]);
+                pts.push_back(vec3(points[id].x, points[id].y, 0.0f));
+            }
+            if (is_zero_area(pts))
+                continue;
+            result.push_back(ct);
+        }
+        return result;
     }
 
 
     void SurfaceMeshPolygonization::internal_apply(SurfaceMesh *mesh, float angle_threshold) {
         SurfaceMesh model = *mesh;
 
+        // Degenerate faces enclose no area (a zero-length edge or a zero-area collinear polygon). Remove them
+        // before the planar partition, which cannot merge them and would report them on every pass.
+        std::vector<SurfaceMesh::Face> degenerate_faces;
+        for (auto f: model.faces()) {
+            if (model.is_degenerate(f))
+                degenerate_faces.push_back(f);
+        }
+        for (auto f: degenerate_faces)
+            model.delete_face(f);
+
         const std::string partition_name = "f:planar_partition";
-        planar_segments_ = model.get_face_property<int>(partition_name);
-        if (!planar_segments_)
-            planar_segments_ = model.add_face_property<int>(partition_name, -1);
+        auto patch_id = model.get_face_property<int>(partition_name);
+        if (!patch_id)
+            patch_id = model.add_face_property<int>(partition_name, -1);
         else {
             for (auto f: model.faces())
-                planar_segments_[f] = -1;
+                patch_id[f] = -1;
         }
 
-        const int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_, angle_threshold);
-        // for each planar patch, find all its boundary halfedges
-        std::vector<std::set<SurfaceMesh::Halfedge> > boundary_edges(num);  // the boundary halfedges for each planar patch
+        const int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, patch_id, angle_threshold);
 
+        // the faces of each planar patch, and the faces that do not belong to any patch (degenerate components)
+        std::vector< std::vector<SurfaceMesh::Face> > patch_faces(num);
+        std::vector<SurfaceMesh::Face> unassigned_faces;
+        for (auto f: model.faces()) {
+            int id = patch_id[f];
+            if (id >= 0)
+                patch_faces[id].push_back(f);
+            else
+                unassigned_faces.push_back(f);
+        }
+
+        // for each planar patch, find all its boundary halfedges
+        std::vector<std::set<SurfaceMesh::Halfedge> > boundary_edges(num);
         for (auto e: model.edges()) {
             if (model.is_border(e)) {
                 auto h = model.halfedge(e, 0);
                 if (model.is_border(h))
                     h = model.opposite(h);
-                int id = planar_segments_[model.face(h)];
-                boundary_edges[id].insert(h);
+                int id = patch_id[model.face(h)];
+                if (id >= 0)    // unassigned faces are kept unchanged, so they contribute no boundary
+                    boundary_edges[id].insert(h);
             } else {
                 auto f0 = model.face(e, 0);
                 auto f1 = model.face(e, 1);
-                int id0 = planar_segments_[f0];
-                int id1 = planar_segments_[f1];
+                int id0 = patch_id[f0];
+                int id1 = patch_id[f1];
                 if (id0 != id1) {
-                    boundary_edges[id0].insert(model.halfedge(e, 0));
-                    boundary_edges[id1].insert(model.halfedge(e, 1));
+                    if (id0 >= 0)
+                        boundary_edges[id0].insert(model.halfedge(e, 0));
+                    if (id1 >= 0)
+                        boundary_edges[id1].insert(model.halfedge(e, 1));
                 }
             }
         }
 
         // for each planar patch, determine its face normal
-        std::vector<vec3> region_normals(num, vec3(0, 0, 0));  // the normal for each planar patch
+        std::vector<vec3> patch_normals(num, vec3(0, 0, 0));
         auto face_normals = model.get_face_property<vec3>("f:normal");
         if (!face_normals)
             model.update_face_normals();
         for (auto f: model.faces()) {
-            int region_id = planar_segments_[f];
-            region_normals[region_id] += face_normals[f];
+            int id = patch_id[f];
+            if (id >= 0)
+                patch_normals[id] += face_normals[f];
         }
-        for (auto& n : region_normals)
+        for (auto& n : patch_normals)
             n.normalize();
 
         mesh->clear();
         SurfaceMeshBuilder builder(mesh);
         builder.begin_surface();
 
+        // map the vertices of the input mesh to the vertices of the rebuilt mesh. The new indices cannot be
+        // assumed to coincide with the old ones (the input mesh may contain deleted/isolated vertices).
+        std::vector<SurfaceMesh::Vertex> vertex_map(model.vertices_size());
         for (auto v: model.vertices())
-            builder.add_vertex(model.position(v));
+            vertex_map[v.idx()] = builder.add_vertex(model.position(v));
 
-        for (int region_idx = 0; region_idx < num; ++region_idx) {
-            auto &edges = boundary_edges[region_idx]; // contains all the boundaries edges of a planar region
-            const auto &loops = extract_boundary_loop(&model, region_idx, edges);
+        auto remap = [&vertex_map](const Contour &poly) {
+            Contour result;
+            result.reserve(poly.size());
+            for (auto v: poly)
+                result.push_back(vertex_map[v.idx()]);
+            return result;
+        };
 
-            // the outer contour represented by a list of SurfaceMesh::Halfedge
-            Loop outer;
-            // the holes each represented by a list of SurfaceMesh::Halfedge
-            std::vector<Loop> holes;
-            if (loops.size() == 1)
-                outer = loops[0];
-            else if (loops.size() > 1)
-                classify(&model, loops, outer, holes);
-            else // empty
-                break;
+        auto is_valid_polygon = [](const Contour &poly) {
+            if (poly.size() < 3)
+                return false;
+            for (std::size_t i = 0; i < poly.size(); ++i) {
+                if (poly[i] == poly[(i + 1) % poly.size()])
+                    return false;
+            }
+            return true;
+        };
 
-            // the outer polygon represented by a list of SurfaceMesh::Vertex
-            Contour outer_poly;
-            for (auto h: outer) {
-                SurfaceMesh::Vertex v = model.target(h);
-                outer_poly.push_back(v);
+        // keep the original faces of a patch when the patch cannot be merged
+        auto add_original_faces = [&](const std::vector<SurfaceMesh::Face>& faces) {
+            for (auto f: faces) {
+                Contour poly;
+                for (auto v: model.vertices(f))
+                    poly.push_back(v);
+                if (!is_valid_polygon(poly)) {
+                    LOG_N_TIMES(3, WARNING) << "skipping an invalid face. " << COUNTER;
+                    continue;
+                }
+                if (!builder.add_face(remap(poly)).is_valid())
+                    LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
+            }
+        };
+
+        add_original_faces(unassigned_faces);
+
+        for (int patch_idx = 0; patch_idx < num; ++patch_idx) {
+            auto &edges = boundary_edges[patch_idx]; // contains all the boundaries edges of a planar patch
+            const auto &loops = extract_boundary_loop(&model, patch_id, patch_idx, edges);
+
+            std::vector<Loop> outers;   // boundary loops enclosing patch material
+            std::vector<Loop> holes;    // boundary loops enclosing holes
+            if (loops.empty() || !classify(&model, loops, patch_normals[patch_idx], outers, holes)) {
+                // the patch cannot be merged into polygons without holes; keep its faces unchanged
+                add_original_faces(patch_faces[patch_idx]);
+                continue;
             }
 
-            // the holes each represented by a list of SurfaceMesh::Vertex
+            std::vector<Contour> outer_polys;
+            outer_polys.reserve(outers.size());
+            bool valid = true;
+            for (const auto& loop : outers) {
+                Contour poly;
+                poly.reserve(loop.size());
+                for (auto h: loop)
+                    poly.push_back(model.target(h));
+                if (!is_valid_polygon(poly)) {
+                    valid = false;
+                    break;
+                }
+                outer_polys.push_back(poly);
+            }
+            if (!valid) {
+                add_original_faces(patch_faces[patch_idx]);
+                continue;
+            }
+
             std::vector<Contour> hole_polys;
+            hole_polys.reserve(holes.size());
             for (const auto& hs: holes) {
                 Contour hole_poly;
-                for (auto h: hs) {
-                    SurfaceMesh::Vertex v = model.target(h);
-                    hole_poly.push_back(v);
+                hole_poly.reserve(hs.size());
+                for (auto h: hs)
+                    hole_poly.push_back(model.target(h));
+                if (!is_valid_polygon(hole_poly)) {
+                    valid = false;
+                    break;
                 }
                 hole_polys.push_back(hole_poly);
             }
+            if (!valid) {
+                add_original_faces(patch_faces[patch_idx]);
+                continue;
+            }
 
-            const auto& normal = region_normals[region_idx];
-            const auto contours = split_complex_contour(outer_poly, hole_polys, normal, &model);
-            for (auto ct : contours) {
-                auto f = builder.add_face(ct);
-                if (!f.is_valid()) {
-                    LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
+            // A self-touching boundary visits a vertex twice, so the loop is not a simple polygon even when the
+            // patch has no holes. Such patches, and all patches with holes, are normalized with the CSG operators
+            // and split into convex polygons, because PolygonPartition requires simple contours and the mesh
+            // builder rejects a polygon with a repeated vertex.
+            bool simple = holes.empty();
+            if (simple) {
+                for (const auto& poly : outer_polys) {
+                    std::unordered_set<int> visited;
+                    for (auto v: poly) {
+                        if (!visited.insert(v.idx()).second) {
+                            simple = false;
+                            break;
+                        }
+                    }
+                    if (!simple)
+                        break;
+                }
+            }
+
+            if (simple) {
+                // The outer loops share vertices only, which the builder resolves if necessary.
+                for (const auto& poly : outer_polys) {
+                    if (!builder.add_face(remap(poly)).is_valid())
+                        LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
+                }
+            }
+            else {
+                const auto contours = split_complex_contour(outer_polys, hole_polys, patch_normals[patch_idx],
+                                                            &model, builder, vertex_map);
+                if (contours.empty()) {
+                    add_original_faces(patch_faces[patch_idx]);
                     continue;
+                }
+                for (const auto& ct : contours) {
+                    if (!builder.add_face(ct).is_valid())
+                        LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                 }
             }
         }
@@ -281,44 +439,48 @@ namespace easy3d {
     }
 
 
-    // classify the loops of a planar region into an "outer" loop and several "holes".
-    void SurfaceMeshPolygonization::classify(const SurfaceMesh *mesh, const std::vector<Loop> &loops, Loop &outer,
-                                             std::vector<Loop> &holes) {
-        auto loop_length = [](const SurfaceMesh *m, const Loop &loop) -> float {
-            float length = 0.0f;
-            for (auto h: loop)
-                length += m->edge_length(h);
-            return length;
-        };
-
-        std::size_t outer_idx = 0;
-        float longest_length = loop_length(mesh, loops[0]);
-        for (std::size_t i = 1; i < loops.size(); ++i) {
-            float length = loop_length(mesh, loops[i]);
-            if (length > longest_length) {
-                longest_length = length;
-                outer_idx = i;
-            }
-        }
-
-        outer.clear();
+    bool SurfaceMeshPolygonization::classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops,
+                                             const vec3& normal, std::vector<Loop>& outers,
+                                             std::vector<Loop>& holes) const {
+        outers.clear();
         holes.clear();
-        for (std::size_t i = 0; i < loops.size(); ++i) {
-            if (i == outer_idx)
-                outer = loops[i];
+
+        for (const auto& loop : loops) {
+            if (loop.size() < 3)
+                return false;
+
+            // The boundary halfedges are oriented with the patch material on their left. Thus, seen from the
+            // patch normal, outer boundaries are counter-clockwise (positive area) and holes clockwise (negative).
+            const vec3 origin = mesh->position(mesh->target(loop[0]));
+            double twice_area = 0.0;
+            for (std::size_t i = 0; i < loop.size(); ++i) {
+                const vec3& p = mesh->position(mesh->target(loop[i]));
+                const vec3& q = mesh->position(mesh->target(loop[(i + 1) % loop.size()]));
+                twice_area += static_cast<double>(dot(cross(p - origin, q - origin), normal));
+            }
+            const double area = 0.5 * twice_area;
+            if (!(area > 0.0) && !(area < 0.0))    // zero or NaN: cannot classify reliably
+                return false;
+
+            if (area > 0.0)
+                outers.push_back(loop);
             else
-                holes.push_back(loops[i]);
+                holes.push_back(loop);
         }
+
+        return !outers.empty();
     }
 
 
     std::vector<SurfaceMeshPolygonization::Loop>
-    SurfaceMeshPolygonization::extract_boundary_loop(const SurfaceMesh *mesh, int comp_id,
-                                                     std::set<SurfaceMesh::Halfedge> &boundary_edges) {
+    SurfaceMeshPolygonization::extract_boundary_loop(const SurfaceMesh *mesh,
+                                                     SurfaceMesh::FaceProperty<int> patch_id,
+                                                     int comp_id,
+                                                     std::set<SurfaceMesh::Halfedge> &boundary_edges) const {
         std::vector<Loop> loops;
         while (!boundary_edges.empty()) {
             SurfaceMesh::Halfedge start = *boundary_edges.begin();
-            assert(planar_segments_[mesh->face(start)] == comp_id);
+            assert(patch_id[mesh->face(start)] == comp_id);
 
             Loop loop;
             loop.push_back(start);
@@ -336,7 +498,7 @@ namespace easy3d {
                 } else {
                     SurfaceMesh::Halfedge test = mesh->opposite(next);
                     auto f = mesh->face(test);
-                    auto id = planar_segments_[f];
+                    auto id = patch_id[f];
                     if (id != comp_id) {
                         cur = next;
                         if (cur != start) {
@@ -375,8 +537,29 @@ namespace easy3d {
             v2.normalize();
             auto angle = geom::angle(v1, v2); // in [-pi, pi]
             angle = geom::to_degrees(std::abs(angle));
-            if (std::abs(angle) < angle_threshold)
-                vertices.push_back(v);
+            if (std::abs(angle) < angle_threshold) {
+                // Do not merge if a face sharing this vertex would collapse to a zero-area sliver: the
+                // operation cannot be undone, and a degenerate face would break the manifold output.
+                bool safe = true;
+                std::set<SurfaceMesh::Face> incident;
+                for (auto h: mesh->halfedges(v)) {
+                    if (mesh->face(h).is_valid())
+                        incident.insert(mesh->face(h));
+                }
+                for (auto f: incident) {
+                    std::vector<vec3> pts;
+                    for (auto vv: mesh->vertices(f)) {
+                        if (vv != v)
+                            pts.push_back(mesh->position(vv));
+                    }
+                    if (is_zero_area(pts)) {
+                        safe = false;
+                        break;
+                    }
+                }
+                if (safe)
+                    vertices.push_back(v);
+            }
         }
 
         for (auto v: vertices)

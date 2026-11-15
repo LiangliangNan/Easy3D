@@ -27,14 +27,24 @@
 #ifndef EASY3D_ALGO_SURFACE_MESH_POLYGONIZATION_H
 #define EASY3D_ALGO_SURFACE_MESH_POLYGONIZATION_H
 
+#include <set>
+#include <vector>
+
 #include <easy3d/core/surface_mesh.h>
 
 
 namespace easy3d {
 
+    class SurfaceMeshBuilder;
+
     /**
      * \brief Merge connected coplanar faces into a general polygon face.
      * \class SurfaceMeshPolygonization easy3d/algo/surface_mesh_polygonization.h
+     * \details Every maximal edge-connected planar patch is merged into one polygon face. If a patch's boundary
+     *      cannot be represented as a single polygon without holes (e.g., a patch with holes or a self-touching
+     *      boundary), the patch is split into convex polygons. If that is not possible either, the patch's
+     *      original faces are kept unchanged, so the operation never loses geometry. Degenerate faces (a
+     *      zero-length edge or a zero-area polygon) are removed, because they enclose no area.
      * \todo Support faces with holes (i.e., polygons with multiple contours)
      */
     class SurfaceMeshPolygonization {
@@ -46,7 +56,8 @@ namespace easy3d {
          * \param mesh The input surface mesh. Upon return, the mesh will be modified.
          * \param angle_threshold Two faces sharing a common edge are considered coplanar if the dihedral angle is
          *      smaller than \p angle_threshold (in degrees).
-         * \attention The current implementation doesn't support polygon faces with holes.
+         * \attention The result doesn't contain polygon faces with holes. Patches with holes are decomposed into
+         *      convex polygons or, if that fails, kept unchanged.
          */
         void apply(SurfaceMesh *mesh, float angle_threshold = 1.0f);
 
@@ -64,22 +75,28 @@ namespace easy3d {
         void internal_apply(SurfaceMesh *mesh, float angle_threshold);
 
         typedef std::vector<SurfaceMesh::Halfedge> Loop;
-        std::vector<Loop> extract_boundary_loop(const SurfaceMesh *mesh, int comp_id, std::set<SurfaceMesh::Halfedge>& boundary_edges);
+        std::vector<Loop> extract_boundary_loop(const SurfaceMesh *mesh,
+                                                SurfaceMesh::FaceProperty<int> patch_id,
+                                                int patch, std::set<SurfaceMesh::Halfedge>& boundary_edges) const;
 
-        // classify the loops of a planar region into an "outer" loop and several "holes".
-        void classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops, Loop& outer, std::vector<Loop>& holes);
+        // classifies the boundary loops of a planar patch by their orientation with respect to the patch normal:
+        // loops enclosing patch material are "outers" (CCW), loops enclosing holes are "holes" (CW). Returns false
+        // if a loop is degenerate, so the patch cannot be classified reliably.
+        bool classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops, const vec3& normal,
+                      std::vector<Loop>& outers, std::vector<Loop>& holes) const;
 
-        // split a complex polygon (with duplicate vertices and possibly hole) into a set of convex polygons
+        // splits a planar patch (outer boundaries and holes) into convex polygons. The patch boundaries are first
+        // normalized with the CSG operators (tessellator.h), because PolygonPartition requires simple contours
+        // without self-intersections or overlaps. Returns polygons of builder vertices; vertices created by the
+        // CSG operations are added to the builder.
         typedef std::vector<SurfaceMesh::Vertex> Contour;
         std::vector<Contour> split_complex_contour(
-                const Contour &outer_poly,              // the outer polygon represented by a list of SurfaceMesh::Vertex
-                const std::vector<Contour> &hole_polys, // the holes each represented by a list of SurfaceMesh::Vertex
-                const vec3 &normal,                     // the normal of the polygon
-                const SurfaceMesh *mesh
-        ) const;
-
-    private:
-        SurfaceMesh::FaceProperty<int> planar_segments_;
+                const std::vector<Contour> &outer_polys,   // outer boundaries, each in counter-clockwise order
+                const std::vector<Contour> &hole_polys,    // holes, each in clockwise order
+                const vec3 &normal,                        // the normal of the polygon
+                const SurfaceMesh *mesh,
+                SurfaceMeshBuilder &builder,
+                const std::vector<SurfaceMesh::Vertex> &vertex_map) const;
     };
 
 }

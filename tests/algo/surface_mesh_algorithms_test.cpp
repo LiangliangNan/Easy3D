@@ -139,6 +139,32 @@ bool test_algo_surface_mesh_topology() {
 }
 
 
+static void require_manifold_and_clean(SurfaceMesh *mesh) {
+    std::vector<int> incident(mesh->vertices_size(), 0);
+    for (auto f : mesh->faces())
+        for (auto v : mesh->vertices(f))
+            ++incident[v.idx()];
+    for (auto v : mesh->vertices()) {
+        test::require(mesh->is_manifold(v), "polygonization produced a non-manifold vertex");
+        // is_manifold() only detects several boundary gaps; also require a single fan of faces.
+        int circulating = 0;
+        for (auto h : mesh->halfedges(v)) {
+            if (mesh->face(h).is_valid())
+                ++circulating;
+        }
+        test::require(circulating == incident[v.idx()],
+                      "polygonization produced a vertex with multiple face fans");
+    }
+    for (auto f : mesh->faces()) {
+        test::require(!mesh->is_degenerate(f), "polygonization produced a degenerate face");
+        for (auto h : mesh->halfedges(f)) {
+            test::require(mesh->position(mesh->source(h)) != mesh->position(mesh->target(h)),
+                          "polygonization produced a zero-length edge");
+        }
+    }
+}
+
+
 bool test_algo_surface_mesh_curvature() {
     const std::string file = resource::directory() + "/data/mannequin.ply";
     SurfaceMesh *mesh = SurfaceMeshIO::load(file);
@@ -189,6 +215,28 @@ bool test_algo_surface_mesh_enumerator() {
     test::require(mesh->n_vertices()>0 && mesh->n_faces()>0,"algorithm produced an empty surface");
     for(const auto& p:mesh->points()) test::require(std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z),"algorithm produced non-finite geometry");
     delete mesh;
+
+    // A degenerate face without a non-degenerate edge neighbor keeps id -1 (documented contract); the
+    // polygonizer removes it (it encloses no area) instead of indexing per-patch arrays with that id.
+    auto* synthetic = new SurfaceMesh;
+    auto a = synthetic->add_vertex(vec3(0,0,0));
+    auto b = synthetic->add_vertex(vec3(1,0,0));
+    auto c = synthetic->add_vertex(vec3(0,1,0));
+    auto regular = synthetic->add_triangle(a,b,c);
+    auto d = synthetic->add_vertex(vec3(10,0,0));
+    auto e = synthetic->add_vertex(vec3(11,0,0));
+    auto g = synthetic->add_vertex(vec3(11,0,0));
+    auto degenerate = synthetic->add_triangle(d,e,g); // collapsed edge and isolated: degenerate
+    auto synthetic_ids = synthetic->face_property<int>("f:planar_partition", -1);
+    const int synthetic_num = SurfaceMeshEnumerator::enumerate_planar_components(synthetic, synthetic_ids, 1.0f);
+    test::require(synthetic_ids[regular]>=0 && synthetic_ids[regular]<synthetic_num,
+                  "a non-degenerate face must belong to a planar patch");
+    test::require(synthetic_ids[degenerate]==-1,
+                  "an isolated degenerate component must keep the unassigned id -1");
+    SurfaceMeshPolygonization polygonizer;
+    polygonizer.apply(synthetic);
+    test::require(synthetic->n_faces()==1,"polygonization must keep the regular face and drop the degenerate one");
+    delete synthetic;
     return true;
 }
 
@@ -356,7 +404,119 @@ bool test_algo_surface_mesh_polygonization() {
 
     test::require(mesh->n_vertices()>0 && mesh->n_faces()>0,"algorithm produced an empty surface");
     for(const auto& p:mesh->points()) test::require(std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z),"algorithm produced non-finite geometry");
+    require_manifold_and_clean(mesh);
     delete mesh;
+
+    // house.obj is a non-manifold polygon soup with degenerate faces; the result must be a clean manifold.
+    SurfaceMesh *house = SurfaceMeshIO::load(resource::directory() + "/data/house/house.obj");
+    test::require(house != nullptr, "failed to load house.obj");
+    const unsigned int house_faces = house->n_faces();
+    SurfaceMeshPolygonization house_polygonizer;
+    house_polygonizer.apply(house);
+    test::require(house->n_faces() > 0 && house->n_faces() < house_faces, "house.obj was not polygonized");
+    require_manifold_and_clean(house);
+    delete house;
+
+    // A textured closed mesh with borders and no degeneracies.
+    SurfaceMesh *domik = SurfaceMeshIO::load(resource::directory() + "/data/domik/domik.obj");
+    test::require(domik != nullptr, "failed to load domik.obj");
+    const unsigned int domik_faces = domik->n_faces();
+    SurfaceMeshPolygonization domik_polygonizer;
+    domik_polygonizer.apply(domik);
+    test::require(domik->n_faces() > 0 && domik->n_faces() < domik_faces, "domik.obj was not polygonized");
+    require_manifold_and_clean(domik);
+    delete domik;
+
+    // A coplanar patch with two holes must be merged without filling the holes.
+    auto* ring = new SurfaceMesh;
+    SurfaceMesh::Vertex grid[7][7];
+    for (int y = 0; y < 7; ++y)
+        for (int x = 0; x < 7; ++x)
+            grid[y][x] = ring->add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), 0.0f));
+
+    auto removed = [](int x, int y) {
+        return (x == 1 && y == 1) || (x == 3 && y == 3) || (x == 4 && y == 3);
+    };
+    for (int y = 0; y < 6; ++y) {
+        for (int x = 0; x < 6; ++x) {
+            if (removed(x, y))
+                continue;
+            ring->add_triangle(grid[y][x], grid[y][x + 1], grid[y + 1][x + 1]);
+            ring->add_triangle(grid[y][x], grid[y + 1][x + 1], grid[y + 1][x]);
+        }
+    }
+    test::require(ring->n_faces() == 66, "unexpected synthetic annulus");
+
+    SurfaceMeshPolygonization ring_polygonizer;
+    ring_polygonizer.apply(ring);
+    test::require(ring->n_faces() > 0 && ring->n_faces() < 66,
+                  "a planar patch with holes was not merged");
+
+    float area = 0.0f;
+    for (auto f : ring->faces()) {
+        test::require(!ring->is_degenerate(f), "polygonization produced a degenerate face");
+        vec3 acc(0.0f, 0.0f, 0.0f);
+        auto vertices = ring->vertices(f);
+        auto it = vertices.begin();
+        auto prev = ring->position(*it);
+        const auto first = prev;
+        for (++it; it != vertices.end(); ++it) {
+            const auto p = ring->position(*it);
+            acc += cross(prev, p);
+            prev = p;
+        }
+        acc += cross(prev, first);
+        area += 0.5f * acc.z;
+    }
+    test::require(std::fabs(area - 33.0f) < 1e-3f,
+                  "polygonization changed the area of a patch with holes (holes must stay open)");
+
+    auto visited = ring->halfedge_property<bool>("h:boundary_visited", false);
+    int loops = 0;
+    for (auto h : ring->halfedges()) {
+        if (!ring->is_border(h) || visited[h])
+            continue;
+        ++loops;
+        auto cur = h;
+        std::size_t guard = 0;
+        do {
+            visited[cur] = true;
+            cur = ring->next(cur);
+            ++guard;
+        } while (cur.is_valid() && cur != h && guard <= ring->n_halfedges());
+    }
+    ring->remove_halfedge_property(visited);
+    test::require(loops == 3, "the outer boundary and the two holes must remain");
+    require_manifold_and_clean(ring);
+    delete ring;
+
+    // A self-touching boundary loop must be normalized rather than handed to the mesh builder as a polygon
+    // with a repeated vertex (bunny.ply contains such a patch), otherwise the patch is silently dropped.
+    SurfaceMesh *bunny = SurfaceMeshIO::load(resource::directory() + "/data/bunny.ply");
+    test::require(bunny != nullptr, "failed to load bunny.ply");
+    auto mesh_area = [](SurfaceMesh *m) {
+        double sum = 0.0;
+        for (auto f : m->faces()) {
+            std::vector<vec3> p;
+            for (auto v : m->vertices(f))
+                p.push_back(m->position(v));
+            vec3 acc(0.0f, 0.0f, 0.0f);
+            for (std::size_t i = 0; i < p.size(); ++i)
+                acc += cross(p[i], p[(i + 1) % p.size()]);
+            sum += 0.5 * length(acc);
+        }
+        return sum;
+    };
+    const int bunny_faces = static_cast<int>(bunny->n_faces());
+    const double bunny_area = mesh_area(bunny);
+    SurfaceMeshPolygonization bunny_polygonizer;
+    bunny_polygonizer.apply(bunny);
+    test::require(bunny->n_faces() > 0 && bunny->n_faces() < bunny_faces,
+                  "bunny.ply was not polygonized");
+    test::require(std::fabs(mesh_area(bunny) - bunny_area) < 1e-3 * bunny_area,
+                  "polygonization dropped a self-touching patch of bunny.ply");
+    require_manifold_and_clean(bunny);
+    delete bunny;
     return true;
 }
 
