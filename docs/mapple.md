@@ -184,7 +184,10 @@ through the log panel.
       partition painted with per-component face colors (`f:color_components`,
       `f:color_planar_partition`), and uniform surface sampling into a new
       `<mesh>_sampled.ply` point cloud.
-- [ ] Point cloud: Delaunay 2D/3D.
+- [x] Point cloud: Delaunay 2D (`Delaunay2` on the XY projection, keeping the original
+      z) and 3D tetrahedralization (`Delaunay3`; the result is a `PolyMesh`). Both add
+      a named model (`<cloud>_delaunay_XY.ply`, `<cloud>_delaunay.ply`) and stop with
+      a log warning instead of adding an empty model when the input is degenerate.
 - [ ] Surface mesh: parameterization, geodesics, clipping/slicing.
 - [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
       reporting and cancellation instead of blocking the frame.
@@ -205,8 +208,9 @@ Phase 2 design notes:
   style whose scalar property no longer exists falls back to uniform coloring through
   `buffer::update`'s missing-field path.
 - Commands without parameters (subdivision, triangulation, dual mesh, connected
-  components, planar partition) execute straight from the menu item through
-  `run_process`; only parameterized commands open a window. The painting commands
+  components, planar partition, Delaunay 2D/3D) execute straight from the menu item
+  through `run_process`; only parameterized commands open a window. The painting
+  commands
   replace the drawable's appearance with their color property, so they drop any saved
   selection style and skip the post-command selection display refresh that would
   otherwise repaint the mesh with the selection colormap.
@@ -403,3 +407,17 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Validation: both backends build; the OpenGL binary was launched with
   `general_closed.obj` without startup errors. The commands were not exercised through
   scripted clicks.
+
+### 2026-11-15 — Phase 2 Delaunay reconstruction
+
+- Point cloud menu gained Delaunay 2D (XY projection) and Delaunay 3D. The 2D result is
+  a `SurfaceMesh` carrying the original z values; the 3D result is a tetrahedral
+  `PolyMesh`. Both add a named model and refresh face/vertex normals before it is
+  shown.
+- Degenerate input (fewer points than the simplex needs, or a projection with no
+  triangles / tetrahedra) logs a warning and adds no model.
+- `PolyMesh` needs no viewer changes: the rendering panel treats its drawables like
+  any other, while the model info and status bar show the name only.
+- Validation: both backends build; the app was launched with the `bunny.bin` point
+  cloud. `algo.point_cloud_delaunay_triangulation_2D` and `_3D` pass in the OpenGL
+  tree; the menu commands were not exercised through scripted clicks.

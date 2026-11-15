@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <chrono>
 
+#include <easy3d/algo/delaunay_2d.h>
+#include <easy3d/algo/delaunay_3d.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <easy3d/algo/point_cloud_ransac.h>
@@ -46,6 +48,7 @@
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -70,6 +73,10 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Poisson Reconstruction";
         case ProcessOp::PC_RANSAC:
             return "Extract Primitives";
+        case ProcessOp::PC_DELAUNAY_2D:
+            return "Delaunay 2D (XY)";
+        case ProcessOp::PC_DELAUNAY_3D:
+            return "Delaunay 3D";
         case ProcessOp::MESH_SMOOTH:
             return "Smooth Surface Mesh";
         case ProcessOp::MESH_SIMPLIFY:
@@ -111,7 +118,8 @@ void MappleViewer::open_process(ProcessOp op) {
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
     const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
-                                op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC;
+                                op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC ||
+                                op == ProcessOp::PC_DELAUNAY_2D || op == ProcessOp::PC_DELAUNAY_3D;
     if ((point_cloud_op && !cloud) || (!point_cloud_op && !mesh))
         return;
 
@@ -400,6 +408,92 @@ void MappleViewer::apply_process() {
                     selection_styles_.erase(model);
                     skip_selection_display = true;
                 }
+            }
+            break;
+
+        case ProcessOp::PC_DELAUNAY_2D:
+            if (cloud) {
+                if (cloud->n_vertices() < 3) {
+                    LOG(WARNING) << "delaunay 2D needs at least three points";
+                    break;
+                }
+                const std::vector<vec3> &pts = cloud->points();
+                std::vector<vec2> projected;
+                projected.reserve(pts.size());
+                for (const auto &p : pts)
+                    projected.emplace_back(p.x, p.y);
+
+                Delaunay2 delaunay;
+                delaunay.set_vertices(projected);
+                if (delaunay.nb_triangles() == 0) {
+                    LOG(WARNING) << "delaunay 2D produced no triangles (degenerate XY projection)";
+                    break;
+                }
+
+                auto *result = new SurfaceMesh;
+                result->set_name(file_system::name_less_extension(cloud->name()) + "_delaunay_XY.ply");
+                for (const auto &p : pts)
+                    result->add_vertex(p);
+                const int num_points = static_cast<int>(pts.size());
+                std::size_t added = 0;
+                for (unsigned int t = 0; t < delaunay.nb_triangles(); ++t) {
+                    SurfaceMesh::Vertex tri[3];
+                    bool valid = true;
+                    for (int j = 0; j < 3; ++j) {
+                        const int v = delaunay.tri_vertex(t, j);
+                        if (v < 0 || v >= num_points) {
+                            valid = false;
+                            break;
+                        }
+                        tri[j] = SurfaceMesh::Vertex(v);
+                    }
+                    if (valid && result->add_triangle(tri[0], tri[1], tri[2]).is_valid())
+                        ++added;
+                }
+                result->update_face_normals();
+                result->update_vertex_normals();
+                LOG(INFO) << "delaunay 2D (XY): " << added << " triangles from " << pts.size() << " points";
+                add_model(result);
+            }
+            break;
+
+        case ProcessOp::PC_DELAUNAY_3D:
+            if (cloud) {
+                if (cloud->n_vertices() < 4) {
+                    LOG(WARNING) << "delaunay 3D needs at least four points";
+                    break;
+                }
+                const std::vector<vec3> &pts = cloud->points();
+                Delaunay3 delaunay;
+                delaunay.set_vertices(pts);
+                if (delaunay.nb_tets() == 0) {
+                    LOG(WARNING) << "delaunay 3D produced no tetrahedra";
+                    break;
+                }
+
+                auto *result = new PolyMesh;
+                result->set_name(file_system::name_less_extension(cloud->name()) + "_delaunay.ply");
+                for (const auto &p : pts)
+                    result->add_vertex(p);
+                const int num_points = static_cast<int>(pts.size());
+                for (unsigned int t = 0; t < delaunay.nb_tets(); ++t) {
+                    PolyMesh::Vertex tet[4];
+                    bool valid = true;
+                    for (int j = 0; j < 4; ++j) {
+                        const int v = delaunay.tet_vertex(t, j);
+                        if (v < 0 || v >= num_points) {
+                            valid = false;
+                            break;
+                        }
+                        tet[j] = PolyMesh::Vertex(v);
+                    }
+                    if (valid)
+                        result->add_tetra(tet[0], tet[1], tet[2], tet[3]);
+                }
+                result->update_face_normals();
+                result->update_vertex_normals();
+                LOG(INFO) << "delaunay 3D: " << delaunay.nb_tets() << " tetrahedra from " << pts.size() << " points";
+                add_model(result);
             }
             break;
 

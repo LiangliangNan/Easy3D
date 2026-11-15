@@ -123,6 +123,11 @@ void MappleViewer::draw_menu_process() {
             open_process(ProcessOp::PC_RANSAC);
         if (ImGui::MenuItem("Poisson Reconstruction..."))
             open_process(ProcessOp::PC_POISSON);
+        ImGui::Separator();
+        if (ImGui::MenuItem("Delaunay 2D (XY)"))
+            run_process(ProcessOp::PC_DELAUNAY_2D);
+        if (ImGui::MenuItem("Delaunay 3D"))
+            run_process(ProcessOp::PC_DELAUNAY_3D);
         ImGui::EndMenu();
     }
 

@@ -174,10 +174,22 @@
     - [x] Phase 2 processing (first slice): Process menu with point-cloud normals/simplification and mesh smoothing/simplification/remeshing/hole filling/polygonization, each behind a modal parameter window and logged to the Log panel. Reconstruction and the remaining algorithms are still pending.
     - [x] Phase 2 point-cloud reconstruction and primitives: Poisson reconstruction (adds a trimmed/named mesh) and RANSAC primitive extraction with per-primitive coloring. Delaunay 2D/3D and the remaining mesh algorithms are still pending.
     - [x] Phase 2 remaining surface-mesh algorithms: fairing, Catmull-Clark/Loop/Sqrt3 subdivision, triangulation, dual mesh, connected components and planar partition (face coloring), and surface sampling into a new point cloud. Parameterization, geodesics, clipping/slicing, Delaunay, and progress/cancellation for long commands remain.
+    - [x] Phase 2 Delaunay: 2D triangulation on the XY projection (new mesh) and 3D tetrahedralization (new `PolyMesh`), both as new named models. Parameterization, geodesics, clipping/slicing, and progress/cancellation for long commands remain.
 
   - Check if clipper can be used to handle overlapping faces.
   - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).
   - Previous timer events may interrupt the current one when visualizing pivot points;
+
+
+(1) TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
+(2) RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations).
+(3) The Vulkan migration is most complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or could become redundant and be deleted after small modification/adaptation. Investigate which classes (and/or their members) have the potential to be removed.
+
+Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and and_drawable. Should they also return a shared_ptr (instead of raw pointer)? Relevant classes (not a complete list): SurfaceMeshIO, PolyMeshIO, GraphIO, PointCloudIO, ImageIO. and many other places.
+
+Hovering mouse highlights the object/face under the cursor (in ModelPicker/FacePicker/ObjectManipulation tutorials).
+
+Use another coding agent to *proofread* the code changes, documentation, and comments.
 
 
 
