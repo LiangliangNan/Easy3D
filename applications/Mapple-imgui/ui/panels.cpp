@@ -279,38 +279,30 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     ImGui::Separator();
     Renderer *renderer = model->renderer();
 
-    for (const auto &drawable : renderer->triangles_drawables()) {
-        auto *d = dynamic_cast<TrianglesDrawable *>(drawable.get());
-        if (!d)
-            continue;
-        ImGui::PushID(d);
-        ImGui::TextUnformatted(d->name().c_str());
-        ImGui::Indent();
+    // Fixed order: faces, edges, borders, vertices, locks. Unknown drawables come last.
+    // Prefix matches so the polyhedral mesh's "faces:border"/"faces:interior" stay with the faces.
+    auto rank = [](const std::string &name) {
+        if (name.rfind("faces", 0) == 0) return 0;
+        if (name.rfind("edges", 0) == 0) return 1;
+        if (name == "borders") return 2;
+        if (name.rfind("vertices", 0) == 0) return 3;
+        if (name == "locks") return 4;
+        return 5;
+    };
+    std::vector<Drawable *> drawables;
+    for (const auto &d : renderer->triangles_drawables())
+        drawables.push_back(d.get());
+    for (const auto &d : renderer->lines_drawables())
+        drawables.push_back(d.get());
+    for (const auto &d : renderer->points_drawables())
+        drawables.push_back(d.get());
+    // Stable, so drawables sharing a name keep the renderer's type order.
+    std::stable_sort(drawables.begin(), drawables.end(), [&rank](const Drawable *a, const Drawable *b) {
+        return rank(a->name()) < rank(b->name());
+    });
 
-        bool visible = d->is_visible();
-        if (ImGui::Checkbox("Visible", &visible)) {
-            d->set_visible(visible);
-            update();
-        }
-
-        vec4 color = d->color();
-        if (ImGui::ColorEdit3("Color", color.data(), kSwatch)) {
-            d->set_uniform_coloring(color);
-            update();
-        }
-
-        bool smooth = d->smooth_shading();
-        if (ImGui::Checkbox("Smooth", &smooth)) {
-            d->set_smooth_shading(smooth);
-            update();
-        }
-
-        float opacity = d->opacity();
-        if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
-            d->set_opacity(opacity);
-            update();
-        }
-
+    // Distinct back color is a State property, so faces and points share these controls.
+    auto draw_back_color = [this](Drawable *d) {
         bool back_color = d->distinct_back_color();
         if (ImGui::Checkbox("Back color", &back_color)) {
             d->set_distinct_back_color(back_color);
@@ -324,67 +316,58 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
                 update();
             }
         }
+    };
 
-        ImGui::Unindent();
-        ImGui::PopID();
-        ImGui::Spacing();
-    }
+    for (Drawable *drawable : drawables) {
+        auto *triangles = dynamic_cast<TrianglesDrawable *>(drawable);
+        auto *lines = dynamic_cast<LinesDrawable *>(drawable);
+        auto *points = dynamic_cast<PointsDrawable *>(drawable);
 
-    for (const auto &drawable : renderer->lines_drawables()) {
-        auto *d = dynamic_cast<LinesDrawable *>(drawable.get());
-        if (!d)
-            continue;
-        ImGui::PushID(d);
-        ImGui::TextUnformatted(d->name().c_str());
+        ImGui::PushID(drawable);
+        ImGui::TextUnformatted(drawable->name().c_str());
         ImGui::Indent();
 
-        bool visible = d->is_visible();
+        bool visible = drawable->is_visible();
         if (ImGui::Checkbox("Visible", &visible)) {
-            d->set_visible(visible);
+            drawable->set_visible(visible);
             update();
         }
 
-        vec4 color = d->color();
+        ImGui::SameLine();
+        vec4 color = drawable->color();
         if (ImGui::ColorEdit3("Color", color.data(), kSwatch)) {
-            d->set_uniform_coloring(color);
+            drawable->set_uniform_coloring(color);
             update();
         }
 
-        float width = d->line_width();
-        if (ImGui::SliderFloat("Width", &width, 1.0f, 10.0f, "%.1f px")) {
-            d->set_line_width(width);
-            update();
-        }
+        if (triangles) {
+            bool smooth = triangles->smooth_shading();
+            if (ImGui::Checkbox("Smooth", &smooth)) {
+                triangles->set_smooth_shading(smooth);
+                update();
+            }
 
-        ImGui::Unindent();
-        ImGui::PopID();
-        ImGui::Spacing();
-    }
+            float opacity = triangles->opacity();
+            if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
+                triangles->set_opacity(opacity);
+                update();
+            }
 
-    for (const auto &drawable : renderer->points_drawables()) {
-        auto *d = dynamic_cast<PointsDrawable *>(drawable.get());
-        if (!d)
-            continue;
-        ImGui::PushID(d);
-        ImGui::TextUnformatted(d->name().c_str());
-        ImGui::Indent();
+            draw_back_color(triangles);
+        } else if (lines) {
+            float width = lines->line_width();
+            if (ImGui::SliderFloat("Width", &width, 1.0f, 10.0f, "%.1f px")) {
+                lines->set_line_width(width);
+                update();
+            }
+        } else if (points) {
+            float size = points->point_size();
+            if (ImGui::SliderFloat("Size", &size, 1.0f, 20.0f, "%.1f px")) {
+                points->set_point_size(size);
+                update();
+            }
 
-        bool visible = d->is_visible();
-        if (ImGui::Checkbox("Visible", &visible)) {
-            d->set_visible(visible);
-            update();
-        }
-
-        vec4 color = d->color();
-        if (ImGui::ColorEdit3("Color", color.data(), kSwatch)) {
-            d->set_uniform_coloring(color);
-            update();
-        }
-
-        float size = d->point_size();
-        if (ImGui::SliderFloat("Size", &size, 1.0f, 20.0f, "%.1f px")) {
-            d->set_point_size(size);
-            update();
+            draw_back_color(points);
         }
 
         ImGui::Unindent();

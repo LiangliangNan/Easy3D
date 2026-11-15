@@ -702,3 +702,19 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   sizes, visibility and bitrate and wrote the same values back, proving the
   constructor applies them, with a dead `recent.0` entry pruned. The native file
   dialogs and the Open Recent menu clicks were not scripted.
+
+### 2026-11-15 — Rendering panel drawable order
+
+- The per-model drawables of the Rendering panel now appear in a fixed order:
+  faces, edges, borders, vertices, locks. The panel previously listed the
+  renderer's three drawable collections in turn (triangles, then lines, then
+  points), so the three loop passes are replaced by one pass over the collected
+  drawables, stably sorted by a name rank. Names are matched by prefix so the
+  polyhedral mesh's `faces:border`/`faces:interior` stay in the faces group and
+  unknown drawables come last.
+- Each drawable's "Visible" checkbox and "Color" swatch share one line; the
+  type-specific controls (Smooth/Opacity for faces, Width for lines, Size for
+  points) remain below. The "Back color" controls are shared by faces and points,
+  since distinct back coloring is a `State` property of both.
+- Validation: both trees build and the app launches; the row layout was not
+  exercised through scripted clicks.
