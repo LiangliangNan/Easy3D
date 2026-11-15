@@ -277,7 +277,6 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
 
     ImGui::TextUnformatted(file_system::simple_name(model->name()).c_str());
     ImGui::Separator();
-    draw_model_info(model);
     Renderer *renderer = model->renderer();
 
     for (const auto &drawable : renderer->triangles_drawables()) {
@@ -436,6 +435,13 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
 
     if (models().empty())
         ImGui::TextDisabled("No models. Drop a file here or use File > Open.");
+
+    // The info belongs to the selected model, so it sits directly above the list that
+    // selects it, not in the rendering panel (which restyles the active model).
+    if (Model *current = current_model()) {
+        draw_model_info(current);
+        ImGui::Separator();
+    }
 
     const float buttons_height = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginChild("##models-list", ImVec2(0, -buttons_height));

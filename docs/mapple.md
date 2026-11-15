@@ -108,8 +108,9 @@ snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
 
 ### Phase 1 — inspection and interaction (this iteration)
 
-- [x] Model data inspection: the active model's path, vertex/edge/face counts, bounding
-      box, and a collapsible property listing (`Model::property_stats`).
+- [x] Model data inspection: the selected model's path, vertex/edge/face counts,
+      bounding box, and a collapsible property listing (`Model::property_stats`),
+      shown in the Models panel so it always describes the highlighted row.
 - [x] Point/picking readouts in the status bar: nearest visible primitive under the
       pointer (world coordinates, face or point index), highlighted in Click mode only;
       the query is throttled and uses `Viewer::pick` in logical window coordinates.
@@ -370,3 +371,9 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   a later selection change cannot repaint over the segmentation.
 - Validation: both backends build. The commands were not exercised through scripted
   clicks.
+
+### 2026-11-15 — Model info moved to the Models panel
+
+- "Model Info" left the Rendering panel and now sits above the Models list, driven by
+  the selected model. With several models loaded it describes the highlighted row
+  instead of whatever model happened to be active in the rendering panel.
