@@ -60,82 +60,6 @@ namespace easy3d {
             return 0.5f * length(n) <= 1e-6f * max_len2;
         }
 
-        float cross_2d(const vec2 &u, const vec2 &v) {
-            return u.x * v.y - u.y * v.x;
-        }
-
-        // Closed segments ab and cd intersect or touch. Adjacent segments share an endpoint, so callers skip them.
-        bool segments_intersect(const vec2 &a, const vec2 &b, const vec2 &c, const vec2 &d) {
-            const float d1 = cross_2d(b - a, c - a);
-            const float d2 = cross_2d(b - a, d - a);
-            const float d3 = cross_2d(d - c, a - c);
-            const float d4 = cross_2d(d - c, b - c);
-            if (((d1 > 0.0f && d2 < 0.0f) || (d1 < 0.0f && d2 > 0.0f)) &&
-                ((d3 > 0.0f && d4 < 0.0f) || (d3 < 0.0f && d4 > 0.0f)))
-                return true;
-
-            auto between = [](float p, float q, float r) {
-                return std::min(p, q) <= r && r <= std::max(p, q);
-            };
-            if (d1 == 0.0f && between(a.x, b.x, c.x) && between(a.y, b.y, c.y))
-                return true;
-            if (d2 == 0.0f && between(a.x, b.x, d.x) && between(a.y, b.y, d.y))
-                return true;
-            if (d3 == 0.0f && between(c.x, d.x, a.x) && between(c.y, d.y, a.y))
-                return true;
-            if (d4 == 0.0f && between(c.x, d.x, b.x) && between(c.y, d.y, b.y))
-                return true;
-            return false;
-        }
-
-        // A contour is simple if it does not visit the same position twice and no two non-adjacent edges cross or
-        // touch. Only simple contours may be handed to PolygonPartition.
-        bool is_simple_contour(const std::vector<vec2> &points) {
-            const std::size_t n = points.size();
-            if (n < 3)
-                return false;
-
-            std::vector<std::pair<float, float> > coords;
-            coords.reserve(n);
-            for (const auto &p : points)
-                coords.emplace_back(p.x, p.y);
-            std::sort(coords.begin(), coords.end());
-            for (std::size_t i = 1; i < n; ++i) {
-                if (coords[i] == coords[i - 1])
-                    return false;
-            }
-
-            // Sort the edges by their left end and only compare an edge with those whose x-range overlaps it.
-            struct Segment {
-                std::size_t index;
-                float min_x, max_x, min_y, max_y;
-            };
-            std::vector<Segment> segments(n);
-            for (std::size_t i = 0; i < n; ++i) {
-                const vec2 &p = points[i];
-                const vec2 &q = points[(i + 1) % n];
-                segments[i] = {i, std::min(p.x, q.x), std::max(p.x, q.x), std::min(p.y, q.y), std::max(p.y, q.y)};
-            }
-            std::sort(segments.begin(), segments.end(),
-                      [](const Segment &a, const Segment &b) { return a.min_x < b.min_x; });
-
-            for (std::size_t i = 0; i < n; ++i) {
-                const Segment &s = segments[i];
-                for (std::size_t j = i + 1; j < n && segments[j].min_x <= s.max_x; ++j) {
-                    const Segment &t = segments[j];
-                    if (t.min_y > s.max_y || t.max_y < s.min_y)
-                        continue;
-                    // skip the same edge and edges sharing a vertex
-                    if (t.index == (s.index + 1) % n || (t.index + 1) % n == s.index)
-                        continue;
-                    if (segments_intersect(points[s.index], points[(s.index + 1) % n],
-                                           points[t.index], points[(t.index + 1) % n]))
-                        return false;
-                }
-            }
-            return true;
-        }
-
     }
 
 
@@ -496,14 +420,14 @@ namespace easy3d {
             // is therefore normalized by the CSG operators, like every patch with holes. The projected loops are
             // kept because the partition works in the patch plane.
             const Plane3 plane(model.position(outer_polys.front().front()), patch_normals[patch_idx]);
-            std::vector<std::vector<vec2> > projected(outer_polys.size());
+            std::vector<Polygon2> projected(outer_polys.size());
             bool simple = holes.empty();
             for (std::size_t i = 0; i < outer_polys.size() && simple; ++i) {
                 const auto& poly = outer_polys[i];
                 projected[i].reserve(poly.size());
                 for (auto v: poly)
                     projected[i].push_back(plane.to_2d(model.position(v)));
-                simple = is_simple_contour(projected[i]);
+                simple = projected[i].is_simple();
             }
 
             std::vector<Contour> polygons;

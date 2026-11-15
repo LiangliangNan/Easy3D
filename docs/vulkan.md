@@ -9910,7 +9910,7 @@ messages for `domik.obj`, and, on `building.off`, the builder's report that it f
 vertices by copying them (the documented repair in `end_surface()`); no partition or merge failure
 is reported. `easy3d/util/version.h` is unchanged.
 
-### 2026-11-15 — batch 82: Hertel-Mehlhorn gets only geometrically simple loops; pinch points are split
+### 2026-11-15 — batch 82: GenericPolygon::is_simple(); Hertel-Mehlhorn gets only geometrically simple loops; is_clockwise corrected
 
 **Scope.** Polygonizing `house.obj` printed `convex partition failed (method:
 Hertel-Mehlhorn)` eleven times. Root cause was in batch 81's simple branch, not in
@@ -9919,14 +9919,16 @@ when it merely did not visit the same *vertex index* twice. After `Surfacer::sti
 patch boundary can revisit the same *position* through different vertices (seam vertices at identical
 coordinates) and can cross itself (e.g. `(-6.69286, 5.02083) (-6.70143, 5.02083) (-6.71, 5.02083)
 (-6.70143, 5.02083) ...`), and Hertel-Mehlhorn fails its ear-clipping triangulation on such input.
-The branch now runs `is_simple_contour()` before partitioning: it rejects repeated positions and any
-pair of non-adjacent edges that cross or touch (orientation test, collinear overlap included), using
-a sweep ordered by minimum x, so only edges with overlapping x-ranges are compared. A non-simple loop,
-or an HM failure, falls through to the existing CSG normalization (`Tessellator`, boundary only,
-`WINDING_POSITIVE`) followed by `PolygonPartition::apply()`, so the patch is still decomposed into
-convex faces. For unstitched `house.obj` this changes the result from 5212 to 5140 faces: loops that
-HM used to "partition" although their boundary touches itself are now normalized first, which removes
-small overlaps and gives fewer, larger faces.
+The check now lives in `GenericPolygon::is_simple()` (`easy3d/core/polygon.h`, immediately before
+`is_clockwise()`), and the polygonizer calls it on the loop projected into the patch plane; it
+rejects repeated positions and any pair of non-adjacent edges that cross or touch (orientation test,
+collinear overlap included), using a sweep ordered by minimum x, so only edges with overlapping
+x-ranges are compared. A non-simple loop, or an HM failure, falls through to the existing CSG
+normalization (`Tessellator`, boundary only, `WINDING_POSITIVE`) followed by
+`PolygonPartition::apply()`, so the patch is still decomposed into convex faces. For unstitched
+`house.obj` this changes the result from 5212 to 5140 faces: loops that HM used to "partition"
+although their boundary touches itself are now normalized first, which removes small overlaps and
+gives fewer, larger faces.
 
 The CSG path had a second bug that the new routing exposed: a normalized patch can still touch itself
 at a pinch vertex, and `PolygonPartition::apply()` then returned a part that repeats that vertex in
@@ -9939,8 +9941,34 @@ means that a loop does not revisit a position and does not cross or touch itself
 which still repeats a vertex is split into cycles sharing it; it also states that an HM failure falls
 back to CSG normalization.
 
+Proofreading the `GenericPolygon` documentation found a defect in `is_clockwise()`: the documented
+contract said "negative signed area: clockwise, positive: counter-clockwise", but the trapezoid sum
+omitted the closing edge (the loop stopped one edge early), so the answer depended on which vertex
+was first (the counter-clockwise square (0,0),(2,0),(2,2),(0,2) returned true for starts 0-2 and
+false for start 3, while `signed_area()` was always +4), and on closed input the sign was inverted
+with respect to the documentation. `csg::difference_of()` had adapted to that inverted meaning,
+so its two conditions are now swapped: `is_clockwise()` is `signed_area() < 0` (rotation-invariant,
+positive area = counter-clockwise, consistent with the rest of Easy3D), the difference keeps
+`polygon_a` counter-clockwise and reverses `polygon_b` to clockwise before `WINDING_POSITIVE`, and
+the A-minus-B result is unchanged. Since this corrects a public API, the return value flips for every
+polygon; code that compensated for the old inverted meaning has to invert its checks (the only
+in-tree consumer is the tutorial that colors outer contours and holes differently). The rest of the
+class documentation was aligned with the code: the polygon is implicitly closed and the first vertex
+must not be repeated at the end; the orientation convention is stated once for the whole class; the
+size constructor produces vertices at the origin (`Vec` zero-initializes); the point-containment test
+classifies points exactly on an edge either way; `contains(polygon)` does not test edge crossings and
+trivially accepts an empty polygon; `signed_area()` is the algebraic sum for a self-intersecting
+polygon; and `bbox()` is invalid, not "empty", for an empty polygon.
+
 **Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 111/111 and Vulkan
-`build-vulkan-check` 145/145, no flakes. Polygonization-only probe (Release, CGAL off): every output
+`build-vulkan-check` 145/145, no flakes. A scratch probe linked against the release library
+confirmed the corrected orientation: the counter-clockwise square returns false for all four
+starting vertices, the clockwise square returns true for all four, the counter-clockwise triangle
+returns false, and `csg::difference_of()` still yields the outer 100 and the hole -16 for a 10x10
+square minus a centered 4x4 square. `is_simple()` returns true for the square and the triangle and
+false for a bow-tie, a pinch, a repeated closing vertex, a repeated vertex and a vertex lying
+exactly on an edge, matching the removed free function (the polygonization probes are unchanged).
+Polygonization-only probe (Release, CGAL off): every output
 has zero degenerate faces, zero-length edges, non-convex faces, non-manifold vertices, multi-fan
 vertices and isolated vertices on `house.obj` (11262 -> 5140), `domik/domik.obj` (3456 -> 2820),
 `bunny.ply` (30779 -> 24933), `fandisk.off` (12946 -> 2510), `fandisk_quads.off` (764 -> 439),

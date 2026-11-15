@@ -48,9 +48,9 @@ namespace easy3d {
      *      between different patches delimit the patch boundary.
      *
      *      Each patch is replaced by convex polygons whenever possible:
-     *      - If the patch has no holes and every boundary loop is simple (it does not revisit a position and no
-     *        two non-adjacent edges cross or touch), each outer boundary loop is partitioned into convex polygons
-     *        with PolygonPartition (Hertel-Mehlhorn); an already convex loop becomes a single face.
+     *      - If the patch has no holes and every boundary loop is simple (i.e., GenericPolygon::is_simple()
+     *        holds for its projection into the patch plane), each outer boundary loop is partitioned into convex
+     *        polygons with PolygonPartition (Hertel-Mehlhorn); an already convex loop becomes a single face.
      *      - If the patch has holes or a self-touching boundary, or the partition above fails, its boundary is
      *        first normalized by the CSG operators (easy3d/algo/tessellator.h) and then partitioned into convex
      *        polygons with PolygonPartition (Hertel-Mehlhorn). The holes remain open, and no face in the result

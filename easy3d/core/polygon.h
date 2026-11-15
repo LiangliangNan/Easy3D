@@ -39,10 +39,18 @@ namespace easy3d {
 
     /**
      * \brief A polygon represented by an ordered sequence of 2D vertices.
-     * \details The polygon is implicitly closed between its final and first
-     * vertices. Point containment uses an even-odd ray-crossing test; callers
-     * should provide a simple polygon for unambiguous results.
-     * \see Polygon2
+     * \details The polygon is implicitly closed, i.e., the last vertex is connected to the first one. The closing
+     *      edge is not stored, so the first vertex must not be repeated at the end. The vertices are accessed
+     *      through the inherited std::vector interface (size(), operator[], begin(), end(), etc.).
+     *
+     *      The orientation is that of the vertex order in the xy-plane: a counter-clockwise polygon has a
+     *      positive signed area and is_clockwise() returns false, a clockwise polygon has a negative signed area
+     *      and is_clockwise() returns true.
+     *
+     *      Point containment uses an even-odd ray-crossing test. Results are only unambiguous for a simple
+     *      polygon, i.e., one whose vertices are pairwise distinct and whose non-adjacent edges do not cross
+     *      or touch each other (see is_simple()).
+     * \see Polygon2, is_simple(), is_clockwise()
      */
     /// \class GenericPolygon easy3d/core/polygon.h
     template<typename FT>
@@ -53,7 +61,7 @@ namespace easy3d {
         /// Construct an empty polygon.
         GenericPolygon() = default;
 
-        /// Construct a polygon with a fixed number of default-initialized vertices.
+        /// Construct a polygon with a fixed number of vertices, all at the origin (0, 0).
         /// \param size Number of vertices.
         explicit GenericPolygon(std::size_t size) { BaseClass::resize(size); }
 
@@ -66,22 +74,43 @@ namespace easy3d {
         GenericPolygon(InputIterator first, InputIterator last);
 
         /**
-         * \brief Checks if the polygon has a clockwise orientation (right-hand rule).
-         * \details This method determines the orientation of a polygon based on the sign of its signed area:
-         *              - negative: clockwise
-         *              - positive: counterclockwise
+         * \brief Checks whether the polygon is simple.
+         * \details A polygon is simple if its vertices are pairwise distinct and no two non-adjacent edges
+         *      intersect or touch each other; adjacent edges share a vertex by definition. Because the polygon
+         *      is implicitly closed, pairwise distinctness includes the last vertex not repeating the first
+         *      position. A polygon with fewer than three vertices is not simple.
+         *
+         *      Vertices are compared by exact equality and the edge test uses orientation predicates, so
+         *      nearly coincident vertices and nearly touching edges are not detected. Algorithms that require
+         *      a simple polygon (e.g., the convex partition in easy3d/algo/polygon_partition.h) expect input
+         *      that passes this check; a polygon that fails it must first be normalized, for instance with the
+         *      CSG operators in easy3d/algo/tessellator.h.
+         * \return True when the polygon is simple.
+         * \sa is_clockwise()
+         */
+        bool is_simple() const;
+
+        /**
+         * \brief Checks whether the polygon is clockwise.
+         * \details The result is the sign of signed_area(): a clockwise polygon has a negative signed area and
+         *      returns true, a counter-clockwise polygon has a positive signed area and returns false. The
+         *      orientation is a property of the vertex order and does not depend on which vertex is first. For
+         *      a self-intersecting polygon the sign is that of the algebraic area, which is not a meaningful
+         *      orientation; use is_simple() to detect such input.
          * \return True when the vertex order is clockwise.
+         * \sa is_simple(), signed_area()
          */
         bool is_clockwise() const;
 
-        /// \brief Reverses the orientation of the polygon. The first vertex (pointed to by `p.begin()`, or [0])
-        /// remains the same.
+        /// \brief Reverses the orientation of the polygon, i.e., turns a clockwise polygon into a
+        /// counter-clockwise one and vice versa. The first vertex p[0] remains the same.
         void reverse_orientation();
 
         /**
          * \brief Test whether a point lies inside the polygon.
          * \param point Point to test.
-         * \return True when the even-odd ray-crossing test classifies it inside.
+         * \return True when the even-odd ray-crossing test classifies it inside. A point exactly on an edge or
+         *      vertex is not handled specially and may be classified either way.
          */
         bool contains(const Vec<2, FT> &point) const;
 
@@ -89,12 +118,14 @@ namespace easy3d {
          * \brief Test whether all vertices of another polygon lie inside this polygon.
          * \param plg Polygon whose vertices are tested.
          * \return True when every vertex passes contains(point); edge crossings
-         *         between the polygons are not tested.
+         *         between the polygons are not tested. An empty polygon is trivially contained.
          */
         bool contains(const GenericPolygon<FT> &plg) const;
 
-        /// Return signed area (positive counterclockwise, negative clockwise).
-        /// \return Signed area in squared coordinate units.
+        /// Return the signed area of the polygon.
+        /// \return Positive for counter-clockwise vertex order, negative for clockwise order, in squared
+        ///         coordinate units. For a self-intersecting polygon this is the algebraic sum, whose magnitude
+        ///         can be smaller than the area that is actually enclosed.
         FT signed_area() const;
 
         /// Return the absolute area of the polygon.
@@ -102,7 +133,7 @@ namespace easy3d {
         FT area() const;
 
         /// Return the smallest axis-aligned box containing the vertices.
-        /// \return Polygon bounding box; empty for an empty polygon.
+        /// \return Polygon bounding box; it is invalid (see GenericBox::is_valid()) for an empty polygon.
         GenericBox<2, FT> bbox() const;
     };
 
@@ -115,18 +146,83 @@ namespace easy3d {
     }
 
     template<typename FT>
-    inline bool GenericPolygon<FT>::is_clockwise() const {
-    #if 0
-        return signed_area() < 0;
-    #else
-        FT sum = FT(0);
-        for (std::size_t i = 0; i + 1 < BaseClass::size(); ++i) {
-            const auto &p1 = BaseClass::at(i);
-            const auto &p2 = BaseClass::at((i + 1) % BaseClass::size());
-            sum += (p2.x - p1.x) * (p2.y + p1.y);
+    inline bool GenericPolygon<FT>::is_simple() const {
+        const std::size_t n = BaseClass::size();
+        if (n < 3)
+            return false;
+
+        // The polygon is implicitly closed, so a position must not occur twice (in particular, the last vertex
+        // must not repeat the first one).
+        std::vector<std::pair<FT, FT> > coords;
+        coords.reserve(n);
+        for (const auto &p : *this)
+            coords.emplace_back(p.x, p.y);
+        std::sort(coords.begin(), coords.end());
+        for (std::size_t i = 1; i < n; ++i) {
+            if (coords[i] == coords[i - 1])
+                return false;
         }
-        return sum < 0;
-    #endif
+
+        const auto cross = [](const Vec<2, FT> &u, const Vec<2, FT> &v) {
+            return u.x * v.y - u.y * v.x;
+        };
+        const auto between = [](FT p, FT q, FT r) {
+            return std::min(p, q) <= r && r <= std::max(p, q);
+        };
+        // Closed segments ab and cd intersect or touch. Adjacent segments share an endpoint, so callers skip them.
+        const auto intersect = [&](const Vec<2, FT> &a, const Vec<2, FT> &b,
+                                   const Vec<2, FT> &c, const Vec<2, FT> &d) {
+            const FT d1 = cross(b - a, c - a);
+            const FT d2 = cross(b - a, d - a);
+            const FT d3 = cross(d - c, a - c);
+            const FT d4 = cross(d - c, b - c);
+            if (((d1 > FT(0) && d2 < FT(0)) || (d1 < FT(0) && d2 > FT(0))) &&
+                ((d3 > FT(0) && d4 < FT(0)) || (d3 < FT(0) && d4 > FT(0))))
+                return true;
+            if (d1 == FT(0) && between(a.x, b.x, c.x) && between(a.y, b.y, c.y))
+                return true;
+            if (d2 == FT(0) && between(a.x, b.x, d.x) && between(a.y, b.y, d.y))
+                return true;
+            if (d3 == FT(0) && between(c.x, d.x, a.x) && between(c.y, d.y, a.y))
+                return true;
+            if (d4 == FT(0) && between(c.x, d.x, b.x) && between(c.y, d.y, b.y))
+                return true;
+            return false;
+        };
+
+        // Sort the edges by their left end and only compare an edge with those whose x-range overlaps it.
+        struct Segment {
+            std::size_t index;
+            FT min_x, max_x, min_y, max_y;
+        };
+        std::vector<Segment> segments(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            const Vec<2, FT> &p = BaseClass::at(i);
+            const Vec<2, FT> &q = BaseClass::at((i + 1) % n);
+            segments[i] = {i, std::min(p.x, q.x), std::max(p.x, q.x), std::min(p.y, q.y), std::max(p.y, q.y)};
+        }
+        std::sort(segments.begin(), segments.end(),
+                  [](const Segment &a, const Segment &b) { return a.min_x < b.min_x; });
+
+        for (std::size_t i = 0; i < n; ++i) {
+            const Segment &s = segments[i];
+            for (std::size_t j = i + 1; j < n && segments[j].min_x <= s.max_x; ++j) {
+                const Segment &t = segments[j];
+                if (t.min_y > s.max_y || t.max_y < s.min_y)
+                    continue;
+                if (t.index == (s.index + 1) % n || (t.index + 1) % n == s.index)  // adjacent edges
+                    continue;
+                if (intersect(BaseClass::at(s.index), BaseClass::at((s.index + 1) % n),
+                              BaseClass::at(t.index), BaseClass::at((t.index + 1) % n)))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    template<typename FT>
+    inline bool GenericPolygon<FT>::is_clockwise() const {
+        return signed_area() < 0;
     }
 
     template<typename FT>

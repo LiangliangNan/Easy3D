@@ -438,12 +438,14 @@ namespace easy3d {
         void difference_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result) {
             result.clear();
 
+            // WINDING_POSITIVE keeps the counter-clockwise contour (polygon_a) and removes the clockwise one
+            // (polygon_b).
             result.push_back(polygon_a);
-            if (!polygon_a.is_clockwise())
+            if (polygon_a.is_clockwise())
                 result.back().reverse_orientation();
 
             result.push_back(polygon_b);
-            if (polygon_b.is_clockwise())
+            if (!polygon_b.is_clockwise())
                 result.back().reverse_orientation();
 
             tessellate(result, Tessellator::WINDING_POSITIVE);
