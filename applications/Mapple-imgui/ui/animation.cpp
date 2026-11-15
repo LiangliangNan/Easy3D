@@ -27,7 +27,10 @@
 #include "../mapple_viewer.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 #include <string>
+#include <vector>
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
@@ -38,6 +41,9 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#ifdef HAS_FFMPEG
+#include <easy3d/video/video_encoder.h>
+#endif
 
 #include <3rd_party/imgui/imgui.h>
 
@@ -123,6 +129,25 @@ void MappleViewer::draw_animation_window() {
     bool visible = show_camera_path_;
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
+
+    ImGui::Separator();
+#ifdef HAS_FFMPEG
+    ImGui::BeginDisabled(count < 2);
+    if (ImGui::Button("Record Video...", ImVec2(140, 0)))
+        record_camera_path();
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::TextDisabled("MP4, scene only");
+    if (count < 2)
+        ImGui::TextDisabled("Recording needs at least two keyframes.");
+    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
+#else
+    ImGui::BeginDisabled();
+    ImGui::Button("Record Video...", ImVec2(140, 0));
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::TextDisabled("requires FFmpeg");
+#endif
 
     ImGui::Separator();
     if (ImGui::Button("Import...", ImVec2(100, 0)))
@@ -238,3 +263,210 @@ void MappleViewer::export_camera_path() {
     else
         LOG(ERROR) << "failed to save keyframes to " << file_name;
 }
+
+//------------------------------------------------------------------------
+// Video recording
+//------------------------------------------------------------------------
+
+#ifdef HAS_FFMPEG
+
+MappleViewer::VideoRecording::~VideoRecording() = default;
+
+bool MappleViewer::recording_video() const {
+    return video_recording_ != nullptr;
+}
+
+void MappleViewer::cancel_video_recording() {
+    if (video_recording_)
+        video_recording_->cancel_requested = true;
+}
+
+void MappleViewer::record_camera_path() {
+    if (video_recording_)
+        return;
+    if (kfi_->number_of_keyframes() < 2) {
+        LOG(WARNING) << "recording needs at least two keyframes";
+        return;
+    }
+
+    std::vector<Frame> frames;
+    try {
+        frames = kfi_->interpolate(); // the whole path, one sample per video frame
+    } catch (const std::exception &e) {
+        LOG(ERROR) << "cannot record the camera path: " << e.what();
+        return;
+    }
+    if (frames.empty()) {
+        LOG(WARNING) << "nothing to record (the camera path is empty)";
+        return;
+    }
+
+    const Model *model = current_model();
+    std::string default_name("camera_path.mp4");
+    if (model)
+        default_name = file_system::replace_extension(model->name(), "mp4");
+    const std::string file_name = dialog::save(
+            "Record the camera path into a video", default_name,
+            {"Video files (*.mp4 *.mov *.avi)", "*.mp4 *.mov *.avi", "All files (*.*)", "*"});
+    if (file_name.empty())
+        return;
+
+    // The encoder needs multiples of 8; cropping at most 7 rows/columns keeps the
+    // video identical to the view (its top-left region).
+    const int width = framebuffer_width() / 8 * 8;
+    const int height = framebuffer_height() / 8 * 8;
+    if (width < 8 || height < 8) {
+        LOG(ERROR) << "the view is too small to record (" << framebuffer_width() << " x "
+                   << framebuffer_height() << " pixels)";
+        return;
+    }
+
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+
+    auto *recording = new VideoRecording;
+    recording->encoder.reset(new VideoEncoder(file_name, kfi_->frame_rate(),
+                                              video_bitrate_mbps_ * 1024 * 1024));
+    recording->frames = std::move(frames);
+    recording->width = width;
+    recording->height = height;
+    recording->capture_width = framebuffer_width();
+    recording->capture_height = framebuffer_height();
+    recording->samples = static_cast<unsigned>(std::max(1, samples()));
+    recording->file_name = file_name;
+    recording->start = std::chrono::steady_clock::now();
+    recording->camera = *camera()->frame();
+    recording->snapshot_hud = snapshot_hud_;
+    // Video frames are scene-only: the capture skips the viewer HUD, and the client
+    // overlays are dropped for the captured frame (pre_draw() reinstalls them).
+    snapshot_hud_ = false;
+    video_recording_.reset(recording);
+
+    LOG(INFO) << "recording " << recording->frames.size() << " frames at " << kfi_->frame_rate()
+              << " fps and " << video_bitrate_mbps_ << " Mbit/s into " << file_name;
+    update();
+}
+
+void MappleViewer::advance_video_recording() {
+    if (!video_recording_)
+        return;
+    VideoRecording &r = *video_recording_;
+
+    // The client overlays (draw_gui() already rebuilt the UI this frame) must not
+    // enter the captured frame.
+    set_overlays({});
+
+    std::string error;
+    if (!r.cancel_requested && r.next_frame < r.frames.size()) {
+        if (framebuffer_width() != r.capture_width || framebuffer_height() != r.capture_height)
+            error = "the view was resized during the recording";
+        else {
+            const Frame &f = r.frames[r.next_frame];
+            camera()->frame()->set_position_and_orientation(f.position(), f.orientation());
+            try {
+                const graphics::FrameImage image = capture(r.samples);
+                const unsigned char *data = image.rgba.data();
+                if (image.width != unsigned(r.width) || image.height != unsigned(r.height)) {
+                    r.pixels.resize(std::size_t(r.width) * r.height * 4);
+                    for (int y = 0; y < r.height; ++y)
+                        std::memcpy(r.pixels.data() + std::size_t(y) * r.width * 4,
+                                    image.rgba.data() + std::size_t(y) * image.width * 4,
+                                    std::size_t(r.width) * 4);
+                    data = r.pixels.data();
+                }
+                if (!r.encoder->encode(data, r.width, r.height, VideoEncoder::PIX_FMT_RGBA_8888))
+                    error = "the video encoder rejected a frame";
+            } catch (const std::exception &e) {
+                error = e.what();
+            }
+            if (error.empty())
+                ++r.next_frame;
+        }
+    }
+
+    const bool cancelled = r.cancel_requested;
+    if (error.empty() && !cancelled && r.next_frame < r.frames.size()) {
+        update();
+        return;
+    }
+
+    // Done, failed or cancelled: finalize the file and restore the user's view.
+    const std::size_t rendered = r.next_frame;
+    const std::size_t total = r.frames.size();
+    const std::string file_name = r.file_name;
+    const Frame camera_state = r.camera;
+    const bool snapshot_hud = r.snapshot_hud;
+    const double seconds = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - r.start).count();
+
+    video_recording_.reset(); // destroys the encoder, which finalizes the stream
+    snapshot_hud_ = snapshot_hud;
+    camera()->frame()->set_position_and_orientation(camera_state.position(), camera_state.orientation());
+    update();
+
+    if (!error.empty())
+        LOG(ERROR) << "video recording failed after " << rendered << " of " << total
+                   << " frames: " << error;
+    else if (cancelled)
+        LOG(WARNING) << "video recording cancelled; " << rendered << " frames written to " << file_name;
+    else
+        LOG(INFO) << "video saved to " << file_name << " (" << total << " frames, "
+                  << static_cast<int>(seconds + 0.5) << " s)";
+}
+
+void MappleViewer::draw_record_progress() {
+    if (!video_recording_)
+        return;
+    const VideoRecording &r = *video_recording_;
+
+    // Dim the scene; the window itself stays fully lit.
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+            viewport->Pos, ImVec2(viewport->Pos.x + viewport->Size.x, viewport->Pos.y + viewport->Size.y),
+            IM_COL32(0, 0, 0, 96));
+
+    ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(360.0f, 0.0f), ImGuiCond_Appearing);
+    const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                                   ImGuiWindowFlags_AlwaysAutoResize;
+    if (!ImGui::Begin("Record Camera Path", nullptr, flags)) {
+        ImGui::End();
+        return;
+    }
+
+    const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - r.start;
+    ImGui::TextDisabled("%s", r.file_name.c_str());
+    ImGui::TextDisabled("%d x %d pixels, %d fps", r.width, r.height, kfi_->frame_rate());
+    ImGui::Spacing();
+
+    char label[64];
+    std::snprintf(label, sizeof(label), "%d / %d frames", static_cast<int>(r.next_frame),
+                  static_cast<int>(r.frames.size()));
+    const float progress = r.frames.empty() ? 0.0f
+                                            : static_cast<float>(r.next_frame) / static_cast<float>(r.frames.size());
+    ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), label);
+    ImGui::Text("Running for %.1f s", elapsed.count());
+    ImGui::Spacing();
+    if (ImGui::Button("Cancel", ImVec2(100, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
+        cancel_video_recording();
+    ImGui::SameLine();
+    ImGui::TextDisabled("Esc cancels; frames written so far are kept.");
+    ImGui::End();
+}
+
+#else // !HAS_FFMPEG
+
+bool MappleViewer::recording_video() const { return false; }
+
+void MappleViewer::record_camera_path() {
+    LOG(WARNING) << "video recording requires FFmpeg (configure Easy3D with -DEasy3D_ENABLE_FFMPEG=ON)";
+}
+
+void MappleViewer::advance_video_recording() {}
+
+void MappleViewer::draw_record_progress() {}
+
+void MappleViewer::cancel_video_recording() {}
+
+#endif // HAS_FFMPEG

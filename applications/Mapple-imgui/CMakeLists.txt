@@ -29,6 +29,11 @@ if (TARGET easy3d::algo_ext)
     target_link_libraries(${name} PRIVATE easy3d::algo_ext)
 endif ()
 
+if (Easy3D_HAS_FFMPEG)
+    # Records the camera path into a video file; defines HAS_FFMPEG for the sources.
+    target_link_libraries(${name} PRIVATE easy3d::video)
+endif ()
+
 if (Easy3D_ENABLE_VULKAN)
     target_compile_definitions(${name} PRIVATE "APP_TITLE=\"${name} - Vulkan\"")
 else ()

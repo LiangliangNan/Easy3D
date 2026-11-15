@@ -40,6 +40,7 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/state.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
@@ -52,6 +53,7 @@ namespace easy3d {
     class PointCloudPicker;
     class SurfaceMeshPicker;
     class Texture;
+    class VideoEncoder;
     namespace graphics { struct DrawCommand; }
 }
 
@@ -292,6 +294,46 @@ private:
 
     void export_camera_path();
 
+    // Video recording needs FFmpeg; without it recording_video() is always false.
+#ifdef HAS_FFMPEG
+    // One camera-path video. The frames are rendered through Viewer::capture() one
+    // per drawn frame, so the progress window reacts and can cancel; the encoder
+    // finalizes the stream when it is destroyed.
+    struct VideoRecording {
+        std::unique_ptr<easy3d::VideoEncoder> encoder;
+        std::vector<easy3d::Frame> frames;   // interpolated path, rendered in order
+        std::size_t next_frame = 0;          // index of the frame rendered next
+        int width = 0, height = 0;           // encoded size (multiples of 8)
+        int capture_width = 0, capture_height = 0; // view size when recording started
+        unsigned samples = 1;
+        std::vector<unsigned char> pixels;   // cropped frame handed to the encoder
+        std::string file_name;
+        std::chrono::steady_clock::time_point start;
+        easy3d::Frame camera;                // camera state restored when it ends
+        bool snapshot_hud = true;
+        bool cancel_requested = false;
+        // Out of line: VideoEncoder is only forward declared in this header.
+        ~VideoRecording();
+    };
+#endif
+
+    // True while a camera-path video is being recorded.
+    bool recording_video() const;
+
+    // Opens the save dialog and starts recording the camera path (no-op without
+    // FFmpeg and with fewer than two keyframes).
+    void record_camera_path();
+
+    // Renders and encodes one video frame per drawn frame; called from pre_draw()
+    // so the scene is rendered outside draw_gui() and the UI stays responsive.
+    void advance_video_recording();
+
+    // Modal progress window of the running recording.
+    void draw_record_progress();
+
+    // Asks the running recording to stop; the frames written so far are kept.
+    void cancel_video_recording();
+
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
 
@@ -446,6 +488,13 @@ private:
     ProcessOp process_op_ = ProcessOp::NONE;
     ProcessParams process_params_;
     std::unique_ptr<ProcessJob> process_job_;
+
+    // The recording that owns the screen and blocks scene input until it finishes
+    // or is cancelled.
+#ifdef HAS_FFMPEG
+    std::unique_ptr<VideoRecording> video_recording_;
+    int video_bitrate_mbps_ = 8;
+#endif
 
     static const char *process_title(ProcessOp op);
 };

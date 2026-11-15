@@ -221,6 +221,12 @@ void MappleViewer::pre_draw() {
     Viewer::pre_draw();
     draw_gui();
 
+    // A video frame renders the scene on its own inside capture(), so it runs
+    // between the UI build and the overlay submission: the freshly built UI
+    // commands are installed afterwards and stay out of the captured frame.
+    if (recording_video())
+        advance_video_recording();
+
     std::vector<graphics::DrawCommand> commands = imgui_->render(framebuffer_width(), framebuffer_height());
     // The rubber band belongs to the scene layer: insert it before the UI geometry
     // so panels and menus always cover it.
@@ -241,9 +247,9 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_captured_ = imgui_ && imgui_->wants_mouse();
     if (mouse_captured_)
         return true;
-    // The processing and snapshot windows are modal: clicks outside them must not
-    // reach the scene.
-    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
+    // The processing, snapshot and recording windows are modal: clicks outside
+    // them must not reach the scene.
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
@@ -272,7 +278,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     mouse_captured_ = false;
     if (captured)
         return true;
-    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
     if (selecting_ && button == BUTTON_LEFT) {
@@ -303,7 +309,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 }
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_)
+    if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
     if (selecting_) {
@@ -327,7 +333,7 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
         clear_hover();
         return true;
     }
-    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_) {
+    if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video()) {
         clear_hover();
         return true;
     }
@@ -348,13 +354,19 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
 
 bool MappleViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
     return (imgui_ && imgui_->wants_mouse()) || process_op_ != ProcessOp::NONE ||
-           show_snapshot_dialog_ || Viewer::mouse_scroll_event(x, y, dx, dy);
+           show_snapshot_dialog_ || recording_video() || Viewer::mouse_scroll_event(x, y, dx, dy);
 }
 
 bool MappleViewer::key_press_event(int key, int modifiers) {
     if (imgui_ && imgui_->wants_keyboard())
         return true;
 
+    if (recording_video()) {
+        // The progress window owns the keyboard; Esc asks the recording to stop.
+        if (key == KEY_ESCAPE && modifiers == 0)
+            cancel_video_recording();
+        return true;
+    }
     if (show_snapshot_dialog_) {
         if (key == KEY_ESCAPE && modifiers == 0)
             show_snapshot_dialog_ = false;
@@ -435,6 +447,13 @@ void MappleViewer::draw_gui() {
             draw_process_progress();
             return;
         }
+    }
+
+    if (recording_video()) {
+        // The recording owns the screen: no menu or panel can run a command while
+        // frames are being written.
+        draw_record_progress();
+        return;
     }
 
     process_pending_work();

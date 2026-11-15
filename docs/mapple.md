@@ -264,7 +264,18 @@ Phase 2 design notes:
       import/export `.kf` files. It drives the viewer's own `KeyFrameInterpolator`, so
       the viewer shortcuts and the HUD path overlay stay authoritative; the scene
       remains interactive while the window is open.
-- [ ] Video recording via `RenderDevice` offscreen capture + `easy3d::video`.
+- [x] Video recording: Camera Path > Record Video... renders the interpolated path
+      through `easy3d::video::VideoEncoder` (FFmpeg builds only; the button is
+      disabled and labeled otherwise). Frames come from
+      `KeyFrameInterpolator::interpolate()` at the path's frame rate, are rendered
+      with `Viewer::capture()` at the current view size (cropped to the encoder's
+      multiple-of-8 requirement), and are scene-only: the capture skips the viewer
+      HUD (`snapshot_hud_` is off while recording) and `pre_draw()` drops the app's
+      UI overlays for the captured frame. One frame is rendered and encoded per
+      drawn frame behind a modal progress window (Cancel/Esc keeps the frames
+      written so far); the camera and HUD state are restored at the end, and a view
+      resize aborts the recording with the error logged. The bitrate is adjustable
+      in the Camera Path window.
 - [x] Snapshot dialog (scale with the resulting pixel size shown, samples, current/
       white/transparent background, frustum expansion), matching the Qt
       `DialogSnapshot`'s capabilities. Saving reuses the native file dialog and
@@ -590,3 +601,39 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   `KeyFrameInterpolator` interpolation, manual playback and `.kf` round-trip it calls
   are covered by the viewer camera-path tests (green in both check trees). The menu
   and window were not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 3 video recording
+
+- The Camera Path window gains Record Video... (disabled below two keyframes) and a
+  bitrate slider (1-50 Mbit/s, default 8). Saving goes through the native save
+  dialog (mp4/mov/avi or any extension FFmpeg recognizes); the video uses the
+  window's current frame rate, so the clip plays at the configured interpolation
+  speed.
+- Recording does not step the camera in real time. It copies
+  `KeyFrameInterpolator::interpolate()` and renders one frame per drawn frame
+  between the UI build and the overlay submission in `pre_draw()`, so the modal
+  progress window updates, Esc/Cancel work, and no other command can run while
+  frames are written.
+- Frames come from `Viewer::capture()`, i.e. the same view size as the window; a
+  size cropped to multiples of 8 (the encoder's requirement) drops at most 7 rows
+  or columns, keeping the view framing. `capture()`'s RGBA rows are top row first,
+  matching the encoder. Frames are scene-only: `snapshot_hud_` is turned off for the
+  recording (so neither backend composes the viewer HUD, including the camera-path
+  overlay), and the app's client overlays are cleared just before each capture
+  (the same `set_overlays({})` contract as the snapshot dialog; `pre_draw()`
+  reinstalls the UI right after). The camera is restored when recording ends
+  (success, cancel or failure), as is `snapshot_hud_`; a view resize mid-recording
+  aborts it with an error rather than mixing frame sizes, and the frames written
+  so far stay in the file.
+- FFmpeg is optional: `applications/Mapple-imgui/CMakeLists.txt` links
+  `easy3d::video` when `Easy3D_HAS_FFMPEG` is set (which also defines `HAS_FFMPEG`
+  for the sources). Without it the button is disabled with a "requires FFmpeg"
+  hint and the recorder compiles to no-ops.
+- Validation: both backends build and launch with `general_open.obj`. A scratch
+  probe linked against both build trees reproduced the recorder's exact sequence -
+  `Viewer::OffScreen` at 645x481 (deliberately not multiples of 8), a three-keyframe
+  path, per-frame `capture()`, top-left crop to 640x480, and
+  `VideoEncoder::encode(..., PIX_FMT_RGBA_8888)` - and produced playable H.264
+  files (61 frames at 30 fps) on OpenGL and Vulkan; an extracted frame is upright
+  and scene-only. The probe then removed itself, and the app's menu/window flow was
+  not exercised through scripted clicks.
