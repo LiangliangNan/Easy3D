@@ -10032,3 +10032,21 @@ remaining time is the debug render itself, not the readback. The encoder costs a
 frame on the same frames either way, and the produced color image is byte-identical between the two
 readback modes in the probe. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-15 — batch 85: points drawables use the distinct backside color by default
+
+**Scope.** `PointsDrawable` took its distinct-backside-color default from
+`setting::points_drawable_distinct_backside_color`, which was false, while triangles defaulted to
+true; all three types share the same default backside color `(0.8, 0.4, 0.4)`. A point drawable
+with the sphere impostor (surface-mesh vertices by default, or any point drawable after enabling
+impostors) therefore shaded back faces with its front color, unlike a triangle drawable of the same
+model. The setting now defaults to true, matching the triangles drawables; lines remain false. The
+per-drawable `State` value still wins, a settings file can still override the key (its name is
+unchanged), and Mapple's Rendering panel now starts with "Back color" checked for point drawables.
+
+**Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 116/116 and Vulkan
+`build-vulkan-check` 150/150, both green, no flakes. A scratch probe linked against the release
+libraries constructed one drawable of each type: points report distinct=1 with back color
+(0.80, 0.40, 0.40), faces distinct=1, and lines distinct=0, which confirms the default reaches the
+drawables and that only the points default changed. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.

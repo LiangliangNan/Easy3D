@@ -70,7 +70,6 @@ namespace {
 
 }
 
-// \endcond
 
 TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string &title) : Viewer(title) {
     // Draw the recorded path and keyframe cameras in the scene so the user can see the route.

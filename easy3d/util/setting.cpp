@@ -59,7 +59,7 @@ namespace easy3d {
 
         // points drawable
         bool points_drawable_two_side_lighting = true;
-        bool points_drawable_distinct_backside_color = false;
+        bool points_drawable_distinct_backside_color = true;
         vec4 points_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
         // lines drawable
         bool lines_drawable_two_side_lighting = false;

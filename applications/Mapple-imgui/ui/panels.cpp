@@ -176,14 +176,24 @@ void MappleViewer::draw_panels(float x, float y, float w, float h) {
         content_h = std::max(1.0f, h - log_height_ - split);
     }
 
+    // A background command or a video recording owns the scene: the model panels stay
+    // laid out but disabled, so no control can change the model or its appearance
+    // while it is being processed or captured. The log panel is mutex-protected and
+    // does not touch the model, so it stays usable.
+    const bool scene_busy = process_job_ != nullptr || recording_video();
+
     if (show_rendering_panel_) {
+        ImGui::BeginDisabled(scene_busy);
         draw_rendering_panel(x, y, left_width_, content_h);
+        ImGui::EndDisabled();
         draw_splitter("##split-left", x + left_width_, y, split, content_h,
                       true, &left_width_, 1.0f, 160.0f, max_side);
     }
     if (show_models_panel_ && right_width_ >= 160.0f) {
         const float right_x = x + w - right_width_;
+        ImGui::BeginDisabled(scene_busy);
         draw_models_panel(right_x, y, right_width_, content_h);
+        ImGui::EndDisabled();
         draw_splitter("##split-right", right_x - split, y, split, content_h,
                       true, &right_width_, -1.0f, 160.0f, max_side);
     }
@@ -383,6 +393,13 @@ void MappleViewer::draw_model_info(Model *model) {
         return;
     if (!ImGui::CollapsingHeader("Model Info"))
         return;
+
+    if (process_job_ && model == process_job_->target) {
+        // The worker owns this model; its counts, bounds and properties are in flux.
+        ImGui::TextDisabled("%s is being processed in the background.", process_title(process_op_));
+        ImGui::Spacing();
+        return;
+    }
 
     ImGui::TextWrapped("Path: %s", model->name().c_str());
     if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))

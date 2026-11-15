@@ -715,6 +715,31 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Each drawable's "Visible" checkbox and "Color" swatch share one line; the
   type-specific controls (Smooth/Opacity for faces, Width for lines, Size for
   points) remain below. The "Back color" controls are shared by faces and points,
-  since distinct back coloring is a `State` property of both.
+  since distinct back coloring is a `State` property of both; points drawables now
+  enable it by default (batch 85 in docs/vulkan.md), so the checkbox starts checked.
 - Validation: both trees build and the app launches; the row layout was not
   exercised through scripted clicks.
+
+### 2026-11-15 — Panels stay visible during processing and recording
+
+- A long-running background command used to take the whole UI off screen: `draw_gui()`
+  returned after the progress window, so the Rendering, Models and Log panels vanished
+  until the job finished. The menu, toolbar and the Rendering and Models panels now
+  stay in place, drawn disabled so nothing can run a command against a model the
+  worker owns. The status bar stays out (it reads vertex/face counts the worker is
+  changing), and the Model Info section of the Models panel shows a "being processed"
+  line instead of the live counts, bounds and properties.
+- Video recording had the same early return, so the whole UI disappeared for the
+  duration of a capture. The menu, toolbar and panels now stay laid out for the whole
+  recording as well, drawn disabled because the recorder owns the scene: no control
+  may change the model, its appearance or the camera while frames are written. The
+  status bar stays out, as before.
+- The Log panel remains fully usable in both cases: it is mutex-protected and never
+  reads the model, so its Clear/Copy/Export buttons and scrolling keep working while
+  a job runs or frames are captured.
+- None of the UI reaches the output: the snapshot dialog and the video recorder drop
+  the UI overlay commands before rendering their frame (`pre_draw()` captures between
+  `draw_gui()` and the overlay submission), independently of whether the UI was drawn
+  that frame.
+- Validation: both trees build and the app launches. The disabled state during a
+  running job or a recording was not exercised through scripted clicks.

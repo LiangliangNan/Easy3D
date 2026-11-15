@@ -467,26 +467,23 @@ bool MappleViewer::focus_event(bool focused) {
 }
 
 void MappleViewer::draw_gui() {
-    if (process_job_) {
+    if (process_job_)
         poll_process_job();
-        if (process_job_) {
-            // The worker owns the model, so the panels (which read model properties)
-            // stay out this frame; process_op_ already blocks scene input.
-            draw_process_progress();
-            return;
-        }
-    }
 
-    if (recording_video()) {
-        // The recording owns the screen: no menu or panel can run a command while
-        // frames are being written.
-        draw_record_progress();
-        return;
-    }
+    // A recording owns the scene for the same reason a background job does: nothing
+    // may change the model, the appearance or the camera while frames are written.
+    const bool recording = recording_video();
+    if (!recording)
+        process_pending_work();
 
-    process_pending_work();
-
+    // The UI stays laid out in both cases but inert. Snapshot and video capture drop
+    // the UI overlays before rendering their frame, so none of it reaches the output.
+    const bool busy = recording || process_job_ != nullptr;
+    if (busy)
+        ImGui::BeginDisabled();
     draw_menu_bar();
+    if (busy)
+        ImGui::EndDisabled();
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     const float x = viewport->Pos.x;
@@ -497,7 +494,27 @@ void MappleViewer::draw_gui() {
     const float toolbar_height = ImGui::GetFrameHeight() + 8.0f;
     const float status_height = ImGui::GetTextLineHeight() + 8.0f;
 
+    if (busy)
+        ImGui::BeginDisabled();
     draw_toolbar(x, y, w, toolbar_height);
+    if (busy)
+        ImGui::EndDisabled();
+
+    if (recording) {
+        draw_panels(x, y + toolbar_height, w, std::max(0.0f, h - toolbar_height - status_height));
+        draw_record_progress();
+        return;
+    }
+
+    if (process_job_) {
+        // The panels keep their place so the UI does not jump; the model ones are
+        // drawn disabled by draw_panels() because the worker owns the model. The
+        // status bar stays out: it reads counts the worker is changing.
+        draw_panels(x, y + toolbar_height, w, std::max(0.0f, h - toolbar_height - status_height));
+        draw_process_progress();
+        return;
+    }
+
     draw_status_bar(x, y + h - status_height, w, status_height);
     draw_panels(x, y + toolbar_height, w, std::max(0.0f, h - toolbar_height - status_height));
 
