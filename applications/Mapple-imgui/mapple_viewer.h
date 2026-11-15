@@ -27,6 +27,7 @@
 #ifndef EASY3D_MAPPLE_VIEWER_H
 #define EASY3D_MAPPLE_VIEWER_H
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <deque>
@@ -34,13 +35,15 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/state.h>
-#include <easy3d/viewer/viewer.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
+#include <easy3d/viewer/viewer.h>
 
 class ImGuiLayer;
 namespace easy3d {
@@ -59,7 +62,7 @@ namespace easy3d {
  *      ImGui first, lays out the panels around the central 3D scene, and collects Easy3D log
  *      messages into the Log panel. See docs/mapple.md for the port plan.
  */
-class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger {
+class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger, public easy3d::ProgressClient {
 public:
     explicit MappleViewer(
             const std::string &title = "Mapple",
@@ -80,6 +83,10 @@ public:
 
     /// Receives every Easy3D log message; shown in the Log panel.
     void send(el::Level level, const std::string &msg) override;
+
+    /// Receives progress from a background command; called on the worker thread, so
+    /// it only stores the percentage for the progress window.
+    void notify(std::size_t percent, bool update_viewer) override;
 
 protected:
     void init() override;
@@ -127,7 +134,8 @@ private:
     // active model in place and reports through the Log panel.
     enum class ProcessOp {
         NONE,
-        PC_ESTIMATE_NORMALS, PC_SIMPLIFY, PC_POISSON, PC_RANSAC, PC_DELAUNAY_2D, PC_DELAUNAY_3D,
+        PC_ESTIMATE_NORMALS, PC_REORIENT_NORMALS, PC_SIMPLIFY, PC_POISSON, PC_RANSAC,
+        PC_DELAUNAY_2D, PC_DELAUNAY_3D,
         MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE,
         MESH_FAIRING, MESH_SAMPLE,
         MESH_COMPONENTS, MESH_PLANAR_PARTITION, MESH_TRIANGULATE, MESH_DUAL,
@@ -209,6 +217,40 @@ private:
 
     // Runs a command that needs no parameters directly (no parameter window).
     void run_process(ProcessOp op);
+
+    // Commands heavy enough to run on a worker thread. The algorithm mutates the
+    // model off the main thread; everything that touches drawables, renderers or the
+    // graphics context happens in finalize_process() after the thread joins.
+    struct ProcessJob {
+        std::thread thread;
+        std::atomic<bool> done{false};
+        std::atomic<int> percent{-1};   // -1 until the algorithm reports progress
+        bool cancelable = false;        // the algorithm polls ProgressLogger::is_canceled()
+        bool cancel_requested = false;
+        easy3d::Model *target = nullptr; // the model the command edits
+        easy3d::Model *result = nullptr; // new model handed to the viewer on finalize
+        std::chrono::steady_clock::time_point start;
+    };
+
+    static bool is_long_running(ProcessOp op);
+
+    // The former body of apply_process(): runs the command, returns whether the
+    // selection display must be left alone afterwards. May run on a worker thread,
+    // so it must not touch GPU resources or add models directly.
+    bool run_process_algorithm(easy3d::Model *model);
+
+    void start_process_job();
+
+    // Joins a finished job and adopts its result model on the main thread.
+    void poll_process_job();
+
+    void finalize_process(easy3d::Model *model, std::chrono::steady_clock::time_point start,
+                          bool skip_selection_display);
+
+    void request_process_cancel();
+
+    // Modal progress window shown while a background command runs.
+    void draw_process_progress();
 
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
@@ -358,6 +400,7 @@ private:
 
     ProcessOp process_op_ = ProcessOp::NONE;
     ProcessParams process_params_;
+    std::unique_ptr<ProcessJob> process_job_;
 
     static const char *process_title(ProcessOp op);
 };

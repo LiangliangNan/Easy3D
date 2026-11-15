@@ -163,7 +163,9 @@ through the log panel.
       for the matching active model, and the point-cloud/mesh split keeps the
       "which model type" question out of the UI.
 - [x] Point cloud: estimate normals (`PointCloudNormals::estimate`, neighbors +
-      curvature) and simplify to a target point count
+      curvature), re-orient existing normals (`PointCloudNormals::reorient`, same
+      neighbors parameter; warns instead of failing silently when the cloud has no
+      normals), and simplify to a target point count
       (`PointCloudSimplification::uniform_simplification`, followed by
       `delete_vertex`/`collect_garbage`).
 - [x] Surface mesh: smoothing (`SurfaceMeshSmoothing`, explicit iterations or implicit
@@ -199,15 +201,30 @@ through the log panel.
       the cut polylines as a new graph model (`<mesh>_slice`). The commands appear
       only in CGAL-enabled builds and warn when the clipping plane is disabled or
       the plane misses the mesh.
-- [ ] Long-running commands (reconstruction, remeshing of large meshes) need progress
-      reporting and cancellation instead of blocking the frame.
+- [x] Long-running commands (Poisson reconstruction, point-cloud/surface simplification,
+      remeshing, uniform sampling) run on a worker thread behind a modal progress
+      window instead of blocking the frame. The percentage comes from `ProgressLogger`
+      where the algorithm reports it; otherwise the bar is indeterminate. Cancellation
+      is cooperative, so the Cancel button (and Esc) is offered only for the two
+      commands whose algorithms poll `ProgressLogger::is_canceled()` (remeshing and
+      sampling); the others finish on their own.
 
 Phase 2 design notes:
 
-- Every command runs synchronously inside `draw_gui()` and logs its duration and the
-  resulting element counts. The shared `ProcessParams` struct keeps the last-used
-  parameters; targets that depend on the model (point/vertex counts) are derived when
-  the window opens.
+- Quick commands run synchronously inside `draw_gui()`; the long ones hand the model to
+  a `ProcessJob` worker thread and only a modal progress window is drawn until it
+  finishes. While the job runs, the panels are skipped because the worker mutates the
+  model's properties (reading them from the main thread would race), and the open
+  `process_op_` already blocks scene input. The worker publishes progress through
+  `ProgressClient::notify()` into an atomic that the window reads each frame; the bar is
+  indeterminate for algorithms that report none. `ProgressClient::cancel()` sets a flag
+  that `ProgressLogger::is_canceled()` polls from the other thread, which is why that
+  flag is atomic. The job's new model (Poisson, sampling) is adopted with `add_model()`
+  on the main thread when the thread joins; the viewer destructor requests cancellation
+  and joins before tearing down. Every command logs its duration and the resulting
+  element counts when it finalizes. The shared `ProcessParams` struct keeps the
+  last-used parameters; targets that depend on the model (point/vertex counts) are
+  derived when the window opens.
 - While a parameter window is open it is modal for the scene: mouse, keyboard, and
   hover queries are consumed before they reach `Viewer`, and a dim rectangle is drawn
   behind the window.
@@ -476,3 +493,39 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   `algo.surface_mesh_slice` pass with CGAL 6.0.1; both backends build and launch with
   `general_open.obj`. The linker warns that Homebrew's gmp/mpfr were built for a newer
   deployment target (environment-specific, not an error).
+
+### 2026-11-15 — Phase 2 background commands with progress and cancellation
+
+- Poisson reconstruction, point-cloud/surface simplification, remeshing, and uniform
+  sampling now run on a worker thread behind a modal progress window instead of
+  blocking the frame, so the window keeps repainting and can show elapsed time.
+- The window shows `ProgressLogger`'s percentage where the algorithm reports one and
+  an indeterminate sweeping bar otherwise. Remeshing and sampling are cancelable
+  (Cancel button or Esc; closing the window cancels and joins); the other algorithms
+  never poll the cancel flag and say so.
+- While a job runs only the progress window is drawn: the models and rendering panels
+  stay out because the worker mutates the model's properties, and `process_op_` already
+  blocks scene input. The job's new model (Poisson mesh, sampled cloud) is adopted with
+  `add_model()` on the main thread when the thread joins; the viewer destructor
+  requests cancellation and joins before teardown.
+- `easy3d/util/progress.cpp`: `internal::Progress::canceled_` is now
+  `std::atomic<bool>` because the main thread sets it through
+  `ProgressClient::cancel()` while the worker polls `ProgressLogger::is_canceled()`.
+- Validation: library suites green in both check trees (OpenGL 116/116, Vulkan 150/150,
+  serial; batch 83). A threaded scratch probe confirmed cancellation stops the remesh
+  early (67,330 faces at 1% versus 169,608 on completion) and that sampling returns no
+  cloud when canceled. Both backends build and launch with `general_open.obj`; the
+  progress window, Cancel button and Esc path were not exercised through scripted
+  clicks.
+
+### 2026-11-15 — Point-cloud normal re-orientation
+
+- Added Re-orient Normals... directly below Estimate Normals in Process > Point Cloud,
+  matching the Qt app's `pointCloudReorientNormals()`.
+- It runs `PointCloudNormals::reorient` (Hoppe et al. 1992, minimum spanning tree over
+  the k-neighbor graph) with the same Neighbors parameter as estimation. Unlike the Qt
+  dialog it warns with "(Process > Point Cloud > Estimate Normals)" when the cloud has
+  no `v:normal` property instead of relying on the algorithm's error log.
+- Validation: both backends build and launch with `bunny.bin`; the algorithm itself is
+  covered by `algo.point_cloud_algorithms` (green in both check trees). The menu command
+  was not exercised through scripted clicks.

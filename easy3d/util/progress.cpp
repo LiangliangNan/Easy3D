@@ -10,6 +10,7 @@
 
 #include <easy3d/util/progress.h>
 
+#include <atomic>
 #include <cassert>
 #include <algorithm>	// for std::min and std::max
 
@@ -41,7 +42,8 @@ namespace easy3d {
 
             ProgressClient *client_;
             int level_;
-            bool canceled_;
+            // Written by the main thread (cancel button) while a worker thread polls it.
+            std::atomic<bool> canceled_;
         };
 
         Progress* Progress::instance() {

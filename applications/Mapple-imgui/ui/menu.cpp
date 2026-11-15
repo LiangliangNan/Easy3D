@@ -116,6 +116,8 @@ void MappleViewer::draw_menu_process() {
     if (ImGui::BeginMenu("Point Cloud", cloud)) {
         if (ImGui::MenuItem("Estimate Normals..."))
             open_process(ProcessOp::PC_ESTIMATE_NORMALS);
+        if (ImGui::MenuItem("Re-orient Normals..."))
+            open_process(ProcessOp::PC_REORIENT_NORMALS);
         if (ImGui::MenuItem("Simplify..."))
             open_process(ProcessOp::PC_SIMPLIFY);
         ImGui::Separator();

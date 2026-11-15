@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <set>
 
 #include <easy3d/algo/delaunay_2d.h>
@@ -75,6 +76,8 @@ const char *MappleViewer::process_title(ProcessOp op) {
     switch (op) {
         case ProcessOp::PC_ESTIMATE_NORMALS:
             return "Estimate Normals";
+        case ProcessOp::PC_REORIENT_NORMALS:
+            return "Re-orient Normals";
         case ProcessOp::PC_SIMPLIFY:
             return "Simplify Point Cloud";
         case ProcessOp::PC_POISSON:
@@ -129,13 +132,16 @@ const char *MappleViewer::process_title(ProcessOp op) {
 }
 
 void MappleViewer::open_process(ProcessOp op) {
+    if (process_job_)
+        return;
     Model *model = current_model();
     if (!model)
         return;
 
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
-    const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
+    const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS ||
+                                op == ProcessOp::PC_REORIENT_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
                                 op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC ||
                                 op == ProcessOp::PC_DELAUNAY_2D || op == ProcessOp::PC_DELAUNAY_3D;
     if ((point_cloud_op && !cloud) || (!point_cloud_op && !mesh))
@@ -200,6 +206,11 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::Checkbox("Compute curvature", &p.compute_curvature);
                 break;
 
+            case ProcessOp::PC_REORIENT_NORMALS:
+                ImGui::InputInt("Neighbors", &p.normals_k);
+                ImGui::TextDisabled("Orients the existing normals consistently; requires normals.");
+                break;
+
             case ProcessOp::PC_SIMPLIFY:
                 ImGui::InputInt("Remaining points", &p.point_target);
                 ImGui::TextDisabled("Keeps a uniform subset of the current points.");
@@ -214,7 +225,7 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::InputFloat("Island ratio", &p.poisson_island_ratio, 0.001f, 0.01f, "%.4f");
                 ImGui::EndDisabled();
                 ImGui::TextDisabled("Adds a new mesh; requires normals.");
-                ImGui::TextDisabled("Runs synchronously and can take a while.");
+                ImGui::TextDisabled("Runs in the background and can take a while.");
                 break;
 
             case ProcessOp::PC_RANSAC: {
@@ -320,15 +331,124 @@ void MappleViewer::draw_process_dialog() {
     ImGui::End();
 }
 
+bool MappleViewer::is_long_running(ProcessOp op) {
+    switch (op) {
+        case ProcessOp::PC_ESTIMATE_NORMALS:
+        case ProcessOp::PC_REORIENT_NORMALS:
+        case ProcessOp::PC_SIMPLIFY:
+        case ProcessOp::PC_POISSON:
+        case ProcessOp::MESH_SIMPLIFY:
+        case ProcessOp::MESH_REMESH:
+        case ProcessOp::MESH_SAMPLE:
+            return true;
+        default:
+            return false;
+    }
+}
+
 void MappleViewer::apply_process() {
     Model *model = current_model();
-    if (!model || process_op_ == ProcessOp::NONE)
+    if (!model || process_op_ == ProcessOp::NONE || process_job_)
         return;
 
+    if (is_long_running(process_op_)) {
+        start_process_job();
+        return;
+    }
+
+    const auto start = std::chrono::steady_clock::now();
+    const bool skip_selection_display = run_process_algorithm(model);
+    if (process_op_ == ProcessOp::NONE) // unknown command; nothing to finalize
+        return;
+    finalize_process(model, start, skip_selection_display);
+}
+
+void MappleViewer::start_process_job() {
+    process_job_.reset(new ProcessJob);
+    process_job_->start = std::chrono::steady_clock::now();
+    process_job_->target = current_model();
+    process_job_->cancelable = process_op_ == ProcessOp::MESH_REMESH ||
+                               process_op_ == ProcessOp::MESH_SAMPLE;
+    process_job_->thread = std::thread([this] {
+        run_process_algorithm(process_job_->target);
+        process_job_->done.store(true, std::memory_order_release);
+    });
+    LOG(INFO) << process_title(process_op_) << " started in the background";
+    update();
+}
+
+void MappleViewer::poll_process_job() {
+    if (!process_job_ || !process_job_->done.load(std::memory_order_acquire))
+        return;
+
+    process_job_->thread.join();
+    Model *target = process_job_->target;
+    Model *result = process_job_->result;
+    const auto start = process_job_->start;
+    process_job_.reset();
+
+    if (result)
+        add_model(result);
+    finalize_process(target, start, false);
+}
+
+void MappleViewer::request_process_cancel() {
+    if (!process_job_ || !process_job_->cancelable || process_job_->cancel_requested)
+        return;
+    process_job_->cancel_requested = true;
+    cancel();
+    LOG(INFO) << "cancellation requested";
+}
+
+void MappleViewer::draw_process_progress() {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+            viewport->Pos, ImVec2(viewport->Pos.x + viewport->Size.x, viewport->Pos.y + viewport->Size.y),
+            IM_COL32(0, 0, 0, 96));
+
+    ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(360.0f, 0.0f), ImGuiCond_Appearing);
+    const ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                                   ImGuiWindowFlags_AlwaysAutoResize;
+    if (!ImGui::Begin(process_title(process_op_), nullptr, flags)) {
+        ImGui::End();
+        return;
+    }
+
+    const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - process_job_->start;
+    ImGui::Text("Running for %.1f s", elapsed.count());
+
+    const int percent = process_job_->percent.load();
+    if (percent >= 0) {
+        ImGui::ProgressBar(static_cast<float>(percent) / 100.0f);
+        ImGui::TextDisabled("%d%%", percent);
+    } else {
+        // No progress callback in this algorithm: show a sweeping bar instead of a
+        // frozen, meaningless percentage.
+        const float sweep = std::fmod(static_cast<float>(ImGui::GetTime()) * 0.35f, 1.0f);
+        ImGui::ProgressBar(sweep, ImVec2(-1, 0), "Working...");
+    }
+
+    ImGui::Spacing();
+    if (process_job_->cancelable) {
+        if (process_job_->cancel_requested)
+            ImGui::TextDisabled("Cancellation requested...");
+        else if (ImGui::Button("Cancel", ImVec2(100, 0)))
+            request_process_cancel();
+        if (!process_job_->cancel_requested) {
+            ImGui::SameLine();
+            ImGui::TextDisabled("Esc also cancels.");
+        }
+    } else
+        ImGui::TextDisabled("This command cannot be interrupted.");
+    ImGui::End();
+}
+
+bool MappleViewer::run_process_algorithm(Model *model) {
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
     ProcessParams &p = process_params_;
-    const auto start = std::chrono::steady_clock::now();
     // RANSAC replaces the cloud's appearance with segmentation colors, which must
     // not be overwritten by a selection display refresh afterwards.
     bool skip_selection_display = false;
@@ -341,6 +461,21 @@ void MappleViewer::apply_process() {
                     LOG(INFO) << "estimated normals for " << cloud->n_vertices() << " points (k = " << k << ")";
                 else
                     LOG(WARNING) << "normal estimation failed";
+            }
+            break;
+
+        case ProcessOp::PC_REORIENT_NORMALS:
+            if (cloud) {
+                if (!cloud->get_vertex_property<vec3>("v:normal")) {
+                    LOG(WARNING) << "re-orienting normals requires normals "
+                                    "(Process > Point Cloud > Estimate Normals)";
+                    break;
+                }
+                const int k = std::max(3, p.normals_k);
+                if (PointCloudNormals::reorient(cloud, static_cast<unsigned int>(k)))
+                    LOG(INFO) << "re-oriented normals of " << cloud->n_vertices() << " points (k = " << k << ")";
+                else
+                    LOG(WARNING) << "normal reorientation failed";
             }
             break;
 
@@ -383,7 +518,10 @@ void MappleViewer::apply_process() {
                 result->set_name(file_system::name_less_extension(cloud->name()) + "_poisson.ply");
                 LOG(INFO) << "poisson reconstruction: " << result->n_vertices() << " vertices, "
                           << result->n_faces() << " faces";
-                add_model(result);
+                if (process_job_)
+                    process_job_->result = result;
+                else
+                    add_model(result);
             }
             break;
 
@@ -626,7 +764,10 @@ void MappleViewer::apply_process() {
                 }
                 cloud->set_name(file_system::name_less_extension(mesh->name()) + "_sampled.ply");
                 LOG(INFO) << "sampled " << cloud->n_vertices() << " points from " << mesh->n_faces() << " faces";
-                add_model(cloud);
+                if (process_job_)
+                    process_job_->result = cloud;
+                else
+                    add_model(cloud);
             }
             break;
 
@@ -859,19 +1000,24 @@ void MappleViewer::apply_process() {
 
         default:
             process_op_ = ProcessOp::NONE;
-            return;
+            return skip_selection_display;
     }
 
+    return skip_selection_display;
+}
+
+void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::time_point start,
+                                    bool skip_selection_display) {
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start);
     LOG(INFO) << process_title(process_op_) << " finished in " << elapsed.count() << " ms";
 
     // The geometry changed; keep the shading normals in sync before the buffers rebuild.
-    if (mesh) {
+    if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
         mesh->update_face_normals();
         mesh->update_vertex_normals();
     }
-    if (model->renderer())
+    if (model && model->renderer())
         model->renderer()->update();
     invalidate_selection_count();
     clear_hover();

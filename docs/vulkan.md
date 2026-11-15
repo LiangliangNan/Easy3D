@@ -9980,3 +9980,26 @@ failure, builder rejection or dropped face is reported. Stitched probe (Release,
 zero, `house` stays at 4940 faces with zero HM and builder warnings, and re-stitching after
 polygonization reproduces the known 19 zero-area CGAL border faces of batch 79 (also unchanged by
 batch 80). `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-15 — batch 83: the progress cancel flag is atomic across threads
+
+**Scope.** Mapple-imgui (docs/mapple.md) now runs its long commands on a worker thread, so the
+main thread can cancel them from the progress window. The worker-visible half of that contract is
+`ProgressLogger::is_canceled()`, which reads `internal::Progress::canceled_`, while the main
+thread sets the same flag through `ProgressClient::cancel()`; the flag was a plain `bool`, so the
+pair was a data race even though it only ever carries a one-way sticky signal. It is now
+`std::atomic<bool>` (default sequentially consistent ordering; the racing accesses are a store and
+a load, so no read-modify-write is involved). The rest of the singleton is unchanged and remains
+single-threaded in practice: `push()`/`pop()` and `level_` are only touched by the thread running
+the algorithm, and `client_` is set once by each `ProgressClient` constructor. The only in-tree
+consumer of the signal is `surface_mesh_remeshing.cpp` and `surface_mesh_sampler.cpp`, which poll
+it per iteration/per triangle; every other algorithm ignores cancellation and runs to completion,
+which is what the Mapple progress window tells the user.
+
+**Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 116/116 and Vulkan
+`build-vulkan-check` 150/150, no flakes. Both trees were fully rebuilt first (the change is in the
+shared library only, and no class layout or virtual-function set changed). A scratch probe linked
+against the release library exercised the threaded contract directly: the remesh canceled from
+another thread after the first reported percent stopped at 67,330 faces where the uncanceled run
+produced 169,608, and the sampler returned no cloud when canceled. `easy3d/util/version.h` is
+unchanged. Linux/Windows/CI remain separate gates.

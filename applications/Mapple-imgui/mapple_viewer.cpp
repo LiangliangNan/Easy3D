@@ -161,11 +161,25 @@ MappleViewer::MappleViewer(const std::string &title,
 }
 
 MappleViewer::~MappleViewer() {
+    if (process_job_) {
+        // Cancellation is cooperative; commands without progress checks finish first.
+        cancel();
+        if (process_job_->thread.joinable())
+            process_job_->thread.join();
+        delete process_job_->result;
+        process_job_.reset();
+    }
     // Release selection colormaps before the graphics device dies with the viewer.
     selection_styles_.clear();
     // Destroy the ImGui context and its font texture while the viewer (and its graphics
     // device) is still alive.
     imgui_.reset();
+}
+
+void MappleViewer::notify(std::size_t percent, bool update_viewer) {
+    // Worker thread: only publish the value; the progress window reads it per frame.
+    if (process_job_)
+        process_job_->percent.store(static_cast<int>(percent));
 }
 
 void MappleViewer::send(el::Level level, const std::string &msg) {
@@ -341,9 +355,14 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         return true;
 
     if (process_op_ != ProcessOp::NONE) {
-        // Esc dismisses the processing window; everything else stays with it.
-        if (key == KEY_ESCAPE && modifiers == 0)
-            process_op_ = ProcessOp::NONE;
+        // A background command owns the slot until it finishes; Esc only asks a
+        // cancelable command to stop. Otherwise Esc dismisses the parameter window.
+        if (key == KEY_ESCAPE && modifiers == 0) {
+            if (process_job_)
+                request_process_cancel();
+            else
+                process_op_ = ProcessOp::NONE;
+        }
         return true;
     }
     // Escape leaves selection mode. With no selection tool active it would close the
@@ -396,6 +415,16 @@ bool MappleViewer::focus_event(bool focused) {
 }
 
 void MappleViewer::draw_gui() {
+    if (process_job_) {
+        poll_process_job();
+        if (process_job_) {
+            // The worker owns the model, so the panels (which read model properties)
+            // stay out this frame; process_op_ already blocks scene input.
+            draw_process_progress();
+            return;
+        }
+    }
+
     process_pending_work();
 
     draw_menu_bar();
