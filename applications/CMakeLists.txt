@@ -6,6 +6,8 @@ if (Easy3D_ENABLE_QT)
     endif ()
 endif ()
 
+add_subdirectory(Mapple-imgui)
+
 add_subdirectory(FigureMaker)
 
 if(Easy3D_ENABLE_VULKAN)

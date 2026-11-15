@@ -731,6 +731,17 @@ namespace easy3d {
         return model_idx_ < 0 || size_t(model_idx_) >= models_.size() ? nullptr : models_[model_idx_].get();
     }
 
+    bool Viewer::set_current_model(Model *model) {
+        if (!model)
+            return false;
+        const auto pos = std::find_if(models_.begin(), models_.end(),
+                                      [model](const std::shared_ptr<Model> &m) { return m.get() == model; });
+        if (pos == models_.end())
+            return false;
+        model_idx_ = int(pos - models_.begin());
+        return true;
+    }
+
     Model *Viewer::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
 #ifndef EASY3D_HAS_VULKAN
         glfwMakeContextCurrent(window_);

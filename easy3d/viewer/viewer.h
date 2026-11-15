@@ -404,6 +404,15 @@ public:
          * \return The active model.
          */
         Model* current_model() const override;
+
+        /**
+         * \brief Make a managed model the active model.
+         * \param model A model managed by this viewer.
+         * \return True when \p model is managed by this viewer and has become the active model;
+         *         false otherwise, in which case the active model is left unchanged.
+         * \sa current_model(), models()
+         */
+        bool set_current_model(Model* model);
         //@}
 
         /// \name Drawable management
