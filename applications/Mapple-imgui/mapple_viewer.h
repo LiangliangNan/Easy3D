@@ -46,6 +46,8 @@
 #include <easy3d/util/progress.h>
 #include <easy3d/viewer/viewer.h>
 
+#include "settings.h"
+
 class ImGuiLayer;
 namespace easy3d {
     class Drawable;
@@ -334,6 +336,17 @@ private:
     // Asks the running recording to stop; the frames written so far are kept.
     void cancel_video_recording();
 
+    // ui/menu.cpp
+    // App-owned file dialogs: Viewer's start in resources/data and know nothing
+    // about recent files. These start in the last-used directory and remember
+    // every successfully opened or saved file.
+    bool open() override;
+
+    bool save() const override;
+
+    // Adds a file chosen from File > Open Recent and fits the camera to it.
+    void open_recent_file(const std::string &file);
+
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
 
@@ -422,6 +435,10 @@ private:
 
 private:
     std::unique_ptr<ImGuiLayer> imgui_;
+
+    // Loaded in the constructor, written back in the destructor. Mutable because
+    // save() is a const Viewer override that still records the saved file.
+    mutable AppSettings settings_;
 
     float menu_height_ = 0.0f; // height of the main menu bar this frame
 

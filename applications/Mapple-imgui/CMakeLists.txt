@@ -4,6 +4,8 @@ add_executable(${name}
         main.cpp
         mapple_viewer.h
         mapple_viewer.cpp
+        settings.h
+        settings.cpp
         imgui_layer.h
         imgui_layer.cpp
         ui/menu.cpp

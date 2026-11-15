@@ -27,15 +27,123 @@
 #include "../mapple_viewer.h"
 
 #include <string>
+#include <vector>
 
+#include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/graph_io.h>
+#include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/util/dialog.h>
+#include <easy3d/util/file_system.h>
+#include <easy3d/util/resource.h>
 
 #include <3rd_party/imgui/imgui.h>
 
 using namespace easy3d;
+
+namespace {
+
+    // Mapple's own list: the aggregate line first, then one entry per model type,
+    // matching the Qt app's dialogs. Pairs of description and pattern.
+    const std::vector<std::string> &model_open_filters() {
+        static const std::vector<std::string> filters = {
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)",
+                "*.ply *.obj *.off *.stl *.sm *.geojson *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh",
+                "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)",
+                "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
+                "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)",
+                "*.plm *.pm *.mesh",
+                "Graph (*.ply)",
+                "*.ply",
+                "All Files (*.*)",
+                "*"};
+        return filters;
+    }
+
+    const std::vector<std::string> &model_save_filters() {
+        static const std::vector<std::string> filters = {
+                "Surface Mesh (*.obj *.ply *.off *.stl *.sm)",
+                "*.obj *.ply *.off *.stl *.sm",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
+                "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)",
+                "*.plm *.pm *.mesh",
+                "Graph (*.ply)",
+                "*.ply",
+                "All Files (*.*)",
+                "*"};
+        return filters;
+    }
+
+} // namespace
+
+bool MappleViewer::open() {
+    const std::string default_path = settings_.data_directory.empty()
+                                             ? resource::directory() + "/data/"
+                                             : settings_.data_directory;
+    const std::vector<std::string> files =
+            dialog::open("Open file(s)", default_path, model_open_filters(), true);
+
+    bool opened = false;
+    for (const auto &file : files) {
+        if (add_model(file)) {
+            settings_.remember_file(file);
+            opened = true;
+        }
+    }
+    if (opened)
+        fit_screen();
+    return opened;
+}
+
+bool MappleViewer::save() const {
+    Model *model = current_model();
+    if (!model) {
+        LOG(ERROR) << "no model exists";
+        return false;
+    }
+
+    std::string default_file_name = model->name();
+    if (file_system::extension(default_file_name).empty()) // no extension?
+        default_file_name += ".ply";                       // default to ply
+    if (!settings_.data_directory.empty())
+        default_file_name = settings_.data_directory + "/" + file_system::simple_name(default_file_name);
+
+    const std::string file_name =
+            dialog::save("Please choose a file name", default_file_name, model_save_filters(), true);
+    if (file_name.empty())
+        return false;
+
+    bool saved = false;
+    if (const auto *cloud = dynamic_cast<const PointCloud *>(model))
+        saved = PointCloudIO::save(file_name, cloud);
+    else if (const auto *mesh = dynamic_cast<const SurfaceMesh *>(model))
+        saved = SurfaceMeshIO::save(file_name, mesh);
+    else if (const auto *graph = dynamic_cast<const Graph *>(model))
+        saved = GraphIO::save(file_name, graph);
+
+    if (saved) {
+        LOG(INFO) << "file successfully saved to: " << file_name;
+        settings_.remember_file(file_name); // settings_ is mutable: save() is const
+    }
+    return saved;
+}
+
+void MappleViewer::open_recent_file(const std::string &file) {
+    if (!add_model(file)) {
+        // The file was deleted or moved since the settings were loaded.
+        settings_.forget_file(file);
+        return;
+    }
+    fit_screen();
+    settings_.remember_file(file);
+}
 
 // The menu bar only exposes actions that exist. Shortcut strings are display-only;
 // the matching keys are handled by Viewer::key_press_event().
@@ -46,6 +154,25 @@ void MappleViewer::draw_menu_bar() {
     if (ImGui::BeginMenu("File")) {
         if (ImGui::MenuItem("Open...", "Ctrl+O"))
             open();
+
+        if (ImGui::BeginMenu("Open Recent")) {
+            // Copied: opening a file moves it to the front of the list.
+            const std::vector<std::string> recent = settings_.recent_files;
+            if (recent.empty())
+                ImGui::MenuItem("(no recent files)", nullptr, false, false);
+            for (std::size_t i = 0; i < recent.size(); ++i) {
+                const std::string label =
+                        std::to_string(i + 1) + "  " + file_system::simple_name(recent[i]);
+                if (ImGui::MenuItem(label.c_str()))
+                    open_recent_file(recent[i]);
+                ImGui::SetItemTooltip("%s", recent[i].c_str());
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Clear Recent Files", nullptr, false, !recent.empty()))
+                settings_.clear_recent_files();
+            ImGui::EndMenu();
+        }
+
         if (ImGui::MenuItem("Save As...", "Ctrl+S", false, current_model() != nullptr))
             save();
 

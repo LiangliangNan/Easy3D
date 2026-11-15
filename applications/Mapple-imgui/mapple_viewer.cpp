@@ -158,6 +158,20 @@ MappleViewer::MappleViewer(const std::string &title,
     if (!glfwInit())
         throw std::runtime_error("glfwInit failed for Mapple's GLFW copy");
 #endif
+
+    // Restore the layout, view toggles and file history of the previous run.
+    settings_.load();
+    show_rendering_panel_ = settings_.show_rendering_panel;
+    show_models_panel_ = settings_.show_models_panel;
+    show_log_panel_ = settings_.show_log_panel;
+    left_width_ = settings_.left_width;
+    right_width_ = settings_.right_width;
+    log_height_ = settings_.log_height;
+    show_pick_readout_ = settings_.pick_readout;
+    log_auto_scroll_ = settings_.log_auto_scroll;
+#ifdef HAS_FFMPEG
+    video_bitrate_mbps_ = settings_.video_bitrate_mbps;
+#endif
 }
 
 MappleViewer::~MappleViewer() {
@@ -174,6 +188,20 @@ MappleViewer::~MappleViewer() {
     // Destroy the ImGui context and its font texture while the viewer (and its graphics
     // device) is still alive.
     imgui_.reset();
+
+    // Persist the layout, view toggles and file history for the next run.
+    settings_.show_rendering_panel = show_rendering_panel_;
+    settings_.show_models_panel = show_models_panel_;
+    settings_.show_log_panel = show_log_panel_;
+    settings_.left_width = left_width_;
+    settings_.right_width = right_width_;
+    settings_.log_height = log_height_;
+    settings_.pick_readout = show_pick_readout_;
+    settings_.log_auto_scroll = log_auto_scroll_;
+#ifdef HAS_FFMPEG
+    settings_.video_bitrate_mbps = video_bitrate_mbps_;
+#endif
+    settings_.save();
 }
 
 void MappleViewer::notify(std::size_t percent, bool update_viewer) {

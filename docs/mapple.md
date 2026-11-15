@@ -5,9 +5,11 @@ Dear ImGui application rendered through Easy3D's backend-neutral overlay path
 (`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
 daily-use workflow.
 
-Status: 2026-11-15 — Phases 0–1 complete and Phase 2 started: builds and runs on both
-OpenGL and Vulkan; panels, menus, log capture, drawable styling, picking readout,
-point/face selection, the clipping plane, and a first set of processing commands work.
+Status: 2026-11-15 — Phases 0–3 complete: the app builds and runs on both OpenGL and
+Vulkan and covers panels, menus, log capture, drawable styling, picking readout,
+point/face selection, the clipping plane, processing commands, snapshots, the camera
+path with video recording, and settings/layout persistence. Phase 4 (retire Qt) is
+pending.
 
 ## Decision
 
@@ -86,7 +88,7 @@ Reuse inventory (verified):
 | Hover primitive readout | `Viewer::pick` → `PickResult` |
 | Log sink | `easy3d::logging::Logger` dispatch callback |
 | ImGui build | `3rd_imgui` target (GLFW backend; OpenGL3 backend excluded under Vulkan) |
-| Settings/layout | not implemented yet; `io.IniFilename` is disabled, so ImGui writes no layout file |
+| Settings/layout | app-owned `AppSettings` (`settings.h`): panel visibility/sizes, view toggles, last directory and recent files in a per-user INI; `io.IniFilename` stays disabled because the panels are fixed windows |
 
 ## Phases
 
@@ -101,7 +103,14 @@ Reuse inventory (verified):
 - [x] Rendering panel: background color, projection; active-model drawable styling
       (visibility, uniform color, point size, line width, smooth shading, back color).
 - [x] Log panel: level-colored lines, auto-scroll, clear, copy, export.
-- [ ] Settings persistence, recent files.
+- [x] Settings persistence, recent files: `AppSettings` (`settings.h/.cpp`) writes
+      panel visibility and sizes, the pick-readout and log auto-scroll toggles, the
+      video bitrate, the last-used directory and up to five recent files to a
+      per-user INI (`~/Library/Application Support/Mapple-imgui/settings.ini`,
+      `%APPDATA%/Mapple-imgui/settings.ini`, or `$XDG_CONFIG_HOME/Mapple-imgui/`).
+      The app-owned Open/Save dialogs start in that directory and File > Open Recent
+      lists the newest files (basename plus full-path tooltip, Clear Recent Files);
+      missing files are pruned when the settings load.
 
 Acceptance: open OBJ/PLY, orbit/zoom, switch active model, toggle drawables, restyle,
 snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
@@ -288,7 +297,8 @@ Phase 2 design notes:
       overlays in snapshots on purpose, e.g. annotations). `pre_draw()` rebuilds them
       on the next frame, so the window is unaffected. The View menu item, the toolbar
       button and `S` all open it.
-- [ ] App settings and panel layout persistence.
+- [x] App settings and panel layout persistence: the Phase 0 settings/recent-files
+      item is implemented (`AppSettings`, File > Open Recent), so Phase 3 is complete.
 
 ### Phase 4 — retire Qt
 
@@ -661,3 +671,34 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   bitrate slider and the "needs at least two keyframes" hint that configure it.
 - Validation: `applications/Mapple-imgui` builds and the app launches; the layout was
   not exercised through scripted clicks.
+
+### 2026-11-15 — Phase 3 settings persistence and recent files
+
+- `AppSettings` (settings.h/.cpp) stores the state that should outlive a session:
+  panel visibility and sizes (left/right widths, log height), the pick-readout and
+  log auto-scroll toggles, the video bitrate, the last-used directory and up to five
+  recent files. It is a plain `key=value` file under the per-user configuration
+  directory (`~/Library/Application Support/Mapple-imgui/settings.ini` on macOS,
+  `%APPDATA%\Mapple-imgui\settings.ini` on Windows, `$XDG_CONFIG_HOME/Mapple-imgui/`
+  or `~/.config` on Linux), written when the app exits and read at start-up.
+  Malformed entries are skipped, missing keys keep their defaults, and recent files
+  that no longer exist are dropped at load.
+- File handling now belongs to the app: `MappleViewer` overrides `open()`/`save()`
+  (both virtual in `ViewerBase`) so the dialogs start in the last-used directory and
+  use Mapple's own filter list, which carries the aggregate "Supported formats" line
+  like the Qt dialogs. Successful opens and saves feed the recent list, and File >
+  Open Recent shows each entry as a numbered basename with the full path as a tooltip;
+  a recent file that fails to load is dropped. `Viewer::open()`/`save()` are
+  untouched, so the tutorials and other apps keep their behavior.
+- Panel layout is persisted by the app rather than ImGui: `io.IniFilename` stays
+  disabled because the panels are fixed windows laid out by `draw_panels()`, so there
+  is no ImGui window state to save. The floating Camera Path window keeps its
+  first-use default position and is not persisted yet.
+- Validation: both trees build and launch. A scratch round-trip probe (linked against
+  `easy3d_util`, removed afterwards) saved and reloaded every field, verified the
+  newest-first recent order, and confirmed that a deleted recent file is pruned. A
+  scripted run of the app itself (temporary exit timer, removed afterwards) wrote the
+  file on a clean exit; a second run started from a hand-written file with custom
+  sizes, visibility and bitrate and wrote the same values back, proving the
+  constructor applies them, with a dead `recent.0` entry pruned. The native file
+  dialogs and the Open Recent menu clicks were not scripted.

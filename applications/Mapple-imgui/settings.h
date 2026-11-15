@@ -1,0 +1,83 @@
+/** \cond LICENSE
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ \endcond */
+
+#ifndef EASY3D_MAPPLE_SETTINGS_H
+#define EASY3D_MAPPLE_SETTINGS_H
+
+#include <cstddef>
+#include <string>
+#include <vector>
+
+
+/**
+ * \brief State Mapple-imgui carries across runs: panel layout, view toggles,
+ *      recording defaults, and the file history (last directory, recent files).
+ * \details load() runs at start-up and save() at exit. The file is a plain
+ *      key=value text file under the per-user configuration directory, so a
+ *      failed write never affects the session.
+ */
+struct AppSettings {
+    bool show_rendering_panel = true;
+    bool show_models_panel = true;
+    bool show_log_panel = true;
+    // Side-panel widths and log-panel height, in logical window pixels.
+    float left_width = 250.0f;
+    float right_width = 300.0f;
+    float log_height = 170.0f;
+
+    bool pick_readout = true;
+    bool log_auto_scroll = true;
+    int video_bitrate_mbps = 8;
+
+    // Directory the File dialogs start in; empty until a file is opened or saved.
+    std::string data_directory;
+    // Newest first, at most max_recent_files, only files that still exist.
+    std::vector<std::string> recent_files;
+
+    static constexpr std::size_t max_recent_files = 5;
+
+    /// Per-user settings file, e.g. ~/Library/Application Support/Mapple-imgui/settings.ini.
+    static std::string file_path();
+
+    /// Reads the settings file. Returns false (keeping the defaults) when it does not
+    /// exist; missing keys keep their default and malformed entries are skipped.
+    bool load();
+
+    /// Writes the settings file, creating its directory. Returns false on failure.
+    bool save() const;
+
+    /// Makes \p file the newest entry, dropping older duplicates, and updates
+    /// data_directory to its parent directory.
+    void remember_file(const std::string &file);
+
+    /// Drops \p file from the recent list (e.g. after it failed to load).
+    void forget_file(const std::string &file);
+
+    void clear_recent_files() { recent_files.clear(); }
+};
+
+
+#endif // EASY3D_MAPPLE_SETTINGS_H
