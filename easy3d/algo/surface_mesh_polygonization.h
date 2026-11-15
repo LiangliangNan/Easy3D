@@ -48,13 +48,15 @@ namespace easy3d {
      *      between different patches delimit the patch boundary.
      *
      *      Each patch is replaced by convex polygons whenever possible:
-     *      - If the patch has no holes and every boundary loop is simple (does not visit a vertex twice), each
-     *        outer boundary loop is partitioned into convex polygons with PolygonPartition (Hertel-Mehlhorn);
-     *        an already convex loop becomes a single face.
-     *      - If the patch has holes or a self-touching boundary, its boundary is first normalized by the CSG
-     *        operators (easy3d/algo/tessellator.h) and then partitioned into convex polygons with
-     *        PolygonPartition (Hertel-Mehlhorn). The holes remain open, and no face in the result has holes.
-     *        Vertices created where boundary segments intersect are added to the mesh.
+     *      - If the patch has no holes and every boundary loop is simple (it does not revisit a position and no
+     *        two non-adjacent edges cross or touch), each outer boundary loop is partitioned into convex polygons
+     *        with PolygonPartition (Hertel-Mehlhorn); an already convex loop becomes a single face.
+     *      - If the patch has holes or a self-touching boundary, or the partition above fails, its boundary is
+     *        first normalized by the CSG operators (easy3d/algo/tessellator.h) and then partitioned into convex
+     *        polygons with PolygonPartition (Hertel-Mehlhorn). The holes remain open, and no face in the result
+     *        has holes. Vertices created where boundary segments intersect are added to the mesh. If the
+     *        normalized patch still touches itself at a vertex, the part that repeats that vertex is split into
+     *        simple cycles sharing it.
      *      - If the boundary cannot be extracted or classified, or the partition fails, the patch's original
      *        faces are kept instead of being dropped (input faces are not necessarily convex). Zero-area parts
      *        returned by the partition are skipped.

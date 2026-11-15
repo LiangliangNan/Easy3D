@@ -9909,3 +9909,46 @@ The only messages are the loader's report for `house.obj`, the two `diffuse text
 messages for `domik.obj`, and, on `building.off`, the builder's report that it fixed 5 non-manifold
 vertices by copying them (the documented repair in `end_surface()`); no partition or merge failure
 is reported. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-15 — batch 82: Hertel-Mehlhorn gets only geometrically simple loops; pinch points are split
+
+**Scope.** Polygonizing `house.obj` printed `convex partition failed (method:
+Hertel-Mehlhorn)` eleven times. Root cause was in batch 81's simple branch, not in
+`extract_boundary_loop()`, `classify()` or `PolygonPartition`: the branch accepted a loop as "simple"
+when it merely did not visit the same *vertex index* twice. After `Surfacer::stitch_borders()`, a
+patch boundary can revisit the same *position* through different vertices (seam vertices at identical
+coordinates) and can cross itself (e.g. `(-6.69286, 5.02083) (-6.70143, 5.02083) (-6.71, 5.02083)
+(-6.70143, 5.02083) ...`), and Hertel-Mehlhorn fails its ear-clipping triangulation on such input.
+The branch now runs `is_simple_contour()` before partitioning: it rejects repeated positions and any
+pair of non-adjacent edges that cross or touch (orientation test, collinear overlap included), using
+a sweep ordered by minimum x, so only edges with overlapping x-ranges are compared. A non-simple loop,
+or an HM failure, falls through to the existing CSG normalization (`Tessellator`, boundary only,
+`WINDING_POSITIVE`) followed by `PolygonPartition::apply()`, so the patch is still decomposed into
+convex faces. For unstitched `house.obj` this changes the result from 5212 to 5140 faces: loops that
+HM used to "partition" although their boundary touches itself are now normalized first, which removes
+small overlaps and gives fewer, larger faces.
+
+The CSG path had a second bug that the new routing exposed: a normalized patch can still touch itself
+at a pinch vertex, and `PolygonPartition::apply()` then returned a part that repeats that vertex in
+its contour (observed part size 9). The builder rejected those faces with `SurfaceMesh::add_face:
+face contains duplicate vertex` (eight faces, `house.obj` 5132 instead of 5140). `split_complex_contour()`
+now walks each part and, when a vertex repeats, emits the cycle between the two occurrences and
+continues from the repeated vertex, so the part becomes simple cycles that share the pinch vertex and
+cover the same area (zero-area cycles are still skipped). The class documentation now says "simple"
+means that a loop does not revisit a position and does not cross or touch itself, and that a part
+which still repeats a vertex is split into cycles sharing it; it also states that an HM failure falls
+back to CSG normalization.
+
+**Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 111/111 and Vulkan
+`build-vulkan-check` 145/145, no flakes. Polygonization-only probe (Release, CGAL off): every output
+has zero degenerate faces, zero-length edges, non-convex faces, non-manifold vertices, multi-fan
+vertices and isolated vertices on `house.obj` (11262 -> 5140), `domik/domik.obj` (3456 -> 2820),
+`bunny.ply` (30779 -> 24933), `fandisk.off` (12946 -> 2510), `fandisk_quads.off` (764 -> 439),
+`general_closed.obj` (692 -> 190), `general_open.obj` (692 -> 141), `room.obj` (2204 -> 1104),
+`sphere.obj` (80 -> 80), `hemisphere.ply` (3600 -> 2392) and `building.off` (19021 -> 18191); no HM
+failure, builder rejection or dropped face is reported. Stitched probe (Release, CGAL on) for
+`house`, `domik`, `bunny`, `fandisk` and `general_open`: areas are preserved (relative error
+1.66e-3, 9.17e-6, 5.98e-6, 2.45e-5 and 5.83e-9), all convexity/manifold/fan/isolated counters are
+zero, `house` stays at 4940 faces with zero HM and builder warnings, and re-stitching after
+polygonization reproduces the known 19 zero-area CGAL border faces of batch 79 (also unchanged by
+batch 80). `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.

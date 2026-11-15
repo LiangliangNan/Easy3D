@@ -25,10 +25,7 @@
  \endcond */
 
 #include <algorithm>
-#include <cstdlib>
-#include <sstream>
 #include <unordered_map>
-#include <unordered_set>
 
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
@@ -61,6 +58,82 @@ namespace easy3d {
             if (!(max_len2 > 0.0f))
                 return true;
             return 0.5f * length(n) <= 1e-6f * max_len2;
+        }
+
+        float cross_2d(const vec2 &u, const vec2 &v) {
+            return u.x * v.y - u.y * v.x;
+        }
+
+        // Closed segments ab and cd intersect or touch. Adjacent segments share an endpoint, so callers skip them.
+        bool segments_intersect(const vec2 &a, const vec2 &b, const vec2 &c, const vec2 &d) {
+            const float d1 = cross_2d(b - a, c - a);
+            const float d2 = cross_2d(b - a, d - a);
+            const float d3 = cross_2d(d - c, a - c);
+            const float d4 = cross_2d(d - c, b - c);
+            if (((d1 > 0.0f && d2 < 0.0f) || (d1 < 0.0f && d2 > 0.0f)) &&
+                ((d3 > 0.0f && d4 < 0.0f) || (d3 < 0.0f && d4 > 0.0f)))
+                return true;
+
+            auto between = [](float p, float q, float r) {
+                return std::min(p, q) <= r && r <= std::max(p, q);
+            };
+            if (d1 == 0.0f && between(a.x, b.x, c.x) && between(a.y, b.y, c.y))
+                return true;
+            if (d2 == 0.0f && between(a.x, b.x, d.x) && between(a.y, b.y, d.y))
+                return true;
+            if (d3 == 0.0f && between(c.x, d.x, a.x) && between(c.y, d.y, a.y))
+                return true;
+            if (d4 == 0.0f && between(c.x, d.x, b.x) && between(c.y, d.y, b.y))
+                return true;
+            return false;
+        }
+
+        // A contour is simple if it does not visit the same position twice and no two non-adjacent edges cross or
+        // touch. Only simple contours may be handed to PolygonPartition.
+        bool is_simple_contour(const std::vector<vec2> &points) {
+            const std::size_t n = points.size();
+            if (n < 3)
+                return false;
+
+            std::vector<std::pair<float, float> > coords;
+            coords.reserve(n);
+            for (const auto &p : points)
+                coords.emplace_back(p.x, p.y);
+            std::sort(coords.begin(), coords.end());
+            for (std::size_t i = 1; i < n; ++i) {
+                if (coords[i] == coords[i - 1])
+                    return false;
+            }
+
+            // Sort the edges by their left end and only compare an edge with those whose x-range overlaps it.
+            struct Segment {
+                std::size_t index;
+                float min_x, max_x, min_y, max_y;
+            };
+            std::vector<Segment> segments(n);
+            for (std::size_t i = 0; i < n; ++i) {
+                const vec2 &p = points[i];
+                const vec2 &q = points[(i + 1) % n];
+                segments[i] = {i, std::min(p.x, q.x), std::max(p.x, q.x), std::min(p.y, q.y), std::max(p.y, q.y)};
+            }
+            std::sort(segments.begin(), segments.end(),
+                      [](const Segment &a, const Segment &b) { return a.min_x < b.min_x; });
+
+            for (std::size_t i = 0; i < n; ++i) {
+                const Segment &s = segments[i];
+                for (std::size_t j = i + 1; j < n && segments[j].min_x <= s.max_x; ++j) {
+                    const Segment &t = segments[j];
+                    if (t.min_y > s.max_y || t.max_y < s.min_y)
+                        continue;
+                    // skip the same edge and edges sharing a vertex
+                    if (t.index == (s.index + 1) % n || (t.index + 1) % n == s.index)
+                        continue;
+                    if (segments_intersect(points[s.index], points[(s.index + 1) % n],
+                                           points[t.index], points[(t.index + 1) % n]))
+                        return false;
+                }
+            }
+            return true;
         }
 
     }
@@ -213,18 +286,40 @@ namespace easy3d {
         std::vector<Contour> result;
         result.reserve(parts.size());
         for (const auto &part : parts) {
-            // The partition can return zero-area slivers when the patch boundary has collinear vertices.
-            Contour ct;
-            ct.reserve(part.size());
-            std::vector<vec3> pts;
-            pts.reserve(part.size());
-            for (auto id : part) {
-                ct.push_back(point_vertices[id]);
-                pts.push_back(vec3(points[id].x, points[id].y, 0.0f));
+            // A normalized boundary can touch itself at a vertex, and the partition then returns a part that
+            // repeats that vertex (a pinch point). Split it into simple cycles sharing the pinch vertex, because
+            // the builder rejects a polygon with a repeated vertex. The cycles cover the same area.
+            std::vector<int> cycle;
+            std::unordered_map<int, int> in_cycle;   // pool point -> position in cycle
+            auto emit = [&](std::size_t from) {
+                if (cycle.size() - from < 3)
+                    return;
+                // The partition can return zero-area slivers when the patch boundary has collinear vertices.
+                std::vector<vec3> pts;
+                pts.reserve(cycle.size() - from);
+                for (std::size_t k = from; k < cycle.size(); ++k)
+                    pts.push_back(vec3(points[cycle[k]].x, points[cycle[k]].y, 0.0f));
+                if (is_zero_area(pts))
+                    return;
+                Contour ct;
+                ct.reserve(pts.size());
+                for (std::size_t k = from; k < cycle.size(); ++k)
+                    ct.push_back(point_vertices[cycle[k]]);
+                result.push_back(ct);
+            };
+            for (int id : part) {
+                auto it = in_cycle.find(id);
+                if (it != in_cycle.end()) {
+                    emit(it->second);
+                    for (std::size_t k = it->second + 1; k < cycle.size(); ++k)
+                        in_cycle.erase(cycle[k]);
+                    cycle.resize(it->second + 1);   // keep the repeated point as the start of the next cycle
+                } else {
+                    in_cycle[id] = static_cast<int>(cycle.size());
+                    cycle.push_back(id);
+                }
             }
-            if (is_zero_area(pts))
-                continue;
-            result.push_back(ct);
+            emit(0);
         }
         return result;
     }
@@ -396,91 +491,31 @@ namespace easy3d {
                 continue;
             }
 
-            // A self-touching boundary visits a vertex twice, so the loop is not a simple polygon even when the
-            // patch has no holes. Such patches, and all patches with holes, are normalized with the CSG operators
-            // and split into convex polygons, because PolygonPartition requires simple contours and the mesh
-            // builder rejects a polygon with a repeated vertex.
+            // PolygonPartition requires simple contours, and the builder rejects a polygon with a repeated
+            // vertex. A loop that revisits a position through different vertices, or crosses or touches itself,
+            // is therefore normalized by the CSG operators, like every patch with holes. The projected loops are
+            // kept because the partition works in the patch plane.
+            const Plane3 plane(model.position(outer_polys.front().front()), patch_normals[patch_idx]);
+            std::vector<std::vector<vec2> > projected(outer_polys.size());
             bool simple = holes.empty();
-            if (simple) {
-                for (const auto& poly : outer_polys) {
-                    std::unordered_set<int> visited;
-                    for (auto v: poly) {
-                        if (!visited.insert(v.idx()).second) {
-                            simple = false;
-                            break;
-                        }
-                    }
-                    if (!simple)
-                        break;
-                }
+            for (std::size_t i = 0; i < outer_polys.size() && simple; ++i) {
+                const auto& poly = outer_polys[i];
+                projected[i].reserve(poly.size());
+                for (auto v: poly)
+                    projected[i].push_back(plane.to_2d(model.position(v)));
+                simple = is_simple_contour(projected[i]);
             }
 
+            std::vector<Contour> polygons;
             if (simple) {
                 // Partition every outer loop into convex polygons. Hertel-Mehlhorn returns an already convex loop
                 // unchanged, so a convex patch still becomes a single polygon face. The projection preserves the
                 // orientation with respect to the patch normal, so counter-clockwise loops stay counter-clockwise.
-                const Plane3 plane(model.position(outer_polys.front().front()), patch_normals[patch_idx]);
-                std::vector<Contour> convex_faces;
                 bool partition_ok = true;
-                for (const auto& poly : outer_polys) {
-                    std::vector<vec2> points;
-                    points.reserve(poly.size());
-                    for (auto v: poly)
-                        points.push_back(plane.to_2d(model.position(v)));
-
+                for (std::size_t i = 0; i < outer_polys.size() && partition_ok; ++i) {
+                    const auto& poly = outer_polys[i];
                     std::vector<PolygonPartition::Polygon> parts;
-                    if (!PolygonPartition::apply_HM(points, parts) || parts.empty()) {
-                        if (std::getenv("EASY3D_POLYGONIZATION_DEBUG")) {
-                            double twice_area = 0.0;
-                            int reflex = 0, dup_consecutive = 0, collinear = 0, intersections = 0;
-                            for (std::size_t i = 0; i < points.size(); ++i) {
-                                const vec2 &a = points[i];
-                                const vec2 &b = points[(i + 1) % points.size()];
-                                twice_area += static_cast<double>(a.x) * b.y - static_cast<double>(b.x) * a.y;
-                                if (a.x == b.x && a.y == b.y)
-                                    ++dup_consecutive;
-                            }
-                            for (std::size_t i = 0; i < points.size(); ++i) {
-                                const vec2 &a = points[(i + points.size() - 1) % points.size()];
-                                const vec2 &b = points[i];
-                                const vec2 &c = points[(i + 1) % points.size()];
-                                const vec2 e1 = b - a;
-                                const vec2 e2 = c - b;
-                                const float cr = e1.x * e2.y - e1.y * e2.x;
-                                if (cr < 0.0f) ++reflex;
-                                if (cr == 0.0f) ++collinear;
-                            }
-                            auto orient = [](const vec2 &a, const vec2 &b, const vec2 &c) {
-                                const vec2 e1 = b - a;
-                                const vec2 e2 = c - a;
-                                const float cr = e1.x * e2.y - e1.y * e2.x;
-                                return cr > 0.0f ? 1 : (cr < 0.0f ? -1 : 0);
-                            };
-                            for (std::size_t i = 0; i < points.size(); ++i) {
-                                for (std::size_t j = i + 2; j < points.size(); ++j) {
-                                    if (i == 0 && j + 1 == points.size())
-                                        continue;
-                                    const vec2 &a = points[i];
-                                    const vec2 &b = points[(i + 1) % points.size()];
-                                    const vec2 &c = points[j];
-                                    const vec2 &d = points[(j + 1) % points.size()];
-                                    const int o1 = orient(a, b, c);
-                                    const int o2 = orient(a, b, d);
-                                    const int o3 = orient(c, d, a);
-                                    const int o4 = orient(c, d, b);
-                                    if (o1 != o2 && o3 != o4)
-                                        ++intersections;
-                                }
-                            }
-                            LOG(WARNING) << "apply_HM failed: n=" << points.size()
-                                         << " twice_area=" << twice_area << " reflex=" << reflex
-                                         << " collinear=" << collinear << " dup_consecutive=" << dup_consecutive
-                                         << " intersections=" << intersections;
-                            std::ostringstream oss;
-                            for (const auto &p : points)
-                                oss << "(" << p.x << "," << p.y << ") ";
-                            LOG(WARNING) << "  points: " << oss.str();
-                        }
+                    if (!PolygonPartition::apply_HM(projected[i], parts) || parts.empty()) {
                         partition_ok = false;
                         break;
                     }
@@ -498,32 +533,25 @@ namespace easy3d {
                         }
                         if (is_zero_area(pts))
                             continue;
-                        convex_faces.push_back(ct);
+                        polygons.push_back(ct);
                     }
                 }
-                if (!partition_ok) {
-                    // the patch cannot be represented by convex polygons; keep its faces
+                if (!partition_ok)
+                    polygons.clear();   // normalize the boundaries below
+            }
+
+            if (polygons.empty()) {
+                polygons = split_complex_contour(outer_polys, hole_polys, patch_normals[patch_idx],
+                                                 &model, builder, vertex_map);
+                if (polygons.empty()) {
                     add_original_faces(patch_faces[patch_idx]);
                     continue;
-                }
-
-                // The outer loops share vertices only, which the builder resolves if necessary.
-                for (const auto& ct : convex_faces) {
-                    if (!builder.add_face(ct).is_valid())
-                        LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                 }
             }
-            else {
-                const auto contours = split_complex_contour(outer_polys, hole_polys, patch_normals[patch_idx],
-                                                            &model, builder, vertex_map);
-                if (contours.empty()) {
-                    add_original_faces(patch_faces[patch_idx]);
-                    continue;
-                }
-                for (const auto& ct : contours) {
-                    if (!builder.add_face(ct).is_valid())
-                        LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
-                }
+
+            for (const auto& ct : polygons) {
+                if (!builder.add_face(ct).is_valid())
+                    LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
             }
         }
         builder.end_surface(false);
