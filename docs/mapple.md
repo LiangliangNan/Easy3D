@@ -136,8 +136,9 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 
 - **Menu-bar height** = `FontSize + 2*FramePadding.y`; content is offset by
   `max(DisplaySafeAreaPadding.y - FramePadding.y, 0)`. Never push a `FramePadding`
-  with `y < DisplaySafeAreaPadding.y` around `BeginMainMenuBar` (that clipped the text
-  in `Tutorial_202_Viewer_imgui`). Default padding gives a 22 px bar.
+  with `y < DisplaySafeAreaPadding.y` around `BeginMainMenuBar`: that was the real bug
+  in `Tutorial_202_Viewer_imgui` (its `FramePadding.y = 0` clipped the labels), fixed
+  on 2026-11-15. Default padding gives a 22 px bar.
 - **Shortcuts**: the string in `MenuItem(label, "Ctrl+O")` is display-only; real
   shortcuts use `IsKeyPressed`/`Shortcut` and must be suppressed while
   `io.WantTextInput`.
@@ -159,6 +160,8 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Smoke test both backends: launch, open a mesh, orbit/zoom, select model, toggle
   drawables, restyle, snapshot, copy/paste view, verify log output.
 - Full suites stay green before any commit (`ctest -j 1 --output-on-failure`).
+- Changes confined to `applications/Mapple-imgui` only need the Mapple target tested;
+  the full Easy3D suites are reserved for library-wide changes.
 - Changes are left uncommitted; summarize and wait.
 
 ## Changelog
@@ -187,3 +190,15 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
   configuring. The rebuilt OpenGL binary was launched once more to confirm it starts;
   dragging from the scene across a panel is covered by the press-time input latch
   (compiled, not scripted).
+
+### 2026-11-15 — Tutorial_202 menu-bar clipping fixed
+
+- `ViewerImGui::draw_gui()` pushed `FramePadding = (5, 0)` around `BeginMainMenuBar()`,
+  which sets `MenuBarOffsetMinVal.y = max(DisplaySafeAreaPadding.y - FramePadding.y, 0)`
+  while sizing the bar as `FontSize + 2*FramePadding.y` — labels were shifted down inside
+  a bar with no room for them. It now keeps the style's `DisplaySafeAreaPadding.y` as the
+  vertical padding (horizontal stays 5), so the default 22 px bar renders fully.
+- Documented the rule in the `ViewerImGui` class comment (`viewer.h`) and in the
+  "ImGui notes" above, so Mapple's own menu bar copies the corrected form.
+- Validation: `opengl.imgui` and `vulkan.imgui` regression tests pass; both snapshots
+  show the File/View/Help labels uncut.

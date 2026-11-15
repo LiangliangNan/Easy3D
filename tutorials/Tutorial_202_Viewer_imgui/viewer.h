@@ -45,6 +45,11 @@ struct ImGuiContext;
  * post_resize() (keep the display size in sync). Input hooks forward mouse/keyboard
  * events to ImGui first so that GUI clicks do not also navigate the 3D scene. Subclass
  * draw_gui() to add your own windows and controls.
+ *
+ * \note A main menu bar is as tall as FontSize + 2*FramePadding.y, and its labels are moved
+ *      down by max(DisplaySafeAreaPadding.y - FramePadding.y, 0). Keep the vertical frame
+ *      padding at least DisplaySafeAreaPadding.y (the style default is), otherwise the
+ *      labels are clipped.
  */
 class ViewerImGui : public easy3d::Viewer {
 public:
@@ -126,7 +131,7 @@ protected:
     // Each viewer owns its UI context.
     ImGuiContext *context_ = nullptr;
 
-    float menu_height_ = 0; //!< Height of the menu bar, in pixels (used to lay out the scene).
+    float menu_height_ = 0; //!< Height of the main menu bar, in logical pixels.
     std::shared_ptr<const easy3d::graphics::Image> font_image_; //!< GPU texture holding the ImGui font atlas.
 };
 

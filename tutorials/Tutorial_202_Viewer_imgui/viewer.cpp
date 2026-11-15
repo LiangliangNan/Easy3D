@@ -291,7 +291,12 @@ void ViewerImGui::draw_gui() {
         ImGui::End();
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 0));
+    // Keep the horizontal padding, but never shrink the vertical one below the style's
+    // display safe area: BeginMainMenuBar() moves its labels down by
+    // max(DisplaySafeAreaPadding.y - FramePadding.y, 0) inside a bar whose height is
+    // FontSize + 2*FramePadding.y, so a smaller padding clips the text.
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,
+                        ImVec2(5, ImGui::GetStyle().DisplaySafeAreaPadding.y));
     // The main menu bar spans the top of the window; its height is recorded for layout.
     if (ImGui::BeginMainMenuBar()) {
         draw_menu_file();
