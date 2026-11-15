@@ -776,6 +776,19 @@ public:
          * is unavailable. Invalid or unsupported requests may throw.
          */
 	    virtual graphics::FrameImage capture(unsigned samples) const;
+
+        /**
+         * \brief Capture the current viewer image with a requested color sample count and readback content.
+         * \param samples Requested multisample count for color rendering.
+         * \param readback Scene data to copy back. FrameReadback::color skips the
+         *        per-drawable depth/ID passes, leaving depth() and ids() empty.
+         * \return Frame image containing composited RGBA color and, when requested,
+         *         scene depth and object/primitive identifiers.
+         * \details Use FrameReadback::color for display-only output (snapshots,
+         *      video frames) that never inspects depth or picking IDs; the skipped
+         *      passes cost a full-resolution readback per drawable.
+         */
+	    virtual graphics::FrameImage capture(unsigned samples, graphics::FrameReadback readback) const;
 #ifdef EASY3D_HAS_VULKAN
 
         /**

@@ -80,6 +80,15 @@ void MappleViewer::draw_animation_window() {
     const int count = static_cast<int>(kfi->number_of_keyframes());
     camera_keyframe_index_ = std::min(camera_keyframe_index_, count - 1);
 
+    if (ImGui::Button("Import...", ImVec2(100, 0)))
+        import_camera_path();
+    ImGui::SameLine();
+    if (ImGui::Button("Export...", ImVec2(100, 0)))
+        export_camera_path();
+    ImGui::SameLine();
+    ImGui::TextDisabled(".kf files");
+
+    ImGui::Separator();
     ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
     ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
 
@@ -132,15 +141,15 @@ void MappleViewer::draw_animation_window() {
 
     ImGui::Separator();
 #ifdef HAS_FFMPEG
+    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
+    if (count < 2)
+        ImGui::TextDisabled("Recording needs at least two keyframes.");
     ImGui::BeginDisabled(count < 2);
     if (ImGui::Button("Record Video...", ImVec2(140, 0)))
         record_camera_path();
     ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::TextDisabled("MP4, scene only");
-    if (count < 2)
-        ImGui::TextDisabled("Recording needs at least two keyframes.");
-    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
 #else
     ImGui::BeginDisabled();
     ImGui::Button("Record Video...", ImVec2(140, 0));
@@ -148,15 +157,6 @@ void MappleViewer::draw_animation_window() {
     ImGui::SameLine();
     ImGui::TextDisabled("requires FFmpeg");
 #endif
-
-    ImGui::Separator();
-    if (ImGui::Button("Import...", ImVec2(100, 0)))
-        import_camera_path();
-    ImGui::SameLine();
-    if (ImGui::Button("Export...", ImVec2(100, 0)))
-        export_camera_path();
-    ImGui::SameLine();
-    ImGui::TextDisabled(".kf files");
 
     ImGui::End();
 }
@@ -364,7 +364,9 @@ void MappleViewer::advance_video_recording() {
             const Frame &f = r.frames[r.next_frame];
             camera()->frame()->set_position_and_orientation(f.position(), f.orientation());
             try {
-                const graphics::FrameImage image = capture(r.samples);
+                // Video frames never inspect depth or picking IDs, so skip those
+                // full-resolution passes and readbacks.
+                const graphics::FrameImage image = capture(r.samples, graphics::FrameReadback::color);
                 const unsigned char *data = image.rgba.data();
                 if (image.width != unsigned(r.width) || image.height != unsigned(r.height)) {
                     r.pixels.resize(std::size_t(r.width) * r.height * 4);

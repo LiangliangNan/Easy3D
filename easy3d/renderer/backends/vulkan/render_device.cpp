@@ -498,19 +498,28 @@ namespace easy3d {
                 Context &c;
                 VkBuffer handle = VK_NULL_HANDLE;
                 VkDeviceMemory memory = VK_NULL_HANDLE;
+                VkDeviceSize size = 0;
                 bool coherent = false;
                 explicit Buffer(Context &context) : c(context) {}
                 Buffer(const Buffer &) = delete;
                 ~Buffer() {
+                    reset();
+                }
+                void reset() {
                     if (handle)
                         c.vkDestroyBuffer(c.device, handle, nullptr);
                     if (memory)
                         c.vkFreeMemory(c.device, memory, nullptr);
+                    handle = VK_NULL_HANDLE;
+                    memory = VK_NULL_HANDLE;
+                    size = 0;
                 }
-                void init(VkDeviceSize size, VkBufferUsageFlags usage, bool host) {
+                void init(VkDeviceSize bytes, VkBufferUsageFlags usage, bool host) {
+                    reset();
+                    size = bytes;
                     VkBufferCreateInfo bi{};
                     bi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-                    bi.size = size;
+                    bi.size = bytes;
                     bi.usage = usage;
                     bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
                     check(c.vkCreateBuffer(c.device, &bi, nullptr, &handle), "create buffer");
@@ -1129,24 +1138,29 @@ namespace easy3d {
                 }
             };
             template <class Record>
-            FrameImage capture_frame(Context &c, Target &target, const Record &record) {
+            FrameImage capture_frame(Context &c, Target &target, const Record &record,
+                                     FrameReadback readback = FrameReadback::color_depth_ids) {
                 const size_t pixels = size_t(target.width) * target.height;
-                if (!target.readback.handle)
-                    target.readback.init(VkDeviceSize(pixels) * 16 + 8, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
-                const size_t id_offset = (pixels * 4 + 7) & ~size_t(7);
-                const size_t depth_offset = id_offset + pixels * 8;
+                const bool complete = readback == FrameReadback::color_depth_ids;
+                const size_t id_offset = complete ? (pixels * 4 + 7) & ~size_t(7) : 0;
+                const size_t depth_offset = complete ? id_offset + pixels * 8 : 0;
+                const size_t bytes_size = complete ? depth_offset + pixels * 4 : pixels * 4;
+                if (!target.readback.handle || target.readback.size < bytes_size)
+                    target.readback.init(bytes_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
                 FrameImage result;
                 result.width = target.width;
                 result.height = target.height;
                 result.rgba.resize(pixels * 4);
-                result.depth.resize(pixels);
-                result.ids.resize(pixels);
-                static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
+                if (complete) {
+                    result.depth.resize(pixels);
+                    result.ids.resize(pixels);
+                    static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
+                }
                 c.execute([&](VkCommandBuffer cmd) {
                     record(cmd);
                     const VkImage images[] = {target.color.handle, target.ids.handle, target.depth.handle};
                     const VkDeviceSize offsets[] = {0, VkDeviceSize(id_offset), VkDeviceSize(depth_offset)};
-                    for (unsigned i = 0; i < 3; ++i) {
+                    for (unsigned i = 0; i < (complete ? 3u : 1u); ++i) {
                         VkBufferImageCopy copy{};
                         copy.bufferOffset = offsets[i];
                         copy.imageSubresource = {
@@ -1164,11 +1178,13 @@ namespace easy3d {
                     c.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1,
                                            &host, 0, nullptr, 0, nullptr);
                 });
-                std::vector<unsigned char> bytes(depth_offset + pixels * 4);
+                std::vector<unsigned char> bytes(bytes_size);
                 target.readback.transfer(bytes.data(), bytes.size(), false);
                 std::memcpy(result.rgba.data(), bytes.data(), pixels * 4);
-                std::memcpy(result.ids.data(), bytes.data() + id_offset, pixels * 8);
-                std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
+                if (complete) {
+                    std::memcpy(result.ids.data(), bytes.data() + id_offset, pixels * 8);
+                    std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
+                }
                 return result;
             }
             template <class Record>
@@ -5177,7 +5193,8 @@ namespace easy3d {
                                   const vec4 &background,
                                   unsigned samples,
                                   TransparencyMethod transparency,
-                                  unsigned peel_layers) override {
+                                  unsigned peel_layers,
+                                  FrameReadback readback) override {
                     oit_method_ = transparency;
                     oit_layers_ = peel_layers ? peel_layers : 16u;
                     const auto draws = prepare(width, height, commands, background, samples);
@@ -5185,7 +5202,7 @@ namespace easy3d {
                     // an explicitly requested capture, including eight-byte ID alignment.
                     auto result = capture_frame(c_, *target_, [&](VkCommandBuffer cmd) {
                         encode(cmd, draws, background);
-                    });
+                    }, readback);
                     OitFrameCoordinator(*this).capture_overflow();
                     return result;
                 }

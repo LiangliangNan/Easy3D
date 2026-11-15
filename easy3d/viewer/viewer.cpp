@@ -228,8 +228,10 @@ namespace easy3d {
             if (!snapshot.active)
                 return device->present(unsigned(width), unsigned(height), commands, owner.background_color(),
                                        unsigned(owner.samples()), method, peel_layers);
+            // File snapshots keep only the color image, so skip the depth/ID readback.
             snapshot.image = device->render(unsigned(width), unsigned(height), commands, snapshot.background,
-                                            snapshot.samples, method, peel_layers);
+                                            snapshot.samples, method, peel_layers,
+                                            graphics::FrameReadback::color);
             return true;
         }
 
@@ -246,13 +248,15 @@ namespace easy3d {
                                      unsigned samples = 1,
                                      int width = 0,
                                      int height = 0,
-                                     bool include_hud = true) const {
+                                     bool include_hud = true,
+                                     graphics::FrameReadback readback = graphics::FrameReadback::color_depth_ids) const {
             if (!width)
                 width = cam.screen_width();
             if (!height)
                 height = cam.screen_height();
             return device->render(uint32_t(width), uint32_t(height),
-                                  owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples);
+                                  owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples,
+                                  graphics::TransparencyMethod::sorted, 4, readback);
         }
     };
     namespace {
@@ -1958,6 +1962,9 @@ namespace easy3d {
         return capture(samples());
     }
     graphics::FrameImage Viewer::capture(unsigned sample_count) const {
+        return capture(sample_count, graphics::FrameReadback::color_depth_ids);
+    }
+    graphics::FrameImage Viewer::capture(unsigned sample_count, graphics::FrameReadback readback) const {
         if (!initialized_) {
             auto *host = const_cast<Viewer *>(this);
             host->init();
@@ -1968,7 +1975,7 @@ namespace easy3d {
             update_interaction_overlays();
         }
         return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height(),
-                              snapshot_hud_);
+                              snapshot_hud_, readback);
     }
 } // namespace easy3d
 #else // OpenGL
@@ -2700,6 +2707,9 @@ namespace easy3d {
         return capture(samples());
     }
     graphics::FrameImage Viewer::capture(unsigned count) const {
+        return capture(count, graphics::FrameReadback::color_depth_ids);
+    }
+    graphics::FrameImage Viewer::capture(unsigned count, graphics::FrameReadback readback) const {
         if (!count || count > 64 || (count & (count - 1)))
             throw std::invalid_argument("invalid capture sample count");
         QueryContext context(window_);
@@ -2749,46 +2759,48 @@ namespace easy3d {
             if (!color.read_color(0, frame.rgba, GL_RGBA, true))
                 throw std::runtime_error("cannot read capture color");
         }
-        FramebufferObject depth(w, h, 0);
-        if (!depth.add_color_buffer() || !depth.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !depth.bind())
-            throw std::runtime_error("cannot create capture depth target");
-        frame.depth.assign(size_t(w) * h, 1);
-        frame.ids.assign(size_t(w) * h, {UINT32_MAX, UINT32_MAX});
-        std::vector<float> candidate(frame.depth.size());
-        const auto append = [&](const std::shared_ptr<Model> &model, const std::shared_ptr<Drawable> &drawable,
-                                uint32_t id) {
-            if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                return;
-            state.prepare(w, h);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            DrawSource source{model, drawable};
-            draw_scene(snapshot, &source);
-            glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, candidate.data());
-            for (int y = 0; y < h; ++y)
-                for (int x = 0; x < w; ++x) {
-                    const auto p = size_t(y) * w + x;
-                    const auto d = candidate[size_t(h - 1 - y) * w + x];
-                    if (d >= 0 && d < frame.depth[p]) {
-                        frame.depth[p] = d;
-                        frame.ids[p] = {id, UINT32_MAX};
+        if (readback == graphics::FrameReadback::color_depth_ids) {
+            FramebufferObject depth(w, h, 0);
+            if (!depth.add_color_buffer() || !depth.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !depth.bind())
+                throw std::runtime_error("cannot create capture depth target");
+            frame.depth.assign(size_t(w) * h, 1);
+            frame.ids.assign(size_t(w) * h, {UINT32_MAX, UINT32_MAX});
+            std::vector<float> candidate(frame.depth.size());
+            const auto append = [&](const std::shared_ptr<Model> &model, const std::shared_ptr<Drawable> &drawable,
+                                    uint32_t id) {
+                if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                    return;
+                state.prepare(w, h);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                DrawSource source{model, drawable};
+                draw_scene(snapshot, &source);
+                glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, candidate.data());
+                for (int y = 0; y < h; ++y)
+                    for (int x = 0; x < w; ++x) {
+                        const auto p = size_t(y) * w + x;
+                        const auto d = candidate[size_t(h - 1 - y) * w + x];
+                        if (d >= 0 && d < frame.depth[p]) {
+                            frame.depth[p] = d;
+                            frame.ids[p] = {id, UINT32_MAX};
+                        }
                     }
-                }
-        };
-        if (models_.size() + drawables_.size() >= UINT32_MAX)
-            throw std::length_error("too many capture objects");
-        for (size_t i = 0; i < models_.size(); ++i) {
-            const auto &model = models_[i];
-            if (!model->renderer())
-                continue;
-            for (const auto &d : model->renderer()->triangles_drawables())
-                append(model, d, uint32_t(i));
-            for (const auto &d : model->renderer()->lines_drawables())
-                append(model, d, uint32_t(i));
-            for (const auto &d : model->renderer()->points_drawables())
-                append(model, d, uint32_t(i));
+            };
+            if (models_.size() + drawables_.size() >= UINT32_MAX)
+                throw std::length_error("too many capture objects");
+            for (size_t i = 0; i < models_.size(); ++i) {
+                const auto &model = models_[i];
+                if (!model->renderer())
+                    continue;
+                for (const auto &d : model->renderer()->triangles_drawables())
+                    append(model, d, uint32_t(i));
+                for (const auto &d : model->renderer()->lines_drawables())
+                    append(model, d, uint32_t(i));
+                for (const auto &d : model->renderer()->points_drawables())
+                    append(model, d, uint32_t(i));
+            }
+            for (size_t i = 0; i < drawables_.size(); ++i)
+                append(nullptr, drawables_[i], uint32_t(models_.size() + i));
         }
-        for (size_t i = 0; i < drawables_.size(); ++i)
-            append(nullptr, drawables_[i], uint32_t(models_.size() + i));
         return frame;
     }
     void Viewer::prepare_pick_view(int, int, int width, int height) const {

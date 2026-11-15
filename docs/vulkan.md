@@ -10003,3 +10003,32 @@ against the release library exercised the threaded contract directly: the remesh
 another thread after the first reported percent stopped at 67,330 faces where the uncanceled run
 produced 169,608, and the sampler returned no cloud when canceled. `easy3d/util/version.h` is
 unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-15 — batch 84: color-only capture skips the picking readback
+
+**Scope.** `Viewer::capture()` always produced depth and object/primitive IDs next to the color
+image, but callers that only display the image - file snapshots and the Mapple-imgui camera-path
+recorder - never inspected either. On Vulkan, `RenderDevice::render()` copied color, IDs and depth
+from the target three times per frame (20.7 + 41.5 + 20.7 MB at 2880x1800), allocated the three
+host vectors, and staged all of it through an 83 MB temporary before the per-channel copies. On
+OpenGL, `capture()` re-rendered the scene once per visible drawable into a depth framebuffer, read
+the full depth buffer back, and scanned every pixel on the CPU to fill `depth`/`ids`. `capture()`
+now takes a `graphics::FrameReadback` argument: `FrameReadback::color` skips the ID and depth
+copies and the per-drawable passes and leaves both arrays empty; `FrameReadback::color_depth_ids`
+is the default and keeps the previous contract. `RenderDevice::render()` takes the same argument
+and the Vulkan capture shares one code path, with its host readback buffer sized from the request
+and grown when a later full capture needs the larger layout. Vulkan file snapshots (which discard
+the picking buffers) and the recorder now ask for color only; everything that uses depth or IDs
+(selection, picking tests, the virtual scanner) still uses the default.
+
+**Validation (2026-11-15, macOS, serial).** OpenGL `build-opengl-check` 116/116 and Vulkan
+`build-vulkan-check` 150/150, both green, no flakes; both trees were fully rebuilt first. A
+scratch probe linked against the release libraries rendered `bunny.ply` through the 213-frame
+`bunny.kf` path at 2880x1800 with 4 samples and timed steady-state capture. OpenGL Release:
+21.8-23.1 ms complete to 11.5-12.4 ms color. Vulkan Release: 5.3-6.1 ms complete to 1.9-3.2 ms
+color. Vulkan Debug (validation enabled, `-O0`): 454-462 ms complete to 140-146 ms color, which
+matches the 233 s the maintainer measured for a 438-frame (60 fps) recording in that build; the
+remaining time is the debug render itself, not the readback. The encoder costs about 7-9 ms per
+frame on the same frames either way, and the produced color image is byte-identical between the two
+readback modes in the probe. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
+separate gates.

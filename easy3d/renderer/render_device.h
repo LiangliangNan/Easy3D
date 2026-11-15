@@ -379,6 +379,19 @@ namespace easy3d {
             std::vector<Id> ids;
         };
 
+        // Scene data a render() call copies back. Color-only capture skips the
+        // depth and ID readbacks, which cost a full-frame copy each even when the
+        // caller only needs an image (snapshots and video frames).
+        /**
+         * \brief Scene data read back from a rendered frame.
+         */
+        enum class FrameReadback {
+            /// RGBA color only; depth and IDs remain empty.
+            color,
+            /// Color plus per-pixel scene depth and object/primitive IDs.
+            color_depth_ids
+        };
+
         /// Color/depth/ID result for one scene pixel.
         struct ScenePixel {
             /// Object and primitive IDs; background uses UINT32_MAX.
@@ -480,7 +493,10 @@ namespace easy3d {
              * \param samples Requested MSAA sample count.
              * \param transparency Method for transparent commands.
              * \param peel_layers Layer limit for depth peeling; zero requests all layers.
-             * \return Color, depth, and picking buffers for the rendered frame.
+             * \param readback Scene data to read back. FrameReadback::color skips
+             *        the depth and pick-ID copies, leaving those arrays empty.
+             * \return Color, depth, and picking buffers for the rendered frame, as
+             *         requested by \p readback.
              */
             virtual FrameImage render(std::uint32_t width,
                                       std::uint32_t height,
@@ -488,7 +504,8 @@ namespace easy3d {
                                       const vec4 &background = vec4(1, 1, 1, 1),
                                       unsigned samples = 1,
                                       TransparencyMethod transparency = TransparencyMethod::sorted,
-                                      unsigned peel_layers = 4) = 0;
+                                      unsigned peel_layers = 4,
+                                      FrameReadback readback = FrameReadback::color_depth_ids) = 0;
             // Render scene IDs and depth at one top-left framebuffer pixel center.
             // The full viewport and draw order are preserved. Overlays are excluded.
             /**
