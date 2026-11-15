@@ -228,8 +228,10 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (mouse_captured_)
         return true;
 
-    if (select_mode_ != SelectMode::OFF && button == BUTTON_LEFT && point_in_scene(x, y) &&
-        current_model()) {
+    // Alt is the clipping-plane drag modifier; it takes precedence over a selection
+    // gesture so the plane stays movable while a selection tool is active.
+    if (select_mode_ != SelectMode::OFF && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) &&
+        point_in_scene(x, y) && current_model()) {
         selecting_ = true;
         select_start_ = select_end_ = vec2(static_cast<float>(x), static_cast<float>(y));
         lasso_.clear();

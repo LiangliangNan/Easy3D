@@ -5,10 +5,9 @@ Dear ImGui application rendered through Easy3D's backend-neutral overlay path
 (`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
 daily-use workflow.
 
-Status: 2026-11-15 — Phase 0 (shell) and Phase 1 (inspection, selection) complete:
-builds and runs on both OpenGL and Vulkan; panels, menus, log capture, drawable styling,
-picking readout, and point/face selection work. The clipping plane is the remaining
-Phase 1 item.
+Status: 2026-11-15 — Phase 0 (shell) and Phase 1 (inspection, selection, clipping)
+complete: builds and runs on both OpenGL and Vulkan; panels, menus, log capture, drawable
+styling, picking readout, point/face selection, and the clipping plane work.
 
 ## Decision
 
@@ -121,7 +120,10 @@ snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
       confirmation). "Show/hide selected" was considered and left out: in a viewer,
       hiding selected points/faces hides geometry without a recovery affordance, and
       delete already covers the destructive case.
-- [ ] Clipping plane.
+- [x] Clipping plane: a collapsible section in the Rendering panel drives the shared
+      `ClippingPlane` (enable, fit to scene, guide visibility/color, cross section and
+      relative thickness). The plane guide, `Alt+C/V/X` shortcuts, and `Alt`+drag
+      manipulation come from `Viewer`, so Mapple adds UI/state wiring only.
 
 Phase 1 design notes:
 
@@ -143,6 +145,11 @@ Phase 1 design notes:
   (`pending_pick_`, `pending_region_`, ...) because the graphics context is not
   guaranteed current during event dispatch; `process_pending_work()` runs at the start
   of `draw_gui()`, where pickers and textures can safely touch the device.
+- Clipping is scene-wide, so it lives in the Rendering panel rather than per model, and
+  stays usable with no model open. Enabling it fits the plane to the scene bounding
+  sphere (the scale the guide and relative cross-section thickness assume). `Alt` is
+  reserved for plane manipulation: a press with `Alt` bypasses an active selection
+  tool so the plane remains draggable in every mode.
 
 ### Phase 2 — processing
 
@@ -286,3 +293,15 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 - Validation: both backends build. Runtime re-checking of these three paths was not
   scripted (keyboard/mouse injection was unavailable while the desktop was under
   TeamViewer control).
+
+### 2026-11-15 — Phase 1 clipping plane
+
+- Added a "Clipping Plane" section to the Rendering panel: Enabled (fits the plane to
+  the scene on enable), Show guide, Cross section, relative Thickness (log slider), and
+  guide color. It drives `ClippingPlane::instance()`; the guide rendering,
+  `Alt+C/V/X` shortcuts, and `Alt`+drag manipulation are `Viewer` behavior and were
+  reused unchanged.
+- `Alt` presses bypass an active selection tool, so the plane can be dragged while
+  Rectangle/Lasso/Click is selected.
+- Validation: target builds in `build-opengl-check` and `build-vulkan-check`. The
+  section was not exercised through scripted clicks.

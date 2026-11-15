@@ -27,6 +27,7 @@
 #include <cstdlib>
 
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/resource.h> // TEMP!!! only for development
 
 #include "mapple_viewer.h"
 
@@ -38,6 +39,10 @@ int main(int argc, char **argv) {
     MappleViewer viewer(APP_TITLE);
     for (int i = 1; i < argc; ++i)
         viewer.add_model(argv[i]);
+
+    // TEMP!!! only for development (a model is always loaded by default)
+    const std::string file_name = resource::directory() + "/data/bunny.ply";
+    viewer.add_model(file_name);
 
     // Do not fit when the command line did not load anything: the default view is
     // already valid and fit_screen() on an empty scene has nothing to frame.

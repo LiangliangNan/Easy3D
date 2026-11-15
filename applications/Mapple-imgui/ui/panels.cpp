@@ -37,6 +37,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -224,6 +225,44 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     }
 
     ImGui::Spacing();
+    // Clipping is a scene-wide effect, so it sits with the other global rendering
+    // controls. The guide and Alt-drag manipulation are handled by Viewer.
+    if (ImGui::CollapsingHeader("Clipping Plane")) {
+        auto *plane = ClippingPlane::instance();
+        bool enabled = plane->is_enabled();
+        if (ImGui::Checkbox("Enabled", &enabled)) {
+            plane->set_enabled(enabled);
+            if (enabled)
+                plane->fit_scene(camera()->scene_center(), camera()->scene_radius());
+            update();
+        }
+        ImGui::BeginDisabled(!enabled);
+        bool visible = plane->is_visible();
+        if (ImGui::Checkbox("Show guide", &visible)) {
+            plane->set_visible(visible);
+            update();
+        }
+        bool cross_section = plane->cross_section();
+        if (ImGui::Checkbox("Cross section", &cross_section)) {
+            plane->set_cross_section(cross_section);
+            update();
+        }
+        float thickness = plane->cross_section_width();
+        if (ImGui::SliderFloat("Thickness", &thickness, 0.001f, 0.1f, "%.3f",
+                               ImGuiSliderFlags_Logarithmic)) {
+            plane->set_cross_section_width(thickness);
+            update();
+        }
+        vec4 guide_color = plane->color();
+        if (ImGui::ColorEdit3("Guide color", guide_color.data(), kSwatch)) {
+            plane->set_color(guide_color);
+            update();
+        }
+        ImGui::EndDisabled();
+        ImGui::TextDisabled("Alt + LMB/RMB drag to move the plane");
+    }
+
+    ImGui::Spacing();
     Model *model = current_model();
     if (!model) {
         ImGui::TextDisabled("No active model.");
@@ -359,7 +398,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
 void MappleViewer::draw_model_info(Model *model) {
     if (!model)
         return;
-    if (!ImGui::CollapsingHeader("Model Info", ImGuiTreeNodeFlags_DefaultOpen))
+    if (!ImGui::CollapsingHeader("Model Info"))
         return;
 
     ImGui::TextWrapped("Path: %s", model->name().c_str());
