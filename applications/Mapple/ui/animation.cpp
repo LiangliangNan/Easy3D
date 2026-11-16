@@ -129,9 +129,9 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
-    const char *methods[] = {"Spline interpolation", "Spline fitting"};
+    const char *methods[] = {"interpolation", "fitting"};
     int method = kfi->interpolation_method() == KeyFrameInterpolator::INTERPOLATION ? 0 : 1;
-    if (ImGui::Combo("Interpolation", &method, methods, 2))
+    if (ImGui::Combo("Spline strategy", &method, methods, 2))
         kfi->set_interpolation_method(
                 method == 0 ? KeyFrameInterpolator::INTERPOLATION : KeyFrameInterpolator::FITTING);
 

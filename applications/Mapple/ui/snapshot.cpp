@@ -81,7 +81,7 @@ void MappleViewer::draw_snapshot_dialog() {
     ImGui::InputInt("Samples", &p.samples);
     p.samples = std::max(1, p.samples);
 
-    const char *backgrounds[] = {"Current color", "White", "Transparent"};
+    const char *backgrounds[] = {"current color", "white", "transparent"};
     ImGui::Combo("Background", &p.background, backgrounds, 3);
     ImGui::Checkbox("Expand frustum", &p.expand);
     ImGui::TextDisabled("Matches the visible scene when the output aspect differs.");

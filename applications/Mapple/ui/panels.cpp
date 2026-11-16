@@ -460,7 +460,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
             set_shadow_enabled(shadow);
         if (shadow) {
             static const char *patterns[] = {"Poisson 25 x 25", "Poisson 32 x 64", "Poisson 64 x 128",
-                                             "Poisson 100 x 100", "Regular 49 x 225"};
+                                             "Poisson 100 x 100", "regular 49 x 225"};
             int pattern = setting::effect_shadow_pattern;
             if (ImGui::Combo("Light pattern", &pattern, patterns, 5)) {
                 setting::effect_shadow_pattern = pattern;
@@ -677,7 +677,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     // State has a lit flag and a two-sided flag; together they make three modes.
     const bool lit = active->lighting();
     int lighting_mode = !lit ? 0 : (active->lighting_two_sides() ? 2 : 1);
-    static const char *lighting_modes[] = {"Unlit", "Front", "Front and back"};
+    static const char *lighting_modes[] = {"unlit", "front", "front and back"};
     if (ImGui::Combo("Lighting", &lighting_mode, lighting_modes, 3)) {
         active->set_lighting(lighting_mode != 0);
         active->set_lighting_two_sides(lighting_mode == 2);
@@ -710,7 +710,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         if (two_sides)
             draw_back_color(triangles);
     } else if (auto *lines = dynamic_cast<LinesDrawable *>(active)) {
-        static const char *imposters[] = {"Plain", "Cylinder", "Cone"};
+        static const char *imposters[] = {"plain", "cylinder", "cone"};
         int imposter = static_cast<int>(lines->impostor_type());
         if (ImGui::Combo("Imposter", &imposter, imposters, 3)) {
             lines->set_impostor_type(static_cast<LinesDrawable::ImposterType>(imposter));
@@ -724,7 +724,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         }
         ImGui::SetItemTooltip("Line width (the diameter of an imposter) in logical pixels.");
     } else if (auto *points = dynamic_cast<PointsDrawable *>(active)) {
-        static const char *imposters[] = {"Plain", "Sphere", "Surfel"};
+        static const char *imposters[] = {"plain", "sphere", "surfel"};
         int imposter = static_cast<int>(points->impostor_type());
         if (ImGui::Combo("Imposter", &imposter, imposters, 3)) {
             points->set_impostor_type(static_cast<PointsDrawable::ImposterType>(imposter));
@@ -1173,7 +1173,7 @@ void MappleViewer::draw_model_info(Model *model) {
     model->property_stats(stats);
     const std::string properties = stats.str();
     if (!properties.empty() && ImGui::TreeNode("Properties")) {
-        ImGui::BeginChild("##model-properties", ImVec2(0, 110), false);
+        ImGui::BeginChild("##model-properties", ImVec2(0, 110), 0);
         ImGui::TextUnformatted(properties.c_str());
         ImGui::EndChild();
         ImGui::TreePop();
@@ -1387,9 +1387,9 @@ void MappleViewer::draw_about_window() {
         return;
 
     ImGui::TextUnformatted("Mapple");
-    ImGui::TextDisabled("Dear ImGui shell on Easy3D");
+    ImGui::TextDisabled("I'm good software, though I have defects.");
     ImGui::Separator();
-    ImGui::Text("Easy3D %s", version_string().c_str());
+    ImGui::Text("Easy3D %s - %d", version_string().c_str(), EASY3D_RELEASE_DATE);
 #ifdef EASY3D_HAS_VULKAN
     ImGui::TextUnformatted("Backend: Vulkan");
 #else
