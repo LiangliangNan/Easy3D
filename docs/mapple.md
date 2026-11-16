@@ -87,6 +87,7 @@ Reuse inventory (verified):
 | File open/save + native dialogs | `Viewer::open/save`, `easy3d/util/dialog.h` (pfd) |
 | Snapshot / offscreen capture | `Viewer::snapshot`, `RenderDevice` synchronous capture |
 | Camera clipboard | `Viewer::copy_view/paste_view` (GLFW clipboard) |
+| Camera state files | `Camera`/`ManipulatedCameraFrame` accessors, native dialogs, nlohmann JSON |
 | Active model selection | `Viewer::current_model()`; new `Viewer::set_current_model()` added for panels |
 | HUD toggles | protected `show_corner_axes_`, `show_frame_rate_`, `show_easy3d_logo_` |
 | Point/face selection | `PointCloudPicker`, `SurfaceMeshPicker` (`easy3d::gui`) |
@@ -292,6 +293,16 @@ Phase 2 design notes:
       (Cancel/Esc keeps the frames written so far); the camera and HUD state are
       restored at the end, and a view resize aborts the recording with the error
       logged. The bitrate is adjustable in the Camera Path window.
+- [x] View state files: Camera > Save View State... / Restore View State... write and
+      read a `.view` JSON file with the window size and position, the background color,
+      the projection type, the clipping/near coefficients, the scene radius and center,
+      the field of view, the camera position/orientation and pivot point, and the frame
+      sensitivities (rotation, translation, wheel, zoom, zooms-on-pivot). A missing or
+      mistyped key keeps the current value, a window position saved on a monitor that
+      is no longer connected is ignored, and restoring stops camera-path playback.
+      This replaces the Qt app's row-based `.view`/`.state` text format. Mapple's
+      files are JSON: Mapple-Qt's old text files are not read, and Mapple-Qt still
+      reads and writes only its own format.
 - [x] Snapshot dialog (scale with the resulting pixel size shown, samples, current/
       white/transparent background, frustum expansion), matching the Qt
       `DialogSnapshot`'s capabilities. Saving reuses the native file dialog and
@@ -320,8 +331,10 @@ Cloud > Normalize Normals), property manipulation (Property > Manipulate
 Properties...), and the small utilities (Edit menu with model manipulation,
 tetrahedralization, creating a mesh from text, polyhedral boundary extraction, and
 ambient occlusion) are migrated, as are the rendering effects (ambient occlusion,
-eye-dome lighting, soft shadow, depth-peeling transparency); the remaining work is
-retiring Qt.
+eye-dome lighting, soft shadow, depth-peeling transparency) and camera state files
+(Camera > Save/Restore View State...). The Qt-only capabilities left over from the
+capability pass are the walk-through animation, the load-translation options and the
+Models-panel/readout extras; retirement can proceed once those are decided on.
 
 ## ImGui notes
 
@@ -1057,3 +1070,27 @@ retiring Qt.
   150/150, green, no flakes. The Mapple binary launches and logs "Mapple UI ready"
   with the new `Mapple.log` and reads `~/Library/Application Support/Mapple`;
   `easy3d/util/version.h` is unchanged.
+
+### 2026-11-16 — Camera state files (Phase 4 gap)
+
+- Camera > Save View State... / Restore View State... (below Copy/Paste View)
+  write and read a `.view` file holding the window size and position, the
+  background color, the projection type, the clipping/near coefficients, the
+  scene radius and center, the field of view, the camera position/orientation
+  and pivot point, and the frame sensitivities (rotation, translation, wheel,
+  zoom, zooms-on-pivot). The file is JSON (nlohmann, same library as
+  `rendering.json`): a missing or mistyped key keeps the current value, so a
+  file from another Mapple version restores the parameters it has.
+- Restoring resizes the window first (the camera aspect follows), places it only
+  when the saved position lies on a connected monitor's work area, stops
+  camera-path playback (which would otherwise overwrite the restored camera on
+  the next frame), and remembers the file's directory for the next dialog.
+  Saving starts from `<model>.view` (or the last-used directory when no model is
+  loaded).
+- This is a capability migration, not a format migration: the Qt app's
+  row-based `.view`/`.state` text files are not read, and Mapple-Qt still reads
+  only its own format.
+- Validation (2026-11-16, macOS): `Mapple` builds in `build-opengl-check` and
+  `build-vulkan-check` and launches with "Mapple UI ready" on both backends.
+  The library is unchanged, so the suites were not rerun; the save/restore
+  dialogs were not scripted. `easy3d/util/version.h` is unchanged.

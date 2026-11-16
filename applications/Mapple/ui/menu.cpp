@@ -26,6 +26,8 @@
 
 #include "../mapple_viewer.h"
 
+#include <cmath>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -39,6 +41,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
@@ -46,6 +49,11 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
+#include <easy3d/util/string.h>
+
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <3rd_party/nlohmann/json.hpp>
 
 #include <3rd_party/imgui/imgui.h>
 
@@ -151,6 +159,258 @@ void MappleViewer::open_recent_file(const std::string &file) {
     settings_.remember_file(file);
 }
 
+namespace {
+
+    const std::vector<std::string> &view_state_filters() {
+        static const std::vector<std::string> filters = {
+                "Viewer state (*.view)", "*.view",
+                "All Files (*.*)", "*"};
+        return filters;
+    }
+
+    nlohmann::json as_json(const vec3 &v) { return {v.x, v.y, v.z}; }
+
+    nlohmann::json as_json(const vec4 &v) { return {v.x, v.y, v.z, v.w}; }
+
+    nlohmann::json as_json(const quat &q) { return {q[0], q[1], q[2], q[3]}; }
+
+    // A missing or mistyped key leaves the value untouched and returns false, so a
+    // file written by a different Mapple version restores the parameters it has.
+    bool read(const nlohmann::json &object, const char *key, int &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_number_integer())
+            return false;
+        value = it->get<int>();
+        return true;
+    }
+
+    bool read(const nlohmann::json &object, const char *key, float &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_number())
+            return false;
+        value = it->get<float>();
+        return true;
+    }
+
+    bool read(const nlohmann::json &object, const char *key, bool &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_boolean())
+            return false;
+        value = it->get<bool>();
+        return true;
+    }
+
+    bool read(const nlohmann::json &object, const char *key, std::string &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_string())
+            return false;
+        value = it->get<std::string>();
+        return true;
+    }
+
+    template <size_t N>
+    bool read(const nlohmann::json &object, const char *key, Vec<N, float> &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_array() || it->size() != N)
+            return false;
+        Vec<N, float> parsed;
+        for (size_t i = 0; i < N; ++i) {
+            if (!(*it)[i].is_number())
+                return false;
+            parsed[i] = (*it)[i].get<float>();
+        }
+        value = parsed;
+        return true;
+    }
+
+    bool read(const nlohmann::json &object, const char *key, quat &value) {
+        const auto it = object.find(key);
+        if (it == object.end() || !it->is_array() || it->size() != 4)
+            return false;
+        quat parsed;
+        for (unsigned i = 0; i < 4; ++i) {
+            if (!(*it)[i].is_number())
+                return false;
+            parsed[i] = (*it)[i].get<float>();
+        }
+        float norm = 0.0f;
+        for (unsigned i = 0; i < 4; ++i)
+            norm += parsed[i] * parsed[i];
+        if (!std::isfinite(norm) || norm < 1e-12f)
+            return false;
+        parsed.normalize();
+        value = parsed;
+        return true;
+    }
+
+    // A state saved on a monitor that is no longer connected must not move the
+    // window out of reach, so its position is restored only when visible.
+    bool on_a_monitor(int x, int y) {
+        int count = 0;
+        GLFWmonitor **monitors = glfwGetMonitors(&count);
+        for (int i = 0; i < count; ++i) {
+            int mx, my, mw, mh;
+            glfwGetMonitorWorkarea(monitors[i], &mx, &my, &mw, &mh);
+            if (x >= mx && x < mx + mw && y >= my && y < my + mh)
+                return true;
+        }
+        return false;
+    }
+
+} // namespace
+
+void MappleViewer::save_view_state() {
+    std::string default_name = "view.view";
+    if (const Model *model = current_model())
+        default_name = file_system::replace_extension(model->name(), "view");
+    else if (!settings_.data_directory.empty())
+        default_name = settings_.data_directory + "/view.view";
+
+    const std::string file_name =
+            dialog::save("Save the view state to a file", default_name, view_state_filters());
+    if (file_name.empty())
+        return;
+
+    int x = 0, y = 0;
+    if (window())
+        glfwGetWindowPos(window(), &x, &y);
+
+    const Camera *cam = camera();
+    const ManipulatedCameraFrame *frame = cam->frame();
+
+    nlohmann::json state;
+    state["saved"] = string::current_time();
+    state["window"] = {{"width", width()}, {"height", height()}, {"x", x}, {"y", y}};
+    state["background"] = as_json(background_color());
+    state["camera"] = {
+            {"type", cam->type() == Camera::PERSPECTIVE ? "perspective" : "orthographic"},
+            {"z_clipping_coefficient", cam->z_clipping_coefficient()},
+            {"z_near_coefficient", cam->z_near_coefficient()},
+            {"scene_radius", cam->scene_radius()},
+            {"scene_center", as_json(cam->scene_center())},
+            {"field_of_view", cam->field_of_view()},
+            {"position", as_json(frame->position())},
+            {"orientation", as_json(frame->orientation())},
+            {"pivot_point", as_json(cam->pivot_point())},
+            {"rotation_sensitivity", frame->rotation_sensitivity()},
+            {"translation_sensitivity", frame->translation_sensitivity()},
+            {"wheel_sensitivity", frame->wheel_sensitivity()},
+            {"zoom_sensitivity", frame->zoom_sensitivity()},
+            {"zooms_on_pivot_point", frame->zooms_on_pivot_point()},
+    };
+
+    std::ofstream output(file_name);
+    if (!output.is_open()) {
+        LOG(ERROR) << "unable to create the view state file " << file_name;
+        return;
+    }
+    output << state.dump(4) << std::endl;
+    if (!output.good()) {
+        LOG(ERROR) << "failed to write the view state to " << file_name;
+        return;
+    }
+    LOG(INFO) << "view state saved to " << file_name;
+    // The user will likely restore this state soon; keep the dialogs here.
+    settings_.data_directory = file_system::parent_directory(file_name);
+}
+
+void MappleViewer::restore_view_state() {
+    const std::string default_path = settings_.data_directory.empty()
+                                             ? resource::directory() + "/data/"
+                                             : settings_.data_directory;
+    const std::string file_name =
+            dialog::open("Restore the view state from a file", default_path, view_state_filters());
+    if (file_name.empty())
+        return;
+
+    nlohmann::json state;
+    try {
+        std::ifstream input(file_name);
+        if (!input.is_open()) {
+            LOG(ERROR) << "unable to read the view state from " << file_name;
+            return;
+        }
+        input >> state;
+    } catch (const std::exception &e) {
+        LOG(ERROR) << "unable to read the view state from " << file_name << ": " << e.what();
+        return;
+    }
+    if (!state.is_object()) {
+        LOG(ERROR) << file_name << " does not contain a view state";
+        return;
+    }
+
+    // Playback would overwrite the restored camera on the next frame.
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+
+    // The window first: resizing updates the camera's aspect ratio.
+    const auto window_state = state.find("window");
+    if (window_state != state.end() && window_state->is_object()) {
+        int w = width(), h = height();
+        read(*window_state, "width", w);
+        read(*window_state, "height", h);
+        if (w > 0 && h > 0)
+            resize(w, h);
+        int x = 0, y = 0;
+        if (read(*window_state, "x", x) && read(*window_state, "y", y) && on_a_monitor(x, y))
+            set_position(x, y);
+    }
+
+    vec4 background = background_color();
+    if (read(state, "background", background))
+        set_background_color(background);
+
+    const auto camera_state = state.find("camera");
+    if (camera_state != state.end() && camera_state->is_object()) {
+        const nlohmann::json &c = *camera_state;
+        std::string type;
+        if (read(c, "type", type)) {
+            if (type == "perspective")
+                camera()->set_type(Camera::PERSPECTIVE);
+            else if (type == "orthographic")
+                camera()->set_type(Camera::ORTHOGRAPHIC);
+        }
+
+        float value = 0.0f;
+        if (read(c, "z_clipping_coefficient", value))
+            camera()->set_z_clipping_coefficient(value);
+        if (read(c, "z_near_coefficient", value))
+            camera()->set_z_near_coefficient(value);
+        if (read(c, "scene_radius", value))
+            camera()->set_scene_radius(value);
+        vec3 point;
+        if (read(c, "scene_center", point))
+            camera()->set_scene_center(point);
+        if (read(c, "field_of_view", value))
+            camera()->set_field_of_view(value);
+
+        ManipulatedCameraFrame *frame = camera()->frame();
+        if (read(c, "rotation_sensitivity", value))
+            frame->set_rotation_sensitivity(value);
+        if (read(c, "translation_sensitivity", value))
+            frame->set_translation_sensitivity(value);
+        if (read(c, "wheel_sensitivity", value))
+            frame->set_wheel_sensitivity(value);
+        if (read(c, "zoom_sensitivity", value))
+            frame->set_zoom_sensitivity(value);
+        bool zooms_on_pivot_point = frame->zooms_on_pivot_point();
+        if (read(c, "zooms_on_pivot_point", zooms_on_pivot_point))
+            frame->set_zooms_on_pivot_point(zooms_on_pivot_point);
+
+        if (read(c, "pivot_point", point))
+            camera()->set_pivot_point(point);
+        if (read(c, "position", point))
+            camera()->set_position(point);
+        quat orientation;
+        if (read(c, "orientation", orientation))
+            camera()->set_orientation(orientation);
+    }
+
+    update();
+    LOG(INFO) << "view state restored from " << file_name;
+}
+
 // The menu bar only exposes actions that exist. Shortcut strings are display-only;
 // the matching keys are handled by Viewer::key_press_event().
 void MappleViewer::draw_menu_bar() {
@@ -210,6 +470,12 @@ void MappleViewer::draw_menu_bar() {
             copy_view();
         if (ImGui::MenuItem("Paste View", "Ctrl+V"))
             paste_view();
+
+        ImGui::Separator();
+        if (ImGui::MenuItem("Save View State..."))
+            save_view_state();
+        if (ImGui::MenuItem("Restore View State..."))
+            restore_view_state();
 
         ImGui::Separator();
         const bool perspective = camera()->type() == Camera::PERSPECTIVE;

@@ -467,6 +467,12 @@ private:
 
     bool save() const override;
 
+    // Writes/restores the window geometry, background color, projection and camera
+    // to/from a .view file (JSON). A parameter missing from the file keeps its value.
+    void save_view_state();
+
+    void restore_view_state();
+
     // Adds a file chosen from File > Open Recent and fits the camera to it.
     void open_recent_file(const std::string &file);
 

@@ -10329,3 +10329,32 @@ writes `Mapple.log`, and reads `~/Library/Application Support/Mapple` (the Debug
 Vulkan run already used the renamed target). Stale pre-rename artifacts in the build trees
 (`Mapple.app`, `Mapple.ini`, `Mapple-imgui.log`) were removed. `easy3d/util/version.h` is
 unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 92: Mapple camera state files
+
+**Scope.** `applications/Mapple` gains the last capability picked from the Qt pass:
+Camera > Save View State... / Restore View State..., placed below Copy/Paste View.
+A `.view` file now stores the window size and position, the background color, the
+projection type, the camera's clipping/near coefficients, scene radius and center,
+field of view, position, orientation and pivot point, and the manipulated-camera-frame
+sensitivities (rotation, translation, wheel, zoom, zooms-on-pivot) plus
+`zooms_on_pivot_point`. The file is JSON written/read with the vendored nlohmann
+already used for `rendering.json`. Typed readers ignore a missing or mistyped key, so
+an older or partially hand-edited file restores the parameters it contains; the
+orientation is normalized and rejected when degenerate. Restoring resizes the window
+first so the camera aspect follows, applies the saved window position only when it
+lies within a connected monitor's work area (`glfwGetMonitorWorkarea` through the
+app's GLFW copy), resets the background, then the camera, and stops camera-path
+playback so it cannot overwrite the restored view on the next frame. Saving starts
+from `<model>.view` and moves `AppSettings::data_directory` to the chosen file's
+directory, as the Qt app did. The Qt text format (row-based `<camera>` section,
+including the deprecated `.state` variant) is intentionally not read: the two apps
+keep separate formats.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready" (OpenGL and
+Vulkan), and the OpenGL smoke instance exited through Alt+F4. The change is confined
+to the application, the library is untouched, so the 116/150 suites were not rerun
+(Mapple-only scope), and the save/restore dialogs were not scripted. The release tree
+was not rebuilt. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
+separate gates.
