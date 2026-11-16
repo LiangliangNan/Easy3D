@@ -135,6 +135,8 @@ namespace easy3d {
 
 
 #include <fstream>
+#include <cstdio>
+#include <cstdlib>
 #include <easy3d/util/file_system.h>
 #include <3rd_party/nlohmann/json.hpp>
 
@@ -142,17 +144,61 @@ namespace easy3d {
 namespace easy3d {
     //\cond
 
+    namespace {
+        // json prints a float through its exact double value, e.g. 0.8f becomes
+        // 0.800000011920929. Use the shortest decimal that still converts back to the
+        // same float (9 significant digits are enough to round-trip any float).
+        inline double compact_float(float value) {
+            char text[32];
+            for (int digits = 1; digits <= 9; ++digits) {
+                std::snprintf(text, sizeof(text), "%.*g", digits, static_cast<double>(value));
+                if (std::strtof(text, nullptr) == value)
+                    break;
+            }
+            return std::strtod(text, nullptr);
+        }
+
+        inline double compact_number(float value) {
+            return compact_float(value);
+        }
+
+        inline double compact_number(double value) {
+            return value;
+        }
+    }
+
     // The following two functions are for vectors to be handled as json's built-in types.
 
     template <template <size_t, class> class Vector, size_t N, typename T>
     void to_json(nlohmann::json &j, const Vector<N, T> &v) {
-        j = std::vector<T>((const T *) (v), v + v.size());
+        std::vector<double> values;
+        for (size_t i = 0; i < N; ++i)
+            values.push_back(compact_number(v[i]));
+        j = values;
     }
 
     template <template <size_t, class> class Vector, size_t N, typename T>
     void from_json(const nlohmann::json &j, Vector<N, T> &v) {
         assert(v.size() == j.size());
         for (int i = 0; i < v.size(); ++i) v[i] = j.at(i);
+    }
+
+    namespace {
+        inline nlohmann::json json_value(float value) {
+            return compact_float(value);
+        }
+
+        inline nlohmann::json json_value(int value) {
+            return value;
+        }
+
+        inline nlohmann::json json_value(bool value) {
+            return value;
+        }
+
+        inline nlohmann::json json_value(const vec4 &value) {
+            return value;
+        }
     }
     //\endcond
 
@@ -194,7 +240,7 @@ namespace easy3d {
 
         // Save the rendering parameters to a stream.
         bool save(std::ostream &output) {
-#define ENCODE(group, var)   settings[group][#var] = var;
+#define ENCODE(group, var)   settings[group][#var] = json_value(var);
 
             nlohmann::json settings;
 

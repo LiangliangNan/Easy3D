@@ -10584,3 +10584,24 @@ panel still lists the drawables with their visibility checkboxes. The change is
 confined to the application, so the 116/150 suites were not rerun. No clicks were
 scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate
 gates.
+
+### 2026-11-16 — batch 100: settings file covers every setting and prints shortest floats
+
+**Scope.** `easy3d/util/setting.cpp` only. `setting::save` and `setting::load` were
+compared against the declarations in `easy3d/util/setting.h`: all 66 variables are
+written and read, and the two lists are identical - nothing is missing in either
+direction. Serialization now writes every float as the shortest decimal that converts
+back to the same float (one to nine significant digits, verified with `strtof`), instead
+of json's exact double expansion: `0.800000011920929` becomes `0.8` and
+`0.045000001788` becomes `0.045`, while values such as one third keep `0.33333334`.
+Colors go through the same helper in the vector `to_json`, and scalars/ints/bools
+through a `json_value` overload set used by the `ENCODE` macro; `load` is unchanged and
+reads both the old long and the new short numbers.
+
+**Validation (2026-11-16, macOS).** Both check trees were fully rebuilt and the suites
+run serially: Vulkan 150/150, OpenGL 116/116. A `/tmp` probe linked against
+`build-vulkan-check/lib` (removed afterwards) saved to a stringstream, reset five
+values, and reloaded: the output contains all 66 keys, and a 0.8 color, the 0.045 AO
+radius, 64 shininess, 1/3, 1e-7 and 123456.789 compare bit-equal after the round trip;
+the text shows `0.8`, `0.045`, `0.33333334`, `1e-07` and `123456.79`. Menu/UI not
+scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
