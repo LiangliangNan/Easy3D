@@ -37,15 +37,22 @@ void main() {
     if (all(equal(base,end))) { gl_Position = vec4(2,2,2,1); return; }
     vec3 lower = min(base,end)-shape.dimensions.w;
     vec3 upper = max(base,end)+shape.dimensions.w;
+    // Only a perspective projection has an eye plane, and the fragment ray starts on
+    // the near plane, so nothing nearer is ever drawn. Clipping the box there keeps
+    // the proxy - which carries w = 1 and is therefore never hardware-clipped - from
+    // covering the whole viewport for every impostor whose box reaches the eye.
+    if (shape.projection[3][2] != 0) {
+        vec4 near_point = shape.inverse_projection * vec4(0,0,-1,1);
+        float near_z = near_point.z / near_point.w;
+        if (lower.z > near_z) { gl_Position = vec4(2,2,2,1); return; }
+        upper.z = min(upper.z, near_z);
+    }
     vec2 lo = vec2(1e30), hi = vec2(-1e30);
-    bool crosses_eye = false;
     for (int i=0;i<8;++i) {
         vec3 corner = vec3((i&1)==0?lower.x:upper.x,(i&2)==0?lower.y:upper.y,(i&4)==0?lower.z:upper.z);
         vec4 p = shape.projection * vec4(corner,1);
-        if (p.w <= 0) crosses_eye = true;
-        else { lo=min(lo,p.xy/p.w); hi=max(hi,p.xy/p.w); }
+        lo=min(lo,p.xy/p.w); hi=max(hi,p.xy/p.w);
     }
-    if (crosses_eye) { lo=vec2(-1); hi=vec2(1); }
     lo=max(lo,vec2(-1)); hi=min(hi,vec2(1));
     const vec2 corners[6] = vec2[](vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,0),vec2(1,1),vec2(0,1));
     vec2 p = mix(lo,hi,corners[gl_VertexIndex]);

@@ -26,6 +26,7 @@
 
 #include <easy3d/renderer/drawable.h>
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 
@@ -44,7 +45,16 @@
 namespace easy3d {
 
     float Drawable::impostor_radius(const Camera& camera, float diameter) {
-        return diameter * camera.world_pixel_ratio(camera.pivot_point()) * 0.5f;
+        // Liangliang: this doesn't work when zooming puts the pivot in or behind the eye plane
+        // return diameter * camera.world_pixel_ratio(camera.pivot_point()) * 0.5f;
+        // Fixed on 2026-11-16:
+        // Zooming can put the pivot in or behind the eye plane, where the world-per-pixel
+        // ratio degenerates to zero. Nothing nearer than the near plane is visible, so that
+        // depth is the floor: the radius must stay finite and positive on both backends.
+        const float ratio = std::max(camera.world_pixel_ratio(camera.pivot_point()),
+                                     camera.world_pixel_ratio(camera.position() +
+                                                              camera.view_direction() * camera.z_near()));
+        return diameter * ratio * 0.5f;
     }
 
 #ifndef EASY3D_HAS_VULKAN

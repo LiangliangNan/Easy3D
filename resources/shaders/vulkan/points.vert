@@ -61,17 +61,25 @@ void main() {
         if (material.shading.x==0 && draw.lighting != 0 && dot(wn,wn)>0)
             vertex_color.rgb *= 0.2+0.8*abs(dot(normalize(wn),normalize(vec3(0.3,0.5,1))));
     } else {
-        // Project a bounding cube. If it crosses the eye plane, use the entire
-        // viewport; this remains conservative even for near-plane intersections.
-        vec2 lo = vec2(1e30), hi = vec2(-1e30);
-        bool crosses_eye = false;
-        for (int i=0;i<8;++i) {
-            vec3 sign_corner = vec3((i&1)==0?-1:1,(i&2)==0?-1:1,(i&4)==0?-1:1);
-            vec4 p = material.projection * vec4(center + sign_corner*material.dimensions.w,1);
-            if (p.w <= 0) crosses_eye = true;
-            else { lo=min(lo,p.xy/p.w); hi=max(hi,p.xy/p.w); }
+        vec3 lower = center - material.dimensions.w;
+        vec3 upper = center + material.dimensions.w;
+        // Only a perspective projection has an eye plane, and the fragment ray starts
+        // on the near plane, so nothing nearer is ever drawn. Clipping the bounding
+        // cube there keeps the proxy - which carries w = 1 and is therefore never
+        // hardware-clipped - from covering the whole viewport for every impostor
+        // whose cube reaches the eye.
+        if (material.projection[3][2] != 0) {
+            vec4 near_point = material.inverse_projection * vec4(0,0,-1,1);
+            float near_z = near_point.z / near_point.w;
+            if (lower.z > near_z) { gl_Position=vec4(2,2,2,1); return; }
+            upper.z = min(upper.z, near_z);
         }
-        if (crosses_eye) { lo=vec2(-1); hi=vec2(1); }
+        vec2 lo = vec2(1e30), hi = vec2(-1e30);
+        for (int i=0;i<8;++i) {
+            vec3 box_corner = vec3((i&1)==0?lower.x:upper.x,(i&2)==0?lower.y:upper.y,(i&4)==0?lower.z:upper.z);
+            vec4 p = material.projection * vec4(box_corner,1);
+            lo=min(lo,p.xy/p.w); hi=max(hi,p.xy/p.w);
+        }
         lo=max(lo,vec2(-1)); hi=min(hi,vec2(1));
         vec2 p = mix(lo,hi,0.5*(corner+1));
         // Proxy depth must not clip the actual impostor surface.

@@ -465,18 +465,18 @@ namespace easy3d {
             virtual const std::string &name() const = 0;
             // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
             // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
-            // Sphere/surfel MSAA additionally requires sampleRateShading. Query by style before
-            // offering multisampled impostors on devices without that optional feature.
+            // No backend pipeline shades per sample, so the counts do not vary by style: an
+            // analytic impostor silhouette takes part in MSAA only through the coverage of the
+            // pixels it rasterizes, and a discard that is evaluated per pixel is all-or-nothing.
             /**
              * \brief Query supported MSAA sample counts for a point style.
-             * \param style Point style whose shader requirements are checked.
+             * \param style Point style to query for.
              * \return Bit mask containing supported numeric sample counts.
              */
             virtual std::uint32_t supported_sample_counts(PointStyle style = PointStyle::plain) const = 0;
-            // Cylinder/cone MSAA has the same sampleRateShading requirement.
             /**
              * \brief Query supported MSAA sample counts for a line style.
-             * \param style Line style whose shader requirements are checked.
+             * \param style Line style to query for.
              * \return Bit mask containing supported numeric sample counts.
              */
             virtual std::uint32_t supported_sample_counts(LineStyle style) const = 0;

@@ -112,7 +112,6 @@ namespace easy3d {
             struct Context : internal::VulkanDispatch {
                 // Retain the library until all instance/device cleanup has finished.
                 std::shared_ptr<internal::VulkanLoader> library;
-                bool sample_shading = false;
                 bool large_points = false;
                 bool independent_blend = false;
                 float min_point_size = 1.0f;
@@ -400,12 +399,10 @@ namespace easy3d {
                     di.ppEnabledExtensionNames = extensions.data();
                     VkPhysicalDeviceFeatures features{}, enabled{};
                     vkGetPhysicalDeviceFeatures(physical, &features);
-                    sample_shading = features.sampleRateShading;
                     large_points = features.largePoints && use_native_large_points;
                     independent_blend = features.independentBlend;
                     min_point_size = large_points ? properties.limits.pointSizeRange[0] : 1.0f;
                     max_point_size = large_points ? properties.limits.pointSizeRange[1] : 1.0f;
-                    enabled.sampleRateShading = features.sampleRateShading;
                     enabled.largePoints = large_points;
                     enabled.independentBlend = features.independentBlend;
                     // Per-pixel linked lists OIT writes and atomically updates storage buffers
@@ -1832,8 +1829,11 @@ namespace easy3d {
                                 vertex.vertexBindingDescriptionCount = 2;
                                 vertex.pVertexBindingDescriptions = point_bindings;
                                 vertex.pVertexAttributeDescriptions = point_attrs;
-                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
-                                ms.minSampleShading = 1;
+                                // Expanded plain points: points_plain.frag neither discards nor
+                                // writes depth, so per-sample shading cannot change a pixel - it
+                                // only multiplies the cost of a large point by the sample count.
+                                ms.sampleShadingEnable = VK_FALSE;
+                                ms.minSampleShading = 0;
                             }
                             if (i == 4) {
                                 vertex.vertexBindingDescriptionCount = 1;
@@ -1843,6 +1843,18 @@ namespace easy3d {
                                 binding.stride = 2 * sizeof(GpuVertex);
                                 vertex.vertexAttributeDescriptionCount = 8;
                                 vertex.pVertexAttributeDescriptions = line_attrs;
+                                // Line impostors discard their analytic silhouette and the analytic
+                                // clip planes, so per-sample shading is the only way to give a
+                                // multisampled cut boundary any coverage. It stays off because the
+                                // cost is not local to this pipeline: with it enabled here and no
+                                // impostor in the scene, a plain-point draw still measured 12.6 fps
+                                // instead of 96.7 (batch 87). Coverage should come from analytic
+                                // alpha-to-coverage instead, which costs one shading pass. Stated
+                                // explicitly rather than inherited: ms outlives every iteration of
+                                // this loop, so a pipeline that does not set it silently takes the
+                                // rasterization state of the pipeline built before it.
+                                ms.sampleShadingEnable = VK_FALSE;
+                                ms.minSampleShading = 0;
                             }
                             if (i == 5) {
                                 stages[0].module = modules[6];
@@ -1867,8 +1879,15 @@ namespace easy3d {
                                 vertex.pVertexBindingDescriptions = point_bindings;
                                 vertex.vertexAttributeDescriptionCount = 6;
                                 vertex.pVertexAttributeDescriptions = point_attrs;
-                                ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
-                                ms.minSampleShading = 1;
+                                // Sphere/surfel impostors shade one fragment per pixel, as the
+                                // OpenGL backend does: per-sample shading here measured 1.6 fps
+                                // versus 13.0 fps for a 479k sphere cloud at point size 15 and 4
+                                // samples, and it also slowed draws that do not even bind this
+                                // pipeline (batch 87). The cost of the choice is that a discarded
+                                // analytic silhouette gets no MSAA coverage, which alpha-to-coverage
+                                // should recover at one shading pass per pixel.
+                                ms.sampleShadingEnable = VK_FALSE;
+                                ms.minSampleShading = 0;
                             }
                             assembly.topology = topologies[i >= 3 ? 0 : i];
                             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
@@ -3897,10 +3916,6 @@ namespace easy3d {
                         if (command.geometry->topology() != Topology::points &&
                             command.point_style != PointStyle::plain)
                             throw std::invalid_argument("point impostor style requires point geometry");
-                        if ((command.point_style != PointStyle::plain || command.line_style != LineStyle::plain) &&
-                            samples > 1 && !c_.sample_shading)
-                            throw std::invalid_argument(
-                                "multisampled impostors require sampleRateShading for correct coverage/depth");
                         if (command.shadow || command.shadow_caster || command.shadow_background) {
                             for (unsigned col = 0; col < 4; ++col)
                                 for (unsigned row = 0; row < 4; ++row)
@@ -4345,11 +4360,13 @@ namespace easy3d {
                 const std::string &name() const override {
                     return name_;
                 }
-                uint32_t supported_sample_counts(PointStyle style) const override {
-                    return style != PointStyle::plain && !c_.sample_shading ? 1 : sample_counts_;
+                uint32_t supported_sample_counts(PointStyle) const override {
+                    // Nothing shades per sample, so the usable counts depend only on the MSAA
+                    // render-target formats and not on what a style's fragment shader does.
+                    return sample_counts_;
                 }
-                uint32_t supported_sample_counts(LineStyle style) const override {
-                    return style != LineStyle::plain && !c_.sample_shading ? 1 : sample_counts_;
+                uint32_t supported_sample_counts(LineStyle) const override {
+                    return sample_counts_;
                 }
                 unsigned validation_errors() const override {
                     return c_.errors.load();

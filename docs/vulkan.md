@@ -1486,12 +1486,17 @@ inverse projection, discard misses and clipped front surfaces, and write the
 surface depth. This handles off-axis perspective views and orthographic views;
 near-plane clipping can expose only a rim, and does not add a solid cap.
 
-Color MSAA evaluates sphere intersections/depth at each sample using queried and
-enabled `sampleRateShading`. Devices lacking this optional feature support
-single-sample spheres and all plain-point sizes; multisampled sphere draws fail
-explicitly instead of rendering incorrect coverage/depth. Query
-`device.supported_sample_counts(PointStyle::sphere)` for the usable counts.
-Picking always uses
+Color MSAA evaluates sphere intersections/depth once per pixel, as the OpenGL
+backend does. Enabling `sampleRateShading` would make that `discard` silhouette
+per-sample and antialiased, but batch 87 measured a 479k-point sphere cloud at
+8x slower with 4 samples - and measured draws that never bind the pipeline
+slowed too - so every Vulkan pipeline now shades per pixel and rim coverage is
+left to analytic alpha-to-coverage. The observable consequence: a pixel the
+proxy geometry only partly covers still resolves to a fractional color, while a
+pixel the analytic silhouette only partly covers resolves all-or-nothing. Every
+sample count the render target supports is usable for every point style; query
+`device.supported_sample_counts(PointStyle::sphere)` for the usable
+counts. Picking always uses
 the existing separate center-sample pass, with the same sphere intersection and
 surface depth, independently of the color sample count. Proxy triangles never
 become picking primitive IDs. Per-draw matrices/parameters use an aligned dynamic
@@ -1563,9 +1568,13 @@ Native clients use `LineStyle::cylinder` or `LineStyle::cone`, set `line_radius`
 and provide an affine `model_view` plus an invertible OpenGL-convention
 `projection`. The shared `sphere_light` field supplies the view-space light for
 all impostors. Query `supported_sample_counts(LineStyle::cylinder)` or
-`LineStyle::cone`; multisampled line impostors require `sampleRateShading`, with
-an explicit error on unsupported devices. Single-sample rendering works without
-that optional feature.
+`LineStyle::cone`. Like the sphere path this is shaded once per pixel, so
+`supported_sample_counts(LineStyle::cylinder)` returns the sample counts of the
+render target rather than a style-dependent subset, and no device feature is
+required. Each pipeline states its sample-rate shading of its own accord: the
+multisample create info is shared by all seven pipelines of a pass, so until
+batch 87 this path inherited whatever the plain-point pipeline built just
+before it had left in that struct.
 
 The device reads each pair of packed line endpoints as one instance and emits a
 six-vertex quad bounding their projected solid. Fragment ray intersections choose
@@ -1626,8 +1635,8 @@ still permits a thick line whose centerline lies just outside the viewport.
 
 A dedicated fragment shader uses perspective-correct endpoint colors/texture
 coordinates and the rasterizer's depth, with no explicit `gl_FragDepth`, silhouette
-discard or sample-rate shading. This preserves normal per-sample triangle depth
-and coverage even on devices without `sampleRateShading`; query
+discard or sample-rate shading. Its wide-line edges therefore get normal per-sample
+triangle depth and coverage from the rasterizer alone, on every device; query
 `supported_sample_counts(LineStyle::plain)` for its available counts. The separate
 center-sample picking pass uses the same ribbon geometry and the original segment
 ID. Endpoint normal lighting follows the existing native one-pixel line convention.
@@ -2121,8 +2130,9 @@ of its control vertices is outside; it applies before curved surface clipping.
 
 Sphere, surfel, cylinder and cone impostors retain their proxy geometry and
 clip their computed front-surface intersections in the fragment shader. A sphere
-whose center lies outside can retain a visible partial surface. MSAA uses the
-existing per-sample analytic paths; no new optional device feature is required.
+whose center lies outside can retain a visible partial surface. MSAA shades the
+analytic paths once per pixel, exactly like the plain points and the OpenGL
+backend (batch 87); no optional device feature is required.
 Clipping does not synthesize caps or substitute a back intersection when the
 front surface is removed. Closed cut surfaces/back-hit rendering remain future
 work. Geometric cut boundaries use normal rasterizer MSAA, without requiring
@@ -10050,3 +10060,167 @@ libraries constructed one drawable of each type: points report distinct=1 with b
 (0.80, 0.40, 0.40), faces distinct=1, and lines distinct=0, which confirms the default reaches the
 drawables and that only the points default changed. `easy3d/util/version.h` is unchanged.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 - batch 86: analytic impostor proxies are clipped to the near plane
+
+**Symptom.** Reported by the user: on Vulkan, zooming into a point/line impostor scene runs at a
+very low frame rate and collapses once some impostors fall behind the camera position, while the
+same scene on OpenGL stays smooth. Reproduced with a scratch viewer linked against the release
+libraries (1600x917 window, 4 samples, `use_native_large_points=false`, camera pulled back by k
+scene radii): a 479,187-point sphere-impostor fountain and a 46,229-edge cylinder-impostor
+`bunny.ply` wireframe. Below the eye-plane threshold the failure is not slowness but
+`VkResult -4` (`VK_ERROR_DEVICE_LOST`) on the first frame containing such impostors - already at
+k = +0.2R, where 9.3% of the point proxies and 18.6% of the line proxies touch the eye, and at
+k = -0.5R, where it is 100%. A second, separate throw came from the same zoom-in
+(`point size and sphere radius must be finite and positive` at k = 0).
+
+**Root cause.** `points.vert` and `lines.vert` bound each impostor with a view-space cube/AABB,
+project its eight corners and fill the resulting screen rectangle with a proxy that carries
+`gl_Position.z/w = 0` and `w = 1` (the surface depth comes from `gl_FragDepth` in the fragment
+shader). Because the proxy's `w` is a constant 1, hardware clipping can never reject it, so the
+vertex shaders detected the eye-plane case with `p.w <= 0` on a corner and answered by making the
+proxy *the whole viewport* (`lo = (-1,-1)`, `hi = (1,1)`). Every impostor whose bounding volume
+reaches the eye then shades every pixel - times four under `sampleShadingEnable` with
+`minSampleShading = 1`, with early depth testing off because both fragment shaders write
+`gl_FragDepth` (batch 87 measured that multiplier, found the per-sample coverage it bought was
+not worth it, and switched every pipeline back to per-pixel shading) - before discarding. A few hundred of those proxies are a tens-of-milliseconds
+frame; a few tens of thousands are a GPU hang, which is what MoltenVK reported as device lost.
+OpenGL does not have this shape of bug: `points/points_spheres_geometry_color.geom` offsets
+`gl_Position.xy` in *view* space by the impostor radius and only then applies `PROJ`, so an
+expanded quad behind the eye is clipped away homogeneously and never covers the screen.
+The throw had a different cause: `Drawable::impostor_radius(camera, diameter)` sizes one world
+radius for the whole drawable from `camera.world_pixel_ratio(camera.pivot_point())`, and that ratio
+is `2*|view_z|*tan(fov/2)/screen_height`, i.e. exactly zero when zoom puts the pivot in the eye
+plane. This is the sphere/cylinder sibling of the plain-point case recorded in batch 69, which only
+routed plain points away from the field.
+
+**Fix.** The proxies are now clipped to the near plane in view space before projection: `near_z` is
+the unprojection of NDC `(0,0,-1)` through the same `inverse_projection` the fragment shaders use,
+a cube wholly nearer than the near plane is culled (`gl_Position = vec4(2,2,2,1)`), and otherwise
+`upper.z` is clamped to `near_z` and the eight *clipped* corners are projected. The whole-viewport
+branch is gone. This cannot lose visible surface: `points.frag`/`lines.frag` start their ray on the
+near plane (`a = inverse_projection*(ndc,-1,1)`) and discard `t < 0` and `clip.w <= 0`, so nothing
+nearer than the near plane was ever drawable; and for a cube entirely beyond the near plane the
+arithmetic is identical to before. The clip is applied only when the projection actually has an eye
+plane (`projection[3][2] != 0`), so orthographic cameras and the low-level `RenderDevice` tests -
+which drive the analytic pipelines with an identity projection whose rays legitimately march in
+`+z` around a `z = 0` cube - keep the previous geometry exactly. `impostor_radius()` now floors the
+ratio at that of a point on the near plane (`camera.position() + camera.view_direction() *
+camera.z_near()`), keeping the world radius finite and positive on both backends without adding any
+state to `Camera`.
+
+**Result (Release, same probe, same window).** Pre-fix / post-fix frames per second:
+
+| camera | lines cylinder | points sphere |
+| --- | --- | --- |
+| k = +3.0R | 44.7 / 43.4 | 4.44 / 4.31 |
+| k = +1.0R | 28.3 / 28.1 | 8.47 / 9.47 |
+| k = +0.2R | device lost / 57.8 | device lost / 86.1 |
+| k = 0 | device lost / 118.1 | device lost / 84.4 |
+| k = -0.5R | device lost / 119.9 | device lost / 119.9 |
+
+The healthy zoomed-out rows are unchanged within noise, which is the point: no cost is added where
+there was no pathology. The radius at k = 0 is now `2.297e-06`/`1.87294e-06` instead of zero. What
+this batch does *not* change is the intrinsic cost of the expanded six-vertex impostor path itself:
+479k sphere proxies still cost about 230 ms/frame when the whole cloud is on screen (the batch-73/74
+early-depth history is about the same path), and that remains open.
+
+**Validation (2026-11-16, macOS, serial).** OpenGL `build-opengl-check` 116/116 and Vulkan
+`build-vulkan-check` 150/150, both green, no flakes, both trees fully rebuilt (the shaders are
+compiled to SPIR-V at build time and `drawable.cpp` is shared by both backends). The first iteration
+of the clip culled the three analytic-impostor device tests' identity-projection scenes
+(`vulkan.render`: "orthographic sphere surface depth is wrong"; `vulkan.clipping`: "analytic
+clipping did not retain a partial surface"; `vulkan.picking`: "no interior sample for primitive");
+the perspective guard above is what makes those pass, and they are the tests to rerun if the guard
+is ever revisited. The Debug tree (`cmake-build-debug`) reproduced the same device-lost failure
+pre-fix and the same recovery post-fix; it was not re-run after the guard was added.
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 87: multisampled impostors shade per pixel, as OpenGL does
+
+**Symptom.** Batch 86 fixed zooming *in*. The user reported the other direction: zooming out - or
+just raising the point size to 15-20, which is what makes every point oversized - drops the Vulkan
+frame rate hard while OpenGL stays smooth, and asked for the Vulkan/OpenGL differences in point and
+line rendering, a judgement of which implementation is more logical for each, and that one adopted.
+`applications/Mapple-imgui/mapple_viewer.h` (and `applications/VulkanViewer/main.cpp`) open their
+viewer with `samples = 4`, so the interactive app is always in the multisampled path.
+
+**The difference.** One bit per pipeline: `VkPipelineMultisampleStateCreateInfo::sampleShadingEnable`
+with `minSampleShading = 1`, which batch 86 left enabled for the analytic point path (and, through
+inheritance, for the line-impostor path) while the OpenGL backend only ever calls
+`glEnable(GL_MULTISAMPLE)` and therefore shades every pipeline once per pixel. 479,187 sphere
+proxies at point size 15 (median 15 framebuffer pixels), 1600x917, 4 samples, fps at
+k = +3R / +1R / +0.2R:
+
+| `sampleShadingEnable` | plain points | sphere impostors |
+| --- | --- | --- |
+| expanded plain points, line impostors and impostor points (batch-86 state, at best) | 9.3 / 9.1 / 41.0 | 1.6 / 2.1 / 21.6 |
+| only the line-impostor pipeline | 12.6 / 11.2 / 41.5 | 16.8 / 26.6 / 111.3 |
+| none, with `sampleRateShading` still enabled on the device | 96.7 / 64.0 / 119.9 | 13.0 / 21.7 / 106.3 |
+| none, feature not enabled at all | 98.2 / 63.0 / 120.0 | 13.2 / 21.4 / 99.5 |
+| OpenGL, per pixel, unpaced window | 127-135 | ~10.5 |
+
+Re-measured on the finished tree, same scene and 4 samples, Vulkan against OpenGL (fps at
+k = +3R / +1R / +0.2R): sphere impostors at point size 15 - the size the user reported - 13.0 / 22.5
+/ 100.7 against 10.3 / 15.4 / 122.0, so 8-10x better than the enabled state and now ahead of OpenGL
+except in the extreme near-eye row; at size 20, 8.6 / 14.5 / 83.2 against 7.2 / 9.6 / 89.6. Plain
+points at size 15 went 99.4 / 63.9 / 120.0 from 9.3 / 9.1 / 41.0, and cylinder impostors
+(bunny, 46,229 edges, width 15) 98.7 / 61.8 / 119.9. Both of those last two pairs still sit below
+OpenGL's 128.4 / 116.6 / 297.8 and 126.1 / 116.2 / 278.2, and the Vulkan numbers are unchanged from
+its 1-sample measurements (92.1 / 64.7 / 119.8), so what remains is not MSAA and not impostor
+specific: it shows up identically on plain points, which share no shader with the impostors.
+
+Three things fall out of the single-variable pairs. Enabling the optional device *feature* costs
+nothing (rows 3 and 4 differ only in that). The impostor cost is local: the enabled pipeline
+doubles-to-tenfolds its own draws. The plain-point cost is not: a plain-point scene binds neither of
+the two pipelines that carry the flag, yet flipping the *line-impostor* one from on to off is what
+takes it from 12.6 to 96.7 fps. Why a per-sample pipeline the draw never binds taxes the pass is not
+attributed here - Metal represents sample-shading state in the render-command encoder, so a
+plausible candidate is a MoltenVK render-pass-level fallback, but that was not measured. Two earlier
+claims in this file are superseded by the table: the plain-point win did not come from the
+expanded-plain-points pipeline (already per-pixel in the slow row), and batch 86's wording about
+keeping the multiplier for the impostors predates the measurement.
+
+**Decision: per-pixel everywhere, matching OpenGL.** The four non-triangle branches of the color pass
+(expanded plain points, line impostors, wide lines, impostor points) now each state
+`sampleShadingEnable = VK_FALSE` explicitly rather than inheriting it - `ms` is declared outside
+the seven-pipeline loop, so a branch that does not write it silently takes the rasterization state of
+the pipeline built before it, which is how the line-impostor pipeline ended up sharing the plain-point
+one. With it go the submission-time `throw` for multisampled impostors on devices lacking the
+feature, the `sample_shading` context field, and the feature enable; `supported_sample_counts`
+becomes style-independent for both `PointStyle` and `LineStyle`, so no draw is refused and no
+capability depends on an optional feature. `points_plain.frag` is the case where the choice is
+provably free - it neither discards nor writes `gl_FragDepth`, so per-sample shading cannot change
+one pixel of it and only multiplied a large point by the sample count.
+
+**What the choice gives up, and how to get it back.** Per-sample shading was the only mechanism that
+gave a `discard`-derived analytic silhouette, and an analytic clip-plane cut, any MSAA coverage.
+After the switch the orthographic-sphere MSAA render still resolves 10 partially covered pixels, but
+those are where the proxy quad itself is partially covered; the surfel and cylinder/cone renders show
+none. `tests/renderer/render_test.cpp` therefore stops asserting rim coverage for the analytic cases:
+`analytic_msaa_interior()` asserts the invariant that does hold (opaque pixels whose whole 3x3
+neighbourhood is opaque are byte-identical to the single-sample render, plus the existing
+ID/center-depth invariance), while the plain-point case keeps `edges > 0`.
+`tests/viewer/clipping_test.cpp` now requires `partial == 0` across an analytic cut and says so in a
+comment, so that check inverts the moment real coverage returns. The intended replacement is analytic
+alpha-to-coverage: compute each boundary's coverage from `clamp(0.5 + d / fwidth(d), 0, 1)` in the
+fragment shader and set `alphaToCoverageEnable`, which buys the same sample-correct rim at one shading
+pass per pixel and keeps center-sample semantics for the single-sample and ID passes because
+`cov > 0.5` is exactly "the sample point is inside". Not implemented in this batch.
+
+**Still open, not explained by this batch.** At 1 sample - where none of these flags are involved -
+Vulkan plain points reproducibly measure 92.1 / 64.7 / 119.8 fps against OpenGL's 126-139 / 119.5 /
+238-272, i.e. a 1.5-1.9x deficit roughly the size of the extra 8-byte `R32G32_UINT` ID attachment the
+Vulkan color pass always writes (16 bytes per fragment against OpenGL's 8). That is a quantity match,
+not a measurement: the hypothesis needs its own experiment. Note also that Vulkan presents through
+`VK_PRESENT_MODE_MAILBOX_KHR` while OpenGL sets `glfwSwapInterval(1)`, so rows that cluster near 120
+are the display cap rather than throughput, and an unpaced offscreen OpenGL window is not directly
+comparable there.
+
+**Validation (2026-11-16, macOS, Apple M4 Pro, MoltenVK, Release, serial).** Vulkan
+`build-vulkan-check` 150/150 and OpenGL `build-opengl-check` 116/116, both green with no flakes,
+after rebuilding both trees (`render_device.h` and `render_test.cpp` are shared). A comment-only
+correction to the impostor pipeline note was re-validated on the six tests that read that path
+(`vulkan.render`, `vulkan.clipping`, `vulkan.picking`, `vulkan.pointselection`,
+`vulkan.pointselectionviewer`, `vulkan.clippingplane`). Linux/Windows/CI remain separate gates, and
+the feature's absence there is no longer a correctness question at all.

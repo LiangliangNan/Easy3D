@@ -24,6 +24,32 @@ std::shared_ptr<const Geometry> triangle(float z, const vec4& color) {
     return std::make_shared<Geometry>(v, std::vector<uint32_t>{0, 1, 2},
                                      Topology::triangles, std::vector<uint32_t>{173});
 }
+void analytic_msaa_interior(unsigned w, unsigned h, const FrameImage& single, const FrameImage& aa) {
+    // An analytic impostor silhouette is discarded once per pixel, so multisampling can only
+    // fractionally resolve a pixel the proxy geometry itself does not fully cover - a handful
+    // where the surface touches the proxy edge. What must hold everywhere else: a pixel whose
+    // whole 3x3 neighbourhood is opaque lies inside both surface and proxy, so all its samples
+    // get the same shading and the multisampled image has to equal the single-sample one.
+    // Per-sample shading used to fractionalise the entire silhouette and charged the whole
+    // multisampled pass for it (docs/vulkan.md batch 87); analytic alpha-to-coverage is the
+    // intended way to bring the antialiasing back, and the clip-plane boundary in
+    // tests/viewer/clipping_test.cpp is the tripwire that detects it.
+    unsigned interior = 0;
+    for (unsigned y = 1; y + 1 < h; ++y) for (unsigned x = 1; x + 1 < w; ++x) {
+        const size_t i = y * w + x;
+        if (single.rgba[4 * i + 3] != 255) continue;
+        bool surrounded = true;
+        for (int dy = -1; dy <= 1 && surrounded; ++dy)
+            for (int dx = -1; dx <= 1; ++dx)
+                surrounded = surrounded &&
+                    single.rgba[4 * (size_t(int(y) + dy) * w + size_t(int(x) + dx)) + 3] == 255;
+        if (!surrounded) continue;
+        ++interior;
+        for (unsigned c = 0; c < 4; ++c)
+            require(aa.rgba[4 * i + c] == single.rgba[4 * i + c], "analytic MSAA changed an interior pixel");
+    }
+    require(interior > 0, "analytic MSAA check found no interior pixels to compare");
+}
 void point_styles(RenderDevice& device) {
     Vertex v; v.position = vec3(0);
     DrawCommand d;
@@ -39,7 +65,7 @@ void point_styles(RenderDevice& device) {
         require(std::abs(square.depth[i]-0.5f)<1e-6f, "large point depth differs from center");
     }
     require(hits == 144, "large point is not a framebuffer-pixel square");
-    auto check_msaa = [&](unsigned w, unsigned h, const FrameImage& single) {
+    auto check_msaa = [&](unsigned w, unsigned h, const FrameImage& single, bool analytic) {
         if (!(device.supported_sample_counts(d.point_style) & 4)) return;
         auto aa = device.render(w,h,{d},vec4(0),4);
         unsigned edges = 0;
@@ -49,15 +75,19 @@ void point_styles(RenderDevice& device) {
             require(std::abs(aa.depth[i]-single.depth[i])<1e-5f, "point/sphere MSAA changed picking depth");
             edges += aa.rgba[4*i] > 0 && aa.rgba[4*i] < 255;
         }
-        require(edges > 0, "point/sphere has no MSAA coverage");
+        // A plain point square is ordinary rasterized geometry, so MSAA gives its edge
+        // partial coverage. An analytic silhouette is shaded once per pixel and instead
+        // has to keep its interior identical to the single-sample render.
+        if (analytic) analytic_msaa_interior(w, h, single, aa);
+        else require(edges > 0, "plain point has no MSAA coverage");
     };
     d.point_size = 12.5f;
-    check_msaa(64,48,device.render(64,48,{d},vec4(0)));
+    check_msaa(64,48,device.render(64,48,{d},vec4(0)),false);
     d.point_style = PointStyle::sphere; d.sphere_radius = 0.35f;
     auto sphere = device.render(65,65,{d},vec4(0));
     require(std::abs(sphere.depth[32*65+32]-0.325f)<1e-5f, "orthographic sphere surface depth is wrong");
     require(sphere.ids[22*65+22].object == UINT32_MAX, "sphere proxy corner was not discarded");
-    check_msaa(65,65,sphere);
+    check_msaa(65,65,sphere,true);
     d.lighting=true; d.sphere_light=vec3(0,0,1);
     auto lit=device.render(65,65,{d});
     require(lit.rgba[(32*65+32)*4]==255 && lit.rgba[(32*65+41)*4]<220,
@@ -100,7 +130,7 @@ void point_styles(RenderDevice& device) {
             require(perspective.ids[i].object==UINT32_MAX,"perspective sphere proxy leaked");
     }
     require(expected_hits>100,"perspective sphere oracle did not exercise enough pixels");
-    check_msaa(93,71,perspective);
+    check_msaa(93,71,perspective,true);
     // Camera/model transform of centers and perspective near/far clipping.
     d.model_view(0,3)=-0.6f; d.model_view(1,3)=-0.2f;
     d.model_view(2,3)=4; // entirely behind the eye
@@ -192,13 +222,10 @@ void surfels(RenderDevice& device) {
     require(hits > 100, "surfel oracle did not cover enough pixels");
     if (device.supported_sample_counts(PointStyle::surfel) & 4) {
         auto aa = device.render(93, 71, {disc}, vec4(0), 4);
-        unsigned edges = 0;
-        for (size_t i = 0; i < image.ids.size(); ++i) {
+        for (size_t i = 0; i < image.ids.size(); ++i)
             require(aa.ids[i].object == image.ids[i].object && aa.ids[i].primitive == image.ids[i].primitive &&
                     std::abs(aa.depth[i]-image.depth[i]) < 1e-5f, "surfel MSAA changed center picking/depth");
-            edges += aa.rgba[4*i] > 0 && aa.rgba[4*i] < 255;
-        }
-        require(edges > 0, "surfel has no antialiased silhouette");
+        analytic_msaa_interior(93, 71, image, aa);
     }
     vertex.normal = -vertex.normal; geometry();
     const auto back = device.render(93, 71, {disc});
@@ -263,15 +290,12 @@ void line_impostors(RenderDevice& device) {
         }
         if (device.supported_sample_counts(style) & 4) {
             const auto aa = device.render(65, 65, {line}, vec4(0), 4);
-            unsigned edges = 0;
-            for (size_t pixel = 0; pixel < aa.ids.size(); ++pixel) {
+            for (size_t pixel = 0; pixel < aa.ids.size(); ++pixel)
                 require(aa.ids[pixel].object == single.ids[pixel].object &&
                         aa.ids[pixel].primitive == single.ids[pixel].primitive &&
                         std::abs(aa.depth[pixel]-single.depth[pixel]) < 1e-5f,
                         "line MSAA changed center-sample picking/depth");
-                edges += aa.rgba[4*pixel] > 0 && aa.rgba[4*pixel] < 255;
-            }
-            require(edges > 0, "line impostor MSAA has no partial coverage");
+            analytic_msaa_interior(65, 65, single, aa);
         }
     }
     // Clipping follows the actual front surface, preserving only the visible
