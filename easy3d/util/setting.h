@@ -120,6 +120,19 @@ namespace easy3d {
         ///      2 (Poisson 64x128, the default), 3 (Poisson 100x100), or 4 (regular 49x225).
         extern EASY3D_UTIL_EXPORT int effect_shadow_pattern;
 
+        /// \brief Transparency method.
+        /// \details 0 = \c AverageColorBlending, 1 = \c DualDepthPeeling (the default), 2 =
+        ///      \c PerPixelLinkedListsOIT. The linked lists need Vulkan or OpenGL 4.3+ (macOS
+        ///      OpenGL is limited to 4.1).
+        extern EASY3D_UTIL_EXPORT int effect_transparency_method;
+        /// \brief Maximum number of layers of the dual depth peeling method.
+        /// \details Zero means no explicit bound; see \c DualDepthPeeling::set_max_peels().
+        extern EASY3D_UTIL_EXPORT int effect_transparency_peels;
+        /// \brief Per-pixel fragment capacity of the per-pixel linked lists method.
+        /// \details Fragments beyond the capacity are discarded; see
+        ///      \c PerPixelLinkedListsOIT::set_max_fragments_per_pixel().
+        extern EASY3D_UTIL_EXPORT int effect_transparency_fragments;
+
         /// \brief Whether ambient occlusion effect is enabled.
         /// \details This variable enables or disables the AO effect, which darkens creases and cavities.
         extern EASY3D_UTIL_EXPORT bool effect_ao_enabled;

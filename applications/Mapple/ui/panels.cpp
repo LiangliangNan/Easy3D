@@ -486,7 +486,52 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         bool transparency = transparency_enabled();
         if (ImGui::Checkbox("Transparency", &transparency))
             set_transparency_enabled(transparency);
-        ImGui::SetItemTooltip("Dual depth peeling; each face drawable sets its own opacity.");
+        ImGui::SetItemTooltip("Each face drawable sets its own opacity.");
+        if (transparency) {
+            static const char *methods[] = {"Average color blending", "Dual depth peeling",
+                                            "Per-pixel linked lists"};
+            const int method = transparency_method();
+            const bool combo_open = ImGui::BeginCombo("Method", methods[method]);
+            ImGui::SetItemTooltip("How the transparent surfaces are composited.");
+            if (combo_open) {
+                for (int i = 0; i < 3; ++i) {
+                    const bool supported = transparency_method_supported(i);
+                    if (!supported)
+                        ImGui::BeginDisabled();
+                    if (ImGui::Selectable(methods[i], i == method))
+                        set_transparency_method(i);
+                    if (i == method)
+                        ImGui::SetItemDefaultFocus();
+                    if (!supported) {
+                        ImGui::EndDisabled();
+                        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                            ImGui::SetTooltip("Requires OpenGL 4.3+ (macOS OpenGL is limited to "
+                                              "4.1); use the Vulkan backend.");
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            if (method == 0)
+                ImGui::SetItemTooltip("Faster approximation; ignores the order of fragments.");
+            else if (method == 1) {
+                ImGui::SetItemTooltip("Order-independent approximation; layers bound the "
+                                      "peeling passes.");
+                int layers = setting::effect_transparency_peels;
+                if (ImGui::SliderInt("Layers", &layers, 0, 16, layers == 0 ? "unbounded" : "%d")) {
+                    setting::effect_transparency_peels = layers;
+                    if (ImGui::IsItemDeactivatedAfterEdit())
+                        apply_effect_parameters();
+                }
+            } else {
+                ImGui::SetItemTooltip("Exact order-independent result; needs more GPU memory.");
+                int fragments = setting::effect_transparency_fragments;
+                if (ImGui::SliderInt("Fragments/pixel", &fragments, 1, 32)) {
+                    setting::effect_transparency_fragments = fragments;
+                    if (ImGui::IsItemDeactivatedAfterEdit())
+                        apply_effect_parameters();
+                }
+            }
+        }
     }
 
     ImGui::Spacing();

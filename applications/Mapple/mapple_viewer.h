@@ -290,6 +290,15 @@ private:
 
     void set_transparency_enabled(bool enabled);
 
+    // Transparency method: 0 average color blending, 1 dual depth peeling, 2 per-pixel
+    // linked lists. Rebuilds the effect when it is running and records the choice in
+    // setting::effect_transparency_method.
+    void set_transparency_method(int method);
+    int transparency_method() const { return transparency_method_; }
+    // Whether \p method can run on this backend: the linked lists need Vulkan or
+    // OpenGL 4.3+ (macOS OpenGL is limited to 4.1).
+    static bool transparency_method_supported(int method);
+
     bool ao_enabled() const { return ao_ != nullptr; }
 
     bool edl_enabled() const { return edl_ != nullptr; }
@@ -729,6 +738,10 @@ private:
     std::unique_ptr<easy3d::EyeDomeLighting> edl_;
     std::unique_ptr<easy3d::SoftShadow> shadow_;
     std::unique_ptr<easy3d::Transparency> transparency_;
+    int transparency_method_ = 1;
+
+    // Builds transparency_ for transparency_method_ and the current parameters.
+    void create_transparency();
 
     // The recording that owns the screen and blocks scene input until it finishes
     // or is cancelled.

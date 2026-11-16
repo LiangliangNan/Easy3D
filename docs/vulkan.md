@@ -10725,3 +10725,39 @@ rebuilt from the restored sources after the probes were removed; `viewer.pointbe
 passes in both (Vulkan 21.6 s, OpenGL 10.3 s). No source or test changed, so the suites
 were not re-run. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate
 gates.
+
+### 2026-11-17 — batch 103: Mapple switches between transparency methods
+
+**Scope.** Mapple's Rendering panel hardcoded `DualDepthPeeling` for the Transparency
+effect, while the renderer also offers `AverageColorBlending` (fast, order-free
+approximation) and `PerPixelLinkedListsOIT` (exact order-independent result). The Effects
+section now carries a Method combo, and the one parameter each method has is editable next
+to it. The choice and the parameters persist with the other rendering settings.
+
+**Design.** Three settings join `effect_transparency_enabled` in `easy3d::setting`:
+`effect_transparency_method` (0 average color blending, 1 dual depth peeling - the
+default, so existing sessions behave as before - and 2 per-pixel linked lists),
+`effect_transparency_peels` (default 4; 0 means no explicit bound) and
+`effect_transparency_fragments` (default 8, the per-pixel node-pool capacity). They are
+encoded and decoded with every other effect key, so a rendering.json written before this
+change keeps its behavior and takes the defaults for the three new keys.
+`MappleViewer` keeps the effective method in `transparency_method_`; `create_transparency()`
+builds the matching effect and applies the saved parameter, and `set_transparency_method()`
+rebuilds the effect only when it is running and the method actually changed.
+`apply_effect_parameters()` pushes later slider edits, calling `set_max_peels()` only when
+the value differs because that setter logs each call. Availability is decided by
+`transparency_method_supported()`: the linked lists need SSBOs and atomics, so Vulkan or
+OpenGL 4.3+; macOS OpenGL is limited to 4.1, where the combo entry is disabled with a
+tooltip and a method persisted as 2 falls back to peeling at startup with a warning. The
+sliders write the setting on every change but reach the effect on release
+(`IsItemDeactivatedAfterEdit`), so dragging does not flood the log. Peeling layers slide
+from 0 to 16 and show "unbounded" at 0, matching `set_max_peels()`.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).** Both
+check trees were fully rebuilt and the suites run serially: Vulkan 150/150 in 168 s,
+OpenGL 116/116 in 60 s. Smoke launches confirm each backend starts: on Vulkan the running
+app switched live from peeling to per-pixel linked lists and then to average color
+blending with no errors in Mapple.log, and a session started with
+`effect_transparency_peels = 0` reported "maximum number of peeling layers: 0"; on OpenGL
+a persisted method 2 logged the fallback warning and constructed dual depth peeling.
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.

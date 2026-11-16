@@ -40,6 +40,7 @@
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/average_color_blending.h>
 #include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
@@ -49,6 +50,7 @@
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/per_pixel_linked_lists_oit.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
@@ -57,6 +59,10 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/setting.h>
+
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>     // glGetString(GL_VERSION)
+#endif
 
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -138,6 +144,14 @@ namespace {
                     return true;
         }
         return false;
+    }
+
+    const char *transparency_method_name(int method) {
+        switch (method) {
+            case 0: return "average color blending";
+            case 2: return "per-pixel linked lists";
+            default: return "dual depth peeling";
+        }
     }
 
 } // namespace
@@ -266,6 +280,14 @@ void MappleViewer::init() {
 
     // Recreate the effect that was enabled in the previous session. The effect objects
     // are cheap until used, but they must exist before the first frame draws.
+    transparency_method_ = setting::effect_transparency_method;
+    if (transparency_method_ < 0 || transparency_method_ > 2 || !transparency_method_supported(transparency_method_)) {
+        if (transparency_method_ != 1)
+            LOG(WARNING) << "transparency method " << transparency_method_
+                         << " is not available; using dual depth peeling";
+        transparency_method_ = 1;
+    }
+    setting::effect_transparency_method = transparency_method_;
     if (setting::effect_ao_enabled)
         set_ao_enabled(true);
     else if (setting::effect_edl_enabled)
@@ -414,13 +436,70 @@ void MappleViewer::set_transparency_enabled(bool enabled) {
         set_shadow_enabled(false);
     }
     if (enabled && !transparency_)
-        transparency_.reset(new DualDepthPeeling(camera()));
+        create_transparency();
     else if (!enabled)
         transparency_.reset();
     setting::effect_transparency_enabled = enabled;
     if (was != enabled)
         LOG(INFO) << "transparency " << (enabled ? "enabled" : "disabled");
     update();
+}
+
+bool MappleViewer::transparency_method_supported(int method) {
+    if (method < 0 || method > 2)
+        return false;
+    if (method != 2)
+        return true;
+#ifdef EASY3D_HAS_VULKAN
+    return true;
+#else
+    // The linked lists need SSBOs and atomics, i.e. OpenGL 4.3+; macOS caps at 4.1.
+    const char *version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
+    int major = 0, minor = 0;
+    return version && std::sscanf(version, "%d.%d", &major, &minor) == 2 &&
+           (major > 4 || (major == 4 && minor >= 3));
+#endif
+}
+
+void MappleViewer::create_transparency() {
+    switch (transparency_method_) {
+        case 0:
+            transparency_.reset(new AverageColorBlending(camera()));
+            break;
+        case 2: {
+            auto *oit = new PerPixelLinkedListsOIT(camera());
+            oit->set_max_fragments_per_pixel(setting::effect_transparency_fragments);
+            transparency_.reset(oit);
+            break;
+        }
+        default:
+            transparency_method_ = 1;
+            {
+                auto *peeling = new DualDepthPeeling(camera());
+                peeling->set_max_peels(setting::effect_transparency_peels);
+                transparency_.reset(peeling);
+            }
+            break;
+    }
+}
+
+void MappleViewer::set_transparency_method(int method) {
+    if (method < 0 || method > 2)
+        return;
+    if (!transparency_method_supported(method)) {
+        LOG(WARNING) << "transparency method \"" << transparency_method_name(method)
+                     << "\" is not available on this backend";
+        return;
+    }
+    const bool changed = method != transparency_method_;
+    transparency_method_ = method;
+    setting::effect_transparency_method = method;
+    if (changed && transparency_) {
+        transparency_.reset();
+        create_transparency();
+        LOG(INFO) << "transparency method: " << transparency_method_name(method);
+        update();
+    }
 }
 
 void MappleViewer::apply_effect_parameters() {
@@ -436,6 +515,11 @@ void MappleViewer::apply_effect_parameters() {
         shadow_->set_softness(setting::effect_shadow_softness);
         shadow_->set_darkness(setting::effect_shadow_darkness);
     }
+    if (auto *peeling = dynamic_cast<DualDepthPeeling *>(transparency_.get())) {
+        if (peeling->max_peels() != setting::effect_transparency_peels)
+            peeling->set_max_peels(setting::effect_transparency_peels);
+    } else if (auto *oit = dynamic_cast<PerPixelLinkedListsOIT *>(transparency_.get()))
+        oit->set_max_fragments_per_pixel(setting::effect_transparency_fragments);
     update();
 }
 

@@ -58,6 +58,9 @@ namespace easy3d {
         float effect_shadow_softness = 0.5f;
         float effect_shadow_darkness = 0.6f;
         int effect_shadow_pattern = 2;  // SoftShadow::SP_Poisson_64_128
+        int effect_transparency_method = 1;  // DualDepthPeeling
+        int effect_transparency_peels = 4;
+        int effect_transparency_fragments = 8;
 
         // points drawable
         bool points_drawable_two_side_lighting = true;
@@ -262,6 +265,9 @@ namespace easy3d {
             ENCODE("effect", effect_ao_enabled)
             ENCODE("effect", effect_edl_enabled)
             ENCODE("effect", effect_transparency_enabled)
+            ENCODE("effect", effect_transparency_method)
+            ENCODE("effect", effect_transparency_peels)
+            ENCODE("effect", effect_transparency_fragments)
             ENCODE("effect", effect_shadow_enabled)
             ENCODE("effect", effect_shadow_light_distance)
             ENCODE("effect", effect_shadow_softness)
@@ -375,6 +381,9 @@ namespace easy3d {
             DECODE("effect", effect_ao_enabled)
             DECODE("effect", effect_edl_enabled)
             DECODE("effect", effect_transparency_enabled)
+            DECODE("effect", effect_transparency_method)
+            DECODE("effect", effect_transparency_peels)
+            DECODE("effect", effect_transparency_fragments)
             DECODE("effect", effect_shadow_enabled)
             DECODE("effect", effect_shadow_light_distance)
             DECODE("effect", effect_shadow_softness)
