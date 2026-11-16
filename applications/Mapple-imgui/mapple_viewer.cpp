@@ -25,7 +25,6 @@
  \endcond */
 
 #include "mapple_viewer.h"
-
 #include "imgui_layer.h"
 
 #include <algorithm>

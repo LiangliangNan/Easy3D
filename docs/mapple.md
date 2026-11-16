@@ -308,8 +308,9 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 
 The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
 stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
-group (the four Property-menu commands) and the rendering panel's color-scheme
-selector are migrated; the remaining groups are mesh repair/orientation, property
+group (the four Property-menu commands), the rendering panel's color-scheme selector,
+and the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
+Cloud > Normalize Normals) are migrated; the remaining groups are property
 manipulation, small utilities, and view polish.
 
 ## ImGui notes
@@ -832,3 +833,56 @@ manipulation, small utilities, and view polish.
   logged "scalar field range [0, 1000] clamped (20%, 20%) to [110, 737]", proving
   the style reached the texture-coordinate rebuild. The combo clicks themselves were
   not exercised.
+
+### 2026-11-16 — Mesh repair and orientation (Phase 4 gap group 3)
+
+- Process > Surface Mesh gains a Repair submenu with the Qt repair commands: Repair
+  Polygon Soup, Orient and Stitch Polygon Soup, Stitch with/without Reorientation,
+  Orient Outward, Reverse Orientation, Remove Isolated Vertices, Remove Duplicate and
+  Folding Faces, Detect Self-Intersections, and Remesh Self-Intersections. Point Cloud
+  gains Normalize Normals next to Re-orient Normals. The commands run immediately (no
+  parameter window) and report to the Log panel.
+- The heavy ones run on the existing worker thread with the indeterminate progress
+  window: the two soup commands, both stitches, duplicate/folding removal, and
+  self-intersection detection/remeshing. Reverse Orientation, Remove Isolated
+  Vertices and Orient Outward stay on the main thread; Orient Outward validates
+  "closed triangle mesh" before paying for the CGAL round trip, and Qt ran all of
+  these synchronously.
+- Repair/orient/stitch and Orient Outward rebuild the mesh through CGAL
+  (`SurfaceMesh::clear()`), so every property - including the selection - is
+  discarded. After the join the viewer drops the stored selection style and skips the
+  selection display, instead of restoring a style whose `f:select` no longer exists
+  (which would warn and fall back to uniform). Detect Self-Intersections instead
+  marks both faces of every pair in `f:select` and lets the normal selection display
+  show them; it wipes any previous selection first, as in Qt.
+- CGAL gating matches Qt: repair, orient-and-stitch, remove duplicate/folding faces,
+  detect and remesh log the "requires CGAL support" build hint when the app is built
+  without it; both stitches and orient-and-stitch fall back to
+  `SurfaceMeshStitching` with Qt's "install CGAL..." warning.
+- Worker-thread commands now catch exceptions (CGAL preconditions throw) and log
+  "failed" instead of letting the exception escape the thread and terminate the app;
+  the main thread still finalizes, with a "stopped early" warning if it happened.
+- Fixed: a color scheme could not return to a scalar field after "Uniform color".
+  `apply_scalar_style` re-applied the *drawable's* property name, which uniform
+  coloring resets to `uniform color`, so the buffer found no such property and fell
+  back to uniform. The style now carries the chosen scheme's location and property;
+  the colormap/clamp controls keep using the drawable's current property.
+- Validation (2026-11-16, macOS): all three trees build; `cmake-build-release`
+  (OpenGL on this machine), `build-vulkan-check` (Vulkan) and `build-opengl-check`
+  launch and report "Mapple UI ready". A temporary probe (removed afterwards) called
+  `run_process` with the same operations the menu items use, on files chosen for each
+  path: `repair/self_intersection/pig.off` found "3 pairs of faces intersect" and
+  remeshed 891 -> 899 faces (then 0 duplicate/folding faces); `blobby-shuffled.off`
+  repaired 8844 -> 2027 vertices over 4050 faces, then oriented/stitched it and ran
+  both stitches (0 border pairs after the repair) and isolated-vertex removal;
+  `partial_overlap.off` removed 1 overlapping face (2 -> 1); `sphere.obj` (closed
+  triangle mesh) reported "face orientations corrected to point outward" and then
+  "face orientations reversed"; `fountain/pointcloud.ply` normalized 479187 normals.
+  The duplicate/self-intersection probe was repeated on the Vulkan build and the soup
+  probe on the OpenGL check build. The menu clicks themselves were not scripted.
+  The non-CGAL `#else` branches were syntax-checked with the app's own compile flags
+  minus `-DHAS_CGAL`. For the color-scheme fix, a probe switched bunny's faces to
+  uniform and then back to `f:chart` on both backends: the drawable stayed
+  `SCALAR_FIELD`, `buffer.cpp` logged
+  "scalar field range [0, 1000] clamped (5%, 5%) to [11, 917]", and no
+  "not found" warning appeared.

@@ -53,6 +53,7 @@
 #include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/algo/surface_mesh_simplification.h>
 #include <easy3d/algo/surface_mesh_smoothing.h>
+#include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_topology.h>
@@ -151,6 +152,8 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Estimate Normals";
         case ProcessOp::PC_REORIENT_NORMALS:
             return "Re-orient Normals";
+        case ProcessOp::PC_NORMALIZE_NORMALS:
+            return "Normalize Normals";
         case ProcessOp::PC_SIMPLIFY:
             return "Simplify Point Cloud";
         case ProcessOp::PC_POISSON:
@@ -193,6 +196,26 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Parameterize Surface Mesh";
         case ProcessOp::MESH_GEODESIC:
             return "Geodesic Distance";
+        case ProcessOp::MESH_REPAIR_SOUP:
+            return "Repair Polygon Soup";
+        case ProcessOp::MESH_ORIENT_STITCH_SOUP:
+            return "Orient and Stitch Polygon Soup";
+        case ProcessOp::MESH_STITCH_REORIENT:
+            return "Stitch with Reorientation";
+        case ProcessOp::MESH_STITCH:
+            return "Stitch without Reorientation";
+        case ProcessOp::MESH_ORIENT_OUTWARD:
+            return "Orient Outward";
+        case ProcessOp::MESH_REVERSE_ORIENTATION:
+            return "Reverse Orientation";
+        case ProcessOp::MESH_REMOVE_ISOLATED:
+            return "Remove Isolated Vertices";
+        case ProcessOp::MESH_REMOVE_DUPLICATE_FACES:
+            return "Remove Duplicate and Folding Faces";
+        case ProcessOp::MESH_DETECT_SELF_INTERSECTIONS:
+            return "Detect Self-Intersections";
+        case ProcessOp::MESH_REMESH_SELF_INTERSECTIONS:
+            return "Remesh Self-Intersections";
         case ProcessOp::MESH_CLIP:
             return "Clip by Clipping Plane";
         case ProcessOp::MESH_SPLIT:
@@ -222,7 +245,8 @@ void MappleViewer::open_process(ProcessOp op) {
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
     const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS ||
-                                op == ProcessOp::PC_REORIENT_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
+                                op == ProcessOp::PC_REORIENT_NORMALS ||
+                                op == ProcessOp::PC_NORMALIZE_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
                                 op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC ||
                                 op == ProcessOp::PC_DELAUNAY_2D || op == ProcessOp::PC_DELAUNAY_3D;
     const bool property_op = op == ProcessOp::PROP_HEIGHT_FIELD || op == ProcessOp::PROP_CURVATURES ||
@@ -438,12 +462,26 @@ bool MappleViewer::is_long_running(ProcessOp op) {
         case ProcessOp::MESH_SIMPLIFY:
         case ProcessOp::MESH_REMESH:
         case ProcessOp::MESH_SAMPLE:
+        case ProcessOp::MESH_REPAIR_SOUP:
+        case ProcessOp::MESH_ORIENT_STITCH_SOUP:
+        case ProcessOp::MESH_STITCH_REORIENT:
+        case ProcessOp::MESH_STITCH:
+        case ProcessOp::MESH_REMOVE_DUPLICATE_FACES:
+        case ProcessOp::MESH_DETECT_SELF_INTERSECTIONS:
+        case ProcessOp::MESH_REMESH_SELF_INTERSECTIONS:
             return true;
         case ProcessOp::PROP_CURVATURES:
             return true;
         default:
             return false;
     }
+}
+
+bool MappleViewer::discards_model_properties(ProcessOp op) {
+    // Surfacer converts the mesh to CGAL and back through mesh->clear().
+    return op == ProcessOp::MESH_REPAIR_SOUP || op == ProcessOp::MESH_ORIENT_STITCH_SOUP ||
+           op == ProcessOp::MESH_STITCH_REORIENT || op == ProcessOp::MESH_STITCH ||
+           op == ProcessOp::MESH_ORIENT_OUTWARD;
 }
 
 void MappleViewer::apply_process() {
@@ -470,7 +508,17 @@ void MappleViewer::start_process_job() {
     process_job_->cancelable = process_op_ == ProcessOp::MESH_REMESH ||
                                process_op_ == ProcessOp::MESH_SAMPLE;
     process_job_->thread = std::thread([this] {
-        run_process_algorithm(process_job_->target);
+        // CGAL preconditions throw; letting that escape the thread would terminate the
+        // process. Report it in the log and still let the main thread finalize.
+        try {
+            run_process_algorithm(process_job_->target);
+        } catch (const std::exception &e) {
+            LOG(ERROR) << process_title(process_op_) << " failed: " << e.what();
+            process_job_->failed = true;
+        } catch (...) {
+            LOG(ERROR) << process_title(process_op_) << " failed";
+            process_job_->failed = true;
+        }
         process_job_->done.store(true, std::memory_order_release);
     });
     LOG(INFO) << process_title(process_op_) << " started in the background";
@@ -485,11 +533,19 @@ void MappleViewer::poll_process_job() {
     Model *target = process_job_->target;
     Model *result = process_job_->result;
     const auto start = process_job_->start;
+    const bool failed = process_job_->failed;
     process_job_.reset();
 
     if (result)
         add_model(result);
-    finalize_process(target, start, false);
+    if (failed)
+        LOG(WARNING) << process_title(process_op_) << " stopped early; the model may be partially modified";
+    // A rebuilt model has no properties left; drop the selection style that refers to
+    // them instead of restoring it (which would warn and fall back to uniform).
+    const bool skip_selection_display = discards_model_properties(process_op_);
+    if (skip_selection_display)
+        selection_styles_.erase(target);
+    finalize_process(target, start, skip_selection_display);
 }
 
 void MappleViewer::request_process_cancel() {
@@ -576,6 +632,20 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                     LOG(INFO) << "re-oriented normals of " << cloud->n_vertices() << " points (k = " << k << ")";
                 else
                     LOG(WARNING) << "normal reorientation failed";
+            }
+            break;
+
+        case ProcessOp::PC_NORMALIZE_NORMALS:
+            if (cloud) {
+                auto normals = cloud->get_vertex_property<vec3>("v:normal");
+                if (!normals) {
+                    LOG(WARNING) << "normalizing normals requires normals "
+                                    "(Process > Point Cloud > Estimate Normals)";
+                    break;
+                }
+                for (auto v : cloud->vertices())
+                    normals[v].normalize();
+                LOG(INFO) << "normals normalized for " << cloud->n_vertices() << " points";
             }
             break;
 
@@ -950,6 +1020,172 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 LOG(INFO) << "geodesic distance from " << seeds.size() << " seed vertices ("
                           << selected_faces << " selected faces)";
             }
+            break;
+
+        case ProcessOp::MESH_REPAIR_SOUP:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const auto before_vertices = mesh->n_vertices();
+                const auto before_faces = mesh->n_faces();
+                Surfacer::repair_polygon_soup(mesh);
+                LOG(INFO) << "polygon soup repaired: " << before_vertices << " -> " << mesh->n_vertices()
+                          << " vertices, " << before_faces << " -> " << mesh->n_faces() << " faces";
+                skip_selection_display = true;
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
+            break;
+
+        case ProcessOp::MESH_ORIENT_STITCH_SOUP:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const auto before_vertices = mesh->n_vertices();
+                const auto before_faces = mesh->n_faces();
+                if (Surfacer::orient_and_stitch_polygon_soup(mesh))
+                    LOG(INFO) << "polygon soup oriented and stitched: " << before_vertices << " -> "
+                              << mesh->n_vertices() << " vertices, " << before_faces << " -> "
+                              << mesh->n_faces() << " faces";
+                else
+                    LOG(WARNING) << "orientation and stitching failed: the polygons do not form a "
+                                    "valid polygon mesh";
+                skip_selection_display = true;
+            }
+#else
+            if (mesh) {
+                SurfaceMeshStitching(mesh).apply();
+                LOG(WARNING) << "install CGAL to allow stitching connected components with "
+                                "incompatible boundaries";
+            }
+#endif
+            break;
+
+        case ProcessOp::MESH_STITCH_REORIENT:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const int stitched = Surfacer::stitch_borders(mesh);
+                Surfacer::merge_reversible_connected_components(mesh);
+                LOG(INFO) << "borders stitched (" << stitched << " pairs) and reversible components merged";
+                skip_selection_display = true;
+            }
+#else
+            if (mesh) {
+                SurfaceMeshStitching(mesh).apply();
+                LOG(WARNING) << "install CGAL to allow stitching connected components with "
+                                "incompatible boundaries";
+            }
+#endif
+            break;
+
+        case ProcessOp::MESH_STITCH:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const int stitched = Surfacer::stitch_borders(mesh);
+                LOG(INFO) << "borders stitched (" << stitched << " pairs)";
+                skip_selection_display = true;
+            }
+#else
+            if (mesh) {
+                SurfaceMeshStitching(mesh).apply();
+                LOG(WARNING) << "install CGAL to allow stitching connected components with "
+                                "incompatible boundaries";
+            }
+#endif
+            break;
+
+        case ProcessOp::MESH_ORIENT_OUTWARD:
+#ifdef HAS_CGAL
+            if (mesh) {
+                if (!mesh->is_triangle_mesh() || !mesh->is_closed()) {
+                    LOG(WARNING) << "orienting outward requires a closed triangle mesh";
+                    break;
+                }
+                Surfacer::orient_closed_triangle_mesh(mesh);
+                LOG(INFO) << "face orientations corrected to point outward";
+                selection_styles_.erase(model);
+                skip_selection_display = true;
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
+            break;
+
+        case ProcessOp::MESH_REVERSE_ORIENTATION:
+            if (mesh) {
+                mesh->reverse_orientation();
+                LOG(INFO) << "face orientations reversed";
+            }
+            break;
+
+        case ProcessOp::MESH_REMOVE_ISOLATED:
+            if (mesh) {
+                const auto before = mesh->n_vertices();
+                for (auto v : mesh->vertices())
+                    if (mesh->is_isolated(v))
+                        mesh->delete_vertex(v);
+                mesh->collect_garbage();
+                LOG(INFO) << (before - mesh->n_vertices()) << " isolated vertices deleted, "
+                          << mesh->n_vertices() << " remain";
+            }
+            break;
+
+        case ProcessOp::MESH_REMOVE_DUPLICATE_FACES:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const auto before = mesh->n_faces();
+                const unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
+                const unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh);
+                LOG(INFO) << (num_degenerate + num_overlapping) << " faces removed (" << num_degenerate
+                          << " degenerate, " << num_overlapping << " overlapping): " << before << " -> "
+                          << mesh->n_faces() << " faces";
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
+            break;
+
+        case ProcessOp::MESH_DETECT_SELF_INTERSECTIONS:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const auto pairs = Surfacer::detect_self_intersections(mesh);
+                if (pairs.empty()) {
+                    LOG(INFO) << "no intersecting faces detected";
+                    break;
+                }
+                auto select = mesh->get_face_property<bool>("f:select");
+                if (select)
+                    select.vector().resize(mesh->n_faces(), false);
+                else
+                    select = mesh->face_property<bool>("f:select", false);
+                for (const auto &pair : pairs) {
+                    select[pair.first] = true;
+                    select[pair.second] = true;
+                }
+                LOG(INFO) << pairs.size() << " pairs of faces intersect (marked in face property 'f:select')";
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
+            break;
+
+        case ProcessOp::MESH_REMESH_SELF_INTERSECTIONS:
+#ifdef HAS_CGAL
+            if (mesh) {
+                const auto before = mesh->n_faces();
+                if (Surfacer::remesh_self_intersections(mesh, true))
+                    LOG(INFO) << "self-intersections remeshed: " << before << " -> "
+                              << mesh->n_faces() << " faces";
+                else
+                    LOG(INFO) << "no intersecting faces detected";
+            }
+#else
+            LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
+                         << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
+#endif
             break;
 
         case ProcessOp::MESH_CLIP:

@@ -138,13 +138,17 @@ private:
     // active model in place and reports through the Log panel.
     enum class ProcessOp {
         NONE,
-        PC_ESTIMATE_NORMALS, PC_REORIENT_NORMALS, PC_SIMPLIFY, PC_POISSON, PC_RANSAC,
-        PC_DELAUNAY_2D, PC_DELAUNAY_3D,
+        PC_ESTIMATE_NORMALS, PC_REORIENT_NORMALS, PC_NORMALIZE_NORMALS, PC_SIMPLIFY,
+        PC_POISSON, PC_RANSAC, PC_DELAUNAY_2D, PC_DELAUNAY_3D,
         MESH_SMOOTH, MESH_SIMPLIFY, MESH_REMESH, MESH_FILL_HOLES, MESH_POLYGONIZE,
         MESH_FAIRING, MESH_SAMPLE,
         MESH_COMPONENTS, MESH_PLANAR_PARTITION, MESH_TRIANGULATE, MESH_DUAL,
         MESH_SUBDIVIDE_CC, MESH_SUBDIVIDE_LOOP, MESH_SUBDIVIDE_SQRT3,
         MESH_PARAMETERIZE, MESH_GEODESIC,
+        MESH_REPAIR_SOUP, MESH_ORIENT_STITCH_SOUP, MESH_STITCH_REORIENT, MESH_STITCH,
+        MESH_ORIENT_OUTWARD, MESH_REVERSE_ORIENTATION,
+        MESH_REMOVE_ISOLATED, MESH_REMOVE_DUPLICATE_FACES,
+        MESH_DETECT_SELF_INTERSECTIONS, MESH_REMESH_SELF_INTERSECTIONS,
         MESH_CLIP, MESH_SPLIT, MESH_SLICE,
         PROP_HEIGHT_FIELD, PROP_CURVATURES, PROP_INDEXED_COLORS, PROP_TOPOLOGY
     };
@@ -258,12 +262,17 @@ private:
         std::atomic<int> percent{-1};   // -1 until the algorithm reports progress
         bool cancelable = false;        // the algorithm polls ProgressLogger::is_canceled()
         bool cancel_requested = false;
+        bool failed = false;            // the algorithm threw; it was logged in the thread
         easy3d::Model *target = nullptr; // the model the command edits
         easy3d::Model *result = nullptr; // new model handed to the viewer on finalize
         std::chrono::steady_clock::time_point start;
     };
 
     static bool is_long_running(ProcessOp op);
+
+    // The command rebuilds the model, so every property (including the selection)
+    // is discarded and the stored selection style no longer applies.
+    static bool discards_model_properties(ProcessOp op);
 
     // The former body of apply_process(): runs the command, returns whether the
     // selection display must be left alone afterwards. May run on a worker thread,
@@ -383,8 +392,11 @@ private:
     // The texture of a scalar field style, from the colormap list in ui/panels.cpp.
     easy3d::Texture *scalar_texture(const ScalarFieldStyle &style) const;
 
-    // Re-applies the colormap and clamping to the drawable's current scalar field.
-    void apply_scalar_style(easy3d::Drawable *drawable, const ScalarFieldStyle &style);
+    // Re-applies a scalar field style to the named property. The property must be
+    // passed explicitly: the drawable's own name is reset when it switches to
+    // uniform coloring, so it cannot be used to return to the previous scalar field.
+    void apply_scalar_style(easy3d::Drawable *drawable, easy3d::State::Location location,
+                            const std::string &property, const ScalarFieldStyle &style);
 
     void draw_models_panel(float x, float y, float w, float h);
 

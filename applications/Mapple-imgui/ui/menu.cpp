@@ -272,6 +272,8 @@ void MappleViewer::draw_menu_process() {
             open_process(ProcessOp::PC_ESTIMATE_NORMALS);
         if (ImGui::MenuItem("Re-orient Normals..."))
             open_process(ProcessOp::PC_REORIENT_NORMALS);
+        if (ImGui::MenuItem("Normalize Normals"))
+            run_process(ProcessOp::PC_NORMALIZE_NORMALS);
         if (ImGui::MenuItem("Simplify..."))
             open_process(ProcessOp::PC_SIMPLIFY);
         ImGui::Separator();
@@ -315,6 +317,31 @@ void MappleViewer::draw_menu_process() {
             open_process(ProcessOp::MESH_FILL_HOLES);
         if (ImGui::MenuItem("Polygonize..."))
             open_process(ProcessOp::MESH_POLYGONIZE);
+        if (ImGui::BeginMenu("Repair")) {
+            if (ImGui::MenuItem("Repair Polygon Soup"))
+                run_process(ProcessOp::MESH_REPAIR_SOUP);
+            if (ImGui::MenuItem("Orient and Stitch Polygon Soup"))
+                run_process(ProcessOp::MESH_ORIENT_STITCH_SOUP);
+            if (ImGui::MenuItem("Stitch with Reorientation"))
+                run_process(ProcessOp::MESH_STITCH_REORIENT);
+            if (ImGui::MenuItem("Stitch without Reorientation"))
+                run_process(ProcessOp::MESH_STITCH);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Orient Outward"))
+                run_process(ProcessOp::MESH_ORIENT_OUTWARD);
+            if (ImGui::MenuItem("Reverse Orientation"))
+                run_process(ProcessOp::MESH_REVERSE_ORIENTATION);
+            if (ImGui::MenuItem("Remove Isolated Vertices"))
+                run_process(ProcessOp::MESH_REMOVE_ISOLATED);
+            if (ImGui::MenuItem("Remove Duplicate and Folding Faces"))
+                run_process(ProcessOp::MESH_REMOVE_DUPLICATE_FACES);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Detect Self-Intersections"))
+                run_process(ProcessOp::MESH_DETECT_SELF_INTERSECTIONS);
+            if (ImGui::MenuItem("Remesh Self-Intersections"))
+                run_process(ProcessOp::MESH_REMESH_SELF_INTERSECTIONS);
+            ImGui::EndMenu();
+        }
         ImGui::Separator();
         if (ImGui::MenuItem("Parameterize..."))
             open_process(ProcessOp::MESH_PARAMETERIZE);

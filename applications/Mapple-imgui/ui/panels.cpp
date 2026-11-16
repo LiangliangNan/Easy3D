@@ -566,10 +566,10 @@ Texture *MappleViewer::scalar_texture(const ScalarFieldStyle &style) const {
     return TextureManager::request(entry.file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
 }
 
-void MappleViewer::apply_scalar_style(Drawable *drawable, const ScalarFieldStyle &style) {
-    // The property name stays; only the colormap and the value clamping change.
-    drawable->set_scalar_coloring(drawable->property_location(), drawable->property_name(),
-                                  scalar_texture(style), style.clamp_lower, style.clamp_upper);
+void MappleViewer::apply_scalar_style(Drawable *drawable, State::Location location,
+                                      const std::string &property, const ScalarFieldStyle &style) {
+    drawable->set_scalar_coloring(location, property, scalar_texture(style),
+                                  style.clamp_lower, style.clamp_upper);
     drawable->set_clamp_range(style.clamp);
     drawable->update();
 }
@@ -595,7 +595,7 @@ void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
                 continue;
             if (scheme.method == State::SCALAR_FIELD) {
                 ScalarFieldStyle &style = scalar_styles_[model][drawable->name()];
-                apply_scalar_style(drawable, style);
+                apply_scalar_style(drawable, scheme.location, scheme.property, style);
             } else {
                 switch (scheme.method) {
                     case State::UNIFORM_COLOR:
@@ -658,7 +658,7 @@ void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
     }
 
     if (changed) {
-        apply_scalar_style(drawable, style);
+        apply_scalar_style(drawable, drawable->property_location(), drawable->property_name(), style);
         update();
     }
 }
