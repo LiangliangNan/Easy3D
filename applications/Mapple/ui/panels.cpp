@@ -517,19 +517,19 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
                 ImGui::SetItemTooltip("Order-independent approximation; layers bound the "
                                       "peeling passes.");
                 int layers = setting::effect_transparency_peels;
-                if (ImGui::SliderInt("Layers", &layers, 0, 16, layers == 0 ? "unbounded" : "%d")) {
+                if (ImGui::SliderInt("Layers", &layers, 0, 16, layers == 0 ? "unbounded" : "%d"))
                     setting::effect_transparency_peels = layers;
-                    if (ImGui::IsItemDeactivatedAfterEdit())
-                        apply_effect_parameters();
-                }
+                // The slider reports no value change on the frame the mouse is released,
+                // so the effect only ever saw edits checked outside the change branch.
+                if (ImGui::IsItemDeactivatedAfterEdit())
+                    apply_effect_parameters();
             } else {
                 ImGui::SetItemTooltip("Exact order-independent result; needs more GPU memory.");
                 int fragments = setting::effect_transparency_fragments;
-                if (ImGui::SliderInt("Fragments/pixel", &fragments, 1, 32)) {
+                if (ImGui::SliderInt("Fragments/pixel", &fragments, 1, 32))
                     setting::effect_transparency_fragments = fragments;
-                    if (ImGui::IsItemDeactivatedAfterEdit())
-                        apply_effect_parameters();
-                }
+                if (ImGui::IsItemDeactivatedAfterEdit())
+                    apply_effect_parameters();
             }
         }
     }

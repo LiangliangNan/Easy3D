@@ -10761,3 +10761,34 @@ blending with no errors in Mapple.log, and a session started with
 `effect_transparency_peels = 0` reported "maximum number of peeling layers: 0"; on OpenGL
 a persisted method 2 logged the fallback warning and constructed dual depth peeling.
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 103 follow-up: the Layers slider reaches the running effect
+
+**Problem.** Changing the number of layers for dual depth peeling did nothing, observed
+with `torusknot.obj`. The setting was stored - switching the method away and back
+constructed the effect with the new value ("maximum number of peeling layers: 16" in
+Mapple.log) - but the peeling object that was already running kept its old bound.
+
+**Cause.** Both transparency sliders checked `IsItemDeactivatedAfterEdit()` inside the
+`if (ImGui::SliderInt(...))` change branch. ImGui's slider clears its active id on the
+release frame without computing a new value (`SliderBehaviorT`:
+`if (!g.IO.MouseDown[0]) { ClearActiveID(); } else { ... set_new_value = true; }`), so the
+change branch does not run on the very frame on which the item reports deactivation. A
+headless replay of a drag/release on a slider (null backend, mouse-active state entered
+directly) pins that frame: `changed=0, deactivated_after_edit=1`.
+
+**Fix.** The deactivation check moved outside the change branch for both "Layers" and
+"Fragments/pixel" in `panels.cpp`. The setting still updates on every change, and the
+effect is pushed once on release, which keeps `set_max_peels()` from logging every drag
+step. The layer count itself was never broken in the device: a Vulkan pixel probe of
+`torusknot.obj` at opacity 0.6 (800x600, one sample) measures 18.07% differing pixels
+between 1 and 4 layers (mean |d| 9.5), 4.93% between 2 and 4 (mean 1.3) and only 0.07%
+between 4 and 16 (mean 0.00) - at 0.6 opacity the fifth and later layers each contribute
+under 2%, so raising the bound above the knot's visible depth complexity is expected to
+look identical.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro).** Mapple-only change: the app was rebuilt
+in `build-vulkan-check`, `build-opengl-check` and `cmake-build-debug`, and smoke launches
+with `torusknot.obj` start cleanly on both backends ("Mapple UI ready", mesh loaded, no
+warnings). The two probes were scratch builds in /tmp, not part of the tree.
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
