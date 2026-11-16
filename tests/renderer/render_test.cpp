@@ -25,15 +25,12 @@ std::shared_ptr<const Geometry> triangle(float z, const vec4& color) {
                                      Topology::triangles, std::vector<uint32_t>{173});
 }
 void analytic_msaa_interior(unsigned w, unsigned h, const FrameImage& single, const FrameImage& aa) {
-    // An analytic impostor silhouette is discarded once per pixel, so multisampling can only
-    // fractionally resolve a pixel the proxy geometry itself does not fully cover - a handful
-    // where the surface touches the proxy edge. What must hold everywhere else: a pixel whose
-    // whole 3x3 neighbourhood is opaque lies inside both surface and proxy, so all its samples
-    // get the same shading and the multisampled image has to equal the single-sample one.
-    // Per-sample shading used to fractionalise the entire silhouette and charged the whole
-    // multisampled pass for it (docs/vulkan.md batch 87); analytic alpha-to-coverage is the
-    // intended way to bring the antialiasing back, and the clip-plane boundary in
-    // tests/viewer/clipping_test.cpp is the tripwire that detects it.
+    // The impostor shader ramps its analytic coverage and alpha-to-coverage turns the
+    // ramp into a sample mask, so a silhouette pixel may now resolve fractionally.
+    // What must hold everywhere else: a pixel whose whole 3x3 neighbourhood is opaque
+    // lies inside both surface and proxy, so its coverage is exactly 1 and the
+    // multisampled image has to equal the single-sample one. The clip-plane boundary in
+    // tests/viewer/clipping_test.cpp checks the other side of the same trade.
     unsigned interior = 0;
     for (unsigned y = 1; y + 1 < h; ++y) for (unsigned x = 1; x + 1 < w; ++x) {
         const size_t i = y * w + x;
@@ -76,10 +73,13 @@ void point_styles(RenderDevice& device) {
             edges += aa.rgba[4*i] > 0 && aa.rgba[4*i] < 255;
         }
         // A plain point square is ordinary rasterized geometry, so MSAA gives its edge
-        // partial coverage. An analytic silhouette is shaded once per pixel and instead
-        // has to keep its interior identical to the single-sample render.
-        if (analytic) analytic_msaa_interior(w, h, single, aa);
-        else require(edges > 0, "plain point has no MSAA coverage");
+        // partial coverage. An analytic silhouette shades once per pixel and derives
+        // the same coverage from its edge field, but its interior must stay identical
+        // to the single-sample render.
+        if (analytic) {
+            require(edges > 0, "analytic silhouette has no MSAA coverage");
+            analytic_msaa_interior(w, h, single, aa);
+        } else require(edges > 0, "plain point has no MSAA coverage");
     };
     d.point_size = 12.5f;
     check_msaa(64,48,device.render(64,48,{d},vec4(0)),false);

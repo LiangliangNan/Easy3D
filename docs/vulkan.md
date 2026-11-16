@@ -10605,3 +10605,68 @@ values, and reloaded: the output contains all 66 keys, and a 0.8 color, the 0.04
 radius, 64 shininess, 1/3, 1e-7 and 123456.789 compare bit-equal after the round trip;
 the text shows `0.8`, `0.045`, `0.33333334`, `1e-07` and `123456.79`. Menu/UI not
 scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 101: analytic MSAA coverage for impostor silhouettes and clip cuts
+
+**Scope.** `resources/shaders/vulkan/points.frag`, `resources/shaders/vulkan/lines.frag`,
+the pipeline builder in `easy3d/renderer/backends/vulkan/render_device.cpp`, and the two
+checks batch 87 left inverted (`tests/viewer/clipping_test.cpp`,
+`tests/renderer/render_test.cpp`). This is the follow-up batch 87 named: per-sample
+shading was removed because it cost 8x on a 479k sphere cloud, and the discarded
+analytic silhouettes and clip cuts were left without MSAA coverage.
+
+**Design.** On the multisampled color pass only, the impostor fragment shaders compute
+analytic coverage and `alphaToCoverageEnable` turns the fragment's first color-output
+alpha into a sample mask - one shading pass per pixel, no per-sample invocation. A
+`layout(constant_id=0) const bool single_sample = true` specialization constant selects
+the mode per pipeline: `VK_TRUE` on the single-sample color and picking pipelines keeps
+the exact center-sample `discard` rule, so object IDs and depth never depend on
+screen-space derivatives; `VK_FALSE` on the two multisampled impostor pipelines (line
+impostors and sphere/surfel impostors - keys, wide lines and plain points do not need
+it) enables `clamp(0.5 + d/fwidth(d), 0, 1)` ramps on every boundary: the sphere and
+surfel discriminants, the surfel disc radius, the line barrel quadric, the two cap
+rims, and each clip plane. A coverage above 0.5 means the pixel-center sample is inside,
+so the 1-sample rule and the 4-sample mask agree at pixel centers. The multisample state
+is reset at the top of every pipeline iteration (and after the loop) because `ms` and
+`stages[]` outlive the loop; a branch that did not reset them would silently leak
+alpha-to-coverage into the triangles and lines built afterwards.
+
+Two shader details follow from derivatives being undefined in non-uniform control flow.
+The line shader hoists the barrel discriminant (still the cancellation-free
+`positive - negative` cross-product form) and the cap-rim fields out of the per-fragment
+cap tests into uniform control flow. The cap rims are conics in the pixel's ray
+direction - the plane-space field `R^2 - |p-c|^2` runs to infinity for a nearly edge-on
+cap, so its screen derivative is unbounded and the ramp aliases far from the rim -
+while the ray-space field keeps the same zero set, stays quadratic, and is negative
+inside the projected rim. A cap pixel that also lies on the barrel is covered by both
+surfaces, so the cap ramp is unioned with the barrel's (`side_visible`) instead of
+cutting a seam across a barrel the cap plane merely grazes.
+
+A fragment whose center just misses an outline is shaded at the tangent point so the
+mask has a surface to sample; the barrel's closest approach is `-b/a` because the
+quadric is `a t^2 + 2 b t + c`. The first implementation wrote `-b/(2a)`, which halves
+the parameter and lands inside the finite axial range: rays that graze the infinite
+barrel behind the base plane were accepted and shaded, and the 4x width-100 perspective
+cylinder painted about 32 px beyond each end as lens-shaped arcs. With the correction
+the tangency is outside the axial range and the fragment discards. The cap candidates
+also now require `t >= 0` (a cap plane behind the eye can no longer win a depth
+comparison against nothing), which is a 1-sample fix as well.
+
+**Validation (2026-11-16, macOS, Apple M4 Pro, MoltenVK, Release, serial).** Both check
+trees were fully rebuilt and the suites run serially: Vulkan 150/150 in 144 s, OpenGL
+116/116. The three touched Vulkan tests were also run from a scratch directory:
+`easy3d_vulkan_clipping_test` now requires `partial > 0` across the analytic cut and
+passes, `easy3d_vulkan_test` requires `edges > 0` for the analytic point silhouette and
+still holds its 3x3-interior invariance, and `easy3d_portable_pick_test` reports
+identical 1x/4x bounds for all four width-100 snapshots (sphere ortho 100x100, cylinder
+ortho 136x100, sphere perspective 103x103, cylinder perspective 163x103), with the lens
+arcs gone and the row spans matching within one antialiased pixel. Cost, measured with a
+temporary sphere-impostor copy of `easy3d_point_benchmark_test` (fountain, 479k points,
+point size 15, 1600x917, 4 samples; removed afterwards): 22.4-23.0 fps with
+alpha-to-coverage off against 13.4-15.0 fps with it on (about 43.6 -> 66.5 ms/frame at
+the least-contended pairs, roughly 1.5x), where per-sample shading measured 1.6 against
+13.0 fps in batch 87. The host carried unrelated CPU load during some runs (outliers
+down to 5.6 fps with A2C and 12.4 fps without), so only the best-behaved pairs are
+quoted. The plain-point,
+wide-line and ID-pass paths are untouched. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.

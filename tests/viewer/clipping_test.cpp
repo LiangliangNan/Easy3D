@@ -157,11 +157,10 @@ void analytic_clipping(RenderDevice& device) {
                 for (unsigned y=20;y<45;++y) for (unsigned x=32;x<36;++x) {
                     const auto alpha=edge.rgba[(y*65+x)*4+3]; partial+=alpha>0 && alpha<255;
                 }
-                // The analytic cut is evaluated once per pixel, so its boundary is a hard edge and
-                // no sample in it is partially covered. Per-sample shading used to antialias it and
-                // charged the whole multisampled pass for it (docs/vulkan.md batch 87); analytic
-                // alpha-to-coverage is the intended replacement, and this check inverts with it.
-                require(partial==0,"analytic clipping boundary is not per-pixel aliased anymore");
+                // The impostor shader ramps its coverage down across the analytic cut and
+                // alpha-to-coverage turns that ramp into a sample mask, so the resolved
+                // boundary is no longer a hard per-pixel edge.
+                require(partial>0,"analytic clipping boundary has no MSAA coverage");
             }
         }
     }

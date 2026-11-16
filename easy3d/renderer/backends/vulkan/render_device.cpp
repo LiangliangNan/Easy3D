@@ -1809,7 +1809,20 @@ namespace easy3d {
                         VkSpecializationMapEntry point_entry = {0, 0, sizeof(native_point)};
                         VkSpecializationInfo point_specialization = {1, &point_entry, sizeof(native_point),
                                                                      &native_point};
+                        // Fragment specialization constant 0 of the impostor shaders. True keeps
+                        // the exact center-sample silhouette rule used by the single-sample
+                        // color and picking passes; false switches to analytic coverage ramps
+                        // that alpha-to-coverage converts into a sample mask.
+                        VkBool32 single_sample = VK_TRUE;
+                        VkSpecializationMapEntry coverage_entry = {0, 0, sizeof(single_sample)};
+                        VkSpecializationInfo coverage_specialization = {1, &coverage_entry,
+                                                                        sizeof(single_sample), &single_sample};
                         for (unsigned i = 0; i < 7; ++i) {
+                            // Both outlive this iteration, so a branch that overrides them must
+                            // not leak its state into the pipelines built afterwards.
+                            stages[1].pSpecializationInfo = nullptr;
+                            ms.alphaToCoverageEnable = VK_FALSE;
+                            ms.alphaToOneEnable = VK_FALSE;
                             if (i == 2) {
                                 stages[0].module = modules[2];
                                 stages[1].module = modules[18];
@@ -1844,15 +1857,17 @@ namespace easy3d {
                                 vertex.vertexAttributeDescriptionCount = 8;
                                 vertex.pVertexAttributeDescriptions = line_attrs;
                                 // Line impostors discard their analytic silhouette and the analytic
-                                // clip planes, so per-sample shading is the only way to give a
-                                // multisampled cut boundary any coverage. It stays off because the
-                                // cost is not local to this pipeline: with it enabled here and no
-                                // impostor in the scene, a plain-point draw still measured 12.6 fps
-                                // instead of 96.7 (batch 87). Coverage should come from analytic
-                                // alpha-to-coverage instead, which costs one shading pass. Stated
-                                // explicitly rather than inherited: ms outlives every iteration of
-                                // this loop, so a pipeline that does not set it silently takes the
-                                // rasterization state of the pipeline built before it.
+                                // clip planes. Per-sample shading stays off because the cost is not
+                                // local to this pipeline: with it enabled here and no impostor in
+                                // the scene, a plain-point draw still measured 12.6 fps instead of
+                                // 96.7 (batch 87). On the multisampled color pass the shader emits
+                                // analytic coverage instead, and alpha-to-coverage turns that alpha
+                                // into a sample mask at one shading pass per pixel.
+                                if (pass.kind == PassKind::multisample_color) {
+                                    single_sample = VK_FALSE;
+                                    stages[1].pSpecializationInfo = &coverage_specialization;
+                                    ms.alphaToCoverageEnable = VK_TRUE;
+                                }
                                 ms.sampleShadingEnable = VK_FALSE;
                                 ms.minSampleShading = 0;
                             }
@@ -1883,9 +1898,15 @@ namespace easy3d {
                                 // OpenGL backend does: per-sample shading here measured 1.6 fps
                                 // versus 13.0 fps for a 479k sphere cloud at point size 15 and 4
                                 // samples, and it also slowed draws that do not even bind this
-                                // pipeline (batch 87). The cost of the choice is that a discarded
-                                // analytic silhouette gets no MSAA coverage, which alpha-to-coverage
-                                // should recover at one shading pass per pixel.
+                                // pipeline (batch 87). On the multisampled color pass the shader
+                                // emits analytic coverage for its silhouette and clip cuts, and
+                                // alpha-to-coverage recovers the MSAA edge quality from it without
+                                // shading per sample.
+                                if (pass.kind == PassKind::multisample_color) {
+                                    single_sample = VK_FALSE;
+                                    stages[1].pSpecializationInfo = &coverage_specialization;
+                                    ms.alphaToCoverageEnable = VK_TRUE;
+                                }
                                 ms.sampleShadingEnable = VK_FALSE;
                                 ms.minSampleShading = 0;
                             }
@@ -1894,6 +1915,10 @@ namespace easy3d {
                                                                &pass.pipelines[i]),
                                   "create pipeline");
                         }
+                        // The last impostor pipeline may have enabled alpha-to-coverage; the
+                        // pipelines below share this multisample state and these stages.
+                        ms.alphaToCoverageEnable = VK_FALSE;
+                        stages[1].pSpecializationInfo = nullptr;
                         if (pass.kind != PassKind::ids && c_.independent_blend) {
                             // Scene triangles with straight-alpha blending. Only the color
                             // attachment blends; the integer ID attachment keeps replacing
