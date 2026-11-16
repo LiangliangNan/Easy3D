@@ -10267,3 +10267,38 @@ backtrace through `logging::Dispatcher::handle`) and the same path now exits 0 w
 terminated. Bye!" still present in `Mapple-imgui.log`; the Vulkan tree exits 0 as well. Mapple was
 launched in all three trees after the final rebuilds ("Mapple UI ready" in each log), and
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 90: rendering settings stream API and effect state in easy3d::setting
+
+**Scope.** `easy3d::setting::save()` and `setting::load()` now take a caller-owned
+`std::ostream&`/`std::istream&` instead of a file name: `save` returns `output.good()` and
+`load` throws on invalid JSON, so a library caller decides where the JSON lives. The header
+documentation was rewritten for the stream contract (the old text still described writing a
+file), and the Python bindings kept their file-name conveniences by opening the file in the
+lambda. Mapple's `AppSettings` no longer keeps its own copy of the effect switches and
+parameters: `effect_ao_enabled` and `effect_shadow_pattern` were added to `easy3d::setting`
+next to the existing `effect_*` globals, all four switches and the pattern are serialized in
+the "effect" group, and Mapple now persists the whole rendering state through
+`setting::save`/`setting::load` into `rendering.json` in the app config directory, leaving
+`settings.ini` with UI state only. The Rendering panel, the effect setters and the startup
+restore read and write those globals.
+
+**Also fixed:** `MappleViewer::draw()` treated "transparency enabled but no visible triangle
+surfaces" as "fall through to the next effect"; with neither AO nor shadow alive the chain
+reached `edl_->begin()` with a null `edl_`. The first frame of a restored transparency
+session with no model loaded therefore crashed inside `EyeDomeLighting::begin()` (crash
+report from the CLion run, EXC_BAD_ACCESS at 0xcc, stack `MappleViewer::draw()` →
+`EyeDomeLighting::begin()`). The transparency branch now draws the plain scene itself, and
+the EDL branch is guarded by `edl_`.
+
+**Validation (2026-11-16, macOS, serial).** Every target was rebuilt in `build-opengl-check`,
+`build-vulkan-check` and `cmake-build-release`. OpenGL `build-opengl-check` 116/116 and
+Vulkan `build-vulkan-check` 150/150, both green with no flakes. A scratch probe linked
+against the release library round-tripped `setting::save`/`load` and confirmed
+`effect_ao_enabled`, `effect_shadow_pattern` and `effect_ao_intensity` survive. Mapple
+restored a seeded `rendering.json` at launch (log: "rendering settings loaded from ...",
+"ambient occlusion enabled"), and a graceful Alt+F4 exit wrote it back ("rendering settings
+saved to ..."), with `settings.ini` holding only UI state. The transparency-without-surfaces
+case was run on both backends with the fixed build: the window stays up and Alt+F4 exits
+cleanly. `easy3d/util/version.h` is unchanged. UI clicks were not scripted. Linux/Windows/CI
+remain separate gates.

@@ -50,11 +50,15 @@
 
 class ImGuiLayer;
 namespace easy3d {
+    class AmbientOcclusion;
     class Drawable;
+    class EyeDomeLighting;
     class Model;
     class PointCloudPicker;
+    class SoftShadow;
     class SurfaceMeshPicker;
     class Texture;
+    class Transparency;
     class VideoEncoder;
     namespace graphics { struct DrawCommand; }
 }
@@ -104,6 +108,11 @@ protected:
     void init() override;
 
     void pre_draw() override;
+
+    // Wraps the scene render in the enabled effect (ambient occlusion, eye dome
+    // lighting, soft shadow, or transparency); snapshots and recordings go through
+    // this too, so they capture the effect.
+    void draw() const override;
 
     void post_resize(int w, int h) override;
 
@@ -250,6 +259,30 @@ private:
     float pixel_ratio() const;
 
     void draw_gui();
+
+    // ---- rendering effects (ui/panels.cpp) ----
+
+    // The effects are full-frame passes that own the scene render, so only one runs
+    // at a time: enabling one turns the others off (the Qt app's Global Setting panel
+    // enforced the same rules between shadow, transparency, AO and EDL).
+    void set_ao_enabled(bool enabled);
+
+    void set_edl_enabled(bool enabled);
+
+    void set_shadow_enabled(bool enabled);
+
+    void set_transparency_enabled(bool enabled);
+
+    bool ao_enabled() const { return ao_ != nullptr; }
+
+    bool edl_enabled() const { return edl_ != nullptr; }
+
+    bool shadow_enabled() const { return shadow_ != nullptr; }
+
+    bool transparency_enabled() const { return transparency_ != nullptr; }
+
+    // Pushes the effect parameters in settings_ into the live effects and redraws.
+    void apply_effect_parameters();
 
     // ui/menu.cpp
     void draw_menu_bar();
@@ -630,6 +663,13 @@ private:
     ProcessOp process_op_ = ProcessOp::NONE;
     ProcessParams process_params_;
     std::unique_ptr<ProcessJob> process_job_;
+
+    // Created in init() (they allocate GPU resources), dropped in the destructor
+    // before the graphics device dies with the viewer.
+    std::unique_ptr<easy3d::AmbientOcclusion> ao_;
+    std::unique_ptr<easy3d::EyeDomeLighting> edl_;
+    std::unique_ptr<easy3d::SoftShadow> shadow_;
+    std::unique_ptr<easy3d::Transparency> transparency_;
 
     // The recording that owns the screen and blocks scene input until it finishes
     // or is cancelled.

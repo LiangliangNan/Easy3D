@@ -37,7 +37,9 @@
  *      recording defaults, and the file history (last directory, recent files).
  * \details load() runs at start-up and save() at exit. The file is a plain
  *      key=value text file under the per-user configuration directory, so a
- *      failed write never affects the session.
+ *      failed write never affects the session. Rendering parameters are not
+ *      stored here: they live in easy3d::setting and are read and written as
+ *      JSON through setting::load()/save() (see AppSettings::rendering_file_path()).
  */
 struct AppSettings {
     bool show_rendering_panel = true;
@@ -62,8 +64,12 @@ struct AppSettings {
     /// Per-user settings file, e.g. ~/Library/Application Support/Mapple-imgui/settings.ini.
     static std::string file_path();
 
-    /// Reads the settings file. Returns false (keeping the defaults) when it does not
-    /// exist; missing keys keep their default and malformed entries are skipped.
+    /// Per-user rendering settings file (easy3d::setting JSON), next to file_path().
+    static std::string rendering_file_path();
+
+    /// Reads the settings file and the rendering settings. Returns false (keeping the
+    /// defaults) when the settings file does not exist; missing keys keep their default
+    /// and malformed entries are skipped.
     bool load();
 
     /// Writes the settings file, creating its directory. Returns false on failure.

@@ -5,11 +5,12 @@ Dear ImGui application rendered through Easy3D's backend-neutral overlay path
 (`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
 daily-use workflow.
 
-Status: 2026-11-15 — Phases 0–3 complete: the app builds and runs on both OpenGL and
+Status: 2026-11-16 — Phases 0–3 complete: the app builds and runs on both OpenGL and
 Vulkan and covers panels, menus, log capture, drawable styling, picking readout,
 point/face selection, the clipping plane, processing commands, snapshots, the camera
-path with video recording, and settings/layout persistence. Phase 4 (retire Qt) is
-pending.
+path with video recording, settings/layout persistence, and the rendering effects
+(ambient occlusion, eye-dome lighting, soft shadow, transparency). Phase 4 (retire
+Qt): all inspected gaps are migrated; the remaining work is retiring Qt.
 
 ## Decision
 
@@ -313,7 +314,9 @@ the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
 Cloud > Normalize Normals), property manipulation (Property > Manipulate
 Properties...), and the small utilities (Edit menu with model manipulation,
 tetrahedralization, creating a mesh from text, polyhedral boundary extraction, and
-ambient occlusion) are migrated; the remaining work is view polish and retiring Qt.
+ambient occlusion) are migrated, as are the rendering effects (ambient occlusion,
+eye-dome lighting, soft shadow, depth-peeling transparency); the remaining work is
+retiring Qt.
 
 ## ImGui notes
 
@@ -692,7 +695,9 @@ ambient occlusion) are migrated; the remaining work is view polish and retiring 
   `%APPDATA%\Mapple-imgui\settings.ini` on Windows, `$XDG_CONFIG_HOME/Mapple-imgui/`
   or `~/.config` on Linux), written when the app exits and read at start-up.
   Malformed entries are skipped, missing keys keep their defaults, and recent files
-  that no longer exist are dropped at load.
+  that no longer exist are dropped at load. Rendering parameters are not stored in
+  this INI: since 2026-11-16 they live in `easy3d::setting` and are written to
+  `rendering.json` in the same directory through `setting::save`/`setting::load`.
 - File handling now belongs to the app: `MappleViewer` overrides `open()`/`save()`
   (both virtual in `ViewerBase`) so the dialogs start in the last-used directory and
   use Mapple's own filter list, which carries the aggregate "Supported formats" line
@@ -988,3 +993,42 @@ ambient occlusion) are migrated; the remaining work is view polish and retiring 
   before its first frame, which aborts during teardown; with the window kept open the
   run exits cleanly, so this is an artifact of that harness, not of the commands.
   Leaving changes uncommitted per the standing rule.
+
+### 2026-11-16 — Rendering effects (view polish)
+
+- The Rendering panel has an Effects section (collapsed by default) with the four
+  full-frame effects the Qt app's Global Setting panel exposed: ambient occlusion
+  (radius ratio 0.01–0.1, intensity 0–1, bias 0.001–0.05), eye-dome lighting, soft
+  shadow (Poisson 25x25 / 32x64 / 64x128 / 100x100 and regular 49x225 patterns, light
+  distance 3–50, softness 0–1, darkness 0–1), and depth-peeling transparency.
+- The effects are mutually exclusive, as in Qt: enabling one turns the others off.
+  `MappleViewer::draw()` selects the active effect and wraps the scene render in its
+  `begin()/end()` pair (OpenGL composites in `end()`, Vulkan publishes frame params
+  that the next `Viewer::draw()` consumes). Soft shadow refreshes its virtual
+  background color from the viewer background each frame; transparency draws the
+  surfaces itself only when there are visible triangle surfaces, and otherwise
+  draws the plain scene (without falling through to the other effects' objects,
+  which are null - that fall-through crashed the first frame of a restored
+  transparency session with no model loaded).
+- The effect switches and parameters are not app state: they are the `effect_*`
+  variables of `easy3d::setting`, edited in the panel and pushed into the live effect
+  when it is enabled or a control changes. They are persisted with the library's own
+  JSON writer/reader (`setting::save(std::ostream&)` / `setting::load(std::istream&)`)
+  to `rendering.json` next to `settings.ini`, so every rendering setting the library
+  knows round-trips without the app keeping a copy; the restored switch re-creates
+  the effect on the next launch. The app's INI file keeps only UI state.
+- Validation (2026-11-16, macOS): a temporary probe (removed afterwards) loaded the
+  bunny, applied non-default AO and shadow parameters, cycled AO → EDL → shadow →
+  transparency → off, and passed 17/17 checks on both `build-opengl-check` and
+  `build-vulkan-check`: each toggle leaves only the requested effect on, the AO and
+  shadow parameters reach the live effects, and every effect frame differs from the
+  plain frame. The shadow frame shows the soft ground shadow on both backends; the
+  OpenGL penumbra on the white background is low-contrast, so its pixel delta is
+  small. The Mapple-imgui target compiles and links in all three trees and launches
+  with "Mapple UI ready"; UI clicks were not scripted. Persistence was checked from
+  the CLI: a probe round-tripped `setting::save(std::ostream&)`/`load(std::istream&)`
+  through a JSON file, a seeded `rendering.json` was restored at launch (the log
+  shows "rendering settings loaded from ..." and "ambient occlusion enabled"), and a
+  graceful Alt+F4 exit wrote it back ("rendering settings saved to ..."), so the
+  effect state survives a restart. With transparency restored and no model loaded,
+  the fixed builds of both backends stay up and exit cleanly.

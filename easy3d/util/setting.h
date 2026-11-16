@@ -27,6 +27,9 @@
 #ifndef EASY3D_UTIL_SETTING_H
 #define EASY3D_UTIL_SETTING_H
 
+
+#include <iostream>
+
 #include <easy3d/core/types.h>
 #include <easy3d/util/export.h>
 
@@ -50,20 +53,23 @@ namespace easy3d {
         void initialize(const std::string &setting_file = "default");
 
         /**
-         * \brief Save the rendering settings as JSON.
-         * \param filename Destination file path.
-         * \return True if the file could be opened for writing; false if opening it failed.
+         * \brief Save the rendering settings as JSON to a stream.
+         * \details The caller owns the stream (e.g., an \c std::ofstream it opened), so the settings can go to a
+         *          file, a string stream, or any other output stream.
+         * \param output Destination stream receiving the JSON text.
+         * \return True if the JSON was written without a stream error; false otherwise.
          */
-        bool save(const std::string &filename);
+        bool save(std::ostream &output);
 
         /**
-         * \brief Load rendering settings from a JSON file.
-         * \param filename Source file path.
-         * \return True if the file could be opened and parsed; false if opening it failed. Missing setting keys
-         *         leave the corresponding current values unchanged.
+         * \brief Load rendering settings from a JSON stream.
+         * \details The caller owns the stream (e.g., an \c std::ifstream it opened). Missing setting keys
+         *          leave the corresponding current values unchanged.
+         * \param input Source stream containing a JSON object.
+         * \return True if the settings were read; invalid or incompatible JSON throws an exception.
          * \note Invalid JSON or incompatible value types may throw an exception.
          */
-        bool load(const std::string &filename);
+        bool load(std::istream &input);
 
         /// \brief Background color of the viewer.
         /// \details This variable defines the background color used in the viewer. It is represented as a 4D vector (RGBA).
@@ -100,16 +106,6 @@ namespace easy3d {
         ///      which suppresses self-occlusion of nearly coplanar samples.
         extern EASY3D_UTIL_EXPORT float effect_ao_bias;
 
-        /// \brief Whether EDL (Eye-Dome Lighting) effect is enabled.
-        /// \details This variable enables or disables the EDL effect, which enhances depth perception by adding shading to the scene.
-        extern EASY3D_UTIL_EXPORT bool effect_edl_enabled;
-        /// \brief Whether transparency effect is enabled.
-        /// \details This variable enables or disables the transparency effect, which allows objects to be rendered with transparency.
-        extern EASY3D_UTIL_EXPORT bool effect_transparency_enabled;
-        /// \brief Whether shadow effect is enabled.
-        /// \details This variable enables or disables the shadow effect, which adds shadows to the scene based on the light source.
-        extern EASY3D_UTIL_EXPORT bool effect_shadow_enabled;
-
         /// \brief Distance of the light source to the scene (w.r.t. the scene radius).
         /// \details This variable controls the distance of the light to the scene, which affects the size and softness of shadows.
         extern EASY3D_UTIL_EXPORT float effect_shadow_light_distance;
@@ -119,6 +115,23 @@ namespace easy3d {
         /// \brief Darkness of the shadow effect.
         /// \details This variable controls the darkness of the shadow effect, which determines how dark the shadows appear.
         extern EASY3D_UTIL_EXPORT float effect_shadow_darkness;
+        /// \brief Sampling pattern of the soft shadow effect.
+        /// \details A \c SoftShadow::SamplePattern value: 0 (Poisson 25x25), 1 (Poisson 32x64),
+        ///      2 (Poisson 64x128, the default), 3 (Poisson 100x100), or 4 (regular 49x225).
+        extern EASY3D_UTIL_EXPORT int effect_shadow_pattern;
+
+        /// \brief Whether ambient occlusion effect is enabled.
+        /// \details This variable enables or disables the AO effect, which darkens creases and cavities.
+        extern EASY3D_UTIL_EXPORT bool effect_ao_enabled;
+        /// \brief Whether EDL (Eye-Dome Lighting) effect is enabled.
+        /// \details This variable enables or disables the EDL effect, which enhances depth perception by adding shading to the scene.
+        extern EASY3D_UTIL_EXPORT bool effect_edl_enabled;
+        /// \brief Whether transparency effect is enabled.
+        /// \details This variable enables or disables the transparency effect, which allows objects to be rendered with transparency.
+        extern EASY3D_UTIL_EXPORT bool effect_transparency_enabled;
+        /// \brief Whether shadow effect is enabled.
+        /// \details This variable enables or disables the shadow effect, which adds shadows to the scene based on the light source.
+        extern EASY3D_UTIL_EXPORT bool effect_shadow_enabled;
 
         // Points drawable settings
         /// \brief Whether two-side lighting is enabled for points drawable.

@@ -39,16 +39,20 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
@@ -186,6 +190,13 @@ MappleViewer::~MappleViewer() {
     }
     // Release selection colormaps before the graphics device dies with the viewer.
     selection_styles_.clear();
+    // The effects own framebuffers and shader programs, so they must go while the
+    // graphics device is still alive. Destroying the shadow/AO/EDL objects also
+    // unregisters them from the per-camera effect registries.
+    transparency_.reset();
+    shadow_.reset();
+    edl_.reset();
+    ao_.reset();
     // Destroy the ImGui context and its font texture while the viewer (and its graphics
     // device) is still alive.
     imgui_.reset();
@@ -253,6 +264,17 @@ void MappleViewer::init() {
         throw std::runtime_error("failed to initialize Dear ImGui");
     imgui_->set_display_size(width(), height());
 
+    // Recreate the effect that was enabled in the previous session. The effect objects
+    // are cheap until used, but they must exist before the first frame draws.
+    if (setting::effect_ao_enabled)
+        set_ao_enabled(true);
+    else if (setting::effect_edl_enabled)
+        set_edl_enabled(true);
+    else if (setting::effect_shadow_enabled)
+        set_shadow_enabled(true);
+    else if (setting::effect_transparency_enabled)
+        set_transparency_enabled(true);
+
 #ifdef EASY3D_HAS_VULKAN
     LOG(INFO) << "Mapple UI ready (Vulkan)";
 #else
@@ -286,6 +308,135 @@ void MappleViewer::post_resize(int w, int h) {
     Viewer::post_resize(w, h);
     if (imgui_)
         imgui_->set_display_size(w, h);
+}
+
+void MappleViewer::draw() const {
+    // The effects wrap the same scene render the viewer would perform; the clipping
+    // plane guide and the model drawables are all part of Viewer::draw(). The Qt app
+    // had the same arrangement with the effect classes' own begin()/end().
+    if (!ao_ && !edl_ && !shadow_ && !transparency_) {
+        Viewer::draw();
+        return;
+    }
+
+    std::vector<TrianglesDrawable *> surfaces;
+    for (const auto &model : models()) {
+        Renderer *renderer = model->renderer();
+        if (!renderer || !renderer->is_visible())
+            continue;
+        for (const auto &drawable : renderer->triangles_drawables())
+            if (drawable->is_visible())
+                surfaces.push_back(drawable.get());
+    }
+
+    if (shadow_) {
+        // The virtual ground follows the viewer's background color, as in Qt.
+        shadow_->set_virtual_background_color(background_color());
+        shadow_->begin(surfaces);
+        Viewer::draw();
+        shadow_->end();
+    } else if (transparency_) {
+        // The transparency pass renders the surfaces itself; with no visible
+        // triangles there is nothing to composite, so fall back to the scene.
+        if (!surfaces.empty())
+            transparency_->draw(surfaces);
+        else
+            Viewer::draw();
+    } else if (ao_) {
+        ao_->begin(models());
+        Viewer::draw();
+        ao_->end();
+    } else if (edl_) {
+        edl_->begin();
+        Viewer::draw();
+        edl_->end();
+    }
+}
+
+void MappleViewer::set_ao_enabled(bool enabled) {
+    const bool was = ao_ != nullptr;
+    if (enabled) {
+        set_edl_enabled(false);
+        set_shadow_enabled(false);
+        set_transparency_enabled(false);
+    }
+    if (enabled && !ao_) {
+        ao_.reset(new AmbientOcclusion(camera()));
+        apply_effect_parameters();
+    } else if (!enabled)
+        ao_.reset();
+    setting::effect_ao_enabled = enabled;
+    if (was != enabled)
+        LOG(INFO) << "ambient occlusion " << (enabled ? "enabled" : "disabled");
+    update();
+}
+
+void MappleViewer::set_edl_enabled(bool enabled) {
+    const bool was = edl_ != nullptr;
+    if (enabled) {
+        set_ao_enabled(false);
+        set_shadow_enabled(false);
+        set_transparency_enabled(false);
+    }
+    if (enabled && !edl_)
+        edl_.reset(new EyeDomeLighting(camera()));
+    else if (!enabled)
+        edl_.reset();
+    setting::effect_edl_enabled = enabled;
+    if (was != enabled)
+        LOG(INFO) << "eye dome lighting " << (enabled ? "enabled" : "disabled");
+    update();
+}
+
+void MappleViewer::set_shadow_enabled(bool enabled) {
+    const bool was = shadow_ != nullptr;
+    if (enabled) {
+        set_ao_enabled(false);
+        set_edl_enabled(false);
+        set_transparency_enabled(false);
+    }
+    if (enabled && !shadow_) {
+        shadow_.reset(new SoftShadow(camera()));
+        apply_effect_parameters();
+    } else if (!enabled)
+        shadow_.reset();
+    setting::effect_shadow_enabled = enabled;
+    if (was != enabled)
+        LOG(INFO) << "soft shadow " << (enabled ? "enabled" : "disabled");
+    update();
+}
+
+void MappleViewer::set_transparency_enabled(bool enabled) {
+    const bool was = transparency_ != nullptr;
+    if (enabled) {
+        set_ao_enabled(false);
+        set_edl_enabled(false);
+        set_shadow_enabled(false);
+    }
+    if (enabled && !transparency_)
+        transparency_.reset(new DualDepthPeeling(camera()));
+    else if (!enabled)
+        transparency_.reset();
+    setting::effect_transparency_enabled = enabled;
+    if (was != enabled)
+        LOG(INFO) << "transparency " << (enabled ? "enabled" : "disabled");
+    update();
+}
+
+void MappleViewer::apply_effect_parameters() {
+    if (ao_) {
+        ao_->set_radius_ratio(setting::effect_ao_radius_ratio);
+        ao_->set_intensity(setting::effect_ao_intensity);
+        ao_->set_bias(setting::effect_ao_bias);
+    }
+    if (shadow_) {
+        shadow_->set_sample_pattern(
+                static_cast<SoftShadow::SamplePattern>(setting::effect_shadow_pattern));
+        shadow_->set_light_distance(setting::effect_shadow_light_distance);
+        shadow_->set_softness(setting::effect_shadow_softness);
+        shadow_->set_darkness(setting::effect_shadow_darkness);
+    }
+    update();
 }
 
 bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {

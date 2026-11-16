@@ -50,6 +50,7 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
+#include <easy3d/util/setting.h>
 #include <easy3d/util/version.h>
 
 #include <3rd_party/imgui/imgui.h>
@@ -395,6 +396,72 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     if (ImGui::RadioButton("Orthographic", !perspective)) {
         camera()->set_type(Camera::ORTHOGRAPHIC);
         update();
+    }
+
+    ImGui::Spacing();
+    // Qt's Global Setting panel exposed these four effects; each is a full-frame
+    // pass that owns the scene render, so at most one runs at a time.
+    if (ImGui::CollapsingHeader("Effects")) {
+        bool ao = ao_enabled();
+        if (ImGui::Checkbox("Ambient Occlusion", &ao))
+            set_ao_enabled(ao);
+        ImGui::BeginDisabled(!ao);
+        float ao_radius = setting::effect_ao_radius_ratio;
+        if (ImGui::SliderFloat("Radius ratio", &ao_radius, 0.01f, 0.1f, "%.3f")) {
+            setting::effect_ao_radius_ratio = ao_radius;
+            apply_effect_parameters();
+        }
+        float ao_intensity = setting::effect_ao_intensity;
+        if (ImGui::SliderFloat("Intensity##ao", &ao_intensity, 0.0f, 1.0f, "%.2f")) {
+            setting::effect_ao_intensity = ao_intensity;
+            apply_effect_parameters();
+        }
+        float ao_bias = setting::effect_ao_bias;
+        if (ImGui::SliderFloat("Bias##ao", &ao_bias, 0.001f, 0.05f, "%.4f")) {
+            setting::effect_ao_bias = ao_bias;
+            apply_effect_parameters();
+        }
+        ImGui::EndDisabled();
+
+        bool edl = edl_enabled();
+        if (ImGui::Checkbox("Eye Dome Lighting", &edl))
+            set_edl_enabled(edl);
+
+        bool shadow = shadow_enabled();
+        if (ImGui::Checkbox("Shadow", &shadow))
+            set_shadow_enabled(shadow);
+        ImGui::BeginDisabled(!shadow);
+        static const char *patterns[] = {"Poisson 25 x 25", "Poisson 32 x 64", "Poisson 64 x 128",
+                                         "Poisson 100 x 100", "Regular 49 x 225"};
+        int pattern = setting::effect_shadow_pattern;
+        if (ImGui::Combo("Light pattern", &pattern, patterns, 5)) {
+            setting::effect_shadow_pattern = pattern;
+            apply_effect_parameters();
+        }
+        float light_distance = setting::effect_shadow_light_distance;
+        if (ImGui::SliderFloat("Light distance", &light_distance, 3.0f, 50.0f, "%.0f")) {
+            setting::effect_shadow_light_distance = light_distance;
+            apply_effect_parameters();
+        }
+        float softness = setting::effect_shadow_softness;
+        if (ImGui::SliderFloat("Softness", &softness, 0.0f, 1.0f, "%.2f")) {
+            setting::effect_shadow_softness = softness;
+            apply_effect_parameters();
+        }
+        float darkness = setting::effect_shadow_darkness;
+        if (ImGui::SliderFloat("Darkness", &darkness, 0.0f, 1.0f, "%.2f")) {
+            setting::effect_shadow_darkness = darkness;
+            apply_effect_parameters();
+        }
+        ImGui::EndDisabled();
+
+        bool transparency = transparency_enabled();
+        if (ImGui::Checkbox("Transparency", &transparency))
+            set_transparency_enabled(transparency);
+        if (transparency)
+            ImGui::TextDisabled("Dual depth peeling; the face opacity is set below.");
+
+        ImGui::TextDisabled("Enabling an effect turns the others off.");
     }
 
     ImGui::Spacing();

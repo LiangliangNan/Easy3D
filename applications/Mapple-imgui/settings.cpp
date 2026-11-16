@@ -28,11 +28,13 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <sstream>
 
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
 
 using namespace easy3d;
 
@@ -60,22 +62,44 @@ namespace {
         return true;
     }
 
+    std::string config_directory() {
+#if defined(_WIN32)
+        const std::string root = file_system::home_directory(); // %APPDATA%
+#elif defined(__APPLE__)
+        const std::string root = file_system::home_directory() + "/Library/Application Support";
+#else
+        const char *xdg = std::getenv("XDG_CONFIG_HOME");
+        const std::string root = (xdg && *xdg) ? std::string(xdg)
+                                               : file_system::home_directory() + "/.config";
+#endif
+        return root + "/Mapple-imgui";
+    }
+
 } // namespace
 
 std::string AppSettings::file_path() {
-#if defined(_WIN32)
-    const std::string root = file_system::home_directory(); // %APPDATA%
-#elif defined(__APPLE__)
-    const std::string root = file_system::home_directory() + "/Library/Application Support";
-#else
-    const char *xdg = std::getenv("XDG_CONFIG_HOME");
-    const std::string root = (xdg && *xdg) ? std::string(xdg)
-                                           : file_system::home_directory() + "/.config";
-#endif
-    return root + "/Mapple-imgui/settings.ini";
+    return config_directory() + "/settings.ini";
+}
+
+std::string AppSettings::rendering_file_path() {
+    return config_directory() + "/rendering.json";
 }
 
 bool AppSettings::load() {
+    // Rendering parameters live in easy3d::setting and are independent of the INI
+    // file, so they are loaded even when the INI file does not exist yet.
+    const std::string rendering_path = rendering_file_path();
+    std::ifstream rendering(rendering_path);
+    if (rendering.is_open()) {
+        try {
+            if (setting::load(rendering))
+                LOG(INFO) << "rendering settings loaded from " << rendering_path;
+        } catch (const std::exception &e) {
+            LOG(WARNING) << "could not read the rendering settings from " << rendering_path
+                         << ": " << e.what();
+        }
+    }
+
     const std::string path = file_path();
     std::ifstream input(path);
     if (!input.is_open()) {
@@ -168,6 +192,17 @@ bool AppSettings::save() const {
     output << "data_directory=" << data_directory << "\n";
     for (std::size_t i = 0; i < recent_files.size() && i < max_recent_files; ++i)
         output << "recent." << i << "=" << recent_files[i] << "\n";
+
+    // The rendering parameters go through easy3d::setting's own JSON writer, so every
+    // setting the library knows round-trips without the app keeping a copy.
+    const std::string rendering_path = rendering_file_path();
+    std::ofstream rendering(rendering_path);
+    if (!rendering.is_open())
+        LOG(WARNING) << "could not write the rendering settings file: " << rendering_path;
+    else if (setting::save(rendering))
+        LOG(INFO) << "rendering settings saved to " << rendering_path;
+    else
+        LOG(WARNING) << "could not write the rendering settings file: " << rendering_path;
 
     LOG(INFO) << "settings saved to " << path;
     return output.good();

@@ -50,12 +50,14 @@ namespace easy3d {
         float effect_ao_radius_ratio = 0.045f;
         float effect_ao_intensity = 1.0f;
         float effect_ao_bias = 0.01f;
+        bool effect_ao_enabled = false;
         bool effect_edl_enabled = false;
         bool effect_transparency_enabled = false;
         bool effect_shadow_enabled = false;
         float effect_shadow_light_distance = 50.0f;
         float effect_shadow_softness = 0.5f;
         float effect_shadow_darkness = 0.6f;
+        int effect_shadow_pattern = 2;  // SoftShadow::SP_Poisson_64_128
 
         // points drawable
         bool points_drawable_two_side_lighting = true;
@@ -174,23 +176,24 @@ namespace easy3d {
 
             if (!setting_file_name.empty()) {
                 if (file_system::is_file(setting_file_name)) {
-                    if (load(setting_file_name)) {
-                        LOG(INFO) << "setting loaded: " << setting_file_name;
-                        return;
+                    std::ifstream input(setting_file_name);
+                    if (input.is_open()) {
+                        if (load(input)) {
+                            LOG(INFO) << "settings loaded: " << setting_file_name;
+                            return;
+                        }
                     }
                 }
-                save(setting_file_name);
+                std::ofstream output(setting_file_name);
+                if (output.is_open()) {
+                    if (save(output))
+                        LOG(INFO) << "settings saved: " << setting_file_name;
+                }
             }
         }
 
-        // Save the rendering parameters to a file.
-        bool save(const std::string &file_name) {
-            std::ofstream output(file_name);
-            if (!output.is_open()) {
-                LOG(WARNING) << "could not open file: " << file_name;
-                return false;
-            }
-
+        // Save the rendering parameters to a stream.
+        bool save(std::ostream &output) {
 #define ENCODE(group, var)   settings[group][#var] = var;
 
             nlohmann::json settings;
@@ -210,9 +213,14 @@ namespace easy3d {
             ENCODE("effect", effect_ao_radius_ratio)
             ENCODE("effect", effect_ao_intensity)
             ENCODE("effect", effect_ao_bias)
+            ENCODE("effect", effect_ao_enabled)
+            ENCODE("effect", effect_edl_enabled)
+            ENCODE("effect", effect_transparency_enabled)
+            ENCODE("effect", effect_shadow_enabled)
             ENCODE("effect", effect_shadow_light_distance)
             ENCODE("effect", effect_shadow_softness)
             ENCODE("effect", effect_shadow_darkness)
+            ENCODE("effect", effect_shadow_pattern)
 
             // points drawable
             ENCODE("points drawable", points_drawable_two_side_lighting)
@@ -284,9 +292,7 @@ namespace easy3d {
             ENCODE("clipping plane", clipping_plane_color)
 
             output << std::setw(4) << settings;
-            LOG(INFO) << "setting file created: " << file_name;
-
-            return true;
+            return output.good();
         }
 
 #define DECODE(key, var) {                                                           \
@@ -299,14 +305,8 @@ namespace easy3d {
             else LOG(WARNING) << "value does not exist for variable: " << #var;      \
         }
 
-        // Load the rendering parameters from a file.
-        bool load(const std::string &file_name) {
-            std::ifstream input(file_name);
-            if (!input.is_open()) {
-                LOG(WARNING) << "could not open file: " << file_name;
-                return false;
-            }
-
+        // Load the rendering parameters from a stream.
+        bool load(std::istream &input) {
             // read a JSON file
             nlohmann::json settings;
             input >> settings;
@@ -326,9 +326,14 @@ namespace easy3d {
             DECODE("effect", effect_ao_radius_ratio)
             DECODE("effect", effect_ao_intensity)
             DECODE("effect", effect_ao_bias)
+            DECODE("effect", effect_ao_enabled)
+            DECODE("effect", effect_edl_enabled)
+            DECODE("effect", effect_transparency_enabled)
+            DECODE("effect", effect_shadow_enabled)
             DECODE("effect", effect_shadow_light_distance)
             DECODE("effect", effect_shadow_softness)
             DECODE("effect", effect_shadow_darkness)
+            DECODE("effect", effect_shadow_pattern)
 
             // points drawable
             DECODE("points drawable", points_drawable_two_side_lighting)
