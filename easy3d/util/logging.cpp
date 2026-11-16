@@ -225,7 +225,7 @@ namespace easy3d
             void handle(const el::LogDispatchData* data) noexcept override {
                 // remove all trailing ending line breaks
                 std::string msg = data->logMessage()->message();
-                while (msg.back() == '\n' && !msg.empty()) {
+                while (!msg.empty() && msg.back() == '\n') {
                     msg.erase(msg.end() - 1);
                 }
                 if (logger)
@@ -236,6 +236,13 @@ namespace easy3d
         Logger::Logger() {
             logger = this;
             ELPP->installLogDispatchCallback<Dispatcher>("Easy3D-Logger");
+        }
+
+        Logger::~Logger() {
+            // The owner and its members (mutexes, buffers) are already gone by the time
+            // its base classes are destroyed, and those bases may still log.
+            if (logger == this)
+                logger = nullptr;
         }
 
     }

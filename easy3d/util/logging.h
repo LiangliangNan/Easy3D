@@ -88,6 +88,12 @@ namespace easy3d {
         public:
             Logger();
             /**
+             * \brief Unregisters the logger.
+             * \details Messages logged after this (e.g. by an owner's base-class
+             *      destructor) are no longer forwarded to it.
+             */
+            virtual ~Logger();
+            /**
              * \brief Receives a log message.
              * \param level Severity level of the message.
              * \param msg Message text.

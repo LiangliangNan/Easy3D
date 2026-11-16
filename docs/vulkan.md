@@ -10241,3 +10241,29 @@ property name, that the scalar `v:ao` survives colorize, and that `v:color` is n
 and in `cmake-build-release`. `algo.surface_mesh_ambient_occlusion` also passed alone. Mapple was
 launched in all three trees ("Mapple UI ready" in the log), and `easy3d/util/version.h` is
 unchanged. The menu/dialog flow was not scripted. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 89: logger outlives the viewer teardown
+
+**Scope.** Closing Mapple on the OpenGL release build terminated with `libc++abi: terminating with
+uncaught exception of type std::__1::system_error: mutex lock failed: Invalid argument`. The message
+came from `Viewer::~Viewer()`, which calls `cleanup()` and then logs "viewer terminated. Bye!"; the
+log dispatcher forwards that message to whatever `logging::Logger` is registered. `MappleViewer` is
+both the registered logger and the viewer subclass, and C++ destroys a derived class's own members
+(its `log_mutex_`) before destroying base subobjects. The base `Viewer` destructor therefore logged
+through a `Logger` whose owner's mutex was already dead, and the `std::lock_guard` threw inside the
+dispatcher's `noexcept` `handle()`, so `std::terminate` followed. The `Logger` base now has a
+`virtual ~Logger()` that clears the global pointer if it still names `this`, so messages logged by a
+logger's own base-class destructors are simply dropped (the file log still receives them - the error
+log callback is separate). The trailing-line-break trim in `Dispatcher::handle` was also reading
+`msg.back()` before checking `msg.empty()`, which is undefined for an empty message; the operands are
+now ordered. No API changes for callers: `Logger` subclasses other than the two in-tree ones now
+compile with a virtual destructor they did not declare, so all targets were rebuilt.
+
+**Validation (2026-11-16, macOS, Release, serial).** Rebuilt every target in `build-opengl-check`,
+`build-vulkan-check` and `cmake-build-release` (the `Logger` vtable changed). OpenGL
+`build-opengl-check` 116/116 and Vulkan `build-vulkan-check` 150/150, both green with no flakes. The
+crash was reproduced on a clean exit of the release OpenGL Mapple before the fix (exit 134, lldb
+backtrace through `logging::Dispatcher::handle`) and the same path now exits 0 with "viewer
+terminated. Bye!" still present in `Mapple-imgui.log`; the Vulkan tree exits 0 as well. Mapple was
+launched in all three trees after the final rebuilds ("Mapple UI ready" in each log), and
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
