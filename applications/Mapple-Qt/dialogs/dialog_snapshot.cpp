@@ -111,7 +111,7 @@ void DialogSnapshot::saveSnapshot() {
 
     if (checkBoxSaveWindowState->isChecked()) {
         const auto state_file = file_system::replace_extension(fileName.toStdString(), "view");
-        std::ofstream output(state_file.c_str());
+        std::ofstream output(state_file);
         viewer_->saveState(output);
     }
 

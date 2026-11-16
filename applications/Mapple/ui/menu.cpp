@@ -169,9 +169,7 @@ namespace {
     }
 
     nlohmann::json as_json(const vec3 &v) { return {v.x, v.y, v.z}; }
-
     nlohmann::json as_json(const vec4 &v) { return {v.x, v.y, v.z, v.w}; }
-
     nlohmann::json as_json(const quat &q) { return {q[0], q[1], q[2], q[3]}; }
 
     // A missing or mistyped key leaves the value untouched and returns false, so a
@@ -259,6 +257,7 @@ namespace {
 
 } // namespace
 
+
 void MappleViewer::save_view_state() {
     std::string default_name = "view.view";
     if (const Model *model = current_model())
@@ -269,6 +268,14 @@ void MappleViewer::save_view_state() {
     const std::string file_name =
             dialog::save("Save the view state to a file", default_name, view_state_filters());
     if (file_name.empty())
+        return;
+
+    save_view_state(file_name);
+}
+
+
+void MappleViewer::save_view_state(const std::string& file_path) {
+    if (file_path.empty())
         return;
 
     int x = 0, y = 0;
@@ -299,19 +306,19 @@ void MappleViewer::save_view_state() {
             {"zooms_on_pivot_point", frame->zooms_on_pivot_point()},
     };
 
-    std::ofstream output(file_name);
+    std::ofstream output(file_path);
     if (!output.is_open()) {
-        LOG(ERROR) << "unable to create the view state file " << file_name;
+        LOG(ERROR) << "unable to create the view state file " << file_path;
         return;
     }
     output << state.dump(4) << std::endl;
     if (!output.good()) {
-        LOG(ERROR) << "failed to write the view state to " << file_name;
+        LOG(ERROR) << "failed to write the view state to " << file_path;
         return;
     }
-    LOG(INFO) << "view state saved to " << file_name;
-    // The user will likely restore this state soon; keep the dialogs here.
-    settings_.data_directory = file_system::parent_directory(file_name);
+    LOG(INFO) << "view state saved to " << file_path;
+    // The user will likely restore this state soon; keep the path here.
+    settings_.data_directory = file_system::parent_directory(file_path);
 }
 
 void MappleViewer::restore_view_state() {

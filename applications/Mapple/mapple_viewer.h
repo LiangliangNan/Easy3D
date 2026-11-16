@@ -255,6 +255,23 @@ private:
         float clamp_upper = 0.05f;
     };
 
+    // A highlight range configured in the Rendering panel. The indices are rendered
+    // primitives (points, lines, or triangles, i.e., polygons are triangulated).
+    // Hover highlighting yields to it, so the two do not overwrite each other.
+    struct HighlightRange {
+        bool enabled = false;
+        int first = 0;
+        int last = 0;
+    };
+
+    // How a textured drawable samples its image: the file chosen in the Rendering
+    // panel and, optionally, a stripe count that quantizes the image into bands.
+    struct TextureStyle {
+        std::string file;      // seeded from the drawable's texture when that is a file
+        bool discrete = false;
+        int stripes = 16;
+    };
+
     // Framebuffer-to-window ratio; may differ from dpi_scaling().
     float pixel_ratio() const;
 
@@ -470,6 +487,7 @@ private:
     // Writes/restores the window geometry, background color, projection and camera
     // to/from a .view file (JSON). A parameter missing from the file keeps its value.
     void save_view_state();
+    void save_view_state(const std::string& file_path);
 
     void restore_view_state();
 
@@ -491,6 +509,19 @@ private:
 
     // The texture of a scalar field style, from the colormap list in ui/panels.cpp.
     easy3d::Texture *scalar_texture(const ScalarFieldStyle &style) const;
+
+    // Texture controls of a textured drawable: the image, its optional stripes,
+    // and the repeat factors.
+    void draw_texture_controls(easy3d::Model *model, easy3d::Drawable *drawable);
+
+    // Vector-field block of the editor: the vec3 fields the drawable can show,
+    // and the scale of the shared "vector - <field>" lines drawable.
+    void draw_vector_field_controls(easy3d::Model *model, easy3d::Drawable *drawable);
+
+    // Shows the field's lines drawable, creating it with a buffer update function
+    // on first use. The location is where the drawable samples the field.
+    void show_vector_field(easy3d::Model *model, const std::string &field,
+                           easy3d::State::Location location);
 
     // Re-applies a scalar field style to the named property. The property must be
     // passed explicitly: the drawable's own name is reset when it switches to
@@ -565,6 +596,10 @@ private:
 
     // Drops saved styles and hover references to a model that is about to be deleted.
     void forget_model(easy3d::Model *model);
+
+    // True when the Rendering panel owns the drawable's highlight, so the hover
+    // picking aid must leave its range alone.
+    bool has_configured_highlight(easy3d::Model *model, const easy3d::Drawable *drawable) const;
 
     // Hover readout and primitive highlight (throttled; see update_hover()).
     void update_hover(int x, int y);
@@ -655,6 +690,16 @@ private:
     // Keyed by model, then drawable name: a renderer update may recreate drawables
     // while keeping their names.
     std::map<easy3d::Model *, std::map<std::string, ScalarFieldStyle>> scalar_styles_;
+
+    // Highlight ranges set in the Rendering panel, keyed like the scalar styles.
+    std::map<easy3d::Model *, std::map<std::string, HighlightRange>> highlight_ranges_;
+
+    // Texture settings and vector-field selection, keyed like the scalar styles.
+    // The vector-field scale is per field because the "vector - <field>" lines
+    // drawable is shared by every drawable that shows the same field.
+    std::map<easy3d::Model *, std::map<std::string, TextureStyle>> texture_styles_;
+    std::map<easy3d::Model *, std::map<std::string, std::string>> vector_fields_;      // drawable -> field
+    std::map<easy3d::Model *, std::map<std::string, float>> vector_field_scales_;      // field -> scale
 
     // The drawable whose editor the Rendering panel shows, by name for the same
     // reason: it survives a renderer update that recreates the drawables.

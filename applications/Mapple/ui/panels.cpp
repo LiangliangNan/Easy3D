@@ -27,6 +27,7 @@
 #include "../mapple_viewer.h"
 
 #include <algorithm>
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -38,6 +39,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
@@ -100,6 +102,13 @@ struct ColorScheme {
     easy3d::State::Location location;
     std::string property;
 };
+
+// The panel draws field arrows into lines drawables it creates as "vector - <field>".
+// They are rendering aids of the field selection, not drawables of the model, so the
+// drawable lists leave them out.
+bool is_vector_field_drawable(const std::string &name) {
+    return name.rfind("vector - ", 0) == 0;
+}
 
 // Scalar fields supported by the buffer update: the numeric property types plus
 // what the renderer can turn into texture coordinates. Bool selection properties
@@ -424,23 +433,23 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         bool ao = ao_enabled();
         if (ImGui::Checkbox("Ambient Occlusion", &ao))
             set_ao_enabled(ao);
-        ImGui::BeginDisabled(!ao);
-        float ao_radius = setting::effect_ao_radius_ratio;
-        if (ImGui::SliderFloat("Radius ratio", &ao_radius, 0.01f, 0.1f, "%.3f")) {
-            setting::effect_ao_radius_ratio = ao_radius;
-            apply_effect_parameters();
+        if (ao) {
+            float ao_radius = setting::effect_ao_radius_ratio;
+            if (ImGui::SliderFloat("Radius ratio", &ao_radius, 0.01f, 0.1f, "%.3f")) {
+                setting::effect_ao_radius_ratio = ao_radius;
+                apply_effect_parameters();
+            }
+            float ao_intensity = setting::effect_ao_intensity;
+            if (ImGui::SliderFloat("Intensity##ao", &ao_intensity, 0.0f, 1.0f, "%.2f")) {
+                setting::effect_ao_intensity = ao_intensity;
+                apply_effect_parameters();
+            }
+            float ao_bias = setting::effect_ao_bias;
+            if (ImGui::SliderFloat("Bias##ao", &ao_bias, 0.001f, 0.05f, "%.4f")) {
+                setting::effect_ao_bias = ao_bias;
+                apply_effect_parameters();
+            }
         }
-        float ao_intensity = setting::effect_ao_intensity;
-        if (ImGui::SliderFloat("Intensity##ao", &ao_intensity, 0.0f, 1.0f, "%.2f")) {
-            setting::effect_ao_intensity = ao_intensity;
-            apply_effect_parameters();
-        }
-        float ao_bias = setting::effect_ao_bias;
-        if (ImGui::SliderFloat("Bias##ao", &ao_bias, 0.001f, 0.05f, "%.4f")) {
-            setting::effect_ao_bias = ao_bias;
-            apply_effect_parameters();
-        }
-        ImGui::EndDisabled();
 
         bool edl = edl_enabled();
         if (ImGui::Checkbox("Eye Dome Lighting", &edl))
@@ -449,30 +458,30 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         bool shadow = shadow_enabled();
         if (ImGui::Checkbox("Shadow", &shadow))
             set_shadow_enabled(shadow);
-        ImGui::BeginDisabled(!shadow);
-        static const char *patterns[] = {"Poisson 25 x 25", "Poisson 32 x 64", "Poisson 64 x 128",
-                                         "Poisson 100 x 100", "Regular 49 x 225"};
-        int pattern = setting::effect_shadow_pattern;
-        if (ImGui::Combo("Light pattern", &pattern, patterns, 5)) {
-            setting::effect_shadow_pattern = pattern;
-            apply_effect_parameters();
+        if (shadow) {
+            static const char *patterns[] = {"Poisson 25 x 25", "Poisson 32 x 64", "Poisson 64 x 128",
+                                             "Poisson 100 x 100", "Regular 49 x 225"};
+            int pattern = setting::effect_shadow_pattern;
+            if (ImGui::Combo("Light pattern", &pattern, patterns, 5)) {
+                setting::effect_shadow_pattern = pattern;
+                apply_effect_parameters();
+            }
+            float light_distance = setting::effect_shadow_light_distance;
+            if (ImGui::SliderFloat("Light distance", &light_distance, 3.0f, 50.0f, "%.0f")) {
+                setting::effect_shadow_light_distance = light_distance;
+                apply_effect_parameters();
+            }
+            float softness = setting::effect_shadow_softness;
+            if (ImGui::SliderFloat("Softness", &softness, 0.0f, 1.0f, "%.2f")) {
+                setting::effect_shadow_softness = softness;
+                apply_effect_parameters();
+            }
+            float darkness = setting::effect_shadow_darkness;
+            if (ImGui::SliderFloat("Darkness", &darkness, 0.0f, 1.0f, "%.2f")) {
+                setting::effect_shadow_darkness = darkness;
+                apply_effect_parameters();
+            }
         }
-        float light_distance = setting::effect_shadow_light_distance;
-        if (ImGui::SliderFloat("Light distance", &light_distance, 3.0f, 50.0f, "%.0f")) {
-            setting::effect_shadow_light_distance = light_distance;
-            apply_effect_parameters();
-        }
-        float softness = setting::effect_shadow_softness;
-        if (ImGui::SliderFloat("Softness", &softness, 0.0f, 1.0f, "%.2f")) {
-            setting::effect_shadow_softness = softness;
-            apply_effect_parameters();
-        }
-        float darkness = setting::effect_shadow_darkness;
-        if (ImGui::SliderFloat("Darkness", &darkness, 0.0f, 1.0f, "%.2f")) {
-            setting::effect_shadow_darkness = darkness;
-            apply_effect_parameters();
-        }
-        ImGui::EndDisabled();
 
         bool transparency = transparency_enabled();
         if (ImGui::Checkbox("Transparency", &transparency))
@@ -497,29 +506,33 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
                 plane->fit_scene(camera()->scene_center(), camera()->scene_radius());
             update();
         }
-        ImGui::BeginDisabled(!enabled);
-        bool visible = plane->is_visible();
-        if (ImGui::Checkbox("Show guide", &visible)) {
-            plane->set_visible(visible);
-            update();
+        if (enabled) {
+            bool visible = plane->is_visible();
+            if (ImGui::Checkbox("Show guide", &visible)) {
+                plane->set_visible(visible);
+                update();
+            }
+            bool cross_section = plane->cross_section();
+            if (ImGui::Checkbox("Cross section", &cross_section)) {
+                plane->set_cross_section(cross_section);
+                update();
+            }
+            if (cross_section) {
+                float thickness = plane->cross_section_width();
+                if (ImGui::SliderFloat("Thickness", &thickness, 0.001f, 0.1f, "%.3f",
+                                       ImGuiSliderFlags_Logarithmic)) {
+                    plane->set_cross_section_width(thickness);
+                    update();
+                }
+            }
+            if (visible) {
+                vec4 guide_color = plane->color();
+                if (ImGui::ColorEdit3("Guide color", guide_color.data(), kSwatch)) {
+                    plane->set_color(guide_color);
+                    update();
+                }
+            }
         }
-        bool cross_section = plane->cross_section();
-        if (ImGui::Checkbox("Cross section", &cross_section)) {
-            plane->set_cross_section(cross_section);
-            update();
-        }
-        float thickness = plane->cross_section_width();
-        if (ImGui::SliderFloat("Thickness", &thickness, 0.001f, 0.1f, "%.3f",
-                               ImGuiSliderFlags_Logarithmic)) {
-            plane->set_cross_section_width(thickness);
-            update();
-        }
-        vec4 guide_color = plane->color();
-        if (ImGui::ColorEdit3("Guide color", guide_color.data(), kSwatch)) {
-            plane->set_color(guide_color);
-            update();
-        }
-        ImGui::EndDisabled();
     }
 
     ImGui::Spacing();
@@ -555,18 +568,27 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         drawables.push_back(d.get());
     for (const auto &d : renderer->points_drawables())
         drawables.push_back(d.get());
+    // The panel's "vector - <field>" lines drawables draw property arrows; they are
+    // rendering aids of the field selection, not drawables of the model.
+    drawables.erase(std::remove_if(drawables.begin(), drawables.end(),
+                                   [](const Drawable *d) {
+                                       return is_vector_field_drawable(d->name());
+                                   }),
+                    drawables.end());
     // Stable, so drawables sharing a name keep the renderer's type order.
     std::stable_sort(drawables.begin(), drawables.end(), [&rank](const Drawable *a, const Drawable *b) {
         return rank(a->name()) < rank(b->name());
     });
 
     // Distinct back color is a State property, so faces and points share these controls.
+    // It only takes effect when both sides are lit, so it is shown only then.
     auto draw_back_color = [this](Drawable *d) {
         bool back_color = d->distinct_back_color();
         if (ImGui::Checkbox("Back color", &back_color)) {
             d->set_distinct_back_color(back_color);
             update();
         }
+        ImGui::SetItemTooltip("Use a different color for the back faces.");
         if (back_color) {
             ImGui::SameLine();
             vec4 color_back = d->back_color();
@@ -632,7 +654,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
                                         row_right - ImGui::CalcTextSize(scheme.c_str()).x);
         ImDrawList *draw_list = ImGui::GetWindowDrawList();
         const ImU32 name_color = ImGui::GetColorU32(visible ? ImGuiCol_Text : ImGuiCol_TextDisabled);
-        draw_list->PushClipRect(ImVec2(name_x, row_min.y), ImVec2(scheme_x - 4.0f, row_min.y + row_h), true);
+        draw_list->PushClipRect(ImVec2(name_x, row_min.y), ImVec2(scheme_x - 6.0f, row_min.y + row_h), true);
         draw_list->AddText(ImVec2(name_x, text_y), name_color, drawable->name().c_str());
         draw_list->PopClipRect();
         draw_list->PushClipRect(ImVec2(scheme_x, row_min.y), ImVec2(row_right, row_min.y + row_h), true);
@@ -652,37 +674,198 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     ImGui::SeparatorText(active->name().c_str());
     draw_color_scheme(model, active);
 
+    // State has a lit flag and a two-sided flag; together they make three modes.
+    const bool lit = active->lighting();
+    int lighting_mode = !lit ? 0 : (active->lighting_two_sides() ? 2 : 1);
+    static const char *lighting_modes[] = {"Unlit", "Front", "Front and back"};
+    if (ImGui::Combo("Lighting", &lighting_mode, lighting_modes, 3)) {
+        active->set_lighting(lighting_mode != 0);
+        active->set_lighting_two_sides(lighting_mode == 2);
+        update();
+    }
+    ImGui::SetItemTooltip("Unlit ignores the normals; front and back also shades the back faces.");
+    // The two-sided flag survives "Unlit", but without lighting no side is shaded.
+    const bool two_sides = lit && active->lighting_two_sides();
+
     if (auto *triangles = dynamic_cast<TrianglesDrawable *>(active)) {
-        bool smooth = triangles->smooth_shading();
-        if (ImGui::Checkbox("Smooth shading", &smooth)) {
-            triangles->set_smooth_shading(smooth);
-            update();
+        // Smooth shading interpolates the normals, which only an unlit pass ignores.
+        if (lit) {
+            bool smooth = triangles->smooth_shading();
+            if (ImGui::Checkbox("Smooth shading", &smooth)) {
+                triangles->set_smooth_shading(smooth);
+                update();
+            }
         }
 
-        float opacity = triangles->opacity();
-        if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
-            triangles->set_opacity(opacity);
-            update();
+        // Opacity only reaches the screen through the transparency pass.
+        if (transparency_enabled()) {
+            float opacity = triangles->opacity();
+            if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
+                triangles->set_opacity(opacity);
+                update();
+            }
+            ImGui::SetItemTooltip("Only takes effect while the Transparency effect is on.");
         }
 
-        draw_back_color(triangles);
+        if (two_sides)
+            draw_back_color(triangles);
     } else if (auto *lines = dynamic_cast<LinesDrawable *>(active)) {
+        static const char *imposters[] = {"Plain", "Cylinder", "Cone"};
+        int imposter = static_cast<int>(lines->impostor_type());
+        if (ImGui::Combo("Imposter", &imposter, imposters, 3)) {
+            lines->set_impostor_type(static_cast<LinesDrawable::ImposterType>(imposter));
+            update();
+        }
+
         float width = lines->line_width();
         if (ImGui::SliderFloat("Width", &width, 1.0f, 10.0f, "%.1f px")) {
             lines->set_line_width(width);
             update();
         }
+        ImGui::SetItemTooltip("Line width (the diameter of an imposter) in logical pixels.");
     } else if (auto *points = dynamic_cast<PointsDrawable *>(active)) {
+        static const char *imposters[] = {"Plain", "Sphere", "Surfel"};
+        int imposter = static_cast<int>(points->impostor_type());
+        if (ImGui::Combo("Imposter", &imposter, imposters, 3)) {
+            points->set_impostor_type(static_cast<PointsDrawable::ImposterType>(imposter));
+            update();
+        }
+
         float size = points->point_size();
         if (ImGui::SliderFloat("Size", &size, 1.0f, 20.0f, "%.1f px")) {
             points->set_point_size(size);
             update();
         }
+        ImGui::SetItemTooltip("Point size (the diameter of an imposter) in logical pixels.");
 
-        draw_back_color(points);
+        if (two_sides)
+            draw_back_color(points);
+    }
+
+    draw_vector_field_controls(model, active);
+
+    // A range of rendered primitives tinted with the highlight color. The range
+    // lives here rather than in the drawable so the hover aid can yield to it.
+    ImGui::Spacing();
+    HighlightRange &highlight = highlight_ranges_[model][active->name()];
+    bool highlight_changed = ImGui::Checkbox("Highlight range", &highlight.enabled);
+    ImGui::SetItemTooltip("Tints a range of rendered primitives (points, lines, or "
+                          "triangles; polygons are triangulated).");
+    if (highlight.enabled) {
+        int first = highlight.first;
+        int last = highlight.last;
+        bool edited = false;
+        ImGui::SetNextItemWidth(70.0f);
+        if (ImGui::DragInt("From", &first, 1.0f, 0, 100000000))
+            edited = true;
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(70.0f);
+        if (ImGui::DragInt("To", &last, 1.0f, 0, 100000000))
+            edited = true;
+        if (edited) {
+            highlight.first = std::max(0, std::min(first, last));
+            highlight.last = std::max(first, last);
+            highlight_changed = true;
+        }
+    }
+
+    if (highlight_changed) {
+        if (highlight.enabled) {
+            active->set_highlight_range({highlight.first, highlight.last});
+            active->set_highlight(true);
+            // The hover aid must not replace this range; it re-applies on the next hover.
+            if (hover_drawable_.lock().get() == active) {
+                hover_drawable_.reset();
+                hover_range_ = {-1, -1};
+            }
+        } else {
+            active->set_highlight(false);
+            active->set_highlight_range({-1, -1});
+        }
+        update();
     }
 
     ImGui::End();
+}
+
+// A texture for a textured drawable from the panel's texture style: the chosen
+// image, optionally quantized into stripes. nullptr lets the renderer install its
+// default checkerboard.
+Texture *texture_from_style(const std::string &file, bool discrete, int stripes) {
+    if (file.empty())
+        return nullptr;
+    if (discrete)
+        return TextureManager::request(file, std::max(2, std::min(stripes, 64)),
+                                       Texture::REPEAT, Texture::LINEAR);
+    return TextureManager::request(file, Texture::REPEAT, Texture::LINEAR);
+}
+
+// The location at which a drawable samples a vector field: points on vertices,
+// lines on edges, triangles on faces.
+State::Location vector_field_location(const Drawable *drawable) {
+    if (dynamic_cast<const TrianglesDrawable *>(drawable))
+        return State::FACE;
+    if (dynamic_cast<const LinesDrawable *>(drawable))
+        return State::EDGE;
+    return State::VERTEX;
+}
+
+// vec3 properties that make sense as vectors. Positions and colors are data, not
+// directions, so they are skipped. Mirrors the vector fields the buffer update
+// supports for each model type.
+template <class MODEL>
+void append_vector_fields_on_vertices(const MODEL *model, std::vector<std::string> &fields) {
+    for (const std::string &name : model->vertex_properties()) {
+        if (name == "v:point" || name == "v:color")
+            continue;
+        if (model->template get_vertex_property<vec3>(name))
+            fields.push_back(name);
+    }
+}
+
+template <class MODEL>
+void append_vector_fields_on_edges(const MODEL *model, std::vector<std::string> &fields) {
+    for (const std::string &name : model->edge_properties()) {
+        if (name == "e:color")
+            continue;
+        if (model->template get_edge_property<vec3>(name))
+            fields.push_back(name);
+    }
+}
+
+template <class MODEL>
+void append_vector_fields_on_faces(const MODEL *model, std::vector<std::string> &fields) {
+    for (const std::string &name : model->face_properties()) {
+        if (name == "f:color")
+            continue;
+        if (model->template get_face_property<vec3>(name))
+            fields.push_back(name);
+    }
+}
+
+// The vector fields a drawable can show. Graph models are excluded: the buffer
+// update has no vector-field variant for them.
+void collect_vector_fields(const Model *model, const Drawable *drawable,
+                           std::vector<std::string> &fields) {
+    const State::Location location = vector_field_location(drawable);
+    if (location == State::FACE) {
+        if (auto *mesh = dynamic_cast<const SurfaceMesh *>(model))
+            append_vector_fields_on_faces(mesh, fields);
+        else if (auto *poly = dynamic_cast<const PolyMesh *>(model))
+            append_vector_fields_on_faces(poly, fields);
+    } else if (location == State::EDGE) {
+        if (auto *mesh = dynamic_cast<const SurfaceMesh *>(model))
+            append_vector_fields_on_edges(mesh, fields);
+        else if (auto *poly = dynamic_cast<const PolyMesh *>(model))
+            append_vector_fields_on_edges(poly, fields);
+    } else {
+        if (auto *mesh = dynamic_cast<const SurfaceMesh *>(model))
+            append_vector_fields_on_vertices(mesh, fields);
+        else if (auto *poly = dynamic_cast<const PolyMesh *>(model))
+            append_vector_fields_on_vertices(poly, fields);
+        else if (auto *cloud = dynamic_cast<const PointCloud *>(model))
+            append_vector_fields_on_vertices(cloud, fields);
+    }
 }
 
 Texture *MappleViewer::scalar_texture(const ScalarFieldStyle &style) const {
@@ -737,9 +920,13 @@ void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
                     case State::COLOR_PROPERTY:
                         drawable->set_property_coloring(scheme.location, scheme.property);
                         break;
-                    case State::TEXTURED:
-                        drawable->set_texture_coloring(scheme.location, scheme.property, nullptr);
+                    case State::TEXTURED: {
+                        TextureStyle &style = texture_styles_[model][drawable->name()];
+                        drawable->set_texture_coloring(scheme.location, scheme.property,
+                                                       texture_from_style(style.file, style.discrete,
+                                                                          style.stripes));
                         break;
+                    }
                     default:
                         break;
                 }
@@ -748,6 +935,11 @@ void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
             update();
         }
         ImGui::EndCombo();
+    }
+
+    if (drawable->coloring_method() == State::TEXTURED) {
+        draw_texture_controls(model, drawable);
+        return;
     }
 
     if (drawable->coloring_method() != State::SCALAR_FIELD)
@@ -794,6 +986,162 @@ void MappleViewer::draw_color_scheme(Model *model, Drawable *drawable) {
         apply_scalar_style(drawable, drawable->property_location(), drawable->property_name(), style);
         update();
     }
+}
+
+void MappleViewer::draw_texture_controls(Model *model, Drawable *drawable) {
+    TextureStyle &style = texture_styles_[model][drawable->name()];
+    // A drawable that was already textured (e.g., set up when the model loaded)
+    // seeds the file field from the texture actually in use.
+    const Texture *texture = drawable->texture();
+    if (style.file.empty() && texture && file_system::is_file(texture->name()))
+        style.file = texture->name();
+
+    bool changed = false;
+
+    const float button_width = ImGui::CalcTextSize("Choose...").x + 2.0f * ImGui::GetStyle().FramePadding.x;
+    const float row_right = ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x;
+
+    ImGui::TextUnformatted("Texture");
+    ImGui::SameLine();
+    // The name is shortened rather than drawn under the button for long paths.
+    std::string file_label = style.file.empty() ? std::string("(default)")
+                                                : file_system::simple_name(style.file);
+    const float name_x = ImGui::GetCursorScreenPos().x;
+    const float name_limit = row_right - button_width - 8.0f - name_x;
+    if (ImGui::CalcTextSize(file_label.c_str()).x > name_limit) {
+        while (!file_label.empty() && ImGui::CalcTextSize((file_label + "...").c_str()).x > name_limit)
+            file_label.pop_back();
+        file_label += "...";
+    }
+    ImGui::TextDisabled("%s", file_label.c_str());
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - button_width);
+    if (ImGui::Button("Choose...")) {
+        const std::string file = dialog::open(
+                "Choose a texture image", resource::directory() + "/textures/",
+                {"Image Files (*.png *.jpg *.jpeg *.bmp *.tga)", "*.png *.jpg *.jpeg *.bmp *.tga",
+                 "All Files (*.*)", "*"});
+        if (!file.empty()) {
+            style.file = file;
+            changed = true;
+        }
+    }
+    ImGui::SetItemTooltip("The image the texture coordinates sample.");
+
+    if (ImGui::Checkbox("Discrete", &style.discrete))
+        changed = true;
+    ImGui::SetItemTooltip("Quantize the image into a few uniformly colored stripes.");
+    if (style.discrete && ImGui::SliderInt("Stripes", &style.stripes, 2, 64))
+        changed = true;
+
+    int repeat = static_cast<int>(std::lround(drawable->texture_repeat()));
+    if (ImGui::DragInt("Repeat", &repeat, 0.05f, 0, 100)) {
+        drawable->set_texture_repeat(static_cast<float>(std::max(0, repeat)));
+        drawable->update();
+        update();
+    }
+    int fraction = static_cast<int>(std::lround(drawable->texture_fractional_repeat()));
+    if (ImGui::DragInt("Fraction", &fraction, 0.5f, 0, 99)) {
+        drawable->set_texture_fractional_repeat(static_cast<float>(std::max(0, std::min(fraction, 99))));
+        drawable->update();
+        update();
+    }
+    ImGui::SetItemTooltip("Texture repeats; 100 fractional repeats make one whole repeat.");
+
+    if (changed) {
+        if (Texture *tex = texture_from_style(style.file, style.discrete, style.stripes))
+            drawable->set_texture_coloring(drawable->property_location(), drawable->property_name(),
+                                           tex, drawable->texture_repeat(),
+                                           drawable->texture_fractional_repeat());
+        drawable->update();
+        update();
+    }
+}
+
+void MappleViewer::show_vector_field(Model *model, const std::string &field,
+                                     State::Location location) {
+    if (!model || field.empty())
+        return;
+    Renderer *renderer = model->renderer();
+    const std::string name = "vector - " + field;
+    LinesDrawable *drawable = renderer->get_lines_drawable(name, false);
+    if (!drawable) {
+        drawable = renderer->add_lines_drawable(name);
+        if (!drawable)
+            return;
+        drawable->set_update_func([this, field, location](Model *m, Drawable *d) {
+            // Read the scale at update time: it changes without rebuilding the
+            // drawable, and the map outlives every buffer update.
+            float scale = 1.0f;
+            auto model_entry = vector_field_scales_.find(m);
+            if (model_entry != vector_field_scales_.end()) {
+                auto scale_entry = model_entry->second.find(field);
+                if (scale_entry != model_entry->second.end())
+                    scale = scale_entry->second;
+            }
+            auto *lines = static_cast<LinesDrawable *>(d);
+            if (auto *mesh = dynamic_cast<SurfaceMesh *>(m))
+                buffer::update(mesh, lines, field, location, scale);
+            else if (auto *poly = dynamic_cast<PolyMesh *>(m))
+                buffer::update(poly, lines, field, location, scale);
+            else if (auto *cloud = dynamic_cast<PointCloud *>(m))
+                buffer::update(cloud, lines, field, scale);
+        });
+    }
+    drawable->set_visible(true);
+    drawable->update();
+    update();
+}
+
+void MappleViewer::draw_vector_field_controls(Model *model, Drawable *drawable) {
+    std::vector<std::string> fields;
+    collect_vector_fields(model, drawable, fields);
+    if (fields.empty())
+        return;
+
+    std::string &current = vector_fields_[model][drawable->name()];
+    // The field is gone after the model was processed: drop it and its arrows.
+    if (!current.empty() && std::find(fields.begin(), fields.end(), current) == fields.end()) {
+        if (auto *lines = model->renderer()->get_lines_drawable("vector - " + current, false))
+            lines->set_visible(false);
+        current.clear();
+    }
+
+    const std::string preview = current.empty() ? "Disabled" : current;
+    if (ImGui::BeginCombo("Vector field", preview.c_str())) {
+        if (ImGui::Selectable("Disabled", current.empty()) && !current.empty()) {
+            if (auto *lines = model->renderer()->get_lines_drawable("vector - " + current, false)) {
+                lines->set_visible(false);
+                update();
+            }
+            current.clear();
+        }
+        for (const std::string &field : fields) {
+            if (ImGui::Selectable(field.c_str(), field == current)) {
+                current = field;
+                show_vector_field(model, field, vector_field_location(drawable));
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SetItemTooltip("Draws the vector property as arrows in a \"vector - <field>\" "
+                          "lines drawable that every drawable showing this field shares.");
+
+    if (current.empty())
+        return;
+
+    auto &scales = vector_field_scales_[model];
+    auto entry = scales.find(current);
+    if (entry == scales.end())
+        entry = scales.emplace(current, 1.0f).first;
+    float &scale = entry->second;
+    if (ImGui::DragFloat("Scale", &scale, 0.01f, 0.01f, 100.0f, "%.2f")) {
+        if (auto *lines = model->renderer()->get_lines_drawable("vector - " + current, false)) {
+            lines->update();
+            update();
+        }
+    }
+    ImGui::SetItemTooltip("Vector length relative to the model scale (see easy3d::buffer).");
 }
 
 void MappleViewer::draw_model_info(Model *model) {
@@ -887,6 +1235,9 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
         if (open) {
             if (Renderer *renderer = model->renderer()) {
                 auto drawable_row = [this](Drawable *d) {
+                    // The panel's vector-field arrows are not drawables of the model.
+                    if (is_vector_field_drawable(d->name()))
+                        return;
                     ImGui::PushID(d);
                     bool visible = d->is_visible();
                     if (ImGui::Checkbox(d->name().c_str(), &visible)) {

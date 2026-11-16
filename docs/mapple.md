@@ -108,8 +108,9 @@ Reuse inventory (verified):
 - [x] Models panel: tree, active model selection, per-drawable visibility, delete, fit.
 - [x] Rendering panel: background color, projection; the active model's drawables as a
       compact list (visibility, uniform color, name, current scheme) with one editor
-      for the selected drawable (color scheme, scalar-field styles, point size, line
-      width, smooth shading, opacity, back color).
+      for the selected drawable (color scheme, scalar-field styles, texture image with
+      optional stripes and repeat, lighting modes, imposters, vector field with scale,
+      highlight range, smooth shading, opacity, back color).
 - [x] Log panel: level-colored lines, auto-scroll, clear, copy, export.
 - [x] Settings persistence, recent files: `AppSettings` (`settings.h/.cpp`) writes
       panel visibility and sizes, the pick-readout and log auto-scroll toggles, the
@@ -1127,3 +1128,77 @@ Models-panel/readout extras; retirement can proceed once those are decided on.
   below. The Vulkan tree launched ("Mapple UI ready (Vulkan)"); its window opened
   behind the OpenGL instance, so the panel was not re-checked there. The library is
   unchanged, so the suites were not rerun; no clicks were scripted.
+
+### 2026-11-16 — Rendering editor: lighting modes, imposters, highlight range
+
+- The drawable editor now opens with a `Lighting` combo that names the three modes the
+  library's two flags encode: Unlit (`lighting()` off), Front (the default), and Front
+  and back (`lighting_two_sides()` on). The `Back color` checkbox and its swatch stay
+  disabled unless the drawable is two-sided, because the back color only takes effect
+  then.
+- Lines gained an `Imposter` combo (Plain, Cylinder, Cone) and points one (Plain,
+  Sphere, Surfel), each next to the width or size control it interacts with. Points
+  keep the width/size slider, whose tooltip already said it is the impostor's
+  diameter for lines.
+- A `Highlight range` block (checkbox plus From/To drag fields) tints a range of
+  rendered primitives. Polygons are triangulated, so face indices count triangles;
+  the range is stored per model and drawable name and survives renderer updates. While
+  a configured range is on, the hover picking aid in Click mode leaves that drawable's
+  highlight alone instead of overwriting it on every hover; enabling a range on the
+  hovered drawable also clears the stale hover range.
+- Still missing from the user's list: discrete textured shading with a stripe count
+  and the vector-field display, which has no renderer/State API yet.
+- Validation (2026-11-16, macOS): both check trees build. The OpenGL instance was
+  checked with `bunny.ply` (Lighting "Front and back", Back color, Highlight range) and
+  a point cloud (Imposter "Plain", Size); the Vulkan instance was captured by window id
+  because CLion held focus, and its panel matched. The library is unchanged, so the
+  suites were not rerun; no clicks were scripted.
+
+### 2026-11-16 — Rendering editor: textures and vector fields
+
+- Drawables colored by texture coordinates now get a `Texture` block: the image in
+  use, a `Choose...` button (native dialog, starting in `resources/textures/`), a
+  `Discrete` checkbox that quantizes the image into `Stripes` bands, and `Repeat` and
+  `Fraction` drag fields. Picking a texture scheme applies the remembered image
+  instead of resetting to the default checkerboard, and a drawable that already has a
+  file texture shows its name.
+- Every drawable gets a `Vector field` combo with the vec3 properties its primitive
+  type samples (vertices for points, edges for lines, faces for triangles) and a
+  `Scale` drag. The field is drawn by a `vector - <field>` lines drawable, which is
+  shared by all drawables showing that field and stays out of the drawable lists
+  (it is a rendering aid, not a drawable of the model); `Disabled` hides it. Graph
+  models do not offer vector fields because the library's buffer update has no
+  variant for them.
+- Validation (2026-11-16, macOS): both check trees build and launch. Two temporary
+  env-gated probes (removed before the final build) confirmed on OpenGL that
+  `f:normal` produces visible arrows and the texture quantizes; the final builds on
+  OpenGL and Vulkan show the new blocks with the texture scheme of `room.obj`. The
+  library is unchanged, so the suites were not rerun; no clicks were scripted.
+
+### 2026-11-16 — Rendering panel: controls appear only when they can take effect
+
+- The drawable editor hides controls that cannot change the result instead of showing
+  them disabled: `Smooth shading` only while the drawable is lit, `Back color` only
+  for two-sided lighting (and only with lighting, since an unlit pass shades neither
+  side), `Opacity` only while the Transparency effect is on (the only pass that
+  applies alpha; the Vulkan renderer rejects an opacity other than 1 without it), and
+  the highlight From/To fields only while the range is enabled.
+- The Effects section shows the AO radius/intensity/bias fields only while ambient
+  occlusion is on and the shadow pattern/light distance/softness/darkness fields only
+  while the shadow is on. The Clipping Plane section shows its guide, cross-section
+  and thickness controls only while the plane is enabled (thickness only with a cross
+  section) and the guide color only while the guide is visible.
+- The `vector - <field>` lines drawables the editor creates to draw field arrows are
+  rendering aids of the field selection, not drawables of the model: they are left out
+  of the Rendering panel's drawable list and the Models tree, whose groups list only
+  the model's own drawables. The arrows stay visible and are still controlled by the
+  `Vector field` combo.
+- Validation (2026-11-16, macOS): both check trees build and launch ("Mapple UI ready
+  (OpenGL/Vulkan)"). The gated panel was checked on OpenGL with `room.obj` (no Back
+  color, Opacity or highlight fields when inapplicable) and on Vulkan with `bunny.ply`
+  (two-sided lighting shows Back color while Opacity and the highlight fields stay
+  hidden). A temporary env-gated probe (removed afterwards, together with its
+  `<cstdlib>` include) selected `f:normal` at startup: the capture showed the arrows
+  drawn while neither list contained a "vector - f:normal" row, and the probe-free
+  builds list faces, edges, borders, vertices and locks only. The library is unchanged,
+  so the suites were not rerun; no clicks were scripted.

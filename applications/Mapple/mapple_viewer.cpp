@@ -1151,6 +1151,10 @@ void MappleViewer::forget_model(Model *model) {
         clear_hover();
     selection_styles_.erase(model);
     scalar_styles_.erase(model);
+    highlight_ranges_.erase(model);
+    texture_styles_.erase(model);
+    vector_fields_.erase(model);
+    vector_field_scales_.erase(model);
     if (counted_model_ == model) {
         counted_model_ = nullptr;
         selection_count_dirty_ = true;
@@ -1160,6 +1164,16 @@ void MappleViewer::forget_model(Model *model) {
 //------------------------------------------------------------------------
 // Hover readout
 //------------------------------------------------------------------------
+
+bool MappleViewer::has_configured_highlight(Model *model, const Drawable *drawable) const {
+    if (!model || !drawable)
+        return false;
+    auto entry = highlight_ranges_.find(model);
+    if (entry == highlight_ranges_.end())
+        return false;
+    auto range = entry->second.find(drawable->name());
+    return range != entry->second.end() && range->second.enabled;
+}
 
 void MappleViewer::update_hover(int x, int y) {
     hover_stamp_ = std::chrono::steady_clock::now();
@@ -1177,8 +1191,10 @@ void MappleViewer::update_hover(int x, int y) {
     bool changed = false;
     const std::shared_ptr<Drawable> previous = hover_drawable_.lock();
     // The highlight is a picking aid of the Click (pick) tool. Other modes still
-    // report the primitive in the status bar but must not tint the scene.
-    const bool highlight = select_mode_ == SelectMode::CLICK;
+    // report the primitive in the status bar but must not tint the scene. A range
+    // configured in the Rendering panel owns the drawable's highlight.
+    const bool highlight = select_mode_ == SelectMode::CLICK &&
+                           !has_configured_highlight(result.model.get(), result.drawable.get());
     if (!highlight) {
         if (previous) {
             previous->set_highlight(false);

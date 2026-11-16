@@ -104,8 +104,16 @@ void MappleViewer::draw_snapshot_dialog() {
                 // belong in captures). Drop them for this frame; pre_draw() rebuilds
                 // them from the next frame on, so the window itself is unaffected.
                 set_overlays({});
-                if (snapshot(file_name, p.scale, p.samples, p.background, p.expand))
+                if (snapshot(file_name, p.scale, p.samples, p.background, p.expand)) {
                     LOG(INFO) << "snapshot saved to " << file_name;
+
+                    const auto state_file = file_system::replace_extension(file_name, "view");
+                    std::ofstream output(state_file);
+                    if (output) {
+                        save_view_state(state_file);
+                        LOG(INFO) << "view state saved to " << state_file;
+                    }
+                }
                 else
                     LOG(ERROR) << "failed to save the snapshot: " << file_name;
                 show_snapshot_dialog_ = false;

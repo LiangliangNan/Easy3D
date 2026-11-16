@@ -795,7 +795,7 @@ void MainWindow::saveCameraStateToFile() {
     if (fileName.isEmpty())
         return;
 
-    std::ofstream output(fileName.toStdString().c_str());
+    std::ofstream output(fileName.toStdString());
     if (output.fail()) {
         QMessageBox::warning(window(), tr("Save state to file error"), tr("Unable to create file %1").arg(fileName));
         return;

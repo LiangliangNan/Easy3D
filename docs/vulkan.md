@@ -10391,3 +10391,106 @@ the running OpenGL instance and was not re-checked visually. The change is confi
 to the application, so the 116/150 suites were not rerun (Mapple-only scope); no
 clicks were scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-16 — batch 94: Rendering editor controls (imposters, lighting, highlight range)
+
+**Scope.** `applications/Mapple`'s drawable editor gains the first group of the missing
+per-drawable controls, all mapped to existing library calls. A `Lighting` combo maps
+`State::lighting()` and `State::lighting_two_sides()` onto the three modes the
+half-open pair encodes: Unlit, Front, Front and back; the `Back color` checkbox
+(and its swatch) is disabled unless the drawable is two-sided, since the back color
+only applies then, and a tooltip says so. Line drawables get an `Imposter` combo
+(Plain/Cylinder/Cone) over `LinesDrawable::set_impostor_type`; point drawables get
+Plain/Sphere/Surfel over `PointsDrawable::set_impostor_type`. A `Highlight range`
+block (checkbox plus `From`/`To` drag fields) calls `State::set_highlight_range` with
+the two ends sorted and clamped to zero, and `State::set_highlight(true)`; unchecking
+clears the range to `(-1, -1)` and turns the highlight off. Ranges are stored
+`[model][drawable name]` like the scalar styles (they survive `Renderer::update()`),
+erased in `forget_model`, and a new `MappleViewer::has_configured_highlight` makes the
+CLICK-mode hover picking aid yield: it no longer overwrites the range of a drawable
+the panel owns, and enabling a range on the currently hovered drawable clears the
+hover bookkeeping. The library is untouched.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready (OpenGL/Vulkan)".
+The panel was checked on OpenGL with `bunny.ply` (the faces editor showed the
+Lighting combo reading "Front and back", the back-color checkbox and the highlight
+From/To fields) and with a point cloud (`001.ply`: Imposter reading "Plain" plus the
+size field). The Vulkan instance was checked the same way this time — its window was
+captured by window id while CLion held focus, and the panel matched the OpenGL one.
+The change is confined to the application, so the 116/150 suites were not rerun
+(Mapple-only scope); no clicks were scripted. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 95: Rendering editor texture and vector-field controls
+
+**Scope.** The last two controls from the Rendering panel list, both implemented in
+`applications/Mapple` on top of existing library helpers. For a drawable colored by
+texture coordinates the editor now shows a `Texture` block: the image currently in
+use, a `Choose...` button opening the native dialog on `resources/textures/`
+(shortening the name rather than drawing it under the button), a `Discrete` checkbox
+with a `Stripes` slider over `TextureManager::request(file, num_stripes, REPEAT,
+LINEAR)`, and `Repeat`/`Fraction` drag fields over `State::texture_repeat()` and
+`texture_fractional_repeat()` (100 fractional repeats make one whole repeat). The
+chosen file and stripe count live in a `TextureStyle` map keyed `[model][drawable
+name]`; selecting a texture scheme re-applies that style instead of the renderer's
+default checkerboard, and a drawable that already carries a file texture seeds the
+file field from `Texture::name()`. Every drawable also gets a `Vector field` combo
+listing the vec3 properties at the location its primitive type samples (vertices for
+points, edges for lines, faces for triangles; positions and colors excluded; graph
+models are excluded because `buffer::update` has no vector-field variant for them)
+plus a `Scale` drag. Selecting a field creates a `vector - <field>` lines drawable
+that every drawable showing that field shares; its update function calls
+`buffer::update` for the model type and reads the scale from a per-field map at
+update time, so scale edits only need `Drawable::update()` and survive
+`Renderer::update()` recreations. `Disabled` hides the shared drawable, a field that
+disappears after processing clears the selection and hides the arrows, and
+`forget_model` erases the three new maps. The library is untouched.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready
+(OpenGL/Vulkan)". Two temporary env-gated probes (removed afterwards; no probe code
+remains) exercised both features on OpenGL with
+`room.obj`: one selected `f:normal` at startup, which created the
+"vector - f:normal" row, drew its arrows and filled the combo and scale; the other
+quantized the texture (`Discrete` checked, 8 stripes). The final probe-free build
+was checked on both backends with the same model: texture block reading
+"checkerboard.png", Repeat 5, Fraction 0, Vector field "Disabled". The change is
+confined to the application, so the 116/150 suites were not rerun (Mapple-only
+scope); no clicks were scripted. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 96: Rendering panel shows only controls that apply
+
+**Scope.** Two refinements of the Rendering panel, both in `applications/Mapple`.
+First, the drawable editor now hides a control while its property cannot take effect
+instead of showing it disabled: `Smooth shading` only while the drawable is lit;
+`Back color` only for two-sided lighting and only with lighting (an unlit pass shades
+neither side, though the flag survives); `Opacity` only while the Transparency effect
+is on, because no other pass applies alpha and the Vulkan renderer rejects an opacity
+other than 1 without it; the highlight From/To fields only while the range is
+enabled; the AO radius/intensity/bias fields only while ambient occlusion is on and
+the shadow pattern/light distance/softness/darkness fields only while the shadow is
+on; and the clipping-plane guide, cross-section and thickness controls only while the
+plane is enabled (thickness only with a cross section) with the guide color only
+while the guide is visible. Second, the "vector - <field>" lines drawables that batch
+95 creates to draw field arrows are rendering aids of the field selection, not
+drawables of the model, so they are filtered out of the Rendering panel's drawable
+list and of the Models tree (which list only the model's own drawables); the arrows
+remain visible and are still controlled by the `Vector field` combo. Identification
+uses the panel's own "vector - " name convention, so it holds even if the drawable was
+created outside the combo path. The library is untouched.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready
+(OpenGL/Vulkan)". The gated editor was checked on OpenGL with `room.obj` (no Back
+color, Opacity or highlight fields where they do not apply) and on Vulkan with
+`bunny.ply` (default two-sided faces show Back color while Opacity and the highlight
+fields stay hidden). A temporary env-gated probe (removed afterwards, with its
+`<cstdlib>` include) called `show_vector_field(model, "f:normal", State::FACE)` at
+startup: the window-id capture showed the arrows drawn and no "vector - f:normal" row
+in either the Rendering list or the Models tree. The probe-free builds on both
+backends list faces, edges, borders, vertices and locks only. The change is confined
+to the application, so the 116/150 suites were not rerun (Mapple-only scope); no
+clicks were scripted. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.
