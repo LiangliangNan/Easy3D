@@ -26,6 +26,7 @@
 
 #include "../mapple_viewer.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <string>
@@ -306,6 +307,15 @@ void MappleViewer::save_view_state(const std::string& file_path) {
             {"zooms_on_pivot_point", frame->zooms_on_pivot_point()},
     };
 
+    // The dialog's settings belong to the figure this state was saved for, so a
+    // restored file reopens the snapshot dialog exactly as the figure was made.
+    state["snapshot"] = {
+            {"scale", snapshot_params_.scale},
+            {"samples", snapshot_params_.samples},
+            {"background", snapshot_params_.background},
+            {"expand", snapshot_params_.expand},
+    };
+
     std::ofstream output(file_path);
     if (!output.is_open()) {
         LOG(ERROR) << "unable to create the view state file " << file_path;
@@ -412,6 +422,20 @@ void MappleViewer::restore_view_state() {
         quat orientation;
         if (read(c, "orientation", orientation))
             camera()->set_orientation(orientation);
+    }
+
+    const auto snapshot_state = state.find("snapshot");
+    if (snapshot_state != state.end() && snapshot_state->is_object()) {
+        const nlohmann::json &s = *snapshot_state;
+        read(s, "scale", snapshot_params_.scale);
+        read(s, "samples", snapshot_params_.samples);
+        read(s, "background", snapshot_params_.background);
+        read(s, "expand", snapshot_params_.expand);
+        // The same limits the dialog enforces.
+        snapshot_params_.scale = std::max(0.1f, std::min(snapshot_params_.scale, 8.0f));
+        snapshot_params_.samples = std::max(1, snapshot_params_.samples);
+        snapshot_params_.background = std::max(0, std::min(snapshot_params_.background, 2));
+        snapshot_samples_restored_ = true;
     }
 
     update();

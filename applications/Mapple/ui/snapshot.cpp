@@ -42,8 +42,10 @@ using namespace easy3d;
 void MappleViewer::open_snapshot_dialog() {
     if (process_op_ != ProcessOp::NONE)
         return;
-    // Start from the window's own sample count; the dialog can raise it.
-    snapshot_params_.samples = std::max(1, samples());
+    // Start from the window's own sample count; the dialog can raise it. A restored
+    // view state already carries the sample count its figure was rendered with.
+    if (!snapshot_samples_restored_)
+        snapshot_params_.samples = std::max(1, samples());
     show_snapshot_dialog_ = true;
 }
 
@@ -106,13 +108,9 @@ void MappleViewer::draw_snapshot_dialog() {
                 set_overlays({});
                 if (snapshot(file_name, p.scale, p.samples, p.background, p.expand)) {
                     LOG(INFO) << "snapshot saved to " << file_name;
-
-                    const auto state_file = file_system::replace_extension(file_name, "view");
-                    std::ofstream output(state_file);
-                    if (output) {
-                        save_view_state(state_file);
-                        LOG(INFO) << "view state saved to " << state_file;
-                    }
+                    // Keep the view next to the image: restoring it reopens the window,
+                    // camera and snapshot settings, so the figure can be re-rendered.
+                    save_view_state(file_system::replace_extension(file_name, "view"));
                 }
                 else
                     LOG(ERROR) << "failed to save the snapshot: " << file_name;

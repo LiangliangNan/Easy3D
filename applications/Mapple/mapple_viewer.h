@@ -484,8 +484,9 @@ private:
 
     bool save() const override;
 
-    // Writes/restores the window geometry, background color, projection and camera
-    // to/from a .view file (JSON). A parameter missing from the file keeps its value.
+    // Writes/restores the window geometry, background color, projection, camera and
+    // snapshot settings to/from a .view file (JSON). A parameter missing from the
+    // file keeps its value.
     void save_view_state();
     void save_view_state(const std::string& file_path);
 
@@ -642,6 +643,9 @@ private:
 
     bool show_snapshot_dialog_ = false;
     SnapshotParams snapshot_params_;
+    // A restored view state carries the sample count its figure was rendered with;
+    // opening the dialog must not re-seed it from the window.
+    bool snapshot_samples_restored_ = false;
 
     bool show_animation_window_ = false;
     int camera_keyframe_index_ = -1; // keyframe last jumped to, for Prev/Next

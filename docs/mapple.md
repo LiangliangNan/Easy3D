@@ -300,9 +300,13 @@ Phase 2 design notes:
       read a `.view` JSON file with the window size and position, the background color,
       the projection type, the clipping/near coefficients, the scene radius and center,
       the field of view, the camera position/orientation and pivot point, and the frame
-      sensitivities (rotation, translation, wheel, zoom, zooms-on-pivot). A missing or
-      mistyped key keeps the current value, a window position saved on a monitor that
-      is no longer connected is ignored, and restoring stops camera-path playback.
+      sensitivities (rotation, translation, wheel, zoom, zooms-on-pivot). Since batch
+      97 the file also carries the Snapshot dialog's settings (scale, samples,
+      background, expand) as a `snapshot` object, so restoring a figure's state
+      reopens the dialog with the values that figure was rendered with; a file
+      without the block keeps the dialog's current values. A missing or mistyped key
+      keeps the current value, a window position saved on a monitor that is no longer
+      connected is ignored, and restoring stops camera-path playback.
       This replaces the Qt app's row-based `.view`/`.state` text format. Mapple's
       files are JSON: Mapple-Qt's old text files are not read, and Mapple-Qt still
       reads and writes only its own format.
@@ -314,7 +318,11 @@ Phase 2 design notes:
       the viewer already drops its HUD, and the dialog drops the app's UI overlays
       with `set_overlays({})` immediately before capturing (the viewer renders client
       overlays in snapshots on purpose, e.g. annotations). `pre_draw()` rebuilds them
-      on the next frame, so the window is unaffected. The View menu item, the toolbar
+      on the next frame, so the window is unaffected. A successful save also writes
+      the viewer state to `<image>.view` next to the image through
+      `save_view_state(path)`: the window size, camera, background and the dialog's
+      settings all come back with Restore View State..., so a figure can be
+      re-rendered after an algorithm change. The View menu item, the toolbar
       button and `S` all open it.
 - [x] App settings and panel layout persistence: the Phase 0 settings/recent-files
       item is implemented (`AppSettings`, File > Open Recent), so Phase 3 is complete.
@@ -1202,3 +1210,25 @@ Models-panel/readout extras; retirement can proceed once those are decided on.
   drawn while neither list contained a "vector - f:normal" row, and the probe-free
   builds list faces, edges, borders, vertices and locks only. The library is unchanged,
   so the suites were not rerun; no clicks were scripted.
+
+### 2026-11-16 — Snapshots keep their view state
+
+- A successful snapshot writes the viewer state to `<image>.view` next to the image
+  through the `save_view_state(path)` overload (Camera > Save View State... shares the
+  same writer). Restoring it brings back the window size, camera and background, so
+  after an algorithm change a paper figure can be re-rendered from the previous view.
+- The state file also records the Snapshot dialog's own settings under a `snapshot`
+  object — scale, samples, background choice and frustum expansion — and restore
+  applies them with the same limits the dialog enforces. A file without the block (or
+  without one of its keys) keeps the dialog's current values. Opening the dialog after
+  a restore keeps the restored sample count instead of re-seeding it from the window.
+- The save block in `ui/snapshot.cpp` relies on `save_view_state`'s own logging (the
+  duplicate "view state saved" line is gone) and no longer opens a throwaway ofstream
+  as a writability test, so a failed write leaves no empty file behind.
+- Validation (2026-11-16, macOS): both check trees build and launch. Temporary probes
+  (removed afterwards; the only `getenv` left in the app is the pre-existing
+  `XDG_CONFIG_HOME` one) saved a state at 1200x800 with the camera at (3.7, -2.1, 84),
+  scale 2.5, samples 7, the white background and no frustum expansion; a fresh process
+  restored it and logged exactly those values with the resized window, and the file
+  held the `snapshot` block. No clicks were scripted; the library is unchanged, so the
+  suites were not rerun.

@@ -10494,3 +10494,30 @@ backends list faces, edges, borders, vertices and locks only. The change is conf
 to the application, so the 116/150 suites were not rerun (Mapple-only scope); no
 clicks were scripted. `easy3d/util/version.h` is unchanged.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 97: Snapshots save their view state
+
+**Scope.** A successful snapshot in `applications/Mapple` now writes the viewer state
+to `<image>.view` next to the image through `save_view_state(path)` (the Camera menu's
+Save View State... shares that writer), so an existing camera can be restored and a
+figure re-rendered after an algorithm change. The `.view` JSON gains a `snapshot`
+object holding the Snapshot dialog's scale, samples, background choice and frustum
+expansion; restoring applies them with the dialog's own limits, and a file without the
+block or key keeps the current values. The state restore sets a flag so opening the
+dialog afterwards does not re-seed the sample count from the window. The save block
+calls `save_view_state` directly and relies on its success/error logging instead of
+opening a throwaway ofstream, so a duplicate log line and a possible empty leftover
+file are gone. The library is untouched.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready
+(OpenGL/Vulkan)". Temporary probes (removed afterwards; the only `getenv` left in the
+app is the pre-existing `XDG_CONFIG_HOME` one) exercised the round trip on OpenGL: the
+save run resized the window to 1200x800, moved the camera to (3.7, -2.1, 84) and set
+scale 2.5, samples 7, white background and no frustum expansion, then called
+`save_view_state("/tmp/mapple-probe.view")`; the file contained the window, camera and
+`snapshot` block. A fresh process restored the same file and logged window 1200x800,
+the same camera position and 2.5 / 7 / 1 / false, with the window visibly resized. The
+change is confined to the application, so the 116/150 suites were not rerun
+(Mapple-only scope); no clicks were scripted. `easy3d/util/version.h` is unchanged.
+Linux/Windows/CI remain separate gates.
