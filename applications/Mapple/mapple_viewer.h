@@ -655,6 +655,10 @@ private:
     // Keyed by model, then drawable name: a renderer update may recreate drawables
     // while keeping their names.
     std::map<easy3d::Model *, std::map<std::string, ScalarFieldStyle>> scalar_styles_;
+
+    // The drawable whose editor the Rendering panel shows, by name for the same
+    // reason: it survives a renderer update that recreates the drawables.
+    std::string active_drawable_name_;
     const easy3d::Model *counted_model_ = nullptr;
     std::size_t selected_count_ = 0;
     bool selection_count_dirty_ = true;

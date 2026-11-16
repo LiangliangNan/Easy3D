@@ -381,6 +381,8 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     ImGui::TextUnformatted("Rendering");
     ImGui::Separator();
 
+    // Scene-wide controls, above the per-model section: the background, the
+    // projection, and the two full-frame passes, each collapsed to one header.
     vec4 background = background_color();
     if (ImGui::ColorEdit3("Background", background.data(), kSwatch)) {
         set_background_color(background);
@@ -388,20 +390,37 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     }
 
     const bool perspective = camera()->type() == Camera::PERSPECTIVE;
-    if (ImGui::RadioButton("Perspective", perspective)) {
+    if (ImGui::RadioButton("Persp", perspective)) {
         camera()->set_type(Camera::PERSPECTIVE);
         update();
     }
+    ImGui::SetItemTooltip("Perspective projection");
     ImGui::SameLine();
-    if (ImGui::RadioButton("Orthographic", !perspective)) {
+    if (ImGui::RadioButton("Ortho", !perspective)) {
         camera()->set_type(Camera::ORTHOGRAPHIC);
         update();
     }
+    ImGui::SetItemTooltip("Orthographic projection");
 
     ImGui::Spacing();
     // Qt's Global Setting panel exposed these four effects; each is a full-frame
-    // pass that owns the scene render, so at most one runs at a time.
-    if (ImGui::CollapsingHeader("Effects")) {
+    // pass that owns the scene render, so at most one runs at a time. The header
+    // names the running one, and the trailing id keeps its open state stable.
+    std::string effects_state;
+    if (ao_enabled())
+        effects_state = "ambient occlusion";
+    else if (edl_enabled())
+        effects_state = "eye dome lighting";
+    else if (shadow_enabled())
+        effects_state = "shadow";
+    else if (transparency_enabled())
+        effects_state = "transparency";
+    std::string effects_label = "Effects";
+    if (!effects_state.empty())
+        effects_label += " (" + effects_state + ")";
+    const bool effects_open = ImGui::CollapsingHeader((effects_label + "###effects").c_str());
+    ImGui::SetItemTooltip("Only one effect runs at a time; enabling one turns the others off.");
+    if (effects_open) {
         bool ao = ao_enabled();
         if (ImGui::Checkbox("Ambient Occlusion", &ao))
             set_ao_enabled(ao);
@@ -458,18 +477,20 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         bool transparency = transparency_enabled();
         if (ImGui::Checkbox("Transparency", &transparency))
             set_transparency_enabled(transparency);
-        if (transparency)
-            ImGui::TextDisabled("Dual depth peeling; the face opacity is set below.");
-
-        ImGui::TextDisabled("Enabling an effect turns the others off.");
+        ImGui::SetItemTooltip("Dual depth peeling; each face drawable sets its own opacity.");
     }
 
     ImGui::Spacing();
     // Clipping is a scene-wide effect, so it sits with the other global rendering
     // controls. The guide and Alt-drag manipulation are handled by Viewer.
-    if (ImGui::CollapsingHeader("Clipping Plane")) {
-        auto *plane = ClippingPlane::instance();
-        bool enabled = plane->is_enabled();
+    auto *plane = ClippingPlane::instance();
+    const bool clipping_enabled = plane->is_enabled();
+    const std::string clipping_label = std::string("Clipping Plane") +
+                                       (clipping_enabled ? " (on)" : "") + "###clipping";
+    const bool clipping_open = ImGui::CollapsingHeader(clipping_label.c_str());
+    ImGui::SetItemTooltip("Alt + LMB/RMB drag moves the plane");
+    if (clipping_open) {
+        bool enabled = clipping_enabled;
         if (ImGui::Checkbox("Enabled", &enabled)) {
             plane->set_enabled(enabled);
             if (enabled)
@@ -499,7 +520,6 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
             update();
         }
         ImGui::EndDisabled();
-        ImGui::TextDisabled("Alt + LMB/RMB drag to move the plane");
     }
 
     ImGui::Spacing();
@@ -515,8 +535,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         return;
     }
 
-    ImGui::TextUnformatted(file_system::simple_name(model->name()).c_str());
-    ImGui::Separator();
+    ImGui::SeparatorText(file_system::simple_name(model->name()).c_str());
     Renderer *renderer = model->renderer();
 
     // Fixed order: faces, edges, borders, vertices, locks. Unknown drawables come last.
@@ -558,63 +577,109 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         }
     };
 
+    // The editor below belongs to this drawable. It is looked up by name, so the
+    // selection survives the renderer updates that recreate the drawables.
+    Drawable *active = nullptr;
     for (Drawable *drawable : drawables) {
-        auto *triangles = dynamic_cast<TrianglesDrawable *>(drawable);
-        auto *lines = dynamic_cast<LinesDrawable *>(drawable);
-        auto *points = dynamic_cast<PointsDrawable *>(drawable);
+        if (drawable->name() == active_drawable_name_) {
+            active = drawable;
+            break;
+        }
+    }
+    if (!active && !drawables.empty()) {
+        active = drawables.front();
+        active_drawable_name_ = active->name();
+    }
 
+    // One line per drawable: visibility, uniform color, name, and current scheme.
+    // The row selectable runs underneath the checkbox and the swatch, so clicking
+    // anywhere else on the line selects the drawable for the editor below.
+    for (Drawable *drawable : drawables) {
         ImGui::PushID(drawable);
-        ImGui::TextUnformatted(drawable->name().c_str());
-        ImGui::Indent();
+        const bool selected = (drawable == active);
+        const ImVec2 row_min = ImGui::GetCursorScreenPos();
+        const float row_w = ImGui::GetContentRegionAvail().x;
+        const float row_h = ImGui::GetFrameHeight();
+        if (ImGui::Selectable("##row", selected, ImGuiSelectableFlags_AllowOverlap, ImVec2(0.0f, row_h)))
+            active_drawable_name_ = drawable->name();
 
+        ImGui::SameLine(0.0f, 0.0f);
         bool visible = drawable->is_visible();
-        if (ImGui::Checkbox("Visible", &visible)) {
+        if (ImGui::Checkbox("##visible", &visible)) {
             drawable->set_visible(visible);
             update();
         }
+        ImGui::SetItemTooltip(visible ? "Hide" : "Show");
 
         ImGui::SameLine();
         vec4 color = drawable->color();
-        if (ImGui::ColorEdit3("Color", color.data(), kSwatch)) {
+        if (ImGui::ColorEdit3("##color", color.data(), kSwatch)) {
+            // Picking a color is an explicit request for plain coloring, even when
+            // the drawable is currently colored by a property or a scalar field.
             drawable->set_uniform_coloring(color);
+            active_drawable_name_ = drawable->name();
+            update();
+        }
+        ImGui::SetItemTooltip("Uniform color");
+        const float swatch_right = ImGui::GetItemRectMax().x;
+
+        // Name on the left, scheme on the right, clipped where they meet.
+        const std::string scheme = scheme_label(drawable);
+        const float text_y = row_min.y + std::floor((row_h - ImGui::GetTextLineHeight()) * 0.5f);
+        const float name_x = swatch_right + ImGui::GetStyle().ItemSpacing.x;
+        const float row_right = row_min.x + row_w;
+        const float scheme_x = std::max(name_x + 30.0f,
+                                        row_right - ImGui::CalcTextSize(scheme.c_str()).x);
+        ImDrawList *draw_list = ImGui::GetWindowDrawList();
+        const ImU32 name_color = ImGui::GetColorU32(visible ? ImGuiCol_Text : ImGuiCol_TextDisabled);
+        draw_list->PushClipRect(ImVec2(name_x, row_min.y), ImVec2(scheme_x - 4.0f, row_min.y + row_h), true);
+        draw_list->AddText(ImVec2(name_x, text_y), name_color, drawable->name().c_str());
+        draw_list->PopClipRect();
+        draw_list->PushClipRect(ImVec2(scheme_x, row_min.y), ImVec2(row_right, row_min.y + row_h), true);
+        draw_list->AddText(ImVec2(scheme_x, text_y), ImGui::GetColorU32(ImGuiCol_TextDisabled), scheme.c_str());
+        draw_list->PopClipRect();
+
+        ImGui::PopID();
+    }
+
+    if (!active) {
+        ImGui::TextDisabled("No drawables.");
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Spacing();
+    ImGui::SeparatorText(active->name().c_str());
+    draw_color_scheme(model, active);
+
+    if (auto *triangles = dynamic_cast<TrianglesDrawable *>(active)) {
+        bool smooth = triangles->smooth_shading();
+        if (ImGui::Checkbox("Smooth shading", &smooth)) {
+            triangles->set_smooth_shading(smooth);
             update();
         }
 
-        draw_color_scheme(model, drawable);
-
-        if (triangles) {
-            bool smooth = triangles->smooth_shading();
-            if (ImGui::Checkbox("Smooth", &smooth)) {
-                triangles->set_smooth_shading(smooth);
-                update();
-            }
-
-            float opacity = triangles->opacity();
-            if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
-                triangles->set_opacity(opacity);
-                update();
-            }
-
-            draw_back_color(triangles);
-        } else if (lines) {
-            float width = lines->line_width();
-            if (ImGui::SliderFloat("Width", &width, 1.0f, 10.0f, "%.1f px")) {
-                lines->set_line_width(width);
-                update();
-            }
-        } else if (points) {
-            float size = points->point_size();
-            if (ImGui::SliderFloat("Size", &size, 1.0f, 20.0f, "%.1f px")) {
-                points->set_point_size(size);
-                update();
-            }
-
-            draw_back_color(points);
+        float opacity = triangles->opacity();
+        if (ImGui::SliderFloat("Opacity", &opacity, 0.0f, 1.0f, "%.2f")) {
+            triangles->set_opacity(opacity);
+            update();
         }
 
-        ImGui::Unindent();
-        ImGui::PopID();
-        ImGui::Spacing();
+        draw_back_color(triangles);
+    } else if (auto *lines = dynamic_cast<LinesDrawable *>(active)) {
+        float width = lines->line_width();
+        if (ImGui::SliderFloat("Width", &width, 1.0f, 10.0f, "%.1f px")) {
+            lines->set_line_width(width);
+            update();
+        }
+    } else if (auto *points = dynamic_cast<PointsDrawable *>(active)) {
+        float size = points->point_size();
+        if (ImGui::SliderFloat("Size", &size, 1.0f, 20.0f, "%.1f px")) {
+            points->set_point_size(size);
+            update();
+        }
+
+        draw_back_color(points);
     }
 
     ImGui::End();

@@ -10358,3 +10358,36 @@ to the application, the library is untouched, so the 116/150 suites were not rer
 (Mapple-only scope), and the save/restore dialogs were not scripted. The release tree
 was not rebuilt. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-16 — batch 93: Mapple Rendering panel redesign
+
+**Scope.** `applications/Mapple`'s Rendering panel is restructured around a drawable
+list and one editor instead of a repeated styling block per drawable. The scene-wide
+controls stay at the top (background swatch, perspective/orthographic radios, and the
+Effects and Clipping Plane sections each collapsed to one header whose title names the
+running effect or "Clipping Plane (on)"; the headers carry a stable `###id` so the
+changing title does not reset their expanded state). The notes those sections used to
+print moved into tooltips. Below them, the active model's drawables appear one line
+each: visibility checkbox, uniform color swatch, drawable name and the current color
+scheme right-aligned. The line is a full-width `Selectable` drawn underneath the
+checkbox and swatch, so clicking anywhere else selects the drawable and hidden
+drawables render dimmed. A single editor below the list shows the selected drawable:
+the unchanged color-scheme combo with its scalar-field controls (colormap,
+discrete/stripes, clamp range) and the type-specific controls (smooth shading,
+opacity, back color for triangles; width for lines; size, back color for points).
+The selection is stored by drawable name, the key the scalar styles already use, so
+it survives the `Renderer::update()` calls that recreate drawables. Picking a color
+in a row's swatch is an explicit request for uniform coloring; previously the color
+edit sat beside the scheme combo on every drawable and silently reset scalar
+coloring. The library is untouched; `MappleViewer` gains one member,
+`active_drawable_name_`.
+
+**Validation (2026-11-16, macOS).** Mapple was rebuilt in `build-opengl-check` and
+`build-vulkan-check`; both binaries launch and log "Mapple UI ready" (OpenGL and
+Vulkan). The panel was checked on the OpenGL instance with a point cloud and a
+surface mesh: all five drawables of the mesh listed their visibility, color, name and
+scheme, and the selected row's editor appeared below. The Vulkan window opened behind
+the running OpenGL instance and was not re-checked visually. The change is confined
+to the application, so the 116/150 suites were not rerun (Mapple-only scope); no
+clicks were scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
+separate gates.

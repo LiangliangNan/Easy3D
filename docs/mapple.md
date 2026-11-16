@@ -106,8 +106,10 @@ Reuse inventory (verified):
 - [x] `ImGuiLayer`: context, Droid Sans atlas, DPI scaling, ImDrawData translation.
 - [x] Menu bar (File, View, Camera, Help), toolbar, status bar.
 - [x] Models panel: tree, active model selection, per-drawable visibility, delete, fit.
-- [x] Rendering panel: background color, projection; active-model drawable styling
-      (visibility, uniform color, point size, line width, smooth shading, back color).
+- [x] Rendering panel: background color, projection; the active model's drawables as a
+      compact list (visibility, uniform color, name, current scheme) with one editor
+      for the selected drawable (color scheme, scalar-field styles, point size, line
+      width, smooth shading, opacity, back color).
 - [x] Log panel: level-colored lines, auto-scroll, clear, copy, export.
 - [x] Settings persistence, recent files: `AppSettings` (`settings.h/.cpp`) writes
       panel visibility and sizes, the pick-readout and log auto-scroll toggles, the
@@ -1094,3 +1096,34 @@ Models-panel/readout extras; retirement can proceed once those are decided on.
   `build-vulkan-check` and launches with "Mapple UI ready" on both backends.
   The library is unchanged, so the suites were not rerun; the save/restore
   dialogs were not scripted. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-16 — Rendering panel: drawable list and one editor
+
+- The Rendering panel no longer repeats a full styling block for every drawable. The
+  scene-wide controls stay at the top: background swatch, projection radios, and the
+  Effects and Clipping Plane sections collapsed to one header each. The active
+  model's drawables are then listed one line per drawable: visibility checkbox,
+  uniform color swatch, name, and the current color scheme right-aligned. The line
+  is a selectable spanning the row; the checkbox and the swatch take the clicks they
+  cover. Hidden drawables are drawn dimmed.
+- Below the list, a single editor shows the selected drawable: the color-scheme combo
+  with its scalar-field controls (colormap, discrete/stripes, clamp range), then the
+  type-specific controls (smooth shading, opacity and back color for triangles, width
+  for lines, size and back color for points). The styling logic is unchanged; only
+  the layout moved.
+- The selection is stored by drawable name, the key the scalar styles already use,
+  so it survives renderer updates that recreate the drawables. Picking a color in the
+  row's swatch is an explicit request for uniform coloring; the editor's scheme combo
+  stays the place to switch to a property or a scalar field. Previously every
+  drawable had its own color edit sitting next to its scheme combo, so picking a
+  color there silently reset a scalar coloring.
+- The Effects and Clipping Plane headers name their state ("Effects (shadow)",
+  "Clipping Plane (on)") and carry a stable id, so the title changes without losing
+  the expanded state. The notes they used to print (one effect at a time, where the
+  face opacity lives, the Alt-drag hint) moved into header/checkbox tooltips.
+- Validation (2026-11-16, macOS): both check trees build. The panel was checked on
+  OpenGL with a point cloud and a surface mesh: the five drawables of the mesh
+  listed their visibility, color, name and scheme, and the selected row's editor sat
+  below. The Vulkan tree launched ("Mapple UI ready (Vulkan)"); its window opened
+  behind the OpenGL instance, so the panel was not re-checked there. The library is
+  unchanged, so the suites were not rerun; no clicks were scripted.
