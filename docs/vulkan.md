@@ -10670,3 +10670,58 @@ down to 5.6 fps with A2C and 12.4 fps without), so only the best-behaved pairs a
 quoted. The plain-point,
 wide-line and ID-pass paths are untouched. `easy3d/util/version.h` is unchanged.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 102: plain-point deficit is a present-cap and point-size-clamp artifact (no code change)
+
+**Scope.** A ToDo follow-up to batch 87: at a single sample the plain-point rows
+(92.1/64.7/119.8 fps against OpenGL's 126-139/119.5/238-272) were 1.5-1.9x short on
+Vulkan, and the always-written 8-byte `R32G32_UINT` ID attachment of the Vulkan color
+pass was the leading hypothesis. The controlled experiment was a temporary probe in
+`easy3d_point_benchmark_test` (window size, point size, camera distance and sample count
+selected by environment variables, plus a hidden-cloud mode that measures the fixed
+per-frame cost) and a probe in `render_device.cpp` that set `blend[1].colorWriteMask = 0`
+for `PassKind::color_ids`; both attachments share blend state, so this needs no
+`independentBlend` feature. Both probes were removed afterwards and no production code
+changed. All rows below are the fountain cloud (479k points), 1600x917 unless stated,
+single sample, measured with the Release binaries of `build-vulkan-check` and
+`build-opengl-check`.
+
+**ID writes.** Point size 60, 4800x2752 logical, camera at +3R, two runs each way:
+vulkan-native 15.25/15.03 ms with the ID writes and 15.40/15.88 ms with them masked,
+vulkan-expanded 20.13/20.06 against 20.36/20.69. Masking the 8 bytes per fragment neither
+helps nor hurts beyond the ~5% run-to-run noise, so the ID write is not the cost.
+
+**Present interval.** The Vulkan window path reports 119.7-120.1 fps (8.33 ms) whenever a
+frame is cheaper than the 120 Hz refresh interval: every 1600x917 size-15 row at
+k = +3R/+1R/+0.2R (4 samples), 4800x2752 at single sample with sizes 1 and 30, and the
+empty hidden scene at 4800 and 6400 all returned 8.33-8.42 ms. A Vulkan row in that band
+only says "cost <= 8.3 ms"; it cannot be compared with an uncapped OpenGL number. OpenGL reached
+239-488 fps in the light rows, so its 8.32-8.46 ms heavy rows are not a shared cap.
+
+**Point-size clamp.** `GL_POINT_SIZE_RANGE` is 1..64 physical pixels on this Mac and the
+OpenGL backend passes `point_size * dpi`, so at DPI 2 any logical size above 32 is
+clamped. The row that looked like a 2x plain-point deficit (vulkan-native 16.71 ms against
+OpenGL 8.34 ms at 6400x3670, size 60) drew 120-px points on Vulkan and 64-px points on
+OpenGL; it is not a like-for-like comparison.
+
+**Like-for-like.** At logical size 30 (60 physical on both) and equal covered pixels
+(13,683,271 Vulkan against 13,683,281 OpenGL, counted through the ID capture), both
+configurations above the 8.33 ms present interval: 6400x3670 vulkan-native 9.59 ms against
+OpenGL 9.86 ms (104.3 against 101.4 fps), 8000x4585 vulkan-native 13.49 against 13.25 ms
+(74.1 against 75.5 fps). At 6400x3670 the six-vertex expanded path costs 14.01 ms, or
+1.46x the native path, and at 8000x4585 17.63 ms, or 1.31x, which is its extra vertex
+work rather than a backend overhead.
+
+**Conclusion.** At a single sample and equal physical footprint the Vulkan plain-point
+path is at parity with OpenGL, the ID attachment is not a performance factor, and the
+recorded 1.5-1.9x band mixes the 120 Hz present interval with point-size-clamp
+comparisons. The scratch viewer that produced the band no longer exists (the follow-up
+re-measured on the current harness), and today the same nominal settings stay at the
+120 fps floor, so no remaining difference can be attributed further; no code change is
+made. The expanded six-vertex point path and the analytic impostor paths are unaffected.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK, Release).** Both check trees were
+rebuilt from the restored sources after the probes were removed; `viewer.pointbenchmark`
+passes in both (Vulkan 21.6 s, OpenGL 10.3 s). No source or test changed, so the suites
+were not re-run. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate
+gates.
