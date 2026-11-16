@@ -384,6 +384,10 @@ void MappleViewer::draw_menu_property() {
         open_process(ProcessOp::PROP_CURVATURES);
 
     ImGui::Separator();
+    if (ImGui::MenuItem("Manipulate Properties...", nullptr, false, model != nullptr))
+        open_properties_window();
+
+    ImGui::Separator();
     if (ImGui::MenuItem("Color from Indexed Colors...", nullptr, false, indexed_colors_supported)) {
         const std::string default_path = settings_.data_directory.empty()
                                                  ? resource::directory() + "/data/"

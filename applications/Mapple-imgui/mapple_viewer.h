@@ -292,6 +292,29 @@ private:
     // Modal progress window shown while a background command runs.
     void draw_process_progress();
 
+    // ui/properties.cpp
+
+    // Opens the floating Properties window on the active model.
+    void open_properties_window();
+
+    // Floating, non-modal property editor: lists the model's vertex, face, edge and
+    // halfedge properties; right-clicking one removes, renames, converts or colors
+    // by it. The scene stays interactive while it is open.
+    void draw_properties_window();
+
+    // Points, lines and triangles drawables (and the appearance saved by the
+    // selection display) that colored by old_name now color by new_name; an empty
+    // new_name resets them to uniform coloring. Keeps the view valid instead of
+    // leaving stale property references.
+    void sync_property_references(easy3d::Model *model, easy3d::State::Location location,
+                                  const std::string &old_name, const std::string &new_name);
+
+    // Colors the drawable that draws the given location by the color property, so a
+    // generated color property is visible immediately. While a selection is shown,
+    // the colors become the appearance restored when the selection ends.
+    void apply_color_property(easy3d::Model *model, easy3d::State::Location location,
+                              const std::string &name);
+
     // ui/snapshot.cpp
     void open_snapshot_dialog();
 
@@ -488,6 +511,19 @@ private:
     bool show_models_panel_ = true;
     bool show_log_panel_ = true;
     bool show_about_ = false;
+
+    // Properties window: the model it edits, whether internal bookkeeping properties
+    // are listed, and the pending rename (property, location, edited name).
+    bool show_properties_window_ = false;
+    bool focus_properties_window_ = false;
+    bool show_internal_properties_ = false;
+    easy3d::Model *properties_model_ = nullptr;
+    bool open_rename_popup_ = false;
+    std::string rename_property_;
+    easy3d::State::Location rename_location_ = easy3d::State::VERTEX;
+    std::string rename_error_;
+    char rename_buffer_[128] = {};
+
     bool show_snapshot_dialog_ = false;
     SnapshotParams snapshot_params_;
 

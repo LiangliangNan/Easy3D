@@ -13,6 +13,7 @@ add_executable(${name}
         ui/process.cpp
         ui/snapshot.cpp
         ui/animation.cpp
+        ui/properties.cpp
         )
 set_target_properties(${name} PROPERTIES FOLDER "applications")
 target_include_directories(${name} PRIVATE ${Easy3D_INCLUDE_DIR})

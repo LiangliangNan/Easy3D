@@ -161,7 +161,7 @@ void append_schemes(const std::vector<std::string> &names, State::Location locat
 // so a drawable never offers a property its shader cannot read.
 void collect_color_schemes(Model *model, Drawable *drawable, std::vector<ColorScheme> &schemes) {
     ColorScheme uniform;
-    uniform.label = "Uniform color";
+    uniform.label = "uniform color";
     uniform.method = State::UNIFORM_COLOR;
     uniform.location = State::VERTEX;
     uniform.property = "uniform color";
@@ -207,7 +207,7 @@ void collect_color_schemes(Model *model, Drawable *drawable, std::vector<ColorSc
 std::string scheme_label(const Drawable *drawable) {
     switch (drawable->coloring_method()) {
         case State::UNIFORM_COLOR:
-            return "Uniform color";
+            return "uniform color";
         case State::SCALAR_FIELD:
             return "scalar - " + drawable->property_name();
         default:

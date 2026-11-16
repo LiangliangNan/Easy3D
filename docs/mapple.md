@@ -309,9 +309,10 @@ and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
 The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
 stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
 group (the four Property-menu commands), the rendering panel's color-scheme selector,
-and the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
-Cloud > Normalize Normals) are migrated; the remaining groups are property
-manipulation, small utilities, and view polish.
+the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
+Cloud > Normalize Normals), and property manipulation (Property > Manipulate
+Properties...) are migrated; the remaining groups are small utilities and view
+polish.
 
 ## ImGui notes
 
@@ -886,3 +887,56 @@ manipulation, small utilities, and view polish.
   `SCALAR_FIELD`, `buffer.cpp` logged
   "scalar field range [0, 1000] clamped (5%, 5%) to [11, 917]", and no
   "not found" warning appeared.
+
+### 2026-11-16 — Property manipulation (Phase 4 gap group 4)
+
+- Property > Manipulate Properties... opens a non-modal window on the whole model
+  list: a model combo, vertex/face/edge/halfedge sections with property counts and
+  types, and a toggle that reveals the properties the editor normally hides (mesh
+  bookkeeping such as `v:locked`, and the selection display). Right-clicking a
+  property offers Remove, Rename..., Convert to (the numeric types), and Generate
+  color property. The window sizes to its content on first use, so a model with few
+  properties gets a short window. The scene stays interactive while it is open.
+- The four operations fix the defects of the Qt dialog instead of reproducing them:
+  - Conversion now actually changes the data type. A typed conversion moves the
+    values to a uniquely named temporary property (checked through the container's
+    type query), removes the old one and gives the temporary the original name, so a
+    pre-existing `<name><name>` property can no longer make the conversion fail
+    silently. The menu offers only convertible numeric types; Qt listed vec2/vec3,
+    which it could not convert.
+  - Rename validates the destination first (`PropertyContainer::rename` itself
+    replaces the name even when another property already has it) and rebuilds the
+    name from the location prefix, so renaming `f:foo` on vertices yields `v:foo`
+    instead of `v:f:foo`. Renaming a property to its own name just closes the dialog.
+  - Drawables and the appearance saved by the selection display follow a rename or
+    conversion; when the property a drawable displays is removed, the drawable keeps
+    a valid uniform color instead of the old "property not found" fallback. Removing
+    `v:select`/`f:select` also restores the style saved before the selection display.
+  - A generated color property is shown immediately: the drawable that draws that
+    location switches to it (or, while a selection is shown, it becomes the style
+    restored when the selection ends), which is why generated colors are now visible
+    without a trip to the Rendering panel. Names follow the Qt scheme
+    (`v:color-<name>`, `f:color-<name>`); int/unsigned int/std::size_t/bool/unsigned
+    char fields use one random color per segment and float fields the bundled rainbow
+    colormap. The colormap sample is clamped to the last column (Qt read the first
+    pixel of the following row at the maximum) and a constant float field is refused
+    with a message, instead of producing a meaningless colormap.
+  - `v:select`/`f:select` are listed only as internal properties and are not offered
+    for conversion; both remain removable, which restores the saved selection style.
+- Validation (2026-11-16, macOS): all three trees build (`cmake-build-release`,
+  `build-vulkan-check`, `build-opengl-check`). A temporary probe (removed afterwards)
+  called the same helpers the context menu calls and reported 26 passing checks on
+  `bunny.ply` (four shared prefix checks plus: face int property converted to float
+  with values preserved, rename, duplicate-destination detection, generated
+  `f:color-probe-renamed` displayed on the faces drawable, drawable follows the
+  renamed `f:colors`, uniform fallback after removal, random colors from an int
+  segmentation, constant float field refused, cleanup) and 14 on
+  `fountain/pointcloud.ply` (the four prefix checks plus: vertex segmentation colors
+  displayed on the vertices drawable, int -> unsigned int, rename, uniform fallback).
+  A second short probe put a float `f:color-chart` in the way before generating colors
+  from bunny's `f:chart`: the colors were created as `f:color-chart-1` (vec3), and
+  regenerating reused `f:color-chart`.
+  The window was also forced open with internal properties shown for the duration of
+  a run: no errors or assertions, and "Mapple UI ready" appears in the log. The
+  context-menu clicks themselves were not scripted. Leaving changes uncommitted per
+  the standing rule.
