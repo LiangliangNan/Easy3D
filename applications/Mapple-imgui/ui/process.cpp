@@ -29,17 +29,18 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <fstream>
 #include <set>
 #include <sstream>
 #include <unordered_map>
 
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
+#include <easy3d/algo/gaussian_noise.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/algo/point_cloud_simplification.h>
+#include <easy3d/algo/surface_mesh_ambient_occlusion.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
@@ -55,8 +56,10 @@
 #include <easy3d/algo/surface_mesh_smoothing.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
+#include <easy3d/algo/surface_mesh_tetrahedralization.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_topology.h>
+#include <easy3d/algo/text_mesher.h>
 #ifdef HAS_CGAL
 #include <easy3d/algo_ext/surfacer.h>
 #endif
@@ -64,14 +67,18 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture.h>
+#include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/resource.h>
 
 #include <3rd_party/imgui/imgui.h>
 
@@ -222,12 +229,20 @@ const char *MappleViewer::process_title(ProcessOp op) {
             return "Split by Clipping Plane";
         case ProcessOp::MESH_SLICE:
             return "Slice by Clipping Plane";
+        case ProcessOp::MESH_TETRAHEDRALIZE:
+            return "Tetrahedralization";
+        case ProcessOp::MESH_CREATE_FROM_TEXT:
+            return "Create Mesh from Text";
+        case ProcessOp::POLY_EXTRACT_BOUNDARY:
+            return "Extract Boundary";
+        case ProcessOp::EDIT_GAUSSIAN_NOISE:
+            return "Add Gaussian Noise";
         case ProcessOp::PROP_HEIGHT_FIELD:
             return "Compute Height Field";
         case ProcessOp::PROP_CURVATURES:
             return "Compute Surface Mesh Curvatures";
-        case ProcessOp::PROP_INDEXED_COLORS:
-            return "Color from Indexed Colors";
+        case ProcessOp::PROP_AMBIENT_OCCLUSION:
+            return "Compute Ambient Occlusion";
         case ProcessOp::PROP_TOPOLOGY:
             return "Topology Statistics";
         default:
@@ -239,26 +254,38 @@ void MappleViewer::open_process(ProcessOp op) {
     if (process_job_ || show_snapshot_dialog_)
         return;
     Model *model = current_model();
-    if (!model)
+    // Creating a mesh from text is the one command that needs no current model.
+    if (!model && op != ProcessOp::MESH_CREATE_FROM_TEXT)
         return;
 
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
+
     const bool point_cloud_op = op == ProcessOp::PC_ESTIMATE_NORMALS ||
                                 op == ProcessOp::PC_REORIENT_NORMALS ||
                                 op == ProcessOp::PC_NORMALIZE_NORMALS || op == ProcessOp::PC_SIMPLIFY ||
                                 op == ProcessOp::PC_POISSON || op == ProcessOp::PC_RANSAC ||
                                 op == ProcessOp::PC_DELAUNAY_2D || op == ProcessOp::PC_DELAUNAY_3D;
-    const bool property_op = op == ProcessOp::PROP_HEIGHT_FIELD || op == ProcessOp::PROP_CURVATURES ||
-                             op == ProcessOp::PROP_INDEXED_COLORS || op == ProcessOp::PROP_TOPOLOGY;
-    if ((point_cloud_op && !cloud) || (!point_cloud_op && !property_op && !mesh))
+    if (point_cloud_op) {
+        if (!cloud)
+            return;
+    } else if (op == ProcessOp::PROP_HEIGHT_FIELD) {
+        // Any model type; run_process_algorithm reports unsupported ones.
+    } else if (op == ProcessOp::PROP_CURVATURES || op == ProcessOp::PROP_AMBIENT_OCCLUSION) {
+        if (!mesh)
+            return;
+    } else if (op == ProcessOp::PROP_TOPOLOGY) {
+        if (!mesh && !dynamic_cast<Graph *>(model))
+            return;
+    } else if (op == ProcessOp::POLY_EXTRACT_BOUNDARY) {
+        if (!dynamic_cast<PolyMesh *>(model))
+            return;
+    } else if (op == ProcessOp::EDIT_GAUSSIAN_NOISE) {
+        if (!cloud && !mesh)
+            return;
+    } else if (op != ProcessOp::MESH_CREATE_FROM_TEXT && !mesh) {
         return;
-    if (op == ProcessOp::PROP_CURVATURES && !mesh)
-        return;
-    if (op == ProcessOp::PROP_INDEXED_COLORS && !cloud && !mesh)
-        return;
-    if (op == ProcessOp::PROP_TOPOLOGY && !mesh && !dynamic_cast<Graph *>(model))
-        return;
+    }
 
     // Targets depend on the current model; refresh them so reopening a window always
     // starts from a sensible value.
@@ -268,6 +295,8 @@ void MappleViewer::open_process(ProcessOp op) {
         process_params_.simplify_target = static_cast<int>(std::max(4u, mesh->n_vertices() / 2));
     if (op == ProcessOp::MESH_SAMPLE && mesh)
         process_params_.sample_points = static_cast<int>(std::max<std::size_t>(1000000, mesh->n_vertices() + 1));
+    if (op == ProcessOp::MESH_CREATE_FROM_TEXT && process_params_.font_file.empty())
+        process_params_.font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
 
     process_op_ = op;
 }
@@ -284,8 +313,9 @@ void MappleViewer::run_process(ProcessOp op) {
 void MappleViewer::draw_process_dialog() {
     if (process_op_ == ProcessOp::NONE)
         return;
+    // Creating a mesh from text works without a current model.
     Model *model = current_model();
-    if (!model) {
+    if (!model && process_op_ != ProcessOp::MESH_CREATE_FROM_TEXT) {
         process_op_ = ProcessOp::NONE;
         return;
     }
@@ -304,13 +334,15 @@ void MappleViewer::draw_process_dialog() {
     const bool visible = ImGui::Begin(process_title(process_op_), nullptr, flags);
 
     if (visible) {
-        ImGui::TextDisabled("%s", model->name().c_str());
-        ImGui::Separator();
-        if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))
-            ImGui::Text("%u vertices, %u faces", mesh->n_vertices(), mesh->n_faces());
-        else if (auto *cloud = dynamic_cast<PointCloud *>(model))
-            ImGui::Text("%u points", cloud->n_vertices());
-        ImGui::Spacing();
+        if (model) {
+            ImGui::TextDisabled("%s", model->name().c_str());
+            ImGui::Separator();
+            if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))
+                ImGui::Text("%u vertices, %u faces", mesh->n_vertices(), mesh->n_faces());
+            else if (auto *cloud = dynamic_cast<PointCloud *>(model))
+                ImGui::Text("%u points", cloud->n_vertices());
+            ImGui::Spacing();
+        }
 
         ProcessParams &p = process_params_;
         switch (process_op_) {
@@ -360,6 +392,34 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::TextDisabled("Requires normals; colors points by primitive.");
                 break;
             }
+
+            case ProcessOp::EDIT_GAUSSIAN_NOISE: {
+                ImGui::InputFloat("Sigma", &p.noise_sigma, 0.0001f, 0.001f, "%.5f");
+                const float suggested = model->bounding_box().radius() * 0.01f;
+                ImGui::TextDisabled("Suggested: %.5f (1%% of the bounding-sphere radius)", suggested);
+                if (ImGui::Button("Use suggested sigma"))
+                    p.noise_sigma = suggested;
+                ImGui::TextDisabled("Adds Gaussian noise in x, y and z to the current model.");
+                break;
+            }
+
+            case ProcessOp::MESH_CREATE_FROM_TEXT:
+                ImGui::InputText("Text", p.text_buffer, sizeof(p.text_buffer));
+                ImGui::InputInt("Font size", &p.text_font_size);
+                ImGui::InputInt("Extrusion", &p.text_extrusion);
+                ImGui::InputInt("Bezier steps", &p.text_bezier_steps);
+                ImGui::Checkbox("Collision free", &p.text_collision_free);
+                ImGui::TextDisabled("%s", file_system::simple_name(p.font_file).c_str());
+                ImGui::SameLine();
+                if (ImGui::Button("Font...")) {
+                    const std::string file = dialog::open(
+                            "Choose a font file", file_system::parent_directory(p.font_file),
+                            {"True Type Font (*.ttf)", "*.ttf", "All Files (*.*)", "*"});
+                    if (!file.empty())
+                        p.font_file = file;
+                }
+                ImGui::TextDisabled("Adds a new mesh; a surface mesh named like the text is rebuilt.");
+                break;
 
             case ProcessOp::MESH_SMOOTH:
                 if (ImGui::RadioButton("Explicit", !p.smooth_implicit))
@@ -434,6 +494,15 @@ void MappleViewer::draw_process_dialog() {
                 ImGui::TextDisabled("Runs in the background.");
                 break;
 
+            case ProcessOp::PROP_AMBIENT_OCCLUSION:
+                ImGui::SliderFloat("Radius ratio", &p.ao_radius_ratio, 0.01f, 1.0f, "%.3f",
+                                   ImGuiSliderFlags_Logarithmic);
+                ImGui::InputInt("Rays per vertex", &p.ao_samples);
+                ImGui::InputFloat("Bias ratio", &p.ao_bias_ratio, 0.0005f, 0.001f, "%.4f");
+                ImGui::TextDisabled("Bakes v:ao and writes the occlusion into the vertex colors v:ao_color.");
+                ImGui::TextDisabled("Runs in the background on triangle meshes.");
+                break;
+
             default:
                 break;
         }
@@ -469,8 +538,10 @@ bool MappleViewer::is_long_running(ProcessOp op) {
         case ProcessOp::MESH_REMOVE_DUPLICATE_FACES:
         case ProcessOp::MESH_DETECT_SELF_INTERSECTIONS:
         case ProcessOp::MESH_REMESH_SELF_INTERSECTIONS:
+        case ProcessOp::MESH_TETRAHEDRALIZE:
             return true;
         case ProcessOp::PROP_CURVATURES:
+        case ProcessOp::PROP_AMBIENT_OCCLUSION:
             return true;
         default:
             return false;
@@ -610,6 +681,20 @@ bool MappleViewer::run_process_algorithm(Model *model) {
     bool skip_selection_display = false;
 
     switch (process_op_) {
+        case ProcessOp::EDIT_GAUSSIAN_NOISE: {
+            const float sigma = std::max(0.00001f, std::min(1.0f, p.noise_sigma));
+            if (mesh) {
+                GaussianNoise::apply(mesh, sigma);
+                LOG(INFO) << "gaussian noise (sigma " << sigma << ") added to " << mesh->n_vertices()
+                          << " mesh vertices";
+            } else if (cloud) {
+                GaussianNoise::apply(cloud, sigma);
+                LOG(INFO) << "gaussian noise (sigma " << sigma << ") added to " << cloud->n_vertices()
+                          << " points";
+            }
+            break;
+        }
+
         case ProcessOp::PC_ESTIMATE_NORMALS:
             if (cloud) {
                 const int k = std::max(3, p.normals_k);
@@ -1334,6 +1419,106 @@ bool MappleViewer::run_process_algorithm(Model *model) {
             }
             break;
 
+        case ProcessOp::MESH_TETRAHEDRALIZE:
+            if (mesh) {
+                SurfaceMeshTetrehedralization tetra;
+                PolyMesh *result = tetra.apply(mesh);
+                if (!result || result->empty()) {
+                    LOG(WARNING) << "tetrahedralization failed (it needs a closed triangle mesh)";
+                    delete result;
+                    break;
+                }
+                result->set_name(file_system::name_less_extension(mesh->name()) +
+                                 "_tetrahedralization.plm");
+                LOG(INFO) << "tetrahedralization: " << result->n_vertices() << " vertices, "
+                          << result->n_faces() << " faces";
+                if (process_job_)
+                    process_job_->result = result;
+                else
+                    add_model(result);
+            }
+            break;
+
+        case ProcessOp::MESH_CREATE_FROM_TEXT: {
+            const std::string text(p.text_buffer);
+            if (text.empty()) {
+                LOG(WARNING) << "the text is empty";
+                break;
+            }
+            if (!file_system::is_file(p.font_file)) {
+                LOG(WARNING) << "font file does not exist: " << p.font_file;
+                break;
+            }
+
+            const int font_size = std::max(5, p.text_font_size);
+            const int extrusion = std::max(1, p.text_extrusion);
+            const int steps = std::max(1, std::min(10, p.text_bezier_steps));
+            TextMesher mesher(p.font_file, static_cast<unsigned short>(steps));
+
+            SurfaceMesh *target = dynamic_cast<SurfaceMesh *>(model);
+            if (target && target->name() == text) {
+                // Like the Qt command: rebuild a mesh that carries the same text.
+                target->clear();
+                if (!mesher.generate(target, text, 0, 0, font_size, extrusion, p.text_collision_free)) {
+                    LOG(WARNING) << "failed to rebuild the text mesh";
+                    break;
+                }
+                target->update_face_normals();
+                target->update_vertex_normals();
+                if (target->manipulator())
+                    target->manipulator()->reset();
+                selection_styles_.erase(target);
+                skip_selection_display = true;
+                LOG(INFO) << "text mesh rebuilt: '" << text << "' (" << target->n_faces() << " faces)";
+            } else {
+                SurfaceMesh *created =
+                        mesher.generate(text, 0, 0, font_size, extrusion, p.text_collision_free);
+                if (!created) {
+                    LOG(WARNING) << "failed to generate a mesh from the text";
+                    break;
+                }
+                created->set_name(text);
+                LOG(INFO) << "mesh created from text '" << text << "': " << created->n_vertices()
+                          << " vertices, " << created->n_faces() << " faces";
+                add_model(created);
+            }
+            break;
+        }
+
+        case ProcessOp::POLY_EXTRACT_BOUNDARY: {
+            auto *poly = dynamic_cast<PolyMesh *>(model);
+            if (poly) {
+                std::vector<std::vector<PolyMesh::Vertex>> faces;
+                poly->extract_boundary(faces);
+
+                auto *boundary = new SurfaceMesh;
+                boundary->set_name(file_system::name_less_extension(poly->name()) + "_boundary.ply");
+                std::unordered_map<PolyMesh::Vertex, SurfaceMesh::Vertex, PolyMesh::Vertex::Hash> unique;
+                SurfaceMeshBuilder builder(boundary);
+                builder.begin_surface();
+                for (const auto &face : faces) {
+                    std::vector<SurfaceMesh::Vertex> vertices;
+                    vertices.reserve(face.size());
+                    for (auto pv : face) {
+                        auto it = unique.find(pv);
+                        if (it == unique.end()) {
+                            auto sv = builder.add_vertex(poly->position(pv));
+                            it = unique.insert(std::make_pair(pv, sv)).first;
+                        }
+                        vertices.push_back(it->second);
+                    }
+                    builder.add_face(vertices);
+                }
+                builder.end_surface();
+                boundary->update_face_normals();
+                boundary->update_vertex_normals();
+                LOG(INFO) << "boundary extracted: " << faces.size() << " faces, "
+                          << boundary->n_vertices() << " vertices";
+                add_model(boundary);
+            }
+            break;
+        }
+
         case ProcessOp::PROP_HEIGHT_FIELD: {
             // Graph derives from PointCloud, so it must be tested first.
             auto *graph = dynamic_cast<Graph *>(model);
@@ -1376,127 +1561,25 @@ bool MappleViewer::run_process_algorithm(Model *model) {
             }
             break;
 
-        case ProcessOp::PROP_INDEXED_COLORS: {
-            if (p.indexed_colors_file.empty()) {
-                LOG(WARNING) << "no indexed colors file was chosen";
-                break;
-            }
-            std::ifstream input(p.indexed_colors_file);
-            if (!input.is_open()) {
-                LOG(WARNING) << "could not open file: " << p.indexed_colors_file;
-                break;
-            }
-
-            // Format: a "<v|f>:<property name>" header line, then "<index> <r> <g> <b>"
-            // lines with 0-255 colors. Blank lines and '#' comments are ignored.
-            std::unordered_map<int, vec3> indexed_colors;
-            int location = -1; // 0: vertices, 1: faces
-            std::string indices_name;
-            std::string line;
-            int malformed = 0;
-            while (std::getline(input, line)) {
-                const std::size_t first = line.find_first_not_of(" \t\r");
-                if (first == std::string::npos)
-                    continue;
-                line.erase(0, first);
-                if (line[0] == '#')
-                    continue;
-                if (line.rfind("v:", 0) == 0 || line.rfind("f:", 0) == 0) {
-                    location = (line[0] == 'v') ? 0 : 1;
-                    indices_name = line.substr(0, line.find_first_of(" \t"));
-                    continue;
-                }
-                std::istringstream values(line);
-                int index = 0;
-                vec3 color(0.0f);
-                if (values >> index >> color)
-                    indexed_colors[index] = color / 255.0f;
-                else
-                    ++malformed;
-            }
-
-            if (location < 0) {
-                LOG(WARNING) << "the file does not declare the index property "
-                                "(expected a 'v:<name>' or 'f:<name>' line)";
-                break;
-            }
-            if (indexed_colors.empty()) {
-                LOG(WARNING) << "no indexed colors found in file: " << p.indexed_colors_file;
-                break;
-            }
-            if (malformed > 0)
-                LOG(WARNING) << "ignored " << malformed << " malformed line(s) in " << p.indexed_colors_file;
-
-            // Missing indices are colored black, like the Qt command.
-            if (location == 0 && cloud) {
-                auto indices = cloud->get_vertex_property<int>(indices_name);
-                if (!indices) {
-                    LOG(WARNING) << "no vertex property named '" << indices_name << "'";
+        case ProcessOp::PROP_AMBIENT_OCCLUSION:
+            if (mesh) {
+                if (!mesh->is_triangle_mesh()) {
+                    LOG(WARNING) << "ambient occlusion requires a triangle mesh "
+                                    "(Process > Surface Mesh > Triangulate)";
                     break;
                 }
-                auto colors = cloud->vertex_property<vec3>("v:color_indexed");
-                std::size_t missing = 0;
-                for (auto v : cloud->vertices()) {
-                    const auto it = indexed_colors.find(indices[v]);
-                    if (it != indexed_colors.end())
-                        colors[v] = it->second;
-                    else {
-                        colors[v] = vec3(0.0f);
-                        ++missing;
-                    }
-                }
-                LOG(INFO) << "color property 'v:color_indexed' generated from " << indexed_colors.size()
-                          << " indexed colors";
-                if (missing > 0)
-                    LOG(WARNING) << missing << " vertices have indices without a color (colored black)";
-            } else if (location == 0 && mesh) {
-                auto indices = mesh->get_vertex_property<int>(indices_name);
-                if (!indices) {
-                    LOG(WARNING) << "no vertex property named '" << indices_name << "'";
-                    break;
-                }
-                auto colors = mesh->vertex_property<vec3>("v:color_indexed");
-                std::size_t missing = 0;
-                for (auto v : mesh->vertices()) {
-                    const auto it = indexed_colors.find(indices[v]);
-                    if (it != indexed_colors.end())
-                        colors[v] = it->second;
-                    else {
-                        colors[v] = vec3(0.0f);
-                        ++missing;
-                    }
-                }
-                LOG(INFO) << "color property 'v:color_indexed' generated from " << indexed_colors.size()
-                          << " indexed colors";
-                if (missing > 0)
-                    LOG(WARNING) << missing << " vertices have indices without a color (colored black)";
-            } else if (location == 1 && mesh) {
-                auto indices = mesh->get_face_property<int>(indices_name);
-                if (!indices) {
-                    LOG(WARNING) << "no face property named '" << indices_name << "'";
-                    break;
-                }
-                auto colors = mesh->face_property<vec3>("f:color_indexed");
-                std::size_t missing = 0;
-                for (auto f : mesh->faces()) {
-                    const auto it = indexed_colors.find(indices[f]);
-                    if (it != indexed_colors.end())
-                        colors[f] = it->second;
-                    else {
-                        colors[f] = vec3(0.0f);
-                        ++missing;
-                    }
-                }
-                LOG(INFO) << "color property 'f:color_indexed' generated from " << indexed_colors.size()
-                          << " indexed colors";
-                if (missing > 0)
-                    LOG(WARNING) << missing << " faces have indices without a color (colored black)";
-            } else if (location == 1)
-                LOG(WARNING) << "the current model has no faces; the file describes face colors";
-            else
-                LOG(WARNING) << "the current model type is not supported for indexed colors";
+                SurfaceMeshAmbientOcclusion::Parameters parameters;
+                parameters.radius_ratio = std::max(0.001f, std::min(1.0f, p.ao_radius_ratio));
+                parameters.sample_count = std::max(4, p.ao_samples);
+                parameters.bias_ratio = std::max(0.0f, p.ao_bias_ratio);
+                auto ao = SurfaceMeshAmbientOcclusion::bake(mesh, parameters);
+                SurfaceMeshAmbientOcclusion::colorize(mesh, ao);
+                LOG(INFO) << "ambient occlusion baked: v:ao and v:ao_color (radius " << parameters.radius_ratio
+                          << " x bounding-sphere radius, " << parameters.sample_count << " rays/vertex)";
+                selection_styles_.erase(model);
+                skip_selection_display = true;
+            }
             break;
-        }
 
         case ProcessOp::PROP_TOPOLOGY: {
             auto *graph = dynamic_cast<Graph *>(model);
@@ -1581,6 +1664,15 @@ void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::tim
     clear_hover();
     if (!skip_selection_display)
         finish_selection_change(model);
+
+    // The AO bake writes its colors into v:ao_color; show them instead of leaving the
+    // user to find the property in the Rendering panel.
+    if (process_op_ == ProcessOp::PROP_AMBIENT_OCCLUSION) {
+        auto *mesh = dynamic_cast<SurfaceMesh *>(model);
+        if (mesh && mesh->get_vertex_property<vec3>("v:ao_color"))
+            apply_color_property(model, State::VERTEX, "v:ao_color");
+    }
+
     process_op_ = ProcessOp::NONE;
     update();
 }

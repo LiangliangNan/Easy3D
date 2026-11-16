@@ -92,6 +92,14 @@ public:
     /// it only stores the percentage for the progress window.
     void notify(std::size_t percent, bool update_viewer) override;
 
+    /// Adds the model and attaches a manipulator, so the Edit commands can move and
+    /// rotate it and the drawables apply the resulting transform.
+    easy3d::Model *add_model(std::shared_ptr<easy3d::Model> model, bool create_drawables = true,
+                             bool fit_scene = true) override;
+
+    // The raw-pointer and file-name forms stay visible; both forward to the override.
+    using easy3d::Viewer::add_model;
+
 protected:
     void init() override;
 
@@ -150,7 +158,10 @@ private:
         MESH_REMOVE_ISOLATED, MESH_REMOVE_DUPLICATE_FACES,
         MESH_DETECT_SELF_INTERSECTIONS, MESH_REMESH_SELF_INTERSECTIONS,
         MESH_CLIP, MESH_SPLIT, MESH_SLICE,
-        PROP_HEIGHT_FIELD, PROP_CURVATURES, PROP_INDEXED_COLORS, PROP_TOPOLOGY
+        MESH_TETRAHEDRALIZE, MESH_CREATE_FROM_TEXT,
+        POLY_EXTRACT_BOUNDARY,
+        EDIT_GAUSSIAN_NOISE,
+        PROP_HEIGHT_FIELD, PROP_CURVATURES, PROP_AMBIENT_OCCLUSION, PROP_TOPOLOGY
     };
 
     // Parameters of the open processing window. Model-dependent values are refreshed
@@ -200,7 +211,19 @@ private:
 
         int curvature_smoothing = 1;    // post-smoothing iterations of the curvature values
         bool curvature_two_ring = true;
-        std::string indexed_colors_file; // .ic file, read when the command runs
+
+        float noise_sigma = 0.001f;     // standard deviation; the Qt dialog's default
+
+        char text_buffer[128] = "Easy3D"; // TextMesher input
+        std::string font_file;          // full path to the .ttf; set when the window opens
+        int text_font_size = 45;
+        int text_extrusion = 10;
+        int text_bezier_steps = 4;
+        bool text_collision_free = true;
+
+        float ao_radius_ratio = 0.1f;   // search radius as a fraction of the bounding-sphere radius
+        int ao_samples = 128;           // cosine-weighted hemisphere rays per vertex
+        float ao_bias_ratio = 0.001f;   // ray origin offset, as a fraction of the search radius
     };
 
     // The drawable appearance in effect before the selection view replaced it, so
@@ -230,6 +253,21 @@ private:
 
     // ui/menu.cpp
     void draw_menu_bar();
+
+    // ui/menu.cpp
+    void draw_menu_edit();
+
+    // Subtracts the first model's bounding-box center from every model, then fits the
+    // scene. Models are stored in local coordinates, so this recenters the whole scene
+    // without touching the camera's existing pose.
+    void translational_recenter();
+
+    // Bakes each model's manipulator transform into its points (and normals) and
+    // resets the manipulator.
+    void apply_manipulated_transformation();
+
+    // Resets the current model's manipulator, discarding the live transform.
+    void discard_manipulated_transformation();
 
     // ui/menu.cpp
     void draw_menu_select();
@@ -498,6 +536,10 @@ private:
     // caller inserts them before the ImGui geometry so hints stay under the UI.
     void append_selection_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
+    // Appends the current model's manipulated-frame box while Alt is held (the
+    // manipulation gesture) or while its transform is not the identity.
+    void append_manipulator_frame(std::vector<easy3d::graphics::DrawCommand> &commands) const;
+
 private:
     std::unique_ptr<ImGuiLayer> imgui_;
 
@@ -543,6 +585,7 @@ private:
 
     easy3d::Model *pending_delete_ = nullptr; // deferred so the Models panel never deletes mid-iteration
     bool mouse_captured_ = false;             // ImGui owned the press; keep the whole gesture away from the scene
+    bool manipulating_model_ = false;         // an Alt+drag started this gesture on the current model
 
     int scene_x_ = 0, scene_y_ = 0, scene_w_ = 0, scene_h_ = 0; // logical, updated every frame
 

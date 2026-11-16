@@ -30,13 +30,19 @@
 #include <vector>
 
 #include <easy3d/core/graph.h>
+#include <easy3d/core/model.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/manipulated_frame.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
@@ -244,6 +250,7 @@ void MappleViewer::draw_menu_bar() {
     }
 
     draw_menu_property();
+    draw_menu_edit();
     draw_menu_process();
     draw_menu_select();
 
@@ -257,6 +264,116 @@ void MappleViewer::draw_menu_bar() {
     // recording the height locally keeps the layout correct on the first frame too.
     menu_height_ = ImGui::GetWindowHeight();
     ImGui::EndMainMenuBar();
+}
+
+namespace {
+
+    bool is_transformed(const easy3d::Model *model) {
+        const easy3d::Manipulator *manipulator = model ? model->manipulator() : nullptr;
+        return manipulator && manipulator->matrix() != easy3d::mat4::identity();
+    }
+
+} // namespace
+
+void MappleViewer::draw_menu_edit() {
+    if (!ImGui::BeginMenu("Edit"))
+        return;
+
+    Model *model = current_model();
+    const bool cloud = dynamic_cast<PointCloud *>(model) != nullptr;
+    const bool mesh = dynamic_cast<SurfaceMesh *>(model) != nullptr;
+
+    if (ImGui::MenuItem("Add Gaussian Noise...", nullptr, false, cloud || mesh))
+        open_process(ProcessOp::EDIT_GAUSSIAN_NOISE);
+
+    ImGui::Separator();
+    if (ImGui::MenuItem("Translational Recenter", nullptr, false, !models().empty()))
+        translational_recenter();
+
+    ImGui::Separator();
+    bool any_transformed = false;
+    for (const auto &candidate : models()) {
+        if (is_transformed(candidate.get())) {
+            any_transformed = true;
+            break;
+        }
+    }
+    if (ImGui::MenuItem("Apply Manipulated Transformation", nullptr, false, any_transformed))
+        apply_manipulated_transformation();
+    if (ImGui::MenuItem("Give Up Manipulated Transformation", nullptr, false, is_transformed(model)))
+        discard_manipulated_transformation();
+    ImGui::EndMenu();
+}
+
+void MappleViewer::translational_recenter() {
+    if (models().empty())
+        return;
+
+    const vec3 origin = models().front()->bounding_box().center();
+    for (const auto &entry : models()) {
+        Model *model = entry.get();
+        for (auto &point : model->points())
+            point -= origin;
+        model->invalidate_bounding_box();
+        if (model->manipulator())
+            model->manipulator()->reset();
+        if (model->renderer())
+            model->renderer()->update();
+    }
+    LOG(INFO) << "scene moved so that the first model's bounding-box center is at the origin";
+    fit_screen();
+}
+
+void MappleViewer::apply_manipulated_transformation() {
+    std::size_t count = 0;
+    for (const auto &entry : models()) {
+        Model *model = entry.get();
+        auto *manipulator = model->manipulator();
+        if (!manipulator)
+            continue;
+        const mat4 manipulation = manipulator->matrix();
+        // Matrices that are a no-op need no baking and no redraw.
+        if (manipulation == mat4::identity())
+            continue;
+
+        for (auto &point : model->points())
+            point = manipulation * point;
+
+        if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
+            model->invalidate_bounding_box();
+            mesh->update_face_normals();
+            mesh->update_vertex_normals();
+        } else {
+            model->invalidate_bounding_box();
+            if (auto *cloud = dynamic_cast<PointCloud *>(model)) {
+                // Graph is a point cloud too; both keep their normals in v:normal.
+                auto normals = cloud->get_vertex_property<vec3>("v:normal");
+                if (normals) {
+                    const mat3 normal_matrix = transform::normal_matrix(manipulation);
+                    for (auto v : cloud->vertices())
+                        normals[v] = normal_matrix * normals[v];
+                }
+            }
+        }
+
+        manipulator->reset();
+        if (model->renderer())
+            model->renderer()->update();
+        ++count;
+    }
+
+    if (count > 0)
+        LOG(INFO) << "manipulated transformation applied to " << count << " model(s)";
+    update();
+}
+
+void MappleViewer::discard_manipulated_transformation() {
+    Model *model = current_model();
+    if (!model || !model->manipulator())
+        return;
+    model->manipulator()->reset();
+    LOG(INFO) << "manipulated transformation discarded";
+    update();
 }
 
 void MappleViewer::draw_menu_process() {
@@ -289,7 +406,10 @@ void MappleViewer::draw_menu_process() {
         ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu("Surface Mesh", mesh)) {
+    // Always open: "Create from Text..." generates a new mesh and needs no current
+    // model, while the commands that edit a mesh are disabled without one.
+    if (ImGui::BeginMenu("Surface Mesh")) {
+        ImGui::BeginDisabled(!mesh);
         if (ImGui::MenuItem("Smooth..."))
             open_process(ProcessOp::MESH_SMOOTH);
         if (ImGui::MenuItem("Fair..."))
@@ -352,6 +472,8 @@ void MappleViewer::draw_menu_process() {
             run_process(ProcessOp::MESH_COMPONENTS);
         if (ImGui::MenuItem("Planar Partition"))
             run_process(ProcessOp::MESH_PLANAR_PARTITION);
+        if (ImGui::MenuItem("Tetrahedralization"))
+            run_process(ProcessOp::MESH_TETRAHEDRALIZE);
         if (ImGui::MenuItem("Sample Surface..."))
             open_process(ProcessOp::MESH_SAMPLE);
 #ifdef HAS_CGAL
@@ -363,6 +485,16 @@ void MappleViewer::draw_menu_process() {
         if (ImGui::MenuItem("Slice by Clipping Plane"))
             run_process(ProcessOp::MESH_SLICE);
 #endif
+        ImGui::EndDisabled();
+        ImGui::Separator();
+        if (ImGui::MenuItem("Create from Text..."))
+            open_process(ProcessOp::MESH_CREATE_FROM_TEXT);
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Polyhedral Mesh", dynamic_cast<PolyMesh *>(model) != nullptr)) {
+        if (ImGui::MenuItem("Extract Boundary"))
+            run_process(ProcessOp::POLY_EXTRACT_BOUNDARY);
         ImGui::EndMenu();
     }
 
@@ -376,29 +508,17 @@ void MappleViewer::draw_menu_property() {
     Model *model = current_model();
     const bool mesh = dynamic_cast<SurfaceMesh *>(model) != nullptr;
     const bool graph = dynamic_cast<Graph *>(model) != nullptr;
-    const bool indexed_colors_supported = mesh || dynamic_cast<PointCloud *>(model) != nullptr;
 
     if (ImGui::MenuItem("Compute Height Field", nullptr, false, model != nullptr))
         run_process(ProcessOp::PROP_HEIGHT_FIELD);
     if (ImGui::MenuItem("Compute Curvatures...", nullptr, false, mesh))
         open_process(ProcessOp::PROP_CURVATURES);
+    if (ImGui::MenuItem("Compute Ambient Occlusion...", nullptr, false, mesh))
+        open_process(ProcessOp::PROP_AMBIENT_OCCLUSION);
 
     ImGui::Separator();
     if (ImGui::MenuItem("Manipulate Properties...", nullptr, false, model != nullptr))
         open_properties_window();
-
-    ImGui::Separator();
-    if (ImGui::MenuItem("Color from Indexed Colors...", nullptr, false, indexed_colors_supported)) {
-        const std::string default_path = settings_.data_directory.empty()
-                                                 ? resource::directory() + "/data/"
-                                                 : settings_.data_directory;
-        const std::string file = dialog::open("Open indexed colors", default_path,
-                                              {"Indexed colors (*.ic)", "*.ic", "All Files (*.*)", "*"});
-        if (!file.empty()) {
-            process_params_.indexed_colors_file = file;
-            run_process(ProcessOp::PROP_INDEXED_COLORS);
-        }
-    }
 
     ImGui::Separator();
     if (ImGui::MenuItem("Topology Statistics", nullptr, false, mesh || graph))

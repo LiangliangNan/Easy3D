@@ -111,7 +111,7 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
             auto ao = SurfaceMeshAmbientOcclusion::bake(mesh);
             SurfaceMeshAmbientOcclusion::colorize(mesh, ao, vec3(0.8f));
             if (drawable) {
-                drawable->set_property_coloring(State::VERTEX, "v:color");
+                drawable->set_property_coloring(State::VERTEX, "v:ao_color");
                 drawable->update();
             }
             baked_ = true;

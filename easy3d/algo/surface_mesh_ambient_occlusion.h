@@ -86,12 +86,13 @@ namespace easy3d {
         static SurfaceMesh::VertexProperty<float> bake(SurfaceMesh *mesh, const Parameters &parameters);
 
         /**
-         * \brief Writes the ambient occlusion term to the vertex color property "v:color".
+         * \brief Writes the ambient occlusion term to the vertex color property "v:ao_color".
          * \param mesh The surface mesh.
          * \param ao The per-vertex occlusion term returned by bake().
          * \param color The unoccluded surface color (default: white).
          * \details The resulting color is color * ao, so it can be used directly as a
-         *      material or exported as vertex colors.
+         *      material or exported as vertex colors. The scalar term in "v:ao" stays
+         *      intact, so the mesh can be colorized repeatedly.
          */
         static void colorize(SurfaceMesh *mesh, const SurfaceMesh::VertexProperty<float> &ao,
                              const vec3 &color = vec3(1.0f));

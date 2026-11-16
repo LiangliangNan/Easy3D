@@ -10224,3 +10224,20 @@ correction to the impostor pipeline note was re-validated on the six tests that 
 (`vulkan.render`, `vulkan.clipping`, `vulkan.picking`, `vulkan.pointselection`,
 `vulkan.pointselectionviewer`, `vulkan.clippingplane`). Linux/Windows/CI remain separate gates, and
 the feature's absence there is no longer a correctness question at all.
+
+### 2026-11-16 — batch 88: baked AO colors live in "v:ao_color"
+
+**Scope.** `SurfaceMeshAmbientOcclusion::colorize()` wrote `color * ao` into the generic vertex
+color property `v:color`, which hid what the colors were. It now writes them into the vertex color
+property `v:ao_color`; `bake()` keeps storing the scalar occlusion term in `v:ao`, so the two
+results coexist and a mesh can be baked and colorized repeatedly. Tutorial 501's baked view and
+Mapple's Compute Ambient Occlusion command display `v:ao_color`. Mapple's Rendering-panel
+color-scheme combo recognizes `_color` names in addition to `:color`, so the baked colors can be
+reselected after switching the drawable to uniform coloring. The algorithm test now checks the new
+property name, that the scalar `v:ao` survives colorize, and that `v:color` is not written.
+
+**Validation (2026-11-16, macOS, serial).** OpenGL `build-opengl-check` 116/116 and Vulkan
+`build-vulkan-check` 150/150, both green, no flakes; every target was rebuilt in both check trees
+and in `cmake-build-release`. `algo.surface_mesh_ambient_occlusion` also passed alone. Mapple was
+launched in all three trees ("Mapple UI ready" in the log), and `easy3d/util/version.h` is
+unchanged. The menu/dialog flow was not scripted. Linux/Windows/CI remain separate gates.

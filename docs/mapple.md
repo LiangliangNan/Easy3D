@@ -310,9 +310,10 @@ The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt
 stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
 group (the four Property-menu commands), the rendering panel's color-scheme selector,
 the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
-Cloud > Normalize Normals), and property manipulation (Property > Manipulate
-Properties...) are migrated; the remaining groups are small utilities and view
-polish.
+Cloud > Normalize Normals), property manipulation (Property > Manipulate
+Properties...), and the small utilities (Edit menu with model manipulation,
+tetrahedralization, creating a mesh from text, polyhedral boundary extraction, and
+ambient occlusion) are migrated; the remaining work is view polish and retiring Qt.
 
 ## ImGui notes
 
@@ -777,6 +778,8 @@ polish.
   `v:color_indexed`/`f:color_indexed`; indices without a color become black. The Qt
   implementation only handled point-cloud vertices and logged "not implemented yet"
   for meshes; the ImGui command also handles surface-mesh vertices and faces.
+  *Removed 2026-11-16 (gap group 5): the command was unused, and Compute Ambient
+  Occlusion took its place in the Property menu.*
 - **Topology Statistics** logs the Qt report: connected components (first 10) with
   their sphere/disc/cylinder/torus classification and F/V/E/B counts, border sizes
   and the isolated-vertex count for a surface mesh; vertex/edge counts plus the degree
@@ -940,3 +943,48 @@ polish.
   a run: no errors or assertions, and "Mapple UI ready" appears in the log. The
   context-menu clicks themselves were not scripted. Leaving changes uncommitted per
   the standing rule.
+
+### 2026-11-16 — Small utilities (Phase 4 gap group 5)
+
+- Edit menu, between Property and Process: Add Gaussian Noise... (point clouds and
+  meshes; sigma defaults to 0.001, with a button that sets the Qt suggestion of 1% of
+  the bounding-sphere radius), Translational Recenter, Apply Manipulated
+  Transformation, and Give Up Manipulated Transformation.
+- Every model now gets a `Manipulator` when it is added, so a model can be moved and
+  rotated before its coordinates are changed. Alt+left-drag rotates and Alt+right-drag
+  translates the current model; while the clipping plane is enabled Alt keeps
+  belonging to the plane. The manipulation frame is drawn while Alt is held or while
+  the model's transform is not the identity, so a pending transform stays visible.
+  Apply bakes the matrix into the points and re-derives the mesh or point-cloud
+  normals; Give Up resets the current model's manipulator; Translational Recenter
+  subtracts the first model's bounding-box center from every model, resets their
+  manipulators and fits the screen.
+- Process > Surface Mesh > Tetrahedralization runs `SurfaceMeshTetrehedralization` in
+  the background and adds `<base>_tetrahedralization.plm`, warning when the mesh is
+  not a closed triangle mesh. Create from Text... drives `TextMesher` with the Qt
+  defaults (text "Easy3D", 45 pt, extrusion 10, 4 bezier steps, collision-free) and a
+  font picker; it is the one command that needs no current model, and when the text
+  equals the current mesh's name it rebuilds that mesh in place instead of adding a
+  second copy. Process > Polyhedral Mesh > Extract Boundary writes the boundary as
+  `<base>_boundary.ply` through `SurfaceMeshBuilder`.
+- Property > Compute Ambient Occlusion... replaces the unused Color from Indexed
+  Colors... . It bakes the scalar `v:ao` and the vertex colors `v:ao_color` in the
+  background (radius ratio, rays per vertex, bias ratio) on triangle meshes and shows
+  `v:ao_color` on the faces drawable immediately, instead of leaving the result to be
+  found in the Rendering panel. `v:ao_color` is listed by the Rendering panel's color
+  scheme combo (which recognizes `:color` and `_color` names).
+- Validation (2026-11-16, macOS): all three trees build (`cmake-build-release`,
+  `build-vulkan-check`, `build-opengl-check`) and launch with "Mapple UI ready". A
+  temporary probe (removed afterwards) called the algorithms the dialogs call and
+  passed 23 checks on `sphere.obj`, `bunny.bin`, `general_closed.obj`, `sphere.plm`
+  and the generated text mesh: noise moves mesh vertices and cloud points; adding a
+  model attaches a manipulator; rotate/translate gestures change its matrix; Apply
+  bakes exactly `matrix * p` into every vertex and resets the manipulator; Give Up
+  leaves the points unchanged; recentering zeroes the first model's bounding-box
+  center; tetrahedralization adds the PolyMesh; text creation without a current model
+  adds a model and a rebuild regenerates the same one; boundary extraction produces
+  80 faces/42 vertices from `sphere.plm`; AO writes `v:ao`/`v:ao_color` and colors the
+  faces drawable. Menu and dialog clicks were not scripted. The probe closed the window
+  before its first frame, which aborts during teardown; with the window kept open the
+  run exits cleanly, so this is an artifact of that harness, not of the commands.
+  Leaving changes uncommitted per the standing rule.

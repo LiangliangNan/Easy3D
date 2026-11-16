@@ -40,9 +40,11 @@
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/buffer.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/render_device.h>
@@ -209,6 +211,21 @@ void MappleViewer::notify(std::size_t percent, bool update_viewer) {
         process_job_->percent.store(static_cast<int>(percent));
 }
 
+Model *MappleViewer::add_model(std::shared_ptr<Model> model, bool create_drawables, bool fit_scene) {
+    Model *added = Viewer::add_model(std::move(model), create_drawables, fit_scene);
+    if (!added)
+        return nullptr;
+
+    // The drawables pick up a model's manipulator transform at draw time; attaching it
+    // after the renderer was built is safe. Its frame reports moves so the scene redraws.
+    if (!added->manipulator()) {
+        auto manipulator = std::make_shared<Manipulator>(added);
+        manipulator->frame()->modified.connect([this] { update(); });
+        added->set_manipulator(manipulator);
+    }
+    return added;
+}
+
 void MappleViewer::send(el::Level level, const std::string &msg) {
     std::lock_guard<std::mutex> lock(log_mutex_);
     log_.push_back({level, msg});
@@ -259,6 +276,7 @@ void MappleViewer::pre_draw() {
     // so panels and menus always cover it.
     std::vector<graphics::DrawCommand> hints;
     append_selection_overlay(hints);
+    append_manipulator_frame(hints);
     if (!hints.empty())
         commands.insert(commands.begin(), hints.begin(), hints.end());
     set_overlays(std::move(commands), true);
@@ -295,6 +313,19 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         return true;
     }
 
+    // Alt + left-drag rotates the current model, Alt + right-drag moves it. While the
+    // clipping plane is enabled Alt belongs to the plane (the Viewer handles it).
+    if ((modifiers & MODIF_ALT) && !ClippingPlane::instance()->is_enabled() &&
+        (button == BUTTON_LEFT || button == BUTTON_RIGHT) && point_in_scene(x, y)) {
+        Model *model = current_model();
+        if (model && model->manipulator()) {
+            manipulating_model_ = true;
+            model->manipulator()->frame()->action_start();
+            clear_hover();
+            update();
+        }
+    }
+
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
@@ -307,6 +338,14 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
+
+    if (manipulating_model_) {
+        manipulating_model_ = false;
+        Model *model = current_model();
+        if (model && model->manipulator())
+            model->manipulator()->frame()->action_end();
+        update();
+    }
 
     if (selecting_ && button == BUTTON_LEFT) {
         const float dx = static_cast<float>(x) - select_start_.x;
@@ -338,6 +377,21 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
+
+    if (manipulating_model_) {
+        Model *model = current_model();
+        if (model && model->manipulator()) {
+            auto *frame = model->manipulator()->frame();
+            const ivec2 origin = interaction_origin();
+            const int cx = x - origin.x, cy = y - origin.y;
+            if (button == BUTTON_LEFT)
+                frame->action_rotate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
+            else if (button == BUTTON_RIGHT)
+                frame->action_translate(cx, cy, dx, dy, camera(), ManipulatedFrame::NONE);
+        }
+        update();
+        return true;
+    }
 
     if (selecting_) {
         select_end_ = vec2(clamp_scene_coord(x, scene_x_, scene_w_),
@@ -458,6 +512,12 @@ bool MappleViewer::char_input_event(unsigned int codepoint) {
 
 bool MappleViewer::focus_event(bool focused) {
     if (!focused) {
+        if (manipulating_model_) {
+            manipulating_model_ = false;
+            Model *model = current_model();
+            if (model && model->manipulator())
+                model->manipulator()->frame()->action_end();
+        }
         cancel_selection_gesture();
         pending_pick_ = pending_region_ = pending_hover_ = false;
         clear_hover();
@@ -1078,4 +1138,22 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
         segments.emplace_back(lasso_.front() * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(segments, color, fw, fh, dpi));
     }
+}
+
+void MappleViewer::append_manipulator_frame(std::vector<graphics::DrawCommand> &commands) const {
+    Model *model = current_model();
+    auto *manipulator = model ? model->manipulator() : nullptr;
+    if (!manipulator)
+        return;
+    // Alt announces the manipulation gesture; a transformed model also keeps its box
+    // visible so the pending transform (apply or give up) stays apparent.
+    if (!ImGui::GetIO().KeyAlt && manipulator->matrix() == mat4::identity())
+        return;
+    const int fw = framebuffer_width();
+    const int fh = framebuffer_height();
+    if (fw <= 0 || fh <= 0)
+        return;
+    graphics::DrawCommand command = manipulator->draw_frame(camera(), fw, fh, dpi_scaling());
+    if (command.geometry)
+        commands.push_back(command);
 }

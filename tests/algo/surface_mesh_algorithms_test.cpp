@@ -1003,10 +1003,12 @@ bool test_algo_surface_mesh_ambient_occlusion() {
         test::require(ao_parallel[SurfaceMesh::Vertex(value.first)] == value.second,
                       "the bake is not deterministic");
 
-    // colorize() writes albedo * occlusion into "v:color".
+    // colorize() writes albedo * occlusion into "v:ao_color" and keeps the scalar term.
     SurfaceMeshAmbientOcclusion::colorize(&mesh, ao_parallel, vec3(0.5f, 0.25f, 1.0f));
-    auto colors = mesh.get_vertex_property<vec3>("v:color");
+    auto colors = mesh.get_vertex_property<vec3>("v:ao_color");
     test::require(colors, "colorize() did not create the vertex colors");
+    test::require(mesh.get_vertex_property<float>("v:ao"), "colorize() removed the scalar term");
+    test::require(!mesh.get_vertex_property<vec3>("v:color"), "colorize() wrote v:color");
     for (auto v : mesh.vertices()) {
         const vec3 expected = vec3(0.5f, 0.25f, 1.0f) * ao_parallel[v];
         test::require(length(colors[v] - expected) < 1e-6f, "colorize() wrote a wrong color");

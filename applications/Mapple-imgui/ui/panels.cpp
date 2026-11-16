@@ -141,7 +141,8 @@ void append_schemes(const std::vector<std::string> &names, State::Location locat
         ColorScheme scheme;
         scheme.location = location;
         scheme.property = name;
-        if (name.find(":color") != std::string::npos) {
+        // "_color" covers the baked AO colors ("v:ao_color").
+        if (name.find(":color") != std::string::npos || name.find("_color") != std::string::npos) {
             scheme.label = name;
             scheme.method = State::COLOR_PROPERTY;
         } else if (name.find(":texcoord") != std::string::npos) {

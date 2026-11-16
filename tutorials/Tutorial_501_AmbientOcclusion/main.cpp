@@ -70,7 +70,7 @@
  * - AmbientOcclusion: the screen-space effect. begin()/end() bracket the scene render;
  *   radius_ratio()/set_radius_ratio() tune the sampling extent as a fraction of the scene radius.
  * - SurfaceMeshAmbientOcclusion: the baked alternative. bake() casts hemisphere rays per vertex
- *   and stores the occlusion in "v:ao"; colorize() turns it into vertex colors.
+ *   and stores the occlusion in "v:ao"; colorize() turns it into the vertex colors "v:ao_color".
  * - DrawableTriangles: the surface drawable; set_uniform_coloring() assigns a constant material
  *   color so that the shading variation comes purely from the occlusion, not from texture.
  *

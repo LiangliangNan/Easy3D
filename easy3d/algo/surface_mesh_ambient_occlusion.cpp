@@ -282,7 +282,7 @@ namespace easy3d {
         if (!ao)
             throw std::invalid_argument("ambient occlusion: invalid occlusion property");
 
-        auto colors = mesh->vertex_property<vec3>("v:color");
+        auto colors = mesh->vertex_property<vec3>("v:ao_color");
         for (auto v : mesh->vertices()) {
             const float visibility = std::max(0.0f, std::min(ao[v], 1.0f));
             colors[v] = color * visibility;
