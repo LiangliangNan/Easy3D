@@ -33,7 +33,7 @@
 
 
 /**
- * \brief State Mapple-imgui carries across runs: panel layout, view toggles,
+ * \brief State Mapple carries across runs: panel layout, view toggles,
  *      recording defaults, and the file history (last directory, recent files).
  * \details load() runs at start-up and save() at exit. The file is a plain
  *      key=value text file under the per-user configuration directory, so a
@@ -44,7 +44,7 @@
 struct AppSettings {
     bool show_rendering_panel = true;
     bool show_models_panel = true;
-    bool show_log_panel = true;
+    bool show_log_panel = false;
     // Side-panel widths and log-panel height, in logical window pixels.
     float left_width = 250.0f;
     float right_width = 300.0f;
@@ -61,7 +61,8 @@ struct AppSettings {
 
     static constexpr std::size_t max_recent_files = 5;
 
-    /// Per-user settings file, e.g. ~/Library/Application Support/Mapple-imgui/settings.ini.
+    /// Per-user settings file, e.g. ~/Library/Application Support/Mapple/settings.ini.
+    /// The previous app's directory (Mapple-imgui) is copied over once on first run.
     static std::string file_path();
 
     /// Per-user rendering settings file (easy3d::setting JSON), next to file_path().

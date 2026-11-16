@@ -10302,3 +10302,30 @@ saved to ..."), with `settings.ini` holding only UI state. The transparency-with
 case was run on both backends with the fixed build: the window stays up and Alt+F4 exits
 cleanly. `easy3d/util/version.h` is unchanged. UI clicks were not scripted. Linux/Windows/CI
 remain separate gates.
+
+### 2026-11-16 — batch 91: Mapple promoted, Qt app renamed Mapple-Qt
+
+**Scope.** The ImGui Mapple is now the app that carries the name: `applications/Mapple-imgui`
+moved to `applications/Mapple` with CMake target and binary `Mapple` (window title "Mapple -
+OpenGL"/"Mapple - Vulkan" from the existing `APP_TITLE` definition), and the Qt application
+moved to `applications/Mapple-Qt` with target `Mapple-Qt` (still OpenGL only, still behind
+`Easy3D_ENABLE_QT`; its `PROJECT_NAME` follows the directory name, and the macOS bundle
+plist now lands under the target's own binary directory). Both moves use `git mv`. The
+per-user configuration directory follows the name: `AppSettings` writes to
+`.../Mapple` (`~/Library/Application Support/Mapple`, `%APPDATA%\Mapple`, or
+`$XDG_CONFIG_HOME/Mapple`) and, on the first run, copies `settings.ini` and
+`rendering.json` from the old `.../Mapple-imgui` directory when the new files do not exist,
+so recent files, panel layout and rendering state survive the rename. The log file is now
+`<build>/bin/Mapple.log`. README, `docs/mapple.md` (status, code structure, Phase 4 wording)
+and the application CMake gate were updated for the new names; historical changelog and
+batch entries keep the old paths as written. Retirement of `Mapple-Qt` is deferred until a
+final capability pass over the Qt dialogs.
+
+**Validation (2026-11-16, macOS, serial).** All three trees were reconfigured (new targets)
+and fully rebuilt; the release tree, which has Qt enabled, produces `Mapple-Qt.app` next to
+`Mapple`. OpenGL `build-opengl-check` 116/116 and Vulkan `build-vulkan-check` 150/150, both
+green with no flakes. The Mapple binary launches on OpenGL and Vulkan with "Mapple UI ready",
+writes `Mapple.log`, and reads `~/Library/Application Support/Mapple` (the Debug tree's
+Vulkan run already used the renamed target). Stale pre-rename artifacts in the build trees
+(`Mapple.app`, `Mapple.ini`, `Mapple-imgui.log`) were removed. `easy3d/util/version.h` is
+unchanged. Linux/Windows/CI remain separate gates.

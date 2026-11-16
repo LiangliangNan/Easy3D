@@ -33,8 +33,9 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
   Window and event handling are based on [GLFW](https://www.glfw.org/) (e.g., [the default viewer](https://github.com/LiangliangNan/Easy3D/blob/main/easy3d/viewer)), 
   with an optional [ImGui](https://github.com/ocornut/imgui) interface (see [the ImGui viewer tutorial](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_imgui)).
-  There is also <b>Mapple</b>, a handy tool created out of the Easy3D library for rendering and processing 3D data 
-  (built on the OpenGL backend).
+  There is also <b>Mapple</b>, a handy tool created out of the Easy3D library for rendering and processing 3D data
+  (an ImGui application that runs on either backend). Its predecessor, the Qt application
+  <b>Mapple-Qt</b>, remains in the tree for reference and requires the OpenGL backend.
   
 * Python bindings for Easy3D, which allow you to use Easy3D in Python scripts (with either rendering backend). 
   
@@ -108,8 +109,8 @@ Easy3D provides two rendering backends, selected at configure time with the CMak
 
 A build contains exactly one backend, so use separate build directories for the two. The public API — `Viewer`, 
 `MultiViewer`, `OffScreen`, drawables, picking, effects, and snapshots — is the same for both backends: client code, 
-all tutorials, and the Python bindings build unchanged against either one. The Qt application Mapple uses the OpenGL 
-backend (`Easy3D_ENABLE_VULKAN=OFF`).
+all tutorials, the Python bindings and Mapple build unchanged against either one. The Qt application Mapple-Qt uses
+the OpenGL backend (`Easy3D_ENABLE_VULKAN=OFF`).
 
 **Migrating from the OpenGL-only Easy3D:** class names, headers, and the `virtual void draw() const` frame hook are 
 unchanged. The one deliberate API change is the viewer constructor: 
@@ -131,9 +132,9 @@ The **optional** third-party libraries are:
   [v5.12.12](https://download.qt.io/archive/qt/5.12/5.12.12/), and [v6.12.0](https://www.qt.io/download-qt-installer-oss)
   have been tested) for UI creation, helping you develop sophisticated applications for 3D data processing and visualization. 
   The Qt support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
-  to include the applications that depend on Qt (e.g., 
-  [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple), which uses the OpenGL backend 
-  and thus also requires `-DEasy3D_ENABLE_VULKAN=OFF`).
+  to include the applications that depend on Qt (e.g.,
+  [`Mapple-Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple-Qt), the original Qt version of
+  Mapple, which uses the OpenGL backend and thus also requires `-DEasy3D_ENABLE_VULKAN=OFF`).
   
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
 

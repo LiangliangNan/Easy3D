@@ -1,16 +1,19 @@
 # Mapple on Dear ImGui
 
-This document tracks the migration of Mapple from Qt Widgets (`applications/Mapple`) to a
-Dear ImGui application rendered through Easy3D's backend-neutral overlay path
-(`applications/Mapple-imgui`). Qt/Mapple remains buildable until the new app covers the
-daily-use workflow.
+This document tracks the migration of Mapple from Qt Widgets to a Dear ImGui
+application rendered through Easy3D's backend-neutral overlay path. The ImGui app is
+now `applications/Mapple` (target `Mapple`); the Qt app it replaces is
+`applications/Mapple-Qt` (target `Mapple-Qt`, OpenGL only, built with
+`Easy3D_ENABLE_QT`). The Qt app remains buildable until a final capability pass
+confirms nothing it offered is still needed.
 
 Status: 2026-11-16 — Phases 0–3 complete: the app builds and runs on both OpenGL and
 Vulkan and covers panels, menus, log capture, drawable styling, picking readout,
 point/face selection, the clipping plane, processing commands, snapshots, the camera
 path with video recording, settings/layout persistence, and the rendering effects
 (ambient occlusion, eye-dome lighting, soft shadow, transparency). Phase 4 (retire
-Qt): all inspected gaps are migrated; the remaining work is retiring Qt.
+Qt): the ImGui app now carries the Mapple name; all inspected gaps are migrated and
+retirement is deferred until one more capability pass over the Qt dialogs.
 
 ## Decision
 
@@ -66,7 +69,7 @@ fixed, resizable, toggleable panels.
 ## Code structure
 
 ```
-applications/Mapple-imgui/
+applications/Mapple/
   main.cpp               initialize(), argv files, run()
   mapple_viewer.{h,cpp}  Viewer + logging::Logger; frame hooks, input routing,
                          layout, app state (panels, actions, log buffer)
@@ -304,11 +307,13 @@ Phase 2 design notes:
 
 ### Phase 4 — retire Qt
 
-Verify the acceptance list, migrate remaining workflows, remove `applications/Mapple`
-and the `Easy3D_ENABLE_QT` gate (or keep Qt for other tools, not Mapple).
+Verify the acceptance list, migrate remaining workflows, then decide the fate of
+`applications/Mapple-Qt` and the `Easy3D_ENABLE_QT` gate (remove it, or keep it for
+other Qt tools). Retirement is deferred until a final capability pass over the Qt
+dialogs; `Mapple-Qt` stays in the tree meanwhile.
 
 The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
-stays untouched until the missing capabilities exist in Mapple-imgui. The inspection
+stays untouched until the missing capabilities exist in the ImGui app. The inspection
 group (the four Property-menu commands), the rendering panel's color-scheme selector,
 the mesh repair/orientation group (Process > Surface Mesh > Repair, plus Point
 Cloud > Normalize Normals), property manipulation (Property > Manipulate
@@ -346,7 +351,7 @@ retiring Qt.
 - Smoke test both backends: launch, open a mesh, orbit/zoom, select model, toggle
   drawables, restyle, snapshot, copy/paste view, verify log output.
 - Full suites stay green before any commit (`ctest -j 1 --output-on-failure`).
-- Changes confined to `applications/Mapple-imgui` only need the Mapple target tested;
+- Changes confined to `applications/Mapple` only need the Mapple target tested;
   the full Easy3D suites are reserved for library-wide changes.
 - Changes are left uncommitted; summarize and wait.
 
@@ -1032,3 +1037,23 @@ retiring Qt.
   graceful Alt+F4 exit wrote it back ("rendering settings saved to ..."), so the
   effect state survives a restart. With transparency restored and no model loaded,
   the fixed builds of both backends stay up and exit cleanly.
+
+### 2026-11-16 — Mapple promoted; Qt app becomes Mapple-Qt
+
+- The ImGui app took over the Mapple name: `applications/Mapple-imgui` became
+  `applications/Mapple` (CMake target and binary `Mapple`, app title "Mapple -
+  OpenGL"/"Mapple - Vulkan"), and the Qt app became `applications/Mapple-Qt`
+  (target `Mapple-Qt`, still OpenGL only and still behind `Easy3D_ENABLE_QT`).
+  The rename was done with `git mv`, so both histories follow the directories.
+- The per-user settings directory moved from `Mapple-imgui` to `Mapple`
+  (`~/Library/Application Support/Mapple` on macOS, `%APPDATA%\Mapple` on Windows,
+  `$XDG_CONFIG_HOME/Mapple` on Linux). On the first run as Mapple, `settings.ini`
+  and `rendering.json` are copied over once from the old directory when they are
+  missing, so recent files, layout and rendering state survive the rename; the log
+  is now `<build>/bin/Mapple.log`.
+- Validation (2026-11-16, macOS): all three trees reconfigured to pick up the new
+  targets and fully rebuilt; the Qt bundle is now `Mapple-Qt.app` (release tree, Qt
+  enabled). OpenGL `build-opengl-check` 116/116 and Vulkan `build-vulkan-check`
+  150/150, green, no flakes. The Mapple binary launches and logs "Mapple UI ready"
+  with the new `Mapple.log` and reads `~/Library/Application Support/Mapple`;
+  `easy3d/util/version.h` is unchanged.
