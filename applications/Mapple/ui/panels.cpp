@@ -1147,8 +1147,6 @@ void MappleViewer::draw_vector_field_controls(Model *model, Drawable *drawable) 
 void MappleViewer::draw_model_info(Model *model) {
     if (!model)
         return;
-    if (!ImGui::CollapsingHeader("Model Info"))
-        return;
 
     if (process_job_ && model == process_job_->target) {
         // The worker owns this model; its counts, bounds and properties are in flux.
@@ -1193,13 +1191,6 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     if (models().empty())
         ImGui::TextDisabled("No models. Drop a file here or use File > Open.");
 
-    // The info belongs to the selected model, so it sits directly above the list that
-    // selects it, not in the rendering panel (which restyles the active model).
-    if (Model *current = current_model()) {
-        draw_model_info(current);
-        ImGui::Separator();
-    }
-
     const float buttons_height = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
     ImGui::BeginChild("##models-list", ImVec2(0, -buttons_height));
 
@@ -1207,14 +1198,10 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
         Model *model = models()[i].get();
         ImGui::PushID(static_cast<int>(i));
 
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow |
-                                   ImGuiTreeNodeFlags_SpanAvailWidth;
-        if (model == current_model())
-            flags |= ImGuiTreeNodeFlags_Selected;
-
         const std::string label = file_system::simple_name(model->name());
-        const bool open = ImGui::TreeNodeEx(label.c_str(), flags);
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+        const bool selected = model == current_model();
+        const bool clicked = ImGui::Selectable(label.c_str(), selected);
+        if (clicked) {
             set_current_model(model);
             update();
             // Selection view follows the active model.
@@ -1232,28 +1219,12 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
             ImGui::EndPopup();
         }
 
-        if (open) {
-            if (Renderer *renderer = model->renderer()) {
-                auto drawable_row = [this](Drawable *d) {
-                    // The panel's vector-field arrows are not drawables of the model.
-                    if (is_vector_field_drawable(d->name()))
-                        return;
-                    ImGui::PushID(d);
-                    bool visible = d->is_visible();
-                    if (ImGui::Checkbox(d->name().c_str(), &visible)) {
-                        d->set_visible(visible);
-                        update();
-                    }
-                    ImGui::PopID();
-                };
-                for (const auto &drawable : renderer->triangles_drawables())
-                    drawable_row(drawable.get());
-                for (const auto &drawable : renderer->lines_drawables())
-                    drawable_row(drawable.get());
-                for (const auto &drawable : renderer->points_drawables())
-                    drawable_row(drawable.get());
-            }
-            ImGui::TreePop();
+        // The info describes the model whose name was clicked, so it sits directly
+        // below that name; clicking another name moves it there.
+        if (selected || clicked) {
+            ImGui::Indent();
+            draw_model_info(model);
+            ImGui::Unindent();
         }
 
         ImGui::PopID();

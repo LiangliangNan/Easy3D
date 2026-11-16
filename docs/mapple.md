@@ -105,7 +105,8 @@ Reuse inventory (verified):
 - [x] `MappleViewer : Viewer, logging::Logger`, ImGui frame hooks and input routing.
 - [x] `ImGuiLayer`: context, Droid Sans atlas, DPI scaling, ImDrawData translation.
 - [x] Menu bar (File, View, Camera, Help), toolbar, status bar.
-- [x] Models panel: tree, active model selection, per-drawable visibility, delete, fit.
+- [x] Models panel: flat model list, active model selection with the selected model's
+      info directly below its name, delete, fit.
 - [x] Rendering panel: background color, projection; the active model's drawables as a
       compact list (visibility, uniform color, name, current scheme) with one editor
       for the selected drawable (color scheme, scalar-field styles, texture image with
@@ -128,7 +129,8 @@ snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
 
 - [x] Model data inspection: the selected model's path, vertex/edge/face counts,
       bounding box, and a collapsible property listing (`Model::property_stats`),
-      shown in the Models panel so it always describes the highlighted row.
+      drawn in the Models panel directly below the clicked model's name so it always
+      describes the highlighted row.
 - [x] Point/picking readouts in the status bar: nearest visible primitive under the
       pointer (world coordinates, face or point index), highlighted in Click mode only;
       the query is throttled and uses `Viewer::pick` in logical window coordinates.
@@ -304,7 +306,9 @@ Phase 2 design notes:
       97 the file also carries the Snapshot dialog's settings (scale, samples,
       background, expand) as a `snapshot` object, so restoring a figure's state
       reopens the dialog with the values that figure was rendered with; a file
-      without the block keeps the dialog's current values. A missing or mistyped key
+      without the block keeps the dialog's current values. Since batch 98 the
+      timestamp is the file's first field (`saved`), with the remaining fields in
+      alphabetical order. A missing or mistyped key
       keeps the current value, a window position saved on a monitor that is no longer
       connected is ignored, and restoring stops camera-path playback.
       This replaces the Qt app's row-based `.view`/`.state` text format. Mapple's
@@ -1232,3 +1236,39 @@ Models-panel/readout extras; retirement can proceed once those are decided on.
   restored it and logged exactly those values with the resized window, and the file
   held the `snapshot` block. No clicks were scripted; the library is unchanged, so the
   suites were not rerun.
+
+### 2026-11-16 — macOS restore dialog and the `.view` header
+
+- Restore View State... no longer greys out every file on macOS. The vendored
+  portable-file-dialogs backend passed the filter to AppleScript as
+  `choose file ... of type {"view"}`, and `choose file` reads a four-character string
+  as a classic file type code, so the pattern matched nothing (`.jpeg` behaved the
+  same; three-letter and five-character extensions worked). Four-character extensions
+  are now left out of the `of type` list, and a filter with no expressible extension
+  opens an unfiltered panel whose selection the caller validates.
+- The `.view` file writes `saved` as its first field (through
+  `nlohmann::ordered_json`); the other fields keep their alphabetical order, so a
+  snapshot's state file still starts with the timestamp for a quick check of its age.
+- Validation (2026-11-16, macOS): probes linked against both check trees' rebuilt
+  `libeasy3d_util` opened the dialog with the app's filters and returned the `.view`
+  path on both backends; a temporary init() probe (removed) confirmed the field order.
+  Both binaries were rebuilt and relaunched afterwards. No clicks were scripted; the
+  suites were run for the library change (OpenGL 116/116, Vulkan 149/150 with a
+  desktop focus flake that passed in isolation).
+
+### 2026-11-16 — Models panel: info under the clicked name
+
+- The per-drawable visibility checkboxes left the Models panel; drawable visibility
+  stays in the Rendering panel's drawable list. Models are now a flat list of
+  selectable names (active row highlighted) with the same Fit to this model / Delete
+  context menu.
+- Clicking a name activates that model and draws its info - path, vertex/edge/face or
+  point counts, bounding box and the collapsible property listing - directly below
+  the name, indented; clicking another name moves the block there. The separate
+  "Model Info" section above the list is gone, and a model being processed in the
+  background shows its notice in the same place.
+- Validation (2026-11-16, macOS): a mesh and a point cloud were opened on both
+  backends; the info block sat under the active name with no drawable checkboxes and
+  moved when the load order changed. The shared trees could not relink while
+  `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
+  check tree's flags and linked against its libraries. Suites not rerun (app-only).

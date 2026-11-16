@@ -1155,7 +1155,13 @@ inline internal::file_dialog::file_dialog(type in_type,
                     has_filter = false;
                 else
 #endif
-                if (internal::starts_with(pat, "*."))
+                // Liangliang: the "choose file" command reads a four-character string as a classic
+                // file type code instead of a filename extension. A filter such as "*.view" or
+                // "*.jpeg" then matches nothing and disables every file in the panel, so such an
+                // extension cannot be expressed as a type here. Leaving it out lists all files;
+                // the caller validates the selection (a 3-character or 5+-character extension
+                // works as an ordinary extension).
+                if (internal::starts_with(pat, "*.") && pat.size() - 2 != 4)
                     filter_list += (filter_list.size() == 0 ? "" : ",") +
                                    osascript_quote(pat.substr(2, pat.size() - 2));
             }

@@ -321,7 +321,16 @@ void MappleViewer::save_view_state(const std::string& file_path) {
         LOG(ERROR) << "unable to create the view state file " << file_path;
         return;
     }
-    output << state.dump(4) << std::endl;
+
+    // "saved" identifies the file at a glance, so it goes on top; the other fields
+    // keep the alphabetical order json gives them.
+    nlohmann::ordered_json ordered;
+    ordered["saved"] = state["saved"];
+    for (auto it = state.begin(); it != state.end(); ++it) {
+        if (it.key() != "saved")
+            ordered[it.key()] = it.value();
+    }
+    output << ordered.dump(4) << std::endl;
     if (!output.good()) {
         LOG(ERROR) << "failed to write the view state to " << file_path;
         return;

@@ -10521,3 +10521,66 @@ the same camera position and 2.5 / 7 / 1 / false, with the window visibly resize
 change is confined to the application, so the 116/150 suites were not rerun
 (Mapple-only scope); no clicks were scripted. `easy3d/util/version.h` is unchanged.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 98: macOS open dialog filters and the `.view` header
+
+**Scope.** Two fixes. First, the macOS backend of the vendored
+`3rd_party/portable_file_dialogs/portable_file_dialogs.h` builds its open filter as
+AppleScript `choose file ... of type {...}`, and `choose file` reads a four-character
+string as a classic file type code rather than a filename extension. The view-state
+dialog's only pattern, `*.view`, therefore became `of type {"view"}`, which matched
+nothing and disabled every file in the panel (`.jpeg` failed the same way, while
+three-letter extensions such as `ply` and five-character ones worked). Four-character
+extensions are now left out of the `of type` list; when none remains the panel lists
+all files and the caller validates the selection, matching what the "All Files" entry
+already does on macOS. Three-character and five-or-more-character extensions filter
+exactly as before. Second, `save_view_state` in `applications/Mapple/ui/menu.cpp`
+writes the state through `nlohmann::ordered_json` with `saved` inserted first, so the
+timestamp headers the file; the remaining fields keep the alphabetical order `dump`
+gave them.
+
+**Validation (2026-11-16, macOS).** Standalone probes first established the AppleScript
+rule: `of type {"view"}` and `of type {"jpeg"}` disabled every file, `{"ply"}` enabled
+the `.ply` test file and `{"viewx"}` enabled the 5-character one. Both check trees were
+rebuilt in full and their suites run serially: OpenGL 116/116; Vulkan 149/150 with
+`vulkan.viewerloop` timing out, which passed in isolation in 1.04 s; the one allowed
+full rerun hit two other desktop flakes (`vulkan.realcamera` failed,
+`vulkan.portableselection` timed out), both passing together in isolation in 1.45 s —
+the known windowed-run focus flake. A `/tmp` probe linked against each tree's rebuilt
+`libeasy3d_util` called `dialog::open` with the app's view-state filters on a folder
+holding `.view`, `.jpeg`, `.ply` and `.txt` files: the window-id captures showed all
+four enabled, and a type-select plus Return returned
+`/private/tmp/aaa_dialogtest/testa.view` on both backends. A temporary probe in
+`MappleViewer::init()` (removed afterwards) wrote `/tmp/ordered.view`, which starts
+with `saved` followed by the alphabetical fields. Mapple was rebuilt in both trees
+after the probe removal and launched on both backends ("Mapple UI ready
+(Vulkan/OpenGL)"); menu clicks and the app's own restore dialog were not scripted.
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-16 — batch 99: Models panel keeps only the models and the clicked model's info
+
+**Scope.** `applications/Mapple/ui/panels.cpp` only. The Models panel no longer repeats
+every drawable with a visibility checkbox (the Rendering panel's drawable list owns
+visibility); the per-model tree nodes became a flat list of selectable names, the
+active row highlighted, with the same context menu (Fit to this model, Delete). Clicking
+a name activates the model and draws its info - path, vertex/edge/face or point counts,
+bounding box, and the collapsible property listing - directly below that name,
+indented; clicking another name moves the block there. The separate "Model Info"
+collapsing section above the list is gone, and the background-processing notice now
+appears in the same place for the model being processed. The bottom Fit/Delete buttons
+are unchanged. The library is untouched.
+
+**Validation (2026-11-16, macOS).** The shared `build-opengl-check` and
+`build-vulkan-check` trees could not relink at validation time: `easy3d/util/setting.cpp`
+was mid-edit in the working tree (`nlohmann::ord settings;`, a half-typed identifier
+from a concurrent edit), and that file belongs to `easy3d_util`. `ui/panels.cpp` was
+compiled with each check tree's own Mapple compile flags and linked against that tree's
+remaining objects and libraries into `/tmp/Mapple-vk-test` and `/tmp/Mapple-gl-test`.
+Both launched with `bunny.ply` and `fountain/pointcloud.ply`: the Models panel lists
+just the two names (active row highlighted) with the info block below it and no
+drawable checkboxes or Model Info header; relaunching with the arguments reversed
+moved the info under the other name, so it follows the active model. The Rendering
+panel still lists the drawables with their visibility checkboxes. The change is
+confined to the application, so the 116/150 suites were not rerun. No clicks were
+scripted. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate
+gates.
