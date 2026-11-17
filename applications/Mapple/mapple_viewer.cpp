@@ -1310,6 +1310,9 @@ void MappleViewer::select_region(SelectAction action) {
         if (!mesh_picker_)
             mesh_picker_.reset(new SurfaceMeshPicker(camera()));
         std::vector<SurfaceMesh::Face> faces;
+        // Mesh regions select what is on screen: the picker rasterizes the face drawable
+        // and keeps faces that own a pixel inside the region, so hidden faces stay out and
+        // faces crossing the region boundary are still selected.
         if (select_mode_ == SelectMode::LASSO && lasso_.size() >= 3)
             faces = mesh_picker_->pick_faces(mesh, Polygon2(lasso_.begin(), lasso_.end()));
         else {

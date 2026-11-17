@@ -45,30 +45,30 @@ void math_tests() {
     require(!picker.pick_face(&mesh,-1,y).is_valid(),"outside query retained a stale face");
     require(!picker.pick_face(nullptr,x,y).is_valid(),"null mesh retained a stale face");
 
-    // Region selection stays geometric and needs no render context.
+    // pick_faces_CPU stays geometric and needs no render context.
     Polygon2 region;region.push_back(vec2(0,0));region.push_back(vec2(399,0));region.push_back(vec2(399,299));region.push_back(vec2(0,299));
-    const auto all=picker.pick_faces(&mesh,region);require(all==std::vector<SurfaceMesh::Face>({rear,front}),"through-region selection lost deleted source slots");
-    require(picker.pick_faces(&mesh,Rect(399,0,299,0))==all,"rectangle and polygon region semantics differ");
+    const auto all=picker.pick_faces_CPU(&mesh,region);require(all==std::vector<SurfaceMesh::Face>({rear,front}),"through-region selection lost deleted source slots");
+    require(picker.pick_faces_CPU(&mesh,Rect(399,0,299,0))==all,"rectangle and polygon region semantics differ");
     SurfaceMesh other;
     face(other,{vec3(8,8,0),vec3(9,8,0),vec3(8,9,0)});face(other,{vec3(-8,-8,0),vec3(-9,-8,0),vec3(-8,-9,0)});
     const auto other_face=face(other,{vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0)});
     Polygon2 boundary;for(auto vertex:other.vertices(other_face)) boundary.push_back(vec2(picker.camera()->projected_coordinates_of(other.position(vertex))));
-    require(picker.pick_faces(&other,boundary)==std::vector<SurfaceMesh::Face>({other_face}),"polygon boundary vertices were excluded");
-    require(picker.pick_faces(&mesh,Polygon2()).empty(),"empty polygon selected faces");
+    require(picker.pick_faces_CPU(&other,boundary)==std::vector<SurfaceMesh::Face>({other_face}),"polygon boundary vertices were excluded");
+    require(picker.pick_faces_CPU(&mesh,Polygon2()).empty(),"empty polygon selected faces");
     Polygon2 degenerate;degenerate.push_back(vec2(0));degenerate.push_back(vec2(1));degenerate.push_back(vec2(2));
-    require(picker.pick_faces(&mesh,degenerate).empty(),"degenerate region selected faces");
-    region[0].x=std::numeric_limits<float>::quiet_NaN();require(picker.pick_faces(&mesh,region).empty(),"nonfinite region selected faces");
+    require(picker.pick_faces_CPU(&mesh,degenerate).empty(),"degenerate region selected faces");
+    region[0].x=std::numeric_limits<float>::quiet_NaN();require(picker.pick_faces_CPU(&mesh,region).empty(),"nonfinite region selected faces");
     // Completely beyond the camera's far plane must not be selected in projection.
     SurfaceMesh far_plane;face(far_plane,{vec3(-1,-1,-10000),vec3(1,-1,-10000),vec3(0,1,-10000)});
-    require(picker.pick_faces(&far_plane,Rect(0,399,0,299)).empty(),"region selection ignored the camera frustum");
+    require(picker.pick_faces_CPU(&far_plane,Rect(0,399,0,299)).empty(),"region selection ignored the camera frustum");
     // Region selection honors clipping and the model transform.
     auto* clipping=ClippingPlane::instance();clipping->fit_scene(vec3(0,0,-.1f),1);clipping->set_enabled(true);clipping->set_cross_section(false);
-    require(picker.pick_faces(&mesh,Rect(0,399,0,299))==std::vector<SurfaceMesh::Face>({rear}),"region selection ignored clipping");
+    require(picker.pick_faces_CPU(&mesh,Rect(0,399,0,299))==std::vector<SurfaceMesh::Face>({rear}),"region selection ignored clipping");
     clipping->set_cross_section(true);clipping->set_cross_section_width(.01f);
-    require(picker.pick_faces(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored cross-section thickness");
+    require(picker.pick_faces_CPU(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored cross-section thickness");
     clipping->set_enabled(false);clipping->set_cross_section(false);
     mesh.set_manipulator(std::make_shared<Manipulator>(&mesh));mesh.manipulator()->frame()->translate(vec3(100,0,0));
-    require(picker.pick_faces(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored the model transform");
+    require(picker.pick_faces_CPU(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored the model transform");
 }
 void rendered_tests() {
     Viewer viewer("Mesh picker",161,121,1,false,false);
@@ -119,6 +119,23 @@ void rendered_tests() {
     drawable->update_vertex_buffer(mesh->points());
     require(picker.pick_face(mesh.get(),x,y)==front,"restored drawable was not pickable");
 
+    // Visible-only regions keep what is on screen: the rear copy is occluded.
+    const Rect screen(0,camera->screen_width()-1,0,camera->screen_height()-1);
+    require(picker.pick_faces(mesh.get(),screen)==std::vector<SurfaceMesh::Face>({front}),
+            "visible region kept occluded or deleted faces");
+    // A region crossing the face boundary is selected even though no vertex is inside,
+    // while the geometric through-selection needs every vertex.
+    Polygon2 small;
+    small.push_back(vec2(pixel.x-2,pixel.y-2));small.push_back(vec2(pixel.x+2,pixel.y-2));
+    small.push_back(vec2(pixel.x+2,pixel.y+2));small.push_back(vec2(pixel.x-2,pixel.y+2));
+    require(picker.pick_faces(mesh.get(),small)==std::vector<SurfaceMesh::Face>({front}),
+            "visible region missed a face crossing the region boundary");
+    require(picker.pick_faces_CPU(mesh.get(),small).empty(),
+            "through-region selection accepted a region without face vertices");
+    drawable->set_visible(false);
+    require(picker.pick_faces(mesh.get(),small).empty(),"hidden face drawable was region-picked");
+    drawable->set_visible(true);
+
     // Vertex/edge snapping remains geometric on the picked face.
     const auto first=*mesh->vertices(front).begin();
     const auto vertex_pixel=picker.camera()->projected_coordinates_of(mesh->position(first));
@@ -143,8 +160,11 @@ void rendered_tests() {
     auto* clipping=ClippingPlane::instance();
     clipping->fit_scene(vec3(.4f,.25f,.2f),1);clipping->set_enabled(true);clipping->set_cross_section(false);
     require(picker.pick_face(mesh.get(),tx,ty)==rear,"clipping was ignored by rasterized picking");
+    require(picker.pick_faces(mesh.get(),screen)==std::vector<SurfaceMesh::Face>({rear}),
+            "visible region ignored clipping");
     clipping->set_cross_section(true);clipping->set_cross_section_width(.01f);
     require(!picker.pick_face(mesh.get(),tx,ty).is_valid(),"cross-section thickness was ignored");
+    require(picker.pick_faces(mesh.get(),screen).empty(),"visible region ignored cross-section thickness");
     clipping->set_enabled(false);clipping->set_cross_section(false);
 
     // Perspective projection and rotation keep the raster path aligned with the camera.
@@ -178,8 +198,10 @@ void rendered_tests() {
     require(!picker.pick_face(&detached,x,y).is_valid(),"detached mesh was picked");
     Polygon2 detached_polygon;
     for(auto vertex:detached.vertices(detached_face)) detached_polygon.push_back(vec2(picker.camera()->projected_coordinates_of(detached.position(vertex))));
-    require(picker.pick_faces(&detached,detached_polygon)==std::vector<SurfaceMesh::Face>({detached_face}),
+    require(picker.pick_faces_CPU(&detached,detached_polygon)==std::vector<SurfaceMesh::Face>({detached_face}),
             "detached region selection failed");
+    require(picker.pick_faces(&detached,detached_polygon).empty(),
+            "detached mesh visible region selected faces");
 
 #ifndef EASY3D_HAS_VULKAN
     // Each picker owns a context-local framebuffer and restores the caller state.

@@ -11118,3 +11118,56 @@ both `camerapathbuilder` variants. Mapple launches on both backends ("Mapple UI 
 (Vulkan)"/"(OpenGL)") with the settings files restored afterwards.
 `easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-17 — batch 119: mesh regions select only what is on screen
+
+**Problem.** `SurfaceMeshPicker::pick_faces()` evaluated a rectangle or lasso geometrically:
+a face qualified when every original vertex projected inside the region, so faces hidden
+behind other geometry were selected and a face crossing the region boundary was dropped even
+when most of it was visible. Mapple's Rect and Lasso modes inherited that through-selection,
+while the point-cloud lasso already rasterizes on the GPU.
+
+**Change (picker).** `pick_faces(model, rect|polygon)` is now the visible-face selection on
+both backends: the face drawable is rasterized with primitive IDs (the same pass as a single
+pixel pick, including the active clipping planes and the model transform), every pixel of the
+region that belongs to the drawable is mapped back to its source face through
+`f:triangle_range`, and the faces are returned in mesh order. Occluded, clipped-away and
+deleted faces stay out, and a face crossing the region boundary is selected as soon as it
+owns one pixel inside it. Only the polygon's bounding rectangle is read back, so a concave or
+self-crossing lasso costs its bounds, and pixels outside the polygon are rejected on the CPU.
+The geometric through-selection keeps its behavior under the new name
+`pick_faces_CPU(model, rect|polygon)`, which needs no rendered drawable; both entry points
+share the same region validation (finite points, non-zero area, fewer than three points
+refused). The previous `bool visible_faces` parameter is gone.
+
+**Change (device).** The Vulkan device gains
+`sample_ids(width, height, commands, x, y, region_width, region_height)`: it renders the full
+viewport through the picking pipeline exactly as `sample_pixel` does, copies only the
+requested image region into a host-visible buffer (tightly packed rows, no row pitch), and
+returns the `(object, primitive)` IDs row-major with the top row first and UINT32_MAX for
+background, throwing `std::out_of_range` for an empty or out-of-bounds region. The OpenGL
+picker renders its existing offscreen selection shader pass and reads the region's framebuffer
+rows back with `glReadPixels`, so both backends answer the same contract without a shared
+device abstraction.
+
+**Change (apps).** Mapple's Rect and Lasso mesh modes call `pick_faces()` and therefore
+select only visible faces; the `select_region` comment states the new rule. Mapple-Qt's
+selection tool uses the same calls: its release handler makes the widget's OpenGL context
+current before dispatching the tool, which is all the OpenGL visible path needs, so the
+retiring app selects visible faces too.
+
+**Test.** `tests/gui/mesh_picker_test.cpp` keeps the geometric assertions (region semantics,
+frustum, clipping, model transform, empty/degenerate/non-finite regions, boundary vertices)
+on `pick_faces_CPU` and adds rendered checks for both backends: the full-window region selects
+only the front face (the occluded rear copy and the deleted front-most slot stay out), a 4x4
+region centered on the face selects it although no vertex lies inside while `pick_faces_CPU`
+returns nothing, hiding the face drawable empties the region, clipping the front surface
+switches the region to the rear face and a cross-section empties it, and a detached mesh has
+no visible region while `pick_faces_CPU` still works.
+
+**Validation.** Both check trees rebuilt; suites ran serially: Vulkan 150/150 (160 s) and
+OpenGL 118/118 (61 s), including `vulkan.meshpicker` and `opengl.meshpicker`. Mapple launches
+on both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)") with bunny.ply; the Rect and Lasso
+gestures themselves were not scripted. Mapple-Qt (OpenGL release tree) also builds and
+launches with bunny.ply; its drag gestures were not scripted either. `easy3d/util/version.h`
+carries only the generated date bump. Linux/Windows/CI remain separate gates.

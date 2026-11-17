@@ -4340,6 +4340,7 @@ namespace easy3d {
                 bool oit_active_ = false;
                 uint32_t oit_dropped_ = 0;
                 std::unique_ptr<Target> target_, pixel_target_;
+                std::unique_ptr<Buffer> region_readback_;
                 std::unique_ptr<ShadowMap> shadow_map_;
                 uint32_t shadow_bound_size_ = 0;
                 std::unique_ptr<Presentation> presentation_;
@@ -4356,6 +4357,7 @@ namespace easy3d {
                     presentation_.reset();
                     target_.reset();
                     pixel_target_.reset();
+                    region_readback_.reset();
                     shadow_map_.reset();
                     point_selector_.reset();
                     // Free transparency descriptor sets before the textures they reference.
@@ -5286,6 +5288,55 @@ namespace easy3d {
                     return capture_pixel(c_, target, x, y, [&](VkCommandBuffer cmd, const VkOffset2D &pixel) {
                         encode_pass(cmd, draws, background, target, pass, target.framebuffer, &pixel);
                     });
+                }
+                std::vector<FrameImage::Id> sample_ids(uint32_t width,
+                                                       uint32_t height,
+                                                       const std::vector<DrawCommand> &commands,
+                                                       uint32_t x,
+                                                       uint32_t y,
+                                                       uint32_t region_width,
+                                                       uint32_t region_height) override {
+                    if (!region_width || !region_height || x >= width || y >= height ||
+                        region_width > width - x || region_height > height - y)
+                        throw std::out_of_range("scene sample region is outside the target");
+                    const vec4 background(0);
+                    const auto draws = prepare(width, height, commands, background, 1, true);
+                    std::vector<FrameImage::Id> result(size_t(region_width) * region_height,
+                                                       FrameImage::Id{UINT32_MAX, UINT32_MAX});
+                    if (draws.empty())
+                        return result;
+                    auto &pass = picking_pass();
+                    if (!pixel_target_ || pixel_target_->width != width || pixel_target_->height != height) {
+                        std::unique_ptr<Target> target(new Target(c_, width, height, pass, nullptr));
+                        target->init();
+                        target->readback.init(12, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+                        pixel_target_ = std::move(target);
+                    }
+                    auto &target = *pixel_target_;
+                    // The row pitch stays zero: the copy packs the region rows tightly
+                    // into the readback buffer, matching the returned row-major layout.
+                    const size_t bytes = result.size() * sizeof(FrameImage::Id);
+                    if (!region_readback_)
+                        region_readback_.reset(new Buffer(c_));
+                    if (region_readback_->size < bytes)
+                        region_readback_->init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+                    c_.execute([&](VkCommandBuffer cmd) {
+                        encode_pass(cmd, draws, background, target, pass, target.framebuffer);
+                        VkBufferImageCopy copy{};
+                        copy.imageOffset = {int32_t(x), int32_t(y), 0};
+                        copy.imageExtent = {region_width, region_height, 1};
+                        copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+                        c_.vkCmdCopyImageToBuffer(cmd, target.ids.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                  region_readback_->handle, 1, &copy);
+                        VkMemoryBarrier host{};
+                        host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                        host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+                        host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+                        c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0,
+                                                1, &host, 0, nullptr, 0, nullptr);
+                    });
+                    region_readback_->transfer(result.data(), bytes, false);
+                    return result;
                 }
                 bool present(uint32_t width,
                              uint32_t height,

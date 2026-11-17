@@ -47,10 +47,13 @@ namespace easy3d {
      *      the cursor pixel and maps the triangle index back to its original face.
      *      A model without a rendered face drawable cannot be picked. Vertex and
      *      edge selection then snaps within the picked face using the picker
-     *      resolution. Region selection remains geometric through-selection: all
-     *      original face vertices must be inside the region, camera frustum and
-     *      clipping planes. Vulkan face picking also requires CPU-side drawable
-     *      buffers so the rasterized triangle can be mapped back to a source face.
+     *      resolution. Region selection rasterizes the face drawable with primitive IDs
+     *      and keeps every face that owns a pixel inside the region, so hidden and
+     *      clipped-away faces are excluded and faces crossing the region boundary are
+     *      included. The pick_faces_CPU() overloads offer the geometric alternative:
+     *      all original face vertices must be inside the region, camera frustum and
+     *      clipping planes. Vulkan face picking also requires CPU-side drawable buffers
+     *      so the rasterized triangle can be mapped back to a source face.
      *      Like all pickers, it acts on the supplied model and never traverses a
      *      Viewer's scene; use Viewer::pick() to identify the hit drawable first
      *      (see Picker for the division of work).
@@ -170,28 +173,51 @@ namespace easy3d {
         //------------------ multiple selection of faces ------------------
 
         /**
-         * \brief Return faces of a surface mesh fully inside a rectangle.
-         * \param model The surface mesh model.
+         * \brief Return the visible faces of a surface mesh inside a rectangle.
+         * \param model Surface mesh with a visible face drawable.
          * \param rect Rectangle in logical window coordinates (top-left origin).
-         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
-         * \note The rectangle is evaluated with through-selection: a face is selected when all its vertices
-         *       project inside the rectangle, are in front of the camera, and are not clipped. The coordinates
-         *       are in logical window units (camera()->screen_width()/Height()), not framebuffer pixels. Both
-         *       OpenGL and Vulkan backends present the same coordinate contract.
+         * \return Faces that own a pixel inside the rectangle. This does not modify mesh selection properties.
+         * \note The face drawable is rasterized with primitive IDs, including the active clipping planes, and a
+         *       face is selected when it wins a pixel inside the rectangle. Occluded and clipped-away faces are
+         *       excluded, and a face crossing the rectangle boundary is selected. Coordinates are in logical
+         *       window units (camera()->screen_width()/Height()), not framebuffer pixels. Both OpenGL and Vulkan
+         *       backends present the same coordinate contract.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Rect &rect);
 
         /**
-         * \brief Return faces of a surface mesh fully inside a polygon/lasso.
-         * \param model The surface mesh model.
+         * \brief Return the visible faces of a surface mesh inside a polygon/lasso.
+         * \param model Surface mesh with a visible face drawable.
          * \param plg Polygon region in logical window coordinates (top-left origin).
-         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
-         * \note The polygon is evaluated with through-selection, same as the rectangle overload. The polygon
-         *       may be concave; it is given in logical window units (camera()->screen_width()/Height()), not
-         *       framebuffer pixels. A polygon with fewer than three points or zero area returns no faces.
-         *       This operation does not modify mesh selection properties.
+         * \return Faces that own a pixel inside the polygon. This does not modify mesh selection properties.
+         * \note Same rasterized selection as the rectangle overload. The polygon may be concave or self-crossing;
+         *       it is given in logical window units (camera()->screen_width()/Height()), not framebuffer pixels.
+         *       A polygon with fewer than three points or zero area returns no faces.
          */
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
+
+        /**
+         * \brief Return faces of a surface mesh fully inside a rectangle (CPU through-selection).
+         * \param model The surface mesh model; no rendered drawable is needed.
+         * \param rect Rectangle in logical window coordinates (top-left origin).
+         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
+         * \note Geometric through-selection: a face is selected when all its vertices project inside the
+         *       rectangle, are in front of the camera, and are not clipped, so occluded faces are included and
+         *       faces crossing the boundary are excluded. The coordinates are in logical window units
+         *       (camera()->screen_width()/Height()), not framebuffer pixels.
+         */
+        std::vector<SurfaceMesh::Face> pick_faces_CPU(SurfaceMesh *model, const Rect &rect);
+
+        /**
+         * \brief Return faces of a surface mesh fully inside a polygon/lasso (CPU through-selection).
+         * \param model The surface mesh model; no rendered drawable is needed.
+         * \param plg Polygon region in logical window coordinates (top-left origin).
+         * \return Faces whose vertices satisfy the region tests. This does not modify mesh selection properties.
+         * \note Same geometric through-selection as the rectangle overload. The polygon may be concave; it is
+         *       given in logical window units (camera()->screen_width()/Height()), not framebuffer pixels.
+         *       A polygon with fewer than three points or zero area returns no faces.
+         */
+        std::vector<SurfaceMesh::Face> pick_faces_CPU(SurfaceMesh *model, const Polygon2 &plg);
 
     private:
         // Rasterized face-ID/depth pass: renders the visible face drawable with a
@@ -200,6 +226,10 @@ namespace easy3d {
         // in picker_surface_mesh.cpp.
         SurfaceMesh::Face pick_face_impl(SurfaceMesh *model, const std::shared_ptr<TrianglesDrawable>& drawable,
                                          int x, int y);
+        // Rasterized region selection: draws the visible face drawable with primitive
+        // IDs and keeps every face that owns a pixel inside the polygon. Backend-specific
+        // offscreen machinery is in picker_surface_mesh.cpp.
+        std::vector<SurfaceMesh::Face> pick_visible_faces(SurfaceMesh *model, const Polygon2 &polygon);
 
     private:
         unsigned int hit_resolution_;     // in pixels

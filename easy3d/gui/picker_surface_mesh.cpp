@@ -79,6 +79,58 @@ namespace {
         }
         return SurfaceMesh::Face();
     }
+
+    // Region membership with the region boundary included: the closing distance
+    // tolerance admits points that the polygon winding test reports as outside.
+    bool inside_polygon(const Polygon2& polygon,const vec2& p) {
+        if(polygon.contains(p)) return true;
+        for(size_t j=0,k=polygon.size()-1;j<polygon.size();k=j++) {
+            const auto edge=polygon[j]-polygon[k];const float length2=edge.length2();
+            if(length2>0) {
+                const float t=std::max(0.f,std::min(1.f,dot(p-polygon[k],edge)/length2));
+                if((p-polygon[k]-t*edge).length2()<=1e-8f) return true;
+            }
+        }
+        return false;
+    }
+
+    Rect polygon_bounds(const Polygon2& polygon) {
+        float min_x=polygon[0].x,max_x=min_x,min_y=polygon[0].y,max_y=min_y;
+        for(const auto& p:polygon) {
+            min_x=std::min(min_x,p.x);max_x=std::max(max_x,p.x);
+            min_y=std::min(min_y,p.y);max_y=std::max(max_y,p.y);
+        }
+        return Rect(min_x,max_x,min_y,max_y);
+    }
+
+    // Shared region contract: finite points describing a non-degenerate area.
+    bool valid_region(const Polygon2& polygon) {
+        if(polygon.size()<3) return false;
+        for(const auto& p:polygon) if(!std::isfinite(p.x) || !std::isfinite(p.y)) return false;
+        bool area=false;
+        for(size_t i=1;i+1<polygon.size();++i) {
+            auto a=polygon[i]-polygon[0],b=polygon[i+1]-polygon[0];
+            area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
+        }
+        return area;
+    }
+
+    // Maps rasterized triangle IDs to their source faces through f:triangle_range,
+    // the same index a single-pixel pick decodes.
+    std::vector<SurfaceMesh::Face> faces_from_primitives(SurfaceMesh* model,std::vector<std::uint32_t> primitives) {
+        std::vector<SurfaceMesh::Face> result;
+        const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
+        if(!ranges || primitives.empty()) return result;
+        std::sort(primitives.begin(),primitives.end());
+        primitives.erase(std::unique(primitives.begin(),primitives.end()),primitives.end());
+        for(auto face:model->faces()) {
+            const auto range=ranges[face];
+            if(range.first<0 || range.second<range.first) continue;
+            const auto hit=std::lower_bound(primitives.begin(),primitives.end(),std::uint32_t(range.first));
+            if(hit!=primitives.end() && int(*hit)<=range.second) result.push_back(face);
+        }
+        return result;
+    }
 }
 
 SurfaceMeshPicker::SurfaceMeshPicker(const Camera* cam):Picker(cam),hit_resolution_(15) {}
@@ -149,13 +201,18 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
 }
 std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,const Polygon2& polygon) {
     std::vector<SurfaceMesh::Face> result;
-    if(!model || polygon.size()<3) return result;
-    bool area=false;
-    for(const auto& p:polygon) if(!std::isfinite(p.x) || !std::isfinite(p.y)) return result;
-    for(size_t i=1;i+1<polygon.size();++i) {
-        auto a=polygon[i]-polygon[0],b=polygon[i+1]-polygon[0];area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
-    }
-    if(!area) return result;
+    if(!model || !valid_region(polygon)) return result;
+    return pick_visible_faces(model,polygon);
+}
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces_CPU(SurfaceMesh* model,const Rect& rect) {
+    Polygon2 polygon;
+    polygon.push_back(vec2(rect.left(),rect.top()));polygon.push_back(vec2(rect.right(),rect.top()));
+    polygon.push_back(vec2(rect.right(),rect.bottom()));polygon.push_back(vec2(rect.left(),rect.bottom()));
+    return pick_faces_CPU(model,polygon);
+}
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces_CPU(SurfaceMesh* model,const Polygon2& polygon) {
+    std::vector<SurfaceMesh::Face> result;
+    if(!model || !valid_region(polygon)) return result;
     const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
     const auto mvp=camera()->model_view_projection_matrix()*transform;
     const auto& points=model->points();std::vector<unsigned char> selected(points.size(),0);
@@ -172,15 +229,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         }
         const int viewport[] = {0,0,camera()->screen_width(),camera()->screen_height()};
         const vec2 p = vec2(transform::project(points[i],mvp,viewport,false));
-        bool inside=polygon.contains(p);
-        for(size_t j=0,k=polygon.size()-1;!inside && j<polygon.size();k=j++) {
-            const auto edge=polygon[j]-polygon[k];const float length2=edge.length2();
-            if(length2>0) {
-                const float t=std::max(0.f,std::min(1.f,dot(p-polygon[k],edge)/length2));
-                inside=(p-polygon[k]-t*edge).length2()<=1e-8f;
-            }
-        }
-        selected[i]=inside;
+        selected[i]=inside_polygon(polygon,p);
     }
     for(auto face:model->faces()) {
         bool inside=true;for(auto vertex:model->vertices(face)) inside=inside && selected[vertex.idx()];
@@ -188,6 +237,99 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
     }
     return result;
 }
+#ifdef EASY3D_HAS_VULKAN
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh* model,const Polygon2& polygon) {
+    std::vector<SurfaceMesh::Face> result;
+    const auto drawable=face_drawable(model);
+    if(!drawable || !drawable->is_visible() || !drawable->has_cpu_buffers()) return result;
+    const int width=camera()->screen_width(),height=camera()->screen_height();
+    if(width<=0 || height<=0) return result;
+    // Only the region's bounding rectangle is read back; pixels outside the polygon
+    // are rejected on the CPU, so the polygon may be concave or self-crossing.
+    const Rect bounds=polygon_bounds(polygon);
+    const int x0=std::max(0,std::min(width-1,int(std::floor(bounds.x_min()))));
+    const int y0=std::max(0,std::min(height-1,int(std::floor(bounds.y_min()))));
+    const int x1=std::max(0,std::min(width-1,int(std::ceil(bounds.x_max()))));
+    const int y1=std::max(0,std::min(height-1,int(std::ceil(bounds.y_max()))));
+    if(x1<x0 || y1<y0) return result;
+    const int region_width=x1-x0+1,region_height=y1-y0+1;
+    const graphics::DrawCommand command=draw_command(drawable,0);
+    const auto ids=render_device().sample_ids(std::uint32_t(width),std::uint32_t(height),{command},
+                                              std::uint32_t(x0),std::uint32_t(y0),
+                                              std::uint32_t(region_width),std::uint32_t(region_height));
+    std::vector<std::uint32_t> primitives;
+    primitives.reserve(ids.size());
+    for(int row=0;row<region_height;++row) for(int col=0;col<region_width;++col) {
+        const auto& id=ids[std::size_t(row)*region_width+col];
+        // Object 0 is this drawable's command; background and other commands keep the
+        // cleared object ID. UINT32_MAX primitive means provenance is unavailable.
+        if(id.object!=0 || id.primitive==UINT32_MAX) continue;
+        if(!inside_polygon(polygon,vec2(float(x0+col)+.5f,float(y0+row)+.5f))) continue;
+        primitives.push_back(id.primitive);
+    }
+    return faces_from_primitives(model,std::move(primitives));
+}
+#else
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh* model,const Polygon2& polygon) {
+    std::vector<SurfaceMesh::Face> result;
+    const auto drawable=face_drawable(model);
+    if(!drawable || !drawable->is_visible()) return result;
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT,viewport);
+    const int width=viewport[2],height=viewport[3];
+    if(width<=0 || height<=0) return result;
+    // The region lives in logical screen units; the bounding rectangle maps to
+    // framebuffer rows, where the bottom-left row is what glReadPixels starts at.
+    const Rect bounds=polygon_bounds(polygon);
+    int gx0,gy0,gx1,gy1;
+    screen_to_opengl(int(std::floor(bounds.x_min())),int(std::floor(bounds.y_min())),gx0,gy0,width,height);
+    screen_to_opengl(int(std::ceil(bounds.x_max())),int(std::ceil(bounds.y_max())),gx1,gy1,width,height);
+    const int left=std::max(0,std::min(width-1,std::min(gx0,gx1)));
+    const int right=std::max(0,std::min(width-1,std::max(gx0,gx1)));
+    // Larger top-left y values are lower framebuffer rows.
+    const int bottom=std::max(0,std::min(height-1,std::min(gy0,gy1)));
+    const int top=std::max(0,std::min(height-1,std::max(gy0,gy1)));
+    const int region_width=right-left+1,region_height=top-bottom+1;
+    const std::string name="selection/selection_single_primitive";
+    auto* program=ShaderManager::get_program(name);
+    if(!program)
+        program=ShaderManager::create_program_from_files(name,{{ShaderProgram::POSITION,"vtx_position"}});
+    if(!program)
+        throw std::runtime_error("surface picking requires the selection shader '"+name+"'");
+    opengl::QueryState state;
+    state.prepare(width,height);
+    setup_framebuffer(width,height);
+    if(!fbo_->bind()) return result;
+    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+    glClearColor(1,1,1,1);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    program->bind();
+    const mat4 MANIP=drawable->manipulated_matrix();
+    program->set_uniform("MANIP",MANIP)
+           ->set_uniform("MVP_MANIP",camera()->model_view_projection_matrix()*MANIP);
+    ClippingPlane::instance()->set_program(program);
+    ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
+    drawable->gl_draw();
+    program->release();
+    fbo_->activate_read_buffer(0);
+    std::vector<unsigned char> pixels(std::size_t(region_width)*region_height*4);
+    glReadPixels(left,bottom,region_width,region_height,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
+    fbo_->release();
+    std::vector<std::uint32_t> primitives;
+    primitives.reserve(pixels.size()/4);
+    for(int row=0;row<region_height;++row) for(int col=0;col<region_width;++col) {
+        const unsigned char* c=&pixels[(std::size_t(row)*region_width+col)*4];
+        // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
+        const int id=color::encode(c[0],c[1],c[2],c[3]);
+        if(id<0) continue;
+        const vec2 p(transform::scale_coordinate(float(left+col)+.5f,width,camera()->screen_width()),
+                     transform::scale_coordinate(float(height-(bottom+row))-.5f,height,camera()->screen_height()));
+        if(!inside_polygon(polygon,p)) continue;
+        primitives.push_back(std::uint32_t(id));
+    }
+    return faces_from_primitives(model,std::move(primitives));
+}
+#endif
 #ifndef EASY3D_HAS_VULKAN
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
             const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {

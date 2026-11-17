@@ -524,6 +524,30 @@ namespace easy3d {
                                             const std::vector<DrawCommand> &commands,
                                             std::uint32_t x,
                                             std::uint32_t y) = 0;
+            // Render scene IDs over a top-left framebuffer rectangle. The frame is
+            // rasterized once; only the requested rows are copied back.
+            /**
+             * \brief Sample scene picking IDs over a top-left framebuffer rectangle.
+             * \details The full viewport and draw order are preserved, as in sample_pixel().
+             *      The returned IDs carry the same object/primitive words the single-pixel
+             *      query reports, so callers can map a primitive back through its drawable.
+             * \param width Full render-target width in pixels.
+             * \param height Full render-target height in pixels.
+             * \param commands Draw commands for the frame.
+             * \param x Left pixel column of the requested region.
+             * \param y Top pixel row of the requested region.
+             * \param region_width Region width in pixels; at least one.
+             * \param region_height Region height in pixels; at least one.
+             * \return Row-major IDs, top row first; background pixels use UINT32_MAX for both.
+             * \throw std::out_of_range if the region is empty or exceeds the render target.
+             */
+            virtual std::vector<FrameImage::Id> sample_ids(std::uint32_t width,
+                                                           std::uint32_t height,
+                                                           const std::vector<DrawCommand> &commands,
+                                                           std::uint32_t x,
+                                                           std::uint32_t y,
+                                                           std::uint32_t region_width,
+                                                           std::uint32_t region_height) = 0;
             // Queue a frame for a configured presentation surface, without CPU readback.
             // False means zero extent/out-of-date surface; the host should retry after events.
             // Headless devices report an unsupported operation explicitly.
