@@ -1604,3 +1604,38 @@ once those are decided on.
   (resampling does not cancel). The drag itself was not scripted; suites were not
   rerun (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is
   unchanged.
+
+### 2026-11-17 — orbit by dragging its axis, with a turntable default (batch 113)
+
+- Arming Orbit now defines the axis with a press-drag in the scene instead of an
+  Alt+click that used the scene center. The press must land on a visible model
+  surface and the axis passes through that hit point. Dragging sets the axis along
+  the dragged screen segment, mapped through the camera's right and up vectors; a
+  press-and-release without a drag (under 2 logical pixels) keeps the turntable
+  default - the view's up axis through the picked point, giving a horizontal circle
+  around it.
+- The preview is the axis itself: the overlay extends the drag direction into a
+  full-length line across the view through the press point (the screen trace of
+  the 3D axis), in the same highlight ribbon as the walking stroke. A click previews
+  the view's up axis, so the default is visible before the release.
+- The axis direction is sign-corrected so `orbit_frames()`'s `up = -axis.direction()`
+  stays the view's up: an upward drag orbits upright instead of upside down. The
+  orbit's `Zoom out`, `Vertical offset`, `Pitch angle`, `Keyframes per loop` and
+  `Loops` parameters are unchanged.
+- The "Replace Camera Path?" modal is gone. The Orbit section offers `Replace path`
+  / `Add to the path`; the gesture applies the choice directly. Arming either path
+  tool snapshots the path and `Ctrl+Z` restores that snapshot (one level; it is
+  consumed by the restore), so a replaced or appended orbit - and a walking route
+  appended by mistake - can be undone without a dialog. The window shows the
+  restore hint while a snapshot is pending. This also closes the separate
+  camera-path snapshot/undo roadmap item.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees;
+  both backends launch with `domik.obj` ("Mapple UI ready (OpenGL)" / "(Vulkan)").
+  A temporary headless probe (removed) drove `CameraPathBuilder::orbit_frames()`
+  directly: with the view's up axis every camera center stays at the picked height,
+  every camera up equals the view's up, every camera looks level, the centers stay
+  one scene diagonal from the axis, the path closes, the vertical offset moves the
+  circle up the axis, and an upward axis (the pre-flip gesture direction) orbits
+  upside down as the sign rule expects; a snapshot restore keeps every pose and
+  time. The drag/press/clicks were not scripted; suites were not rerun
+  (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is unchanged.

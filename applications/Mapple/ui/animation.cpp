@@ -36,7 +36,6 @@
 #include <easy3d/core/model.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/types.h>
-#include <easy3d/gui/picker.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -79,7 +78,6 @@ void MappleViewer::draw_animation_window() {
             if (camera_path_builder_)
                 camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
             cancel_path_gesture();
-            pending_orbit_ = false;
         }
         return;
     }
@@ -114,9 +112,12 @@ void MappleViewer::draw_animation_window() {
             cancel_camera_path_tool();
         ImGui::TextDisabled(tool == CameraPathBuilder::Mode::GroundWalk
                                     ? "Drag over the ground surface to trace the route. Esc cancels."
-                                    : "Click the scene to set the orbit axis. Esc cancels.");
+                                    : "Drag across the scene to set the orbit axis; a click uses the "
+                                      "vertical axis. Esc cancels.");
     } else
         ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
+    if (camera_path_snapshot_.valid)
+        ImGui::TextDisabled("Ctrl+Z restores the path from before the last tool.");
 
     if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
         add_camera_keyframe();
@@ -190,6 +191,18 @@ void MappleViewer::draw_animation_window() {
         ImGui::SetItemTooltip("Distance between keyframes along the route, relative to the character height.");
     } else if (camera_path_builder_ && tool == CameraPathBuilder::Mode::Orbit) {
         ImGui::Separator();
+        ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
+        ImGui::SetItemTooltip("The axis runs along the dragged screen segment through the surface under "
+                              "the press, and the camera circles around it. A click (no drag) uses the "
+                              "view's up axis through that point. Ctrl+Z restores the path from before "
+                              "the tool was armed.");
+        int apply = orbit_replaces_path_ ? 0 : 1;
+        if (ImGui::RadioButton("Replace path", &apply, 0))
+            orbit_replaces_path_ = true;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Add to the path", &apply, 1))
+            orbit_replaces_path_ = false;
+
         float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
         if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
             camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom);
@@ -207,28 +220,8 @@ void MappleViewer::draw_animation_window() {
             camera_path_builder_->set_num_loops(loops);
     }
 
-    // The orbit arrives as a click; a non-empty path is only replaced on request.
-    if (pending_orbit_) {
-        pending_orbit_ = false;
-        ImGui::OpenPopup("Replace Camera Path?");
-    }
-    if (ImGui::BeginPopupModal("Replace Camera Path?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextUnformatted("The orbit replaces the current camera path.");
-        ImGui::Spacing();
-        if (ImGui::Button("Replace", ImVec2(100, 0))) {
-            kfi_->delete_path();
-            camera_path_builder_->generate_camera_path(pending_orbit_axis_);
-            camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
-            if (!show_camera_path_)
-                set_camera_path_visible(true);
-            update();
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(100, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
+    // The orbit gesture applies Replace/Append directly; Ctrl+Z restores the path
+    // from before the tool was armed.
 
     ImGui::Separator();
 #ifdef HAS_FFMPEG
@@ -383,9 +376,11 @@ void MappleViewer::arm_camera_path_tool(CameraPathBuilder::Mode tool) {
     }
 
     camera_path_builder_->set_mode(tool);
+    snapshot_camera_path(); // Ctrl+Z restores the path the tool started from
     LOG(INFO) << (tool == CameraPathBuilder::Mode::GroundWalk
                   ? "walk route tool armed: drag over the ground surface to trace the route"
-                  : "orbit tool armed: click the scene to set the orbit axis");
+                  : "orbit tool armed: drag across the scene to set the orbit axis "
+                    "(a click uses the vertical axis)");
     update();
 }
 
@@ -398,7 +393,7 @@ void MappleViewer::cancel_camera_path_tool() {
 
 void MappleViewer::cancel_path_gesture() {
     tracing_route_ = false;
-    orbit_click_pending_ = false;
+    orbit_dragging_ = false;
     route_stroke_screen_.clear();
     route_segment_.clear();
     route_segments_.clear();
@@ -480,29 +475,83 @@ void MappleViewer::commit_ground_route() {
     update();
 }
 
-void MappleViewer::apply_orbit_pick(int x, int y) {
-    if (!camera_path_builder_ || !point_in_scene(x, y))
+void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
+    if (!camera_path_builder_)
         return;
-
     camera_path_builder_->set_scene(models());
     if (!camera_path_builder_->scene_box().is_valid()) {
         LOG(WARNING) << "the orbit needs a visible model";
         return;
     }
-    const Picker picker(camera());
-    const Line3 axis = picker.picking_line(x, y);
 
-    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
-    if (kfi_->number_of_keyframes() == 0) {
-        camera_path_builder_->generate_camera_path(axis);
-        camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
-        if (!show_camera_path_)
-            set_camera_path_visible(true);
-        update();
-    } else {
-        pending_orbit_axis_ = axis;
-        pending_orbit_ = true; // the window asks before replacing the path
+    // The axis passes through the surface under the press; a click (no drag) keeps
+    // the turntable default, the view's up axis through that point.
+    const PickResult hit = pick(static_cast<int>(from.x), static_cast<int>(from.y));
+    if (!hit) {
+        LOG(WARNING) << "the orbit has to start on a visible model surface";
+        return;
     }
+    const vec3 up = camera_path_builder_->ground_up_direction();
+    vec3 direction = -up;
+    const vec2 drag = to - from;
+    if (drag.length2() > 4.0f) { // 2 logical pixels: below that the gesture is a click
+        // The image-plane direction that projects onto the dragged segment.
+        direction = camera()->right_vector() * drag.x - camera()->up_vector() * drag.y;
+        direction.normalize();
+        // orbit_frames() keeps the axis as the camera's up; point a dragged axis so
+        // that up stays the view's up, and an upward drag does not orbit upside down.
+        if (dot(-direction, up) < 0.0f)
+            direction = -direction;
+    }
+    const Line3 axis = Line3::from_point_and_direction(hit.position, direction);
+
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
+    if (orbit_replaces_path_)
+        kfi_->delete_path();
+    camera_path_builder_->generate_camera_path(axis);
+    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    if (!show_camera_path_)
+        set_camera_path_visible(true);
+    LOG(INFO) << (orbit_replaces_path_ ? "camera path replaced by an orbit (Ctrl+Z restores it)"
+                                       : "orbit added to the camera path (Ctrl+Z removes it)");
+    update();
+}
+
+void MappleViewer::snapshot_camera_path() {
+    camera_path_snapshot_.frames.clear();
+    camera_path_snapshot_.times.clear();
+    for (std::size_t i = 0; kfi_ && i < kfi_->number_of_keyframes(); ++i) {
+        camera_path_snapshot_.frames.push_back(kfi_->keyframe(i));
+        camera_path_snapshot_.times.push_back(kfi_->keyframe_time(i));
+    }
+    camera_path_snapshot_.keyframe_index = camera_keyframe_index_;
+    camera_path_snapshot_.valid = true;
+}
+
+bool MappleViewer::undo_camera_path() {
+    if (!camera_path_snapshot_.valid || !kfi_)
+        return false;
+
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+    kfi_->delete_path();
+    for (std::size_t i = 0; i < camera_path_snapshot_.frames.size(); ++i)
+        kfi_->add_keyframe(camera_path_snapshot_.frames[i], camera_path_snapshot_.times[i]);
+    const int count = static_cast<int>(kfi_->number_of_keyframes());
+    camera_keyframe_index_ = std::min(camera_path_snapshot_.keyframe_index, count - 1);
+    camera_path_snapshot_.valid = false;
+
+    if (count > 0 && !show_camera_path_)
+        set_camera_path_visible(true);
+    else if (count == 0 && show_camera_path_) {
+        release_camera_markers();
+        restore_scene_bounds();
+    }
+    LOG(INFO) << "camera path restored: " << count << " keyframes";
+    update();
+    return true;
 }
 
 //------------------------------------------------------------------------

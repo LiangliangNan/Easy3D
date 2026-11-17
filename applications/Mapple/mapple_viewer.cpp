@@ -662,8 +662,8 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         return true;
 
     // The armed one-shot path tool owns the next plain left press in the scene: a
-    // walk drag starts its route stroke there, and an orbit click is decided on the
-    // release. Alt still belongs to model manipulation and the clipping plane.
+    // walk drag starts its route stroke there, and an orbit drag starts its axis.
+    // Alt still belongs to model manipulation and the clipping plane.
     const CameraPathBuilder::Mode tool =
             camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
     if (tool != CameraPathBuilder::Mode::Off && button == BUTTON_LEFT &&
@@ -686,9 +686,9 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             } else
                 LOG(WARNING) << "the walking route needs a visible model";
         } else {
-            orbit_click_pending_ = true;
-            orbit_click_x_ = x;
-            orbit_click_y_ = y;
+            orbit_dragging_ = true;
+            orbit_drag_from_ = vec2(static_cast<float>(x), static_cast<float>(y));
+            orbit_drag_to_ = orbit_drag_from_;
             clear_hover();
             update();
         }
@@ -745,12 +745,9 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     }
 
-    if (orbit_click_pending_ && button == BUTTON_LEFT) {
-        orbit_click_pending_ = false;
-        const float dx = static_cast<float>(x) - static_cast<float>(orbit_click_x_);
-        const float dy = static_cast<float>(y) - static_cast<float>(orbit_click_y_);
-        if (std::fabs(dx) <= 2.0f && std::fabs(dy) <= 2.0f)
-            apply_orbit_pick(x, y);
+    if (orbit_dragging_ && button == BUTTON_LEFT) {
+        orbit_dragging_ = false;
+        apply_orbit_gesture(orbit_drag_from_, vec2(static_cast<float>(x), static_cast<float>(y)));
         update();
         return true;
     }
@@ -817,8 +814,11 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
         return true;
     }
 
-    if (orbit_click_pending_) // a drag is not a click; keep the gesture away from the camera
+    if (orbit_dragging_) {
+        orbit_drag_to_ = vec2(static_cast<float>(x), static_cast<float>(y));
+        update();
         return true;
+    }
 
     if (manipulating_model_) {
         Model *model = current_model();
@@ -949,6 +949,10 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
     // Camera-path shortcuts; the base Viewer no longer owns an interpolator or these keys.
     if (modifiers == MODIF_ALT && key == KEY_K) {
         add_camera_keyframe();
+        return true;
+    }
+    if (modifiers == MODIF_CTRL && key == KEY_Z) {
+        undo_camera_path();
         return true;
     }
     if (modifiers == MODIF_ALT && key == KEY_D) {
@@ -1623,7 +1627,8 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
 }
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {
-    if (!tracing_route_ || route_stroke_screen_.size() < 2)
+    const bool stroke = tracing_route_ && route_stroke_screen_.size() >= 2;
+    if (!stroke && !orbit_dragging_)
         return;
     const unsigned fw = static_cast<unsigned>(framebuffer_width());
     const unsigned fh = static_cast<unsigned>(framebuffer_height());
@@ -1633,13 +1638,29 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
     // Same coordinate contract as the selection overlay: logical units in, a
     // one-logical-pixel ribbon in framebuffer pixels out.
     const float dpi = dpi_scaling();
-    std::vector<vec2> segments;
-    segments.reserve(route_stroke_screen_.size() * 2);
-    for (std::size_t i = 1; i < route_stroke_screen_.size(); ++i) {
-        segments.emplace_back(route_stroke_screen_[i - 1] * dpi);
-        segments.emplace_back(route_stroke_screen_[i] * dpi);
+    if (stroke) {
+        std::vector<vec2> segments;
+        segments.reserve(route_stroke_screen_.size() * 2);
+        for (std::size_t i = 1; i < route_stroke_screen_.size(); ++i) {
+            segments.emplace_back(route_stroke_screen_[i - 1] * dpi);
+            segments.emplace_back(route_stroke_screen_[i] * dpi);
+        }
+        commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
     }
-    commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
+    if (orbit_dragging_) {
+        // The axis projects onto the line through the press point along the dragged
+        // segment, so drawing that line across the view previews the orbit axis; a
+        // click (no drag) previews the turntable default, the view's up axis.
+        vec2 dir = orbit_drag_to_ - orbit_drag_from_;
+        if (dir.length2() < 4.0f)
+            dir = vec2(0.0f, 1.0f);
+        dir.normalize();
+        const float reach = std::max(static_cast<float>(fw), static_cast<float>(fh));
+        std::vector<vec2> segments(2);
+        segments[0] = orbit_drag_from_ * dpi - dir * reach;
+        segments[1] = orbit_drag_from_ * dpi + dir * reach;
+        commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
+    }
 }
 
 void MappleViewer::append_manipulator_frame(std::vector<graphics::DrawCommand> &commands) const {

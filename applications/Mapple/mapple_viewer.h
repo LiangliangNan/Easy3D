@@ -473,9 +473,23 @@ private:
     // stroke is split into segments where a drag sample missed the visible surface.
     void commit_ground_route();
 
-    // Uses the ray through (x, y) as the orbit axis; a non-empty path is replaced
-    // only after the Camera Path window asks.
-    void apply_orbit_pick(int x, int y);
+    // Applies the orbit gesture: the axis passes through the surface under \p from
+    // and runs along the dragged screen segment; a click (no drag) keeps the
+    // turntable default, the view's up axis through that point. The orbit replaces
+    // the path or is appended to it, as the Orbit tool is set.
+    void apply_orbit_gesture(const easy3d::vec2 &from, const easy3d::vec2 &to);
+
+    // The path as it was when the last path tool was armed, for Ctrl+Z. One level:
+    // restoring it consumes the snapshot.
+    struct CameraPathSnapshot {
+        std::vector<easy3d::Frame> frames;
+        std::vector<float> times;
+        int keyframe_index = -1;
+        bool valid = false;
+    };
+    void snapshot_camera_path();
+    // Restores the snapshot taken when a path tool started; false without one.
+    bool undo_camera_path();
 
     // The visible surface under (x, y): the ground-contact point of a route sample
     // and the walker's up direction there (the picked face's normal, turned to the
@@ -496,7 +510,8 @@ private:
     // restores the bounds afterwards.
     void release_camera_markers();
 
-    // Draws the walking stroke being traced, in the scene's overlay layer.
+    // Draws the path gesture preview: the walking stroke being traced, or the orbit
+    // axis being dragged, in the scene's overlay layer.
     void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Video recording needs FFmpeg; without it recording_video() is always false.
@@ -740,12 +755,14 @@ private:
     std::vector<easy3d::vec2> route_stroke_screen_;          // accepted drag trail, logical window coordinates
     std::vector<RouteSample> route_segment_;                 // picked samples of the current segment
     std::vector<std::vector<RouteSample>> route_segments_;   // segments completed by a missed pick
-    // A left press on the scene may still become the orbit click.
-    bool orbit_click_pending_ = false;
-    int orbit_click_x_ = 0, orbit_click_y_ = 0;
-    // The Camera Path window asks before replacing a non-empty path with an orbit.
-    bool pending_orbit_ = false;
-    easy3d::Line3 pending_orbit_axis_;
+    // The orbit gesture: a drag across the scene sets the axis (previewed as the
+    // dragged segment); the release applies it.
+    bool orbit_dragging_ = false;
+    easy3d::vec2 orbit_drag_from_;
+    easy3d::vec2 orbit_drag_to_;
+    // The Orbit tool clears the path before generating instead of appending.
+    bool orbit_replaces_path_ = true;
+    CameraPathSnapshot camera_path_snapshot_;
 
     float left_width_ = 250.0f;
     float right_width_ = 300.0f;
