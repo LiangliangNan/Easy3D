@@ -349,6 +349,7 @@ void MappleViewer::pre_draw() {
     // so panels and menus always cover it.
     std::vector<graphics::DrawCommand> hints;
     append_selection_overlay(hints);
+    append_measure_overlay(hints);
     append_path_stroke_overlay(hints);
     append_manipulator_frame(hints);
     if (!hints.empty())
@@ -716,6 +717,17 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
+    // The armed distance tool owns the next two plain left presses in the scene.
+    // Alt still belongs to model manipulation and the clipping plane. The pick and the
+    // guide buffers wait for draw_gui(), where the graphics context is current.
+    if (measure_armed_ && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
+        pending_measure_pick_ = true;
+        measure_pick_x_ = x;
+        measure_pick_y_ = y;
+        clear_hover();
+        return true;
+    }
+
     // The armed one-shot path tool owns the next plain left press in the scene: a
     // walk drag starts its route stroke there, and an orbit drag starts its axis.
     // Alt still belongs to model manipulation and the clipping plane.
@@ -1006,13 +1018,15 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         cancel_keyframe_drag();
         return true;
     }
-    // Escape leaves selection mode. With no selection tool active it would close the
-    // window, so ask first: the two meanings are easy to confuse.
+    // Escape leaves selection mode, then clears the measurement. With neither active
+    // it would close the window, so ask first: the meanings are easy to confuse.
     if (key == KEY_ESCAPE && modifiers == 0) {
         if (select_mode_ != SelectMode::OFF) {
             cancel_selection_gesture();
             pending_mode_ = true;
             pending_select_mode_ = SelectMode::OFF;
+        } else if (measure_armed_ || measure_point_count_ > 0) {
+            clear_measurement();
         } else {
             const dialog::Response response = dialog::message(
                     "Quit Mapple", "Close Mapple?", dialog::Choice::yes_no, dialog::Type::question);
@@ -1159,6 +1173,8 @@ bool MappleViewer::point_in_scene(int x, int y) const {
 void MappleViewer::set_select_mode(SelectMode mode) {
     if (mode == select_mode_)
         return;
+    if (mode != SelectMode::OFF && measure_armed_)
+        clear_measurement(); // an unfinished measurement would keep eating the clicks
     cancel_selection_gesture();
     // The selection display outlives the tool: switching modes (including Off) only
     // changes how the pointer interacts with the scene. Only an empty selection or
@@ -1208,6 +1224,11 @@ void MappleViewer::process_pending_work() {
         pending_region_ = false;
         select_region(pending_action_);
         lasso_.clear();
+    }
+
+    if (pending_measure_pick_) {
+        pending_measure_pick_ = false;
+        measure_click(measure_pick_x_, measure_pick_y_);
     }
 
     if (pending_hover_) {
@@ -1574,6 +1595,53 @@ void MappleViewer::forget_model(Model *model) {
 }
 
 //------------------------------------------------------------------------
+// Distance measurement
+//------------------------------------------------------------------------
+
+void MappleViewer::arm_measure() {
+    if (measure_armed_) {
+        clear_measurement();
+        return;
+    }
+    // Exclusive with the other scene gestures it would compete with for the press.
+    cancel_camera_path_tool();
+    if (select_mode_ != SelectMode::OFF)
+        set_select_mode(SelectMode::OFF);
+    clear_measurement(); // a new measurement replaces the previous one
+    measure_armed_ = true;
+    LOG(INFO) << "measure tool armed: click two points on a visible model surface";
+    update();
+}
+
+void MappleViewer::measure_click(int x, int y) {
+    if (!measure_armed_) // the tool was disarmed between the press and this frame
+        return;
+    const PickResult hit = pick(x, y);
+    if (!hit) {
+        LOG(WARNING) << "a measurement point has to be on a visible model surface";
+        return;
+    }
+    if (measure_point_count_ == 0) {
+        measure_start_ = hit.position;
+        measure_point_count_ = 1;
+    } else {
+        measure_end_ = hit.position;
+        measure_point_count_ = 2;
+        measure_distance_ = static_cast<float>((measure_end_ - measure_start_).length());
+        measure_armed_ = false; // one shot: the second point completes the measurement
+        LOG(INFO) << "distance between the two picked points: " << measure_distance_;
+    }
+    update();
+}
+
+void MappleViewer::clear_measurement() {
+    measure_armed_ = false;
+    measure_point_count_ = 0;
+    measure_distance_ = 0.0f;
+    update();
+}
+
+//------------------------------------------------------------------------
 // Hover readout
 //------------------------------------------------------------------------
 
@@ -1717,6 +1785,43 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
         segments.emplace_back(lasso_.front() * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(segments, color, fw, fh, dpi));
     }
+}
+
+void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &commands) const {
+    if (measure_point_count_ == 0)
+        return;
+    const unsigned fw = static_cast<unsigned>(framebuffer_width());
+    const unsigned fh = static_cast<unsigned>(framebuffer_height());
+    if (fw == 0 || fh == 0)
+        return;
+
+    // Warm orange, distinct from the red selection/hover highlight. Same coordinate
+    // contract as the selection overlay: logical values in, framebuffer pixels out.
+    const float dpi = dpi_scaling();
+    const vec4 color(1.0f, 0.55f, 0.1f, 1.0f);
+    auto project = [this, dpi](const vec3 &point, vec2 &screen) {
+        const vec3 p = camera()->projected_coordinates_of(point);
+        if (!std::isfinite(p.x) || !std::isfinite(p.y) || p.z < 0.0f || p.z > 1.0f)
+            return false; // behind the eye or outside the depth range
+        screen = vec2(p.x, p.y) * dpi;
+        return true;
+    };
+
+    vec2 start, end;
+    const bool start_visible = project(measure_start_, start);
+    const bool end_visible = measure_point_count_ == 2 && project(measure_end_, end);
+    if (start_visible && end_visible)
+        commands.push_back(graphics::shape::draw_lines_2d({start, end}, color, fw, fh, 2.0f * dpi));
+
+    auto marker = [&commands, color, fw, fh, dpi](const vec2 &at) {
+        const float half = 3.5f * dpi;
+        commands.push_back(graphics::shape::draw_quad_filled(
+                Rect(at.x - half, at.x + half, at.y - half, at.y + half), color, fw, fh));
+    };
+    if (start_visible)
+        marker(start);
+    if (end_visible)
+        marker(end);
 }
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {

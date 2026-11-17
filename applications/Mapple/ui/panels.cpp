@@ -314,11 +314,23 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
     if (toolbar_button("snapshot", "Snapshot"))
         open_snapshot_dialog();
     ImGui::SameLine();
-   if (toolbar_button("copy", "Copy View"))
+    if (toolbar_button("copy", "Copy View"))
         copy_view();
     ImGui::SameLine();
-   if (toolbar_button("paste", "Paste View"))
+    if (toolbar_button("paste", "Paste View"))
         paste_view();
+
+    // The distance tool is a one-shot mode: the pressed background shows it is armed,
+    // and the second click (or Esc) disarms it. The push/pop pair must use the armed
+    // state from before the click, because the click itself toggles it.
+    ImGui::SameLine();
+    const bool measure_was_armed = measure_armed_;
+    if (measure_was_armed)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+    if (toolbar_button("measure", "Measure"))
+        arm_measure();
+    if (measure_was_armed)
+        ImGui::PopStyleColor();
 
     // Selection tools are mode toggles: pressing the active one returns to OFF,
     // where the pointer navigates the scene again.
@@ -1964,6 +1976,16 @@ void MappleViewer::draw_status_bar(float x, float y, float w, float h) {
         }
     }
 
+    if (measure_armed_ || measure_point_count_ > 0) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("|");
+        ImGui::SameLine();
+        if (measure_point_count_ == 2)
+            ImGui::Text("Distance: %.4f", measure_distance_);
+        else
+            ImGui::Text("Measure: click the %s point", measure_point_count_ == 0 ? "first" : "second");
+    }
+
     if (!hover_text_.empty()) {
         ImGui::SameLine();
         ImGui::TextDisabled("|");
@@ -1971,9 +1993,11 @@ void MappleViewer::draw_status_bar(float x, float y, float w, float h) {
         ImGui::TextDisabled("%s", hover_text_.c_str());
     }
 
-    const char *hint = select_mode_ == SelectMode::OFF
-                       ? "LMB rotate   RMB pan   MMB zoom   F fit"
-                       : "LMB select   Shift add   Ctrl remove   Esc exit";
+    const char *hint = measure_armed_ ? "LMB measure   Esc cancel"
+                     : select_mode_ != SelectMode::OFF
+                         ? "LMB select   Shift add   Ctrl remove   Esc exit"
+                     : measure_point_count_ > 0 ? "Esc clears the measurement"
+                                                : "LMB rotate   RMB pan   MMB zoom   F fit";
     const float hint_width = ImGui::CalcTextSize(hint).x;
     ImGui::SameLine(ImGui::GetWindowWidth() - hint_width - ImGui::GetStyle().WindowPadding.x);
     ImGui::TextDisabled("%s", hint);

@@ -531,6 +531,8 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
         update();
         return;
     }
+    if (measure_armed_)
+        clear_measurement(); // the measure tool would take this tool's presses
 
     if (tool == PathTool::GroundWalk || tool == PathTool::Orbit || tool == PathTool::Flight) {
         camera_path_builder_->set_scene(models());

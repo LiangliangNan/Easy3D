@@ -767,9 +767,26 @@ private:
 
     void clear_hover();
 
+    // ---- distance measurement (mapple_viewer.cpp) ----
+
+    // Arms the one-shot two-click distance tool; pressing it again (or Esc) clears the
+    // measurement and disarms. The first click places a marker, the second completes
+    // the segment, reports the distance in the status bar and disarms the tool.
+    void arm_measure();
+
+    void measure_click(int x, int y);
+
+    // Hides the guides, disarms the tool and drops the status-bar readout.
+    void clear_measurement();
+
     // Appends the rubber-band/lasso hint geometry to the overlay commands; the
     // caller inserts them before the ImGui geometry so hints stay under the UI.
     void append_selection_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
+
+    // Appends the distance annotation: the endpoint markers and the segment between
+    // them. It is a screen-space overlay because the chord between two surface points
+    // runs through the model and scene geometry would be occluded.
+    void append_measure_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Appends the current model's manipulated-frame box while Alt is held (the
     // manipulation gesture) or while its transform is not the identity.
@@ -892,6 +909,16 @@ private:
     easy3d::vec2 select_start_ = easy3d::vec2(0); // logical window coordinates
     easy3d::vec2 select_end_ = easy3d::vec2(0);
     std::vector<easy3d::vec2> lasso_; // logical window coordinates
+
+    // Distance measurement: the armed one-shot tool and the picked points
+    // (0: none, 1: first placed, 2: complete). The annotation is drawn as an overlay.
+    bool measure_armed_ = false;
+    bool pending_measure_pick_ = false;
+    int measure_pick_x_ = 0, measure_pick_y_ = 0;
+    int measure_point_count_ = 0;
+    easy3d::vec3 measure_start_ = easy3d::vec3(0);
+    easy3d::vec3 measure_end_ = easy3d::vec3(0);
+    float measure_distance_ = 0.0f;
 
     // Deferred work: input callbacks record requests, draw_gui() executes them.
     bool pending_mode_ = false;

@@ -1287,6 +1287,43 @@ migrated; retirement can proceed whenever it is wanted.
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
 
+### 2026-11-17 — Distance measuring tool
+
+- The toolbar gains `Measure` (`measure`, icon `resources/icons/measure.png`). It arms
+  a one-shot two-click tool: the first left press in the scene places a marker, the
+  second completes the segment, logs the distance, reports `Distance: <d>` (four
+  decimals) in the status bar and disarms. While armed the button keeps the pressed
+  background, the status bar prompts `Measure: click the first/second point`, and the
+  scene hint reads `LMB measure   Esc cancel`.
+- Esc clears an armed or completed measurement; with no measurement left the next Esc
+  behaves as before (leave selection mode, or ask before closing). Arming Measure
+  clears the previous measurement, cancels a camera-path tool and leaves the selection
+  mode, and arming a selection mode or a path tool cancels an armed measurement, so
+  only one tool consumes scene presses. Alt still belongs to the clipping plane and
+  model manipulation.
+- The annotation is a screen-space overlay (a warm-orange segment 2 logical pixels wide
+  with square endpoint markers), not scene geometry: the chord between two picked
+  surface points runs through the model, so a depth-tested line was invisible in the
+  first implementation. The press defers its pick to `draw_gui()` like the selection
+  picks, so the pick runs where the graphics context is current. Like the selection
+  rubber band, the annotation is not part of snapshots or video captures.
+- The armed button's pressed background is pushed under the pre-click armed state: the
+  click toggles the state, and reading it again after the call pushed nothing on the
+  arm click (and leaked the push on the disarm click), which aborted with
+  `PopStyleColor() too many times` on the first arm. The push/pop pair now uses
+  `measure_was_armed`, captured before `toolbar_button()`.
+- Validation (2026-11-17, macOS, Release): both check trees build and launch; a
+  temporary `MAPPLE_MEASURE_PROBE` probe (removed afterwards; `getenv` count zero)
+  armed the tool and clicked two points on bunny.ply, and window captures on both
+  backends show the segment, both markers, `Distance: 0.142902` in the status bar and
+  the `Esc clears the measurement` hint; the probe log also shows the post-second-click
+  `armed 0`. The armed one-point state was exercised by the probe but its window was
+  used for a second click before the capture, so only the completed state was
+  photographed. The reported crash was then reproduced by hand as loading graph.ply
+  and clicking Measure; with the fix, the same real clicks arm and disarm the tool on
+  both backends (graph.ply, `Distance: 12.9830` and `Distance: 35.6835` reported, no
+  imgui assertion). Suites not rerun (app-only change).
+
 ### 2026-11-17 — Status-bar and info-block graph/polyhedral readout
 
 - The status bar's current-model readout now covers the two remaining model types:
@@ -1383,11 +1420,11 @@ migrated; retirement can proceed whenever it is wanted.
   icon, or a text button when the file cannot be read (the failure is cached, so a
   missing icon is logged once). The label is the hover tooltip. The icon is drawn at
   the font size, so an ImageButton keeps the height of the text buttons.
-- Toolbar: Open (`open`), Save (`save`), Fit (`home`) and Snapshot (`snapshot`) are
-  icon-only buttons; Click (`pick`), Rect (`rect`) and Lasso (`lasso`) are icon-only
-  toggle buttons that keep the pressed background while their mode is active. Copy
-  View, Paste View and the remaining commands stay text until matching 32x32 icons
-  exist.
+- Toolbar: Open (`open`), Save (`save`), Fit (`fit`), Snapshot (`snapshot`), Copy
+  View (`copy`), Paste View (`paste`) and Measure (`measure`, added with the distance
+  tool) are icon-only buttons; Click (`pick`), Rect (`rect`) and Lasso (`lasso`) are
+  icon-only toggle buttons that keep the pressed background while their mode is
+  active. The text fallback remains for any icon whose file cannot be read.
 - Menus: `MappleViewer::icon_menu_item(icon, label, shortcut)` draws a popup row with
   the icon in a leading column - `MenuItem()` cannot show an image. The row is a
   hidden `Selectable` (which owns hover, activation and popup closing) with the icon,
