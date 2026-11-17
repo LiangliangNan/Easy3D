@@ -31,10 +31,15 @@
 
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/buffer.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -120,21 +125,55 @@ namespace easy3d {
                 SurfaceMesh::Face face;
                 auto *mesh = dynamic_cast<ToolSurfaceMeshFaceSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(face, x, y);
                 if (mesh && face.is_valid()) {
-                    auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-                    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-                    buffer::update_highlight_mask(drawable, triangle_range[face].first, triangle_range[face].second);
+                    hover_mesh_ = mesh;
+                    hover_face_ = face;
                 }
             }
         }
 
         void MultitoolSurfaceMeshFaceSelectionClick::clear_hint() {
+            hover_mesh_ = nullptr;
+            hover_face_ = SurfaceMesh::Face();
+        }
+
+        void MultitoolSurfaceMeshFaceSelectionClick::draw_hint() const {
+            if (!hover_mesh_ || !hover_face_.is_valid())
+                return;
+
+            bool exists = false;
             for (auto model : tool_manager()->viewer()->models()) {
-                auto mesh = dynamic_cast<SurfaceMesh *>(model.get());
-                if (mesh) {
-                    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-                    buffer::update_highlight_mask(drawable, -1, -1);
+                if (model.get() == hover_mesh_) {
+                    exists = true;
+                    break;
                 }
             }
+            if (!exists) // the hovered model has been removed
+                return;
+
+            auto camera = tool_manager()->viewer()->camera();
+            const mat4 mvp = camera->model_view_projection_matrix();
+            const mat4 manip = hover_mesh_->manipulator()->matrix();
+
+            Polygon2 polygon;
+            for (auto v : hover_mesh_->vertices(hover_face_)) {
+                const vec3 p = manip * hover_mesh_->position(v);
+                if ((mvp * vec4(p, 1.0f)).w <= 0.0f) // the face crosses the eye plane: no fill this frame
+                    return;
+                const vec3 proj = camera->projected_coordinates_of(p);
+                polygon.push_back(vec2(proj.x, proj.y));
+            }
+            if (polygon.size() < 3)
+                return;
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            // The cue is drawn every frame: it must not write depth, or it would hide later 3D hints
+            // (the manipulator frame) drawn in front of the face.
+            glDepthMask(GL_FALSE);
+            shape::draw_polygon_filled(polygon, vec4(setting::highlight_color.xyz(), 0.35f),
+                                       camera->screen_width(), camera->screen_height(), -0.9f);
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
         }
 
 

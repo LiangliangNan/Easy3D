@@ -110,7 +110,7 @@ namespace easy3d {
 
             void prepare_hint(ToolButton button, int x, int y) override;
             void clear_hint() override;
-            void draw_hint() const override {} //I will draw the highlighted face using shader
+            void draw_hint() const override;
 
             std::string instruction() const override {
                 return "Left: select; Right: deselect";
@@ -118,6 +118,10 @@ namespace easy3d {
 
         protected:
             SurfaceMeshPicker *picker_;
+            // The hover cue is drawn as a face overlay (see draw_hint()), so it never touches the
+            // highlight mask that displays the selection.
+            SurfaceMesh *hover_mesh_ = nullptr;
+            SurfaceMesh::Face hover_face_;
         };
 
 

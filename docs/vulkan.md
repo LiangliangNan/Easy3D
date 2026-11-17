@@ -11326,3 +11326,33 @@ backends with torusknot.obj and shows texturing, selection and the mask path int
 Mapple-Qt was rebuilt and launches in the OpenGL release tree with no stale-uniform
 warnings. Interactive clicks and drags were not scripted. `easy3d/util/version.h` is
 untouched. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 125: the Mapple-Qt hover cue is a tool-drawn face overlay
+
+**Problem.** Since batch 122 a selection is a per-primitive highlight mask, but
+Mapple-Qt's click-selection hover cue still drove that same mask:
+`MultitoolSurfaceMeshFaceSelectionClick::prepare_hint()` installed a one-interval
+tint over the hovered face, and `clear_hint()` reset every mesh's mask to empty - and
+`ToolManager::press()`/`release()` call `clear_hint()` around every click. A click
+selected the face (`f:select` set, mask built by `update_render_buffer()`), then the
+release's `clear_hint()` wiped the tint, and the next mouse move re-tinted only the
+face under the cursor: Shift+click selected faces but left them unhighlighted. (The
+same collision exists in Mapple-Qt's point-cloud click tool, which is unchanged.)
+
+**Change (application).** The click multitool no longer touches the highlight mask.
+It remembers the hovered `SurfaceMesh` and face, and `draw_hint()` draws the cue
+itself, after the scene: the face's corners are transformed by the model manipulator
+and projected with `camera::projected_coordinates_of()`, and the resulting screen-space
+`Polygon2` is filled with `shape::draw_polygon_filled()` in `setting::highlight_color`
+at alpha 0.35 (depth -0.9, depth writes off so the persistent cue does not hide the
+manipulator frame drawn later). `draw_polygon_filled()` tessellates the polygon, so
+quads and pentagons fill as one face, not one triangle. The fill is skipped when a
+corner lies at or behind the eye plane or when the hovered model has been removed.
+Masks are now written only by `update_render_buffer()` (from the selection property),
+so a selected face keeps its tint after the click and while other faces are hovered.
+
+**Validation.** Mapple-Qt rebuilt in the OpenGL release tree (`cmake-build-release`,
+`Easy3D_ENABLE_QT=ON`, Vulkan off); it launches with `girl_face.ply`, loads the mesh
+and renders with a clean log. The hover and selection gestures were not scripted
+(no synthetic input), and the suites were not rerun because only the Qt app changed.
+`easy3d/util/version.h` is untouched. Linux/Windows/CI remain separate gates.
