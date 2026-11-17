@@ -255,7 +255,6 @@ private:
 
     // A highlight range configured in the Rendering panel. The indices are rendered
     // primitives (points, lines, or triangles, i.e., polygons are triangulated).
-    // Hover highlighting yields to it, so the two do not overwrite each other.
     struct HighlightRange {
         bool enabled = false;
         int first = 0;
@@ -739,11 +738,7 @@ private:
     // Drops saved styles and hover references to a model that is about to be deleted.
     void forget_model(easy3d::Model *model);
 
-    // True when the Rendering panel owns the drawable's highlight, so the hover
-    // picking aid must leave its range alone.
-    bool has_configured_highlight(easy3d::Model *model, const easy3d::Drawable *drawable) const;
-
-    // Hover readout and primitive highlight (throttled; see update_hover()).
+    // Hover readout and the hovered face's edge outline (throttled; see update_hover()).
     void update_hover(int x, int y);
 
     void clear_hover();
@@ -763,6 +758,10 @@ private:
     // Appends the rubber-band/lasso hint geometry to the overlay commands; the
     // caller inserts them before the ImGui geometry so hints stay under the UI.
     void append_selection_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
+
+    // Appends the hovered face's fill: a depth-tested world-space triangle overlay,
+    // so the cue never touches the drawable's highlight mask.
+    void append_hover_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Appends the distance annotation: the endpoint markers and the segment between
     // them. It is a screen-space overlay because the chord between two surface points
@@ -939,8 +938,7 @@ private:
 
     bool show_pick_readout_ = true;
     easy3d::Model *hover_model_ = nullptr;       // clears the hover when its model is deleted
-    std::weak_ptr<easy3d::Drawable> hover_drawable_;
-    std::pair<int, int> hover_range_ = {-1, -1}; // highlighted primitives
+    std::vector<easy3d::vec3> hover_face_;       // world-space triangles of the hovered face
     std::string hover_text_;
     std::chrono::steady_clock::time_point hover_stamp_;
 

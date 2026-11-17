@@ -132,7 +132,7 @@ snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
       drawn in the Models panel directly below the clicked model's name so it always
       describes the highlighted row.
 - [x] Point/picking readouts in the status bar: nearest visible primitive under the
-      pointer (world coordinates, face or point index), highlighted in Click mode only;
+      pointer (world coordinates, face or point index), outlined in Click mode only;
       the query is throttled and uses `Viewer::pick` in logical window coordinates.
 - [x] Selection tools: click/rect/lasso for point clouds and surface meshes written
       straight to the picker API (`PointCloudPicker`/`SurfaceMeshPicker`) instead of
@@ -162,8 +162,12 @@ Phase 1 design notes:
 - Deleting selected faces/points changes the topology, so the whole renderer is
   invalidated (`Renderer::update()`); otherwise edge/border/vertex drawables would keep
   drawing the deleted elements.
-- The hover highlight is a picking aid of the Click (pick) mode only; the status-bar
-  readout remains available in the other modes when Pick Readout is enabled.
+- The hover cue is an overlay, not a highlight mask (batch 124): in Click mode the
+  hovered face itself is filled with a translucent depth-tested world-space overlay,
+  so hovering never overwrites the selection tint (a Shift/Ctrl multi-selection keeps
+  every selected face) and the whole polygonal face - not one of its triangles - is
+  clearly indicated. The status-bar readout remains available in the other modes when
+  Pick Readout is enabled; the cue belongs to Click only.
 - Press/release/drag in selection mode are consumed by the app so the camera never
   sees them; `Esc` leaves selection mode. Input callbacks only queue work
   (`pending_pick_`, `pending_region_`, ...) because the graphics context is not
@@ -1896,3 +1900,33 @@ migrated; retirement can proceed whenever it is wanted.
   suites (which cover the shared helpers through `vulkan.camerapath` and
   `opengl.cameraguides`) ran with Vulkan 150/150 and OpenGL 118/118. See the
   batch-118 entry in docs/vulkan.md.
+
+### 2026-11-17 — the hover cue is a face overlay (batch 124)
+
+- The Click-mode hover no longer uses the drawable's highlight mask. It installed a
+  one-interval mask over the hovered *rendered triangle*, which replaced the
+  selection's whole mask - a Shift/Ctrl multi-selection lost its tint while the
+  pointer moved - and tinted only one triangle of a polygonal face. `update_hover()`
+  now resolves the picked primitive to its mesh face (the drawable's
+  `source_faces`, or `f:triangle_range` through `face_from_primitive()` where that
+  mapping is unavailable), tessellates the face the same way the renderer does
+  (`Tessellator`, nonzero winding, so a concave face is not covered by a fan that
+  strays outside it) and stores its triangles in world space (`hover_face_`).
+  `append_hover_overlay()` projects them and submits the fill as a depth-tested
+  overlay among `pre_draw()`'s hint commands - the same overlay path as the
+  selection rubber band - in `setting::highlight_color` at alpha 0.35, so the face's
+  own shading stays readable. A selection or a Rendering-panel highlight range
+  therefore keeps its tint while hovering, and the cue always covers exactly the
+  face that the click selects. Batch 94's "the hover aid yields to a configured
+  range" and the panel's reset of a stale hover range are gone with the mask
+  bookkeeping.
+- Validation (2026-11-17, macOS): Mapple rebuilt in both check trees; both backends
+  launch ("Mapple UI ready (OpenGL)" / "(Vulkan)") with the settings files restored
+  afterwards. A temporary headless probe (removed) added a quad, forced its buffer
+  upload, and checked that both rendered triangles map to the one face
+  (`f:triangle_range` 0..1, Vulkan `source_faces` 0 0), that `pick()` resolves the
+  rendered triangle to face 0, and two snapshots around the face fill: the face
+  center shifted toward the highlight color ((255,230,136) -> (255,149,88)) while a
+  point just outside the face was unchanged, identically on OpenGL and Vulkan. The
+  hover gesture itself was not scripted; the suites were not rerun (Mapple-only
+  change).

@@ -31,10 +31,12 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+#include <easy3d/algo/tessellator.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/translator.h>
@@ -136,6 +138,21 @@ namespace {
                     return true;
         }
         return false;
+    }
+
+    // The face whose triangulated range contains a rendered triangle. pick() normally
+    // resolves this through the drawable's source faces; this fallback covers drawables
+    // whose triangle-to-face mapping is available only as f:triangle_range.
+    SurfaceMesh::Face face_from_primitive(SurfaceMesh *mesh, std::uint32_t primitive) {
+        const auto ranges = mesh->get_face_property<std::pair<int, int>>("f:triangle_range");
+        if (ranges)
+            for (auto f : mesh->faces()) {
+                const auto range = ranges[f];
+                if (range.first >= 0 && range.second >= range.first &&
+                    primitive >= std::uint32_t(range.first) && primitive <= std::uint32_t(range.second))
+                    return f;
+            }
+        return SurfaceMesh::Face();
     }
 
     const char *transparency_method_name(int method) {
@@ -334,6 +351,7 @@ void MappleViewer::pre_draw() {
     // so panels and menus always cover it.
     std::vector<graphics::DrawCommand> hints;
     append_selection_overlay(hints);
+    append_hover_overlay(hints);
     append_measure_overlay(hints);
     append_path_stroke_overlay(hints);
     append_manipulator_frame(hints);
@@ -1571,16 +1589,6 @@ void MappleViewer::clear_measurement() {
 // Hover readout
 //------------------------------------------------------------------------
 
-bool MappleViewer::has_configured_highlight(Model *model, const Drawable *drawable) const {
-    if (!model || !drawable)
-        return false;
-    auto entry = highlight_ranges_.find(model);
-    if (entry == highlight_ranges_.end())
-        return false;
-    auto range = entry->second.find(drawable->name());
-    return range != entry->second.end() && range->second.enabled;
-}
-
 void MappleViewer::update_hover(int x, int y) {
     hover_stamp_ = std::chrono::steady_clock::now();
     if (!show_pick_readout_ || !point_in_scene(x, y) || selecting_) {
@@ -1594,45 +1602,41 @@ void MappleViewer::update_hover(int x, int y) {
         return;
     }
 
-    bool changed = false;
-    const std::shared_ptr<Drawable> previous = hover_drawable_.lock();
-    // The highlight is a picking aid of the Click (pick) tool. Other modes still
-    // report the primitive in the status bar but must not tint the scene. A highlight
-    // configured in the Rendering panel owns the drawable's mask.
-    const bool highlight = select_mode_ == SelectMode::CLICK &&
-                           !has_configured_highlight(result.model.get(), result.drawable.get());
-    if (!highlight) {
-        if (previous) {
-            buffer::update_highlight_mask(previous.get(), -1, -1);
-            changed = true;
-        }
-        hover_drawable_.reset();
-        hover_range_ = {-1, -1};
-    } else {
-        if (previous != result.drawable) {
-            if (previous)
-                buffer::update_highlight_mask(previous.get(), -1, -1);
-            hover_drawable_ = result.drawable;
-            hover_range_ = {-1, -1}; // the range below belongs to the previous drawable
-            changed = true;
-        }
-        if (result.primitive != UINT32_MAX) {
-            const std::pair<int, int> range(static_cast<int>(result.primitive),
-                                            static_cast<int>(result.primitive));
-            if (hover_range_ != range) {
-                buffer::update_highlight_mask(result.drawable.get(), range.first, range.second);
-                hover_range_ = range;
-                changed = true;
+    // The hover cue is the picked face itself, filled as an overlay. It never touches
+    // the drawable's highlight mask, so a selection (or a range configured in the
+    // Rendering panel) keeps its tint while the pointer moves.
+    std::vector<vec3> face;
+    if (select_mode_ == SelectMode::CLICK && result.drawable->type() == Drawable::DT_TRIANGLES) {
+        auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
+        if (mesh) {
+            SurfaceMesh::Face f;
+            if (result.face_index >= 0)
+                f = SurfaceMesh::Face(result.face_index);
+            else
+                f = face_from_primitive(mesh, result.primitive);
+            if (f.is_valid() && !mesh->is_deleted(f)) {
+                // Tessellate like the renderer does; a fan could stray outside a
+                // concave face.
+                Tessellator tessellator;
+                tessellator.begin_polygon(mesh->compute_face_normal(f));
+                tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);
+                tessellator.begin_contour();
+                for (auto h : mesh->halfedges(f))
+                    tessellator.add_vertex(mesh->position(mesh->target(h)));
+                tessellator.end_contour();
+                tessellator.end_polygon();
+                const auto &vertices = tessellator.vertices();
+                for (const auto &triangle : tessellator.elements())
+                    for (unsigned int i : triangle)
+                        face.emplace_back(vertices[i]->data());
             }
-        } else if (hover_range_ != std::make_pair(-1, -1)) {
-            // Same drawable, but this hit has no primitive index to highlight.
-            buffer::update_highlight_mask(result.drawable.get(), -1, -1);
-            hover_range_ = {-1, -1};
-            changed = true;
         }
     }
 
+    bool changed = (face != hover_face_);
+    hover_face_.swap(face);
     hover_model_ = result.model.get();
+
     const std::string name = result.model ? file_system::simple_name(result.model->name()) : "drawable";
     char buffer[256];
     if (result.drawable->type() == Drawable::DT_TRIANGLES && result.face_index >= 0)
@@ -1654,14 +1658,9 @@ void MappleViewer::update_hover(int x, int y) {
 }
 
 void MappleViewer::clear_hover() {
-    bool changed = false;
-    if (const std::shared_ptr<Drawable> drawable = hover_drawable_.lock()) {
-        buffer::update_highlight_mask(drawable.get(), -1, -1);
-        changed = true;
-    }
-    hover_drawable_.reset();
+    bool changed = !hover_face_.empty();
+    hover_face_.clear();
     hover_model_ = nullptr;
-    hover_range_ = {-1, -1};
     if (!hover_text_.empty()) {
         hover_text_.clear();
         changed = true;
@@ -1706,6 +1705,36 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
         segments.emplace_back(lasso_.front() * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(segments, color, fw, fh, dpi));
     }
+}
+
+void MappleViewer::append_hover_overlay(std::vector<graphics::DrawCommand> &commands) const {
+    if (hover_face_.empty())
+        return;
+    const int fw = framebuffer_width();
+    const int fh = framebuffer_height();
+    if (fw <= 0 || fh <= 0)
+        return;
+
+    const mat4 mvp = camera()->model_view_projection_matrix();
+    const vec4 tint(setting::highlight_color.xyz(), 0.35f);
+    std::vector<graphics::Vertex> vertices;
+    vertices.reserve(hover_face_.size());
+    for (const auto &p : hover_face_) {
+        const vec4 clip = mvp * vec4(p, 1.0f);
+        if (!(clip.w > 1e-8f))
+            return;     // a corner at or behind the eye: no fill this frame
+        const vec3 ndc = clip.xyz() / clip.w;
+        graphics::Vertex vertex;
+        // Keep a coplanar face visible over its own surface (the same offset the
+        // line overlays use); this never writes scene depth or picking IDs.
+        vertex.position = vec3(ndc.x, ndc.y, std::max(-1.0f, ndc.z - 4 * std::numeric_limits<float>::epsilon()));
+        vertex.color = tint;
+        vertices.push_back(vertex);
+    }
+    graphics::DrawCommand result;
+    result.geometry = std::make_shared<graphics::Geometry>(std::move(vertices));
+    result.overlay = result.overlay_depth_test = true;
+    commands.push_back(std::move(result));
 }
 
 void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &commands) const {
