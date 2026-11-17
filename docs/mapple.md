@@ -1706,6 +1706,5 @@ once those are decided on.
   backends launch ("Mapple UI ready (OpenGL)" / "(Vulkan)") with the settings files
   unchanged afterwards. The paths were not exercised by scripted interaction; the
   suites (which cover the shared helpers through `vulkan.camerapath` and
-  `opengl.cameraguides`) ran with Vulkan 149/150 and OpenGL 117/118, the only
-  failures being `*.camerapathbuilder` against the working tree's uncommitted
-  keyframe-spacing default. See the batch-118 entry in docs/vulkan.md.
+  `opengl.cameraguides`) ran with Vulkan 150/150 and OpenGL 118/118. See the
+  batch-118 entry in docs/vulkan.md.

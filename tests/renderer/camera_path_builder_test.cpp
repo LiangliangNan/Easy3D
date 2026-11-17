@@ -55,6 +55,11 @@ int main() {
         camera.set_scene_radius(1.0f);
         KeyFrameInterpolator kfi(camera.frame());
         CameraPathBuilder builder(&camera, &kfi);
+        // Fix the spacing the route and flight counts below are written against instead of
+        // depending on the default: one character height is one eye height, 2 world units.
+        builder.set_keyframe_spacing_in_character_heights(1.0f);
+        require(near(builder.keyframe_spacing_in_character_heights(), 1.0f),
+                "the keyframe spacing was not stored");
 
         // --- scene bounds and eye height ---------------------------------
         builder.set_scene({});
@@ -170,7 +175,7 @@ int main() {
         // --- an interactive flight: stations, aim, keyframes -----------------
         // The flight height is relative to the scene height: 0.5 of the 10-unit
         // extent along the view's up is 5 world units. The stroke spans 8 units, so
-        // the default spacing (1 x height) resamples it to 3 stations.
+        // the spacing (1 x height) resamples it to 3 stations.
         require(near(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
         const std::vector<vec3> stations = builder.flight_stations(flat_stroke, flat_ups);
         require(stations.size() == 3, "the flight track was not resampled at the flight spacing");

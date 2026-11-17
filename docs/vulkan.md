@@ -11108,14 +11108,13 @@ restores the bare capture. Its tutorial section now also requires the guides to 
 depth and appear in the ID buffer. The fixture is derived from the fitted view (view
 direction, up, field of view, scene-center depth) rather than a pinned camera: two
 keyframes in the upper frustum clear the model at the scene center, and the glyphs are
-filled after the last keyframe exists.
+filled after the last keyframe exists. `camera_path_builder_test.cpp` sets its keyframe
+spacing explicitly, because its station counts are written against one character
+height and must not follow the default.
 
-**Validation.** Both check trees rebuilt; suites ran serially: Vulkan 149/150 (147 s)
-and OpenGL 117/118 (62 s), including `vulkan.camerapath` and `opengl.cameraguides`.
-The single failure in each tree, `vulkan.camerapathbuilder` / `opengl.camerapathbuilder`,
-is the working tree's uncommitted keyframe-spacing default (1.0 -> 0.5 character
-heights) whose test still asserts five stations; it is independent of this batch's
-files and was left untouched. Mapple launches on both backends ("Mapple UI ready
+**Validation.** Both check trees rebuilt; suites ran serially: Vulkan 150/150 (116 s)
+and OpenGL 118/118 (38 s), including `vulkan.camerapath`, `opengl.cameraguides` and
+both `camerapathbuilder` variants. Mapple launches on both backends ("Mapple UI ready
 (Vulkan)"/"(OpenGL)") with the settings files restored afterwards.
 `easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
 separate gates.
