@@ -163,6 +163,68 @@ namespace {
         }
     }
 
+    // Projects a world point to logical window coordinates (top-left origin). False
+    // when it is behind the eye or outside the depth range.
+    bool project_to_screen(const Camera *camera, const vec3 &point, vec2 &screen) {
+        const vec3 p = camera->projected_coordinates_of(point);
+        if (!std::isfinite(p.x) || !std::isfinite(p.y) || p.z < 0.0f || p.z > 1.0f)
+            return false;
+        screen = vec2(p.x, p.y);
+        return true;
+    }
+
+    // Distance, in logical pixels, from \p p to the segment [a, b].
+    float screen_segment_distance(const vec2 &p, const vec2 &a, const vec2 &b) {
+        const vec2 ab = b - a;
+        const float length2 = ab.length2();
+        if (length2 < 1e-6f)
+            return distance(p, a);
+        const float t = clamp(dot(p - a, ab) / length2, 0.0f, 1.0f);
+        return distance(p, a + ab * t);
+    }
+
+    // The parameter on the line (origin + s * axis) nearest to the cursor ray. False
+    // when the axis is seen end-on, where the cursor cannot place a point along it.
+    bool ray_axis_parameter(int x, int y, const Camera *camera, const vec3 &origin, const vec3 &axis,
+                            float &parameter) {
+        vec3 ray_origin, ray_direction;
+        camera->convert_click_to_line(x, y, ray_origin, ray_direction);
+        const float b = dot(axis, ray_direction);
+        const float denom = 1.0f - b * b; // axis and ray direction are unit vectors
+        if (denom < 1e-4f)
+            return false;
+        const vec3 r = origin - ray_origin;
+        parameter = (b * dot(ray_direction, r) - dot(axis, r)) / denom;
+        return true;
+    }
+
+    // An orthonormal basis of the plane orthogonal to \p axis, chosen the same way for
+    // every call so press and drag angles are comparable.
+    void plane_basis(const vec3 &axis, vec3 &u, vec3 &v) {
+        const vec3 helper = std::abs(axis.z) < 0.9f ? vec3(0, 0, 1) : vec3(1, 0, 0);
+        u = normalize(cross(axis, helper));
+        v = cross(axis, u);
+    }
+
+    // The cursor's angle around \p axis in the plane through \p center. False when the
+    // plane is seen edge-on or behind the eye.
+    bool ring_angle_at(int x, int y, const Camera *camera, const vec3 &center, const vec3 &axis,
+                       float &angle) {
+        vec3 ray_origin, ray_direction;
+        camera->convert_click_to_line(x, y, ray_origin, ray_direction);
+        const float denom = dot(ray_direction, axis);
+        if (std::abs(denom) < 1e-5f)
+            return false;
+        const float t = dot(center - ray_origin, axis) / denom;
+        if (t <= 0.0f)
+            return false;
+        const vec3 hit = ray_origin + ray_direction * t;
+        vec3 u, v;
+        plane_basis(axis, u, v);
+        angle = std::atan2(dot(hit - center, v), dot(hit - center, u));
+        return true;
+    }
+
 } // namespace
 
 MappleViewer::MappleViewer(const std::string &title,
@@ -354,6 +416,7 @@ void MappleViewer::pre_draw() {
     append_hover_overlay(hints);
     append_measure_overlay(hints);
     append_path_stroke_overlay(hints);
+    append_keyframe_gizmo_overlay(hints);
     append_manipulator_frame(hints);
     if (!hints.empty())
         commands.insert(commands.begin(), hints.begin(), hints.end());
@@ -472,20 +535,145 @@ void MappleViewer::release_camera_path_guides() {
     camera_markers_faces_per_glyph_ = 0;
 }
 
+int MappleViewer::selected_keyframe() const {
+    if (!edit_keyframes_ || !kfi_ || !show_camera_path_ || kfi_->is_interpolation_started())
+        return -1;
+    if (camera_keyframe_index_ < 0 ||
+        camera_keyframe_index_ >= static_cast<int>(kfi_->number_of_keyframes()))
+        return -1;
+    return camera_keyframe_index_;
+}
+
+void MappleViewer::keyframe_handle_axes(vec3 axes[3], float &arrow_length, float &ring_radius) const {
+    const int index = selected_keyframe();
+    const quat orientation = index >= 0 ? kfi_->keyframe(static_cast<std::size_t>(index)).orientation()
+                                        : quat();
+    axes[0] = normalize(orientation.rotate(vec3(1, 0, 0)));
+    axes[1] = normalize(orientation.rotate(vec3(0, 1, 0)));
+    axes[2] = normalize(orientation.rotate(vec3(0, 0, 1)));
+    // Sized to the drawn glyph: the arrows reach a little past it and the rings wrap
+    // it closely, so the gizmo never dwarfs the camera it edits.
+    const float width = camera_marker_width();
+    arrow_length = 1.25f * width;
+    ring_radius = 0.75f * width;
+}
+
+MappleViewer::KeyframeHandle MappleViewer::keyframe_handle_at(int x, int y) const {
+    const int index = selected_keyframe();
+    if (index < 0)
+        return KeyframeHandle::none;
+    vec3 axes[3];
+    float arrow_length, ring_radius;
+    keyframe_handle_axes(axes, arrow_length, ring_radius);
+    if (!(arrow_length > 0.0f) || !(ring_radius > 0.0f))
+        return KeyframeHandle::none;
+    const vec3 center = kfi_->keyframe_position(static_cast<std::size_t>(index));
+    const vec3 view = camera()->view_direction();
+    const vec2 cursor(static_cast<float>(x), static_cast<float>(y));
+    const float tolerance = 7.0f; // logical pixels
+
+    float best = tolerance;
+    KeyframeHandle result = KeyframeHandle::none;
+
+    // Arrows first: at the ring's radius the shaft passes close to the ring, and the
+    // straight handle is the more predictable grab there.
+    for (int i = 0; i < 3; ++i) {
+        const vec3 &axis = axes[i];
+        if (std::abs(dot(axis, view)) > 0.97f) // seen end-on: no stable parameter
+            continue;
+        vec2 start, end;
+        if (!project_to_screen(camera(), center, start) ||
+            !project_to_screen(camera(), center + axis * arrow_length, end))
+            continue;
+        if (distance(start, end) < 10.0f) // too short to grab, even off the end-on case
+            continue;
+        const float d = screen_segment_distance(cursor, start, end);
+        if (d <= best) {
+            best = d;
+            result = static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::move_x) + i);
+        }
+    }
+
+    // Then the rings, accepted only when their plane is not seen edge-on.
+    for (int i = 0; i < 3; ++i) {
+        const vec3 &axis = axes[i];
+        if (std::abs(dot(axis, view)) < 0.2f) // edge-on: a flat line, ambiguous to grab
+            continue;
+        vec3 u, v;
+        plane_basis(axis, u, v);
+        const int segments = 64;
+        vec2 previous;
+        bool valid = project_to_screen(camera(), center + (u * ring_radius), previous);
+        for (int s = 1; valid && s <= segments; ++s) {
+            const float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(s) / segments;
+            vec2 current;
+            valid = project_to_screen(camera(), center + (u * std::cos(angle) + v * std::sin(angle)) * ring_radius,
+                                      current);
+            if (!valid)
+                break;
+            const float d = screen_segment_distance(cursor, previous, current);
+            if (d < best) {
+                best = d;
+                result = static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::turn_x) + i);
+            }
+            previous = current;
+        }
+    }
+    return result;
+}
+
 bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
     if (!kfi_ || camera_markers_faces_per_glyph_ == 0 || !show_camera_path_ ||
         kfi_->is_interpolation_started())
         return false;
+
+    keyframe_drag_moved_ = false;
+    hovered_keyframe_handle_ = KeyframeHandle::none;
+
+    // A gizmo handle owns the press before the glyph's scene pick: the handles are
+    // screen-space, so the test is cheap, takes precedence where they overlap the
+    // glyph, and needs the keyframe to be selected already.
+    const KeyframeHandle handle = keyframe_handle_at(x, y);
+    int index = selected_keyframe();
+    if (handle != KeyframeHandle::none && index >= 0) {
+        const Frame start = kfi_->keyframe(static_cast<std::size_t>(index));
+        keyframe_drag_start_position_ = start.position();
+        keyframe_drag_start_orientation_ = start.orientation();
+        keyframe_drag_plane_point_ = start.position();
+        const int axis_index = static_cast<int>(handle) % 3;
+        keyframe_drag_axis_ = normalize(start.orientation().rotate(
+                axis_index == 0 ? vec3(1, 0, 0) : axis_index == 1 ? vec3(0, 1, 0) : vec3(0, 0, 1)));
+        const bool turn = static_cast<int>(handle) >= static_cast<int>(KeyframeHandle::turn_x);
+        if (turn) {
+            keyframe_drag_angle_ = 0.0f;
+            if (!ring_angle_at(x, y, camera(), keyframe_drag_plane_point_, keyframe_drag_axis_,
+                               keyframe_drag_last_angle_))
+                return false;
+        } else {
+            if (!ray_axis_parameter(x, y, camera(), keyframe_drag_plane_point_, keyframe_drag_axis_,
+                                    keyframe_drag_start_scalar_))
+                return false;
+        }
+        dragged_keyframe_ = index;
+        camera_keyframe_index_ = index;
+        keyframe_handle_ = handle;
+        clear_hover();
+        update();
+        return true;
+    }
+
     const PickResult hit = pick(x, y);
     if (!hit || hit.drawable != camera_markers_ || hit.primitive == UINT32_MAX)
         return false;
-    const int index = static_cast<int>(hit.primitive / camera_markers_faces_per_glyph_);
+    index = static_cast<int>(hit.primitive / camera_markers_faces_per_glyph_);
     if (index < 0 || index >= static_cast<int>(kfi_->number_of_keyframes()))
         return false;
 
     dragged_keyframe_ = index;
     camera_keyframe_index_ = index;
+    keyframe_handle_ = KeyframeHandle::free;
     keyframe_drag_start_position_ = kfi_->keyframe_position(static_cast<std::size_t>(index));
+    keyframe_drag_start_orientation_ = kfi_->keyframe(static_cast<std::size_t>(index)).orientation();
     keyframe_drag_plane_point_ = keyframe_drag_start_position_;
     if (upright_plane) {
         // The pose's own up: the terrain plane for a walking pose, the orbit plane
@@ -498,7 +686,6 @@ bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
         keyframe_drag_plane_normal_.normalize();
     } else // the screen plane through the pose: the drag follows the cursor
         keyframe_drag_plane_normal_ = camera()->view_direction();
-    keyframe_drag_moved_ = false;
     clear_hover();
     update();
     return true;
@@ -507,6 +694,56 @@ bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
 void MappleViewer::drag_keyframe(int x, int y) {
     if (dragged_keyframe_ < 0 || dragged_keyframe_ >= static_cast<int>(kfi_->number_of_keyframes()))
         return;
+    const auto index = static_cast<std::size_t>(dragged_keyframe_);
+
+    if (keyframe_handle_ == KeyframeHandle::none) // nothing grabbed
+        return;
+
+    // An arrow moves the pose along its axis: the cursor ray selects the parameter on
+    // the axis line, so the pose follows the cursor without drifting off the axis.
+    if (keyframe_handle_ >= KeyframeHandle::move_x && keyframe_handle_ <= KeyframeHandle::move_z) {
+        float parameter;
+        if (!ray_axis_parameter(x, y, camera(), keyframe_drag_plane_point_, keyframe_drag_axis_, parameter))
+            return;
+        const vec3 position = keyframe_drag_start_position_ +
+                              keyframe_drag_axis_ * (parameter - keyframe_drag_start_scalar_);
+        if (distance(position, keyframe_drag_start_position_) < epsilon<float>())
+            return;
+        if (!keyframe_drag_moved_) {
+            // The gesture becomes an edit - and the undo point - only once it moves.
+            snapshot_camera_path();
+            keyframe_drag_moved_ = true;
+        }
+        kfi_->set_keyframe_position(index, position);
+        const float dist = distance(camera()->scene_center(), position);
+        if (dist > camera()->scene_radius())
+            camera()->set_scene_radius(dist);
+        return;
+    }
+
+    // A ring turns the pose around its axis: the accumulated cursor angle around the
+    // ring's center is applied to the orientation captured at the press, so the pose
+    // does not drift when the cursor crosses the ring's seam.
+    if (keyframe_handle_ >= KeyframeHandle::turn_x && keyframe_handle_ <= KeyframeHandle::turn_z) {
+        float angle;
+        if (!ring_angle_at(x, y, camera(), keyframe_drag_plane_point_, keyframe_drag_axis_, angle))
+            return;
+        const float delta = std::remainder(angle - keyframe_drag_last_angle_,
+                                           2.0f * static_cast<float>(M_PI));
+        keyframe_drag_last_angle_ = angle;
+        keyframe_drag_angle_ += delta;
+        if (std::abs(keyframe_drag_angle_) < 1e-6f)
+            return;
+        if (!keyframe_drag_moved_) {
+            snapshot_camera_path();
+            keyframe_drag_moved_ = true;
+        }
+        const quat turn(keyframe_drag_axis_, keyframe_drag_angle_);
+        kfi_->set_keyframe_orientation(index, turn * keyframe_drag_start_orientation_);
+        return;
+    }
+
+    // The glyph itself: intersection with the plane fixed at the press.
     vec3 orig, dir;
     camera()->convert_click_to_line(x, y, orig, dir);
     const float denom = dot(dir, keyframe_drag_plane_normal_);
@@ -524,7 +761,7 @@ void MappleViewer::drag_keyframe(int x, int y) {
         snapshot_camera_path();
         keyframe_drag_moved_ = true;
     }
-    kfi_->set_keyframe_position(static_cast<std::size_t>(dragged_keyframe_), position);
+    kfi_->set_keyframe_position(index, position);
     // Keep the moved pose inside the view frustum, as adding a keyframe does.
     const float dist = distance(camera()->scene_center(), position);
     if (dist > camera()->scene_radius())
@@ -534,9 +771,15 @@ void MappleViewer::drag_keyframe(int x, int y) {
 void MappleViewer::end_keyframe_drag() {
     if (dragged_keyframe_ < 0)
         return;
-    if (keyframe_drag_moved_)
-        LOG(INFO) << "keyframe " << dragged_keyframe_ + 1 << " moved (Ctrl+Z restores it)";
+    if (keyframe_drag_moved_) {
+        const bool turned = keyframe_handle_ >= KeyframeHandle::turn_x &&
+                            keyframe_handle_ <= KeyframeHandle::turn_z;
+        LOG(INFO) << "keyframe " << dragged_keyframe_ + 1
+                  << (turned ? " turned" : " moved") << " (Ctrl+Z restores it)";
+    }
     dragged_keyframe_ = -1;
+    keyframe_handle_ = KeyframeHandle::none;
+    hovered_keyframe_handle_ = KeyframeHandle::none;
     keyframe_drag_moved_ = false;
     update();
 }
@@ -545,10 +788,14 @@ void MappleViewer::cancel_keyframe_drag() {
     if (dragged_keyframe_ < 0)
         return;
     if (keyframe_drag_moved_ && kfi_ &&
-        dragged_keyframe_ < static_cast<int>(kfi_->number_of_keyframes()))
-        kfi_->set_keyframe_position(static_cast<std::size_t>(dragged_keyframe_),
-                                    keyframe_drag_start_position_);
+        dragged_keyframe_ < static_cast<int>(kfi_->number_of_keyframes())) {
+        const auto index = static_cast<std::size_t>(dragged_keyframe_);
+        kfi_->set_keyframe_position(index, keyframe_drag_start_position_);
+        kfi_->set_keyframe_orientation(index, keyframe_drag_start_orientation_);
+    }
     dragged_keyframe_ = -1;
+    keyframe_handle_ = KeyframeHandle::none;
+    hovered_keyframe_handle_ = KeyframeHandle::none;
     keyframe_drag_moved_ = false;
     update();
 }
@@ -970,6 +1217,16 @@ bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modif
         }
     } else
         clear_hover();
+
+    // The gizmo's handles highlight under the cursor, independent of the pick
+    // readout, so the element a press would grab is visible before the press.
+    KeyframeHandle hovered = KeyframeHandle::none;
+    if (edit_keyframes_ && dragged_keyframe_ < 0 && point_in_scene(x, y))
+        hovered = keyframe_handle_at(x, y);
+    if (hovered != hovered_keyframe_handle_) {
+        hovered_keyframe_handle_ = hovered;
+        update();
+    }
 
     return Viewer::mouse_free_move_event(x, y, dx, dy, modifiers);
 }
@@ -1462,6 +1719,7 @@ void MappleViewer::delete_selected_primitives() {
     }
 
     if (count) {
+        refresh_selection_after_model_change(model);
         finish_selection_change(model);
         clear_hover();
         update();
@@ -1495,6 +1753,17 @@ std::size_t MappleViewer::selection_count() {
     return count;
 }
 
+void MappleViewer::refresh_selection_after_model_change(Model *model) {
+    SelectionTarget target;
+    if (!selection_target(model, target))
+        return;
+    // An empty selection clears the mask without a size check, so only a model that
+    // still has selected elements needs its drawable rebuilt here.
+    if (!has_any_selection(model))
+        return;
+    buffer::update(model, target.drawable);
+}
+
 void MappleViewer::refresh_selection_display(Model *model) {
     SelectionTarget target;
     if (!selection_target(model, target))
@@ -1504,6 +1773,13 @@ void MappleViewer::refresh_selection_display(Model *model) {
     // tints the elements marked in f:select/v:select. An empty selection drops the
     // mask, which restores the drawable's appearance without touching its state.
     const bool has_selection = has_any_selection(model);
+
+    // A new (e.g. duplicated) model's drawable has no primitives yet; the mask is
+    // sized per existing primitive, so extract the geometry before applying it.
+    if (has_selection && !model->points().empty() &&
+        target.drawable->num_vertices() == 0 && target.drawable->num_indices() == 0)
+        buffer::update(model, target.drawable);
+
     target.drawable->set_highlight_property(target.location, has_selection ? target.property : "");
     buffer::update_highlight_mask(model, target.drawable);
 
@@ -1704,6 +1980,98 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
         segments.emplace_back(lasso_.back() * dpi);
         segments.emplace_back(lasso_.front() * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(segments, color, fw, fh, dpi));
+    }
+}
+
+void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawCommand> &commands) const {
+    const int index = selected_keyframe();
+    if (index < 0)
+        return;
+    const unsigned fw = static_cast<unsigned>(framebuffer_width());
+    const unsigned fh = static_cast<unsigned>(framebuffer_height());
+    if (fw == 0 || fh == 0)
+        return;
+
+    vec3 axes[3];
+    float arrow_length, ring_radius;
+    keyframe_handle_axes(axes, arrow_length, ring_radius);
+    if (!(arrow_length > 0.0f) || !(ring_radius > 0.0f))
+        return;
+
+    const vec3 center = kfi_->keyframe_position(static_cast<std::size_t>(index));
+    const vec3 view = camera()->view_direction();
+    const float dpi = dpi_scaling();
+    const KeyframeHandle active = dragged_keyframe_ >= 0 ? keyframe_handle_ : hovered_keyframe_handle_;
+    // Axis colors, so an arrow and its ring read as the same axis.
+    const vec4 colors[3] = {vec4(0.92f, 0.28f, 0.25f, 1.0f),
+                            vec4(0.30f, 0.78f, 0.32f, 1.0f),
+                            vec4(0.30f, 0.52f, 0.95f, 1.0f)};
+
+    auto handle_for = [](bool turn, int axis) {
+        return turn ? static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::turn_x) + axis)
+                    : static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::move_x) + axis);
+    };
+    // The grabbed or hovered element is drawn full and thick; the rest dims, so the
+    // handle a gesture will act on stays unmistakable.
+    auto emit = [&](bool turn, int axis, const std::vector<vec2> &segments) {
+        if (segments.size() < 2)
+            return;
+        const bool hot = handle_for(turn, axis) == active;
+        const bool dim = active != KeyframeHandle::none && !hot;
+        vec4 color = colors[axis];
+        color.w = dim ? 0.25f : hot ? 1.0f : 0.8f;
+        std::vector<vec2> framebuffer_points;
+        framebuffer_points.reserve(segments.size());
+        for (const vec2 &p : segments)
+            framebuffer_points.push_back(p * dpi);
+        commands.push_back(graphics::shape::draw_lines_2d(framebuffer_points, color, fw, fh,
+                                                          (hot ? 2.5f : 1.0f) * dpi));
+    };
+
+    // Arrows: the shaft plus two screen-space head wings at the tip.
+    for (int i = 0; i < 3; ++i) {
+        vec2 start, tip;
+        if (!project_to_screen(camera(), center, start) ||
+            !project_to_screen(camera(), center + axes[i] * arrow_length, tip))
+            continue;
+        const vec2 shaft = tip - start;
+        const float length = shaft.length();
+        if (length < 10.0f) // seen end-on: no stable grab and no readable arrow
+            continue;
+        const vec2 dir = shaft / length;
+        const vec2 side(-dir.y, dir.x);
+        const float head = std::min(12.0f, 0.4f * length);
+        const std::vector<vec2> segments = {
+                start, tip,
+                tip, tip - dir * head + side * (head * 0.45f),
+                tip, tip - dir * head - side * (head * 0.45f)};
+        emit(false, i, segments);
+    }
+
+    // Rings: only when their plane is not seen edge-on.
+    for (int i = 0; i < 3; ++i) {
+        if (std::abs(dot(axes[i], view)) < 0.2f)
+            continue;
+        vec3 u, v;
+        plane_basis(axes[i], u, v);
+        const int sample_count = 64;
+        std::vector<vec2> segments;
+        segments.reserve(sample_count * 2);
+        vec2 previous;
+        bool valid = project_to_screen(camera(), center + u * ring_radius, previous);
+        for (int s = 1; valid && s <= sample_count; ++s) {
+            const float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(s) /
+                                static_cast<float>(sample_count);
+            vec2 current;
+            valid = project_to_screen(
+                    camera(), center + (u * std::cos(angle) + v * std::sin(angle)) * ring_radius, current);
+            if (!valid)
+                break;
+            segments.push_back(previous);
+            segments.push_back(current);
+            previous = current;
+        }
+        emit(true, i, segments);
     }
 }
 

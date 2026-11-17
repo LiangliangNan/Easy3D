@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -45,6 +46,7 @@
 #include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo/surface_mesh_hole_filling.h>
@@ -289,8 +291,10 @@ void MappleViewer::open_process(ProcessOp op) {
 
     // Targets depend on the current model; refresh them so reopening a window always
     // starts from a sensible value.
-    if (op == ProcessOp::PC_SIMPLIFY && cloud)
+    if (op == ProcessOp::PC_SIMPLIFY && cloud) {
         process_params_.point_target = static_cast<int>(std::max(1u, cloud->n_vertices() / 2));
+        process_params_.point_average_spacing = -1.0f;
+    }
     if (op == ProcessOp::MESH_SIMPLIFY && mesh)
         process_params_.simplify_target = static_cast<int>(std::max(4u, mesh->n_vertices() / 2));
     if (op == ProcessOp::MESH_SAMPLE && mesh)
@@ -348,22 +352,54 @@ void MappleViewer::draw_process_dialog() {
         switch (process_op_) {
             case ProcessOp::PC_ESTIMATE_NORMALS:
                 ImGui::InputInt("Neighbors", &p.normals_k);
+                p.normals_k = std::min(1000, std::max(6, p.normals_k));
                 ImGui::Checkbox("Compute curvature", &p.compute_curvature);
                 break;
 
             case ProcessOp::PC_REORIENT_NORMALS:
                 ImGui::InputInt("Neighbors", &p.normals_k);
+                p.normals_k = std::min(1000, std::max(6, p.normals_k));
                 ImGui::TextDisabled("Orients the existing normals consistently; requires normals.");
                 break;
 
             case ProcessOp::PC_SIMPLIFY:
-                ImGui::InputInt("Remaining points", &p.point_target);
-                ImGui::TextDisabled("Keeps a uniform subset of the current points.");
+                if (ImGui::RadioButton("Expected count", !p.point_simplify_by_distance))
+                    p.point_simplify_by_distance = false;
+                ImGui::SameLine();
+                if (ImGui::RadioButton("Distance threshold", p.point_simplify_by_distance))
+                    p.point_simplify_by_distance = true;
+                if (!p.point_simplify_by_distance) {
+                    ImGui::InputInt("Remaining points", &p.point_target);
+                    ImGui::TextDisabled("Keeps a uniform subset of the current points.");
+                } else {
+                    ImGui::InputFloat("Threshold", &p.point_simplify_distance, 0.001f, 0.01f, "%.4f");
+                    ImGui::Checkbox("Uniform (minimum spacing)", &p.point_simplify_uniform);
+                    ImGui::TextDisabled(p.point_simplify_uniform ?
+                                        "Keeps one point per neighborhood of the given radius." :
+                                        "Keeps one representative per grid cell of the given size.");
+                    if (p.point_average_spacing > 0.0f)
+                        ImGui::InputFloat("Average spacing", &p.point_average_spacing, 0.0f, 0.0f, "%.4f",
+                                          ImGuiInputTextFlags_ReadOnly);
+                    else
+                        ImGui::TextDisabled("Average spacing: unknown");
+                    ImGui::SameLine();
+                    if (ImGui::Button("Compute")) {
+                        auto *cloud = dynamic_cast<PointCloud *>(model);
+                        if (cloud && cloud->n_vertices() > 0) {
+                            p.point_average_spacing = PointCloudSimplification::average_space(
+                                    cloud, nullptr, 6, false, 10000);
+                            LOG(INFO) << "average point spacing: " << p.point_average_spacing;
+                        }
+                    }
+                    ImGui::TextDisabled("A threshold near the average spacing removes roughly half the points.");
+                }
                 break;
 
             case ProcessOp::PC_POISSON:
                 ImGui::InputInt("Octree depth", &p.poisson_depth);
+                p.poisson_depth = std::min(15, std::max(1, p.poisson_depth));
                 ImGui::InputFloat("Samples per node", &p.poisson_samples, 1.0f, 5.0f, "%.1f");
+                p.poisson_samples = clamp(p.poisson_samples, 1.0f, 20.0f);
                 ImGui::Checkbox("Trim result", &p.poisson_trim);
                 ImGui::BeginDisabled(!p.poisson_trim);
                 ImGui::InputFloat("Trim density", &p.poisson_trim_value, 1.0f, 5.0f, "%.1f");
@@ -438,14 +474,27 @@ void MappleViewer::draw_process_dialog() {
                 break;
 
             case ProcessOp::MESH_REMESH:
-                ImGui::SliderFloat("Edge length x", &p.remesh_edge_factor, 0.05f, 5.0f, "%.2f",
-                                   ImGuiSliderFlags_Logarithmic);
-                ImGui::TextDisabled("Factor times the current mean edge length.");
+                if (ImGui::RadioButton("Uniform", p.remesh_scheme == 0))
+                    p.remesh_scheme = 0;
+                ImGui::SameLine();
+                if (ImGui::RadioButton("Adaptive", p.remesh_scheme == 1))
+                    p.remesh_scheme = 1;
+                if (p.remesh_scheme == 0)
+                    ImGui::SliderFloat("Edge length x", &p.remesh_edge_factor, 0.1f, 5.0f, "%.2f",
+                                       ImGuiSliderFlags_Logarithmic);
+                ImGui::Checkbox("Preserve features", &p.remesh_use_features);
+                ImGui::BeginDisabled(!p.remesh_use_features);
+                ImGui::SliderInt("Feature angle", &p.remesh_dihedral, 1, 180, "%d deg");
+                ImGui::EndDisabled();
+                ImGui::TextDisabled(p.remesh_scheme == 0 ?
+                                    "Uniform: edge length is the factor times the current mean edge length." :
+                                    "Adaptive: edge lengths scale with the feature density.");
                 break;
 
             case ProcessOp::MESH_FILL_HOLES:
                 ImGui::InputInt("Max hole size", &p.hole_max_size);
-                ImGui::TextDisabled("Holes with more boundary edges are left open.");
+                ImGui::TextDisabled("Boundary edges; larger holes are left open.");
+                ImGui::TextDisabled("Holes around non-manifold vertices are skipped.");
                 break;
 
             case ProcessOp::MESH_POLYGONIZE:
@@ -682,7 +731,7 @@ void MappleViewer::run_process_algorithm(Model *model) {
 
         case ProcessOp::PC_ESTIMATE_NORMALS:
             if (cloud) {
-                const int k = std::max(3, p.normals_k);
+                const int k = std::min(1000, std::max(6, p.normals_k));
                 if (PointCloudNormals::estimate(cloud, static_cast<unsigned int>(k), p.compute_curvature))
                     LOG(INFO) << "estimated normals for " << cloud->n_vertices() << " points (k = " << k << ")";
                 else
@@ -697,7 +746,7 @@ void MappleViewer::run_process_algorithm(Model *model) {
                                     "(Process > Point Cloud > Estimate Normals)";
                     break;
                 }
-                const int k = std::max(3, p.normals_k);
+                const int k = std::min(1000, std::max(6, p.normals_k));
                 if (PointCloudNormals::reorient(cloud, static_cast<unsigned int>(k)))
                     LOG(INFO) << "re-oriented normals of " << cloud->n_vertices() << " points (k = " << k << ")";
                 else
@@ -722,9 +771,22 @@ void MappleViewer::run_process_algorithm(Model *model) {
         case ProcessOp::PC_SIMPLIFY:
             if (cloud) {
                 const auto before = cloud->n_vertices();
-                const int target = std::max(1, p.point_target);
-                const auto removed = PointCloudSimplification::uniform_simplification(
-                        cloud, static_cast<unsigned int>(target));
+                std::vector<PointCloud::Vertex> removed;
+                if (!p.point_simplify_by_distance) {
+                    const int target = std::max(1, p.point_target);
+                    removed = PointCloudSimplification::uniform_simplification(
+                            cloud, static_cast<unsigned int>(target));
+                } else {
+                    const float threshold = std::max(0.0f, p.point_simplify_distance);
+                    if (threshold <= 0.0f) {
+                        LOG(WARNING) << "distance threshold must be positive";
+                        break;
+                    }
+                    if (p.point_simplify_uniform)
+                        removed = PointCloudSimplification::uniform_simplification(cloud, threshold);
+                    else
+                        removed = PointCloudSimplification::grid_simplification(cloud, threshold);
+                }
                 for (auto v : removed)
                     cloud->delete_vertex(v);
                 cloud->collect_garbage();
@@ -740,19 +802,36 @@ void MappleViewer::run_process_algorithm(Model *model) {
                     break;
                 }
                 PoissonReconstruction recon;
-                recon.set_depth(std::max(5, std::min(14, p.poisson_depth)));
-                recon.set_samples_per_node(std::max(1.0f, p.poisson_samples));
+                recon.set_depth(std::min(15, std::max(1, p.poisson_depth)));
+                recon.set_samples_per_node(clamp(p.poisson_samples, 1.0f, 20.0f));
                 SurfaceMesh *result = recon.apply(cloud);
                 if (!result) {
                     LOG(WARNING) << "poisson reconstruction failed";
                     break;
                 }
                 if (p.poisson_trim) {
-                    SurfaceMesh *trimmed = PoissonReconstruction::trim(
-                            result, p.poisson_trim_value, p.poisson_island_ratio, false);
-                    if (trimmed) {
-                        delete result;
-                        result = trimmed;
+                    auto density = result->get_vertex_property<float>("v:density");
+                    float min_density = std::numeric_limits<float>::max();
+                    float max_density = -std::numeric_limits<float>::max();
+                    if (density) {
+                        for (auto v : result->vertices()) {
+                            min_density = std::min(min_density, density[v]);
+                            max_density = std::max(max_density, density[v]);
+                        }
+                    }
+                    if (!density)
+                        LOG(WARNING) << "no density property on the reconstruction; trim skipped";
+                    else if (p.poisson_trim_value <= min_density || p.poisson_trim_value >= max_density)
+                        LOG(WARNING) << "trim value (" << p.poisson_trim_value
+                                     << ") out of density range [" << min_density << ", " << max_density
+                                     << "]; trim skipped";
+                    else {
+                        SurfaceMesh *trimmed = PoissonReconstruction::trim(
+                                result, p.poisson_trim_value, p.poisson_island_ratio, false);
+                        if (trimmed) {
+                            delete result;
+                            result = trimmed;
+                        }
                     }
                 }
                 result->set_name(file_system::name_less_extension(cloud->name()) + "_poisson.ply");
@@ -943,25 +1022,79 @@ void MappleViewer::run_process_algorithm(Model *model) {
 
         case ProcessOp::MESH_REMESH:
             if (mesh) {
-                float mean_edge = 0.0f;
-                for (auto e : mesh->edges())
-                    mean_edge += distance(mesh->position(mesh->vertex(e, 0)), mesh->position(mesh->vertex(e, 1)));
-                if (mesh->n_edges())
-                    mean_edge /= static_cast<float>(mesh->n_edges());
-                if (mean_edge <= 0.0f) {
-                    LOG(WARNING) << "cannot remesh a mesh without edges";
-                    break;
+                if (p.remesh_use_features) {
+                    SurfaceMeshFeatures features(mesh);
+                    features.clear();
+                    features.detect_angle(static_cast<float>(p.remesh_dihedral));
+                    features.detect_boundary();
                 }
-                SurfaceMeshRemeshing(mesh).uniform_remeshing(mean_edge * p.remesh_edge_factor);
-                LOG(INFO) << "remeshed to edge length " << (mean_edge * p.remesh_edge_factor)
-                          << " (" << mesh->n_vertices() << " vertices, " << mesh->n_faces() << " faces)";
+                if (p.remesh_scheme == 1) {
+                    const float diag = mesh->bounding_box().diagonal_length();
+                    SurfaceMeshRemeshing(mesh).adaptive_remeshing(
+                            0.001f * diag, 0.100f * diag, 0.001f * diag);
+                    LOG(INFO) << "adaptively remeshed (" << mesh->n_vertices() << " vertices, "
+                              << mesh->n_faces() << " faces)";
+                } else {
+                    float mean_edge = 0.0f;
+                    for (auto e : mesh->edges())
+                        mean_edge += distance(mesh->position(mesh->vertex(e, 0)), mesh->position(mesh->vertex(e, 1)));
+                    if (mesh->n_edges())
+                        mean_edge /= static_cast<float>(mesh->n_edges());
+                    if (mean_edge <= 0.0f) {
+                        LOG(WARNING) << "cannot remesh a mesh without edges";
+                        break;
+                    }
+                    SurfaceMeshRemeshing(mesh).uniform_remeshing(mean_edge * p.remesh_edge_factor);
+                    LOG(INFO) << "remeshed to edge length " << (mean_edge * p.remesh_edge_factor)
+                              << " (" << mesh->n_vertices() << " vertices, " << mesh->n_faces() << " faces)";
+                }
             }
             break;
 
         case ProcessOp::MESH_FILL_HOLES:
             if (mesh) {
-                const int filled = SurfaceMeshHoleFilling(mesh).fill_holes(std::max(3, p.hole_max_size));
-                LOG(INFO) << filled << " hole(s) filled, " << mesh->n_faces() << " faces";
+                // Collect the boundary loops, skipping holes around non-manifold
+                // vertices: closing those would create invalid connectivity.
+                const int allowed = std::max(3, p.hole_max_size);
+                int smallest = std::numeric_limits<int>::max();
+                int largest = std::numeric_limits<int>::min();
+                std::vector<std::pair<SurfaceMesh::Halfedge, int>> holes;
+                auto visited = mesh->add_halfedge_property<bool>("Mapple::hole::visited", false);
+                for (auto h : mesh->halfedges()) {
+                    if (visited[h] || !mesh->is_border(h))
+                        continue;
+                    int size = 0;
+                    SurfaceMesh::Halfedge hh = h;
+                    do {
+                        visited[hh] = true;
+                        ++size;
+                        if (!mesh->is_manifold(mesh->target(hh))) {
+                            size += 123456;
+                            break;
+                        }
+                        hh = mesh->next(hh);
+                    } while (hh != h);
+                    smallest = std::min(smallest, size);
+                    largest = std::max(largest, size);
+                    if (size <= allowed)
+                        holes.emplace_back(h, size);
+                }
+                mesh->remove_halfedge_property(visited);
+
+                int filled = 0;
+                for (const auto &hole : holes) {
+                    if (SurfaceMeshHoleFilling(mesh).fill_hole(hole.first))
+                        ++filled;
+                }
+                if (holes.empty()) {
+                    if (smallest == std::numeric_limits<int>::max())
+                        LOG(WARNING) << "model is closed and has no holes to fill";
+                    else
+                        LOG(WARNING) << "no holes meet the requirement (smallest: " << smallest
+                                     << ", largest: " << largest << ")";
+                } else
+                    LOG(INFO) << filled << " (out of " << holes.size() << ") hole(s) filled, "
+                              << mesh->n_faces() << " faces";
             }
             break;
 
@@ -1615,6 +1748,7 @@ void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::tim
         model->renderer()->update();
     invalidate_selection_count();
     clear_hover();
+    refresh_selection_after_model_change(model);
     finish_selection_change(model);
 
     // The AO bake writes its colors into v:ao_color; show them instead of leaving the

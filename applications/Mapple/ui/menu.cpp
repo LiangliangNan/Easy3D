@@ -41,6 +41,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/translator.h>
 #include <easy3d/renderer/camera.h>
@@ -143,6 +144,8 @@ bool MappleViewer::save() const {
         saved = PointCloudIO::save(file_name, cloud);
     else if (const auto *mesh = dynamic_cast<const SurfaceMesh *>(model))
         saved = SurfaceMeshIO::save(file_name, mesh);
+    else if (const auto *poly = dynamic_cast<const PolyMesh *>(model))
+        saved = PolyMeshIO::save(file_name, poly);
     else if (const auto *graph = dynamic_cast<const Graph *>(model))
         saved = GraphIO::save(file_name, graph);
 

@@ -7,13 +7,14 @@ now `applications/Mapple` (target `Mapple`); the Qt app it replaces is
 `Easy3D_ENABLE_QT`). The Qt app remains buildable until a final capability pass
 confirms nothing it offered is still needed.
 
-Status: 2026-11-16 — Phases 0–3 complete: the app builds and runs on both OpenGL and
+Status: 2026-11-17 — Phases 0–3 complete: the app builds and runs on both OpenGL and
 Vulkan and covers panels, menus, log capture, drawable styling, picking readout,
 point/face selection, the clipping plane, processing commands, snapshots, the camera
 path with video recording, settings/layout persistence, and the rendering effects
 (ambient occlusion, eye-dome lighting, soft shadow, transparency). Phase 4 (retire
-Qt): the ImGui app now carries the Mapple name; all inspected gaps are migrated and
-retirement is deferred until one more capability pass over the Qt dialogs.
+Qt): the ImGui app now carries the Mapple name; batch 127 completed the final
+capability pass over the Qt dialogs and the interactive keyframe editing item, so
+`Mapple-Qt` can be retired.
 
 ## Decision
 
@@ -1930,3 +1931,116 @@ migrated; retirement can proceed whenever it is wanted.
   point just outside the face was unchanged, identically on OpenGL and Vulkan. The
   hover gesture itself was not scripted; the suites were not rerun (Mapple-only
   change).
+
+### 2026-11-17 — interactive keyframe handles on the glyph (batch 127)
+
+- The Camera Path window's `Edit keyframe handles` now puts a gizmo on the selected
+  keyframe that is sized to its camera glyph: `keyframe_handle_at()` projects three
+  pose axes (the keyframe orientation's local X/Y/Z) as arrows reaching 1.25x the
+  marker width and three rings at 0.75x that width, and resolves a hover or press to
+  a `KeyframeHandle` (`move_x..move_z`, `turn_x..turn_z`, or `free` for the glyph).
+  Arrows and rings are screen-space tests with a 7-logical-pixel tolerance, accepted
+  before the scene pick so they win where they overlap the glyph; an axis seen
+  end-on (|dot(axis, view)| > 0.97, or a projected arrow shorter than 10 pixels)
+  offers no arrow, and a ring seen edge-on (< 0.2) offers no ring. The same
+  handlers draw the gizmo as overlay lines in axis colors - red/green/blue, the
+  hovered or grabbed element full and 2.5x thick, the others dimmed to alpha 0.25 -
+  so the element a gesture will act on is unmistakable.
+- Dragging an arrow moves the pose along that axis: the cursor ray's nearest
+  parameter on the axis line (the new `ray_axis_parameter()` helper) is applied to
+  the position captured at the press, so the pose stays exactly on the axis.
+  Dragging a ring turns the pose around that axis by the accumulated cursor angle in
+  the ring's plane (unwrapped with `std::remainder`, so crossing the seam does not
+  flip the pose) applied to the orientation captured at the press;
+  the glyph drag keeps its batch-114 meaning (screen plane, or the pose's up plane
+  with Shift). The undo snapshot is still taken on the first movement, Esc restores
+  both position and orientation, and `end_keyframe_drag()` logs whether the pose was
+  moved or turned.
+- The handling otherwise follows batch 114: an armed path tool or a running playback
+  keeps its meaning, the gizmo appears only while the edit tool is on, and
+  `Ctrl+Z` restores the path from before the drag. `ToDo.md`'s open "attach a
+  Manipulator to each camera" item is closed by this gizmo - the path is not a
+  model, so a per-keyframe handle is the direct-manipulation equivalent.
+
+### 2026-11-17 — the Qt dialog capability pass (batch 127)
+
+- A last audit of `applications/Mapple-Qt/dialogs` against the ImGui app found five
+  real gaps in `ui/process.cpp`, plus the missing PolyMesh save, all closed:
+  - Point-cloud simplification keeps the expected-count strategy but regains Qt's
+    distance-threshold strategy: `Uniform (minimum spacing)` calls
+    `uniform_simplification(cloud, epsilon)` and the unchecked variant calls
+    `grid_simplification(cloud, cell)`, with the read-only average spacing filled by
+    `average_space(cloud, nullptr, 6)` on demand (reset to unknown when the window
+    reopens).
+  - Remeshing regains the scheme choice - uniform (`mean edge * factor`, factor
+    0.1..5, default 1.0) or adaptive (`0.001 / 0.1 / 0.001` of the bounding-box
+    diagonal) - and feature preservation: `SurfaceMeshFeatures::clear()`,
+    `detect_angle(dihedral)` and `detect_boundary()` run before either scheme, with
+    the dihedral angle (1..180, default 60) enabled only when the box is checked.
+  - Hole filling now matches the Qt semantics instead of `fill_holes(size)`, which
+    compares halfedge counts and excludes the bound: it scans the boundary loops
+    once, skips holes around non-manifold vertices, fills each hole whose boundary
+    edge count is at most the requested size (default 50), and reports the smallest
+    and largest hole when none qualifies.
+  - Defaults and bounds follow Qt: smoothing starts at 5 iterations, `RANSAC`
+    starts with the plane only, normal estimation/reorientation clamps k to
+    6..1000, and Poisson clamps the octree depth to 1..15 and samples per node to
+    1..20. The inline trim now checks the reconstruction's `v:density` range first
+    and skips with a warning when the trim value is outside it, as the Qt dialog
+    did (rather than silently producing an empty mesh).
+- Also fixed: `File > Save` now writes `PolyMesh` through `PolyMeshIO::save()`
+  (the filters already advertised `*.plm *.pm *.mesh`).
+- Judged intentional, not gaps: the ImGui slice cuts with a clipping plane instead
+  of Qt's ten-plane 2D section; a snapshot always writes the matching `.view`
+  state (Qt made it optional); Qt's "vec2/vec3" conversion targets were dead (the
+  conversion switch never handled them) and are deliberately absent; the library
+  has no PPM writer, so PPM is not offered, and the `*.ic` indexed-colors import is
+  not worth carrying over (Qt implemented it for point-cloud vertices only); Qt's
+  `OrientClosedTriangleMesh` (CGAL-gated) exists in the ImGui app as
+  `Process > Surface Mesh > Orient Outward` with the same closed-triangle-mesh
+  guard, so there is nothing to port there.
+  Everything else in the Qt dialogs (normal estimation/reorientation, RANSAC,
+  smoothing, fairing, simplification, sampling, remeshing, hole filling, Poisson,
+  parameterization, curvature, text, Gaussian noise, snapshot, properties,
+  walkthrough) already existed in the ImGui app, which additionally offers AO,
+  geodesic, planar partition, components, triangulation, dual, subdivision,
+  repair/stitch, self-intersection removal, tetrahedralization, height fields and
+  topology statistics.
+- Validation (2026-11-17, macOS): Mapple rebuilt in the OpenGL release tree and the
+  Vulkan debug tree; both backends launch with `bunny.ply` ("Mapple UI ready
+  (OpenGL)" / "(Vulkan)") with no errors or warnings in `Mapple.log`, and the
+  Mapple settings files were unchanged afterwards. The process dialogs and the
+  gizmo gestures were not scripted (no synthetic input); suites were not rerun
+  (Mapple-only change) and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — deleting the selection no longer crashes on a stale highlight mask
+
+- Deleting selected elements exited the viewer with
+  `Viewer failed: highlight mask must have one strength per rendered primitive`.
+  `delete_selected_primitives()` compacts the model and invalidates the renderer,
+  but `finish_selection_change()` -> `refresh_selection_display()` then applied the
+  mask through `buffer::update_highlight_mask(model, drawable)` while the
+  selection drawable still held the buffers from before the edit. A vertex mask is
+  sized per surviving vertex of the model, so it no longer matches the drawable's
+  pre-deletion primitive count and the consistency check in
+  `Drawable::update_highlight_mask()` throws. A new model's drawable (e.g. a
+  duplicate that carries `f:select`/`v:select`) hits the same check from the other
+  side, zero built primitives against a non-empty mask.
+- `MappleViewer::refresh_selection_after_model_change(model)` now rebuilds the
+  selection drawable with `buffer::update(model, drawable)` (which re-extracts the
+  geometry and applies the mask itself) when the model still holds a selection, and
+  is called at the model-change funnels before `finish_selection_change()`:
+  `delete_selected_primitives()` and `finalize_process()` (every process dialog that
+  removes geometry). A drawable that has not been extracted yet is rebuilt first in
+  `refresh_selection_display()` (a duplicated or never-drawn model with a
+  selection). With no selection left the mask is cleared without a size check, so
+  the drawable stays lazy. No library code changed.
+- Validation (2026-11-17, macOS): a headless probe outside the repository, linked
+  against the Vulkan debug libraries, reproduced the exact exception with the old
+  order on a deleted point cloud (10 primitives in the drawable, 8 in the model)
+  and on a fresh drawable, and showed no exception with the rebuild first (8 mask
+  entries in both cases). Both check trees rebuilt; both backends launch with
+  `bunny.ply` ("Mapple UI ready (OpenGL)" / "(Vulkan)") on an error-free
+  `Mapple.log`, with the settings files restored afterwards. The delete gesture was
+  not scripted; suites were not rerun (Mapple-only change) and
+  `easy3d/util/version.h` is unchanged.

@@ -192,6 +192,13 @@ private:
         int normals_k = 16;
         bool compute_curvature = false;
         int point_target = 0;
+        // Distance-threshold simplification: uniform (minimum point spacing) or grid
+        // (one representative per cell). Querying the average spacing fills the
+        // read-only display so the threshold can be chosen relative to it.
+        bool point_simplify_by_distance = false;
+        bool point_simplify_uniform = true;
+        float point_simplify_distance = 0.01f;
+        float point_average_spacing = -1.0f;
 
         int poisson_depth = 8;
         float poisson_samples = 1.0f;
@@ -200,8 +207,8 @@ private:
         float poisson_island_ratio = 0.001f;
 
         bool ransac_plane = true;
-        bool ransac_sphere = true;
-        bool ransac_cylinder = true;
+        bool ransac_sphere = false;
+        bool ransac_cylinder = false;
         bool ransac_cone = false;
         bool ransac_torus = false;
         int ransac_min_support = 1000;
@@ -213,10 +220,13 @@ private:
 
         bool smooth_implicit = false;
         bool smooth_uniform = false;
-        int smooth_iterations = 10;
+        int smooth_iterations = 5;
         int simplify_target = 0;
+        int remesh_scheme = 0;          // 0: uniform, 1: adaptive
+        bool remesh_use_features = true;
+        int remesh_dihedral = 60;
         float remesh_edge_factor = 1.0f;
-        int hole_max_size = 500;
+        int hole_max_size = 50;
         float polygonize_angle = 1.0f;
         int fairing_criterion = 0;      // 0: area, 1: curvature, 2: curvature variation
         int sample_points = 1000000;
@@ -493,9 +503,23 @@ private:
     // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
 
-    // Keyframe handles: with editing on, a press on a visible keyframe glyph selects
-    // that keyframe and a drag moves it in the view plane through its position, or in
-    // the plane orthogonal to its up with Shift held. Esc restores the position.
+    // Keyframe handles: with editing on, the selected keyframe shows a gizmo sized to
+    // its camera glyph. A press on the glyph drags it in the view plane through its
+    // position (the plane through its up with Shift), an axis arrow drags it along
+    // that axis, and a ring turns its pose around that axis. Esc restores the pose.
+    enum class KeyframeHandle {
+        none, free,
+        move_x, move_y, move_z,
+        turn_x, turn_y, turn_z
+    };
+    // The selected keyframe whose gizmo is shown and edited, or -1.
+    int selected_keyframe() const;
+    // The gizmo's world axes, arrow length and ring radius: the keyframe's own axes,
+    // sized relative to camera_marker_width() so it hugs the drawn glyph.
+    void keyframe_handle_axes(easy3d::vec3 axes[3], float &arrow_length, float &ring_radius) const;
+    // The handle under the cursor (nearest screen element within a few pixels); none
+    // when no keyframe is selected or the element is seen end-on.
+    KeyframeHandle keyframe_handle_at(int x, int y) const;
     bool begin_keyframe_drag(int x, int y, bool upright_plane);
     void drag_keyframe(int x, int y);
     void end_keyframe_drag();
@@ -534,6 +558,11 @@ private:
     // Draws the path gesture preview: the walking stroke being traced, or the orbit
     // axis being dragged, in the scene's overlay layer.
     void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
+
+    // Draws the selected keyframe's gizmo (three axis arrows and three turn rings)
+    // in the overlay layer; the grabbed or hovered handle is drawn prominent and the
+    // others are dimmed.
+    void append_keyframe_gizmo_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Video recording needs FFmpeg; without it recording_video() is always false.
 #ifdef HAS_FFMPEG
@@ -732,6 +761,12 @@ private:
     // coloring, and drops the tint when the selection is empty.
     void refresh_selection_display(easy3d::Model *model);
 
+    // Rebuilds the selection drawable's buffers from the model. A topology change
+    // (deleted vertices or faces) leaves the drawable with the geometry from before
+    // it, while the highlight mask is sized per rendered primitive, so the mask must
+    // be applied only after the buffers reflect the new model.
+    void refresh_selection_after_model_change(easy3d::Model *model);
+
     // Refreshes the selection display after a selection change.
     void finish_selection_change(easy3d::Model *model);
 
@@ -818,13 +853,21 @@ private:
     std::vector<easy3d::Frame> camera_markers_frames_;
     float camera_markers_width_ = 0;
     std::size_t camera_markers_faces_per_glyph_ = 0; // maps a picked triangle to its keyframe
-    // Keyframe handle editing: glyphs can be grabbed while this is on. The drag plane
-    // (a point and a normal) is fixed at the press so the pose follows the cursor.
+    // Keyframe handle editing: the gizmo can be grabbed while this is on. The drag
+    // plane (a point and a normal) is fixed at the press so the pose follows the
+    // cursor; an axis drag keeps a line parameter, a ring drag an accumulated angle.
     bool edit_keyframes_ = false;
     int dragged_keyframe_ = -1;
+    KeyframeHandle keyframe_handle_ = KeyframeHandle::none;
+    KeyframeHandle hovered_keyframe_handle_ = KeyframeHandle::none;
     easy3d::vec3 keyframe_drag_plane_point_;
     easy3d::vec3 keyframe_drag_plane_normal_;
     easy3d::vec3 keyframe_drag_start_position_;
+    easy3d::quat keyframe_drag_start_orientation_;
+    easy3d::vec3 keyframe_drag_axis_;          // the grabbed arrow's or ring's axis
+    float keyframe_drag_start_scalar_ = 0.0f;  // arrow grab: line parameter at the press
+    float keyframe_drag_angle_ = 0.0f;         // ring grab: accumulated angle
+    float keyframe_drag_last_angle_ = 0.0f;    // ring grab: previous cursor angle
     bool keyframe_drag_moved_ = false;
     // Walking, orbit and flight keyframe creation (created in init()).
     std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;

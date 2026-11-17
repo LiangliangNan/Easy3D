@@ -205,9 +205,11 @@ void MappleViewer::draw_animation_window() {
             cancel_keyframe_drag();
         update();
     }
-    ImGui::SetItemTooltip("Drag a keyframe camera glyph to move it: in the screen plane through its "
-                          "position, or in the plane of its up (the terrain or orbit plane) with "
-                          "Shift. Ctrl+Z restores the path from before the drag; Esc cancels it.");
+    ImGui::SetItemTooltip("The selected keyframe shows a gizmo sized to its camera glyph. Drag the "
+                          "glyph itself to move it in the screen plane through its position (the "
+                          "plane of its up - the terrain or orbit plane - with Shift), an axis arrow "
+                          "to move it along that axis, or a ring to turn its pose around that axis. "
+                          "Ctrl+Z restores the path from before the drag; Esc cancels it.");
 
     if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         ImGui::Separator();
