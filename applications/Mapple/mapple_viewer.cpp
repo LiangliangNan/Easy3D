@@ -192,6 +192,10 @@ MappleViewer::MappleViewer(const std::string &title,
     log_height_ = settings_.log_height;
     show_pick_readout_ = settings_.pick_readout;
     log_auto_scroll_ = settings_.log_auto_scroll;
+    models_auto_focus_ = settings_.models_auto_focus;
+    // Applied by the first panel frame, after the scene is there; the flag alone
+    // hides nothing yet.
+    models_selected_only_ = settings_.models_selected_only;
 #ifdef HAS_FFMPEG
     video_bitrate_mbps_ = settings_.video_bitrate_mbps;
 #endif
@@ -237,6 +241,8 @@ MappleViewer::~MappleViewer() {
     settings_.log_height = log_height_;
     settings_.pick_readout = show_pick_readout_;
     settings_.log_auto_scroll = log_auto_scroll_;
+    settings_.models_auto_focus = models_auto_focus_;
+    settings_.models_selected_only = models_selected_only_;
 #ifdef HAS_FFMPEG
     settings_.video_bitrate_mbps = video_bitrate_mbps_;
 #endif
@@ -1552,6 +1558,11 @@ void MappleViewer::forget_model(Model *model) {
     texture_styles_.erase(model);
     vector_fields_.erase(model);
     vector_field_scales_.erase(model);
+    model_selection_.erase(model);
+    if (model_selection_anchor_ == model)
+        model_selection_anchor_ = nullptr;
+    if (renaming_model_ == model)
+        renaming_model_ = nullptr;
     if (counted_model_ == model) {
         counted_model_ = nullptr;
         selection_count_dirty_ = true;

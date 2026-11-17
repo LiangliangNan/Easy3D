@@ -349,9 +349,12 @@ ambient occlusion) are migrated, as are the rendering effects (ambient occlusion
 eye-dome lighting, soft shadow, depth-peeling transparency) and camera state files
 (Camera > Save/Restore View State...). The walk-through animation is migrated too
 (Camera Path window modes: free, walking and orbit; see the 2026-11-17 changelog
-entry). The Qt-only capabilities left over from the capability pass are the
-load-translation options and the Models-panel/readout extras; retirement can proceed
-once those are decided on.
+entry). The Models panel's Qt extras (multi-select Duplicate/Merge/Decompose/Delete,
+Auto focus, Selected only, Apply to all and in-place rename) are migrated too (see the
+2026-11-17 "Models panel: selection and the remaining model commands" entry). The
+Qt-only capabilities left over from the capability pass are the load-translation
+options and the status-bar Graph/PolyMesh readout extras (deliberately skipped);
+retirement can proceed once those are decided on.
 
 ## ImGui notes
 
@@ -1281,6 +1284,49 @@ once those are decided on.
   moved when the load order changed. The shared trees could not relink while
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
+
+### 2026-11-17 — Models panel: selection and the remaining model commands
+
+- Rows are now multi-selectable: a plain click selects only that row, Ctrl/Cmd toggles
+  it, and Shift extends from the anchor; the clicked row also becomes the active model
+  (the info block moves under it). With no explicit selection the active model is the
+  selected row, so the footer and context menu keep acting on it. Double-click a row
+  (or Rename) edits the name in place; the edit keeps the parent directory and the
+  extension, and an empty name is rejected. Esc drops the edit.
+- Batch commands act on the selection in scene order (or on the active model when
+  nothing is selected). The context menu offers Fit to this model, Duplicate, Merge
+  selected, Decompose, Rename, Invert selection and Delete; the footer has Fit,
+  Delete and Apply to all plus the Auto focus / Selected only checkboxes. Delete asks
+  once for the whole selection and is deferred to the end of the panel so the list is
+  never modified while it is being drawn.
+- Duplicate clones a surface mesh, point cloud, graph or polyhedral mesh to
+  `<name>_copy` and makes the copy active. Merge joins the selected surface meshes
+  into `merged_mesh` and the selected point clouds into `merged_point_set` (writing
+  `f:index`/`v:index` like the Qt app), deletes the merged-away sources and selects
+  the results. Decompose extracts the connected components of selected surface meshes
+  into `<parent>/<base>_part_N` models, deletes the originals and selects the parts.
+- Apply to all copies the active model's drawable state (including the colormap
+  choice) and the point/line/triangle extras (point size and impostor, line width and
+  impostor, smooth shading and opacity) onto same-named drawables of every other
+  model. Visibility stays per model, and the panel's scalar-field/texture records are
+  copied so its controls stay consistent; the scalar colormap is applied immediately.
+  A selection display is restored before the copy and re-applied afterwards, so the
+  highlight never becomes part of the propagated style.
+- Auto focus fits the camera when the active model changes (and when the option is
+  turned on). Selected only shows just the active model and is enforced every panel
+  frame, so newly loaded or activated models obey it; turning it off shows every model
+  again, as the Qt panel did. Both options persist in `settings.ini`
+  (`models_auto_focus`, `models_selected_only`).
+- Validation (2026-11-17, macOS, Release): a temporary `/tmp` probe added two
+  in-memory triangles and exercised rename (path and extension kept), duplicate
+  (`b_copy`, count grows), merge (2 faces, one result, sources gone), decompose (two
+  parts named `merged_mesh_part_N`), Apply to all (the target faces took the source's
+  red), Selected only (visibility 0/1/0 around the active model), Auto focus (camera
+  radius became the active triangle's) and the deferred delete (active fell back to the
+  last model). The probe was removed, both check trees rebuilt, and Vulkan/OpenGL
+  launches with two models showed the highlighted active row, the info block under it
+  and the two-row footer with bottom padding intact; the settings files were unchanged.
+  Suites not rerun (app-only change); dialogs and clicks were not scripted.
 
 ### 2026-11-17 — toolbar icons (ImGui texture registry)
 

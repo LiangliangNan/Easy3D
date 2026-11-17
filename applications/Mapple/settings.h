@@ -52,6 +52,10 @@ struct AppSettings {
 
     bool pick_readout = true;
     bool log_auto_scroll = true;
+    // Models panel view toggles: fit the camera when the active model changes, and
+    // show only the active model.
+    bool models_auto_focus = false;
+    bool models_selected_only = false;
     int video_bitrate_mbps = 8;
 
     // Directory the File dialogs start in; empty until a file is opened or saved.

@@ -34,6 +34,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <utility>
@@ -648,6 +649,46 @@ private:
 
     void draw_models_panel(float x, float y, float w, float h);
 
+    // Whether the row is part of the Models panel's selection.
+    bool model_row_selected(const easy3d::Model *model) const;
+
+    // Applies a click on a row: plain click selects only that row, Ctrl/Cmd toggles
+    // it, Shift extends the selection from the anchor. Makes the row the active model,
+    // refreshes the selection view, and fits the camera when auto focus is on.
+    void click_model_row(easy3d::Model *model);
+
+    // The rows a batch command acts on, in scene order: the selection, or the active
+    // model when nothing is selected.
+    std::vector<easy3d::Model *> selected_models() const;
+
+    // Drops selected, renamed or anchored models that are no longer in the scene.
+    void prune_model_selection();
+
+    // Replaces the selection with its complement in scene order.
+    void invert_model_selection();
+
+    // Models panel commands (context menu and buttons). Each logs its result.
+    void duplicate_model(easy3d::Model *model);
+    void merge_selected_models();
+    void decompose_selected_models();
+    // One confirmation for the whole selection; the deletion itself is deferred to
+    // the end of the panel so the list is never modified mid-iteration.
+    void delete_selected_models();
+    // Copies the active model's drawable styles (state, point/line/triangle extras and
+    // the panel's scalar/texture records) onto same-named drawables of every other
+    // model. Visibility and topology-dependent records stay per model.
+    void apply_style_to_all_models();
+    // One drawable kind of apply_style_to_all_models(): pairs by name.
+    void propagate_drawable_style(easy3d::Model *source, easy3d::Model *target,
+                                  const std::vector<easy3d::Drawable *> &from_drawables,
+                                  const std::vector<easy3d::Drawable *> &to_drawables);
+    void begin_rename_model(easy3d::Model *model);
+    void commit_rename_model();
+    // Selected only: the active model visible and every other model hidden; turning it
+    // off shows every model again, as the Qt panel did.
+    void set_models_selected_only(bool on);
+    void set_models_auto_focus(bool on);
+
     void draw_log_panel(float x, float y, float w, float h);
 
     void draw_status_bar(float x, float y, float w, float h);
@@ -659,8 +700,6 @@ private:
     void draw_splitter(const char *id, float x, float y, float w, float h,
                        bool resize_width, float *value, float sign,
                        float min_value, float max_value);
-
-    void delete_model_confirm(easy3d::Model *model);
 
     // ---- selection (mapple_viewer.cpp) ----
 
@@ -828,9 +867,17 @@ private:
     bool log_auto_scroll_ = true;
     static constexpr std::size_t max_log_lines_ = 2000;
 
-    easy3d::Model *pending_delete_ = nullptr; // deferred so the Models panel never deletes mid-iteration
-    bool mouse_captured_ = false;             // ImGui owned the press; keep the whole gesture away from the scene
-    bool manipulating_model_ = false;         // an Alt+drag started this gesture on the current model
+    // Deferred so the Models panel never modifies the scene while iterating its list.
+    std::vector<easy3d::Model *> pending_deletes_;
+    std::set<easy3d::Model *> model_selection_;
+    easy3d::Model *model_selection_anchor_ = nullptr; // Shift-click range start
+    easy3d::Model *renaming_model_ = nullptr;         // the row that shows an edit box
+    char model_rename_buffer_[256] = {};
+    bool rename_focus_ = false;          // focus the edit box on the next frame
+    bool models_auto_focus_ = false;     // fit the camera when the active model changes
+    bool models_selected_only_ = false;  // show only the active model
+    bool mouse_captured_ = false;        // ImGui owned the press; keep the whole gesture away from the scene
+    bool manipulating_model_ = false;    // an Alt+drag started this gesture on the current model
 
     int scene_x_ = 0, scene_y_ = 0, scene_w_ = 0, scene_h_ = 0; // logical, updated every frame
 

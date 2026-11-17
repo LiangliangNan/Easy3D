@@ -29,13 +29,14 @@
 #include "../imgui_layer.h"
 
 #include <algorithm>
-#include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/model.h>
 #include <easy3d/core/point_cloud.h>
@@ -48,6 +49,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/texture_manager.h>
@@ -1234,40 +1236,100 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     ImGui::TextDisabled("(%d)", static_cast<int>(models().size()));
     ImGui::Separator();
 
+    // Selected only is a view filter over the whole scene, so enforce it here: every
+    // path that adds, removes or activates a model goes through this panel.
+    if (models_selected_only_ && !models().empty()) {
+        Model *active = current_model();
+        bool changed = false;
+        for (const auto &model : models()) {
+            if (!model->renderer())
+                continue;
+            const bool visible = (model.get() == active);
+            if (model->renderer()->is_visible() != visible) {
+                model->renderer()->set_visible(visible);
+                changed = true;
+            }
+        }
+        if (changed)
+            update();
+    }
+
     if (models().empty())
         ImGui::TextDisabled("No models. Drop a file here or use File > Open.");
 
-    const float buttons_height = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
-    ImGui::BeginChild("##models-list", ImVec2(0, -buttons_height));
+    const float footer_height = 2.0f * ImGui::GetFrameHeightWithSpacing();
+    ImGui::BeginChild("##models-list", ImVec2(0, -footer_height));
 
     for (std::size_t i = 0; i < models().size(); ++i) {
         Model *model = models()[i].get();
         ImGui::PushID(static_cast<int>(i));
 
-        const std::string label = file_system::simple_name(model->name());
-        const bool selected = model == current_model();
-        const bool clicked = ImGui::Selectable(label.c_str(), selected);
-        if (clicked) {
-            set_current_model(model);
-            update();
-            // Selection view follows the active model.
-            if (select_mode_ != SelectMode::OFF)
-                refresh_selection_display(model);
-        }
-        if (ImGui::BeginPopupContextItem("##model-menu")) {
-            if (ImGui::MenuItem("Fit to this model")) {
-                fit_screen(model);
-                update();
+        if (renaming_model_ == model) {
+            ImGui::SetNextItemWidth(-1.0f);
+            if (rename_focus_) {
+                ImGui::SetKeyboardFocusHere();
+                rename_focus_ = false;
             }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Delete"))
-                delete_model_confirm(model);
-            ImGui::EndPopup();
+            const bool entered = ImGui::InputText("##rename", model_rename_buffer_, sizeof(model_rename_buffer_),
+                                                  ImGuiInputTextFlags_EnterReturnsTrue |
+                                                          ImGuiInputTextFlags_AutoSelectAll);
+            if (entered)
+                commit_rename_model();
+            else if (ImGui::IsItemDeactivated()) {
+                if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+                    renaming_model_ = nullptr; // the edited text is dropped
+                else
+                    commit_rename_model();
+            }
+        } else {
+            const std::string label = file_system::simple_name(model->name());
+            const bool row_selected = model_row_selected(model);
+            if (ImGui::Selectable(label.c_str(), row_selected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                click_model_row(model);
+                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    begin_rename_model(model);
+            }
+            // A context menu on a row outside the selection acts on that row.
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Right) && !row_selected)
+                click_model_row(model);
+
+            if (ImGui::BeginPopupContextItem("##model-menu")) {
+                if (ImGui::MenuItem("Fit to this model")) {
+                    fit_screen(model);
+                    update();
+                }
+                ImGui::Separator();
+
+                const std::vector<Model *> targets = selected_models();
+                std::size_t meshes = 0;
+                std::size_t clouds = 0;
+                for (Model *target : targets) {
+                    if (dynamic_cast<SurfaceMesh *>(target))
+                        ++meshes;
+                    else if (dynamic_cast<PointCloud *>(target))
+                        ++clouds;
+                }
+
+                if (ImGui::MenuItem("Duplicate"))
+                    duplicate_model(model);
+                if (ImGui::MenuItem("Merge selected", nullptr, false, meshes >= 2 || clouds >= 2))
+                    merge_selected_models();
+                if (ImGui::MenuItem("Decompose", nullptr, false, meshes >= 1))
+                    decompose_selected_models();
+                if (ImGui::MenuItem("Rename"))
+                    begin_rename_model(model);
+                ImGui::Separator();
+                if (ImGui::MenuItem("Invert selection"))
+                    invert_model_selection();
+                if (ImGui::MenuItem("Delete", nullptr, false, !targets.empty()))
+                    delete_selected_models();
+                ImGui::EndPopup();
+            }
         }
 
-        // The info describes the model whose name was clicked, so it sits directly
-        // below that name; clicking another name moves it there.
-        if (selected || clicked) {
+        // The info describes the active model, so it sits directly below the row that
+        // was activated; activating another row moves it there.
+        if (model == current_model()) {
             ImGui::Indent();
             draw_model_info(model);
             ImGui::Unindent();
@@ -1278,28 +1340,501 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
 
     ImGui::EndChild();
 
-    Model *model = current_model();
-    ImGui::BeginDisabled(model == nullptr);
+    Model *active = current_model();
+    ImGui::BeginDisabled(active == nullptr);
     if (ImGui::Button("Fit")) {
-        fit_screen(model);
+        fit_screen(active);
         update();
     }
     ImGui::SameLine();
     if (ImGui::Button("Delete"))
-        delete_model_confirm(model);
+        delete_selected_models();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(models().size() < 2);
+    if (ImGui::Button("Apply to all"))
+        apply_style_to_all_models();
     ImGui::EndDisabled();
+    ImGui::EndDisabled();
+
+    bool auto_focus = models_auto_focus_;
+    if (ImGui::Checkbox("Auto focus", &auto_focus))
+        set_models_auto_focus(auto_focus);
+    ImGui::SameLine();
+    bool selected_only = models_selected_only_;
+    if (ImGui::Checkbox("Selected only", &selected_only))
+        set_models_selected_only(selected_only);
 
     ImGui::End();
 
     // Delete after the list has been drawn: removing a model inside the loop would
     // invalidate the iteration state.
-    if (pending_delete_) {
-        Model *doomed = pending_delete_;
-        pending_delete_ = nullptr;
-        forget_model(doomed);
-        if (delete_model(doomed))
-            update();
+    if (!pending_deletes_.empty()) {
+        const std::vector<Model *> doomed = pending_deletes_;
+        pending_deletes_.clear();
+        Model *previous = current_model();
+        bool previous_deleted = false;
+        for (Model *model : doomed) {
+            if (model == previous)
+                previous_deleted = true;
+            forget_model(model);
+            delete_model(model);
+        }
+        if (!models().empty()) {
+            // The base viewer selects the last model after a deletion; keep the active
+            // model when it survived.
+            if (!previous_deleted && previous)
+                set_current_model(previous);
+            else
+                set_current_model(models().back().get());
+        }
+        prune_model_selection();
+        if (models_selected_only_)
+            set_models_selected_only(true);
+        if (models_auto_focus_ && !models().empty())
+            fit_screen();
+        if (select_mode_ != SelectMode::OFF && current_model())
+            refresh_selection_display(current_model());
+        update();
     }
+}
+
+bool MappleViewer::model_row_selected(const Model *model) const {
+    // With no selection the panel acts on the active model, so show that row selected.
+    if (model_selection_.empty())
+        return model == current_model();
+    return model_selection_.find(const_cast<Model *>(model)) != model_selection_.end();
+}
+
+void MappleViewer::click_model_row(Model *model) {
+    if (!model)
+        return;
+    if (renaming_model_ && renaming_model_ != model)
+        commit_rename_model();
+
+    Model *previous = current_model();
+    const ImGuiIO &io = ImGui::GetIO();
+
+    if (io.KeyShift && model_selection_anchor_) {
+        int anchor = -1;
+        int target = -1;
+        for (std::size_t i = 0; i < models().size(); ++i) {
+            if (models()[i].get() == model_selection_anchor_)
+                anchor = static_cast<int>(i);
+            if (models()[i].get() == model)
+                target = static_cast<int>(i);
+        }
+        if (anchor >= 0 && target >= 0) {
+            const int first = std::min(anchor, target);
+            const int last = std::max(anchor, target);
+            model_selection_.clear();
+            for (int i = first; i <= last; ++i)
+                model_selection_.insert(models()[i].get());
+        } else {
+            model_selection_.clear();
+            model_selection_.insert(model);
+            model_selection_anchor_ = model;
+        }
+    } else if (io.KeyCtrl || io.KeySuper) {
+        if (model_selection_.count(model))
+            model_selection_.erase(model);
+        else
+            model_selection_.insert(model);
+        model_selection_anchor_ = model;
+    } else {
+        model_selection_.clear();
+        model_selection_.insert(model);
+        model_selection_anchor_ = model;
+    }
+
+    set_current_model(model);
+    if (select_mode_ != SelectMode::OFF)
+        refresh_selection_display(model);
+    if (models_selected_only_)
+        set_models_selected_only(true);
+    if (models_auto_focus_ && previous != model)
+        fit_screen(model);
+    update();
+}
+
+std::vector<Model *> MappleViewer::selected_models() const {
+    std::vector<Model *> selected;
+    for (const auto &model : models()) {
+        if (model_selection_.count(model.get()))
+            selected.push_back(model.get());
+    }
+    if (selected.empty() && current_model())
+        selected.push_back(current_model());
+    return selected;
+}
+
+void MappleViewer::prune_model_selection() {
+    std::set<Model *> present;
+    for (const auto &model : models())
+        present.insert(model.get());
+    for (auto it = model_selection_.begin(); it != model_selection_.end();) {
+        if (!present.count(*it))
+            it = model_selection_.erase(it);
+        else
+            ++it;
+    }
+    if (model_selection_anchor_ && !present.count(model_selection_anchor_))
+        model_selection_anchor_ = nullptr;
+    if (renaming_model_ && !present.count(renaming_model_))
+        renaming_model_ = nullptr;
+}
+
+void MappleViewer::invert_model_selection() {
+    std::set<Model *> inverted;
+    for (const auto &model : models()) {
+        if (!model_selection_.count(model.get()))
+            inverted.insert(model.get());
+    }
+    model_selection_ = std::move(inverted);
+    model_selection_anchor_ = nullptr; // the previous range start is meaningless now
+    update();
+}
+
+void MappleViewer::duplicate_model(Model *model) {
+    if (!model)
+        return;
+
+    std::shared_ptr<Model> copy;
+    if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))
+        copy = std::make_shared<SurfaceMesh>(*mesh);
+    else if (auto *cloud = dynamic_cast<PointCloud *>(model))
+        copy = std::make_shared<PointCloud>(*cloud);
+    else if (auto *graph = dynamic_cast<Graph *>(model))
+        copy = std::make_shared<Graph>(*graph);
+    else if (auto *poly = dynamic_cast<PolyMesh *>(model))
+        copy = std::make_shared<PolyMesh>(*poly);
+    if (!copy) {
+        LOG(WARNING) << "this model type cannot be duplicated";
+        return;
+    }
+
+    copy->set_name(file_system::name_less_extension(model->name()) + "_copy");
+    Model *added = add_model(copy, true, true);
+    if (!added) {
+        LOG(WARNING) << "failed to duplicate '" << file_system::simple_name(model->name()) << "'";
+        return;
+    }
+
+    model_selection_.clear();
+    model_selection_.insert(added);
+    model_selection_anchor_ = added;
+    set_current_model(added);
+    if (select_mode_ != SelectMode::OFF)
+        refresh_selection_display(added);
+    update();
+    LOG(INFO) << "model duplicated as '" << added->name() << "'";
+}
+
+void MappleViewer::merge_selected_models() {
+    const std::vector<Model *> selected = selected_models();
+    std::vector<SurfaceMesh *> meshes;
+    std::vector<PointCloud *> clouds;
+    for (Model *model : selected) {
+        if (auto *mesh = dynamic_cast<SurfaceMesh *>(model))
+            meshes.push_back(mesh);
+        else if (auto *cloud = dynamic_cast<PointCloud *>(model))
+            clouds.push_back(cloud);
+    }
+    if (meshes.size() < 2 && clouds.size() < 2) {
+        LOG(WARNING) << "merging needs at least two selected surface meshes or two selected point clouds";
+        return;
+    }
+
+    std::vector<Model *> sources;
+    std::vector<Model *> results;
+
+    if (meshes.size() > 1) {
+        SurfaceMesh *target = meshes.front();
+        auto index = target->face_property<int>("f:index", 0);
+        for (std::size_t i = 1; i < meshes.size(); ++i) {
+            SurfaceMesh *source = meshes[i];
+            const unsigned int start = target->n_faces();
+            const unsigned int count = source->n_faces();
+            target->join(*source);
+            for (unsigned int f = start; f < start + count; ++f)
+                index[SurfaceMesh::Face(static_cast<int>(f))] = static_cast<int>(i);
+            sources.push_back(source);
+        }
+        target->set_name("merged_mesh");
+        if (target->manipulator())
+            target->manipulator()->reset();
+        target->renderer()->update();
+        results.push_back(target);
+        LOG(INFO) << "merged " << meshes.size() << " surface meshes into '" << target->name() << "'";
+    }
+
+    if (clouds.size() > 1) {
+        PointCloud *target = clouds.front();
+        auto index = target->vertex_property<int>("v:index", 0);
+        for (std::size_t i = 1; i < clouds.size(); ++i) {
+            PointCloud *source = clouds[i];
+            const unsigned int start = target->n_vertices();
+            const unsigned int count = source->n_vertices();
+            target->join(*source);
+            for (unsigned int v = start; v < start + count; ++v)
+                index[PointCloud::Vertex(static_cast<int>(v))] = static_cast<int>(i);
+            sources.push_back(source);
+        }
+        target->set_name("merged_point_set");
+        if (target->manipulator())
+            target->manipulator()->reset();
+        target->renderer()->update();
+        results.push_back(target);
+        LOG(INFO) << "merged " << clouds.size() << " point clouds into '" << target->name() << "'";
+    }
+
+    for (Model *source : sources) {
+        forget_model(source);
+        delete_model(source);
+    }
+    if (results.empty())
+        return;
+
+    model_selection_.clear();
+    model_selection_.insert(results.begin(), results.end());
+    model_selection_anchor_ = results.front();
+    set_current_model(results.front());
+    if (select_mode_ != SelectMode::OFF)
+        refresh_selection_display(results.front());
+    if (models_auto_focus_)
+        fit_screen(results.front());
+    update();
+}
+
+void MappleViewer::decompose_selected_models() {
+    const std::vector<Model *> selected = selected_models();
+    std::vector<Model *> parts;
+    std::size_t decomposed = 0;
+
+    for (Model *model : selected) {
+        auto *mesh = dynamic_cast<SurfaceMesh *>(model);
+        if (!mesh)
+            continue;
+        const std::vector<SurfaceMeshComponent> components = SurfaceMeshComponent::extract(mesh);
+        if (components.size() <= 1) {
+            LOG(WARNING) << "'" << file_system::simple_name(mesh->name()) << "' has only one component";
+            continue;
+        }
+
+        const std::string model_name = mesh->name();
+        const std::string parent = file_system::parent_directory(model_name);
+        const std::string base = (parent.empty() ? std::string() : parent + "/") +
+                                 file_system::base_name(model_name) + "_part_";
+        std::vector<Model *> created;
+        for (std::size_t i = 0; i < components.size(); ++i) {
+            std::shared_ptr<SurfaceMesh> part(components[i].to_mesh());
+            part->set_name(base + std::to_string(i + 1));
+            if (Model *added = add_model(part, true, false))
+                created.push_back(added);
+        }
+
+        forget_model(mesh);
+        delete_model(mesh);
+        ++decomposed;
+        parts.insert(parts.end(), created.begin(), created.end());
+        LOG(INFO) << "'" << file_system::simple_name(model_name) << "' decomposed into "
+                  << components.size() << " parts";
+    }
+
+    if (decomposed == 0) {
+        LOG(WARNING) << "decomposition needs a surface mesh with at least two connected components";
+        return;
+    }
+
+    if (!parts.empty()) {
+        model_selection_.clear();
+        model_selection_.insert(parts.begin(), parts.end());
+        model_selection_anchor_ = parts.front();
+        set_current_model(parts.front());
+        if (select_mode_ != SelectMode::OFF)
+            refresh_selection_display(parts.front());
+        if (models_auto_focus_)
+            fit_screen(parts.front());
+    }
+    update();
+}
+
+void MappleViewer::delete_selected_models() {
+    const std::vector<Model *> doomed = selected_models();
+    if (doomed.empty())
+        return;
+
+    const std::string message = doomed.size() == 1
+                                        ? "Delete \"" + file_system::simple_name(doomed.front()->name()) + "\"?"
+                                        : "Delete " + std::to_string(doomed.size()) + " models?";
+    const dialog::Response response = dialog::message(
+            doomed.size() == 1 ? "Delete model" : "Delete models", message,
+            dialog::Choice::yes_no, dialog::Type::question);
+    if (response == dialog::Response::yes)
+        pending_deletes_ = doomed;
+}
+
+void MappleViewer::apply_style_to_all_models() {
+    Model *source = current_model();
+    if (!source || models().size() < 2) {
+        LOG(WARNING) << "applying the style needs an active model and at least one other model";
+        return;
+    }
+
+    // The selection display replaces a drawable's own state; propagate the appearance
+    // underneath it and re-apply the display afterwards.
+    std::set<Model *> selection_display;
+    for (const auto &model : models()) {
+        if (selection_styles_.count(model.get())) {
+            selection_display.insert(model.get());
+            restore_selection_style(model.get());
+        }
+    }
+
+    std::size_t targets = 0;
+    for (const auto &entry : models()) {
+        Model *target = entry.get();
+        if (target == source || !target->renderer())
+            continue;
+        ++targets;
+
+        std::vector<Drawable *> from_drawables;
+        std::vector<Drawable *> to_drawables;
+
+        from_drawables.clear();
+        to_drawables.clear();
+        for (const auto &from : source->renderer()->points_drawables())
+            from_drawables.push_back(from.get());
+        for (const auto &to : target->renderer()->points_drawables())
+            to_drawables.push_back(to.get());
+        propagate_drawable_style(source, target, from_drawables, to_drawables);
+
+        from_drawables.clear();
+        to_drawables.clear();
+        for (const auto &from : source->renderer()->lines_drawables())
+            from_drawables.push_back(from.get());
+        for (const auto &to : target->renderer()->lines_drawables())
+            to_drawables.push_back(to.get());
+        propagate_drawable_style(source, target, from_drawables, to_drawables);
+
+        from_drawables.clear();
+        to_drawables.clear();
+        for (const auto &from : source->renderer()->triangles_drawables())
+            from_drawables.push_back(from.get());
+        for (const auto &to : target->renderer()->triangles_drawables())
+            to_drawables.push_back(to.get());
+        propagate_drawable_style(source, target, from_drawables, to_drawables);
+
+        if (scalar_styles_.count(source))
+            scalar_styles_[target] = scalar_styles_[source];
+        else
+            scalar_styles_.erase(target);
+        if (texture_styles_.count(source))
+            texture_styles_[target] = texture_styles_[source];
+        else
+            texture_styles_.erase(target);
+    }
+
+    for (Model *model : selection_display)
+        refresh_selection_display(model);
+
+    if (targets)
+        LOG(INFO) << "applied the style of '" << file_system::simple_name(source->name()) << "' to "
+                  << targets << " other model(s)";
+    update();
+}
+
+void MappleViewer::propagate_drawable_style(Model *source, Model *target,
+                                            const std::vector<Drawable *> &from_drawables,
+                                            const std::vector<Drawable *> &to_drawables) {
+    for (Drawable *from : from_drawables) {
+        for (Drawable *to : to_drawables) {
+            if (from->name() != to->name())
+                continue;
+            const bool visible = to->is_visible();
+            to->state() = from->state();
+            to->set_visible(visible); // visibility belongs to the model, not its style
+            if (auto *src = dynamic_cast<PointsDrawable *>(from)) {
+                if (auto *dst = dynamic_cast<PointsDrawable *>(to)) {
+                    dst->set_point_size(src->point_size());
+                    dst->set_impostor_type(src->impostor_type());
+                }
+            } else if (auto *src = dynamic_cast<LinesDrawable *>(from)) {
+                if (auto *dst = dynamic_cast<LinesDrawable *>(to)) {
+                    dst->set_line_width(src->line_width());
+                    dst->set_impostor_type(src->impostor_type());
+                }
+            } else if (auto *src = dynamic_cast<TrianglesDrawable *>(from)) {
+                if (auto *dst = dynamic_cast<TrianglesDrawable *>(to)) {
+                    dst->set_smooth_shading(src->smooth_shading());
+                    dst->set_opacity(src->opacity());
+                }
+            }
+            // The state copied the source's colormap choice; give the target the same
+            // colormap controls the Rendering panel would apply.
+            if (from->coloring_method() == State::SCALAR_FIELD) {
+                auto style = scalar_styles_[source].find(from->name());
+                if (style != scalar_styles_[source].end()) {
+                    scalar_styles_[target][from->name()] = style->second;
+                    apply_scalar_style(to, from->property_location(), from->property_name(), style->second);
+                }
+            }
+        }
+    }
+}
+
+void MappleViewer::begin_rename_model(Model *model) {
+    if (!model)
+        return;
+    renaming_model_ = model;
+    const std::string base = file_system::base_name(model->name());
+    std::snprintf(model_rename_buffer_, sizeof(model_rename_buffer_), "%s", base.c_str());
+    rename_focus_ = true;
+}
+
+void MappleViewer::commit_rename_model() {
+    Model *model = renaming_model_;
+    renaming_model_ = nullptr;
+    if (!model)
+        return;
+
+    const std::string text(model_rename_buffer_);
+    if (text.empty()) {
+        LOG(WARNING) << "model name cannot be empty";
+        return;
+    }
+
+    const std::string old_name = model->name();
+    const std::string path = file_system::parent_directory(old_name);
+    const std::string ext = file_system::extension(old_name);
+    std::string new_name;
+    if (path.empty() && ext.empty())
+        new_name = text;
+    else
+        new_name = (path.empty() ? std::string() : path + "/") + text +
+                   (ext.empty() ? std::string() : "." + ext);
+    if (new_name == old_name)
+        return;
+
+    model->set_name(new_name);
+    LOG(INFO) << "model name '" << old_name << "' changed to '" << new_name << "'";
+    update();
+}
+
+void MappleViewer::set_models_auto_focus(bool on) {
+    models_auto_focus_ = on;
+    if (on && current_model())
+        fit_screen(current_model());
+    update();
+}
+
+void MappleViewer::set_models_selected_only(bool on) {
+    models_selected_only_ = on;
+    Model *active = current_model();
+    for (const auto &model : models()) {
+        if (model->renderer())
+            model->renderer()->set_visible(!on || model.get() == active);
+    }
+    update();
 }
 
 void MappleViewer::draw_log_panel(float x, float y, float w, float h) {
@@ -1479,14 +2014,4 @@ void MappleViewer::draw_splitter(const char *id, float x, float y, float w, floa
     }
     ImGui::End();
     ImGui::PopStyleVar(2);
-}
-
-void MappleViewer::delete_model_confirm(Model *model) {
-    if (!model)
-        return;
-    const std::string name = file_system::simple_name(model->name());
-    const dialog::Response response = dialog::message(
-            "Delete model", "Delete \"" + name + "\"?", dialog::Choice::yes_no, dialog::Type::question);
-    if (response == dialog::Response::yes)
-        pending_delete_ = model;
 }

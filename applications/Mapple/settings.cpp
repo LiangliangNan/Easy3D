@@ -161,6 +161,12 @@ bool AppSettings::load() {
         } else if (key == "log_auto_scroll") {
             bool v;
             if (parse_bool(value, v)) log_auto_scroll = v;
+        } else if (key == "models_auto_focus") {
+            bool v;
+            if (parse_bool(value, v)) models_auto_focus = v;
+        } else if (key == "models_selected_only") {
+            bool v;
+            if (parse_bool(value, v)) models_selected_only = v;
         } else if (key == "video_bitrate_mbps")
             parse_number(value, video_bitrate_mbps);
         else if (key == "data_directory")
@@ -209,6 +215,8 @@ bool AppSettings::save() const {
     output << "log_height=" << log_height << "\n";
     output << "pick_readout=" << (pick_readout ? 1 : 0) << "\n";
     output << "log_auto_scroll=" << (log_auto_scroll ? 1 : 0) << "\n";
+    output << "models_auto_focus=" << (models_auto_focus ? 1 : 0) << "\n";
+    output << "models_selected_only=" << (models_selected_only ? 1 : 0) << "\n";
     output << "video_bitrate_mbps=" << video_bitrate_mbps << "\n";
     output << "data_directory=" << data_directory << "\n";
     for (std::size_t i = 0; i < recent_files.size() && i < max_recent_files; ++i)
