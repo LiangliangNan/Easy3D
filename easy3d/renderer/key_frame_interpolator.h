@@ -440,8 +440,12 @@ namespace easy3d {
          *      hidden behind its front side, and scene surfaces occlude the glyphs (and
          *      the glyphs occlude them) on both backends. Add the drawable to the viewer's
          *      scene (e.g. with Viewer::add_drawable()) and refresh it when the keyframes,
-         *      the camera's projection, or \p camera_width changes. Because the glyphs are
-         *      ordinary triangles, they can also be picked: glyph \c i owns the triangles
+         *      the camera's projection, or \p camera_width changes. Each glyph is a solid
+         *      view frustum with its apex at the keyframe position, opening along that
+         *      keyframe's view direction, with an up arrow on its front face; \p camera_width
+         *      sets the front face's width, the screen aspect its height and the field of
+         *      view its depth. Because the glyphs are ordinary triangles, they can also be
+         *      picked: glyph \c i owns the triangles
          *      [i * camera_glyph_triangles(), (i + 1) * camera_glyph_triangles()).
          * \param drawable The drawable to fill; its buffers and color are replaced.
          * \param camera The current camera; its field of view and screen aspect size the glyphs.
@@ -456,8 +460,20 @@ namespace easy3d {
 
         /**
          * \brief The number of triangles one camera glyph occupies in update_cameras_drawable().
-         * \details Glyph \c i thus owns the triangles [i * camera_glyph_triangles(),
-         *      (i + 1) * camera_glyph_triangles()), which maps a picked triangle to its keyframe.
+         * \details The glyph mesh has a fixed topology, so the count is the same for every
+         *      keyframe and does not depend on camera_width, the camera's field of view, the
+         *      screen aspect or the number of keyframes; those only move the glyph vertices.
+         *      In a drawable filled by update_cameras_drawable(), glyph \c i owns the
+         *      triangles [i * camera_glyph_triangles(), (i + 1) * camera_glyph_triangles()),
+         *      so a picked triangle \c t belongs to keyframe \c t / camera_glyph_triangles().
+         *      draw_cameras() renders the same glyph, so the count describes its geometry too.
+         * \return The glyph's triangle count (7 with the current mesh). Call this instead of
+         *      hard-coding the number.
+         * \note The mapping assumes the drawable's element buffer holds nothing but these
+         *      glyphs, i.e. it was filled by update_cameras_drawable() alone. Refill the
+         *      drawable whenever the keyframes, the camera's projection or the glyph width
+         *      change; a stale drawable maps picked triangles to the old keyframes.
+         * \sa update_cameras_drawable()
          */
         static std::size_t camera_glyph_triangles();
 
@@ -504,7 +520,11 @@ namespace easy3d {
             float time_;
         };
 
-        // Appends the keyframe cameras as glyph triangles to the given buffers.
+        // Appends the keyframe cameras as glyph triangles to the given buffers: the glyph
+        // mesh is created once (shape::create_camera) and instanced per keyframe with that
+        // keyframe's Frame matrix. Every glyph contributes the same triangle range, and
+        // glyph i occupies the contiguous indices [i * camera_glyph_triangles(), ...), which
+        // is what maps a picked triangle back to its keyframe.
         void append_camera_glyphs(float camera_width, float fov, float aspect,
                                   std::vector<vec3>& points, std::vector<unsigned int>& indices) const;
 
