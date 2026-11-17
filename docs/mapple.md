@@ -1287,9 +1287,14 @@ retirement can proceed once those are decided on.
 
 ### 2026-11-17 — Models panel: selection and the remaining model commands
 
+- The panel is a clean list of model names; the active model's info (path, counts,
+  bounds, properties) lives in its own region at the bottom of the panel, directly
+  above the footer buttons. The region's height follows its content (measured on the
+  previous frame, so expanding Properties or a longer wrapped path grows it) and the
+  list takes all remaining room.
 - Rows are now multi-selectable: a plain click selects only that row, Ctrl/Cmd toggles
   it, and Shift extends from the anchor; the clicked row also becomes the active model
-  (the info block moves under it). With no explicit selection the active model is the
+  (the info block follows it). With no explicit selection the active model is the
   selected row, so the footer and context menu keep acting on it. Double-click a row
   (or Rename) edits the name in place; the edit keeps the parent directory and the
   extension, and an empty name is rejected. Esc drops the edit.
@@ -1324,8 +1329,9 @@ retirement can proceed once those are decided on.
   red), Selected only (visibility 0/1/0 around the active model), Auto focus (camera
   radius became the active triangle's) and the deferred delete (active fell back to the
   last model). The probe was removed, both check trees rebuilt, and Vulkan/OpenGL
-  launches with two models showed the highlighted active row, the info block under it
-  and the two-row footer with bottom padding intact; the settings files were unchanged.
+  launches with two models showed the name-only list, the highlighted active row, the
+  info block pinned above the footer and the two-row footer with bottom padding
+  intact; the settings files were unchanged.
   Suites not rerun (app-only change); dialogs and clicks were not scripted.
 
 ### 2026-11-17 — toolbar icons (ImGui texture registry)

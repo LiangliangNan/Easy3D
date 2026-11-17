@@ -1258,7 +1258,18 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
         ImGui::TextDisabled("No models. Drop a file here or use File > Open.");
 
     const float footer_height = 2.0f * ImGui::GetFrameHeightWithSpacing();
-    ImGui::BeginChild("##models-list", ImVec2(0, -footer_height));
+    // The list is names only; the active model's info fills its own region above the
+    // footer. Its height follows the content (measured last frame), so the separator
+    // sits just above the info and the list gets all the remaining room.
+    const float line = ImGui::GetTextLineHeightWithSpacing();
+    const float spacing = ImGui::GetStyle().ItemSpacing.y;
+    const float available = ImGui::GetContentRegionAvail().y;
+    const float chrome = footer_height + line + 4.0f * spacing; // footer, separator, item gaps
+    const ImGuiID info_height_id = ImGui::GetID("##model-info-height");
+    float info_height = ImGui::GetStateStorage()->GetFloat(info_height_id, 8.0f * line);
+    info_height = std::min(info_height, std::max(3.0f * line, available - chrome - 4.0f * line));
+    const float list_height = std::max(0.0f, available - chrome - info_height);
+    ImGui::BeginChild("##models-list", ImVec2(0, list_height));
 
     for (std::size_t i = 0; i < models().size(); ++i) {
         Model *model = models()[i].get();
@@ -1327,20 +1338,22 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
             }
         }
 
-        // The info describes the active model, so it sits directly below the row that
-        // was activated; activating another row moves it there.
-        if (model == current_model()) {
-            ImGui::Indent();
-            draw_model_info(model);
-            ImGui::Unindent();
-        }
-
         ImGui::PopID();
     }
 
     ImGui::EndChild();
 
+    ImGui::Separator();
+    ImGui::BeginChild("##model-info", ImVec2(0, info_height));
     Model *active = current_model();
+    if (active)
+        draw_model_info(active);
+    else
+        ImGui::TextDisabled("No model selected.");
+    const float measured = ImGui::GetCursorPosY() + ImGui::GetScrollY() + spacing;
+    ImGui::EndChild();
+    ImGui::GetStateStorage()->SetFloat(info_height_id, measured);
+
     ImGui::BeginDisabled(active == nullptr);
     if (ImGui::Button("Fit")) {
         fit_screen(active);
