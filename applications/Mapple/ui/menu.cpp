@@ -527,22 +527,6 @@ void MappleViewer::draw_menu_bar() {
         return;
 
     if (ImGui::BeginMenu("File")) {
-        // Session-only, like the Qt app: the choice is not saved and each launch starts
-        // with No translation.
-        if (ImGui::BeginMenu("Loading option")) {
-            const Translator::Status status = Translator::instance()->status();
-            if (ImGui::MenuItem("No translation", nullptr, status == Translator::DISABLED))
-                set_load_translation(Translator::DISABLED);
-            if (ImGui::MenuItem("Translate relative to first vertex", nullptr,
-                                status == Translator::TRANSLATE_USE_FIRST_POINT))
-                set_load_translation(Translator::TRANSLATE_USE_FIRST_POINT);
-            if (ImGui::MenuItem("Translate relative to last known vertex", nullptr,
-                                status == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET))
-                set_load_translation(Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET);
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
-
         if (ImGui::MenuItem("Open...", "Ctrl+O"))
             open();
 
@@ -566,6 +550,22 @@ void MappleViewer::draw_menu_bar() {
 
         if (ImGui::MenuItem("Save As...", "Ctrl+S", false, current_model() != nullptr))
             save();
+        ImGui::Separator();
+
+        // Session-only, like the Qt app: the choice is not saved and each launch starts
+        // with No translation.
+        if (ImGui::BeginMenu("Loading option")) {
+            const Translator::Status status = Translator::instance()->status();
+            if (ImGui::MenuItem("No translation", nullptr, status == Translator::DISABLED))
+                set_load_translation(Translator::DISABLED);
+            if (ImGui::MenuItem("Translate relative to first vertex", nullptr,
+                                status == Translator::TRANSLATE_USE_FIRST_POINT))
+                set_load_translation(Translator::TRANSLATE_USE_FIRST_POINT);
+            if (ImGui::MenuItem("Translate relative to last known vertex", nullptr,
+                                status == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET))
+                set_load_translation(Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET);
+            ImGui::EndMenu();
+        }
 
         ImGui::Separator();
         if (ImGui::MenuItem("Quit", "Alt+F4"))
