@@ -1208,6 +1208,11 @@ void MappleViewer::draw_model_info(Model *model) {
         ImGui::Text("%u vertices, %u edges, %u faces", mesh->n_vertices(), mesh->n_edges(), mesh->n_faces());
     else if (auto *cloud = dynamic_cast<PointCloud *>(model))
         ImGui::Text("%u points", cloud->n_vertices());
+    else if (auto *graph = dynamic_cast<Graph *>(model))
+        ImGui::Text("%u vertices, %u edges", graph->n_vertices(), graph->n_edges());
+    else if (auto *poly = dynamic_cast<PolyMesh *>(model))
+        ImGui::Text("%u vertices, %u edges, %u faces, %u cells", poly->n_vertices(), poly->n_edges(),
+                    poly->n_faces(), poly->n_cells());
 
     const Box3 &box = model->bounding_box();
     if (box.is_valid()) {
@@ -1935,6 +1940,11 @@ void MappleViewer::draw_status_bar(float x, float y, float w, float h) {
             ImGui::Text("%s  %u vertices, %u faces", name.c_str(), mesh->n_vertices(), mesh->n_faces());
         else if (auto *cloud = dynamic_cast<PointCloud *>(model))
             ImGui::Text("%s  %u points", name.c_str(), cloud->n_vertices());
+        else if (auto *graph = dynamic_cast<Graph *>(model))
+            ImGui::Text("%s  %u vertices, %u edges", name.c_str(), graph->n_vertices(), graph->n_edges());
+        else if (auto *poly = dynamic_cast<PolyMesh *>(model))
+            ImGui::Text("%s  %u vertices, %u edges, %u faces, %u cells", name.c_str(),
+                        poly->n_vertices(), poly->n_edges(), poly->n_faces(), poly->n_cells());
         else
             ImGui::TextUnformatted(name.c_str());
     }

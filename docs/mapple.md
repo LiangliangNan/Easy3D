@@ -353,9 +353,10 @@ entry). The Models panel's Qt extras (multi-select Duplicate/Merge/Decompose/Del
 Auto focus, Selected only, Apply to all and in-place rename) are migrated too (see the
 2026-11-17 "Models panel: selection and the remaining model commands" entry). The
 load-translation options are migrated as File > Loading option (session-only, see the
-2026-11-17 "File > Loading option" entry). The only Qt-only capability left over from
-the capability pass is the status-bar Graph/PolyMesh readout (deliberately skipped);
-retirement can proceed once that is decided on.
+2026-11-17 "File > Loading option" entry), and the status bar and info block now cover
+graph and polyhedral mesh models (see the 2026-11-17 "Status-bar and info-block
+graph/polyhedral readout" entry). Every capability from the Qt capability pass is
+migrated; retirement can proceed whenever it is wanted.
 
 ## ImGui notes
 
@@ -1285,6 +1286,22 @@ retirement can proceed once that is decided on.
   moved when the load order changed. The shared trees could not relink while
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
+
+### 2026-11-17 — Status-bar and info-block graph/polyhedral readout
+
+- The status bar's current-model readout now covers the two remaining model types:
+  a `Graph` shows `<name>  N vertices, N edges` and a `PolyMesh` shows
+  `<name>  N vertices, N edges, N faces, N cells`. The four PolyMesh counts are the
+  same set the Qt status bar displayed (Qt used separate `#faces`/`#vertices`/
+  `#edges`/`#cells` labels; Mapple keeps its compact one-line form). The
+  surface-mesh and point-cloud lines are unchanged.
+- The Models panel's info block uses the same counts under the path: `Graph` adds
+  `N vertices, N edges` and `PolyMesh` adds `N vertices, N edges, N faces, N cells`.
+- Validation (2026-11-17, macOS, Release): Vulkan launched with `graph.ply` active
+  showed `graph.ply 80 vertices, 120 edges` in the status bar and `80 vertices, 120
+  edges` in the info block; Vulkan and OpenGL launched with `sphere.plm` active showed
+  `42 vertices, 171 edges, 220 faces, 90 cells` in both places. Both check trees
+  rebuilt. Suites not rerun (app-only change); no clicks scripted.
 
 ### 2026-11-17 — File > Loading option (load translation)
 
