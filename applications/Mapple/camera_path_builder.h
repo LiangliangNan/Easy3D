@@ -46,8 +46,8 @@ namespace easy3d {
  *      KeyFrameInterpolator for preview, playback and recording. This class covers
  *      the sources that free recording cannot express:
  *
- *      - walking along a ground plane (walk_to() turns a picked surface point into
- *        a third-person pose),
+ *      - walking along the ground plane (generate_ground_route() turns a stroke on
+ *        the ground into first-person eye-height poses aimed along the route),
  *      - orbiting a picked axis (generate_camera_path() turns a line into a closed
  *        orbit), and
  *      - pure builders for previewing or editing a path before it is inserted:
@@ -59,37 +59,36 @@ namespace easy3d {
  *      creates are the ones the Camera Path window, playback and video recording
  *      already operate on, and it does not draw the path (the viewer draws it).
  *
+ *      Mode only says which one-shot tool the app has armed; the app decides which
+ *      gesture (a drag along the ground, a click for the orbit axis) is fed to the
+ *      generators below and disarms the tool when the gesture is done.
+ *
  *      Smoothness and timing are the interpolator's: builders return sparse poses
  *      and the interpolator fits a smooth curve through them. Per-segment timing
  *      (easing, slowing down near points of interest) is not exposed here.
  *
- * \attention The walking mode assumes the scene is upright, i.e. (0, 0, 1) is up.
+ * \attention The walking route assumes the scene is upright, i.e. (0, 0, 1) is up.
  */
 class CameraPathBuilder {
 public:
     CameraPathBuilder(easy3d::Camera *camera, easy3d::KeyFrameInterpolator *interpolator);
     ~CameraPathBuilder() = default;
 
+    /// The one-shot tool the app has armed; Off means no tool owns the next gesture.
     enum class Mode {
-        Off,         // no path tool is active
-        Free,        // keyframes are recorded from the current camera pose
-        GroundWalk,  // clicks on the scene walk the character there
-        Orbit        // a picked line becomes the orbit axis
+        Off,         // no path tool is armed
+        GroundWalk,  // the next drag on the ground becomes a walking route
+        Orbit        // the next click picks the orbit axis
     };
 
     Mode mode() const { return mode_; }
     void set_mode(Mode mode) { mode_ = mode; }
 
-    /// \name Walking mode
+    /// \name Walking route
     //@{
-    /// Bounds of the visible models, used by the eye height and the orbit.
+    /// Bounds of the visible models, used by the eye height and the orbit. With no
+    /// visible model the box becomes invalid, so callers can refuse the gesture.
     void set_scene(const std::vector<std::shared_ptr<easy3d::Model>> &scene);
-
-    /// Walks the character to the \p ground_point position and records a keyframe.
-    void walk_to(const easy3d::vec3 &ground_point);
-
-    void set_follow_up(bool follow_up) { follow_up_ = follow_up; }
-    bool follow_up() const { return follow_up_; }
 
     /// \brief The eye height above the walking plane, in scene heights (default 0.2).
     /// \details The scene height is the scene box's z extent, or the scene radius
@@ -97,13 +96,23 @@ public:
     void set_eye_height_in_scene_heights(float height_in_scene_heights);
     float eye_height_in_scene_heights() const { return eye_height_in_scene_heights_; }
 
-    /// \brief The observer distance behind the character's eye, in character heights
-    ///      (default 1.8). 0 puts the camera at the eye.
-    void set_eye_distance_in_character_heights(float distance_in_character_heights);
-    float eye_distance_in_character_heights() const { return eye_distance_in_character_heights_; }
+    /// \brief Distance between route keyframes along the stroke, in character
+    ///      heights (default 1, i.e. about one body length per keyframe).
+    void set_keyframe_spacing_in_character_heights(float spacing_in_character_heights);
+    float keyframe_spacing_in_character_heights() const { return keyframe_spacing_in_character_heights_; }
+
+    /// \brief Generates a walking route along \p stroke on the ground plane.
+    /// \details The stroke is resampled at the keyframe spacing by arc length, each
+    ///      sample becomes a first-person pose at the eye height aiming along the
+    ///      route, and the poses are appended to the path (an existing path is kept
+    ///      so several strokes can build one walk). The stroke points are expected
+    ///      on the horizontal plane, i.e. only x and y are used.
+    /// \return The number of keyframes added (0 if the stroke is degenerate or the
+    ///      eye height is zero).
+    std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke);
     //@}
 
-    /// \name Orbit mode
+    /// \name Orbit
     //@{
     /// Generates the orbit around \p axis, replacing nothing: callers clear the
     /// path first when a replacement is intended.
@@ -111,26 +120,24 @@ public:
 
     /// \brief Extra orbit radius beyond the scene diagonal, in object heights
     ///      (default 0).
-    void set_orbit_radius_offset_in_object_heights(float offset_in_object_heights,
-                                                   bool re_generate = false);
+    void set_orbit_radius_offset_in_object_heights(float offset_in_object_heights);
     float orbit_radius_offset_in_object_heights() const { return orbit_radius_offset_in_object_heights_; }
 
     /// \brief Vertical offset of the orbit center above the picked axis point, in
     ///      object heights (default 0).
-    void set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights,
-                                                     bool re_generate = false);
+    void set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights);
     float orbit_vertical_offset_in_object_heights() const { return orbit_vertical_offset_in_object_heights_; }
 
     /// Camera pitch in degrees (default 0).
-    void set_pitch_degrees(float degrees, bool re_generate = false);
+    void set_pitch_degrees(float degrees);
     float pitch_degrees() const { return pitch_degrees_; }
 
     /// Keyframes per orbit loop (default 10).
-    void set_keyframes_per_loop(int count, bool re_generate = false);
+    void set_keyframes_per_loop(int count);
     int keyframes_per_loop() const { return keyframes_per_loop_; }
 
     /// Number of orbit loops (default 2).
-    void set_num_loops(int count, bool re_generate = false);
+    void set_num_loops(int count);
     int num_loops() const { return num_loops_; }
     //@}
 
@@ -175,33 +182,15 @@ public:
                                              const easy3d::vec3 &up) const;
     //@}
 
-    /// Removes the last keyframe; in walking mode with follow-up, the camera
-    /// returns to the new last keyframe.
-    void delete_last_keyframe();
-
-    /// Removes every keyframe.
-    void clear();
-
-    /// Moves the camera to the \p idx keyframe immediately and updates the pivot.
-    /// \return The index of the keyframe the camera is at.
-    int move_to(int idx);
-
-    /// Index of the keyframe the camera was last moved to, or -1.
-    int current_keyframe_index() const { return current_frame_idx_; }
-
     /// The scene bounds last passed to set_scene().
     const easy3d::Box3 &scene_box() const { return scene_box_; }
 
 protected:
     void add_keyframe(const easy3d::Frame &frame);
-    void add_keyframe(const easy3d::vec3 &cam_pos, const easy3d::vec3 &view_dir);
 
     // The eye height above the ground, in world units.
     float eye_height() const;
-    // The distance from the character's eye to the observer, in world units.
-    float eye_distance() const;
-    easy3d::vec3 eye_position(const easy3d::vec3 &foot) const;
-    easy3d::quat to_orientation(const easy3d::vec3 &view_dir) const;
+
     /// Orientation looking along \p view_dir with \p up as the roll reference; the
     /// two must be orthogonal (used by the plane-constrained builders).
     static easy3d::quat to_orientation(const easy3d::vec3 &view_dir, const easy3d::vec3 &up);
@@ -216,22 +205,18 @@ protected:
 
     Mode mode_;
 
-    // Walking mode
+    // Walking route
     easy3d::Box3 scene_box_;
     easy3d::vec3 ground_plane_normal_;   // upright scenes only: (0, 0, 1)
-    bool follow_up_;
     float eye_height_in_scene_heights_;
-    float eye_distance_in_character_heights_;
+    float keyframe_spacing_in_character_heights_;
 
-    // Orbit mode
-    easy3d::Line3 rotate_axis_;
+    // Orbit
     float orbit_radius_offset_in_object_heights_;
     float orbit_vertical_offset_in_object_heights_;
     float pitch_degrees_;
     int keyframes_per_loop_;
     int num_loops_;
-
-    int current_frame_idx_;
 };
 
 #endif // EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H

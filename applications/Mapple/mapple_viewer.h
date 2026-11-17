@@ -460,14 +460,29 @@ private:
 
     void export_camera_path();
 
-    // The two keyframe-creation tools beyond free recording: walking through the
-    // scene and orbiting a picked axis. They share the viewer's camera and keyframe
-    // interpolator.
-    void set_camera_path_mode(CameraPathBuilder::Mode mode);
+    // One-shot path tools. Arming makes the next gesture in the scene belong to the
+    // tool - a drag traces a walking route along the ground, a click picks the orbit
+    // axis - and the tool disarms itself once that gesture is applied. Esc or the
+    // window's Cancel button disarms it immediately.
+    void arm_camera_path_tool(CameraPathBuilder::Mode tool);
+    void cancel_camera_path_tool();
+    void cancel_path_gesture();
 
-    // Applies an Alt+click while a path tool is active: walks to the picked point or
-    // uses the picked line as the orbit axis.
-    void apply_camera_path_click(int x, int y);
+    // Turns the traced stroke (ground points in drag order) into walking keyframes
+    // appended to the path.
+    void commit_ground_route();
+
+    // Uses the ray through (x, y) as the orbit axis; a non-empty path is replaced
+    // only after the Camera Path window asks.
+    void apply_orbit_pick(int x, int y);
+
+    // Intersects the view ray through (x, y) with the ground plane captured at the
+    // start of the stroke. False when the ray misses the plane, hits it behind the
+    // camera, or hits it implausibly far from the scene.
+    bool route_point_at(int x, int y, easy3d::vec3 &point) const;
+
+    // Draws the walking stroke being traced, in the scene's overlay layer.
+    void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Video recording needs FFmpeg; without it recording_video() is always false.
 #ifdef HAS_FFMPEG
@@ -693,11 +708,15 @@ private:
     // Walking and orbit keyframe creation (created in init()).
     std::unique_ptr<CameraPathBuilder> camera_path_builder_;
 
-    // An Alt+press that belongs to a path tool. The drag threshold turns it into a
-    // click; the walk pick itself runs at draw time, where picking is safe.
-    bool walk_click_pending_ = false;
-    bool pending_walk_pick_ = false;
-    int walk_click_x_ = 0, walk_click_y_ = 0;
+    // The gesture owned by the armed one-shot path tool. A route stroke keeps the
+    // screen path for the live preview and the ground points that become keyframes.
+    bool tracing_route_ = false;
+    std::vector<easy3d::vec2> route_stroke_screen_; // logical window coordinates
+    std::vector<easy3d::vec3> route_stroke_points_; // on route_plane_
+    easy3d::Plane3 route_plane_;                    // captured at the press
+    // A left press on the scene may still become the orbit click.
+    bool orbit_click_pending_ = false;
+    int orbit_click_x_ = 0, orbit_click_y_ = 0;
     // The Camera Path window asks before replacing a non-empty path with an orbit.
     bool pending_orbit_ = false;
     easy3d::Line3 pending_orbit_axis_;

@@ -341,6 +341,7 @@ void MappleViewer::pre_draw() {
     // so panels and menus always cover it.
     std::vector<graphics::DrawCommand> hints;
     append_selection_overlay(hints);
+    append_path_stroke_overlay(hints);
     append_manipulator_frame(hints);
     if (!hints.empty())
         commands.insert(commands.begin(), hints.begin(), hints.end());
@@ -596,6 +597,40 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
+    // The armed one-shot path tool owns the next plain left press in the scene: a
+    // walk drag starts its route stroke there, and an orbit click is decided on the
+    // release. Alt still belongs to model manipulation and the clipping plane.
+    const CameraPathBuilder::Mode tool =
+            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
+    if (tool != CameraPathBuilder::Mode::Off && button == BUTTON_LEFT &&
+        !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
+        if (tool == CameraPathBuilder::Mode::GroundWalk) {
+            if (camera_path_builder_->scene_box().is_valid()) {
+                // The route lies on the ground at the bottom of the scene box, so it
+                // needs no GPU pick and every stroke point is available immediately.
+                const float ground_z = camera_path_builder_->scene_box().min_point().z;
+                route_plane_ = Plane3(vec3(0.0f, 0.0f, ground_z), vec3(0.0f, 0.0f, 1.0f));
+                vec3 point;
+                if (route_point_at(x, y, point)) {
+                    tracing_route_ = true;
+                    route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
+                    route_stroke_points_.assign(1, point);
+                    clear_hover();
+                    update();
+                } else
+                    LOG(WARNING) << "the view ray does not meet the ground plane there";
+            } else
+                LOG(WARNING) << "the walking route needs a visible model";
+        } else {
+            orbit_click_pending_ = true;
+            orbit_click_x_ = x;
+            orbit_click_y_ = y;
+            clear_hover();
+            update();
+        }
+        return true;
+    }
+
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
     // gesture so the plane stays movable while a selection tool is active.
     if (select_mode_ != SelectMode::OFF && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) &&
@@ -607,22 +642,6 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         select_action_ = (modifiers & MODIF_CTRL) ? SelectAction::REMOVE
                        : (modifiers & MODIF_SHIFT) ? SelectAction::ADD
                                                    : SelectAction::REPLACE;
-        clear_hover();
-        update();
-        return true;
-    }
-
-    // While a path tool is active Alt belongs to the tool: the press may become a
-    // click on the scene (walk there, or pick the orbit axis) and must not start a
-    // model manipulation. The clipping plane keeps its Alt precedence.
-    const CameraPathBuilder::Mode path_mode =
-            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
-    if ((modifiers & MODIF_ALT) && button == BUTTON_LEFT &&
-        !ClippingPlane::instance()->is_enabled() && point_in_scene(x, y) &&
-        (path_mode == CameraPathBuilder::Mode::GroundWalk || path_mode == CameraPathBuilder::Mode::Orbit)) {
-        walk_click_pending_ = true;
-        walk_click_x_ = x;
-        walk_click_y_ = y;
         clear_hover();
         update();
         return true;
@@ -654,12 +673,21 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
-    if (walk_click_pending_) {
-        walk_click_pending_ = false;
-        const float dx = static_cast<float>(x) - static_cast<float>(walk_click_x_);
-        const float dy = static_cast<float>(y) - static_cast<float>(walk_click_y_);
-        if (button == BUTTON_LEFT && std::fabs(dx) <= 2.0f && std::fabs(dy) <= 2.0f)
-            apply_camera_path_click(x, y);
+    if (tracing_route_ && button == BUTTON_LEFT) {
+        tracing_route_ = false;
+        commit_ground_route();
+        route_stroke_screen_.clear();
+        route_stroke_points_.clear();
+        update();
+        return true;
+    }
+
+    if (orbit_click_pending_ && button == BUTTON_LEFT) {
+        orbit_click_pending_ = false;
+        const float dx = static_cast<float>(x) - static_cast<float>(orbit_click_x_);
+        const float dy = static_cast<float>(y) - static_cast<float>(orbit_click_y_);
+        if (std::fabs(dx) <= 2.0f && std::fabs(dy) <= 2.0f)
+            apply_orbit_pick(x, y);
         update();
         return true;
     }
@@ -703,7 +731,21 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
     if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
-    if (walk_click_pending_) // a drag is not a click; keep the gesture away from the camera
+    if (tracing_route_) {
+        vec3 point;
+        if (point_in_scene(x, y) && route_point_at(x, y, point)) {
+            const vec2 sample(static_cast<float>(x), static_cast<float>(y));
+            const vec2 delta = sample - route_stroke_screen_.back();
+            if (delta.length2() >= 4.0f) { // sample at least ~2 pixels apart
+                route_stroke_screen_.push_back(sample);
+                route_stroke_points_.push_back(point);
+            }
+        }
+        update();
+        return true;
+    }
+
+    if (orbit_click_pending_) // a drag is not a click; keep the gesture away from the camera
         return true;
 
     if (manipulating_model_) {
@@ -798,6 +840,12 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         open_snapshot_dialog();
         return true;
     }
+    // An armed path tool takes the first Esc; selection mode keeps its own.
+    if (key == KEY_ESCAPE && modifiers == 0 && camera_path_builder_ &&
+        camera_path_builder_->mode() != CameraPathBuilder::Mode::Off) {
+        cancel_camera_path_tool();
+        return true;
+    }
     // Escape leaves selection mode. With no selection tool active it would close the
     // window, so ask first: the two meanings are easy to confuse.
     if (key == KEY_ESCAPE && modifiers == 0) {
@@ -826,15 +874,6 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         pending_command_ = SelectCommand::INVERT_SELECTION;
         return true;
     }
-    // Alt+K records the current camera pose, which belongs to the free mode; a walk
-    // or orbit path is built from scene clicks instead.
-    if (key == KEY_K && modifiers == MODIF_ALT && camera_path_builder_ &&
-        (camera_path_builder_->mode() == CameraPathBuilder::Mode::GroundWalk ||
-         camera_path_builder_->mode() == CameraPathBuilder::Mode::Orbit)) {
-        LOG(WARNING) << "'Alt+K' is for the free mode; Alt+click the scene to extend this path";
-        return true;
-    }
-
     // Camera-path shortcuts; the base Viewer no longer owns an interpolator or these keys.
     if (modifiers == MODIF_ALT && key == KEY_K) {
         add_camera_keyframe();
@@ -866,7 +905,7 @@ bool MappleViewer::char_input_event(unsigned int codepoint) {
 
 bool MappleViewer::focus_event(bool focused) {
     if (!focused) {
-        walk_click_pending_ = false;
+        cancel_path_gesture();
         if (manipulating_model_) {
             manipulating_model_ = false;
             Model *model = current_model();
@@ -1005,21 +1044,6 @@ void MappleViewer::process_pending_work() {
         pending_region_ = false;
         select_region(pending_action_);
         lasso_.clear();
-    }
-
-    if (pending_walk_pick_) {
-        pending_walk_pick_ = false;
-        const PickResult result = pick(walk_click_x_, walk_click_y_);
-        if (result) {
-            camera_path_builder_->set_scene(models());
-            camera_path_builder_->walk_to(result.position);
-            if (!show_camera_path_)
-                set_camera_path_visible(true);
-            camera_keyframe_index_ = camera_path_builder_->current_keyframe_index();
-            LOG(INFO) << "walking keyframe added at (" << result.position << ")";
-            update();
-        } else
-            LOG(WARNING) << "no surface under the click; nothing to walk to";
     }
 
     if (pending_hover_) {
@@ -1524,6 +1548,26 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
         segments.emplace_back(lasso_.front() * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(segments, color, fw, fh, dpi));
     }
+}
+
+void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {
+    if (!tracing_route_ || route_stroke_screen_.size() < 2)
+        return;
+    const unsigned fw = static_cast<unsigned>(framebuffer_width());
+    const unsigned fh = static_cast<unsigned>(framebuffer_height());
+    if (fw == 0 || fh == 0)
+        return;
+
+    // Same coordinate contract as the selection overlay: logical units in, a
+    // one-logical-pixel ribbon in framebuffer pixels out.
+    const float dpi = dpi_scaling();
+    std::vector<vec2> segments;
+    segments.reserve(route_stroke_screen_.size() * 2);
+    for (std::size_t i = 1; i < route_stroke_screen_.size(); ++i) {
+        segments.emplace_back(route_stroke_screen_[i - 1] * dpi);
+        segments.emplace_back(route_stroke_screen_[i] * dpi);
+    }
+    commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
 }
 
 void MappleViewer::append_manipulator_frame(std::vector<graphics::DrawCommand> &commands) const {

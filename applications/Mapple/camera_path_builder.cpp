@@ -26,6 +26,7 @@
 
 #include "camera_path_builder.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include <easy3d/core/model.h>
@@ -37,74 +38,83 @@
 
 using namespace easy3d;
 
+namespace {
+    // Samples \p points at constant arc length. The first point, every \p spacing
+    // sample and the stroke end are kept; a sample closer than a quarter spacing to
+    // the end is dropped so the last keyframes do not crowd.
+    std::vector<vec3> resample_by_arc_length(const std::vector<vec3> &points, float spacing) {
+        std::vector<vec3> samples;
+        if (points.empty())
+            return samples;
+        samples.push_back(points.front());
+        if (points.size() < 2)
+            return samples;
+
+        std::vector<float> cumulative(points.size(), 0.0f);
+        for (std::size_t i = 1; i < points.size(); ++i)
+            cumulative[i] = cumulative[i - 1] + distance(points[i], points[i - 1]);
+        const float total = cumulative.back();
+        if (total <= 1e-6f)
+            return samples;
+
+        std::size_t segment = 1;
+        for (float s = spacing; s < total - 0.25f * spacing; s += spacing) {
+            while (segment < points.size() && cumulative[segment] < s)
+                ++segment;
+            if (segment >= points.size())
+                break;
+            const float length = cumulative[segment] - cumulative[segment - 1];
+            const float t = length > 0.0f ? (s - cumulative[segment - 1]) / length : 0.0f;
+            samples.push_back(points[segment - 1] + (points[segment] - points[segment - 1]) * t);
+        }
+        samples.push_back(points.back());
+        return samples;
+    }
+}
+
 CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
         : camera_(camera), kfi_(interpolator), mode_(Mode::Off), ground_plane_normal_(0, 0, 1),
-          follow_up_(true), eye_height_in_scene_heights_(0.2f), eye_distance_in_character_heights_(1.8f),
+          eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(1.0f),
           orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
-          pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2), current_frame_idx_(-1) {
+          pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
 }
 
 void CameraPathBuilder::set_scene(const std::vector<std::shared_ptr<Model>> &scene) {
-    if (scene.empty())
-        return;
     Box3 box;
     for (const auto &m : scene) {
         if (m->renderer() && m->renderer()->is_visible())
             box += m->bounding_box();
     }
     scene_box_ = box;
-    camera_->set_scene_radius(box.radius() * 1.1f);
-}
-
-void CameraPathBuilder::walk_to(const vec3 &ground_point) {
-    if (mode_ != Mode::GroundWalk) {
-        LOG(WARNING) << "wrong status: walk_to() is for the walking mode only";
-        return;
-    }
-
-    const vec3 head = eye_position(ground_point);
-    vec3 view_dir = head - camera_->position(); // approximate (when no previous keyframes exist)
-    if (kfi_->number_of_keyframes() > 0) {
-        const std::size_t prev_idx = kfi_->number_of_keyframes() - 1;
-        view_dir = head - kfi_->keyframe_position(prev_idx);
-    }
-    view_dir.z = 0;
-    view_dir.normalize();
-
-    vec3 cam_pos = head;    // if not follow up, we want to get what we see
-    if (follow_up_)
-        cam_pos = cam_pos - view_dir * eye_distance(); // move back
-
-    // adjust the previous view direction to be pointing to the new one
-    if (kfi_->number_of_keyframes() > 0) {
-        const std::size_t last_idx = kfi_->number_of_keyframes() - 1;
-        vec3 dir = cam_pos - kfi_->keyframe_position(last_idx);
-        dir.z = 0;
-        dir.normalize();
-        kfi_->set_keyframe_orientation(last_idx, to_orientation(dir));
-    }
-
-    add_keyframe(cam_pos, view_dir);
-
-    // set the pivot point ahead of the character.
-    camera_->set_pivot_point(ground_point + view_dir * eye_distance() * 2.0f);
+    if (box.is_valid())
+        camera_->set_scene_radius(box.radius() * 1.1f);
 }
 
 void CameraPathBuilder::set_eye_height_in_scene_heights(float height_in_scene_heights) {
     eye_height_in_scene_heights_ = height_in_scene_heights;
-    if (follow_up_)
-        move_to(current_frame_idx_);
 }
 
-void CameraPathBuilder::set_eye_distance_in_character_heights(float distance_in_character_heights) {
-    eye_distance_in_character_heights_ = distance_in_character_heights;
-    if (follow_up_)
-        move_to(current_frame_idx_);
+void CameraPathBuilder::set_keyframe_spacing_in_character_heights(float spacing_in_character_heights) {
+    keyframe_spacing_in_character_heights_ = spacing_in_character_heights;
+}
+
+std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
+    if (stroke.size() < 2)
+        return 0;
+
+    const float eye = eye_height();
+    if (eye <= 1e-4f)
+        return 0;
+    const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
+    const std::vector<vec3> feet = resample_by_arc_length(stroke, spacing);
+    const std::vector<Frame> frames = ground_frames(feet, ground_plane_normal_, eye);
+    for (const auto &frame : frames)
+        add_keyframe(frame);
+    return frames.size();
 }
 
 void CameraPathBuilder::generate_camera_path(const Line3 &axis) {
     camera_->set_scene_radius(scene_box_.radius() * 1.1f);
-    rotate_axis_ = axis;
 
     for (const auto &frame : orbit_frames(axis, camera_->scene_center()))
         add_keyframe(frame);
@@ -210,85 +220,24 @@ std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<vec3> &pos
     return frames;
 }
 
-void CameraPathBuilder::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights,
-                                                                  bool re_generate) {
+void CameraPathBuilder::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights) {
     orbit_radius_offset_in_object_heights_ = offset_in_object_heights;
-    if (re_generate && mode_ == Mode::Orbit && kfi_->number_of_keyframes() > 0) {
-        kfi_->delete_path();
-        generate_camera_path(rotate_axis_);
-    }
 }
 
-void CameraPathBuilder::set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights,
-                                                                    bool re_generate) {
+void CameraPathBuilder::set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights) {
     orbit_vertical_offset_in_object_heights_ = offset_in_object_heights;
-    if (re_generate && mode_ == Mode::Orbit && kfi_->number_of_keyframes() > 0) {
-        kfi_->delete_path();
-        generate_camera_path(rotate_axis_);
-    }
 }
 
-void CameraPathBuilder::set_pitch_degrees(float degrees, bool re_generate) {
+void CameraPathBuilder::set_pitch_degrees(float degrees) {
     pitch_degrees_ = degrees;
-    if (re_generate && mode_ == Mode::Orbit && kfi_->number_of_keyframes() > 0) {
-        kfi_->delete_path();
-        generate_camera_path(rotate_axis_);
-    }
 }
 
-void CameraPathBuilder::set_keyframes_per_loop(int count, bool re_generate) {
+void CameraPathBuilder::set_keyframes_per_loop(int count) {
     keyframes_per_loop_ = count;
-    if (re_generate && mode_ == Mode::Orbit && kfi_->number_of_keyframes() > 0) {
-        kfi_->delete_path();
-        generate_camera_path(rotate_axis_);
-    }
 }
 
-void CameraPathBuilder::set_num_loops(int count, bool re_generate) {
+void CameraPathBuilder::set_num_loops(int count) {
     num_loops_ = count;
-    if (re_generate && mode_ == Mode::Orbit && kfi_->number_of_keyframes() > 0) {
-        kfi_->delete_path();
-        generate_camera_path(rotate_axis_);
-    }
-}
-
-void CameraPathBuilder::delete_last_keyframe() {
-    if (kfi_->number_of_keyframes() == 0) {
-        current_frame_idx_ = -1;
-        return;
-    }
-
-    kfi_->delete_last_keyframe();
-
-    const int last = static_cast<int>(kfi_->number_of_keyframes()) - 1;
-    current_frame_idx_ = last;
-    if (follow_up_ && last >= 0)
-        move_to(last);
-}
-
-void CameraPathBuilder::clear() {
-    kfi_->delete_path();
-    current_frame_idx_ = -1;
-}
-
-int CameraPathBuilder::move_to(int idx) {
-    if (kfi_->number_of_keyframes() == 0 || idx < 0 || idx >= kfi_->number_of_keyframes())
-        return current_frame_idx_;
-
-    const Frame frame = kfi_->keyframe(static_cast<std::size_t>(idx));
-    camera_->frame()->set_position_and_orientation(frame.position(), frame.orientation());
-
-    current_frame_idx_ = idx;
-
-    vec3 view_dir = frame.inverse_transform_of(vec3(0.0, 0.0, -1.0));
-    view_dir.z = 0;
-    view_dir.normalize();
-
-    const vec3 foot = frame.position() + view_dir * eye_distance() * 2.0f -
-                      vec3(0, 0, 1) * eye_height();
-    camera_->set_pivot_point(foot);
-
-    return current_frame_idx_;
 }
 
 void CameraPathBuilder::add_keyframe(const Frame &frame) {
@@ -300,33 +249,10 @@ void CameraPathBuilder::add_keyframe(const Frame &frame) {
     }
 }
 
-void CameraPathBuilder::add_keyframe(const vec3 &cam_pos, const vec3 &view_dir) {
-    vec3 dir = view_dir;
-    dir.z = 0; // force looking in a horizontal direction
-    dir.normalize();
-
-    add_keyframe(Frame(cam_pos, to_orientation(dir)));
-
-    if (follow_up_)
-        move_to(static_cast<int>(kfi_->number_of_keyframes()) - 1); // move to the new view point
-}
-
 float CameraPathBuilder::eye_height() const {
     if (scene_box_.is_valid())
         return scene_box_.range(2) * eye_height_in_scene_heights_;
     return camera_->scene_radius() * eye_height_in_scene_heights_;
-}
-
-float CameraPathBuilder::eye_distance() const {
-    return eye_height() * eye_distance_in_character_heights_;
-}
-
-vec3 CameraPathBuilder::eye_position(const vec3 &pos) const {
-    return pos + ground_plane_normal_ * eye_height();
-}
-
-quat CameraPathBuilder::to_orientation(const vec3 &view_dir) const {
-    return to_orientation(view_dir, ground_plane_normal_);
 }
 
 quat CameraPathBuilder::to_orientation(const vec3 &view_dir, const vec3 &up) {

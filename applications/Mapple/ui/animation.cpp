@@ -59,8 +59,6 @@ namespace {
 
 void MappleViewer::open_animation_window() {
     show_animation_window_ = true;
-    if (camera_path_builder_ && camera_path_builder_->mode() == CameraPathBuilder::Mode::Off)
-        set_camera_path_mode(CameraPathBuilder::Mode::Free);
 }
 
 void MappleViewer::draw_animation_window() {
@@ -76,11 +74,10 @@ void MappleViewer::draw_animation_window() {
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
             camera_keyframe_index_ = -1;
-            // The tool owns Alt+clicks while active, so it stops with its window.
+            // The tool disarms with its window; a gesture in progress is abandoned.
             if (camera_path_builder_)
                 camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
-            walk_click_pending_ = false;
-            pending_walk_pick_ = false;
+            cancel_path_gesture();
             pending_orbit_ = false;
         }
         return;
@@ -101,31 +98,27 @@ void MappleViewer::draw_animation_window() {
     ImGui::Separator();
     ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
 
-    const CameraPathBuilder::Mode mode =
-            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Mode");
+    if (ImGui::Button("Walk a route...", ImVec2(120, 0)))
+        arm_camera_path_tool(CameraPathBuilder::Mode::GroundWalk);
     ImGui::SameLine();
-    if (ImGui::RadioButton("Free", mode == CameraPathBuilder::Mode::Free))
-        set_camera_path_mode(CameraPathBuilder::Mode::Free);
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Walk", mode == CameraPathBuilder::Mode::GroundWalk))
-        set_camera_path_mode(CameraPathBuilder::Mode::GroundWalk);
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Orbit", mode == CameraPathBuilder::Mode::Orbit))
-        set_camera_path_mode(CameraPathBuilder::Mode::Orbit);
+    if (ImGui::Button("Orbit...", ImVec2(80, 0)))
+        arm_camera_path_tool(CameraPathBuilder::Mode::Orbit);
 
-    if (mode == CameraPathBuilder::Mode::GroundWalk)
-        ImGui::TextDisabled("Alt+click a surface to record a step.");
-    else if (mode == CameraPathBuilder::Mode::Orbit)
-        ImGui::TextDisabled("Alt+click to set the rotation axis.");
-    else
+    // Read after the buttons so arming shows its hint and its parameters at once.
+    const CameraPathBuilder::Mode tool =
+            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
+    if (tool != CameraPathBuilder::Mode::Off) {
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(70, 0)))
+            cancel_camera_path_tool();
+        ImGui::TextDisabled(tool == CameraPathBuilder::Mode::GroundWalk
+                                    ? "Drag along the ground to trace the route. Esc cancels."
+                                    : "Click the scene to set the orbit axis. Esc cancels.");
+    } else
         ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
 
-    ImGui::BeginDisabled(mode != CameraPathBuilder::Mode::Free);
     if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
         add_camera_keyframe();
-    ImGui::EndDisabled();
     ImGui::SameLine();
     if (ImGui::Button("Remove Last", ImVec2(110, 0)))
         remove_last_camera_keyframe();
@@ -171,59 +164,38 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
 
-    if (camera_path_builder_ && mode == CameraPathBuilder::Mode::GroundWalk) {
+    if (camera_path_builder_ && tool == CameraPathBuilder::Mode::GroundWalk) {
         ImGui::Separator();
-        bool follow = camera_path_builder_->follow_up();
-        if (ImGui::Checkbox("Follow the character", &follow))
-            camera_path_builder_->set_follow_up(follow);
-        ImGui::SetItemTooltip("Move the camera to each recorded step.");
-
         float height = camera_path_builder_->eye_height_in_scene_heights();
-        if (ImGui::DragFloat("Character height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+        if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_eye_height_in_scene_heights(height);
             update();
         }
         ImGui::SetItemTooltip("The eye height above the ground, relative to the scene height.");
 
-        float distance = camera_path_builder_->eye_distance_in_character_heights();
-        if (ImGui::DragFloat("Character distance to eye", &distance, 0.01f, 0.0f, 100.0f,
-                             "%.2f x height")) {
-            camera_path_builder_->set_eye_distance_in_character_heights(distance);
+        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
+        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
+            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
             update();
         }
-        ImGui::SetItemTooltip("How far the camera stands behind the character, relative to its height.");
-    } else if (camera_path_builder_ && mode == CameraPathBuilder::Mode::Orbit) {
+        ImGui::SetItemTooltip("Distance between keyframes along the route, relative to the character height.");
+    } else if (camera_path_builder_ && tool == CameraPathBuilder::Mode::Orbit) {
         ImGui::Separator();
-        bool changed = false;
         float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
-        if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
-            camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom, true);
-            changed = true;
-        }
+        if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
+            camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom);
         float offset = camera_path_builder_->orbit_vertical_offset_in_object_heights();
-        if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
-            camera_path_builder_->set_orbit_vertical_offset_in_object_heights(offset, true);
-            changed = true;
-        }
+        if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height"))
+            camera_path_builder_->set_orbit_vertical_offset_in_object_heights(offset);
         float pitch = camera_path_builder_->pitch_degrees();
-        if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg")) {
-            camera_path_builder_->set_pitch_degrees(pitch, true);
-            changed = true;
-        }
+        if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg"))
+            camera_path_builder_->set_pitch_degrees(pitch);
         int keyframes_per_loop = camera_path_builder_->keyframes_per_loop();
-        if (ImGui::DragInt("Keyframes per loop", &keyframes_per_loop, 0.5f, 1, 99)) {
-            camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop, true);
-            changed = true;
-        }
+        if (ImGui::DragInt("Keyframes per loop", &keyframes_per_loop, 0.5f, 1, 99))
+            camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop);
         int loops = camera_path_builder_->num_loops();
-        if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99)) {
-            camera_path_builder_->set_num_loops(loops, true);
-            changed = true;
-        }
-        if (changed) {
-            camera_keyframe_index_ = camera_path_builder_->current_keyframe_index();
-            update();
-        }
+        if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99))
+            camera_path_builder_->set_num_loops(loops);
     }
 
     // The orbit arrives as a click; a non-empty path is only replaced on request.
@@ -236,8 +208,8 @@ void MappleViewer::draw_animation_window() {
         ImGui::Spacing();
         if (ImGui::Button("Replace", ImVec2(100, 0))) {
             kfi_->delete_path();
-            camera_keyframe_index_ = -1;
             camera_path_builder_->generate_camera_path(pending_orbit_axis_);
+            camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
             if (!show_camera_path_)
                 set_camera_path_visible(true);
             update();
@@ -284,11 +256,7 @@ void MappleViewer::add_camera_keyframe() {
 void MappleViewer::remove_last_camera_keyframe() {
     if (kfi_->number_of_keyframes() == 0)
         return;
-    // In walking mode the tool also steps back to the new last view.
-    if (camera_path_builder_ && camera_path_builder_->mode() == CameraPathBuilder::Mode::GroundWalk)
-        camera_path_builder_->delete_last_keyframe();
-    else
-        kfi_->delete_last_keyframe();
+    kfi_->delete_last_keyframe();
     camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     LOG(INFO) << "last keyframe removed (" << kfi_->number_of_keyframes() << " remaining)";
     update();
@@ -297,10 +265,7 @@ void MappleViewer::remove_last_camera_keyframe() {
 void MappleViewer::clear_camera_path() {
     if (kfi_->number_of_keyframes() == 0)
         return;
-    if (camera_path_builder_)
-        camera_path_builder_->clear();
-    else
-        kfi_->delete_path();
+    kfi_->delete_path();
     camera_keyframe_index_ = -1;
     if (show_camera_path_)
         restore_scene_bounds();
@@ -381,52 +346,97 @@ void MappleViewer::export_camera_path() {
         LOG(ERROR) << "failed to save keyframes to " << file_name;
 }
 
-void MappleViewer::set_camera_path_mode(CameraPathBuilder::Mode mode) {
+void MappleViewer::arm_camera_path_tool(CameraPathBuilder::Mode tool) {
     if (!camera_path_builder_)
         return;
 
-    walk_click_pending_ = false;
-    pending_orbit_ = false;
-    if (camera_path_builder_->mode() == mode)
+    cancel_path_gesture();
+    if (camera_path_builder_->mode() == tool) { // clicking the armed tool disarms it
+        camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+        update();
         return;
+    }
 
-    camera_path_builder_->set_mode(mode);
-    if (mode == CameraPathBuilder::Mode::GroundWalk || mode == CameraPathBuilder::Mode::Orbit)
+    if (tool == CameraPathBuilder::Mode::GroundWalk || tool == CameraPathBuilder::Mode::Orbit) {
         camera_path_builder_->set_scene(models());
+        if (!camera_path_builder_->scene_box().is_valid()) {
+            LOG(WARNING) << "the camera path tools need a visible model";
+            camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+            update();
+            return;
+        }
+    }
 
-    LOG(INFO) << "camera path creation mode: "
-              << (mode == CameraPathBuilder::Mode::GroundWalk ? "walking"
-                  : mode == CameraPathBuilder::Mode::Orbit ? "orbit" : "free");
+    camera_path_builder_->set_mode(tool);
+    LOG(INFO) << (tool == CameraPathBuilder::Mode::GroundWalk
+                  ? "walk route tool armed: drag along the ground to trace the route"
+                  : "orbit tool armed: click the scene to set the orbit axis");
     update();
 }
 
-void MappleViewer::apply_camera_path_click(int x, int y) {
+void MappleViewer::cancel_camera_path_tool() {
+    cancel_path_gesture();
+    if (camera_path_builder_)
+        camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+    update();
+}
+
+void MappleViewer::cancel_path_gesture() {
+    tracing_route_ = false;
+    orbit_click_pending_ = false;
+    route_stroke_screen_.clear();
+    route_stroke_points_.clear();
+}
+
+bool MappleViewer::route_point_at(int x, int y, vec3 &point) const {
+    const Picker picker(camera());
+    const Line3 ray = picker.picking_line(x, y);
+    if (!route_plane_.intersect(ray, point))
+        return false;
+    // A grazing ray meets the plane arbitrarily far away; reject those hits instead
+    // of letting one stray sample drag the route across the scene.
+    return distance(point, camera()->scene_center()) <= camera()->scene_radius() * 4.0f;
+}
+
+void MappleViewer::commit_ground_route() {
+    if (!camera_path_builder_ || route_stroke_points_.size() < 2)
+        return; // too short: the tool stays armed for another try
+
+    const std::size_t added = camera_path_builder_->generate_ground_route(route_stroke_points_);
+    if (added == 0) {
+        LOG(WARNING) << "the stroke is too short to generate walking keyframes";
+        return;
+    }
+    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
+    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    if (!show_camera_path_)
+        set_camera_path_visible(true);
+    LOG(INFO) << added << " walking keyframes added to the camera path";
+    update();
+}
+
+void MappleViewer::apply_orbit_pick(int x, int y) {
     if (!camera_path_builder_ || !point_in_scene(x, y))
         return;
 
-    if (camera_path_builder_->mode() == CameraPathBuilder::Mode::GroundWalk) {
-        // The GPU pick runs at draw time, like the selection picks.
-        pending_walk_pick_ = true;
-        walk_click_x_ = x;
-        walk_click_y_ = y;
-    } else if (camera_path_builder_->mode() == CameraPathBuilder::Mode::Orbit) {
-        camera_path_builder_->set_scene(models());
-        if (!camera_path_builder_->scene_box().is_valid()) {
-            LOG(WARNING) << "the orbit needs a visible model";
-            return;
-        }
-        const Picker picker(camera());
-        const Line3 axis = picker.picking_line(x, y);
-        if (kfi_->number_of_keyframes() == 0) {
-            camera_path_builder_->generate_camera_path(axis);
-            if (!show_camera_path_)
-                set_camera_path_visible(true);
-            camera_keyframe_index_ = camera_path_builder_->current_keyframe_index();
-            update();
-        } else {
-            pending_orbit_axis_ = axis;
-            pending_orbit_ = true; // the window asks before replacing the path
-        }
+    camera_path_builder_->set_scene(models());
+    if (!camera_path_builder_->scene_box().is_valid()) {
+        LOG(WARNING) << "the orbit needs a visible model";
+        return;
+    }
+    const Picker picker(camera());
+    const Line3 axis = picker.picking_line(x, y);
+
+    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
+    if (kfi_->number_of_keyframes() == 0) {
+        camera_path_builder_->generate_camera_path(axis);
+        camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+        if (!show_camera_path_)
+            set_camera_path_visible(true);
+        update();
+    } else {
+        pending_orbit_axis_ = axis;
+        pending_orbit_ = true; // the window asks before replacing the path
     }
 }
 

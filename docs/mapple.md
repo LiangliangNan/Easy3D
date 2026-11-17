@@ -1391,3 +1391,59 @@ once those are decided on.
   launch with `sphere.obj` ("Mapple UI ready (Vulkan)/(OpenGL)") and exit cleanly.
   Suites were not rerun (app-only, pure rename with identical mode mapping); no
   clicks were scripted. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — one-shot path tools and a dragged walking route (batch 108)
+
+- The Camera Path window's persistent `Free`/`Walk`/`Orbit` radio row is gone. Two
+  buttons, `Walk a route...` and `Orbit...`, arm a tool for **one** gesture: while it
+  is armed the window shows that tool's hint and its parameters, `Cancel` (or Esc, or
+  clicking the armed button again) disarms it, and applying the gesture disarms it
+  automatically. Free recording is not a mode - `Add Keyframe` is always enabled, and
+  Alt+K keeps recording the current view.
+- Walking is now a single left-drag on the scene instead of one click per step. The
+  press starts a stroke on the horizontal plane at the bottom of the visible scene's
+  bounding box (the walking plane is therefore the scene's floor, not the picked
+  surface under the cursor), which needs no GPU pick, so every sample is available
+  while the drag runs. The stroke is drawn live as a highlight-colored line in the
+  scene overlay layer (same coordinate and DPI contract as the lasso). On release the
+  stroke is resampled by arc length at the new
+  `keyframe_spacing_in_character_heights` setting (default 1, i.e. about one character
+  height apart), converted by `ground_frames()` into first-person eye-height poses
+  that aim along the route, and appended to the path - so one gesture records a whole
+  street walk, and a second stroke continues it. A stroke too short to produce a
+  keyframe changes nothing and leaves the tool armed; rays that graze the ground and
+  would meet the plane implausibly far away (`> 4 x` the scene radius from the center)
+  are rejected. Arming requires a visible model, and the scene box is recomputed at
+  that moment.
+- Orbit remains a one-shot click: the ray through the click becomes the axis, the
+  path is generated when it is empty, and a non-empty path is still replaced only
+  through the existing `Replace Camera Path?` modal. Its parameter sliders are now
+  chosen before the click; editing them no longer regenerates an existing orbit.
+- The click-to-walk API this supersedes is removed rather than left dead:
+  `walk_to()`, `set_follow_up()`/`follow_up()`,
+  `set_eye_distance_in_character_heights()`/`eye_distance_in_character_heights()`,
+  and the helpers `eye_distance()`, `eye_position()`, `move_to()`,
+  `delete_last_keyframe()`, `clear()`, `current_keyframe_index()`,
+  `add_keyframe(pos, dir)`, plus `Mode::Free` (the enum is now
+  `{ Off, GroundWalk, Orbit }`). The orbit setters lost their `re_generate`
+  parameter, and `set_scene()` now invalidates the box when no visible model remains,
+  so the tools can refuse to arm. The Camera Path window, `MappleViewer` input
+  routing (`arm_camera_path_tool()`, `cancel_camera_path_tool()`,
+  `commit_ground_route()`, `apply_orbit_pick()`, `route_point_at()`,
+  `append_path_stroke_overlay()`) and `camera_path_builder.h/.cpp` were updated; the
+  removed walk-specific UI controls are replaced by `Eye height` and
+  `Keyframe spacing`.
+- The remaining six-part interaction plan is recorded in `ToDo.md`: orbit by dragging
+  the axis with a turntable default and Replace/Append plus undo (3), editable
+  keyframe handles (4), a path snapshot with local undo replacing the modal (5), and
+  a flight recorder feeding `flight_frames()` (6).
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees
+  (`build-opengl-check`, `build-vulkan-check`); both backends launch with `sphere.obj`
+  ("Mapple UI ready (OpenGL)" / "(Vulkan)") and exit. A temporary headless probe
+  (removed afterwards) exercised `generate_ground_route()`: a straight 10-unit stroke
+  at eye height 2 produced 6 keyframes 2 units apart, all one eye height above the
+  plane and aiming along the route; a 20-unit L-stroke produced 11 with the corner
+  pose on the bisector; a repeated point was skipped; a stroke shorter than the
+  spacing kept its two ends; a second stroke appended; a single point generated
+  nothing. Suites were not rerun (Mapple-only change) and the arm/drag gestures were
+  not scripted. `easy3d/util/version.h` is unchanged.
