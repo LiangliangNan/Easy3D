@@ -414,7 +414,8 @@ namespace easy3d {
          *      region gesture. The property is resolved when the rendering buffers are updated (see buffer::update()
          *      and buffer::update_highlight_mask()), so the drawable keeps its coloring method, scalar field, and
          *      texture while only the marked elements change their look. Marked elements are mixed toward
-         *      setting::highlight_color.
+         *      setting::highlight_color. Selections and contiguous highlight ranges share this one mask mechanism;
+         *      a range is built by buffer::update_highlight_mask(drawable, first, last).
          * \param location The type of elements the property is defined on. Faces of a triangle drawable are mapped to
          *      their rendered triangles through SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range").
          * \param name The name of the boolean property. An empty name removes the highlight.

@@ -83,6 +83,12 @@ namespace easy3d {
          * \param first     Index of the first rendered primitive to tint.
          * \param last      Index of the last rendered primitive to tint (inclusive).
          * \param strength  The tint strength in [0, 1]; the default matches the selection mix.
+         * \attention For non-triangular surface meshes, all polygonal faces are internally triangulated for a
+         *      unified rendering API, so the interval must be given on the rendered triangles. Convert a face range
+         *      to a triangle range through the per-face SurfaceMesh::face_property<std::pair<int, int> >(
+         *      "f:triangle_range").
+         * \note A geometry upload clears the mask; a caller that keeps an interval-based highlight across buffer
+         *      updates must apply it again after the update.
          * \see void update_highlight_mask(Model* model, Drawable* drawable, float strength = 0.8f);
          */
         void update_highlight_mask(Drawable* drawable, int first, int last, float strength = 0.8f);

@@ -94,8 +94,10 @@ namespace easy3d {
             vec4 color = vec4(1, 1, 1, 1);
             /// Texture coordinate.
             vec2 texcoord = vec2(0, 0);
-            /// RGB selection tint and mix strength in [0,1], applied after texture and
-            /// lighting. Set consistently on a primitive's corners; overlays ignore it.
+            /// RGB highlight tint and mix strength in [0,1], applied after texture and
+            /// lighting. Renderers compose the drawable's per-primitive highlight mask and
+            /// its selection into the strength. Set consistently on a primitive's corners;
+            /// overlays ignore it.
             vec4 highlight = vec4(0);
         };
 

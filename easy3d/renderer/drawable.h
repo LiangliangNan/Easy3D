@@ -193,9 +193,11 @@ namespace easy3d {
          * \details Primitives are points, lines, or triangles in the order they are drawn, i.e., the element
          *      buffer order when one is used. A strength of 0 leaves the primitive untouched, a positive value
          *      mixes its final color toward setting::highlight_color.
-         *      Normally the mask is produced from the highlight property by buffer::update_highlight_mask();
-         *      use this function only when uploading the buffer yourself.
+         *      The mask is normally produced by buffer::update_highlight_mask(), either from the highlight property
+         *      or as one contiguous interval (e.g. a hover aid or a preview); call this function directly only when
+         *      you build the strengths yourself.
          * \param strengths One strength in [0, 1] per rendered primitive, or an empty vector to clear the highlight.
+         * \param dynamic Ignored; provided for symmetry with the other buffer updates.
          * \throws std::invalid_argument if the count does not match the rendered primitives or a value is not in [0, 1].
          * \note The mask is associated with the current geometry and is cleared by a geometry upload.
          */
