@@ -640,10 +640,13 @@ bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
         keyframe_drag_start_position_ = start.position();
         keyframe_drag_start_orientation_ = start.orientation();
         keyframe_drag_plane_point_ = start.position();
-        const int axis_index = static_cast<int>(handle) % 3;
+        const bool turn = handle >= KeyframeHandle::turn_x;
+        // Index within the handle's triple (move_/turn_), not the enum value: the enum
+        // starts with none and free, so a modulo over it would offset every axis.
+        const int axis_index = static_cast<int>(handle) -
+                               static_cast<int>(turn ? KeyframeHandle::turn_x : KeyframeHandle::move_x);
         keyframe_drag_axis_ = normalize(start.orientation().rotate(
                 axis_index == 0 ? vec3(1, 0, 0) : axis_index == 1 ? vec3(0, 1, 0) : vec3(0, 0, 1)));
-        const bool turn = static_cast<int>(handle) >= static_cast<int>(KeyframeHandle::turn_x);
         if (turn) {
             keyframe_drag_angle_ = 0.0f;
             if (!ring_angle_at(x, y, camera(), keyframe_drag_plane_point_, keyframe_drag_axis_,
@@ -686,6 +689,20 @@ bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
         keyframe_drag_plane_normal_.normalize();
     } else // the screen plane through the pose: the drag follows the cursor
         keyframe_drag_plane_normal_ = camera()->view_direction();
+
+    // Keep the station where it was under the cursor: the vector from the press's
+    // plane point to the station is added back to every drag intersection.
+    keyframe_drag_grab_offset_ = vec3(0.0f);
+    {
+        vec3 orig, dir;
+        camera()->convert_click_to_line(x, y, orig, dir);
+        const float denom = dot(dir, keyframe_drag_plane_normal_);
+        if (std::abs(denom) > 1e-5f) {
+            const float t = dot(keyframe_drag_plane_point_ - orig, keyframe_drag_plane_normal_) / denom;
+            if (t > 0.0f)
+                keyframe_drag_grab_offset_ = keyframe_drag_start_position_ - (orig + dir * t);
+        }
+    }
     clear_hover();
     update();
     return true;
@@ -754,7 +771,11 @@ void MappleViewer::drag_keyframe(int x, int y) {
     const float t = dot(keyframe_drag_plane_point_ - orig, keyframe_drag_plane_normal_) / denom;
     if (t <= 0.0f)
         return;
-    const vec3 position = orig + dir * t;
+    // The station follows the cursor from where the glyph was grabbed, not from the
+    // cursor itself: without the offset the pose jumps to the clicked point.
+    const vec3 position = orig + dir * t + keyframe_drag_grab_offset_;
+    if (distance(position, keyframe_drag_start_position_) < epsilon<float>())
+        return;
 
     if (!keyframe_drag_moved_) {
         // The gesture becomes an edit - and the undo point - only once it moves.

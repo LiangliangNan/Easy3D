@@ -865,6 +865,9 @@ private:
     easy3d::vec3 keyframe_drag_start_position_;
     easy3d::quat keyframe_drag_start_orientation_;
     easy3d::vec3 keyframe_drag_axis_;          // the grabbed arrow's or ring's axis
+    // Glyph grab: world offset from the press's plane point to the station, so the
+    // station keeps its position under the cursor instead of jumping to it.
+    easy3d::vec3 keyframe_drag_grab_offset_;
     float keyframe_drag_start_scalar_ = 0.0f;  // arrow grab: line parameter at the press
     float keyframe_drag_angle_ = 0.0f;         // ring grab: accumulated angle
     float keyframe_drag_last_angle_ = 0.0f;    // ring grab: previous cursor angle

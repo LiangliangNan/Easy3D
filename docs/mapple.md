@@ -1956,6 +1956,18 @@ migrated; retirement can proceed whenever it is wanted.
   with Shift). The undo snapshot is still taken on the first movement, Esc restores
   both position and orientation, and `end_keyframe_drag()` logs whether the pose was
   moved or turned.
+- Fixed after the first build: the drag axis was derived as `handle % 3`, but the
+  handle enum starts with `none, free` (`move_x` is 2), so every handle acted on the
+  next pose axis (x dragged along z, y along x, z along y) - arrows and rings alike.
+  The axis is now the handle's offset within its `move_`/`turn_` triple, the same
+  index the gizmo draws and hit-tests, so a constrained drag follows the element
+  under the cursor. Both check trees rebuilt.
+- Fixed after the first build: a glyph drag moved the station to the cursor's plane
+  intersection, so grabbing the glyph anywhere but exactly at the station square
+  teleported the pose to the clicked point on the first drag event. The press now
+  records the in-plane offset from that intersection to the station and adds it back
+  on every move, so the grabbed point of the glyph stays under the cursor (a press
+  that never moves no longer takes an undo snapshot or logs a move).
 - The handling otherwise follows batch 114: an armed path tool or a running playback
   keeps its meaning, the gizmo appears only while the edit tool is on, and
   `Ctrl+Z` restores the path from before the drag. `ToDo.md`'s open "attach a
