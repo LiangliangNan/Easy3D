@@ -281,9 +281,9 @@ Phase 2 design notes:
       navigation, playback, speed, frame rate, interpolation method, path visibility)
       plus Camera-menu commands to add (Alt+K), remove the last keyframe, clear the
       path, play/stop (Ctrl+K), show the path and keyframe cameras (Ctrl+T), and
-      import/export `.kf` files. It drives the viewer's own `KeyFrameInterpolator`, so
-      the viewer shortcuts and the HUD path overlay stay authoritative; the scene
-      remains interactive while the window is open.
+      import/export `.kf` files. It drives `MappleViewer`'s own
+      `KeyFrameInterpolator`; the app's shortcuts and path overlay stay authoritative;
+      the scene remains interactive while the window is open.
 - [x] Video recording: Camera Path > Record Video... renders the interpolated path
       through `easy3d::video::VideoEncoder` (FFmpeg builds only; the button is
       disabled and labeled otherwise). Frames come from
@@ -1299,14 +1299,14 @@ once those are decided on.
   exists the click opens a `Replace Camera Path?` modal instead of silently
   discarding it.
 - `WalkThrough` (new `walk_through.h/.cpp`) is a redesign rather than a copy: it
-  borrows the viewer's camera and its own `KeyFrameInterpolator` instead of owning
+  borrows the viewer's camera and its `KeyFrameInterpolator` instead of owning
   them, and it adds to the scene radius rather than widening it up front, because
-  the Viewer already uses the same interpolator for playback, `.kf` import/export
+  `MappleViewer` already uses the same interpolator for playback, `.kf` import/export
   and video recording. `move_to()` places the camera immediately through the frame
   and updates the pivot point (the Qt version animated on a timer). Deliberately not
   ported: the editor's threaded `preview()`, because `start_manual_interpolation()`
   refuses an interpolator that was ever timer-driven; the tool-side path drawing,
-  which the Viewer's own overlay already does; and the separate "record path" flag.
+  which `MappleViewer`'s own overlay already does; and the separate "record path" flag.
   Alt+click priority is the clipping plane (when on), then the path tool, then model
   manipulation, and the GPU picks run at draw time from `process_pending_work()`.
 - Validation (2026-11-17, macOS): all three trees build; both backends launch
@@ -1315,3 +1315,19 @@ once those are decided on.
   position (z = -11.243 on a box of range 37.48) and a 20-keyframe orbit at radius
   77.63 = the scene diagonal with constant z. Suites not rerun (app-only); the radio
   row, Alt+click recording and the replace modal were not scripted.
+
+### 2026-11-17 — the camera path is owned by the app, not the Viewer
+
+- The base `Viewer` no longer carries a `KeyFrameInterpolator` (batch 104): no path
+  state, playback step, Vulkan path renderer, Alt+K/Alt+D/Ctrl+K/Ctrl+T handlers or
+  usage lines. `MappleViewer` owns the interpolator it already drove, so the Camera
+  menu, the Camera Path window, `.kf` import/export, video recording and `WalkThrough`
+  behave as before; the shortcuts now live in `MappleViewer::key_press_event`.
+- Playback keeps its UI-thread clock: `pre_draw()` calls `advance_camera_path()`, which
+  applies one manual-interpolation sample per interpolation period. The Vulkan guide
+  commands are registered in `draw()` through the protected annotation slot (and again
+  before a video capture, which renders outside `draw()`); OpenGL still draws the guides
+  directly after `Viewer::draw()`.
+- Validation (2026-11-17, macOS, Release): both check trees rebuilt; Vulkan 149/149 and
+  OpenGL 116/116 serial; Mapple launches with `sphere.obj` to "Mapple UI ready (Vulkan)"
+  and "(OpenGL)". The path keys and overlay were not exercised through scripted input.

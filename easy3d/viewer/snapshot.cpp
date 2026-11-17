@@ -47,7 +47,7 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
     if (!initialized_) {
         auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
     }
-    if (window_) { update_camera_path_overlays(); update_interaction_overlays(); }
+    if (window_) update_interaction_overlays();
     try {
         if (samples <= 0) throw std::invalid_argument("sample count must be positive");
         if (!std::isfinite(scaling) || scaling <= 0 || double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
@@ -94,7 +94,6 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
 }
 #else
 #include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -271,11 +270,6 @@ namespace easy3d {
                 struct TileReset { ivec4& value;ivec4 old;~TileReset(){value=old;} } reset{overlay_tile_,overlay_tile_};
                 overlay_tile_=ivec4(i*sub_w,j*sub_h,w,h);
 				draw();
-                // Scene annotations belong in snapshots; HUD callbacks do not.
-                if (show_camera_path_ && !kfi_->is_interpolation_started()) {
-                    kfi_->draw_path(camera(), 2.0f);
-                    kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
-                }
                 draw_overlays(true);
 
 				fbo->release();

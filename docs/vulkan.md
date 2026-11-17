@@ -2988,6 +2988,10 @@ markers/path and unchanged usage hint were visually inspected.
 
 ## Shared viewer camera-path controls
 
+> Superseded by batch 104: the base `Viewer` no longer owns a `KeyFrameInterpolator`,
+> a camera path or these shortcuts. The state described in this section lives in the
+> consuming subclass now (Tutorial 206, `MappleViewer`).
+
 `VulkanViewer` now implements the global camera-path shortcuts corresponding to
 `Viewer`: Alt-K records a keyframe, Alt-D stops/deletes the path, Ctrl/Command-K
 plays/pauses it, and Ctrl/Command-T toggles its display. `kfi_` and
@@ -4715,6 +4719,9 @@ Work stayed on Easy3D-Vulkan, preserving the checkout; no commit was made.
 
 
 ### 2026-11-04 — U5c: Tutorial 206 on the existing Viewer camera path
+
+> Superseded by batch 104: Tutorial 206 owns its interpolator again, as on the main
+> branch, and the Viewer no longer has a path.
 
 Tutorial 206 now uses Viewer's existing protected `kfi_` and path-visibility state.
 Its original key-recording and scene-bounds logic is retained; Space delegates to
@@ -10791,4 +10798,56 @@ look identical.
 in `build-vulkan-check`, `build-opengl-check` and `cmake-build-debug`, and smoke launches
 with `torusknot.obj` start cleanly on both backends ("Mapple UI ready", mesh loaded, no
 warnings). The two probes were scratch builds in /tmp, not part of the tree.
+`easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+### 2026-11-17 — batch 104: the Viewer no longer owns a KeyFrameInterpolator
+
+**Problem.** `Viewer` carried a `KeyFrameInterpolator` that the base class never needed:
+`kfi_`, `show_camera_path_`, host-stepped playback (`advance_camera_path()` and its
+deadline), the Vulkan `camera_path_renderer_` plus `update_camera_path_overlays()`, four
+Alt/Ctrl shortcuts and their manual lines. That made camera interpolation a Viewer
+feature, although the library's own tutorial was the only direct consumer, and it ran
+tutorial playback through timer-thread/server-manual gymnastics inside the frame loop.
+
+**Change.** `easy3d/viewer/viewer.{h,cpp}` and `snapshot.cpp` drop the interpolator, its
+state, overlay update, renderer, shortcut handlers and hints, and their includes. The
+frame loop no longer has a camera-path step: `run_frames()` waits while
+`!is_animating() && !show_frame_rate_` and nothing else. Interpolation is now a
+subclass feature: whoever wants it owns a `KeyFrameInterpolator` and decides how it is
+driven.
+
+**Tutorial 206 returns to its main-branch form.** `TutorialCameraInterpolation` owns
+the interpolator bound to `camera()->frame()`, keeps K (record, grow the scene radius),
+Space (`start_interpolation()`/`stop_interpolation()`), D (delete the path, rebuild
+the scene bounds from the models) and the original usage hint, and draws the path and
+keyframe cameras only while interpolation is stopped. Because the timer thread drives
+the camera, the constructor connects `frame_interpolated` and `interpolation_stopped`
+to `Viewer::update()`, which re-posts a frame; without that the backend would sit in
+its event wait with nothing animating. On Vulkan the draw override renders the guides
+with `vulkan::KeyFrameInterpolatorRenderer` and registers them through the protected
+annotation slot before `Viewer::draw()`; OpenGL draws them after `Viewer::draw()`.
+
+**Mapple keeps its UX on the subclass side.** `MappleViewer` owns `kfi_`,
+`show_camera_path_`, the playback deadline and the cached Vulkan renderer, handles
+Alt+K/Alt+D/Ctrl+K/Ctrl+T in `key_press_event`, steps manual interpolation in
+`pre_draw()` (so the app keeps its single UI-thread clock), registers the path
+annotations at the top of `draw()`, and refreshes them before a video recording
+captures a frame from inside `pre_draw()`. `WalkThrough` still borrows the same
+interpolator.
+
+**Tests.** `viewer_loop_test.cpp` loses its camera-path block (that state no longer
+exists) and `viewer_camera_path_test.cpp` with its `vulkan.viewercamerapath` target is
+deleted. `camera_path_test.cpp` now exercises the tutorial-owned path: the K/Space/D
+keys through the window callback, a stable redraw, guides visible in `capture()` while
+depth/IDs stay identical (the guides are hidden for that comparison through a test
+subclass override, since the tutorial has no visibility toggle), Shift+K ignored, D
+removing the path, timer playback moving and pausing the camera, and the Vulkan
+renderer cache. Keyframes are recorded before the camera is backed off, otherwise the
+last keyframe sits on the eye and the path falls behind the near plane.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).**
+Both check trees rebuilt and the suites run serially: Vulkan 149/149 in 115 s (one
+fewer than before: `vulkan.viewercamerapath` is deleted and the reworked tutorial
+test runs as `vulkan.camerapath`) and OpenGL 116/116 in 62 s. Mapple builds in both
+trees and launches with `sphere.obj` to "Mapple UI ready (Vulkan)" and "(OpenGL)";
+the camera-path keys and the guide overlay were not exercised through scripted input.
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.

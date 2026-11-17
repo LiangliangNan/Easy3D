@@ -51,6 +51,10 @@
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
+#endif
+#include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/per_pixel_linked_lists_oit.h>
@@ -194,9 +198,15 @@ MappleViewer::MappleViewer(const std::string &title,
 #ifdef HAS_FFMPEG
     video_bitrate_mbps_ = settings_.video_bitrate_mbps;
 #endif
+
+    // The camera path belongs to the app: the base Viewer does not own an interpolator.
+    kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
 }
 
 MappleViewer::~MappleViewer() {
+    // Stop the path playback while the camera frame it drives is still alive.
+    if (kfi_)
+        kfi_->stop_interpolation();
     if (process_job_) {
         // Cancellation is cooperative; commands without progress checks finish first.
         cancel();
@@ -281,7 +291,7 @@ void MappleViewer::init() {
         throw std::runtime_error("failed to initialize Dear ImGui");
     imgui_->set_display_size(width(), height());
 
-    // The walking and orbit tools create keyframes on the viewer's own camera path.
+    // The walking and orbit tools create keyframes on the app-owned camera path.
     walk_through_.reset(new WalkThrough(camera(), kfi_.get()));
 
     // Recreate the effect that was enabled in the previous session. The effect objects
@@ -313,13 +323,18 @@ void MappleViewer::init() {
 void MappleViewer::pre_draw() {
     imgui_->new_frame(dpi_scaling(), pixel_ratio());
     Viewer::pre_draw();
+    advance_camera_path();
     draw_gui();
 
     // A video frame renders the scene on its own inside capture(), so it runs
     // between the UI build and the overlay submission: the freshly built UI
     // commands are installed afterwards and stay out of the captured frame.
-    if (recording_video())
+    if (recording_video()) {
+        // capture() replays the annotation slot, which is otherwise refreshed by draw();
+        // match the path to the camera advanced above.
+        update_camera_path_annotations();
         advance_video_recording();
+    }
 
     std::vector<graphics::DrawCommand> commands = imgui_->render(framebuffer_width(), framebuffer_height());
     // The rubber band belongs to the scene layer: insert it before the UI geometry
@@ -339,11 +354,15 @@ void MappleViewer::post_resize(int w, int h) {
 }
 
 void MappleViewer::draw() const {
+    // The annotation slot is replayed by Viewer::draw(), so register the path first.
+    update_camera_path_annotations();
+
     // The effects wrap the same scene render the viewer would perform; the clipping
     // plane guide and the model drawables are all part of Viewer::draw(). The Qt app
     // had the same arrangement with the effect classes' own begin()/end().
     if (!ao_ && !edl_ && !shadow_ && !transparency_) {
         Viewer::draw();
+        draw_camera_path();
         return;
     }
 
@@ -379,6 +398,45 @@ void MappleViewer::draw() const {
         Viewer::draw();
         edl_->end();
     }
+
+    draw_camera_path();
+}
+
+void MappleViewer::update_camera_path_annotations() const {
+#ifdef EASY3D_HAS_VULKAN
+    std::vector<graphics::DrawCommand> commands;
+    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started()) {
+        if (!camera_path_renderer_)
+            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
+        auto path = camera_path_renderer_->draw_path(*kfi_, *camera());
+        auto cameras = camera_path_renderer_->draw_cameras(*kfi_, *camera(), camera()->scene_radius() * 0.05f);
+        if (path.geometry)
+            commands.push_back(path);
+        if (cameras.geometry)
+            commands.push_back(cameras);
+    }
+    set_viewer_annotations(std::move(commands));
+#endif
+}
+
+void MappleViewer::draw_camera_path() const {
+#ifndef EASY3D_HAS_VULKAN
+    // Shown only when it is not animating; on Vulkan this runs through the annotation slot.
+    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started()) {
+        kfi_->draw_path(camera(), 2.0f);
+        kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
+    }
+#endif
+}
+
+void MappleViewer::advance_camera_path() {
+    if (!kfi_ || !kfi_->is_interpolation_started())
+        return;
+    const auto now = std::chrono::steady_clock::now();
+    if (now < next_camera_path_frame_)
+        return;
+    kfi_->advance_interpolation();
+    next_camera_path_frame_ = now + std::chrono::milliseconds(kfi_->interpolation_period());
 }
 
 void MappleViewer::set_ao_enabled(bool enabled) {
@@ -774,6 +832,24 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         (walk_through_->status() == WalkThrough::WALKING_MODE ||
          walk_through_->status() == WalkThrough::ROTATE_AROUND_AXIS)) {
         LOG(WARNING) << "'Alt+K' is for the free mode; Alt+click the scene to extend this path";
+        return true;
+    }
+
+    // Camera-path shortcuts; the base Viewer no longer owns an interpolator or these keys.
+    if (modifiers == MODIF_ALT && key == KEY_K) {
+        add_camera_keyframe();
+        return true;
+    }
+    if (modifiers == MODIF_ALT && key == KEY_D) {
+        clear_camera_path();
+        return true;
+    }
+    if (modifiers == MODIF_CTRL && key == KEY_K) {
+        toggle_camera_path_playback();
+        return true;
+    }
+    if (modifiers == MODIF_CTRL && key == KEY_T) {
+        set_camera_path_visible(!show_camera_path_);
         return true;
     }
 

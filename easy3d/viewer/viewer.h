@@ -43,13 +43,11 @@ namespace easy3d {
 namespace detail { class GlfwRuntime; }
 namespace opengl { class OverlayRenderer; class PointSelector; }
 namespace graphics { class TextLayoutEngine; }
-namespace vulkan { class KeyFrameInterpolatorRenderer; }
 class Camera;
 class Model;
 class Drawable;
 class LinesDrawable2D;
 class TrianglesDrawable;
-class KeyFrameInterpolator;
 #ifdef EASY3D_HAS_VULKAN
 /**
  * \brief Options for creating a Vulkan-backed Viewer.
@@ -937,13 +935,11 @@ public:
 	    int         height_;        // framebuffer size comes from framebuffer_width/height())
 	    std::string	title_;         // window title, also mirrored to the host window on Vulkan
 	    std::unique_ptr<Camera> camera_;   // the one camera manipulated by events, animations and picking
-	    std::unique_ptr<KeyFrameInterpolator> kfi_; // camera-path recorder/player behind the animation keys
 	    std::string manual_;        // shortcut manual printed once on the first drawn frame (empty = none)
 	    std::string hint_; // shown in the top-left corner of the screen
 	    int		samples_;	// the actual samples
 	    vec4	background_color_;  // clear color of the color/depth pass
 	    bool    show_frame_rate_;   // HUD toggle: show the frame-rate readout
-	    bool	show_camera_path_;  // HUD toggle: show the camera path and its keyframe cameras
 	    bool    show_easy3d_logo_;  // HUD toggle: show the Easy3D logo text
 	    std::vector< std::shared_ptr<Model> > models_;    // models in insertion order (add_model/remove/close)
 	    int model_idx_;             // model addressed by the model-bound commands, -1 when there is none
@@ -952,13 +948,6 @@ public:
 	    bool show_pivot_point_ = false;  // HUD toggle: pivot mark, auto-hidden after a few seconds
 	    typedef std::pair<Function, Model*> FunctionModel;
 	    std::map<Key, std::map<Modifier, FunctionModel> >  commands_; // key+modifier -> bound action and its model
-	private:
-	    // Steps the camera-path interpolation one keyframe forward, rate-limited by
-	    // next_camera_path_frame_ so playback follows the keyframe period.
-	    void advance_camera_path();
-
-	    // Time the camera path may advance to next.
-	    std::chrono::steady_clock::time_point next_camera_path_frame_;
 
 	protected:
 	    /// \name Frame-loop and HUD helpers
@@ -1019,10 +1008,6 @@ public:
 	    /// \name Vulkan frame composition
 	    //@{
 
-	    // Rebuilds the camera-path overlay (path polyline plus per-keyframe frustum
-	    // markers) from the interpolator and caches its draw commands.
-	    void update_camera_path_overlays() const;
-
 	    // Rebuilds the corner axes, pivot mark and hint commands, skipping the work
 	    // while the window size, DPI, flags and hint text are all unchanged.
 	    void update_interaction_overlays(bool force = false) const;
@@ -1055,8 +1040,6 @@ public:
 	    // Render device plus the cached scene/overlay command sets and pick resources;
 	    // defined in viewer.cpp so this header does not pull in the device headers.
 	    std::unique_ptr<Impl> impl_;
-	    // Produces the camera-path polyline and per-keyframe frustum commands.
-	    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 	    vec2 pivot_pixel_ = vec2(0);        // logical position of the pivot marked by the last pick
 	    std::chrono::steady_clock::time_point pivot_expires_;   // pivot mark auto-hides once this instant passes
 	    mutable bool pivot_hint_visible_ = false;   // pivot state of the cached overlays, lets rebuilds be skipped

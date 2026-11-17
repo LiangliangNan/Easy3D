@@ -184,10 +184,6 @@ if(Easy3D_ENABLE_VULKAN)
         target_link_libraries(easy3d_vulkan_geometry_tutorials_test PRIVATE easy3d::viewer)
         add_test(NAME vulkan.geometrytutorials COMMAND easy3d_vulkan_geometry_tutorials_test ${validation_args})
         set_tests_properties(vulkan.geometrytutorials PROPERTIES TIMEOUT 120 LABELS desktop)
-        add_executable(easy3d_vulkan_viewer_camera_path_test viewer_camera_path_test.cpp)
-        target_link_libraries(easy3d_vulkan_viewer_camera_path_test PRIVATE easy3d::viewer)
-        add_test(NAME vulkan.viewercamerapath COMMAND easy3d_vulkan_viewer_camera_path_test ${validation_args})
-        set_tests_properties(vulkan.viewercamerapath PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_camera_path_test camera_path_test.cpp
                 ../../tutorials/Tutorial_206_CameraInterpolation/viewer.cpp)
         target_link_libraries(easy3d_vulkan_camera_path_test PRIVATE easy3d::viewer)
@@ -425,7 +421,6 @@ if(Easy3D_ENABLE_VULKAN)
             easy3d_vulkan_scan_viewer_test
             easy3d_vulkan_text_viewer_test
             easy3d_vulkan_usage_test
-            easy3d_vulkan_viewer_camera_path_test
             easy3d_vulkan_window_test
             easy3d_imgui_viewer_test)
         target_link_libraries(${target} PRIVATE 3rd_glfw)

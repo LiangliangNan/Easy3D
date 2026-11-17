@@ -49,7 +49,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -88,7 +87,6 @@
 #include <easy3d/renderer/backends/vulkan/drawable.h>
 #include <easy3d/renderer/backends/vulkan/clipping_plane.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #else
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/opengl.h> // for gl functions
@@ -294,10 +292,6 @@ namespace easy3d {
             "  Ctrl + Up/Down Arrow:    Move camera up/down                                \n"
             "  Ctrl + 'c':              Copy current view status to clipboard              \n"
             "  Ctrl + 'v':              Restore view status from clipboard                 \n"
-            "  Alt + 'k':               Add key frame to the camera path                   \n"
-            "  Alt + 'd':               Delete the camera path                             \n"
-            "  Ctrl + 'k':              Play/pause the camera path                         \n"
-            "  Ctrl + 't':              Toggle camera path visibility                      \n"
             "  'f':                     Fit screen (all models)                            \n"
             "  'c':                     Fit screen (current model only)                    \n"
             "  'z' + Left click:        Zoom to target point on model                      \n"
@@ -664,7 +658,6 @@ namespace easy3d {
             if (should_close())
                 return false;
         }
-        advance_camera_path();
         print_usage();
         if (callback_error_)
             std::rethrow_exception(callback_error_);
@@ -672,7 +665,6 @@ namespace easy3d {
             return false;
         pre_draw();
 #ifdef EASY3D_HAS_VULKAN
-        update_camera_path_overlays();
         update_interaction_overlays();
 #endif
         draw();
@@ -710,22 +702,12 @@ namespace easy3d {
             if (callback_error_)
                 std::rethrow_exception(callback_error_);
             return detail::run_viewer_frames(*this, max_frames, [this] {
-                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
+                return is_animating() || show_frame_rate_;
             });
         } catch (const std::exception &e) {
             LOG(ERROR) << "Viewer failed: " << e.what();
             return EXIT_FAILURE;
         }
-    }
-
-    void Viewer::advance_camera_path() {
-        if (!kfi_->is_interpolation_started())
-            return;
-        const auto now = std::chrono::steady_clock::now();
-        if (now < next_camera_path_frame_)
-            return;
-        kfi_->advance_interpolation();
-        next_camera_path_frame_ = now + std::chrono::milliseconds(kfi_->interpolation_period());
     }
 
     //------------------------------------------------------------------------
@@ -882,7 +864,7 @@ namespace easy3d {
         impl_->viewer_annotations.clear();
         if (window_) {
             cancel_interaction();
-            update_camera_path_overlays();
+            update_interaction_overlays();
         }
 #else
         if (overlay_renderer_)
@@ -1273,39 +1255,7 @@ namespace easy3d {
             camera()->frame()->translate(camera()->frame()->inverse_transform_of(direction));
         } else if (modifiers == MODIF_CTRL && (key == KEY_MINUS || key == KEY_EQUAL))
             camera()->frame()->action_zoom(key == KEY_EQUAL ? 1 : -1, camera());
-        else if (key == KEY_K && modifiers == MODIF_ALT) {
-            // add key frame
-            if (kfi_->add_keyframe(*camera()->frame()))
-                LOG(INFO) << "key frame added to camera path";
-        } else if (key == KEY_D && modifiers == MODIF_ALT) {
-            // delete path
-            kfi_->delete_path();
-#ifdef EASY3D_HAS_VULKAN
-            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
-            set_viewer_annotations({});
-#endif
-            restore_scene_bounds();
-            update();
-        } else if (key == KEY_K && modifiers == MODIF_CTRL) {
-            // play the path
-            if (kfi_->is_interpolation_started())
-                kfi_->stop_interpolation();
-            else {
-                kfi_->start_manual_interpolation();
-                next_camera_path_frame_ = std::chrono::steady_clock::now();
-            }
-            update();
-        } else if (key == KEY_T && modifiers == MODIF_CTRL) {
-            show_camera_path_ = !show_camera_path_;
-            if (show_camera_path_) {
-                float radius = camera()->scene_radius();
-                for (size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
-                    radius = std::max(radius, distance(camera()->scene_center(), kfi_->keyframe_position(i)));
-                camera()->set_scene_radius(radius);
-            } else
-                restore_scene_bounds();
-            update();
-        } else if (key == KEY_C && modifiers == MODIF_CTRL)
+        else if (key == KEY_C && modifiers == MODIF_CTRL)
             copy_view(); // copy camera
         else if (key == KEY_V && modifiers == MODIF_CTRL)
             paste_view(); // paste camera
@@ -1524,7 +1474,7 @@ namespace easy3d {
     Viewer::Viewer(int width, int height, const VulkanOptions &options)
         : window_(nullptr), width_(width), height_(height), camera_(new Camera), samples_(1),
           background_color_(setting::background_color), show_frame_rate_(false),
-          show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
+          show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
         resize_render_target(width, height);
         impl_->device =
             graphics::create_vulkan_device(options.validation, options.sync_validation, options.profiling,
@@ -1806,7 +1756,7 @@ namespace easy3d {
     Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions &options)
         : window_(host->handle), width_(host->width), height_(host->height), title_(host->title), camera_(new Camera),
           samples_(1), background_color_(setting::background_color), show_frame_rate_(false),
-          show_camera_path_(false), show_easy3d_logo_(true), model_idx_(-1), window_host_(std::move(host)),
+          show_easy3d_logo_(true), model_idx_(-1), window_host_(std::move(host)),
           impl_(new Impl(*this)) {
         try {
             // Initialize logging (if it has not been initialized yet)
@@ -1815,8 +1765,6 @@ namespace easy3d {
 
             impl_->device = window_host_->device(options);
             manual_ = default_manual;
-            kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
-            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
             { // The default of 4 samples must not fail on a device without 4x MSAA: step a valid
                 // power of two down to a supported count with a warning (as OpenGL does); invalid
                 // counts are still rejected by set_samples().
@@ -1855,8 +1803,6 @@ namespace easy3d {
         }
     }
     Viewer::~Viewer() {
-        if (kfi_)
-            kfi_->stop_interpolation();
         // Base classes are destroyed after members. Release the surface/device now,
         // while the member-owned GLFW window (and its Metal layer on macOS) still live.
         if (window_)
@@ -1876,18 +1822,6 @@ namespace easy3d {
             throw std::invalid_argument("unsupported Vulkan viewer sample count");
         window_host_->samples = samples;
         samples_ = int(samples);
-    }
-    void Viewer::update_camera_path_overlays() const {
-        std::vector<graphics::DrawCommand> commands;
-        if (show_camera_path_ && !kfi_->is_interpolation_started()) {
-            auto path = camera_path_renderer_->draw_path(*kfi_, *camera());
-            auto cameras = camera_path_renderer_->draw_cameras(*kfi_, *camera(), camera()->scene_radius() * .05f);
-            if (path.geometry)
-                commands.push_back(path);
-            if (cameras.geometry)
-                commands.push_back(cameras);
-        }
-        set_viewer_annotations(std::move(commands));
     }
     void Viewer::draw_corner_axes() const {
         if (!show_corner_axes_) {
@@ -1971,7 +1905,6 @@ namespace easy3d {
             host->initialized_ = true;
         }
         if (window_) {
-            update_camera_path_overlays();
             update_interaction_overlays();
         }
         return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height(),
@@ -1995,7 +1928,7 @@ namespace easy3d {
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0),
           visible_(visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
-          show_camera_path_(false), model_idx_(-1) {
+          model_idx_(-1) {
         if (width <= 0 || height <= 0)
             throw std::invalid_argument("window dimensions must be positive");
         if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1))))
@@ -2029,10 +1962,6 @@ namespace easy3d {
             camera_->show_entire_scene();
 
             easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
-
-            kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
-            easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
-
 
             /* Poll for events once before starting a potentially lengthy loading process.*/
             glfwPollEvents();
@@ -2068,10 +1997,6 @@ namespace easy3d {
                       "  Alt + 'c':               Toggle clipping plane                   \n"
                       "  Alt + 'v':               Toggle clipping plane visibility        \n"
                       "  Alt + 'x':               Toggle cross-section                    \n"
-                      "  Alt + 'k':               Add key frame to the camera path        \n"
-                      "  Alt + 'd':               Delete the camera path                  \n"
-                      "  Ctrl + 'k':              Play the camera path                    \n"
-                      "  Ctrl + 't':              Toggle camera path visibility           \n"
                       "  'f':                     Fit screen (all models)                 \n"
                       "  'c':                     Fit screen (current model only)         \n"
                       "  'z' + Left click:        Zoom to target point on model           \n"
@@ -2321,9 +2246,6 @@ namespace easy3d {
         const auto previous_context = glfwGetCurrentContext();
         glfwMakeContextCurrent(window_);
         glfwSetWindowUserPointer(window_, nullptr);
-        if (kfi_)
-            kfi_->stop_interpolation();
-        kfi_.reset();
         camera_.reset();
         drawable_axes_.reset();
         drawable_pivot_.reset();
@@ -2482,11 +2404,6 @@ namespace easy3d {
         }
 
         // shown only when it is not animating
-        if (show_camera_path_ && !kfi_->is_interpolation_started()) {
-            kfi_->draw_path(camera(), 2.0f);
-            kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
-        }
-
         if (show_pivot_point_)
             drawable_pivot_->draw(camera());
 

@@ -54,6 +54,7 @@ namespace easy3d {
     class AmbientOcclusion;
     class Drawable;
     class EyeDomeLighting;
+    class KeyFrameInterpolator;
     class Model;
     class PointCloudPicker;
     class SoftShadow;
@@ -62,6 +63,7 @@ namespace easy3d {
     class Transparency;
     class VideoEncoder;
     namespace graphics { struct DrawCommand; }
+    namespace vulkan { class KeyFrameInterpolatorRenderer; }
 }
 
 
@@ -435,6 +437,18 @@ private:
 
     void toggle_camera_path_playback();
 
+    // Steps the keyframe interpolation one sample when its period has elapsed; called
+    // from pre_draw() while playback runs, since the base Viewer no longer owns one.
+    void advance_camera_path();
+
+    // Vulkan: rebuilds the path/keyframe-camera draw commands in the scene annotation
+    // slot. Must run before Viewer::draw(), which replays the annotations. No-op on OpenGL.
+    void update_camera_path_annotations() const;
+
+    // OpenGL: draws the path and keyframe cameras into the live framebuffer after the
+    // scene. No-op on Vulkan, which uses the annotation slot instead.
+    void draw_camera_path() const;
+
     // Stops playback and moves the camera to a keyframe.
     void goto_camera_keyframe(int index);
 
@@ -669,6 +683,14 @@ private:
 
     bool show_animation_window_ = false;
     int camera_keyframe_index_ = -1; // keyframe last jumped to, for Prev/Next
+    // The camera path (keyframes, playback state and drawing) belongs to the app: the
+    // base Viewer no longer owns a KeyFrameInterpolator.
+    std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
+    bool show_camera_path_ = false;
+    std::chrono::steady_clock::time_point next_camera_path_frame_;
+#ifdef EASY3D_HAS_VULKAN
+    mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
+#endif
     // Walking and rotate-around-axis keyframe creation (created in init()).
     std::unique_ptr<WalkThrough> walk_through_;
 
