@@ -1374,10 +1374,12 @@ migrated; retirement can proceed whenever it is wanted.
   extension, and an empty name is rejected. Esc drops the edit.
 - Batch commands act on the selection in scene order (or on the active model when
   nothing is selected). The context menu offers Fit to this model, Duplicate, Merge
-  selected, Decompose, Rename, Invert selection and Delete; the footer has Fit,
-  Delete and Apply to all plus the Auto focus / Selected only checkboxes. Delete asks
-  once for the whole selection and is deferred to the end of the panel so the list is
-  never modified while it is being drawn.
+  selected, Decompose, Rename, Invert selection and Delete; the footer keeps only the
+  Auto focus / Selected only checkboxes. The Fit and Delete buttons left the footer:
+  Fit stays on the context menu (and the F key), Delete on the context menu, and
+  Apply to all moved to the bottom of the Rendering panel, because it copies
+  rendering styles. Delete asks once for the whole selection and is deferred to the
+  end of the panel so the list is never modified while it is being drawn.
 - Duplicate clones a surface mesh, point cloud, graph or polyhedral mesh to
   `<name>_copy` and makes the copy active. Merge joins the selected surface meshes
   into `merged_mesh` and the selected point clouds into `merged_point_set` (writing
@@ -1387,15 +1389,23 @@ migrated; retirement can proceed whenever it is wanted.
 - Apply to all copies the active model's drawable state (including the colormap
   choice) and the point/line/triangle extras (point size and impostor, line width and
   impostor, smooth shading and opacity) onto same-named drawables of every other
-  model. Visibility stays per model, and the panel's scalar-field/texture records are
-  copied so its controls stay consistent; the scalar colormap is applied immediately.
-  A selection display is restored before the copy and re-applied afterwards, so the
-  highlight never becomes part of the propagated style.
+  model. The button is pinned at the bottom of the Rendering panel (below a scrollable
+  content child, disabled with fewer than two models), since the copy is rendering
+  state rather than a model command. Visibility stays per model, and the panel's
+  scalar-field/texture records are copied so its controls stay consistent; the scalar
+  colormap is applied immediately. A selection display is restored before the copy and
+  re-applied afterwards, so the highlight never becomes part of the propagated style.
 - Auto focus fits the camera when the active model changes (and when the option is
   turned on). Selected only shows just the active model and is enforced every panel
   frame, so newly loaded or activated models obey it; turning it off shows every model
   again, as the Qt panel did. Both options persist in `settings.ini`
   (`models_auto_focus`, `models_selected_only`).
+- The list height reserves exactly the fixed chrome below it: the two footer rows
+  (`footer_height`), the separator above the info region, and the item gaps after the
+  list, the separator and the info child. It previously reserved an extra text line,
+  which surfaced as a gap under the Auto focus / Selected only row; the checkboxes now
+  sit the window's normal 6 px bottom padding above the border (measured 12 device
+  pixels on OpenGL and Vulkan).
 - Validation (2026-11-17, macOS, Release): a temporary `/tmp` probe added two
   in-memory triangles and exercised rename (path and extension kept), duplicate
   (`b_copy`, count grows), merge (2 faces, one result, sources gone), decompose (two
@@ -1404,8 +1414,9 @@ migrated; retirement can proceed whenever it is wanted.
   radius became the active triangle's) and the deferred delete (active fell back to the
   last model). The probe was removed, both check trees rebuilt, and Vulkan/OpenGL
   launches with two models showed the name-only list, the highlighted active row, the
-  info block pinned above the footer and the two-row footer with bottom padding
-  intact; the settings files were unchanged.
+  info block above the one-row footer, and the Apply to all button pinned at the
+  bottom-left of the Rendering panel with the two-model state enabled; the settings
+  files were unchanged.
   Suites not rerun (app-only change); dialogs and clicks were not scripted.
 
 ### 2026-11-17 — toolbar icons (ImGui texture registry)

@@ -415,6 +415,12 @@ void MappleViewer::draw_panels(float x, float y, float w, float h) {
 
 void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     begin_panel("Rendering", x, y, w, h);
+
+    // The style copy is a panel-wide command, so it stays pinned at the bottom edge
+    // while everything above it scrolls.
+    ImGui::BeginChild("##rendering-content",
+                      ImVec2(0, -ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.y));
+
     ImGui::TextUnformatted("Rendering");
     ImGui::Separator();
 
@@ -599,11 +605,13 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     Model *model = current_model();
     if (!model) {
         ImGui::TextDisabled("No active model.");
+        ImGui::EndChild();
         ImGui::End();
         return;
     }
     if (!model->renderer()) {
         ImGui::TextDisabled("The active model has no renderer.");
+        ImGui::EndChild();
         ImGui::End();
         return;
     }
@@ -726,6 +734,7 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
 
     if (!active) {
         ImGui::TextDisabled("No drawables.");
+        ImGui::EndChild();
         ImGui::End();
         return;
     }
@@ -844,6 +853,18 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         }
         update();
     }
+
+    ImGui::EndChild();
+
+    // Styling is a rendering concern, so the copy lives here rather than among the
+    // model commands: it copies the active model's drawable styles and the panel's
+    // scalar/texture settings onto same-named drawables of the other models.
+    ImGui::BeginDisabled(models().size() < 2);
+    if (ImGui::Button("Apply to all"))
+        apply_style_to_all_models();
+    ImGui::EndDisabled();
+    ImGui::SetItemTooltip("Copy the active model's style onto the same-named drawables of "
+                          "every other model.");
 
     ImGui::End();
 }
@@ -1274,14 +1295,19 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     if (models().empty())
         ImGui::TextDisabled("No models. Drop a file here or use File > Open.");
 
-    const float footer_height = 2.0f * ImGui::GetFrameHeightWithSpacing();
+    const float footer_height = ImGui::GetFrameHeightWithSpacing(); // the checkbox row
     // The list is names only; the active model's info fills its own region above the
     // footer. Its height follows the content (measured last frame), so the separator
     // sits just above the info and the list gets all the remaining room.
     const float line = ImGui::GetTextLineHeightWithSpacing();
     const float spacing = ImGui::GetStyle().ItemSpacing.y;
     const float available = ImGui::GetContentRegionAvail().y;
-    const float chrome = footer_height + line + 4.0f * spacing; // footer, separator, item gaps
+    // What the list does not own below it: the two footer rows (footer_height already
+    // holds their spacing), the separator above the info region, and the item gaps
+    // after the list, the separator and the info child. Reserving more leaves the
+    // slack as a gap under the checkboxes; reserving less pushes them against the
+    // bottom border.
+    const float chrome = footer_height + 2.0f * spacing + 1.0f;
     const ImGuiID info_height_id = ImGui::GetID("##model-info-height");
     float info_height = ImGui::GetStateStorage()->GetFloat(info_height_id, 8.0f * line);
     info_height = std::min(info_height, std::max(3.0f * line, available - chrome - 4.0f * line));
@@ -1370,21 +1396,6 @@ void MappleViewer::draw_models_panel(float x, float y, float w, float h) {
     const float measured = ImGui::GetCursorPosY() + ImGui::GetScrollY() + spacing;
     ImGui::EndChild();
     ImGui::GetStateStorage()->SetFloat(info_height_id, measured);
-
-    ImGui::BeginDisabled(active == nullptr);
-    if (ImGui::Button("Fit")) {
-        fit_screen(active);
-        update();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Delete"))
-        delete_selected_models();
-    ImGui::SameLine();
-    ImGui::BeginDisabled(models().size() < 2);
-    if (ImGui::Button("Apply to all"))
-        apply_style_to_all_models();
-    ImGui::EndDisabled();
-    ImGui::EndDisabled();
 
     bool auto_focus = models_auto_focus_;
     if (ImGui::Checkbox("Auto focus", &auto_focus))
