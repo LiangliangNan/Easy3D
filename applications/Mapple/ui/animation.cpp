@@ -79,6 +79,7 @@ void MappleViewer::draw_animation_window() {
             path_tool_ = PathTool::Off;
             edit_keyframes_ = false;
             cancel_path_gesture();
+            clear_flight_gesture();
         }
         return;
     }
@@ -103,6 +104,9 @@ void MappleViewer::draw_animation_window() {
     ImGui::SameLine();
     if (ImGui::Button("Orbit...", ImVec2(80, 0)))
         arm_camera_path_tool(PathTool::Orbit);
+    ImGui::SameLine();
+    if (ImGui::Button("Flight...", ImVec2(80, 0)))
+        arm_camera_path_tool(PathTool::Flight);
 
     // Read after the buttons so arming shows its hint and its parameters at once.
     const PathTool tool = path_tool_;
@@ -110,7 +114,13 @@ void MappleViewer::draw_animation_window() {
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(70, 0)))
             cancel_camera_path_tool();
-        ImGui::TextDisabled(tool == PathTool::GroundWalk
+        if (tool == PathTool::Flight)
+            ImGui::TextDisabled(flight_aim_ready_
+                                ? "Click to aim at one target, or drag to trace the aim along the track. "
+                                  "Esc cancels."
+                                : "Drag over the surface to trace the camera track. Esc cancels.");
+        else
+            ImGui::TextDisabled(tool == PathTool::GroundWalk
                                     ? "Drag over the ground surface to trace the route. Esc cancels."
                                     : "Drag across the scene to set the orbit axis; a click uses the "
                                       "vertical axis. Esc cancels.");
@@ -251,6 +261,29 @@ void MappleViewer::draw_animation_window() {
         int loops = camera_path_builder_->num_loops();
         if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99))
             camera_path_builder_->set_num_loops(loops);
+    } else if (camera_path_builder_ && tool == PathTool::Flight) {
+        ImGui::Separator();
+        ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
+        ImGui::SetItemTooltip("The camera track follows the traced surface points, each lifted along "
+                              "the surface normal under it. Where the surface has no normal (e.g. a "
+                              "point cloud), the view's up direction is used. After the track, click "
+                              "one point to aim at it, or drag to trace the aim along the track.");
+
+        float height = camera_path_builder_->flight_height_in_scene_heights();
+        if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            camera_path_builder_->set_flight_height_in_scene_heights(height);
+            update();
+        }
+        ImGui::SetItemTooltip("The camera height above the traced surface, relative to the scene extent "
+                              "along the view's up direction; each pose rises along its foot's "
+                              "surface normal.");
+
+        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
+        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
+            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
+            update();
+        }
+        ImGui::SetItemTooltip("Distance between keyframes along the track, relative to the flight height.");
     }
 
     // The orbit gesture applies Replace/Append directly; Ctrl+Z restores the path
@@ -492,13 +525,14 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
         return;
 
     cancel_path_gesture();
+    clear_flight_gesture(); // arming starts from a clean slate
     if (path_tool_ == tool) { // clicking the armed tool disarms it
         path_tool_ = PathTool::Off;
         update();
         return;
     }
 
-    if (tool == PathTool::GroundWalk || tool == PathTool::Orbit) {
+    if (tool == PathTool::GroundWalk || tool == PathTool::Orbit || tool == PathTool::Flight) {
         camera_path_builder_->set_scene(models());
         if (!camera_path_builder_->scene_box().is_valid()) {
             LOG(WARNING) << "the camera path tools need a visible model";
@@ -512,13 +546,16 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
     snapshot_camera_path(); // Ctrl+Z restores the path the tool started from
     LOG(INFO) << (tool == PathTool::GroundWalk
                   ? "walk route tool armed: drag over the ground surface to trace the route"
-                  : "orbit tool armed: drag across the scene to set the orbit axis "
-                    "(a click uses the vertical axis)");
+                  : tool == PathTool::Orbit
+                    ? "orbit tool armed: drag across the scene to set the orbit axis "
+                      "(a click uses the vertical axis)"
+                    : "flight tool armed: drag over the surface to trace the camera track");
     update();
 }
 
 void MappleViewer::cancel_camera_path_tool() {
     cancel_path_gesture();
+    clear_flight_gesture();
     path_tool_ = PathTool::Off;
     update();
 }
@@ -526,6 +563,8 @@ void MappleViewer::cancel_camera_path_tool() {
 void MappleViewer::cancel_path_gesture() {
     tracing_route_ = false;
     orbit_dragging_ = false;
+    flight_tracking_ = false;
+    flight_aiming_ = false;
     route_stroke_screen_.clear();
     route_segment_.clear();
     route_segments_.clear();
@@ -606,6 +645,91 @@ void MappleViewer::commit_ground_route() {
         set_camera_path_visible(true);
     LOG(INFO) << added << " walking keyframes added to the camera path";
     update();
+}
+
+void MappleViewer::commit_flight_track() {
+    if (!camera_path_builder_)
+        return;
+    if (route_segment_.size() >= 2)
+        route_segments_.push_back(route_segment_);
+    route_segment_.clear();
+
+    // A flight bridges the gaps where the drag left the surface, so all segments are
+    // concatenated into one camera track (unlike the walking route, whose segments
+    // become separate walks).
+    std::vector<vec3> points, ups;
+    for (const auto &segment : route_segments_) {
+        for (const auto &sample : segment) {
+            points.push_back(sample.point);
+            ups.push_back(sample.up);
+        }
+    }
+    route_segments_.clear();
+
+    flight_positions_ = camera_path_builder_->flight_stations(points, ups);
+    if (flight_positions_.size() < 2) {
+        flight_positions_.clear();
+        LOG(WARNING) << "the stroke is too short to trace a flight track";
+        return; // the tool stays armed for another try
+    }
+    flight_aim_ready_ = true;
+    LOG(INFO) << flight_positions_.size()
+              << " flight stations traced: click to aim at one target, or drag to trace the aim";
+    update();
+}
+
+void MappleViewer::commit_flight_aim() {
+    if (!camera_path_builder_ || !flight_aim_ready_ || flight_positions_.size() < 2) {
+        clear_flight_gesture();
+        return;
+    }
+
+    if (route_segment_.size() >= 2)
+        route_segments_.push_back(route_segment_);
+    route_segment_.clear();
+    std::vector<vec3> points;
+    for (const auto &segment : route_segments_)
+        for (const auto &sample : segment)
+            points.push_back(sample.point);
+    route_segments_.clear();
+    if (points.empty()) {
+        LOG(WARNING) << "the aim has to end on a visible model surface";
+        return; // the track keeps its stations for another aim
+    }
+
+    std::vector<vec3> targets;
+    if (points.size() < 2) // a click: every station aims at the picked point
+        targets.assign(flight_positions_.size(), points.front());
+    else
+        targets = camera_path_builder_->aim_targets(points, flight_positions_.size());
+    if (targets.size() != flight_positions_.size()) {
+        LOG(WARNING) << "the aim could not be sampled along the flight track";
+        return;
+    }
+
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+    const std::size_t added = camera_path_builder_->generate_flight(flight_positions_, targets);
+    if (added == 0) {
+        LOG(WARNING) << "the flight track could not be turned into keyframes";
+        return;
+    }
+
+    path_tool_ = PathTool::Off; // one-shot
+    flight_aim_ready_ = false;
+    flight_positions_.clear();
+    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    if (!show_camera_path_)
+        set_camera_path_visible(true);
+    LOG(INFO) << added << " flight keyframes added to the camera path";
+    update();
+}
+
+void MappleViewer::clear_flight_gesture() {
+    flight_tracking_ = false;
+    flight_aiming_ = false;
+    flight_aim_ready_ = false;
+    flight_positions_.clear();
 }
 
 void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {

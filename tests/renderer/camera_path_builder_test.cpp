@@ -166,5 +166,58 @@ int main() {
                          normalize(targets[i] - positions[i]), 1e-4f),
                     "a flight pose does not aim at its target");
         }
+
+        // --- an interactive flight: stations, aim, keyframes -----------------
+        // The flight height is relative to the scene height: 0.5 of the 10-unit
+        // extent along the view's up is 5 world units. The stroke spans 8 units, so
+        // the default spacing (1 x height) resamples it to 3 stations.
+        require(near(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
+        const std::vector<vec3> stations = builder.flight_stations(flat_stroke, flat_ups);
+        require(stations.size() == 3, "the flight track was not resampled at the flight spacing");
+        for (const vec3 &s : stations)
+            require(near(s.y, 0.0f) && near(s.z, 0.0f), "a flight station is not one flight height above its foot");
+
+        const std::vector<vec3> over_ramp = builder.flight_stations(flat_stroke, ramp_ups);
+        require(over_ramp.size() == stations.size(), "the tilted flight track changed the station count");
+        for (std::size_t i = 0; i < over_ramp.size(); ++i)
+            require(near(over_ramp[i], vec3(stations[i].x, -5.0f, 0.0f) + ramp_up * 5.0f),
+                    "a tilted flight station does not rise along the surface normal under its foot");
+
+        builder.set_flight_height_in_scene_heights(0.0f);
+        require(builder.flight_stations(flat_stroke, flat_ups).empty(), "a zero flight height was accepted");
+        builder.set_flight_height_in_scene_heights(0.5f);
+        require(builder.flight_stations({vec3(0.0f)}, {}).empty(), "a single-point flight track was accepted");
+        require(builder.flight_stations(flat_stroke, {ramp_up}).empty(), "unpaired flight ups were accepted");
+
+        const std::vector<vec3> aim_stroke = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f)};
+        require(builder.aim_targets({}, 3).empty() && builder.aim_targets(aim_stroke, 0).empty(),
+                "an empty aim produced targets");
+        const std::vector<vec3> spaced = builder.aim_targets(aim_stroke, 5);
+        require(spaced.size() == 5 && near(spaced.front(), aim_stroke.front()) &&
+                near(spaced.back(), aim_stroke.back()) && near(spaced[2], vec3(5.0f, 0.0f, 10.0f)),
+                "the aim targets are not evenly spaced along the aim stroke");
+        const std::vector<vec3> clicked = builder.aim_targets({vec3(1.0f, 2.0f, 3.0f)}, 4);
+        require(clicked.size() == 4 && near(clicked[3], vec3(1.0f, 2.0f, 3.0f)),
+                "a clicked aim does not repeat its point for every station");
+
+        kfi.delete_path();
+        // A level flight: every view direction is perpendicular to the view's up
+        // (0,0,-1), so the roll reference is the camera up exactly.
+        const std::vector<vec3> flying = {vec3(-10.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f),
+                                          vec3(10.0f, 10.0f, 0.0f)};
+        const std::vector<vec3> aimed_at = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 10.0f, 0.0f),
+                                            vec3(20.0f, 10.0f, 0.0f)};
+        const std::size_t flight_keys = builder.generate_flight(flying, aimed_at);
+        require(flight_keys == flying.size(), "generate_flight dropped stations");
+        require(kfi.number_of_keyframes() == flight_keys, "the flight poses did not reach the interpolator");
+        for (std::size_t i = 0; i < flight_keys; ++i) {
+            const Frame f = kfi.keyframe(i);
+            require(near(f.position(), flying[i]), "a flight keyframe is not at its station");
+            require(near(f.orientation().rotate(local_forward), normalize(aimed_at[i] - flying[i]), 1e-4f),
+                    "a flight keyframe does not aim at its target");
+            require(near(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, -1.0f), 1e-4f),
+                    "a flight keyframe does not use the view's up as its roll reference");
+        }
+        require(builder.generate_flight(flying, {vec3(0.0f)}) == 0, "generate_flight accepted unpaired aims");
     });
 }

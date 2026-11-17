@@ -52,7 +52,10 @@ namespace easy3d {
  *        picked ground points into first-person eye-height poses aimed along the
  *        route,
  *      - orbiting a picked axis: generate_orbit() turns a line into a closed orbit,
- *        and
+ *      - recording a flight: flight_stations() lifts a traced ground stroke to camera
+ *        stations at the flight height, aim_targets() turns an aim stroke into one
+ *        target per station (a clicked target is a repeated aim_targets() value), and
+ *        generate_flight() appends the aimed poses, and
  *      - pure builders for previewing or editing a path before it is inserted:
  *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
  *        flight_frames() (a position track with a separate aim track).
@@ -172,6 +175,51 @@ public:
     int num_loops() const { return num_loops_; }
     //@}
 
+    /// \name Flight
+    //@{
+    /// \brief The camera stations' height above the traced ground, in scene heights
+    ///      (default 0.5).
+    /// \details A scene height is the extent of the scene box along
+    ///      ground_up_direction(), or the scene radius before set_scene() has seen a
+    ///      visible model.
+    void set_flight_height_in_scene_heights(float height_in_scene_heights);
+    float flight_height_in_scene_heights() const { return flight_height_in_scene_heights_; }
+
+    /// The flight height in world units, i.e. flight_height_in_scene_heights()
+    /// resolved against the scene box along ground_up_direction() (or the scene
+    /// radius before set_scene() has seen a visible model).
+    float flight_height_in_world_units() const;
+
+    /// \brief Camera stations of a flight track through \p stroke.
+    /// \details Each station sits one flight height above its own ground point along
+    ///      the surface up there, so the track follows the terrain. The stroke is
+    ///      resampled by arc length at the keyframe spacing scaled by the flight
+    ///      height, and the surface ups are oriented toward the camera and smoothed
+    ///      like the walking route's.
+    /// \param stroke Ground-contact points in track order.
+    /// \param surface_up_directions The up direction at each stroke point, in the
+    ///      same order; an empty vector stands every station along
+    ///      ground_up_direction().
+    /// \return The stations, or an empty vector if the stroke is degenerate, the
+    ///      directions do not pair with it, or the flight height is zero.
+    std::vector<vec3> flight_stations(const std::vector<vec3> &stroke,
+                                      const std::vector<vec3> &surface_up_directions) const;
+
+    /// \brief One aim point per station, sampled along \p stroke.
+    /// \details The stroke is sampled at \p count equal arc-length fractions, so the
+    ///      aim starts and ends where the stroke does and progresses with the flight.
+    ///      A single stroke point aims every station at it.
+    /// \return \p count targets, or an empty vector if \p stroke is empty or
+    ///      \p count is zero.
+    std::vector<vec3> aim_targets(const std::vector<vec3> &stroke, std::size_t count) const;
+
+    /// \brief Appends flight poses over \p positions aimed at the matching \p targets,
+    ///      with roll referenced to ground_up_direction(). Nothing is replaced:
+    ///      callers clear the path first when a replacement is intended.
+    /// \return The number of keyframes added (0 if the inputs do not pair up).
+    std::size_t generate_flight(const std::vector<vec3> &positions, const std::vector<vec3> &targets);
+    //@}
+
     /// \name Path builders
     /// Pure: they return the keyframe poses and never move the camera or touch the
     /// interpolator, so a caller can preview, filter or edit them first.
@@ -219,6 +267,18 @@ public:
     //@}
 
 protected:
+    // The scene extent along ground_up_direction() in world units (the scene radius
+    // before set_scene() has seen a visible model).
+    float scene_height_in_world_units() const;
+
+    // Resamples \p stroke and its camera-facing, smoothed surface ups at \p spacing;
+    // false on degenerate input.
+    bool resample_stroke(const std::vector<vec3> &stroke,
+                         const std::vector<vec3> &surface_up_directions,
+                         float spacing,
+                         std::vector<vec3> &feet,
+                         std::vector<vec3> &ups) const;
+
     /// Appends \p frame to the interpolator and grows the camera's scene radius to
     /// keep it inside the view frustum.
     void add_keyframe(const Frame &frame);
@@ -238,6 +298,9 @@ protected:
     Box3 scene_box_;
     float eye_height_in_scene_heights_;
     float keyframe_spacing_in_character_heights_;
+
+    // Flight
+    float flight_height_in_scene_heights_;
 
     // Orbit
     float orbit_radius_offset_in_object_heights_;

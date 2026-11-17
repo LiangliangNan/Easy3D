@@ -89,6 +89,7 @@ namespace easy3d {
     CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
             : camera_(camera), kfi_(interpolator),
               eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(1.0f),
+              flight_height_in_scene_heights_(0.5f),
               orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
               pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
     }
@@ -119,32 +120,41 @@ namespace easy3d {
         return up.normalize();
     }
 
-    float CameraPathBuilder::eye_height_in_world_units() const {
+    float CameraPathBuilder::scene_height_in_world_units() const {
         if (!scene_box_.is_valid())
-            return camera_->scene_radius() * eye_height_in_scene_heights_;
+            return camera_->scene_radius();
 
         // The scene "height" is its extent along the route's fallback up direction
-        // (the view's up), so the eye height keeps the same ratio in any view.
+        // (the view's up), so heights keep the same ratio in any view.
         const vec3 up = ground_up_direction();
-        const float scene_height = std::abs(up.x) * scene_box_.range(0) +
-                                   std::abs(up.y) * scene_box_.range(1) +
-                                   std::abs(up.z) * scene_box_.range(2);
-        return scene_height * eye_height_in_scene_heights_;
+        return std::abs(up.x) * scene_box_.range(0) +
+               std::abs(up.y) * scene_box_.range(1) +
+               std::abs(up.z) * scene_box_.range(2);
     }
 
-    std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke,
-                                                         const std::vector<vec3> &foot_up_directions) {
+    float CameraPathBuilder::eye_height_in_world_units() const {
+        return scene_height_in_world_units() * eye_height_in_scene_heights_;
+    }
+
+    float CameraPathBuilder::flight_height_in_world_units() const {
+        return scene_height_in_world_units() * flight_height_in_scene_heights_;
+    }
+
+    void CameraPathBuilder::set_flight_height_in_scene_heights(float height_in_scene_heights) {
+        flight_height_in_scene_heights_ = height_in_scene_heights;
+    }
+
+    bool CameraPathBuilder::resample_stroke(const std::vector<vec3> &stroke,
+                                            const std::vector<vec3> &surface_up_directions,
+                                            float spacing, std::vector<vec3> &feet, std::vector<vec3> &ups) const {
+        feet.clear();
+        ups.clear();
         if (stroke.size() < 2)
-            return 0;
-        if (!foot_up_directions.empty() && foot_up_directions.size() != stroke.size())
-            return 0;
+            return false;
+        if (!surface_up_directions.empty() && surface_up_directions.size() != stroke.size())
+            return false;
 
-        const float eye = eye_height_in_world_units();
-        if (eye <= 1e-4f)
-            return 0;
-        const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
         const std::vector<ArcSample> samples = arc_length_samples(stroke, spacing);
-
         const vec3 fallback_up = ground_up_direction();
         const vec3 view_dir = camera_->view_direction();
 
@@ -153,7 +163,7 @@ namespace easy3d {
         // the view direction. Sounding the eye offset off the far side would put the
         // camera centers behind the surface. The input is oriented before resampling so
         // arbitrary winding cannot cancel out in the interpolation.
-        std::vector<vec3> directions = foot_up_directions;
+        std::vector<vec3> directions = surface_up_directions;
         for (auto &up : directions) {
             if (up.length2() < epsilon_sqr<float>())
                 up = fallback_up;
@@ -162,7 +172,6 @@ namespace easy3d {
                 up = -up;
         }
 
-        std::vector<vec3> feet, ups;
         feet.reserve(samples.size());
         ups.reserve(samples.size());
         for (const auto &sample : samples) {
@@ -185,8 +194,75 @@ namespace easy3d {
             }
             ups.swap(smoothed);
         }
+        return true;
+    }
+
+    std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke,
+                                                         const std::vector<vec3> &foot_up_directions) {
+        const float eye = eye_height_in_world_units();
+        if (eye <= 1e-4f)
+            return 0;
+        const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
+
+        std::vector<vec3> feet, ups;
+        if (!resample_stroke(stroke, foot_up_directions, spacing, feet, ups))
+            return 0;
 
         const std::vector<Frame> frames = ground_frames(feet, ups, eye);
+        for (const auto &frame : frames)
+            add_keyframe(frame);
+        return frames.size();
+    }
+
+    std::vector<vec3> CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke,
+                                                         const std::vector<vec3> &surface_up_directions) const {
+        std::vector<vec3> stations;
+        const float height = flight_height_in_world_units();
+        if (height <= 1e-4f)
+            return stations;
+        const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * height);
+
+        std::vector<vec3> feet, ups;
+        if (!resample_stroke(stroke, surface_up_directions, spacing, feet, ups))
+            return stations;
+
+        stations.reserve(feet.size());
+        for (std::size_t i = 0; i < feet.size(); ++i)
+            stations.push_back(feet[i] + ups[i] * height);
+        return stations;
+    }
+
+    std::vector<vec3> CameraPathBuilder::aim_targets(const std::vector<vec3> &stroke, std::size_t count) const {
+        std::vector<vec3> targets;
+        if (stroke.empty() || count == 0)
+            return targets;
+        targets.assign(count, stroke.front());
+
+        std::vector<float> cumulative(stroke.size(), 0.0f);
+        for (std::size_t i = 1; i < stroke.size(); ++i)
+            cumulative[i] = cumulative[i - 1] + distance(stroke[i], stroke[i - 1]);
+        const float total = cumulative.back();
+        if (stroke.size() < 2 || total <= 1e-6f)
+            return targets;
+
+        std::size_t segment = 1;
+        for (std::size_t i = 0; i < count; ++i) {
+            const float fraction = count == 1 ? 0.5f : static_cast<float>(i) / static_cast<float>(count - 1);
+            const float s = fraction * total;
+            while (segment < stroke.size() && cumulative[segment] < s)
+                ++segment;
+            if (segment >= stroke.size())
+                segment = stroke.size() - 1;
+            const float length = cumulative[segment] - cumulative[segment - 1];
+            const float t = length > 0.0f ? (s - cumulative[segment - 1]) / length : 0.0f;
+            targets[i] = stroke[segment - 1] + (stroke[segment] - stroke[segment - 1]) * t;
+        }
+        return targets;
+    }
+
+    std::size_t CameraPathBuilder::generate_flight(const std::vector<vec3> &positions,
+                                                   const std::vector<vec3> &targets) {
+        const std::vector<Frame> frames = flight_frames(positions, targets, ground_up_direction());
         for (const auto &frame : frames)
             add_keyframe(frame);
         return frames.size();

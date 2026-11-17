@@ -10949,3 +10949,58 @@ Both check trees rebuilt; suites run serially: Vulkan 150/150 (143 s) and OpenGL
 both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)"); the path gestures were not
 scripted. `easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI
 remain separate gates.
+
+### 2026-11-17 — batch 116: Flight recording in the camera-path tools
+
+**Problem.** `CameraPathBuilder::flight_frames()` could build look-at poses from a
+position track and per-station targets, but no app could produce those two tracks:
+the flight poses were reachable only from code that already had both arrays, and the
+Camera Path window offered the walking and orbit tools only.
+
+**Change (library).** `easy3d/renderer/camera_path_builder.{h,cpp}` gains the
+recording-side helpers the interactive tool needs, next to the existing builder:
+`set_flight_height_in_scene_heights()`/`flight_height_in_scene_heights()` with
+`flight_height_in_world_units()` (scene extent along the view's up times the ratio,
+default 0.5); `flight_stations(stroke, surface_up_directions)`, which resamples the
+traced stroke through the same arc-length plan as the walking route - at
+`keyframe_spacing x flight height` - orients the surface normals to the camera-facing
+side and lifts every resampled foot along its own normal by the flight height;
+`aim_targets(stroke, count)` samples an aim stroke to one target per station by arc
+length (a single point repeats for every station, the first and last targets are the
+stroke's ends, empty input or count 0 yields nothing); and
+`generate_flight(positions, targets)`, which appends `flight_frames()` poses whose
+roll reference is `ground_up_direction()` and returns the count. The stroke validation
+(short stroke, unpaired directions, zero spacing or height) is shared with the
+walking route, and `scene_height_in_world_units()`/`resample_stroke()` moved to
+protected members so the two track builders share one implementation.
+
+**Change (Mapple).** `PathTool` gains `Flight`. `Flight...` arms it for two gestures:
+a left-drag over the visible surface traces the camera track exactly like the walking
+tool (the picked contact point and surface normal per sample, gaps where the drag
+leaves the surface bridged by concatenation rather than becoming separate tracks), and
+the release stores the `flight_stations()` in `flight_positions_` and shows them in the
+scene overlay (a projected polyline with a small square per station). The tool then
+waits for the aim gesture on the same press/drag machinery: a click picks one point
+that every station aims at, a drag traces an aim stroke that `aim_targets()` maps to
+one target per station, and the release feeds both arrays to `generate_flight()`,
+disarms the tool and selects the last appended keyframe. The window shows the
+phase-dependent hint, a `Flight height` slider and the shared keyframe spacing;
+Esc/Cancel/clicking the armed button calls `cancel_camera_path_tool()`, which now also
+clears a pending track, while arming starts from a clean slate. A too-short track or an
+aim that never reaches the surface keeps the tool armed (and the pending track, for
+the aim) instead of discarding the work.
+
+**Test.** `tests/renderer/camera_path_builder_test.cpp` additionally checks the flight
+height in world units, a flat track's station count and one-height lift, a 30-degree
+track rising along each foot's normal, refusals (zero flight height, single-point
+stroke, unpaired directions), `aim_targets()` (empty inputs, even arc-length spacing
+between the stroke ends, a clicked point repeated for every station), and
+`generate_flight()` (station count, keyframe positions and aims, the view's up as the
+roll reference for a level flight, unpaired aims refused).
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).**
+Both check trees rebuilt; suites run serially: Vulkan 150/150 (151 s) and OpenGL
+118/118 (60 s). `vulkan.camerapathbuilder`/`opengl.camerapathbuilder` pass in their
+trees. Mapple launches on both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)"); the
+flight gestures were not scripted. `easy3d/util/version.h` carries only the generated
+date bump. Linux/Windows/CI remain separate gates.
