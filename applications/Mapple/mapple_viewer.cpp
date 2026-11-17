@@ -217,6 +217,9 @@ MappleViewer::~MappleViewer() {
     }
     // Release selection colormaps before the graphics device dies with the viewer.
     selection_styles_.clear();
+    // The glyph drawable would otherwise outlive the scene cleanup (this class holds
+    // it too) and free its buffer after the window and device are gone.
+    release_camera_markers();
     // The effects own framebuffers and shader programs, so they must go while the
     // graphics device is still alive. Destroying the shadow/AO/EDL objects also
     // unregisters them from the per-camera effect registries.
@@ -324,6 +327,7 @@ void MappleViewer::pre_draw() {
     imgui_->new_frame(dpi_scaling(), pixel_ratio());
     Viewer::pre_draw();
     advance_camera_path();
+    update_camera_markers();
     draw_gui();
 
     // A video frame renders the scene on its own inside capture(), so it runs
@@ -410,11 +414,8 @@ void MappleViewer::update_camera_path_annotations() const {
         if (!camera_path_renderer_)
             camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
         auto path = camera_path_renderer_->draw_path(*kfi_, *camera());
-        auto cameras = camera_path_renderer_->draw_cameras(*kfi_, *camera(), camera()->scene_radius() * 0.05f);
         if (path.geometry)
             commands.push_back(path);
-        if (cameras.geometry)
-            commands.push_back(cameras);
     }
     set_viewer_annotations(std::move(commands));
 #endif
@@ -423,11 +424,74 @@ void MappleViewer::update_camera_path_annotations() const {
 void MappleViewer::draw_camera_path() const {
 #ifndef EASY3D_HAS_VULKAN
     // Shown only when it is not animating; on Vulkan this runs through the annotation slot.
-    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started()) {
+    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started())
         kfi_->draw_path(camera(), 2.0f);
-        kfi_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
-    }
 #endif
+}
+
+void MappleViewer::update_camera_markers() {
+    // The glyphs are ordinary scene triangles, so they occlude behind the surfaces and
+    // the pivot gesture resolves them like any other visible geometry.
+    const float width = camera_marker_width();
+    const bool show = show_camera_path_ && kfi_ && !kfi_->is_interpolation_started() && width > 0 &&
+                      kfi_->number_of_keyframes() > 0;
+    if (!show) {
+        if (camera_markers_)
+            camera_markers_->set_visible(false);
+        return;
+    }
+
+    const std::size_t count = kfi_->number_of_keyframes();
+    bool same = camera_markers_ && camera_markers_width_ == width && camera_markers_frames_.size() == count;
+    for (std::size_t i = 0; same && i < count; ++i) {
+        const Frame frame = kfi_->keyframe(i);
+        same = camera_markers_frames_[i].position() == frame.position();
+        for (unsigned j = 0; same && j < 4; ++j)
+            same = camera_markers_frames_[i].orientation()[j] == frame.orientation()[j];
+    }
+    if (same) {
+        camera_markers_->set_visible(true);
+        return;
+    }
+
+    std::vector<vec3> glyph_points;
+    std::vector<unsigned int> glyph_indices;
+    shape::create_camera(glyph_points, glyph_indices, width, camera()->field_of_view(),
+                         float(camera()->screen_height()) / float(camera()->screen_width()));
+    std::vector<vec3> points;
+    std::vector<unsigned int> indices;
+    points.reserve(glyph_points.size() * count);
+    indices.reserve(glyph_indices.size() * count);
+    camera_markers_frames_.clear();
+    for (std::size_t i = 0; i < count; ++i) {
+        const Frame frame = kfi_->keyframe(i);
+        camera_markers_frames_.push_back(frame);
+        const mat4 pose = frame.matrix();
+        const auto offset = static_cast<unsigned int>(points.size());
+        for (const auto &p : glyph_points)
+            points.push_back(pose * p);
+        for (auto index : glyph_indices)
+            indices.push_back(offset + index);
+    }
+
+    if (!camera_markers_) {
+        camera_markers_ = std::make_shared<TrianglesDrawable>("camera path markers");
+        camera_markers_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
+        add_drawable(camera_markers_);
+    }
+    camera_markers_->update_vertex_buffer(points);
+    camera_markers_->update_element_buffer(indices);
+    camera_markers_->set_visible(true);
+    camera_markers_width_ = width;
+}
+
+void MappleViewer::release_camera_markers() {
+    if (!camera_markers_)
+        return;
+    delete_drawable(camera_markers_.get());
+    camera_markers_.reset();
+    camera_markers_frames_.clear();
+    camera_markers_width_ = 0;
 }
 
 void MappleViewer::advance_camera_path() {
@@ -607,13 +671,14 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         if (tool == CameraPathBuilder::Mode::GroundWalk) {
             if (camera_path_builder_->scene_box().is_valid()) {
                 // The route follows the visible surface under the cursor, so the
-                // terrain supplies each stroke point's height; no ground plane is
-                // assumed (the up axis only sets the eye offset).
-                vec3 point;
-                if (route_point_at(x, y, point)) {
+                // terrain supplies each stroke point's contact point and the
+                // walker's up direction (the surface normal) there; no ground plane
+                // is assumed.
+                vec3 point, up;
+                if (route_point_at(x, y, point, up)) {
                     tracing_route_ = true;
                     route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
-                    route_segment_.assign(1, point);
+                    route_segment_.assign(1, RouteSample{point, up});
                     clear_hover();
                     update();
                 } else
@@ -736,9 +801,9 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
         // without re-rendering the scene for every drag event.
         if (delta.length2() >= 16.0f) {
             route_stroke_screen_.push_back(sample);
-            vec3 point;
-            if (route_point_at(x, y, point)) {
-                route_segment_.push_back(point);
+            vec3 point, up;
+            if (route_point_at(x, y, point, up)) {
+                route_segment_.push_back(RouteSample{point, up});
             } else {
                 // Leaving the visible surface ends the current segment; the stroke
                 // continues as a new route when the drag comes back on it, instead

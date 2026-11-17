@@ -34,6 +34,7 @@
 #include <vector>
 
 #include <easy3d/core/model.h>
+#include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/types.h>
 #include <easy3d/gui/picker.h>
 #include <easy3d/renderer/camera.h>
@@ -166,15 +167,11 @@ void MappleViewer::draw_animation_window() {
 
     if (camera_path_builder_ && tool == CameraPathBuilder::Mode::GroundWalk) {
         ImGui::Separator();
-        const char *up_axes[] = {"Auto (box shortest)", "+X", "+Y", "+Z"};
-        int up_axis = static_cast<int>(camera_path_builder_->ground_up_axis());
-        if (ImGui::Combo("Up axis", &up_axis, up_axes, 4)) {
-            camera_path_builder_->set_ground_up_axis(static_cast<CameraPathBuilder::GroundUpAxis>(up_axis));
-            update();
-        }
-        ImGui::SetItemTooltip("The direction the scene is upright along. Auto uses the shortest "
-                              "extent of the visible scene box (the height of a building-like "
-                              "scene); the eye height is measured along this axis.");
+        ImGui::TextDisabled("Up  surface normal under each foot");
+        ImGui::SetItemTooltip("The walker stands upright on the traced surface: each pose rises along "
+                              "the surface normal under its foot, so the route tilts with the terrain. "
+                              "Where the surface has no normal (e.g. a point cloud), the view's up "
+                              "direction is used.");
 
         float height = camera_path_builder_->eye_height_in_scene_heights();
         if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
@@ -182,7 +179,8 @@ void MappleViewer::draw_animation_window() {
             update();
         }
         ImGui::SetItemTooltip("The eye height above the ground, relative to the scene extent "
-                              "along the up axis.");
+                              "along the view's up direction; each pose rises along its foot's "
+                              "surface normal.");
 
         float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
         if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
@@ -278,8 +276,10 @@ void MappleViewer::clear_camera_path() {
         return;
     kfi_->delete_path();
     camera_keyframe_index_ = -1;
-    if (show_camera_path_)
+    if (show_camera_path_) {
+        release_camera_markers();
         restore_scene_bounds();
+    }
     LOG(INFO) << "camera path cleared";
     update();
 }
@@ -318,8 +318,12 @@ void MappleViewer::set_camera_path_visible(bool visible) {
         for (std::size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
             radius = std::max(radius, distance(camera()->scene_center(), kfi_->keyframe_position(i)));
         camera()->set_scene_radius(radius);
-    } else
+    } else {
+        // The glyphs are scene geometry; they must be gone before the bounds are
+        // rebuilt from the scene, or they would keep the keyframes in the bounds.
+        release_camera_markers();
         restore_scene_bounds();
+    }
     update();
 }
 
@@ -400,14 +404,40 @@ void MappleViewer::cancel_path_gesture() {
     route_segments_.clear();
 }
 
-bool MappleViewer::route_point_at(int x, int y, vec3 &point) const {
+bool MappleViewer::route_point_at(int x, int y, vec3 &point, vec3 &up) const {
     if (!point_in_scene(x, y))
         return false;
     const PickResult result = pick(x, y);
     if (!result)
         return false;
     point = result.position;
+
+    // The walker stands on the surface, so its up is the picked face's normal. A
+    // point cloud or a standalone drawable has no faces and falls back to the view's
+    // up direction. Winding decides the normal's sign, so align it with the view.
+    up = camera_path_builder_->ground_up_direction();
+    const auto mesh = std::dynamic_pointer_cast<SurfaceMesh>(result.model);
+    if (mesh && result.face_index >= 0 && result.face_index < static_cast<int>(mesh->n_faces())) {
+        vec3 normal = mesh->compute_face_normal(SurfaceMesh::Face(result.face_index));
+        if (normal.length2() > epsilon_sqr<float>()) {
+            normal.normalize();
+            up = dot(normal, up) < 0.0f ? -normal : normal;
+        }
+    }
     return true;
+}
+
+float MappleViewer::camera_marker_width() const {
+    // The glyphs are scene geometry, so size them from the models: the scene radius
+    // would include the glyphs' own bounds and grow with each rebuild. Without a model
+    // the keyframe spread is used, which does not depend on the glyph size.
+    Box3 box;
+    for (const auto &model : models())
+        box.grow(model->bounding_box());
+    if (!box.is_valid() && kfi_)
+        for (std::size_t i = 0; i < kfi_->number_of_keyframes(); ++i)
+            box.grow(kfi_->keyframe_position(i));
+    return box.is_valid() ? box.diagonal_length() * 0.03f : 0.0f;
 }
 
 void MappleViewer::commit_ground_route() {
@@ -417,9 +447,19 @@ void MappleViewer::commit_ground_route() {
         route_segments_.push_back(route_segment_);
     route_segment_.clear();
 
+    // The stroke carries a surface sample per point: the contact point and the
+    // walker's up there, so the poses tilt with the terrain.
     std::size_t added = 0;
-    for (const auto &segment : route_segments_)
-        added += camera_path_builder_->generate_ground_route(segment);
+    for (const auto &segment : route_segments_) {
+        std::vector<vec3> points, ups;
+        points.reserve(segment.size());
+        ups.reserve(segment.size());
+        for (const auto &sample : segment) {
+            points.push_back(sample.point);
+            ups.push_back(sample.up);
+        }
+        added += camera_path_builder_->generate_ground_route(points, ups);
+    }
     route_segments_.clear();
 
     if (added == 0) {

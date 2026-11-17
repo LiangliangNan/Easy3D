@@ -68,9 +68,11 @@ namespace easy3d {
  *      and the interpolator fits a smooth curve through them. Per-segment timing
  *      (easing, slowing down near points of interest) is not exposed here.
  *
- * \attention The walking route assumes the scene is upright along its ground up
- *      axis: the scene box's shortest extent by default, or an explicit world axis.
- *      The eye height is measured along that axis.
+ * \attention The walking route stands the walker upright on the traced surface:
+ *      each pose rises from its own ground-contact point along the surface normal
+ *      under it, and the eye height is measured along that normal, so the route
+ *      tilts with the terrain. Poses without a surface normal (e.g. a point-cloud
+ *      pick) use the current view's up direction instead.
  */
 class CameraPathBuilder {
 public:
@@ -89,27 +91,15 @@ public:
 
     /// \name Walking route
     //@{
-    /// \brief The world axis the scene is upright along (default Auto).
-    /// \details Auto uses the shortest extent of the scene box: the height of a
-    ///      building- or terrain-like scene, e.g. domik.obj, which is Y-up. Override
-    ///      it for scenes whose height is not the shortest extent (a standing
-    ///      figure) or whose box cannot tell the height.
-    enum class GroundUpAxis {
-        Auto,  // the shortest extent of the scene box
-        X,     // world +X
-        Y,     // world +Y
-        Z      // world +Z
-    };
-
-    /// Bounds of the visible models, used by the eye height, the ground up axis and
-    /// the orbit. With no visible model the box becomes invalid, so callers can
-    /// refuse the gesture.
+    /// Bounds of the visible models, used by the eye height and the orbit. With no
+    /// visible model the box becomes invalid, so callers can refuse the gesture.
     void set_scene(const std::vector<std::shared_ptr<easy3d::Model>> &scene);
 
-    void set_ground_up_axis(GroundUpAxis axis) { ground_up_axis_ = axis; }
-    GroundUpAxis ground_up_axis() const { return ground_up_axis_; }
-
-    /// The resolved up direction of the walking route, a unit world axis.
+    /// \brief The up direction used where the route has no surface normal, a unit
+    ///      vector.
+    /// \details This is the current view's up direction. Eye poses that carry no
+    ///      per-foot normal stand along it, and the eye height is measured against
+    ///      the scene extent along it.
     easy3d::vec3 ground_up_direction() const;
 
     /// \brief The eye height above the ground, in scene heights (default 0.2).
@@ -127,13 +117,21 @@ public:
     /// \brief Generates a walking route through \p stroke on the ground.
     /// \details The stroke points are ground-contact points, so passing the surface
     ///      points picked under the cursor makes the route follow the terrain: each
-    ///      pose sits one eye height above its own stroke point, along the up
-    ///      direction, and aims level along the route. The stroke is resampled at
-    ///      the keyframe spacing by arc length, and the poses are appended to the
-    ///      path (an existing path is kept, so several strokes can build one walk).
-    /// \return The number of keyframes added (0 if the stroke is degenerate or the
-    ///      eye height is zero).
-    std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke);
+    ///      pose sits one eye height above its own stroke point, along the walker's
+    ///      up direction there, and aims level along the route. The stroke is
+    ///      resampled at the keyframe spacing by arc length, and the poses are
+    ///      appended to the path (an existing path is kept, so several strokes can
+    ///      build one walk).
+    /// \param stroke Ground-contact points in path order.
+    /// \param foot_up_directions The walker's up direction at each stroke point,
+    ///      typically the surface normal there, in the same order as \p stroke.
+    ///      Each direction is normalized and flipped to face along
+    ///      ground_up_direction(); they are smoothed along the route before posing.
+    ///      An empty vector stands every pose along ground_up_direction().
+    /// \return The number of keyframes added (0 if the stroke is degenerate, the
+    ///      directions do not pair with the stroke, or the eye height is zero).
+    std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke,
+                                      const std::vector<easy3d::vec3> &foot_up_directions);
     //@}
 
     /// \name Orbit
@@ -179,16 +177,22 @@ public:
     /// \param center The scene center the orbit is built around.
     std::vector<easy3d::Frame> orbit_frames(const easy3d::Line3 &axis, const easy3d::vec3 &center) const;
 
-    /// \brief Eye poses walking through \p feet with \p up as the up direction.
+    /// \brief Eye poses walking through \p feet, each pose standing along its own
+    ///      up direction.
     /// \details Each pose aims level along the path (central-difference tangent
-    ///      projected onto the horizon plane), which keeps the heading continuous,
-    ///      and the interpolator smooths the path between the poses. The feet may lie
-    ///      at different heights (terrain following); each pose uses its own foot.
+    ///      projected onto its foot's horizon plane), which keeps the heading
+    ///      continuous, and the interpolator smooths the path between the poses. The
+    ///      feet may lie at different heights (terrain following); each pose uses its
+    ///      own foot and up direction, so the walker tilts with the terrain.
     /// \param feet Ground-contact positions in path order; at least two are needed.
-    /// \param up Unit up direction; the heading is kept perpendicular to it.
-    /// \param eye_height Eye height above each foot, in world units, along \p up.
-    /// \return The poses, or an empty vector if fewer than two feet are given.
-    std::vector<easy3d::Frame> ground_frames(const std::vector<easy3d::vec3> &feet, const easy3d::vec3 &up,
+    /// \param up_directions One unit up direction per foot, in the same order; each
+    ///      heading is kept perpendicular to its own direction.
+    /// \param eye_height Eye height above each foot, in world units, along the up
+    ///      direction of that foot.
+    /// \return The poses, or an empty vector if fewer than two feet are given, the
+    ///      directions do not pair with them, or a direction is degenerate.
+    std::vector<easy3d::Frame> ground_frames(const std::vector<easy3d::vec3> &feet,
+                                             const std::vector<easy3d::vec3> &up_directions,
                                              float eye_height) const;
 
     /// \brief Flight poses along \p positions, each aiming at the matching target.
@@ -230,7 +234,6 @@ protected:
 
     // Walking route
     easy3d::Box3 scene_box_;
-    GroundUpAxis ground_up_axis_;        // Auto: the box's shortest extent
     float eye_height_in_scene_heights_;
     float keyframe_spacing_in_character_heights_;
 

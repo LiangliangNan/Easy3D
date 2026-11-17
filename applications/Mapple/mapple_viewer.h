@@ -58,6 +58,7 @@ namespace easy3d {
     class Model;
     class PointCloudPicker;
     class SoftShadow;
+    class TrianglesDrawable;
     class SurfaceMeshPicker;
     class Texture;
     class Transparency;
@@ -441,12 +442,12 @@ private:
     // from pre_draw() while playback runs, since the base Viewer no longer owns one.
     void advance_camera_path();
 
-    // Vulkan: rebuilds the path/keyframe-camera draw commands in the scene annotation
-    // slot. Must run before Viewer::draw(), which replays the annotations. No-op on OpenGL.
+    // Vulkan: rebuilds the path draw command in the scene annotation slot. Must run
+    // before Viewer::draw(), which replays the annotations. No-op on OpenGL.
     void update_camera_path_annotations() const;
 
-    // OpenGL: draws the path and keyframe cameras into the live framebuffer after the
-    // scene. No-op on Vulkan, which uses the annotation slot instead.
+    // OpenGL: draws the path into the live framebuffer after the scene. No-op on
+    // Vulkan, which uses the annotation slot instead.
     void draw_camera_path() const;
 
     // Stops playback and moves the camera to a keyframe.
@@ -476,9 +477,24 @@ private:
     // only after the Camera Path window asks.
     void apply_orbit_pick(int x, int y);
 
-    // The visible surface point under (x, y): the ground-contact point of a route
-    // sample. False when the ray misses every visible primitive.
-    bool route_point_at(int x, int y, easy3d::vec3 &point) const;
+    // The visible surface under (x, y): the ground-contact point of a route sample
+    // and the walker's up direction there (the picked face's normal, aligned with
+    // the view's up; the view's up itself when the hit has no face). False when the
+    // ray misses every visible primitive.
+    bool route_point_at(int x, int y, easy3d::vec3 &point, easy3d::vec3 &up) const;
+
+    // Width, in world units, of the keyframe camera glyphs; the drawn glyphs and their
+    // rebuilt geometry use the same width.
+    float camera_marker_width() const;
+
+    // Rebuilds the keyframe camera glyphs in the scene, one camera per keyframe. They
+    // are ordinary triangles, so the scene hides them and the pivot gesture lands on
+    // them; they are hidden while the path plays and removed when it is hidden.
+    void update_camera_markers();
+
+    // Removes the glyph drawable so the scene bounds no longer include it; the caller
+    // restores the bounds afterwards.
+    void release_camera_markers();
 
     // Draws the walking stroke being traced, in the scene's overlay layer.
     void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
@@ -701,6 +717,11 @@ private:
     std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
     bool show_camera_path_ = false;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
+    // The keyframe camera glyphs: a standalone triangle drawable in the scene. The
+    // stored poses and width are the ones its buffers were built with.
+    std::shared_ptr<easy3d::TrianglesDrawable> camera_markers_;
+    std::vector<easy3d::Frame> camera_markers_frames_;
+    float camera_markers_width_ = 0;
 #ifdef EASY3D_HAS_VULKAN
     mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 #endif
@@ -708,12 +729,17 @@ private:
     std::unique_ptr<CameraPathBuilder> camera_path_builder_;
 
     // The gesture owned by the armed one-shot path tool. A route stroke keeps the
-    // accepted screen trail for the live preview and the picked ground points, split
-    // into segments where the drag left the visible surface.
+    // accepted screen trail for the live preview and the picked surface samples,
+    // split into segments where the drag left the visible surface.
     bool tracing_route_ = false;
+    // A route sample: the surface point under the cursor and the walker's up there.
+    struct RouteSample {
+        easy3d::vec3 point;
+        easy3d::vec3 up;
+    };
     std::vector<easy3d::vec2> route_stroke_screen_;          // accepted drag trail, logical window coordinates
-    std::vector<easy3d::vec3> route_segment_;                // picked ground points of the current segment
-    std::vector<std::vector<easy3d::vec3>> route_segments_;  // segments completed by a missed pick
+    std::vector<RouteSample> route_segment_;                 // picked samples of the current segment
+    std::vector<std::vector<RouteSample>> route_segments_;   // segments completed by a missed pick
     // A left press on the scene may still become the orbit click.
     bool orbit_click_pending_ = false;
     int orbit_click_x_ = 0, orbit_click_y_ = 0;

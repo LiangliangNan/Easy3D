@@ -1487,3 +1487,94 @@ once those are decided on.
   foot heights. Suites were not rerun (Mapple-only change), the arm/drag gestures
   were not scripted (picking is the same `Viewer::pick()` path the hover readout
   uses), and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — walker upright in the view; keyframe cameras as scene triangles (batch 110)
+
+- The walking route no longer guesses the up axis from the scene box. The walker
+  stands upright in the current view, so `CameraPathBuilder::ground_up_direction()`
+  is the camera's (normalized) up vector, and the route rises from the traced
+  surface along it; a rolled view tilts the walker. `eye_height()` measures the
+  scene extent along that direction, so the eye-height ratio keeps its meaning in
+  any view. The `GroundUpAxis` enum, `ground_up_axis()`/`set_ground_up_axis()` and
+  the Walk tool's Up axis combo are removed (batch 109's Auto/X/Y/Z choice is
+  superseded); the window instead shows the resolved direction, e.g.
+  `Up axis  (0.00, 1.00, 0.00)`, with a tooltip. `domik.obj` viewed upright still
+  yields +Y, but the answer now follows the view rather than the box.
+- The keyframe camera glyphs are scene triangles instead of annotations
+  (`MappleViewer::update_camera_markers()`): one `shape::create_camera()` glyph per
+  keyframe, posed by `Frame::matrix()` into a standalone `TrianglesDrawable`
+  ("camera path markers", uniform green `(0.2, 0.7, 0.3)`) added with
+  `add_drawable()`. They are rebuilt in `pre_draw()` only when the poses or the
+  glyph width change, hidden with `set_visible(false)` while playback runs (or when
+  the width is 0), and removed by `release_camera_markers()` before
+  `restore_scene_bounds()`
+  in `set_camera_path_visible(false)` and `clear_camera_path()` so the hidden path
+  leaves no keyframe extent in the scene bounds. Width is 3% of the models' box
+  diagonal (the keyframe spread when no model is loaded) rather than 5% of
+  `camera()->scene_radius()`, because the glyphs are now part of the scene bounds
+  and a radius-based width would grow with its own bounds.
+- This gives the glyphs a written depth: the scene pass hides them behind the
+  surfaces (the far side no longer shades through), and because standalone
+  drawables are in the scene depth and pick passes on both backends,
+  `point_under_pixel()` (the Z / Shift + left-click pivot gesture) lands on a glyph
+  and `pick()` reports it (`PickResult::model` is null). `Viewer::draw()` and its
+  effects draw them with the models (the OIT transparency mode, which renders only
+  the model surfaces itself, still omits every standalone drawable - a pre-existing
+  limitation of that mode).
+- The Vulkan annotation slot now carries only the path polyline
+  (`KeyFrameInterpolatorRenderer::draw_path()`); Mapple no longer calls
+  `draw_cameras()`, and the OpenGL `draw_camera_path()` likewise draws only the
+  line. The core renderer's `draw_cameras()` stays for the camera-path tests and
+  Tutorial 206, and the viewer-level annotation pivot hook and the Vulkan
+  culled-overlay pipeline tried on the way here were removed again (the core
+  libraries are unchanged from HEAD).
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees
+  (`build-opengl-check`, `build-vulkan-check`); both backends launch with
+  `domik.obj` ("Mapple UI ready (OpenGL)" / "(Vulkan)"). A temporary headless probe
+  (removed afterwards, built against both trees) placed glyphs over a ground quad
+  and required, on both backends: the glyph is in the scene depth (the probe point
+  returns z > 1 for a glyph at z = 2 over ground z = 0), it is drawn (the capture
+  differs), `pick()` returns the glyph drawable with no model, a hidden glyph
+  leaves the depth alone, a glyph behind the ground is occluded (the probe point and
+  the pick report the ground) and deleting it restores the bare capture. Suites were
+  not rerun (Mapple-only change), keyframes and the pivot gesture were not
+  scripted, and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — the walker stands upright on the terrain (batch 111)
+
+- The walking route's up direction is now the surface under each foot, not the
+  view (batch 110's camera-up choice is superseded). `MappleViewer::route_point_at()`
+  also returns the walker's up at the picked point: the hit face's normal
+  (`SurfaceMesh::compute_face_normal(Face(PickResult::face_index))`), flipped to
+  face along `ground_up_direction()` because the winding decides its sign, and the
+  view's up when the hit has no face (a point cloud or a standalone drawable).
+  A dragged route keeps a `RouteSample {point, up}` per sample instead of a bare
+  point, and `commit_ground_route()` hands the points and directions to
+  `CameraPathBuilder::generate_ground_route(stroke, foot_up_directions)`.
+- The builder resamples points and directions through one arc-length plan
+  (`arc_length_samples()` records `{segment, t}` and `sample_value()` interpolates
+  either array), normalizes each direction and aligns it with the view's up,
+  smooths them along the route with two 1-2-1 passes (picked facet normals step at
+  facet edges), and `ground_frames(feet, up_directions, eye_height)` now builds
+  every pose along its own foot's up, projecting the central-difference heading
+  onto that foot's tangent plane. The walker therefore tilts with the terrain and
+  the route still follows it. An empty direction vector keeps the view's up
+  (`ground_up_direction()` is now documented as that fallback and still scales the
+  eye height); directions that do not pair with the stroke, or a degenerate one,
+  produce no keyframes.
+- The Walk window's `Up axis  (x, y, z)` readout (batch 110) is replaced by
+  `Up  surface normal under each foot`, with a tooltip that names the fallback; the
+  eye-height tooltip now says each pose rises along its foot's normal, measured
+  against the scene extent along the view's up.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees
+  (`build-opengl-check`, `build-vulkan-check`); both backends launch with
+  `domik.obj` ("Mapple UI ready (OpenGL)" / "(Vulkan)"). A temporary headless probe
+  (removed) walked a 30-degree ramp with constant surface normals: 11 keyframes
+  were generated, every keyframe's up equals the ramp's normal, every pose sits one
+  eye height above the ramp line along that normal, every heading lies in the
+  terrain plane, the keyframes advance along the stroke, a route without
+  directions falls back to the view's up, and mismatched directions are refused.
+  The drag gesture itself (picking a face normal under the cursor) was not
+  scripted, so the on-screen tilt was not captured; suites were not rerun
+  (Mapple-only change, core libraries at HEAD), and `easy3d/util/version.h` is
+  unchanged.

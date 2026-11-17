@@ -39,14 +39,21 @@
 using namespace easy3d;
 
 namespace {
-    // Samples \p points at constant arc length. The first point, every \p spacing
+    // A point along a polyline: \p segment - 1 to \p segment, \p t of the way;
+    // segment 0 with t 0 is the first point.
+    struct ArcSample {
+        std::size_t segment;
+        float t;
+    };
+
+    // Samples a polyline at constant arc length. The first point, every \p spacing
     // sample and the stroke end are kept; a sample closer than a quarter spacing to
     // the end is dropped so the last keyframes do not crowd.
-    std::vector<vec3> resample_by_arc_length(const std::vector<vec3> &points, float spacing) {
-        std::vector<vec3> samples;
+    std::vector<ArcSample> arc_length_samples(const std::vector<vec3> &points, float spacing) {
+        std::vector<ArcSample> samples;
         if (points.empty())
             return samples;
-        samples.push_back(points.front());
+        samples.push_back({0, 0.0f});
         if (points.size() < 2)
             return samples;
 
@@ -65,15 +72,23 @@ namespace {
                 break;
             const float length = cumulative[segment] - cumulative[segment - 1];
             const float t = length > 0.0f ? (s - cumulative[segment - 1]) / length : 0.0f;
-            samples.push_back(points[segment - 1] + (points[segment] - points[segment - 1]) * t);
+            samples.push_back({segment, t});
         }
-        samples.push_back(points.back());
+        samples.push_back({points.size() - 1, 1.0f});
         return samples;
+    }
+
+    // The value of a per-stroke-point quantity at a sample: linearly interpolated,
+    // so positions and the walker's up directions share the resampling.
+    vec3 sample_value(const std::vector<vec3> &values, const ArcSample &sample) {
+        if (sample.segment == 0)
+            return values.front();
+        return values[sample.segment - 1] + (values[sample.segment] - values[sample.segment - 1]) * sample.t;
     }
 }
 
 CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
-        : camera_(camera), kfi_(interpolator), mode_(Mode::Off), ground_up_axis_(GroundUpAxis::Auto),
+        : camera_(camera), kfi_(interpolator), mode_(Mode::Off),
           eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(1.0f),
           orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
           pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
@@ -99,33 +114,59 @@ void CameraPathBuilder::set_keyframe_spacing_in_character_heights(float spacing_
 }
 
 vec3 CameraPathBuilder::ground_up_direction() const {
-    switch (ground_up_axis_) {
-        case GroundUpAxis::X: return vec3(1.0f, 0.0f, 0.0f);
-        case GroundUpAxis::Y: return vec3(0.0f, 1.0f, 0.0f);
-        case GroundUpAxis::Z: return vec3(0.0f, 0.0f, 1.0f);
-        case GroundUpAxis::Auto: break;
-    }
-    if (!scene_box_.is_valid())
+    // The fallback for poses whose surface supplies no normal: the view's up
+    // direction, which is also what the eye height is measured against.
+    vec3 up = camera_->up_vector();
+    if (up.length2() < epsilon_sqr<float>())
         return vec3(0.0f, 0.0f, 1.0f);
-
-    const vec3 extent = scene_box_.max_point() - scene_box_.min_point();
-    if (extent.x < extent.y && extent.x < extent.z)
-        return vec3(1.0f, 0.0f, 0.0f);
-    if (extent.y < extent.z)
-        return vec3(0.0f, 1.0f, 0.0f);
-    return vec3(0.0f, 0.0f, 1.0f);
+    return up.normalize();
 }
 
-std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
+std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke,
+                                                     const std::vector<vec3> &foot_up_directions) {
     if (stroke.size() < 2)
+        return 0;
+    if (!foot_up_directions.empty() && foot_up_directions.size() != stroke.size())
         return 0;
 
     const float eye = eye_height();
     if (eye <= 1e-4f)
         return 0;
     const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
-    const std::vector<vec3> feet = resample_by_arc_length(stroke, spacing);
-    const std::vector<Frame> frames = ground_frames(feet, ground_up_direction(), eye);
+    const std::vector<ArcSample> samples = arc_length_samples(stroke, spacing);
+
+    const vec3 fallback_up = ground_up_direction();
+    std::vector<vec3> feet, ups;
+    feet.reserve(samples.size());
+    ups.reserve(samples.size());
+    for (const auto &sample : samples) {
+        feet.push_back(sample_value(stroke, sample));
+        if (foot_up_directions.empty()) {
+            ups.push_back(fallback_up);
+            continue;
+        }
+        vec3 up = sample_value(foot_up_directions, sample);
+        // The face winding decides the normal's sign; the view's up says which side
+        // of the surface the walker stands on.
+        if (up.length2() < epsilon_sqr<float>())
+            up = fallback_up;
+        up.normalize();
+        ups.push_back(dot(up, fallback_up) < 0.0f ? -up : up);
+    }
+
+    // Picked facet normals step at facet edges; smoothing along the route keeps the
+    // walker from tipping on a single keyframe.
+    for (int pass = 0; pass < 2; ++pass) {
+        std::vector<vec3> smoothed = ups;
+        for (std::size_t i = 1; i + 1 < ups.size(); ++i) {
+            vec3 n = ups[i - 1] + ups[i] * 2.0f + ups[i + 1];
+            if (n.length2() > epsilon_sqr<float>())
+                smoothed[i] = n.normalize();
+        }
+        ups.swap(smoothed);
+    }
+
+    const std::vector<Frame> frames = ground_frames(feet, ups, eye);
     for (const auto &frame : frames)
         add_keyframe(frame);
     return frames.size();
@@ -183,21 +224,21 @@ std::vector<Frame> CameraPathBuilder::orbit_frames(const Line3 &axis, const vec3
     return frames;
 }
 
-std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &feet, const vec3 &up,
-                                              float eye_height) const {
+std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &feet,
+                                                    const std::vector<vec3> &up_directions,
+                                                    float eye_height) const {
     std::vector<Frame> frames;
-    if (feet.size() < 2)
+    if (feet.size() < 2 || up_directions.size() != feet.size())
         return frames;
-
-    vec3 normal = up;
-    if (normal.length2() < epsilon_sqr<float>())
-        return frames;
-    normal.normalize();
+    for (const auto &up : up_directions) {
+        if (up.length2() < epsilon_sqr<float>())
+            return frames;
+    }
 
     // In-plane heading that stays continuous: the central difference of the
     // neighbours, with repeated waypoints skipped and an arbitrary in-plane
     // heading as the last resort.
-    auto heading = [&](size_t i) -> vec3 {
+    auto heading = [&](size_t i, const vec3 &up) -> vec3 {
         const vec3 &a = feet[i > 0 ? i - 1 : i];
         const vec3 &b = feet[i + 1 < feet.size() ? i + 1 : i];
         vec3 d = b - a;
@@ -213,18 +254,20 @@ std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &fee
             if (d.length2() > epsilon_sqr<float>())
                 return d;
         }
-        return geom::orthogonal(normal);
+        return geom::orthogonal(up);
     };
 
     frames.reserve(feet.size());
     for (size_t i = 0; i < feet.size(); ++i) {
-        vec3 dir = heading(i);
-        dir -= normal * dot(dir, normal);
+        vec3 up = up_directions[i];
+        up.normalize();
+        vec3 dir = heading(i, up);
+        dir -= up * dot(dir, up);
         // A near-vertical step (steep terrain) leaves no in-plane heading.
         if (dir.length2() < epsilon_sqr<float>())
-            dir = geom::orthogonal(normal);
+            dir = geom::orthogonal(up);
         dir.normalize();
-        frames.emplace_back(feet[i] + normal * eye_height, to_orientation(dir, normal));
+        frames.emplace_back(feet[i] + up * eye_height, to_orientation(dir, up));
     }
     return frames;
 }
@@ -274,8 +317,8 @@ float CameraPathBuilder::eye_height() const {
     if (!scene_box_.is_valid())
         return camera_->scene_radius() * eye_height_in_scene_heights_;
 
-    // The scene "height" is its extent along the up axis, which is Z only when the
-    // box says so (Auto) or the caller chose Z.
+    // The scene "height" is its extent along the route's fallback up direction
+    // (the view's up), so the eye height keeps the same ratio in any view.
     const vec3 up = ground_up_direction();
     const float scene_height = std::abs(up.x) * scene_box_.range(0) +
                                std::abs(up.y) * scene_box_.range(1) +
