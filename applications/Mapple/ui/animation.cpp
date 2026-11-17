@@ -25,6 +25,7 @@
  \endcond */
 
 #include "../mapple_viewer.h"
+#include "../walk_through.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -34,6 +35,7 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
+#include <easy3d/gui/picker.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -57,6 +59,8 @@ namespace {
 
 void MappleViewer::open_animation_window() {
     show_animation_window_ = true;
+    if (walk_through_ && walk_through_->status() == WalkThrough::STOPPED)
+        set_camera_path_mode(0);
 }
 
 void MappleViewer::draw_animation_window() {
@@ -72,6 +76,12 @@ void MappleViewer::draw_animation_window() {
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
             camera_keyframe_index_ = -1;
+            // The tool owns Alt+clicks while active, so it stops with its window.
+            if (walk_through_)
+                walk_through_->set_status(WalkThrough::STOPPED);
+            walk_click_pending_ = false;
+            pending_walk_pick_ = false;
+            pending_orbit_ = false;
         }
         return;
     }
@@ -90,10 +100,32 @@ void MappleViewer::draw_animation_window() {
 
     ImGui::Separator();
     ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
-    ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
 
+    const WalkThrough::Status mode =
+            walk_through_ ? walk_through_->status() : WalkThrough::STOPPED;
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Mode");
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Free", mode == WalkThrough::FREE_MODE))
+        set_camera_path_mode(0);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Walk", mode == WalkThrough::WALKING_MODE))
+        set_camera_path_mode(1);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Orbit", mode == WalkThrough::ROTATE_AROUND_AXIS))
+        set_camera_path_mode(2);
+
+    if (mode == WalkThrough::WALKING_MODE)
+        ImGui::TextDisabled("Alt+click a surface to record a step.");
+    else if (mode == WalkThrough::ROTATE_AROUND_AXIS)
+        ImGui::TextDisabled("Alt+click to set the rotation axis.");
+    else
+        ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
+
+    ImGui::BeginDisabled(mode != WalkThrough::FREE_MODE);
     if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
         add_camera_keyframe();
+    ImGui::EndDisabled();
     ImGui::SameLine();
     if (ImGui::Button("Remove Last", ImVec2(110, 0)))
         remove_last_camera_keyframe();
@@ -139,6 +171,84 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
 
+    if (walk_through_ && mode == WalkThrough::WALKING_MODE) {
+        ImGui::Separator();
+        bool follow = walk_through_->follow_up();
+        if (ImGui::Checkbox("Follow the character", &follow))
+            walk_through_->set_follow_up(follow);
+        ImGui::SetItemTooltip("Move the camera to each recorded step.");
+
+        float height = walk_through_->height_factor();
+        if (ImGui::DragFloat("Character height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            walk_through_->set_height_factor(height);
+            update();
+        }
+        ImGui::SetItemTooltip("The eye height above the ground, relative to the scene height.");
+
+        float distance = walk_through_->third_person_forward_factor();
+        if (ImGui::DragFloat("Character distance to eye", &distance, 0.01f, 0.0f, 100.0f,
+                             "%.2f x height")) {
+            walk_through_->set_third_person_forward_factor(distance);
+            update();
+        }
+        ImGui::SetItemTooltip("How far the camera stands behind the character, relative to its height.");
+    } else if (walk_through_ && mode == WalkThrough::ROTATE_AROUND_AXIS) {
+        ImGui::Separator();
+        bool changed = false;
+        float zoom = walk_through_->zoom_out_factor();
+        if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
+            walk_through_->set_zoom_out_factor(zoom, true);
+            changed = true;
+        }
+        float offset = walk_through_->vertical_offset_factor();
+        if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
+            walk_through_->set_vertical_offset_factor(offset, true);
+            changed = true;
+        }
+        float pitch = walk_through_->pitch_angle();
+        if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg")) {
+            walk_through_->set_pitch_angle(pitch, true);
+            changed = true;
+        }
+        int samples = walk_through_->keyframe_samples();
+        if (ImGui::DragInt("Keyframes per loop", &samples, 0.5f, 1, 99)) {
+            walk_through_->set_keyframe_samples(samples, true);
+            changed = true;
+        }
+        int loops = walk_through_->num_loops();
+        if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99)) {
+            walk_through_->set_num_loops(loops, true);
+            changed = true;
+        }
+        if (changed) {
+            camera_keyframe_index_ = walk_through_->current_keyframe_index();
+            update();
+        }
+    }
+
+    // The orbit arrives as a click; a non-empty path is only replaced on request.
+    if (pending_orbit_) {
+        pending_orbit_ = false;
+        ImGui::OpenPopup("Replace Camera Path?");
+    }
+    if (ImGui::BeginPopupModal("Replace Camera Path?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextUnformatted("The orbit replaces the current camera path.");
+        ImGui::Spacing();
+        if (ImGui::Button("Replace", ImVec2(100, 0))) {
+            kfi_->delete_path();
+            camera_keyframe_index_ = -1;
+            walk_through_->generate_camera_path(pending_orbit_axis_);
+            if (!show_camera_path_)
+                set_camera_path_visible(true);
+            update();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(100, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
     ImGui::Separator();
 #ifdef HAS_FFMPEG
     ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
@@ -174,7 +284,11 @@ void MappleViewer::add_camera_keyframe() {
 void MappleViewer::remove_last_camera_keyframe() {
     if (kfi_->number_of_keyframes() == 0)
         return;
-    kfi_->delete_last_keyframe();
+    // In walking mode the tool also steps back to the new last view.
+    if (walk_through_ && walk_through_->status() == WalkThrough::WALKING_MODE)
+        walk_through_->delete_last_keyframe();
+    else
+        kfi_->delete_last_keyframe();
     camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     LOG(INFO) << "last keyframe removed (" << kfi_->number_of_keyframes() << " remaining)";
     update();
@@ -183,7 +297,10 @@ void MappleViewer::remove_last_camera_keyframe() {
 void MappleViewer::clear_camera_path() {
     if (kfi_->number_of_keyframes() == 0)
         return;
-    kfi_->delete_path();
+    if (walk_through_)
+        walk_through_->clear();
+    else
+        kfi_->delete_path();
     camera_keyframe_index_ = -1;
     if (show_camera_path_)
         restore_scene_bounds();
@@ -262,6 +379,58 @@ void MappleViewer::export_camera_path() {
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes saved to " << file_name;
     else
         LOG(ERROR) << "failed to save keyframes to " << file_name;
+}
+
+void MappleViewer::set_camera_path_mode(int mode) {
+    if (!walk_through_)
+        return;
+    const WalkThrough::Status status = mode == 1 ? WalkThrough::WALKING_MODE
+                                     : mode == 2 ? WalkThrough::ROTATE_AROUND_AXIS
+                                                 : WalkThrough::FREE_MODE;
+
+    walk_click_pending_ = false;
+    pending_orbit_ = false;
+    if (walk_through_->status() == status)
+        return;
+
+    walk_through_->set_status(status);
+    if (status == WalkThrough::WALKING_MODE || status == WalkThrough::ROTATE_AROUND_AXIS)
+        walk_through_->set_scene(models());
+
+    LOG(INFO) << "camera path creation mode: "
+              << (status == WalkThrough::WALKING_MODE ? "walking"
+                  : status == WalkThrough::ROTATE_AROUND_AXIS ? "orbit" : "free");
+    update();
+}
+
+void MappleViewer::apply_camera_path_click(int x, int y) {
+    if (!walk_through_ || !point_in_scene(x, y))
+        return;
+
+    if (walk_through_->status() == WalkThrough::WALKING_MODE) {
+        // The GPU pick runs at draw time, like the selection picks.
+        pending_walk_pick_ = true;
+        walk_click_x_ = x;
+        walk_click_y_ = y;
+    } else if (walk_through_->status() == WalkThrough::ROTATE_AROUND_AXIS) {
+        walk_through_->set_scene(models());
+        if (!walk_through_->scene_box().is_valid()) {
+            LOG(WARNING) << "the orbit needs a visible model";
+            return;
+        }
+        const Picker picker(camera());
+        const Line3 axis = picker.picking_line(x, y);
+        if (kfi_->number_of_keyframes() == 0) {
+            walk_through_->generate_camera_path(axis);
+            if (!show_camera_path_)
+                set_camera_path_visible(true);
+            camera_keyframe_index_ = walk_through_->current_keyframe_index();
+            update();
+        } else {
+            pending_orbit_axis_ = axis;
+            pending_orbit_ = true; // the window asks before replacing the path
+        }
+    }
 }
 
 //------------------------------------------------------------------------

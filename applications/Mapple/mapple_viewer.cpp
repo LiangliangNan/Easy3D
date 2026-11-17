@@ -26,6 +26,7 @@
 
 #include "mapple_viewer.h"
 #include "imgui_layer.h"
+#include "walk_through.h"
 
 #include <algorithm>
 #include <cmath>
@@ -37,6 +38,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/gui/picker.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/ambient_occlusion.h>
@@ -48,6 +50,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/per_pixel_linked_lists_oit.h>
@@ -277,6 +280,9 @@ void MappleViewer::init() {
     if (!imgui_->init(window(), dpi_scaling(), pixel_ratio()))
         throw std::runtime_error("failed to initialize Dear ImGui");
     imgui_->set_display_size(width(), height());
+
+    // The walking and orbit tools create keyframes on the viewer's own camera path.
+    walk_through_.reset(new WalkThrough(camera(), kfi_.get()));
 
     // Recreate the effect that was enabled in the previous session. The effect objects
     // are cheap until used, but they must exist before the first frame draws.
@@ -548,6 +554,22 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         return true;
     }
 
+    // While a path tool is active Alt belongs to the tool: the press may become a
+    // click on the scene (walk there, or pick the orbit axis) and must not start a
+    // model manipulation. The clipping plane keeps its Alt precedence.
+    const WalkThrough::Status path_mode =
+            walk_through_ ? walk_through_->status() : WalkThrough::STOPPED;
+    if ((modifiers & MODIF_ALT) && button == BUTTON_LEFT &&
+        !ClippingPlane::instance()->is_enabled() && point_in_scene(x, y) &&
+        (path_mode == WalkThrough::WALKING_MODE || path_mode == WalkThrough::ROTATE_AROUND_AXIS)) {
+        walk_click_pending_ = true;
+        walk_click_x_ = x;
+        walk_click_y_ = y;
+        clear_hover();
+        update();
+        return true;
+    }
+
     // Alt + left-drag rotates the current model, Alt + right-drag moves it. While the
     // clipping plane is enabled Alt belongs to the plane (the Viewer handles it).
     if ((modifiers & MODIF_ALT) && !ClippingPlane::instance()->is_enabled() &&
@@ -573,6 +595,16 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
+
+    if (walk_click_pending_) {
+        walk_click_pending_ = false;
+        const float dx = static_cast<float>(x) - static_cast<float>(walk_click_x_);
+        const float dy = static_cast<float>(y) - static_cast<float>(walk_click_y_);
+        if (button == BUTTON_LEFT && std::fabs(dx) <= 2.0f && std::fabs(dy) <= 2.0f)
+            apply_camera_path_click(x, y);
+        update();
+        return true;
+    }
 
     if (manipulating_model_) {
         manipulating_model_ = false;
@@ -611,6 +643,9 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
+        return true;
+
+    if (walk_click_pending_) // a drag is not a click; keep the gesture away from the camera
         return true;
 
     if (manipulating_model_) {
@@ -733,6 +768,14 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         pending_command_ = SelectCommand::INVERT_SELECTION;
         return true;
     }
+    // Alt+K records the current camera pose, which belongs to the free mode; a walk
+    // or orbit path is built from scene clicks instead.
+    if (key == KEY_K && modifiers == MODIF_ALT && walk_through_ &&
+        (walk_through_->status() == WalkThrough::WALKING_MODE ||
+         walk_through_->status() == WalkThrough::ROTATE_AROUND_AXIS)) {
+        LOG(WARNING) << "'Alt+K' is for the free mode; Alt+click the scene to extend this path";
+        return true;
+    }
 
     return Viewer::key_press_event(key, modifiers);
 }
@@ -747,6 +790,7 @@ bool MappleViewer::char_input_event(unsigned int codepoint) {
 
 bool MappleViewer::focus_event(bool focused) {
     if (!focused) {
+        walk_click_pending_ = false;
         if (manipulating_model_) {
             manipulating_model_ = false;
             Model *model = current_model();
@@ -885,6 +929,21 @@ void MappleViewer::process_pending_work() {
         pending_region_ = false;
         select_region(pending_action_);
         lasso_.clear();
+    }
+
+    if (pending_walk_pick_) {
+        pending_walk_pick_ = false;
+        const PickResult result = pick(walk_click_x_, walk_click_y_);
+        if (result) {
+            walk_through_->set_scene(models());
+            walk_through_->walk_to(result.position);
+            if (!show_camera_path_)
+                set_camera_path_visible(true);
+            camera_keyframe_index_ = walk_through_->current_keyframe_index();
+            LOG(INFO) << "walking keyframe added at (" << result.position << ")";
+            update();
+        } else
+            LOG(WARNING) << "no surface under the click; nothing to walk to";
     }
 
     if (pending_hover_) {

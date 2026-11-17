@@ -49,6 +49,7 @@
 #include "settings.h"
 
 class ImGuiLayer;
+class WalkThrough;
 namespace easy3d {
     class AmbientOcclusion;
     class Drawable;
@@ -445,6 +446,16 @@ private:
 
     void export_camera_path();
 
+    // The two keyframe-creation tools beyond free recording: walking through the
+    // scene and orbiting a picked axis. They share the viewer's camera and keyframe
+    // interpolator; the mode lives in the tool (0 free, 1 walking, 2 orbit).
+    void set_camera_path_mode(int mode);
+    WalkThrough *camera_path_tool() const { return walk_through_.get(); }
+
+    // Applies an Alt+click while a path tool is active: walks to the picked point or
+    // uses the picked line as the orbit axis.
+    void apply_camera_path_click(int x, int y);
+
     // Video recording needs FFmpeg; without it recording_video() is always false.
 #ifdef HAS_FFMPEG
     // One camera-path video. The frames are rendered through Viewer::capture() one
@@ -658,6 +669,17 @@ private:
 
     bool show_animation_window_ = false;
     int camera_keyframe_index_ = -1; // keyframe last jumped to, for Prev/Next
+    // Walking and rotate-around-axis keyframe creation (created in init()).
+    std::unique_ptr<WalkThrough> walk_through_;
+
+    // An Alt+press that belongs to a path tool. The drag threshold turns it into a
+    // click; the walk pick itself runs at draw time, where picking is safe.
+    bool walk_click_pending_ = false;
+    bool pending_walk_pick_ = false;
+    int walk_click_x_ = 0, walk_click_y_ = 0;
+    // The Camera Path window asks before replacing a non-empty path with an orbit.
+    bool pending_orbit_ = false;
+    easy3d::Line3 pending_orbit_axis_;
 
     float left_width_ = 250.0f;
     float right_width_ = 300.0f;

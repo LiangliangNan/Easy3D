@@ -347,9 +347,11 @@ Properties...), and the small utilities (Edit menu with model manipulation,
 tetrahedralization, creating a mesh from text, polyhedral boundary extraction, and
 ambient occlusion) are migrated, as are the rendering effects (ambient occlusion,
 eye-dome lighting, soft shadow, depth-peeling transparency) and camera state files
-(Camera > Save/Restore View State...). The Qt-only capabilities left over from the
-capability pass are the walk-through animation, the load-translation options and the
-Models-panel/readout extras; retirement can proceed once those are decided on.
+(Camera > Save/Restore View State...). The walk-through animation is migrated too
+(Camera Path window modes: free, walking and orbit; see the 2026-11-17 changelog
+entry). The Qt-only capabilities left over from the capability pass are the
+load-translation options and the Models-panel/readout extras; retirement can proceed
+once those are decided on.
 
 ## ImGui notes
 
@@ -1272,3 +1274,44 @@ Models-panel/readout extras; retirement can proceed once those are decided on.
   moved when the load order changed. The shared trees could not relink while
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
+
+### 2026-11-17 — Walk-through keyframe creation (Phase 4 gap)
+
+- The Camera Path window now has a `Mode` row - `Free`, `Walk` and `Orbit` - over
+  the Qt walk-through tool. `Free` is the existing behaviour (move the camera, press
+  Alt+K to record the view, and the Add Keyframe button is enabled only there). The
+  `Walk` and `Orbit` modes instead record with an Alt+click on the scene; the hint
+  under the radio row says which: "Alt+click a surface to record a step." for walking
+  and "Alt+click to set the rotation axis." for orbit. The Add Keyframe button is
+  disabled in both, and Alt+K explains that it belongs to the free mode.
+- Walking: the clicked surface point becomes the character's foot. The eye keyframe
+  sits at the character's head, `character_height = 0.2 x scene` above the foot and
+  `1.8 x character_height` behind it, matching the Qt formulas. `set_scene()` seeds the
+  bounds from the visible models, and the first step enables the path overlay so the
+  new keyframes are visible. The section's two sliders are `Follow the character`
+  and `Character height` (0-100, "%.2f x scene") plus `Character distance to eye`
+  (0-100, "%.2f x height"); removing the last keyframe also steps the camera back to
+  the new last view in walking mode.
+- Orbit: the Alt+click ray serves as the rotation axis through the scene center,
+  exactly like the Qt dialog's axis picking. The section holds `Zoom out`, `Vertical
+  offset` (-100..100), `Pitch` (-89..89 deg), `Keyframes per loop` (1..99) and
+  `Loops` (1..99); each edit regenerates the path immediately. When a path already
+  exists the click opens a `Replace Camera Path?` modal instead of silently
+  discarding it.
+- `WalkThrough` (new `walk_through.h/.cpp`) is a redesign rather than a copy: it
+  borrows the viewer's camera and its own `KeyFrameInterpolator` instead of owning
+  them, and it adds to the scene radius rather than widening it up front, because
+  the Viewer already uses the same interpolator for playback, `.kf` import/export
+  and video recording. `move_to()` places the camera immediately through the frame
+  and updates the pivot point (the Qt version animated on a timer). Deliberately not
+  ported: the editor's threaded `preview()`, because `start_manual_interpolation()`
+  refuses an interpolator that was ever timer-driven; the tool-side path drawing,
+  which the Viewer's own overlay already does; and the separate "record path" flag.
+  Alt+click priority is the clipping plane (when on), then the path tool, then model
+  manipulation, and the GPU picks run at draw time from `process_pending_work()`.
+- Validation (2026-11-17, macOS): all three trees build; both backends launch
+  cleanly with `torusknot.obj` ("Mapple UI ready (Vulkan)" / "(OpenGL)"). A
+  temporary in-app probe (removed) generated a walk keyframe at the designed eye
+  position (z = -11.243 on a box of range 37.48) and a 20-keyframe orbit at radius
+  77.63 = the scene diagonal with constant z. Suites not rerun (app-only); the radio
+  row, Alt+click recording and the replace modal were not scripted.
