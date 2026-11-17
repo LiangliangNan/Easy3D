@@ -1721,16 +1721,8 @@ void MappleViewer::apply_style_to_all_models() {
         return;
     }
 
-    // The selection display replaces a drawable's own state; propagate the appearance
-    // underneath it and re-apply the display afterwards.
-    std::set<Model *> selection_display;
-    for (const auto &model : models()) {
-        if (selection_styles_.count(model.get())) {
-            selection_display.insert(model.get());
-            restore_selection_style(model.get());
-        }
-    }
-
+    // The selection overlay lives in the drawables, not in their state, so the style
+    // copy leaves it in place; re-apply it to recover the selection masks.
     std::size_t targets = 0;
     for (const auto &entry : models()) {
         Model *target = entry.get();
@@ -1775,8 +1767,8 @@ void MappleViewer::apply_style_to_all_models() {
             texture_styles_.erase(target);
     }
 
-    for (Model *model : selection_display)
-        refresh_selection_display(model);
+    for (const auto &model : models())
+        refresh_selection_display(model.get());
 
     if (targets)
         LOG(INFO) << "applied the style of '" << file_system::simple_name(source->name()) << "' to "

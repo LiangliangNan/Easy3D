@@ -149,7 +149,9 @@ namespace easy3d {
 
         ClippingPlane::instance()->set_program(program);
 
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release();
     }
 
@@ -242,7 +244,9 @@ namespace easy3d {
 
         ClippingPlane::instance()->set_program(program);
 
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release();
     }
 
@@ -301,7 +305,9 @@ namespace easy3d {
 
         ClippingPlane::instance()->set_program(program);
 
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release_texture();
 
         program->release();
@@ -353,7 +359,9 @@ namespace easy3d {
         ClippingPlane::instance()->set_program(program);
 
         program->bind_texture("textureID",texture()->id(), 0);
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release_texture();
 
         program->release();
@@ -413,7 +421,9 @@ namespace easy3d {
 
         ClippingPlane::instance()->set_program(program);
 
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release();
     }
 
@@ -466,7 +476,9 @@ namespace easy3d {
         ClippingPlane::instance()->set_program(program);
 
         program->bind_texture("textureID",texture()->id(), 0);
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release_texture();
 
         program->release();

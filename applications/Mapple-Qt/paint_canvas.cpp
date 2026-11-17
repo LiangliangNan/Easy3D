@@ -1475,60 +1475,24 @@ void PaintCanvas::enableEyeDomeLighting(bool b) {
 
 void PaintCanvas::invertSelection() {
     makeCurrent();
-    if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-        auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
+    if (auto *mesh = dynamic_cast<SurfaceMesh*>(currentModel())) {
+        auto select = mesh->get_face_property<bool>("f:select");
+        if (!select)
+            select = mesh->add_face_property<bool>("f:select", false);
+        for (auto f : mesh->faces())
+            select[f] = !select[f];
         auto d = mesh->renderer()->get_triangles_drawable("faces");
-        if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
-            auto select = mesh->get_face_property<bool>("f:select");
-            if (!select)
-                select = mesh->add_face_property<bool>("f:select", false);
-            for (auto f : mesh->faces())
-                select[f] = !select[f];
-            d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-            buffer::update(mesh, d);
-        }
-        else {
-            auto select = mesh->face_property<bool>("f:select");
-            for (auto f : mesh->faces())
-                select[f] = !select[f];
-
-            auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-
-            // update the drawable's texcoord buffer
-            std::vector<vec2> texcoords(d->num_vertices());
-            for (auto f : mesh->faces()) {
-                int start = triangle_range[f].first;
-                int end = triangle_range[f].second;
-                for (int idx = start; idx <= end; ++idx)
-                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f],0.5f);
-            }
-            d->update_texcoord_buffer(texcoords);
-            d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-        }
-    } else if (dynamic_cast<PointCloud*>(currentModel())) {
-        auto cloud = dynamic_cast<PointCloud*>(currentModel());
+        d->set_highlight_property(State::FACE, "f:select");
+        buffer::update_highlight_mask(mesh, d);
+    } else if (auto *cloud = dynamic_cast<PointCloud*>(currentModel())) {
+        auto select = cloud->get_vertex_property<bool>("v:select");
+        if (!select)
+            select = cloud->add_vertex_property<bool>("v:select", false);
+        for (auto v : cloud->vertices())
+            select[v] = !select[v];
         auto d = cloud->renderer()->get_points_drawable("vertices");
-        if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "v:select") {
-            auto select = cloud->get_vertex_property<bool>("v:select");
-            if (!select)
-                select = cloud->add_vertex_property<bool>("v:select", false);
-            for(auto v : cloud->vertices())
-                select[v] = !select[v];
-            d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-            buffer::update(cloud, d);
-        }
-        else {
-            auto select = cloud->vertex_property<bool>("v:select");
-            for (auto v : cloud->vertices())
-                select[v] = !select[v];
-
-            // update the drawable's texcoord buffer
-            std::vector<vec2> texcoords(d->num_vertices());
-            for (auto v : cloud->vertices())
-                texcoords[v.idx()] = vec2(select[v], 0.5f);
-            d->update_texcoord_buffer(texcoords);
-            d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-        }
+        d->set_highlight_property(State::VERTEX, "v:select");
+        buffer::update_highlight_mask(cloud, d);
     }
     doneCurrent();
 

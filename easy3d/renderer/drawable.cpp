@@ -93,7 +93,8 @@ namespace easy3d {
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), buffers_ready_(false), update_func_(nullptr), vertex_buffer_(0),
-              color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
+              color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), element_buffer_(0),
+              highlight_texture_(0), highlight_primitives_(0), manipulator_(nullptr) {
 #ifndef EASY3D_HAS_VULKAN
         opengl_initialize();
 #else
@@ -133,11 +134,40 @@ namespace easy3d {
         if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
             opengl_release_buffers();
 #endif
-
+        reset_highlight_mask();
         num_vertices_ = 0;
         num_indices_ = 0;
         buffers_ready_ = false;
         bbox_.clear();
+    }
+
+
+    void Drawable::reset_highlight_mask() {
+        if (cpu_buffers_)
+            cpu_buffers_->highlights.clear();
+#ifndef EASY3D_HAS_VULKAN
+        highlight_primitives_ = 0;
+#endif
+    }
+
+
+    void Drawable::update_highlight_mask(const std::vector<float> &strengths, bool dynamic) {
+        const std::size_t stride = type() == DT_TRIANGLES ? 3 : type() == DT_LINES ? 2 : 1;
+        const std::size_t base = num_indices_ ? num_indices_ : num_vertices_;
+        const std::size_t primitives = base / stride;
+        if (!strengths.empty()) {
+            if (strengths.size() != primitives)
+                throw std::invalid_argument("highlight mask must have one strength per rendered primitive");
+            for (const float s : strengths)
+                if (!(s >= 0.0f && s <= 1.0f))
+                    throw std::invalid_argument("highlight strengths must lie in [0, 1]");
+        }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->highlights = strengths;
+        ++cpu_buffers_->revision;
+#else
+        opengl_update_highlight_mask(strengths, dynamic);
+#endif
     }
 
 
@@ -148,6 +178,7 @@ namespace easy3d {
         if (element_buffer_) opengl_disable_element_buffer();
 #endif
         num_indices_ = 0;
+        reset_highlight_mask();
     }
 
 
@@ -196,6 +227,7 @@ namespace easy3d {
         // The model must not overwrite them afterwards, matching the OpenGL backend,
         // where the GPU buffer exists as soon as it has been uploaded.
         buffers_ready_ = true;
+        reset_highlight_mask();
     }
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
@@ -229,6 +261,7 @@ namespace easy3d {
         ++point_revision_;
         opengl_update_element_buffer(indices);
 #endif
+        reset_highlight_mask();
     }
 
     void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {

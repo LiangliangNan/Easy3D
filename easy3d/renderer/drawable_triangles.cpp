@@ -135,7 +135,9 @@ namespace easy3d {
             program->bind_texture("aoTexture", ao_texture_, 1);
         else
             program->set_uniform("aoTexture", 0);
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         if (use_ao)
             program->release_texture();
 

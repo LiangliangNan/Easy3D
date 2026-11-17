@@ -41,6 +41,7 @@ namespace easy3d {
     class Model;
     class Camera;
     class Manipulator;
+    class ShaderProgram;
     class VertexArrayObject;
     namespace opengl { class PointSelector; }
 
@@ -78,6 +79,8 @@ namespace easy3d {
             std::vector<vec2> texcoords;
             /// Optional indices into the vertex arrays.
             std::vector<unsigned int> indices;
+            /// Per-primitive highlight strength in [0, 1], in draw order; empty when nothing is highlighted.
+            std::vector<float> highlights;
             /// Original SurfaceMesh face index for each rendered triangle; -1 means unknown.
             std::vector<int> source_faces;
             /// Incremented when the CPU-side buffer snapshot changes.
@@ -186,6 +189,20 @@ namespace easy3d {
          * invalidate the mapping.
          */
         void set_source_faces(const std::vector<int>& faces);
+
+        /**
+         * \brief Sets a per-primitive highlight strength in draw order.
+         * \details Primitives are points, lines, or triangles in the order they are drawn, i.e., the element
+         *      buffer order when one is used. A strength of 0 leaves the primitive untouched, a positive value
+         *      mixes its final color toward setting::highlight_color.
+         *      Normally the mask is produced from the highlight property by buffer::update_highlight_mask();
+         *      use this function only when uploading the buffer yourself.
+         * \param strengths One strength in [0, 1] per rendered primitive, or an empty vector to clear the highlight.
+         * \throws std::invalid_argument if the count does not match the rendered primitives or a value is not in
+         *      [0, 1].
+         * \note The mask is associated with the current geometry and is cleared by a geometry upload.
+         */
+        void update_highlight_mask(const std::vector<float> &strengths, bool dynamic = false);
 
         /**
          * \brief Returns the vertex buffer ID.
@@ -410,6 +427,8 @@ namespace easy3d {
         void opengl_update_texcoord_buffer(const std::vector<vec2>&, bool);
         // Uploads the index array into the element buffer.
         void opengl_update_element_buffer(const std::vector<unsigned int>&);
+        // Uploads the per-primitive highlight mask and rebuilds the lookup texture.
+        void opengl_update_highlight_mask(const std::vector<float>&, bool);
 
         // Version of the position storage, bumped on every buffer change so that
         // point selection can tell that its cached snapshot is stale.
@@ -426,6 +445,10 @@ namespace easy3d {
         // resets the vertex/index counts and the bounding box.
         void clear();
 
+        // Drops the per-primitive highlight mask; called whenever the geometry changes,
+        // because the mask is indexed by the primitives of a specific upload.
+        void reset_highlight_mask();
+
 #ifndef EASY3D_HAS_VULKAN
         // Framebuffer-to-logical pixel scale of the currently bound OpenGL viewport:
         // queries GL_VIEWPORT and divides its width by camera.screen_width(), which is
@@ -438,6 +461,13 @@ namespace easy3d {
         // dpi_scaling() only when the target is the window framebuffer, so do not
         // substitute dpi_scaling() for it.
         static float viewport_pixel_scale(const Camera& camera);
+
+        // Binds the highlight mask lookup texture (unit 2) and points the program's
+        // highlight_mask sampler at it. Also tells the program whether a mask exists,
+        // so a program reused by an unhighlighted drawable never samples a stale texture.
+        void opengl_bind_highlight_mask(ShaderProgram* program) const;
+        // Unbinds the highlight mask after drawing.
+        void opengl_release_highlight_mask() const;
 #endif
 
     protected:
@@ -460,6 +490,8 @@ namespace easy3d {
         unsigned int normal_buffer_;    //!< The normal buffer ID.
         unsigned int texcoord_buffer_;  //!< The texture coordinate buffer ID.
         unsigned int element_buffer_;   //!< The element buffer ID.
+        unsigned int highlight_texture_;    //!< The highlight mask texture ID; owned by the OpenGL backend.
+        std::size_t highlight_primitives_;  //!< Number of primitives described by highlight_texture_; 0 = no mask.
 
         // drawables not attached to a model can also be manipulated
         std::shared_ptr<Manipulator> manipulator_;   //!< The manipulator for the drawable.

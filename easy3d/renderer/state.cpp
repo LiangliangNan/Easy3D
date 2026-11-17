@@ -46,7 +46,7 @@ namespace easy3d {
               texture_(nullptr), texture_repeat_(1.0f), texture_fractional_repeat_(0.0f), ao_enabled_(false),
               ao_texture_(0),
               clamp_range_(true), clamp_lower_(0.05f), clamp_upper_(0.05f), plane_clip_discard_primitive_(false),
-              highlight_(false), highlight_range_(-1, -1) {
+              highlight_(false), highlight_range_(-1, -1), highlight_location_(VERTEX), highlight_property_() {
     }
 
 
@@ -61,7 +61,8 @@ namespace easy3d {
               ao_enabled_(s.is_ao_enabled()), ao_texture_(s.ao_texture_), clamp_range_(s.clamp_range()),
               clamp_lower_(s.clamp_lower()), clamp_upper_(s.clamp_upper()),
               material_(s.material()), plane_clip_discard_primitive_(s.plane_clip_discard_primitive()),
-              highlight_(s.highlight()), highlight_range_(s.highlight_range()) {
+              highlight_(s.highlight()), highlight_range_(s.highlight_range()),
+              highlight_location_(s.highlight_location()), highlight_property_(s.highlight_property()) {
     }
 
 
@@ -88,6 +89,8 @@ namespace easy3d {
         plane_clip_discard_primitive_ = s.plane_clip_discard_primitive();
         highlight_ = s.highlight();
         highlight_range_ = s.highlight_range();
+        highlight_location_ = s.highlight_location();
+        highlight_property_ = s.highlight_property();
         return *this;
     }
 

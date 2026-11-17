@@ -241,14 +241,6 @@ private:
         float ao_bias_ratio = 0.001f;   // ray origin offset, as a fraction of the search radius
     };
 
-    // The drawable appearance in effect before the selection view replaced it, so
-    // clearing the selection restores the user's appearance instead of leaving the
-    // model painted with the selection colormap.
-    struct SelectionStyle {
-        easy3d::State state;                        // full drawable state before selection
-        std::unique_ptr<easy3d::Texture> colormap;  // 2x1: unselected color -> highlight
-    };
-
     // How a drawable's scalar field is colored. The coloring itself lives in the
     // drawable's state; this keeps the Rendering panel's controls populated across
     // frames and renderer updates.
@@ -380,22 +372,16 @@ private:
 
     static bool is_long_running(ProcessOp op);
 
-    // The command rebuilds the model, so every property (including the selection)
-    // is discarded and the stored selection style no longer applies.
-    static bool discards_model_properties(ProcessOp op);
-
-    // The former body of apply_process(): runs the command, returns whether the
-    // selection display must be left alone afterwards. May run on a worker thread,
-    // so it must not touch GPU resources or add models directly.
-    bool run_process_algorithm(easy3d::Model *model);
+    // The former body of apply_process(): runs the command. May run on a worker
+    // thread, so it must not touch GPU resources or add models directly.
+    void run_process_algorithm(easy3d::Model *model);
 
     void start_process_job();
 
     // Joins a finished job and adopts its result model on the main thread.
     void poll_process_job();
 
-    void finalize_process(easy3d::Model *model, std::chrono::steady_clock::time_point start,
-                          bool skip_selection_display);
+    void finalize_process(easy3d::Model *model, std::chrono::steady_clock::time_point start);
 
     void request_process_cancel();
 
@@ -743,17 +729,12 @@ private:
 
     void invalidate_selection_count() { selection_count_dirty_ = true; }
 
-    // Shows the selection as v:select/f:select scalar coloring, remembering the
-    // drawable's previous appearance the first time. Selection changes refresh only
-    // the texture coordinates; a topology change needs a renderer update first.
+    // Tints the elements marked in v:select/f:select over the drawable's own
+    // coloring, and drops the tint when the selection is empty.
     void refresh_selection_display(easy3d::Model *model);
 
-    // Refreshes the selection display, or restores the saved appearance when the
-    // selection became empty.
+    // Refreshes the selection display after a selection change.
     void finish_selection_change(easy3d::Model *model);
-
-    // Restores the appearance saved by refresh_selection_display(), if any.
-    void restore_selection_style(easy3d::Model *model);
 
     // Drops saved styles and hover references to a model that is about to be deleted.
     void forget_model(easy3d::Model *model);
@@ -934,8 +915,6 @@ private:
     // Pickers borrow the camera and own backend pick resources; created on first use.
     std::unique_ptr<easy3d::PointCloudPicker> point_picker_;
     std::unique_ptr<easy3d::SurfaceMeshPicker> mesh_picker_;
-
-    std::map<easy3d::Model *, SelectionStyle> selection_styles_;
 
     // Keyed by model, then drawable name: a renderer update may recreate drawables
     // while keeping their names.

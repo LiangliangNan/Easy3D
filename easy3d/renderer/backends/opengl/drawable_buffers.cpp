@@ -31,8 +31,16 @@
 #include <easy3d/core/model.h>
 #include <easy3d/util/logging.h>
 #include <cassert>
+#include <algorithm>
 #include <stdexcept>
 namespace easy3d {
+    namespace {
+        // The mask is a 1D array of strengths sampled by primitive ID; a 2D R32F texture
+        // keeps it below the texture-buffer size limit for meshes of any practical size.
+        constexpr int kHighlightMaskWidth = 4096;
+        constexpr int kHighlightMaskUnit = 2;   // texture unit 1 belongs to the AO map
+    }
+
     void Drawable::opengl_initialize() { vao_.reset(new VertexArrayObject); }
     void Drawable::opengl_release_buffers() {
         VertexArrayObject::release_buffer(vertex_buffer_);
@@ -40,6 +48,10 @@ namespace easy3d {
         VertexArrayObject::release_buffer(normal_buffer_);
         VertexArrayObject::release_buffer(texcoord_buffer_);
         VertexArrayObject::release_buffer(element_buffer_);
+        if (highlight_texture_)
+            glDeleteTextures(1, &highlight_texture_);
+        highlight_texture_ = 0;
+        highlight_primitives_ = 0;
     }
     void Drawable::opengl_disable_element_buffer() { VertexArrayObject::release_buffer(element_buffer_); }
     void Drawable::opengl_update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
@@ -90,6 +102,56 @@ namespace easy3d {
         bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
                                                  texcoords.size() * sizeof(vec2), 2, dynamic);
         LOG_IF(!success, ERROR) << "failed updating texcoord buffer";
+    }
+
+
+    void Drawable::opengl_update_highlight_mask(const std::vector<float> &strengths, bool /*dynamic*/) {
+        if (strengths.empty()) {
+            highlight_primitives_ = 0;
+            return;
+        }
+
+        const int width = kHighlightMaskWidth;
+        const int height = int((strengths.size() + std::size_t(width) - 1) / std::size_t(width));
+        if (!highlight_texture_)
+            glGenTextures(1, &highlight_texture_);
+
+        // Rows are padded so the driver never reads past the uploaded data.
+        std::vector<float> pixels(std::size_t(width) * std::size_t(height), 0.0f);
+        std::copy(strengths.begin(), strengths.end(), pixels.begin());
+
+        glActiveTexture(GL_TEXTURE0);                           easy3d_debug_log_gl_error
+        glBindTexture(GL_TEXTURE_2D, highlight_texture_);       easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);      easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);      easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);    easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);    easy3d_debug_log_gl_error
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);                  easy3d_debug_log_gl_error
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, pixels.data());
+        easy3d_debug_log_gl_error
+        glBindTexture(GL_TEXTURE_2D, 0);                        easy3d_debug_log_gl_error
+
+        highlight_primitives_ = strengths.size();
+    }
+
+
+    void Drawable::opengl_bind_highlight_mask(ShaderProgram *program) const {
+        const bool active = highlight_primitives_ > 0 && highlight_texture_ != 0;
+        program->set_uniform("has_highlight_mask", active);
+        if (!active)
+            return;
+        program->set_uniform("highlight_mask", kHighlightMaskUnit)
+                ->set_uniform("highlight_mask_width", kHighlightMaskWidth);
+        glActiveTexture(GL_TEXTURE0 + kHighlightMaskUnit);      easy3d_debug_log_gl_error
+        glBindTexture(GL_TEXTURE_2D, highlight_texture_);       easy3d_debug_log_gl_error
+        glActiveTexture(GL_TEXTURE0);                           easy3d_debug_log_gl_error
+    }
+
+
+    void Drawable::opengl_release_highlight_mask() const {
+        glActiveTexture(GL_TEXTURE0 + kHighlightMaskUnit);      easy3d_debug_log_gl_error
+        glBindTexture(GL_TEXTURE_2D, 0);                        easy3d_debug_log_gl_error
+        glActiveTexture(GL_TEXTURE0);                           easy3d_debug_log_gl_error
     }
 
 

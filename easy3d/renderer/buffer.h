@@ -58,6 +58,18 @@ namespace easy3d {
          * \param drawable  The drawable.
          */
         void update(Model* model, Drawable* drawable);
+
+        /**
+         * \brief Rebuild the highlight mask of a drawable from its highlight property.
+         * \details The drawable's set_highlight_property() names a boolean property; true elements are mixed toward
+         *      setting::highlight_color without changing the drawable's coloring. Faces of a triangle drawable are
+         *      expanded to the triangles given by SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range"),
+         *      points are taken in draw order. Call this after changing the property: it is cheap compared to
+         *      update(), which rebuilds the whole rendering buffer. update() calls it as well.
+         * \param model     The model.
+         * \param drawable  The drawable. An empty highlight property clears the mask.
+         */
+        void update_highlight_mask(Model* model, Drawable* drawable);
         //@}
 
         /// \name Render buffer update for PointCloud

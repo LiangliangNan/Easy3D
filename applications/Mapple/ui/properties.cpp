@@ -729,10 +729,6 @@ void MappleViewer::sync_property_references(Model *model, State::Location locati
                 drawable->update();
         }
     }
-
-    auto entry = selection_styles_.find(model);
-    if (entry != selection_styles_.end())
-        fix_state(entry->second.state);
 }
 
 void MappleViewer::apply_color_property(Model *model, State::Location location,
@@ -755,17 +751,9 @@ void MappleViewer::apply_color_property(Model *model, State::Location location,
         return;
     }
 
-    auto entry = selection_styles_.find(model);
-    if (model == current_model() && entry != selection_styles_.end() && selection_count() > 0) {
-        // The selection keeps the screen; the colors become the appearance restored
-        // when the selection ends.
-        entry->second.state.set_property_coloring(location, name);
-        refresh_selection_display(model);
-    } else {
-        drawable->set_property_coloring(location, name);
-        drawable->update();
-        update();
-    }
+    drawable->set_property_coloring(location, name);
+    drawable->update();
+    update();
     LOG(INFO) << "'" << name << "' shown on the '" << drawable->name() << "' drawable";
 }
 
@@ -840,10 +828,10 @@ void MappleViewer::draw_properties_window() {
 
         if (ImGui::MenuItem("Remove")) {
             if (remove_property(model, location, name)) {
-                // Restore the appearance saved before the selection display if the
-                // property that displayed the selection is gone.
-                if (selection_property && selection_styles_.count(model))
-                    restore_selection_style(model);
+                // The drawable may still name the removed property as its highlight
+                // source; refreshing drops that mask.
+                if (selection_property)
+                    refresh_selection_display(model);
                 sync_property_references(model, location, name, std::string());
                 invalidate_selection_count();
                 update();

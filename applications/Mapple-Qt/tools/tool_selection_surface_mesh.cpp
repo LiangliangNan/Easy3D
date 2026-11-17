@@ -49,29 +49,11 @@ namespace easy3d {
 
         void ToolSurfaceMeshFaceSelection::update_render_buffer(SurfaceMesh* mesh) const {
             auto d = mesh->renderer()->get_triangles_drawable("faces");
-            if ((d->coloring_method() != easy3d::State::SCALAR_FIELD) || (d->property_location() != State::FACE) || (d->property_name() != "f:select")) {
-                if (!mesh->get_face_property<bool>("f:select"))
-                    mesh->add_face_property<bool>("f:select", false);
-                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-                d->set_distinct_back_color(false); // the backside also highlighted
-                buffer::update(mesh, d);
-            }
-            else {
-                auto select = mesh->face_property<bool>("f:select", false);
-                auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-
-                // update the drawable's texcoord buffer
-                std::vector<vec2> texcoords(d->num_vertices());
-                for (auto f : mesh->faces()) {
-                    int start = triangle_range[f].first;
-                    int end = triangle_range[f].second;
-                    for (int idx = start; idx <= end; ++idx)
-                        texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f], 0.5f);
-                }
-                d->update_texcoord_buffer(texcoords);
-                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-                d->set_distinct_back_color(false); // the backside also highlighted
-            }
+            if (!mesh->get_face_property<bool>("f:select"))
+                mesh->add_face_property<bool>("f:select", false);
+            // Selection tints the drawable's own coloring instead of replacing it.
+            d->set_highlight_property(State::FACE, "f:select");
+            buffer::update_highlight_mask(mesh, d);
         }
 
         // -------------------- Click Select ----------------------

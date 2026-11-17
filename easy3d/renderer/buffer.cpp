@@ -1995,6 +1995,72 @@ namespace easy3d {
 
         }
 
+        // Per-primitive highlight strengths of a vertex property, in draw order. A
+        // drawable whose vertices are indexed draws only the live ones, so the mask
+        // follows the vertex iteration order instead of the property slots.
+        template <typename MODEL>
+        std::vector<float> vertex_highlight_mask(MODEL *model, const std::string &name,
+                                                 const Drawable *drawable, float strength) {
+            auto select = model->template get_vertex_property<bool>(name);
+            if (!select)
+                return {};
+            std::vector<float> mask;
+            if (drawable->num_indices() > 0) {
+                mask.reserve(drawable->num_indices());
+                for (auto v : model->vertices())
+                    mask.push_back(select[v] ? strength : 0.0f);
+            } else {
+                mask.assign(select.vector().size(), 0.0f);
+                for (auto v : model->vertices())
+                    mask[v.idx()] = select[v] ? strength : 0.0f;
+            }
+            return mask;
+        }
+
+
+        void update_highlight_mask(Model *model, Drawable *drawable) {
+            if (!drawable)
+                return;
+            const std::string &name = drawable->highlight_property();
+            if (!model || name.empty()) {
+                drawable->update_highlight_mask({});
+                return;
+            }
+
+            // The same mix strength as the primitive-range highlight in the shaders.
+            const float strength = 0.8f;
+            std::vector<float> mask;
+
+            if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
+                if (drawable->type() == Drawable::DT_TRIANGLES && drawable->highlight_location() == State::FACE) {
+                    auto select = mesh->get_face_property<bool>(name);
+                    auto ranges = mesh->get_face_property<std::pair<int, int> >("f:triangle_range");
+                    if (select && ranges) {
+                        const std::size_t count =
+                                (drawable->num_indices() ? drawable->num_indices() : drawable->num_vertices()) / 3;
+                        mask.assign(count, 0.0f);
+                        for (auto f : mesh->faces()) {
+                            if (!select[f])
+                                continue;
+                            const auto range = ranges[f];
+                            if (range.first < 0 || range.second < range.first ||
+                                std::size_t(range.second) >= count)
+                                continue;
+                            for (int i = range.first; i <= range.second; ++i)
+                                mask[i] = strength;
+                        }
+                    }
+                } else if (drawable->type() == Drawable::DT_POINTS &&
+                           drawable->highlight_location() == State::VERTEX)
+                    mask = vertex_highlight_mask(mesh, name, drawable, strength);
+            } else if (auto *cloud = dynamic_cast<PointCloud *>(model)) {
+                if (drawable->type() == Drawable::DT_POINTS && drawable->highlight_location() == State::VERTEX)
+                    mask = vertex_highlight_mask(cloud, name, drawable, strength);
+            }
+
+            drawable->update_highlight_mask(mask);
+        }
+
 
 
         // -------------------------------------------------------------------------------------------------------------
@@ -2011,6 +2077,7 @@ namespace easy3d {
                 for (auto v:model->vertices()) live.push_back(v.idx());
                 drawable->update_element_buffer(live);
             }
+            update_highlight_mask(model, drawable);
         }
 
 
@@ -2049,6 +2116,7 @@ namespace easy3d {
                 return;
             }
             internal::update<SurfaceMesh>(model, drawable);
+            update_highlight_mask(model, drawable);
         }
 
 
@@ -2331,6 +2399,7 @@ namespace easy3d {
         void update(SurfaceMesh *model, TrianglesDrawable *drawable) {
             if (drawable->has_cpu_buffers()) drawable->set_source_faces({});
             update_surface_triangles(model,drawable);
+            update_highlight_mask(model, drawable);
             if (!drawable->has_cpu_buffers()) return;
             const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
             if (!ranges) return;

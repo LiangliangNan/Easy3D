@@ -197,6 +197,7 @@ namespace easy3d {
                 // style, lit or not; the OpenGL shaders follow the same contract.
                 const bool range_marked = highlighted && range.first >= 0 && range.second >= range.first;
                 const bool selection_marked = selected;
+                const bool mask_marked = !buffers.highlights.empty();
                 if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
                     entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
                     entry.textured != textured || (textured && entry.repeat != repeat) ||
@@ -271,19 +272,28 @@ namespace easy3d {
                         geometry =
                             std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
                     }
-                    if (selection_marked || range_marked) {
+                    if (selection_marked || range_marked || mask_marked) {
                         const auto &source = geometry->vertices();
                         const auto &indices = geometry->indices();
                         const auto count = indices.empty() ? source.size() : indices.size();
                         const unsigned stride = topology == graphics::Topology::triangles ? 3
                                                 : topology == graphics::Topology::lines   ? 2
                                                                                           : 1;
+                        const size_t primitives = (count + stride - 1) / stride;
+                        if (mask_marked && buffers.highlights.size() != primitives)
+                            throw std::logic_error("highlight mask count does not match primitives");
                         std::vector<graphics::Vertex> marked(count);
                         for (size_t i = 0; i < count; ++i) {
                             marked[i] = source[indices.empty() ? i : indices[i]];
                             float strength = selection_marked ? 0.6f : 0;
                             if (range_marked && i / stride >= size_t(range.first) && i / stride <= size_t(range.second))
                                 strength = 0.8f + 0.2f * strength;
+                            // The mask is a per-primitive tint; compose it the same way the
+                            // OpenGL shaders blend their successive tint passes.
+                            if (mask_marked) {
+                                const float mask = buffers.highlights[i / stride];
+                                strength = mask + (1.0f - mask) * strength;
+                            }
                             marked[i].highlight = vec4(setting::highlight_color.x, setting::highlight_color.y,
                                                        setting::highlight_color.z, strength);
                         }

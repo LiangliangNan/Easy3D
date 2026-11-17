@@ -52,21 +52,11 @@ namespace easy3d {
 
         void ToolPointCloudSelection::update_render_buffer(PointCloud* cloud) const {
             auto d = cloud->renderer()->get_points_drawable("vertices");
-            if ((d->coloring_method() != easy3d::State::SCALAR_FIELD) || (d->property_location() != State::VERTEX) || (d->property_name() != "v:select")) {
-                if (!cloud->get_vertex_property<bool>("v:select"))
-                    cloud->add_vertex_property<bool>("v:select", false);
-                d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-                buffer::update(cloud, d);
-            }
-            else {
-                auto select = cloud->vertex_property<bool>("v:select", false);
-                // update the drawable's texcoord buffer
-                std::vector<vec2> texcoords(d->num_vertices());
-                for (auto v : cloud->vertices())
-                    texcoords[v.idx()] = vec2(select[v], 0.5f);
-                d->update_texcoord_buffer(texcoords);
-                d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-            }
+            if (!cloud->get_vertex_property<bool>("v:select"))
+                cloud->add_vertex_property<bool>("v:select", false);
+            // Selection tints the drawable's own coloring instead of replacing it.
+            d->set_highlight_property(State::VERTEX, "v:select");
+            buffer::update_highlight_mask(cloud, d);
         }
 
 

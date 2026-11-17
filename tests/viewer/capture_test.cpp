@@ -8,8 +8,10 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/util/setting.h>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
@@ -75,6 +77,66 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     require(sphere.ids[center].object==1 && sphere_hit.drawable==point && sphere.depth[center]<one.depth[center] && std::abs(sphere.depth[center]-sphere_hit.depth)<1e-6f,"capture sphere depth or standalone ID differs from picking");
     host.clear_scene();const auto empty=host.capture(1);
     require(std::all_of(empty.ids.begin(),empty.ids.end(),[](const graphics::FrameImage::Id& p){return p.object==UINT32_MAX;}),"clear_scene retained captured objects");
+    // A boolean property tints the marked primitives over the drawable's own color;
+    // emptying the property clears the overlay and restores the capture exactly.
+    setting::highlight_color=vec4(1,0,0,1);
+    auto pair=std::make_shared<SurfaceMesh>();
+    auto a=pair->add_vertex(vec3(-1,-.5f,0));auto b=pair->add_vertex(vec3(-.2f,-.5f,0));auto c=pair->add_vertex(vec3(-.6f,.5f,0));
+    pair->add_triangle(a,b,c);
+    auto d=pair->add_vertex(vec3(.2f,-.5f,0));auto e=pair->add_vertex(vec3(1,-.5f,0));auto f=pair->add_vertex(vec3(.6f,.5f,0));
+    pair->add_triangle(d,e,f);
+    host.add_model(pair);
+    auto* faces=pair->renderer()->get_triangles_drawable("faces");
+    faces->set_lighting(false);faces->set_uniform_coloring(vec4(0,0,1,1));camera(host);
+    auto select=pair->face_property<bool>("f:select",false);
+    const auto plain=host.capture(1);
+    const auto left_uv=host.camera()->projected_coordinates_of(vec3(-.6f,-.1667f,0));
+    const auto right_uv=host.camera()->projected_coordinates_of(vec3(.6f,-.1667f,0));
+    const size_t left=size_t(left_uv.y)*plain.width+size_t(left_uv.x);
+    const size_t right=size_t(right_uv.y)*plain.width+size_t(right_uv.x);
+    select[SurfaceMesh::Face(1)]=true;
+    faces->set_highlight_property(State::FACE,"f:select");
+    buffer::update_highlight_mask(pair.get(),faces);
+    const auto masked=host.capture(1);
+    require(masked.rgba[4*left]==plain.rgba[4*left] && masked.rgba[4*left+1]==plain.rgba[4*left+1] &&
+            masked.rgba[4*left+2]==plain.rgba[4*left+2],"highlight mask tinted an unmarked face");
+    require(std::abs(int(masked.rgba[4*right])-204)<=2 && masked.rgba[4*right+1]<=2 &&
+            std::abs(int(masked.rgba[4*right+2])-51)<=2,"highlight mask did not mix the color at strength 0.8");
+    for(size_t i=0;i<plain.ids.size();++i)require(plain.ids[i].object==masked.ids[i].object,"highlight mask changed capture IDs");
+    faces->set_selected(true);
+    const auto composed=host.capture(1);
+    require(std::abs(int(composed.rgba[4*right])-235)<=2 && std::abs(int(composed.rgba[4*right+2])-20)<=2,
+            "highlight mask did not compose with the drawable selection");
+    faces->set_selected(false);
+    bool rejected=false;
+    try { faces->update_highlight_mask({0.5f}); } catch(const std::invalid_argument&) { rejected=true; }
+    require(rejected,"highlight mask accepted one strength for two primitives");
+    rejected=false;
+    try { faces->update_highlight_mask({0.5f,2.0f}); } catch(const std::invalid_argument&) { rejected=true; }
+    require(rejected,"highlight mask accepted a strength outside [0, 1]");
+    faces->set_highlight_property(State::FACE,"");
+    buffer::update_highlight_mask(pair.get(),faces);
+    require(host.capture(1).rgba==plain.rgba,"clearing the highlight property did not restore the appearance");
+    select[SurfaceMesh::Face(1)]=true;
+    auto ranges=pair->face_property<std::pair<int,int>>("f:triangle_range");
+    ranges[SurfaceMesh::Face(1)]={999,1000};
+    faces->set_highlight_property(State::FACE,"f:select");
+    buffer::update_highlight_mask(pair.get(),faces);
+    require(host.capture(1).rgba==plain.rgba,"out-of-range highlight mask tinted a primitive");
+    // The same overlay applies to points through a vertex property.
+    auto dots=std::make_shared<PointCloud>();
+    dots->add_vertex(vec3(-.5f,0,.3f));dots->add_vertex(vec3(.5f,0,.3f));
+    host.add_model(dots);
+    auto* points=dots->renderer()->get_points_drawable("vertices");
+    points->set_point_size(15);points->set_lighting(false);points->set_uniform_coloring(vec4(0,0,1,1));
+    auto marked=dots->vertex_property<bool>("v:select",false);marked[PointCloud::Vertex(1)]=true;
+    points->set_highlight_property(State::VERTEX,"v:select");
+    buffer::update(dots.get(),points);
+    const auto point_capture=host.capture(1);
+    const auto point_uv=host.camera()->projected_coordinates_of(vec3(.5f,0,.3f));
+    const size_t point_pixel=size_t(point_uv.y)*point_capture.width+size_t(point_uv.x);
+    require(point_capture.rgba[4*point_pixel]>200 && point_capture.rgba[4*point_pixel+2]<100,
+            "highlight mask did not tint a marked point");
     Scanner scanner;scanner.resize(101,79);scanner.set_usage("");scanner.key_press_event(Scanner::KEY_SPACE,0);require(scanner.models().empty(),"empty tutorial scan added points");
     auto source=quad();scanner.add_model(source);material(source);camera(scanner);scanner.camera()->set_pivot_point(vec3(.1f,.2f,.3f));
     const auto expected=scanner.capture(1);const auto acquisition=scanner.camera()->model_view_projection_matrix();const auto pivot=scanner.camera()->pivot_point();

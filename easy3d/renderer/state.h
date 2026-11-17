@@ -436,6 +436,36 @@ namespace easy3d {
          */
         const std::pair<int, int> &highlight_range() const { return highlight_range_; }
 
+        /**
+         * \brief Sets a boolean property whose true elements are tinted on top of the drawable's own rendering.
+         * \details Unlike the primitive range above, the property can mark any subset of elements, e.g., the faces
+         *      selected by a click, a lasso, or a region gesture. The property is resolved when the rendering buffers
+         *      are updated (see buffer::update() and buffer::update_highlight_mask()), so the drawable keeps its
+         *      coloring method, scalar field, and texture while only the marked elements change their look.
+         *      Marked elements are mixed toward setting::highlight_color.
+         * \param location The type of elements the property is defined on. Faces of a triangle drawable are mapped to
+         *      their rendered triangles through SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range").
+         * \param name The name of the boolean property. An empty name removes the highlight.
+         * \attention This is independent of the single primitive range: the hover aid can keep using
+         *      set_highlight()/set_highlight_range() while a selection is shown through the property.
+         */
+        void set_highlight_property(Location location, const std::string &name) {
+            highlight_location_ = location;
+            highlight_property_ = name;
+        }
+
+        /**
+         * \brief Returns the location of the property that marks the highlighted elements.
+         * \return The property location; meaningful only when highlight_property() is not empty.
+         */
+        Location highlight_location() const { return highlight_location_; }
+
+        /**
+         * \brief Returns the name of the property that marks the highlighted elements.
+         * \return The property name, or an empty string when no property highlight is shown.
+         */
+        const std::string &highlight_property() const { return highlight_property_; }
+
     protected:
         // Create a default texture.
         // Default texture file: "/textures/checkerboard.png";
@@ -484,6 +514,10 @@ namespace easy3d {
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
         bool highlight_;
         std::pair<int, int> highlight_range_;
+
+        // highlight the elements marked true in this boolean property
+        Location highlight_location_;
+        std::string highlight_property_;
     };
 
 }

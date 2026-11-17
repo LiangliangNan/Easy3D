@@ -52,6 +52,11 @@ uniform bool highlight;
 uniform int  highlight_id_min;
 uniform int  highlight_id_max;
 
+// property-based highlight: one strength per rendered primitive
+uniform bool has_highlight_mask = false;
+uniform sampler2D highlight_mask;
+uniform int highlight_mask_width;
+
 layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
         vec3	specular;		// in [0, 1], r==g==b;
@@ -103,6 +108,10 @@ void main()
     if (highlight) {
         if (FragmentIn.point_id >= highlight_id_min && FragmentIn.point_id <= highlight_id_max)
             fragmentColor = mix(fragmentColor, highlight_color, 0.8);
+    }
+    if (has_highlight_mask) {
+        ivec2 coord = ivec2(FragmentIn.point_id % highlight_mask_width, FragmentIn.point_id / highlight_mask_width);
+        fragmentColor = mix(fragmentColor, highlight_color, texelFetch(highlight_mask, coord, 0).r);
     }
     if (selected)
         fragmentColor = mix(fragmentColor, highlight_color, 0.6);

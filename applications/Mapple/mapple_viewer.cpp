@@ -78,7 +78,7 @@ using namespace easy3d;
 
 namespace {
 
-    // The drawable that shows v:select / f:select for a model.
+    // The drawable that shows the selection for a model, and the property holding it.
     struct SelectionTarget {
         Drawable *drawable;
         State::Location location;
@@ -112,19 +112,6 @@ namespace {
             return true;
         }
         return false;
-    }
-
-    // texel 0 reproduces the drawable's own color, texel 1 is the highlight color.
-    // Scalar coloring samples this as a 1D colormap at texture coordinate x.
-    Texture *create_selection_colormap(const vec4 &unselected) {
-        std::vector<unsigned char> rgba(8, 255);
-        const vec4 colors[2] = {unselected, setting::highlight_color};
-        for (int i = 0; i < 2; ++i) {
-            for (int c = 0; c < 3; ++c)
-                rgba[4 * i + c] = static_cast<unsigned char>(clamp(colors[i][c], 0.0f, 1.0f) * 255.0f + 0.5f);
-            rgba[4 * i + 3] = 255;
-        }
-        return Texture::create(rgba, 2, 1, 4, Texture::CLAMP_TO_EDGE, Texture::NEAREST);
     }
 
     // A drag may leave the scene over a panel; keep the region inside the scene rect.
@@ -220,8 +207,6 @@ MappleViewer::~MappleViewer() {
         delete process_job_->result;
         process_job_.reset();
     }
-    // Release selection colormaps before the graphics device dies with the viewer.
-    selection_styles_.clear();
     // The guide drawables would otherwise outlive the scene cleanup (this class holds
     // them too) and free their buffers after the window and device are gone.
     release_camera_path_guides();
@@ -1369,12 +1354,9 @@ void MappleViewer::clear_selection() {
             for (auto f : mesh->faces())
                 select[f] = false;
     }
-    if (selection_styles_.find(model) != selection_styles_.end())
-        restore_selection_style(model);
-    invalidate_selection_count();
+    finish_selection_change(model);
     update();
 }
-
 void MappleViewer::invert_selection() {
     Model *model = current_model();
     if (!model)
@@ -1500,53 +1482,12 @@ void MappleViewer::refresh_selection_display(Model *model) {
     if (!selection_target(model, target))
         return;
 
-    auto entry = selection_styles_.find(model);
-    if (entry == selection_styles_.end()) {
-        SelectionStyle style;
-        style.state = static_cast<const State &>(*target.drawable);
-        style.colormap.reset(create_selection_colormap(target.drawable->color()));
-        if (!style.colormap) {
-            LOG(WARNING) << "failed to create the selection colormap";
-            return;
-        }
-        entry = selection_styles_.emplace(model, std::move(style)).first;
-        target.drawable->set_distinct_back_color(false);
-        target.drawable->set_scalar_coloring(target.location, target.property,
-                                             entry->second.colormap.get(), 0.0f, 0.0f);
-        buffer::update(model, target.drawable);
-    } else if (target.drawable->coloring_method() != State::SCALAR_FIELD ||
-               target.drawable->property_location() != target.location ||
-               target.drawable->property_name() != target.property) {
-        // The selection display survives mode changes and may be overridden by a
-        // restyle in the Rendering panel; re-apply it before refreshing texcoords.
-        target.drawable->set_distinct_back_color(false);
-        target.drawable->set_scalar_coloring(target.location, target.property,
-                                             entry->second.colormap.get(), 0.0f, 0.0f);
-        buffer::update(model, target.drawable);
-    }
-
-    // Fast path: selection changes only move the scalar coordinate of each element.
-    if (auto *cloud = dynamic_cast<PointCloud *>(model)) {
-        auto select = cloud->get_vertex_property<bool>(target.property);
-        if (!select)
-            return;
-        std::vector<vec2> texcoords(target.drawable->num_vertices());
-        for (auto v : cloud->vertices())
-            texcoords[v.idx()] = vec2(select[v] ? 1.0f : 0.0f, 0.5f);
-        target.drawable->update_texcoord_buffer(texcoords);
-    } else if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
-        auto select = mesh->get_face_property<bool>(target.property);
-        auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-        if (!select || !triangle_range)
-            return;
-        std::vector<vec2> texcoords(target.drawable->num_vertices());
-        for (auto f : mesh->faces()) {
-            const vec2 coord(select[f] ? 1.0f : 0.0f, 0.5f);
-            for (int i = triangle_range[f].first; i <= triangle_range[f].second; ++i)
-                texcoords[i * 3] = texcoords[i * 3 + 1] = texcoords[i * 3 + 2] = coord;
-        }
-        target.drawable->update_texcoord_buffer(texcoords);
-    }
+    // Selection is an overlay: the drawable keeps its own coloring and the mask
+    // tints the elements marked in f:select/v:select. An empty selection drops the
+    // mask, which restores the drawable's appearance without touching its state.
+    const bool has_selection = has_any_selection(model);
+    target.drawable->set_highlight_property(target.location, has_selection ? target.property : "");
+    buffer::update_highlight_mask(model, target.drawable);
 
     update();
 }
@@ -1554,25 +1495,8 @@ void MappleViewer::refresh_selection_display(Model *model) {
 void MappleViewer::finish_selection_change(Model *model) {
     if (!model)
         return;
-    if (has_any_selection(model))
-        refresh_selection_display(model);
-    else
-        restore_selection_style(model);
+    refresh_selection_display(model);
     invalidate_selection_count();
-}
-
-void MappleViewer::restore_selection_style(Model *model) {
-    auto entry = selection_styles_.find(model);
-    if (entry == selection_styles_.end())
-        return;
-    SelectionTarget target;
-    if (selection_target(model, target)) {
-        static_cast<State &>(*target.drawable) = entry->second.state;
-        buffer::update(model, target.drawable);
-    }
-    selection_styles_.erase(entry);
-    invalidate_selection_count();
-    update();
 }
 
 void MappleViewer::forget_model(Model *model) {
@@ -1580,7 +1504,6 @@ void MappleViewer::forget_model(Model *model) {
         return;
     if (hover_model_ == model)
         clear_hover();
-    selection_styles_.erase(model);
     scalar_styles_.erase(model);
     highlight_ranges_.erase(model);
     texture_styles_.erase(model);

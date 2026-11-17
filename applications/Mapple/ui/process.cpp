@@ -548,13 +548,6 @@ bool MappleViewer::is_long_running(ProcessOp op) {
     }
 }
 
-bool MappleViewer::discards_model_properties(ProcessOp op) {
-    // Surfacer converts the mesh to CGAL and back through mesh->clear().
-    return op == ProcessOp::MESH_REPAIR_SOUP || op == ProcessOp::MESH_ORIENT_STITCH_SOUP ||
-           op == ProcessOp::MESH_STITCH_REORIENT || op == ProcessOp::MESH_STITCH ||
-           op == ProcessOp::MESH_ORIENT_OUTWARD;
-}
-
 void MappleViewer::apply_process() {
     Model *model = current_model();
     if (!model || process_op_ == ProcessOp::NONE || process_job_)
@@ -566,10 +559,10 @@ void MappleViewer::apply_process() {
     }
 
     const auto start = std::chrono::steady_clock::now();
-    const bool skip_selection_display = run_process_algorithm(model);
+    run_process_algorithm(model);
     if (process_op_ == ProcessOp::NONE) // unknown command; nothing to finalize
         return;
-    finalize_process(model, start, skip_selection_display);
+    finalize_process(model, start);
 }
 
 void MappleViewer::start_process_job() {
@@ -611,12 +604,7 @@ void MappleViewer::poll_process_job() {
         add_model(result);
     if (failed)
         LOG(WARNING) << process_title(process_op_) << " stopped early; the model may be partially modified";
-    // A rebuilt model has no properties left; drop the selection style that refers to
-    // them instead of restoring it (which would warn and fall back to uniform).
-    const bool skip_selection_display = discards_model_properties(process_op_);
-    if (skip_selection_display)
-        selection_styles_.erase(target);
-    finalize_process(target, start, skip_selection_display);
+    finalize_process(target, start);
 }
 
 void MappleViewer::request_process_cancel() {
@@ -672,13 +660,10 @@ void MappleViewer::draw_process_progress() {
     ImGui::End();
 }
 
-bool MappleViewer::run_process_algorithm(Model *model) {
+void MappleViewer::run_process_algorithm(Model *model) {
     auto *cloud = dynamic_cast<PointCloud *>(model);
     auto *mesh = dynamic_cast<SurfaceMesh *>(model);
     ProcessParams &p = process_params_;
-    // RANSAC replaces the cloud's appearance with segmentation colors, which must
-    // not be overwritten by a selection display refresh afterwards.
-    bool skip_selection_display = false;
 
     switch (process_op_) {
         case ProcessOp::EDIT_GAUSSIAN_NOISE: {
@@ -829,10 +814,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                     Renderer::color_from_segmentation(cloud, segments, coloring);
                     if (auto *drawable = cloud->renderer() ?
                                          cloud->renderer()->get_points_drawable("vertices", false) : nullptr)
-                        drawable->set_property_coloring(State::VERTEX, "v:color-segments");
-                    selection_styles_.erase(model);
-                    skip_selection_display = true;
-                }
+                        drawable->set_property_coloring(State::VERTEX, "v:color-segments");                }
             }
             break;
 
@@ -1057,10 +1039,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 if (p.param_preview) {
                     if (auto *drawable = mesh->renderer() ?
                                          mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
-                        drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
-                    selection_styles_.erase(model);
-                    skip_selection_display = true;
-                }
+                        drawable->set_texture_coloring(State::VERTEX, "v:texcoord");                }
                 LOG(INFO) << "texture coordinates stored in v:texcoord";
             }
             break;
@@ -1114,9 +1093,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 const auto before_faces = mesh->n_faces();
                 Surfacer::repair_polygon_soup(mesh);
                 LOG(INFO) << "polygon soup repaired: " << before_vertices << " -> " << mesh->n_vertices()
-                          << " vertices, " << before_faces << " -> " << mesh->n_faces() << " faces";
-                skip_selection_display = true;
-            }
+                          << " vertices, " << before_faces << " -> " << mesh->n_faces() << " faces";            }
 #else
             LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
                          << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
@@ -1134,9 +1111,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                               << mesh->n_faces() << " faces";
                 else
                     LOG(WARNING) << "orientation and stitching failed: the polygons do not form a "
-                                    "valid polygon mesh";
-                skip_selection_display = true;
-            }
+                                    "valid polygon mesh";            }
 #else
             if (mesh) {
                 SurfaceMeshStitching(mesh).apply();
@@ -1151,9 +1126,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
             if (mesh) {
                 const int stitched = Surfacer::stitch_borders(mesh);
                 Surfacer::merge_reversible_connected_components(mesh);
-                LOG(INFO) << "borders stitched (" << stitched << " pairs) and reversible components merged";
-                skip_selection_display = true;
-            }
+                LOG(INFO) << "borders stitched (" << stitched << " pairs) and reversible components merged";            }
 #else
             if (mesh) {
                 SurfaceMeshStitching(mesh).apply();
@@ -1167,9 +1140,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
 #ifdef HAS_CGAL
             if (mesh) {
                 const int stitched = Surfacer::stitch_borders(mesh);
-                LOG(INFO) << "borders stitched (" << stitched << " pairs)";
-                skip_selection_display = true;
-            }
+                LOG(INFO) << "borders stitched (" << stitched << " pairs)";            }
 #else
             if (mesh) {
                 SurfaceMeshStitching(mesh).apply();
@@ -1187,10 +1158,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                     break;
                 }
                 Surfacer::orient_closed_triangle_mesh(mesh);
-                LOG(INFO) << "face orientations corrected to point outward";
-                selection_styles_.erase(model);
-                skip_selection_display = true;
-            }
+                LOG(INFO) << "face orientations corrected to point outward";            }
 #else
             LOG(WARNING) << process_title(process_op_) << " requires CGAL support "
                          << "(build Easy3D with -DEasy3D_ENABLE_CGAL=ON)";
@@ -1356,10 +1324,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 Renderer::color_from_segmentation(mesh, ids, coloring);
                 if (auto *drawable = mesh->renderer() ?
                                      mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
-                    drawable->set_property_coloring(State::FACE, "f:color_components");
-                selection_styles_.erase(model);
-                skip_selection_display = true;
-                LOG(INFO) << components.size() << " connected component(s)";
+                    drawable->set_property_coloring(State::FACE, "f:color_components");                LOG(INFO) << components.size() << " connected component(s)";
                 if (!components.empty())
                     LOG(INFO) << "largest component has " << components.front().n_faces() << " faces";
             }
@@ -1374,10 +1339,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 Renderer::color_from_segmentation(mesh, ids, coloring);
                 if (auto *drawable = mesh->renderer() ?
                                      mesh->renderer()->get_triangles_drawable("faces", false) : nullptr)
-                    drawable->set_property_coloring(State::FACE, "f:color_planar_partition");
-                selection_styles_.erase(model);
-                skip_selection_display = true;
-                LOG(INFO) << num << " planar patch(es) at a 1 degree normal threshold";
+                    drawable->set_property_coloring(State::FACE, "f:color_planar_partition");                LOG(INFO) << num << " planar patch(es) at a 1 degree normal threshold";
             }
             break;
 
@@ -1466,10 +1428,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 target->update_face_normals();
                 target->update_vertex_normals();
                 if (target->manipulator())
-                    target->manipulator()->reset();
-                selection_styles_.erase(target);
-                skip_selection_display = true;
-                LOG(INFO) << "text mesh rebuilt: '" << text << "' (" << target->n_faces() << " faces)";
+                    target->manipulator()->reset();                LOG(INFO) << "text mesh rebuilt: '" << text << "' (" << target->n_faces() << " faces)";
             } else {
                 SurfaceMesh *created =
                         mesher.generate(text, 0, 0, font_size, extrusion, p.text_collision_free);
@@ -1575,10 +1534,7 @@ bool MappleViewer::run_process_algorithm(Model *model) {
                 auto ao = SurfaceMeshAmbientOcclusion::bake(mesh, parameters);
                 SurfaceMeshAmbientOcclusion::colorize(mesh, ao);
                 LOG(INFO) << "ambient occlusion baked: v:ao and v:ao_color (radius " << parameters.radius_ratio
-                          << " x bounding-sphere radius, " << parameters.sample_count << " rays/vertex)";
-                selection_styles_.erase(model);
-                skip_selection_display = true;
-            }
+                          << " x bounding-sphere radius, " << parameters.sample_count << " rays/vertex)";            }
             break;
 
         case ProcessOp::PROP_TOPOLOGY: {
@@ -1641,14 +1597,11 @@ bool MappleViewer::run_process_algorithm(Model *model) {
 
         default:
             process_op_ = ProcessOp::NONE;
-            return skip_selection_display;
+            return;
     }
-
-    return skip_selection_display;
 }
 
-void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::time_point start,
-                                    bool skip_selection_display) {
+void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::time_point start) {
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::steady_clock::now() - start);
     LOG(INFO) << process_title(process_op_) << " finished in " << elapsed.count() << " ms";
@@ -1662,8 +1615,7 @@ void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::tim
         model->renderer()->update();
     invalidate_selection_count();
     clear_hover();
-    if (!skip_selection_display)
-        finish_selection_change(model);
+    finish_selection_change(model);
 
     // The AO bake writes its colors into v:ao_color; show them instead of leaving the
     // user to find the property in the Rendering panel.

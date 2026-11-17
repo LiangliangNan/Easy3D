@@ -11222,3 +11222,56 @@ suites ran serially: Vulkan 150/150 (149 s) and OpenGL 118/118 (67 s). Mapple la
 both backends with bunny.ply; the drag/lasso gestures were not scripted.
 `easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-17 — batch 122: selection is a highlight mask over the drawable's own coloring
+
+**Problem.** As soon as anything was selected, Mapple replaced the drawable's coloring with
+scalar coloring on `f:select`/`v:select`, so the user's chosen property (chart colors, a
+texture, uniform color) disappeared for the duration of the selection. Every tool and
+process that could invalidate a selection had to save and restore the previous style, and
+Mapple-Qt's selection tools each rebuilt the same save/restore dance.
+
+**Change (library).** A selection is now a tint on top of whatever the drawable already
+shows. `State::set_highlight_property(location, name)` names a boolean property, and
+`Drawable::update_highlight_mask(strengths, dynamic)` stores one strength per rendered
+primitive, validating the count against triangles/lines/points and each value against
+[0, 1]; an empty vector clears the mask. `buffer::update_highlight_mask(model, drawable)`
+expands the property in draw order at strength 0.8 (faces through `f:triangle_range`, so
+handles deleted by topology changes are skipped and ranges past the rendered triangle count
+are ignored; vertices follow the live-vertex iteration order) and `buffer::update` applies
+it automatically after a geometry upload, which drops stale masks after topology edits.
+The mask resets on `clear()`, `update_vertex_buffer()`, element-buffer changes and
+`reset_highlight_mask()`.
+
+**Change (backends).** OpenGL uploads the strengths as a 4096-wide R32F 2D texture on
+texture unit 2 (NEAREST, clamp to edge) and samples it with `texelFetch` at
+`gl_PrimitiveID` - or at the point ID for the sphere/surfel impostors - in `surface.frag`
+and the six points fragment shaders, between the primitive-range tint (0.8) and the
+drawable-selection tint (0.6). Vulkan keeps the strengths in the per-vertex highlight
+vector already used for selection and range marking and composes all three as
+`mask + (1-mask)*strength`, which is algebraically the same as the shader's sequential
+mixes; a revision bump invalidates cached geometry, and a size mismatch throws with the
+same message as the OpenGL path. The first shader version declared the lookup coordinate
+`const`, which GLSL rejects for a non-constant initializer; the tests caught it at the first
+frame, and the coordinate is now a plain local.
+
+**Change (apps).** Mapple's selection display is `refresh_selection_display(model)`: name
+`f:select`/`v:select` on the drawable and rebuild the mask, leaving the coloring property
+alone; an empty selection names the empty property and clears the tint. The per-model
+`selection_styles_` map and its save/restore calls are gone from the process tools, model
+removal, property removal and Apply to all (the latter re-refreshes the masks), and
+`run_process_algorithm` no longer has to report whether it discarded properties because
+finalizing a process always refreshes the display. Mapple-Qt's surface-mesh and point-cloud
+selection tools and Invert Selection flip the property and call `set_highlight_property` +
+`buffer::update_highlight_mask` directly.
+
+**Validation.** `tests/viewer/capture_test.cpp` gains a mask section that runs on both
+backends: with two triangles and two points, marking one face and one vertex tints only the
+marked primitives (0.8 mix on the marked face); the mask composes with the drawable
+selection to 0.92; capture object IDs, MSAA depth and the rest of the pixels are unchanged;
+setting the empty property name or an out-of-range triangle range restores the baseline
+capture byte for byte; and masks whose size or strength is invalid throw. Both check trees
+rebuilt; suites ran serially: Vulkan 150/150 (153 s) and OpenGL 118/118 (64 s). Mapple
+launches on both backends with torusknot.obj and no shader or validation errors; selection
+clicks were not scripted. `easy3d/util/version.h` carries only the generated date bump.
+Linux/Windows/CI remain separate gates.
