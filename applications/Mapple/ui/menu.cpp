@@ -26,6 +26,8 @@
 
 #include "../mapple_viewer.h"
 
+#include "../imgui_layer.h"
+
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -451,6 +453,56 @@ void MappleViewer::restore_view_state() {
     LOG(INFO) << "view state restored from " << file_name;
 }
 
+bool MappleViewer::icon_menu_item(const char *icon_name, const char *label,
+                                  const char *shortcut, bool enabled) {
+    const ImTextureID texture = imgui_->icon(icon_name);
+    if (!texture)
+        return ImGui::MenuItem(label, shortcut, false, enabled);
+
+    const ImGuiStyle &style = ImGui::GetStyle();
+    const float icon_size = ImGui::GetFontSize();
+    const ImVec2 label_size = ImGui::CalcTextSize(label, nullptr, true);
+    const ImVec2 shortcut_size = shortcut ? ImGui::CalcTextSize(shortcut, nullptr) : ImVec2(0, 0);
+    // MenuItem's first column starts after ItemSpacing and the icon takes the column
+    // that MenuItem would leave empty; the label follows after ItemInnerSpacing.
+    const float icon_column = style.ItemSpacing.x + icon_size + style.ItemInnerSpacing.x;
+    const float shortcut_column = shortcut_size.x > 0 ? style.ItemSpacing.x + shortcut_size.x : 0.0f;
+    // MenuItem() also reserves a checkmark column after the shortcut; keeping it makes
+    // the shortcuts line up with the built-in items of the same popup.
+    const float checkmark_w = std::floor(icon_size * 1.20f);
+    // Ask for the row's full width so the auto-resizing popup fits it (the row is wider
+    // than the window on the frame the menu opens, then the popup settles).
+    const float width = std::max(ImGui::GetContentRegionAvail().x,
+                                 icon_column + label_size.x + shortcut_column + checkmark_w +
+                                         style.ItemSpacing.x);
+
+    const ImVec2 row_pos = ImGui::GetCursorScreenPos();
+    ImGui::PushID(label);
+    if (!enabled)
+        ImGui::BeginDisabled();
+    const bool pressed = ImGui::Selectable("##row", false, ImGuiSelectableFlags_None,
+                                           ImVec2(width, label_size.y));
+    if (!enabled)
+        ImGui::EndDisabled();
+    ImGui::PopID();
+
+    // AddImage() multiplies the texture by this color, so the icon keeps its own colors:
+    // white with an alpha for the disabled state. The label then takes the text color.
+    const float alpha = enabled ? 1.0f : style.DisabledAlpha;
+    const ImU32 icon_tint = IM_COL32(255, 255, 255, static_cast<int>(255.0f * alpha));
+    ImDrawList *draw = ImGui::GetWindowDrawList();
+    draw->AddImage(texture, ImVec2(row_pos.x + style.ItemSpacing.x, row_pos.y),
+                   ImVec2(row_pos.x + style.ItemSpacing.x + icon_size, row_pos.y + icon_size),
+                   ImVec2(0, 0), ImVec2(1, 1), icon_tint);
+    draw->AddText(ImVec2(row_pos.x + icon_column, row_pos.y),
+                  ImGui::GetColorU32(ImGuiCol_Text, alpha), label);
+    if (shortcut_size.x > 0)
+        draw->AddText(ImVec2(row_pos.x + width - checkmark_w - style.ItemSpacing.x - shortcut_size.x,
+                             row_pos.y),
+                      ImGui::GetColorU32(ImGuiCol_TextDisabled, alpha), shortcut);
+    return pressed;
+}
+
 // The menu bar only exposes actions that exist. Shortcut strings are display-only;
 // the matching keys are handled by Viewer::key_press_event().
 void MappleViewer::draw_menu_bar() {
@@ -561,7 +613,7 @@ void MappleViewer::draw_menu_bar() {
     draw_menu_select();
 
     if (ImGui::BeginMenu("Help")) {
-        if (ImGui::MenuItem("About Mapple"))
+        if (icon_menu_item("about", "About Mapple"))
             show_about_ = true;
         ImGui::EndMenu();
     }

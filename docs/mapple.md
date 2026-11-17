@@ -365,8 +365,15 @@ once those are decided on.
   `io.WantTextInput`.
 - **Font/DPI**: atlas is rasterized at `16 * dpi_scaling()` with
   `FontGlobalScale = 1 / pixel_ratio`; rebuild when the pixel ratio changes.
-- **Textures**: the overlay translation currently supports the font atlas only.
-  Icons need an `ImTextureID -> graphics::Image` registry.
+- **Textures**: the overlay supports the font atlas plus the icons registered through
+  `ImGuiLayer::icon()`. `<resource directory>/icons/<name>.png` is decoded once into a
+  `graphics::Image` (four channels, top row first, linear filtering) and the texture ID
+  is the image pointer, as for the atlas; commands keep the image alive through their
+  shared pointer. Icons are drawn at the font size, so the 32x32 files stay sharp on a
+  2x framebuffer and are minified on a 1x one. Toolbar buttons use the icon with the
+  label as a tooltip, and fall back to a text button when the file cannot be read.
+  Popup-menu rows draw the icon in a leading column (`icon_menu_item()`), since
+  `MenuItem()` cannot show an image.
 - **Docking**: the vendored ImGui is 1.91.8 WIP, non-docking. Fixed panels are used
   now; switching to the docking branch later only affects the `3rd_imgui` sources.
 - **HUD overlap**: the Viewer draws its own HUD in screen space; the new app disables
@@ -1274,6 +1281,47 @@ once those are decided on.
   moved when the load order changed. The shared trees could not relink while
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
+
+### 2026-11-17 — toolbar icons (ImGui texture registry)
+
+- `ImGuiLayer` now has an icon registry. `icon("open")` decodes
+  `resources/icons/open.png` on first use into a `graphics::Image` (four channels,
+  top row first, linear filtering) and caches the texture ID, failures included;
+  `render()` resolves each draw command's texture through the font atlas or that
+  registry, so the old "font atlas texture only" exception is gone. Commands carry the
+  image's shared pointer, which keeps it alive while they are queued.
+- `MappleViewer::toolbar_button(icon, label)` draws one toolbar button: the named
+  icon, or a text button when the file cannot be read (the failure is cached, so a
+  missing icon is logged once). The label is the hover tooltip. The icon is drawn at
+  the font size, so an ImageButton keeps the height of the text buttons.
+- Toolbar: Open (`open`), Save (`save`), Fit (`home`) and Snapshot (`snapshot`) are
+  icon-only buttons; Click (`pick`), Rect (`rect`) and Lasso (`lasso`) are icon-only
+  toggle buttons that keep the pressed background while their mode is active. Copy
+  View, Paste View and the remaining commands stay text until matching 32x32 icons
+  exist.
+- Menus: `MappleViewer::icon_menu_item(icon, label, shortcut)` draws a popup row with
+  the icon in a leading column - `MenuItem()` cannot show an image. The row is a
+  hidden `Selectable` (which owns hover, activation and popup closing) with the icon,
+  label and shortcut drawn over it. The shortcut reserves MenuItem's checkmark column
+  so it lines up with the other rows of the same popup. The icon is drawn with a white
+  tint (alpha only when disabled) because `AddImage()` multiplies the texture by the
+  vertex color, while the text takes the item colors. Used by Quit (`quit`, "Alt+F4")
+  and About Mapple (`about`).
+- The icons are 32x32 PNGs in `resources/icons` (the Qt tree is scheduled for
+  retirement, and an installed app cannot reach it), and the top-level install rule
+  ships that folder next to fonts, colormaps and textures.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees; both
+  backends launch ("Mapple UI ready (Vulkan)" / "(OpenGL)") and window captures show
+  all nine icons crisp in the toolbar, with the Save icon dimmed while no model is
+  open. The File and Help menus were opened with a temporary `/tmp` probe: the Quit
+  row shows the stop-sign icon, "Quit" and right-aligned "Alt+F4" level with the
+  "Ctrl+S" of the text rows; the About row shows the question icon and "About
+  Mapple". The probe was removed and the final builds re-captured. The text fallback
+  was exercised when the files were renamed mid-way (Open and Save rendered as text
+  buttons until the code used the new names, and Copy View stayed text after
+  `duplicate.png` left the set). The settings files were unchanged afterwards. Suites
+  not rerun (app-only change); activating the icon rows from the keyboard or mouse
+  was not scripted.
 
 ### 2026-11-17 — Walk-through keyframe creation (Phase 4 gap)
 

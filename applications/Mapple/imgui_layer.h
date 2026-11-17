@@ -28,7 +28,11 @@
 #define EASY3D_MAPPLE_IMGUI_LAYER_H
 
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
+
+#include <3rd_party/imgui/imgui.h>
 
 #include <easy3d/renderer/render_device.h>
 
@@ -41,7 +45,8 @@ struct ImGuiContext;
  * \details This is the backend-neutral overlay path of Tutorial_202: the ImGui context is bound
  *      to the viewer's GLFW window for input and time, fonts are rasterized for the current DPI,
  *      and every ImGui draw list becomes a graphics::DrawCommand that the viewer composites on
- *      top of the 3D scene. Only the font atlas texture is supported.
+ *      top of the 3D scene. The font atlas and the icons registered through icon() are the
+ *      supported textures.
  */
 class ImGuiLayer {
 public:
@@ -79,11 +84,28 @@ public:
 
     ImGuiContext *context() const { return context_; }
 
+    /**
+     * \brief Returns the overlay texture of an icon shipped in `resources/icons`.
+     * \details The file is `<resource directory>/icons/<icon_name>.png`, decoded on first
+     *      use and cached for the lifetime of the layer. Failures are cached as well, so a
+     *      missing icon logs once instead of every frame. The image is drawn at the font
+     *      size, so a 32x32 icon stays sharp on a 2x framebuffer and is minified on a 1x one.
+     * \param icon_name File base name without directory or extension, e.g. "open".
+     * \return The texture ID to pass to ImGui::Image() or ImGui::ImageButton(), or 0 when
+     *      the file is missing or cannot be decoded.
+     */
+    ImTextureID icon(const std::string &icon_name);
+
 private:
     void reload_font();
 
     ImGuiContext *context_ = nullptr;
     std::shared_ptr<const easy3d::graphics::Image> font_image_;
+    // Icon textures by file base name (0 marks a failed load) and by the texture ID that
+    // draw commands carry. The shared pointers keep the images alive while commands using
+    // them are still queued.
+    std::unordered_map<std::string, ImTextureID> icon_ids_;
+    std::unordered_map<ImTextureID, std::shared_ptr<const easy3d::graphics::Image>> icon_images_;
     float dpi_scaling_ = 1.0f;
     float pixel_ratio_ = 1.0f;
     int font_size_ = 16;

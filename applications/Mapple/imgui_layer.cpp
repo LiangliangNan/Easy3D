@@ -31,10 +31,14 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <3rd_party/imgui/imgui.h>
 #include <3rd_party/imgui/backends/imgui_impl_glfw.h>
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
+
+#include <easy3d/fileio/image_io.h>
+#include <easy3d/util/resource.h>
 
 
 ImGuiLayer::ImGuiLayer() = default;
@@ -140,6 +144,31 @@ void ImGuiLayer::reload_font() {
     io.Fonts->SetTexID(ImTextureID(reinterpret_cast<uintptr_t>(font_image_.get())));
 }
 
+ImTextureID ImGuiLayer::icon(const std::string &icon_name) {
+    const auto cached = icon_ids_.find(icon_name);
+    if (cached != icon_ids_.end())
+        return cached->second;
+
+    ImTextureID texture = 0;
+    const std::string file = easy3d::resource::directory() + "/icons/" + icon_name + ".png";
+    std::vector<unsigned char> rgba;
+    int width = 0, height = 0, channels = 0;
+    // Four channels for the overlay shader; top row first, which is what graphics::Image stores.
+    if (easy3d::ImageIO::load(file, rgba, width, height, channels, 4, false) &&
+        width > 0 && height > 0 && rgba.size() == std::size_t(width) * std::size_t(height) * 4) {
+        easy3d::graphics::Sampler sampler;
+        sampler.filter = easy3d::graphics::TextureFilter::linear;
+        auto image = std::make_shared<const easy3d::graphics::Image>(
+                static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height),
+                std::move(rgba), sampler);
+        texture = reinterpret_cast<ImTextureID>(image.get());
+        icon_images_[texture] = image;
+    }
+    // Cache the failure too: a button falls back to its text label and stops retrying.
+    icon_ids_[icon_name] = texture;
+    return texture;
+}
+
 std::vector<easy3d::graphics::DrawCommand> ImGuiLayer::render(int framebuffer_width, int framebuffer_height) {
     ImGui::SetCurrentContext(context_);
     ImGui::Render();
@@ -172,8 +201,14 @@ std::vector<easy3d::graphics::DrawCommand> ImGuiLayer::render(int framebuffer_wi
             const int bottom = std::min(framebuffer_height, int(std::ceil((draw.ClipRect.w - origin.y) * scale.y)));
             if (right <= x || bottom <= y)
                 continue;
-            if (draw.GetTexID() != font_texture)
-                throw std::logic_error("the Mapple UI supports the ImGui font atlas texture only");
+
+            std::shared_ptr<const easy3d::graphics::Image> texture = font_image_;
+            if (draw.GetTexID() != font_texture) {
+                const auto found = icon_images_.find(draw.GetTexID());
+                if (found == icon_images_.end())
+                    throw std::logic_error("the Mapple UI received an unregistered ImGui texture");
+                texture = found->second;
+            }
 
             // Expand the indexed triangles into a vertex list in viewport-local coordinates.
             std::vector<easy3d::graphics::Vertex> vertices;
@@ -193,7 +228,7 @@ std::vector<easy3d::graphics::DrawCommand> ImGuiLayer::render(int framebuffer_wi
 
             easy3d::graphics::DrawCommand command;
             command.overlay = true;
-            command.texture = font_image_;
+            command.texture = texture;
             command.viewport = easy3d::ivec4(x, y, right - x, bottom - y);
             command.model_view_projection =
                     easy3d::graphics::screen_space_projection(std::uint32_t(right - x), std::uint32_t(bottom - y));

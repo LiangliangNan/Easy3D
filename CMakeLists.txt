@@ -341,6 +341,7 @@ install(DIRECTORY
         "${Easy3D_ROOT}/resources/fonts"
         "${Easy3D_ROOT}/resources/colormaps"
         "${Easy3D_ROOT}/resources/textures"
+        "${Easy3D_ROOT}/resources/icons"
         DESTINATION
         "${Easy3D_INSTALL_RESOURCE_DIR}")
 if(NOT Easy3D_ENABLE_VULKAN)

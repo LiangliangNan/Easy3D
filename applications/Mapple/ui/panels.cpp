@@ -26,6 +26,8 @@
 
 #include "../mapple_viewer.h"
 
+#include "../imgui_layer.h"
+
 #include <algorithm>
 #include <algorithm>
 #include <cmath>
@@ -277,6 +279,18 @@ ImU32 level_color(el::Level level) {
 
 } // namespace
 
+bool MappleViewer::toolbar_button(const char *icon_name, const char *label) {
+    const ImTextureID texture = imgui_->icon(icon_name);
+    if (!texture)
+        return ImGui::Button(label);
+    // The image is the font size, so the button keeps the height of the text buttons.
+    const float icon_size = ImGui::GetFontSize();
+    const bool pressed = ImGui::ImageButton(label, texture, ImVec2(icon_size, icon_size));
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
+        ImGui::SetTooltip("%s", label);
+    return pressed;
+}
+
 void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(std::max(1.0f, w), std::max(1.0f, h)), ImGuiCond_Always);
@@ -284,24 +298,24 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::Begin("##toolbar", nullptr, kPanelFlags);
 
-    if (ImGui::Button("Open"))
+    if (toolbar_button("open", "Open"))
         open();
     ImGui::SameLine();
     ImGui::BeginDisabled(current_model() == nullptr);
-    if (ImGui::Button("Save"))
+    if (toolbar_button("save", "Save"))
         save();
     ImGui::EndDisabled();
     ImGui::SameLine();
-    if (ImGui::Button("Fit"))
+    if (toolbar_button("fit", "Fit"))
         fit_screen();
     ImGui::SameLine();
-    if (ImGui::Button("Snapshot"))
+    if (toolbar_button("snapshot", "Snapshot"))
         open_snapshot_dialog();
     ImGui::SameLine();
-    if (ImGui::Button("Copy View"))
+   if (toolbar_button("copy", "Copy View"))
         copy_view();
     ImGui::SameLine();
-    if (ImGui::Button("Paste View"))
+   if (toolbar_button("paste", "Paste View"))
         paste_view();
 
     // Selection tools are mode toggles: pressing the active one returns to OFF,
@@ -309,19 +323,19 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
     ImGui::SameLine();
     ImGui::TextDisabled("|");
     ImGui::SameLine();
-    auto mode_button = [this](const char *label, SelectMode mode) {
+    auto mode_button = [this](const char *icon_name, const char *label, SelectMode mode) {
         const bool active = select_mode_ == mode;
         if (active)
             ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
-        if (ImGui::Button(label))
+        if (toolbar_button(icon_name, label))
             set_select_mode(active ? SelectMode::OFF : mode);
         if (active)
             ImGui::PopStyleColor();
         ImGui::SameLine();
     };
-    mode_button("Click", SelectMode::CLICK);
-    mode_button("Rect", SelectMode::RECT);
-    mode_button("Lasso", SelectMode::LASSO);
+    mode_button("pick", "Click", SelectMode::CLICK);
+    mode_button("rect", "Rect", SelectMode::RECT);
+    mode_button("lasso", "Lasso", SelectMode::LASSO);
 
     ImGui::End();
     ImGui::PopStyleVar(2);
@@ -397,19 +411,6 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
         set_background_color(background);
         update();
     }
-
-    const bool perspective = camera()->type() == Camera::PERSPECTIVE;
-    if (ImGui::RadioButton("Persp", perspective)) {
-        camera()->set_type(Camera::PERSPECTIVE);
-        update();
-    }
-    ImGui::SetItemTooltip("Perspective projection");
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Ortho", !perspective)) {
-        camera()->set_type(Camera::ORTHOGRAPHIC);
-        update();
-    }
-    ImGui::SetItemTooltip("Orthographic projection");
 
     ImGui::Spacing();
     // Qt's Global Setting panel exposed these four effects; each is a full-frame

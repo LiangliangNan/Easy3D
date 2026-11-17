@@ -317,6 +317,13 @@ private:
     // ui/menu.cpp
     void draw_menu_bar();
 
+    // One popup-menu row: the named icon in the icon column, the label, and the shortcut
+    // right-aligned. MenuItem() cannot show an image, so the row is drawn over a hidden
+    // Selectable (which still owns hover, activation and popup closing). Falls back to
+    // MenuItem() when the icon is unavailable.
+    bool icon_menu_item(const char *icon_name, const char *label, const char *shortcut = nullptr,
+                        bool enabled = true);
+
     // ui/menu.cpp
     void draw_menu_edit();
 
@@ -602,6 +609,10 @@ private:
 
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);
+
+    // One toolbar button: the named icon from resources/icons with `label` as its tooltip,
+    // or a plain text button when the icon is unavailable.
+    bool toolbar_button(const char *icon_name, const char *label);
 
     void draw_model_info(easy3d::Model *model);
 
