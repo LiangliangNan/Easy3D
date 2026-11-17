@@ -6,8 +6,8 @@ add_executable(${name}
         mapple_viewer.cpp
         settings.h
         settings.cpp
-        walk_through.h
-        walk_through.cpp
+        camera_path_builder.h
+        camera_path_builder.cpp
         imgui_layer.h
         imgui_layer.cpp
         ui/menu.cpp

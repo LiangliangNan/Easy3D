@@ -26,7 +26,7 @@
 
 #include "mapple_viewer.h"
 #include "imgui_layer.h"
-#include "walk_through.h"
+#include "camera_path_builder.h"
 
 #include <algorithm>
 #include <cmath>
@@ -292,7 +292,7 @@ void MappleViewer::init() {
     imgui_->set_display_size(width(), height());
 
     // The walking and orbit tools create keyframes on the app-owned camera path.
-    walk_through_.reset(new WalkThrough(camera(), kfi_.get()));
+    camera_path_builder_.reset(new CameraPathBuilder(camera(), kfi_.get()));
 
     // Recreate the effect that was enabled in the previous session. The effect objects
     // are cheap until used, but they must exist before the first frame draws.
@@ -615,11 +615,11 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     // While a path tool is active Alt belongs to the tool: the press may become a
     // click on the scene (walk there, or pick the orbit axis) and must not start a
     // model manipulation. The clipping plane keeps its Alt precedence.
-    const WalkThrough::Status path_mode =
-            walk_through_ ? walk_through_->status() : WalkThrough::STOPPED;
+    const CameraPathBuilder::Mode path_mode =
+            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
     if ((modifiers & MODIF_ALT) && button == BUTTON_LEFT &&
         !ClippingPlane::instance()->is_enabled() && point_in_scene(x, y) &&
-        (path_mode == WalkThrough::WALKING_MODE || path_mode == WalkThrough::ROTATE_AROUND_AXIS)) {
+        (path_mode == CameraPathBuilder::Mode::GroundWalk || path_mode == CameraPathBuilder::Mode::Orbit)) {
         walk_click_pending_ = true;
         walk_click_x_ = x;
         walk_click_y_ = y;
@@ -828,9 +828,9 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
     }
     // Alt+K records the current camera pose, which belongs to the free mode; a walk
     // or orbit path is built from scene clicks instead.
-    if (key == KEY_K && modifiers == MODIF_ALT && walk_through_ &&
-        (walk_through_->status() == WalkThrough::WALKING_MODE ||
-         walk_through_->status() == WalkThrough::ROTATE_AROUND_AXIS)) {
+    if (key == KEY_K && modifiers == MODIF_ALT && camera_path_builder_ &&
+        (camera_path_builder_->mode() == CameraPathBuilder::Mode::GroundWalk ||
+         camera_path_builder_->mode() == CameraPathBuilder::Mode::Orbit)) {
         LOG(WARNING) << "'Alt+K' is for the free mode; Alt+click the scene to extend this path";
         return true;
     }
@@ -1011,11 +1011,11 @@ void MappleViewer::process_pending_work() {
         pending_walk_pick_ = false;
         const PickResult result = pick(walk_click_x_, walk_click_y_);
         if (result) {
-            walk_through_->set_scene(models());
-            walk_through_->walk_to(result.position);
+            camera_path_builder_->set_scene(models());
+            camera_path_builder_->walk_to(result.position);
             if (!show_camera_path_)
                 set_camera_path_visible(true);
-            camera_keyframe_index_ = walk_through_->current_keyframe_index();
+            camera_keyframe_index_ = camera_path_builder_->current_keyframe_index();
             LOG(INFO) << "walking keyframe added at (" << result.position << ")";
             update();
         } else

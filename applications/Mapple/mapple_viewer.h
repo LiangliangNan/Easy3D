@@ -46,10 +46,10 @@
 #include <easy3d/util/progress.h>
 #include <easy3d/viewer/viewer.h>
 
+#include "camera_path_builder.h"
 #include "settings.h"
 
 class ImGuiLayer;
-class WalkThrough;
 namespace easy3d {
     class AmbientOcclusion;
     class Drawable;
@@ -462,9 +462,8 @@ private:
 
     // The two keyframe-creation tools beyond free recording: walking through the
     // scene and orbiting a picked axis. They share the viewer's camera and keyframe
-    // interpolator; the mode lives in the tool (0 free, 1 walking, 2 orbit).
-    void set_camera_path_mode(int mode);
-    WalkThrough *camera_path_tool() const { return walk_through_.get(); }
+    // interpolator.
+    void set_camera_path_mode(CameraPathBuilder::Mode mode);
 
     // Applies an Alt+click while a path tool is active: walks to the picked point or
     // uses the picked line as the orbit axis.
@@ -691,8 +690,8 @@ private:
 #ifdef EASY3D_HAS_VULKAN
     mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 #endif
-    // Walking and rotate-around-axis keyframe creation (created in init()).
-    std::unique_ptr<WalkThrough> walk_through_;
+    // Walking and orbit keyframe creation (created in init()).
+    std::unique_ptr<CameraPathBuilder> camera_path_builder_;
 
     // An Alt+press that belongs to a path tool. The drag threshold turns it into a
     // click; the walk pick itself runs at draw time, where picking is safe.

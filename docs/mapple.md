@@ -1331,3 +1331,63 @@ once those are decided on.
 - Validation (2026-11-17, macOS, Release): both check trees rebuilt; Vulkan 149/149 and
   OpenGL 116/116 serial; Mapple launches with `sphere.obj` to "Mapple UI ready (Vulkan)"
   and "(OpenGL)". The path keys and overlay were not exercised through scripted input.
+
+### 2026-11-17 — camera-path builders in the walkthrough tool (batch 106)
+
+- `WalkThrough` now separates path generation from the interactive tools. Three pure
+  builders return keyframe poses and never move the camera or touch the interpolator,
+  so a caller can preview, filter or edit them first:
+  `orbit_frames(axis, center)`, `ground_frames(feet, up, eye_height)` and
+  `flight_frames(positions, targets, up)`. The rotate-around-axis mode delegates to
+  `orbit_frames`, so the existing entry points and callers are unchanged.
+- Orbit: the rotate offsets are now relative to the scene extent along the picked axis
+  instead of the box's maximum z (which assumed the scene sat on z=0), and the path
+  closes the requested number of loops: `keyframes per loop x loops` segment steps with
+  the last pose equal to the first, instead of stopping one step short of the start.
+  A 10 x 2 orbit therefore has 21 keyframes rather than 20.
+- Ground: eye poses one `eye_height` above the walking plane, aiming along the path
+  with central-difference tangents. A corner bisects its turn, repeated waypoints are
+  skipped instead of producing a NaN heading, and fewer than two feet yield no path.
+  Terrain following needs per-foot heights (and scene ray casts), so it is not applied.
+- Flight: positions and aim points are separate tracks of equal length; the camera
+  looks at the matching target and roll stays referenced to the `up` vector. The
+  interpolator smooths both tracks; between stations the aim is the interpolated
+  orientation, not an exact target lock.
+- Timing stays with the interpolator: per-segment easing and slowing down near points
+  of interest are not exposed by this class. The naming changes discussed for the tool
+  (a capability name, a `Mode` enum, quantity-in-name parameters) were deferred so the
+  existing callers keep compiling.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees; a
+  temporary headless probe linked against the app's `walk_through.cpp.o` verified the
+  orbit count/closure/radius/level plane, constant eye height and path-aligned headings,
+  duplicate-waypoint finiteness, dual-track aim, mismatched-input rejection, and that
+  `generate_camera_path()` inserts the builder poses. Both backends launch with
+  `sphere.obj` ("Mapple UI ready (Vulkan)/(OpenGL)", no warnings or errors). Suites were
+  not rerun (Mapple-only change); the probe was removed.
+
+### 2026-11-17 — the walkthrough tool is `CameraPathBuilder` (batch 107)
+
+- The tool is named after its capability: `WalkThrough` is now `CameraPathBuilder`, in
+  `camera_path_builder.h/.cpp` (the Qt app keeps its own `WalkThrough` class). The
+  status enum becomes `enum class Mode { Off, Free, GroundWalk, Orbit }` with
+  `mode()`/`set_mode()`, replacing `Status`, `STOPPED`, `FREE_MODE`, `WALKING_MODE`
+  and `ROTATE_AROUND_AXIS`. `MappleViewer::set_camera_path_mode()` now takes that
+  enum instead of 0/1/2, and the viewer member follows (`camera_path_builder_`); the
+  unused private `camera_path_tool()` accessor is gone.
+- Parameters now state the quantity and the unit they are expressed in:
+  `height_factor` is `eye_height_in_scene_heights`, `third_person_forward_factor` is
+  `eye_distance_in_character_heights`, `zoom_out_factor` is
+  `orbit_radius_offset_in_object_heights` (an offset added to the scene diagonal, not
+  the radius itself), `vertical_offset_factor` is
+  `orbit_vertical_offset_in_object_heights`, `pitch_angle` is `pitch_degrees`, and
+  `keyframe_samples` is `keyframes_per_loop`. The private helpers follow:
+  `character_height()` is `eye_height()`, `third_person_forward_distance()` is
+  `eye_distance()`, and `character_head()` is `eye_position()`. The Camera Path
+  window's labels, ranges and behavior are unchanged.
+- The app source list and the callers were updated (`mapple_viewer.h/.cpp`,
+  `ui/animation.cpp`, `applications/Mapple/CMakeLists.txt`). No test target builds
+  this tool, so no test file changed.
+- Validation (2026-11-17, macOS): Mapple rebuilt in both check trees; both backends
+  launch with `sphere.obj` ("Mapple UI ready (Vulkan)/(OpenGL)") and exit cleanly.
+  Suites were not rerun (app-only, pure rename with identical mode mapping); no
+  clicks were scripted. `easy3d/util/version.h` is unchanged.
