@@ -11189,3 +11189,36 @@ same boundary tolerance applies.
 suites ran serially: Vulkan 150/150 (149 s) and OpenGL 118/118 (59 s). Mapple launches on
 both backends with bunny.ply; the drag/lasso gestures were not scripted. `easy3d/util/version.h`
 carries only the generated date bump. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 121: polygon queries and region picking stop redoing work per pixel
+
+**Problem.** Auditing `GenericPolygon` with region picking as its hot consumer found three
+avoidable costs: `contains()` indexed through bounds-checked `at()` and computed the ray
+intersection in `double`; `bbox()` grew the box vertex by vertex, each `grow()` re-checking
+validity and looping the dimensions; and both rasterized region paths ray-cast every pixel
+and then ran a distance-to-every-edge loop for every pixel outside the lasso. On a
+200-vertex lasso with a 600x600 bounding box that per-pixel containment alone cost 166 ms.
+
+**Change (polygon).** `contains()` indexes through `operator[]` and evaluates the crossing
+in `FT`; `bbox()` is a single min/max pass over x and y followed by one box construction
+(an empty polygon still yields an invalid box); `signed_area()` divides by `FT(2)` - a
+`double` literal truncated the area for integral `FT` - and indexes with `size_t`;
+`<cmath>` and `<utility>` are included directly instead of arriving transitively; and the
+`is_simple()` documentation now says the edge test evaluates pairwise cross products in `FT`
+rather than implying exact orientation predicates. No signature or behavior changed:
+classification counts are identical to before on the audit fixture.
+
+**Change (picker).** `pick_visible_faces()` (both backends) fills each scanline once with
+`row_spans()` - the row's even-odd crossings sorted and paired into x-spans - and accepts a
+pixel with `in_spans()`, replacing the per-pixel `inside_polygon()` ray cast and its
+per-edge distance loop. Pixel centers never coincide with a lasso edge, so the boundary
+tolerance stays only in `pick_faces_CPU()`, where the inputs are projected vertex
+coordinates. Measured on the audit fixture (360k pixel queries): the region pass drops from
+166 ms to 0.26 ms of span work, `contains()` from 52 ms to 38 ms and `bbox()` from 1.15 us
+to 0.25 us per call at 200 vertices.
+
+**Validation.** Both check trees rebuilt; `vulkan.meshpicker` and `opengl.meshpicker` pass;
+suites ran serially: Vulkan 150/150 (149 s) and OpenGL 118/118 (67 s). Mapple launches on
+both backends with bunny.ply; the drag/lasso gestures were not scripted.
+`easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
+separate gates.

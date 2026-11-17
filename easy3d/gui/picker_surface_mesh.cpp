@@ -96,6 +96,27 @@ namespace {
         return polygon.area()>1e-8f;
     }
 
+    // Even-odd fill spans of the polygon at one scanline, x-sorted. Pixel centers never
+    // coincide with a lasso edge, so the rasterized region needs no boundary tolerance
+    // (the CPU through-selection keeps it for projected vertex coordinates).
+    void row_spans(const Polygon2& polygon,float y,std::vector<float>& crossings,
+                   std::vector<std::pair<float,float>>& spans) {
+        crossings.clear();
+        spans.clear();
+        for(size_t i=0,j=polygon.size()-1;i<polygon.size();j=i++) {
+            const vec2& a=polygon[j];const vec2& b=polygon[i];
+            if(((a.y<=y)&&(y<b.y))||((b.y<=y)&&(y<a.y)))
+                crossings.push_back(a.x+(y-a.y)*(b.x-a.x)/(b.y-a.y));
+        }
+        std::sort(crossings.begin(),crossings.end());
+        for(size_t k=0;k+1<crossings.size();k+=2) spans.emplace_back(crossings[k],crossings[k+1]);
+    }
+
+    bool in_spans(const std::vector<std::pair<float,float>>& spans,float x) {
+        for(const auto& span:spans) if(x>=span.first && x<span.second) return true;
+        return false;
+    }
+
     // Maps rasterized triangle IDs to their source faces through f:triangle_range,
     // the same index a single-pixel pick decodes.
     std::vector<SurfaceMesh::Face> faces_from_primitives(SurfaceMesh* model,std::vector<std::uint32_t> primitives) {
@@ -241,13 +262,18 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
                                               std::uint32_t(region_width),std::uint32_t(region_height));
     std::vector<std::uint32_t> primitives;
     primitives.reserve(ids.size());
-    for(int row=0;row<region_height;++row) for(int col=0;col<region_width;++col) {
-        const auto& id=ids[std::size_t(row)*region_width+col];
-        // Object 0 is this drawable's command; background and other commands keep the
-        // cleared object ID. UINT32_MAX primitive means provenance is unavailable.
-        if(id.object!=0 || id.primitive==UINT32_MAX) continue;
-        if(!inside_polygon(polygon,vec2(float(x0+col)+.5f,float(y0+row)+.5f))) continue;
-        primitives.push_back(id.primitive);
+    std::vector<float> crossings;
+    std::vector<std::pair<float,float>> spans;
+    for(int row=0;row<region_height;++row) {
+        row_spans(polygon,float(y0+row)+.5f,crossings,spans);
+        for(int col=0;col<region_width;++col) {
+            const auto& id=ids[std::size_t(row)*region_width+col];
+            // Object 0 is this drawable's command; background and other commands keep the
+            // cleared object ID. UINT32_MAX primitive means provenance is unavailable.
+            if(id.object!=0 || id.primitive==UINT32_MAX) continue;
+            if(!in_spans(spans,float(x0+col)+.5f)) continue;
+            primitives.push_back(id.primitive);
+        }
     }
     return faces_from_primitives(model,std::move(primitives));
 }
@@ -300,15 +326,20 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
     fbo_->release();
     std::vector<std::uint32_t> primitives;
     primitives.reserve(pixels.size()/4);
-    for(int row=0;row<region_height;++row) for(int col=0;col<region_width;++col) {
-        const unsigned char* c=&pixels[(std::size_t(row)*region_width+col)*4];
-        // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
-        const int id=color::encode(c[0],c[1],c[2],c[3]);
-        if(id<0) continue;
-        const vec2 p(transform::scale_coordinate(float(left+col)+.5f,width,camera()->screen_width()),
-                     transform::scale_coordinate(float(height-(bottom+row))-.5f,height,camera()->screen_height()));
-        if(!inside_polygon(polygon,p)) continue;
-        primitives.push_back(std::uint32_t(id));
+    std::vector<float> crossings;
+    std::vector<std::pair<float,float>> spans;
+    for(int row=0;row<region_height;++row) {
+        const float y=transform::scale_coordinate(float(height-(bottom+row))-.5f,height,camera()->screen_height());
+        row_spans(polygon,y,crossings,spans);
+        for(int col=0;col<region_width;++col) {
+            const unsigned char* c=&pixels[(std::size_t(row)*region_width+col)*4];
+            // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
+            const int id=color::encode(c[0],c[1],c[2],c[3]);
+            if(id<0) continue;
+            const float x=transform::scale_coordinate(float(left+col)+.5f,width,camera()->screen_width());
+            if(!in_spans(spans,x)) continue;
+            primitives.push_back(std::uint32_t(id));
+        }
     }
     return faces_from_primitives(model,std::move(primitives));
 }

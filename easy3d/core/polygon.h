@@ -30,6 +30,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <cmath>
+#include <utility>
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/box.h>
@@ -80,8 +82,9 @@ namespace easy3d {
          *      is implicitly closed, pairwise distinctness includes the last vertex not repeating the first
          *      position. A polygon with fewer than three vertices is not simple.
          *
-         *      Vertices are compared by exact equality and the edge test uses orientation predicates, so
-         *      nearly coincident vertices and nearly touching edges are not detected. Algorithms that require
+         *      Vertices are compared by exact equality and the edge test evaluates pairwise
+         *      orientation cross products in FT arithmetic, so nearly coincident vertices and nearly
+         *      touching edges are not detected. Algorithms that require
          *      a simple polygon (e.g., the convex partition in easy3d/algo/polygon_partition.h) expect input
          *      that passes this check; a polygon that fails it must first be normalized, for instance with the
          *      CSG operators in easy3d/algo/tessellator.h.
@@ -237,17 +240,17 @@ namespace easy3d {
     template<typename FT>
     inline bool GenericPolygon<FT>::contains(const Vec<2, FT> &p) const {
         bool inside = false;
-        std::size_t n = BaseClass::size();
+        const std::size_t n = BaseClass::size();
         for (std::size_t i = 0, j = n - 1; i < n; j = i, ++i) {
-            const Vec<2, FT> &u0 = BaseClass::at(i);
-            const Vec<2, FT> &u1 = BaseClass::at(j);  // current edge
+            const Vec<2, FT> &u0 = BaseClass::operator[](i);
+            const Vec<2, FT> &u1 = BaseClass::operator[](j);  // current edge
 
             if (((u0.y <= p.y) && (p.y < u1.y)) ||  // U1 is above the ray, U0 is on or below the ray
                 ((u1.y <= p.y) && (p.y < u0.y)))    // U0 is above the ray, U1 is on or below the ray
             {
                 // find x-intersection of current edge with the ray.
                 // Only consider edge crossings on the ray to the right of P.
-                double x = u0.x + (p.y - u0.y) * (u1.x - u0.x) / (u1.y - u0.y);
+                const FT x = u0.x + (p.y - u0.y) * (u1.x - u0.x) / (u1.y - u0.y);
                 if (x > p.x)
                     inside = !inside;
             }
@@ -275,23 +278,32 @@ namespace easy3d {
     template<typename FT>
     inline FT GenericPolygon<FT>::signed_area() const {
         FT result = 0;
-        for (unsigned int i = 0; i < BaseClass::size(); i++) {
-            unsigned int j = (i + 1) % BaseClass::size();
-            const Vec<2, FT> &t1 = BaseClass::at(i);
-            const Vec<2, FT> &t2 = BaseClass::at(j);
+        const std::size_t n = BaseClass::size();
+        for (std::size_t i = 0; i < n; ++i) {
+            const std::size_t j = (i + 1) % n;
+            const Vec<2, FT> &t1 = BaseClass::operator[](i);
+            const Vec<2, FT> &t2 = BaseClass::operator[](j);
             result += t1.x * t2.y - t2.x * t1.y;
         }
-        result /= 2.0;
+        result /= FT(2);
         return result;
     }
 
 
     template<typename FT>
     inline GenericBox<2, FT> GenericPolygon<FT>::bbox() const {
-        GenericBox<2, FT> box;
-        for (auto p : *this)
-            box.grow(p);
-        return box;
+        if (BaseClass::empty())
+            return GenericBox<2, FT>();
+        const Vec<2, FT> &first = BaseClass::operator[](0);
+        FT min_x = first.x, max_x = first.x, min_y = first.y, max_y = first.y;
+        for (std::size_t i = 1; i < BaseClass::size(); ++i) {
+            const Vec<2, FT> &p = BaseClass::operator[](i);
+            min_x = std::min(min_x, p.x);
+            max_x = std::max(max_x, p.x);
+            min_y = std::min(min_y, p.y);
+            max_y = std::max(max_y, p.y);
+        }
+        return GenericBox<2, FT>(Vec<2, FT>(min_x, min_y), Vec<2, FT>(max_x, max_y));
     }
 
 }
