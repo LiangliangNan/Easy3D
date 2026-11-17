@@ -24,9 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
-#define EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
+#ifndef EASY3D_RENDERER_CAMERA_PATH_BUILDER_H
+#define EASY3D_RENDERER_CAMERA_PATH_BUILDER_H
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -39,30 +40,30 @@ namespace easy3d {
     class Model;
 }
 
+namespace easy3d {
 
 /**
  * \brief Camera-path authoring for demonstrating a 3D scene or object in a video.
- * \details A path is a sequence of keyframe poses that the app hands to the shared
+ * \details A path is a sequence of keyframe poses that an app hands to a
  *      KeyFrameInterpolator for preview, playback and recording. This class covers
  *      the sources that free recording cannot express:
  *
- *      - walking a traced ground route (generate_ground_route() turns a stroke of
+ *      - walking a traced ground route: generate_ground_route() turns a stroke of
  *        picked ground points into first-person eye-height poses aimed along the
- *        route),
- *      - orbiting a picked axis (generate_camera_path() turns a line into a closed
- *        orbit), and
+ *        route,
+ *      - orbiting a picked axis: generate_orbit() turns a line into a closed orbit,
+ *        and
  *      - pure builders for previewing or editing a path before it is inserted:
- *        orbit_frames(), ground_frames() (eye poses over ground-contact points)
- *        and flight_frames() (a position track with a separate aim track).
+ *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
+ *        flight_frames() (a position track with a separate aim track).
  *
- *      Ported from the Qt app (Mapple-Qt/walk_through.h). Unlike the Qt version it
- *      borrows the viewer's camera and keyframe interpolator, so the keyframes it
- *      creates are the ones the Camera Path window, playback and video recording
- *      already operate on, and it does not draw the path (the viewer draws it).
- *
- *      Mode only says which one-shot tool the app has armed; the app decides which
- *      gesture (a drag along the ground, a click for the orbit axis) is fed to the
- *      generators below and disarms the tool when the gesture is done.
+ *      The class borrows a camera and a keyframe interpolator. The builders return
+ *      plain frames; the generating functions append them to the interpolator the
+ *      caller owns, so the poses feed exactly the path the caller's path UI, playback
+ *      and video recording already operate on. The convenience of the generating
+ *      functions is that they also grow the camera's scene radius to keep the new
+ *      poses inside the view frustum. The class draws nothing and never moves or
+ *      orients the camera: drawing an authored path is the caller's choice.
  *
  *      Smoothness and timing are the interpolator's: builders return sparse poses
  *      and the interpolator fits a smooth curve through them. Per-segment timing
@@ -78,31 +79,26 @@ namespace easy3d {
  */
 class CameraPathBuilder {
 public:
-    CameraPathBuilder(easy3d::Camera *camera, easy3d::KeyFrameInterpolator *interpolator);
+    /// Borrows \p camera (for the view's up direction and the scene radius) and
+    /// \p interpolator (the path that receives the poses).
+    CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
     ~CameraPathBuilder() = default;
-
-    /// The one-shot tool the app has armed; Off means no tool owns the next gesture.
-    enum class Mode {
-        Off,         // no path tool is armed
-        GroundWalk,  // the next drag on the ground becomes a walking route
-        Orbit        // the next click picks the orbit axis
-    };
-
-    Mode mode() const { return mode_; }
-    void set_mode(Mode mode) { mode_ = mode; }
 
     /// \name Walking route
     //@{
     /// Bounds of the visible models, used by the eye height and the orbit. With no
     /// visible model the box becomes invalid, so callers can refuse the gesture.
-    void set_scene(const std::vector<std::shared_ptr<easy3d::Model>> &scene);
+    void set_scene(const std::vector<std::shared_ptr<Model>> &scene);
+
+    /// The scene bounds last passed to set_scene().
+    const Box3 &scene_box() const { return scene_box_; }
 
     /// \brief The up direction used where the route has no surface normal, a unit
     ///      vector.
     /// \details This is the current view's up direction. Eye poses that carry no
     ///      per-foot normal stand along it, and the eye height is measured against
     ///      the scene extent along it.
-    easy3d::vec3 ground_up_direction() const;
+    vec3 ground_up_direction() const;
 
     /// \brief The eye height above the ground, in scene heights (default 0.2).
     /// \details A scene height is the extent of the scene box along
@@ -111,12 +107,19 @@ public:
     void set_eye_height_in_scene_heights(float height_in_scene_heights);
     float eye_height_in_scene_heights() const { return eye_height_in_scene_heights_; }
 
+    /// \brief The eye height above the ground in world units, i.e.
+    ///      eye_height_in_scene_heights() resolved against the scene box along
+    ///      ground_up_direction() (or the scene radius before set_scene() has seen a
+    ///      visible model).
+    float eye_height_in_world_units() const;
+
     /// \brief Distance between route keyframes along the stroke, in character
     ///      heights (default 1, i.e. about one body length per keyframe).
     void set_keyframe_spacing_in_character_heights(float spacing_in_character_heights);
     float keyframe_spacing_in_character_heights() const { return keyframe_spacing_in_character_heights_; }
 
-    /// \brief Generates a walking route through \p stroke on the ground.
+    /// \brief Generates a walking route through \p stroke on the ground and appends
+    ///      it to the interpolator.
     /// \details The stroke points are ground-contact points, so passing the surface
     ///      points picked under the cursor makes the route follow the terrain: each
     ///      pose sits one eye height above its own stroke point, along the walker's
@@ -133,15 +136,18 @@ public:
     ///      pose along ground_up_direction().
     /// \return The number of keyframes added (0 if the stroke is degenerate, the
     ///      directions do not pair with the stroke, or the eye height is zero).
-    std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke,
-                                      const std::vector<easy3d::vec3> &foot_up_directions);
+    std::size_t generate_ground_route(const std::vector<vec3> &stroke,
+                                      const std::vector<vec3> &foot_up_directions);
     //@}
 
     /// \name Orbit
     //@{
-    /// Generates the orbit around \p axis, replacing nothing: callers clear the
-    /// path first when a replacement is intended.
-    void generate_camera_path(const easy3d::Line3 &axis);
+    /// \brief Generates the orbit around \p axis through \p center and appends it to
+    ///      the interpolator. Nothing is replaced: callers clear the path first when
+    ///      a replacement is intended.
+    /// \return The number of keyframes added (0 if the scene box is invalid or the
+    ///      orbit settings produce no poses).
+    std::size_t generate_orbit(const Line3 &axis, const vec3 &center);
 
     /// \brief Extra orbit radius beyond the scene diagonal, in object heights
     ///      (default 0).
@@ -178,7 +184,7 @@ public:
     /// \param axis The orbit axis; the camera looks at the axis and the scene
     ///      recedes along the direction opposite to the picked line.
     /// \param center The scene center the orbit is built around.
-    std::vector<easy3d::Frame> orbit_frames(const easy3d::Line3 &axis, const easy3d::vec3 &center) const;
+    std::vector<Frame> orbit_frames(const Line3 &axis, const vec3 &center) const;
 
     /// \brief Eye poses walking through \p feet, each pose standing along its own
     ///      up direction.
@@ -194,9 +200,9 @@ public:
     ///      direction of that foot.
     /// \return The poses, or an empty vector if fewer than two feet are given, the
     ///      directions do not pair with them, or a direction is degenerate.
-    std::vector<easy3d::Frame> ground_frames(const std::vector<easy3d::vec3> &feet,
-                                             const std::vector<easy3d::vec3> &up_directions,
-                                             float eye_height) const;
+    std::vector<Frame> ground_frames(const std::vector<vec3> &feet,
+                                     const std::vector<vec3> &up_directions,
+                                     float eye_height) const;
 
     /// \brief Flight poses along \p positions, each aiming at the matching target.
     /// \details The motion track and the aim track are independent: positions are
@@ -207,36 +213,29 @@ public:
     /// \param targets One aim point per position, in the same order.
     /// \param up Unit up reference that keeps the camera roll level.
     /// \return The poses, or an empty vector if the inputs do not pair up.
-    std::vector<easy3d::Frame> flight_frames(const std::vector<easy3d::vec3> &positions,
-                                             const std::vector<easy3d::vec3> &targets,
-                                             const easy3d::vec3 &up) const;
+    std::vector<Frame> flight_frames(const std::vector<vec3> &positions,
+                                     const std::vector<vec3> &targets,
+                                     const vec3 &up) const;
     //@}
 
-    /// The scene bounds last passed to set_scene().
-    const easy3d::Box3 &scene_box() const { return scene_box_; }
-
 protected:
-    void add_keyframe(const easy3d::Frame &frame);
-
-    // The eye height above the ground, in world units along the up direction.
-    float eye_height() const;
+    /// Appends \p frame to the interpolator and grows the camera's scene radius to
+    /// keep it inside the view frustum.
+    void add_keyframe(const Frame &frame);
 
     /// Orientation looking along \p view_dir with \p up as the roll reference; the
     /// two must be orthogonal (used by the plane-constrained builders).
-    static easy3d::quat to_orientation(const easy3d::vec3 &view_dir, const easy3d::vec3 &up);
+    static quat to_orientation(const vec3 &view_dir, const vec3 &up);
     /// Orientation looking from \p position at \p target with \p up as the roll
     /// reference; the view direction may point anywhere relative to \p up.
-    static easy3d::quat look_at_orientation(const easy3d::vec3 &position, const easy3d::vec3 &target,
-                                            const easy3d::vec3 &up);
+    static quat look_at_orientation(const vec3 &position, const vec3 &target, const vec3 &up);
 
 protected:
-    easy3d::Camera *camera_;
-    easy3d::KeyFrameInterpolator *kfi_;
-
-    Mode mode_;
+    Camera *camera_;
+    KeyFrameInterpolator *kfi_;
 
     // Walking route
-    easy3d::Box3 scene_box_;
+    Box3 scene_box_;
     float eye_height_in_scene_heights_;
     float keyframe_spacing_in_character_heights_;
 
@@ -248,4 +247,6 @@ protected:
     int num_loops_;
 };
 
-#endif // EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
+} // namespace easy3d
+
+#endif // EASY3D_RENDERER_CAMERA_PATH_BUILDER_H

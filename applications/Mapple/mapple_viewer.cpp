@@ -26,7 +26,6 @@
 
 #include "mapple_viewer.h"
 #include "imgui_layer.h"
-#include "camera_path_builder.h"
 
 #include <algorithm>
 #include <cmath>
@@ -747,11 +746,10 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     // The armed one-shot path tool owns the next plain left press in the scene: a
     // walk drag starts its route stroke there, and an orbit drag starts its axis.
     // Alt still belongs to model manipulation and the clipping plane.
-    const CameraPathBuilder::Mode tool =
-            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
-    if (tool != CameraPathBuilder::Mode::Off && button == BUTTON_LEFT &&
+    const PathTool tool = path_tool_;
+    if (tool != PathTool::Off && button == BUTTON_LEFT &&
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
-        if (tool == CameraPathBuilder::Mode::GroundWalk) {
+        if (tool == PathTool::GroundWalk) {
             if (camera_path_builder_->scene_box().is_valid()) {
                 // The route follows the visible surface under the cursor, so the
                 // terrain supplies each stroke point's contact point and the
@@ -1015,8 +1013,7 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
         return true;
     }
     // An armed path tool takes the first Esc; selection mode keeps its own.
-    if (key == KEY_ESCAPE && modifiers == 0 && camera_path_builder_ &&
-        camera_path_builder_->mode() != CameraPathBuilder::Mode::Off) {
+    if (key == KEY_ESCAPE && modifiers == 0 && path_tool_ != PathTool::Off) {
         cancel_camera_path_tool();
         return true;
     }

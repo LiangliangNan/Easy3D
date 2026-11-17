@@ -25,7 +25,7 @@
  \endcond */
 
 #include "../mapple_viewer.h"
-#include "../camera_path_builder.h"
+#include <easy3d/renderer/camera_path_builder.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -76,8 +76,7 @@ void MappleViewer::draw_animation_window() {
             camera_keyframe_index_ = -1;
             // The tool disarms with its window; a gesture in progress is abandoned,
             // and the keyframe handles go away with the window that turns them on.
-            if (camera_path_builder_)
-                camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+            path_tool_ = PathTool::Off;
             edit_keyframes_ = false;
             cancel_path_gesture();
         }
@@ -100,19 +99,18 @@ void MappleViewer::draw_animation_window() {
     ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
 
     if (ImGui::Button("Walk a route...", ImVec2(120, 0)))
-        arm_camera_path_tool(CameraPathBuilder::Mode::GroundWalk);
+        arm_camera_path_tool(PathTool::GroundWalk);
     ImGui::SameLine();
     if (ImGui::Button("Orbit...", ImVec2(80, 0)))
-        arm_camera_path_tool(CameraPathBuilder::Mode::Orbit);
+        arm_camera_path_tool(PathTool::Orbit);
 
     // Read after the buttons so arming shows its hint and its parameters at once.
-    const CameraPathBuilder::Mode tool =
-            camera_path_builder_ ? camera_path_builder_->mode() : CameraPathBuilder::Mode::Off;
-    if (tool != CameraPathBuilder::Mode::Off) {
+    const PathTool tool = path_tool_;
+    if (tool != PathTool::Off) {
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(70, 0)))
             cancel_camera_path_tool();
-        ImGui::TextDisabled(tool == CameraPathBuilder::Mode::GroundWalk
+        ImGui::TextDisabled(tool == PathTool::GroundWalk
                                     ? "Drag over the ground surface to trace the route. Esc cancels."
                                     : "Drag across the scene to set the orbit axis; a click uses the "
                                       "vertical axis. Esc cancels.");
@@ -201,7 +199,7 @@ void MappleViewer::draw_animation_window() {
                           "position, or in the plane of its up (the terrain or orbit plane) with "
                           "Shift. Ctrl+Z restores the path from before the drag; Esc cancels it.");
 
-    if (camera_path_builder_ && tool == CameraPathBuilder::Mode::GroundWalk) {
+    if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         ImGui::Separator();
         ImGui::TextDisabled("Up  surface normal under each foot");
         ImGui::SetItemTooltip("The walker stands upright on the traced surface: each pose rises along "
@@ -224,7 +222,7 @@ void MappleViewer::draw_animation_window() {
             update();
         }
         ImGui::SetItemTooltip("Distance between keyframes along the route, relative to the character height.");
-    } else if (camera_path_builder_ && tool == CameraPathBuilder::Mode::Orbit) {
+    } else if (camera_path_builder_ && tool == PathTool::Orbit) {
         ImGui::Separator();
         ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
         ImGui::SetItemTooltip("The axis runs along the dragged screen segment through the surface under "
@@ -489,30 +487,30 @@ void MappleViewer::export_camera_path() {
         LOG(ERROR) << "failed to save keyframes to " << file_name;
 }
 
-void MappleViewer::arm_camera_path_tool(CameraPathBuilder::Mode tool) {
+void MappleViewer::arm_camera_path_tool(PathTool tool) {
     if (!camera_path_builder_)
         return;
 
     cancel_path_gesture();
-    if (camera_path_builder_->mode() == tool) { // clicking the armed tool disarms it
-        camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+    if (path_tool_ == tool) { // clicking the armed tool disarms it
+        path_tool_ = PathTool::Off;
         update();
         return;
     }
 
-    if (tool == CameraPathBuilder::Mode::GroundWalk || tool == CameraPathBuilder::Mode::Orbit) {
+    if (tool == PathTool::GroundWalk || tool == PathTool::Orbit) {
         camera_path_builder_->set_scene(models());
         if (!camera_path_builder_->scene_box().is_valid()) {
             LOG(WARNING) << "the camera path tools need a visible model";
-            camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+            path_tool_ = PathTool::Off;
             update();
             return;
         }
     }
 
-    camera_path_builder_->set_mode(tool);
+    path_tool_ = tool;
     snapshot_camera_path(); // Ctrl+Z restores the path the tool started from
-    LOG(INFO) << (tool == CameraPathBuilder::Mode::GroundWalk
+    LOG(INFO) << (tool == PathTool::GroundWalk
                   ? "walk route tool armed: drag over the ground surface to trace the route"
                   : "orbit tool armed: drag across the scene to set the orbit axis "
                     "(a click uses the vertical axis)");
@@ -521,8 +519,7 @@ void MappleViewer::arm_camera_path_tool(CameraPathBuilder::Mode tool) {
 
 void MappleViewer::cancel_camera_path_tool() {
     cancel_path_gesture();
-    if (camera_path_builder_)
-        camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off);
+    path_tool_ = PathTool::Off;
     update();
 }
 
@@ -603,7 +600,7 @@ void MappleViewer::commit_ground_route() {
         LOG(WARNING) << "the stroke is too short to generate walking keyframes";
         return; // the tool stays armed for another try
     }
-    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
+    path_tool_ = PathTool::Off; // one-shot
     camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     if (!show_camera_path_)
         set_camera_path_visible(true);
@@ -643,10 +640,10 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
 
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
-    camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
+    path_tool_ = PathTool::Off; // one-shot
     if (orbit_replaces_path_)
         kfi_->delete_path();
-    camera_path_builder_->generate_camera_path(axis);
+    camera_path_builder_->generate_orbit(axis, camera()->scene_center());
     camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     if (!show_camera_path_)
         set_camera_path_visible(true);

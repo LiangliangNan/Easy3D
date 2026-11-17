@@ -40,13 +40,13 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/state.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
 #include <easy3d/viewer/viewer.h>
 
-#include "camera_path_builder.h"
 #include "settings.h"
 
 class ImGuiLayer;
@@ -461,11 +461,18 @@ private:
 
     void export_camera_path();
 
+    // The one-shot tool the app has armed; Off means no tool owns the next gesture.
+    enum class PathTool {
+        Off,         // no path tool is armed
+        GroundWalk,  // the next drag on the ground becomes a walking route
+        Orbit        // the next click picks the orbit axis
+    };
+
     // One-shot path tools. Arming makes the next gesture in the scene belong to the
     // tool - a drag traces a walking route along the ground, a click picks the orbit
     // axis - and the tool disarms itself once that gesture is applied. Esc or the
     // window's Cancel button disarms it immediately.
-    void arm_camera_path_tool(CameraPathBuilder::Mode tool);
+    void arm_camera_path_tool(PathTool tool);
     void cancel_camera_path_tool();
     void cancel_path_gesture();
 
@@ -768,7 +775,9 @@ private:
     mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 #endif
     // Walking and orbit keyframe creation (created in init()).
-    std::unique_ptr<CameraPathBuilder> camera_path_builder_;
+    std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;
+    // Which one-shot path tool owns the next gesture.
+    PathTool path_tool_ = PathTool::Off;
 
     // The gesture owned by the armed one-shot path tool. A route stroke keeps the
     // accepted screen trail for the live preview and the picked surface samples,

@@ -1,3 +1,15 @@
+# The camera path builders are CPU geometry: no context or backend device, so this
+# test runs unchanged in both builds.
+add_executable(easy3d_camera_path_builder_test camera_path_builder_test.cpp)
+target_link_libraries(easy3d_camera_path_builder_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.camerapathbuilder COMMAND easy3d_camera_path_builder_test)
+    set_tests_properties(vulkan.camerapathbuilder PROPERTIES TIMEOUT 120)
+else()
+    add_test(NAME opengl.camerapathbuilder COMMAND easy3d_camera_path_builder_test)
+    set_tests_properties(opengl.camerapathbuilder PROPERTIES TIMEOUT 120)
+endif()
+
 if(Easy3D_ENABLE_VULKAN)
     add_executable(easy3d_vulkan_test render_test.cpp)
     target_link_libraries(easy3d_vulkan_test PRIVATE easy3d::renderer)

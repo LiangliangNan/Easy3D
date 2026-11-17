@@ -10903,3 +10903,49 @@ Both check trees rebuilt and the suites run serially: Vulkan 149/149 and OpenGL
 was also run with the flat pipeline forced and failed; OpenGL likewise with
 `set_lighting(false)`. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
 separate gates.
+
+### 2026-11-17 — batch 115: CameraPathBuilder moves into easy3d::renderer
+
+**Problem.** The camera-path builders lived in `applications/Mapple/camera_path_builder.{h,cpp}`
+and were therefore reachable only from Mapple, although they are pure camera geometry
+(stroke resampling, terrain-following eye poses, turntable orbits, dual-track flight
+tracks) that any app or viewer can use.
+
+**Change.** New `easy3d/renderer/camera_path_builder.{h,cpp}` in namespace `easy3d`,
+registered in `renderer_headers`/`renderer_sources` so it ships with the installed
+library. The class drops the app-policy `Mode` enum: Mapple keeps its own
+`enum class PathTool { Off, GroundWalk, Orbit }` member, so arming, gesture ownership
+and the one-shot disarm stay app-side. The library API gains
+`eye_height_in_world_units()` (the resolved eye height, previously a protected
+`eye_height()`), and `generate_camera_path(axis)` becomes `generate_orbit(axis,
+center)`, returning the number of poses appended. `set_scene()` now only measures the
+visible bounds instead of also rewinding the camera's scene radius, and the orbit no
+longer resets that radius; `add_keyframe()` still grows the radius so appended poses
+stay inside the frustum, which is the documented convenience. The builders themselves
+(arc-length resampling, camera-facing normal orientation, two-pass smoothing,
+terrain-following ground poses, level headings, turntable orbit with pitch, look-at
+flight poses) are unchanged, including the class documentation of those rules.
+
+**Mapple.** Loads `<easy3d/renderer/camera_path_builder.h>`, deletes its copies and
+their CMake entries, and uses `path_tool_` where it read the builder's mode. The orbit
+call site passes `camera()->scene_center()` explicitly. The only behavior delta is
+that arming a tool no longer rewinds the camera's scene radius to the visible box
+(growing to fit the generated poses still happens).
+
+**Test.** New `tests/renderer/camera_path_builder_test.cpp`, CPU-only and registered
+in both builds as `vulkan.camerapathbuilder` / `opengl.camerapathbuilder`: visible-only
+scene bounds (hidden models are ignored), the eye height in world units, a flat route's
+count, eye height and heading, a 30-degree ramp with mixed face winding (every pose
+stands along the camera-facing up, one eye height above its own foot, with a level
+heading along the route), degenerate refusals (short stroke, unpaired directions, zero
+eye height, single foot, degenerate direction, unpaired flight targets), the turntable
+orbit (loop count, closure, constant radius, axis as up, looking at the axis),
+`generate_orbit()` appending and growing the camera radius, and flight stations aiming
+at their own targets.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).**
+Both check trees rebuilt; suites run serially: Vulkan 150/150 (143 s) and OpenGL
+118/118 (59 s), each one more than before (the new builder test). Mapple launches on
+both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)"); the path gestures were not
+scripted. `easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI
+remain separate gates.

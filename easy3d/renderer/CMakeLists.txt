@@ -33,6 +33,7 @@ set(renderer_sources
 list(APPEND renderer_headers
         obj_materials.h
         camera.h
+        camera_path_builder.h
         clipping_plane.h
         constraint.h
         drawable.h
@@ -60,6 +61,7 @@ list(APPEND renderer_headers
 list(APPEND renderer_sources
         obj_materials.cpp
         camera.cpp
+        camera_path_builder.cpp
         clipping_plane.cpp
         constraint.cpp
         drawable.cpp
