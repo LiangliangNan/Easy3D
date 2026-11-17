@@ -7,9 +7,11 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
+#include <vector>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
 void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
@@ -21,8 +23,14 @@ struct PathViewer : TutorialCameraInterpolation {
     using TutorialCameraInterpolation::TutorialCameraInterpolation;
     // Hide the guides without touching the path or the scene bounds, so depth/IDs stay comparable.
     bool show_path = true;
+    // Draw a caller-supplied annotation set instead of the tutorial's guides.
+    bool manual_annotations = false;
+    std::vector<graphics::DrawCommand> annotations;
     void draw() const override {
-        if (show_path)
+        if (manual_annotations) {
+            set_viewer_annotations(annotations);
+            Viewer::draw();
+        } else if (show_path)
             TutorialCameraInterpolation::draw();
         else {
             set_viewer_annotations({});
@@ -99,6 +107,25 @@ void tutorial_keys(PathViewer& v) {
     require(v.camera()->position()==paused,"paused tutorial animation moved the camera");
     require(v.snapshot("vulkan-camera-path.png",1,1),"camera path snapshot failed");
 }
+void marker_lighting(PathViewer& v) {
+    KeyFrameInterpolator path(v.camera()->frame());
+    require(path.add_keyframe(Frame(vec3(0,0,50),quat()),0) &&
+            path.add_keyframe(Frame(vec3(50,0,50),quat()),1),"lighting path fixture failed");
+    vulkan::KeyFrameInterpolatorRenderer renderer;
+    const auto lit=renderer.draw_cameras(path,*v.camera(),30);
+    require(lit.geometry && lit.lighting && lit.material_lighting,"keyframe cameras are drawn unlit");
+    require(lit.overlay_depth_test,"keyframe cameras lost scene-depth occlusion");
+    for (const auto& vertex:lit.geometry->vertices())
+        require(std::abs(length(vertex.normal)-1)<1e-4f,"keyframe camera facet normal is not unit length");
+    v.manual_annotations=true;
+    v.annotations={};v.draw_frame();const auto bare=v.capture();
+    v.annotations={lit};v.draw_frame();const auto shaded=v.capture();
+    auto flat=lit;flat.lighting=flat.material_lighting=false;
+    v.annotations={flat};v.draw_frame();const auto unshaded=v.capture();
+    v.manual_annotations=false;
+    require(shaded.rgba!=bare.rgba,"keyframe cameras were not visible");
+    require(shaded.rgba!=unshaded.rgba,"keyframe cameras ignore lighting");
+}
 void renderer_cache(PathViewer& v) {
     KeyFrameInterpolator path(v.camera()->frame());
     require(path.add_keyframe(Frame(vec3(0,0,50),quat()),0) &&
@@ -122,8 +149,9 @@ int main(int argc,char**) {
         PathViewer v("Tutorial camera paths");set_size(v,options);require(v.has_usage(),"tutorial usage hint missing");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere load failed");
         tutorial_keys(v);
+        marker_lighting(v);
         renderer_cache(v);
         require(v.device().validation_errors()==0,"camera path validation errors");
-        std::cout<<"PASS: shared manual interpolation, tutorial timer playback and keys, native paths/cameras, depth/IDs, snapshot\n";
+        std::cout<<"PASS: shared manual interpolation, tutorial timer playback and keys, native paths/cameras, lighting, depth/IDs, snapshot\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

@@ -238,12 +238,14 @@ namespace easy3d {
             float shininess = 64;                     ///< Specular exponent.
             // Straight-alpha triangle annotations composite after the 3D scene.
             // They never write scene depth or picking IDs; depth testing is opt-in below.
-            // Flat/scene-depth annotations are unlit; independent 3D HUDs support lighting.
+            // Flat/scene-depth annotations are unlit unless lighting is enabled; the
+            // lit material state below shades them like scene triangles.
             bool overlay =
                 false; ///< Composite triangle annotations after the scene; overlays do not write scene depth or IDs.
             // Depth-tested alpha annotations render after the opaque scene and before
             // screen overlays. They test scene depth (<=), but never write depth or IDs.
             // Supply these in back-to-front order when they overlap; triangles only.
+            // Lighting uses the material state below, and normals come from the geometry.
             bool overlay_depth_test =
                 false; ///< Test triangle overlays against scene depth without writing depth or IDs; submit overlapping annotations back-to-front.
             // 3D HUD triangles share a separately cleared depth attachment, testing and

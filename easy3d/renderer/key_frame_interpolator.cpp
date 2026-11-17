@@ -322,12 +322,14 @@ namespace easy3d {
                 cameras_drawable_ = new TrianglesDrawable;
                 cameras_drawable_->update_vertex_buffer(points);
                 cameras_drawable_->update_element_buffer(indices);
-                cameras_drawable_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
+                cameras_drawable_->set_uniform_coloring(color);
             }
         }
 
-        if (cameras_drawable_)
+        if (cameras_drawable_) {
+            cameras_drawable_->set_uniform_coloring(color);
             cameras_drawable_->draw(camera);
+        }
     }
 
 

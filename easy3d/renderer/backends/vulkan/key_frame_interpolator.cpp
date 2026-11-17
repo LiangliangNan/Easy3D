@@ -27,8 +27,8 @@
 #include "key_frame_interpolator.h"
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/util/setting.h>
 #include <cmath>
 #include <stdexcept>
 namespace easy3d {
@@ -88,25 +88,31 @@ namespace easy3d {
             if (!same) {
                 keyframes_.clear();
                 std::vector<graphics::Vertex> vertices;
-                std::vector<uint32_t> indices;
                 for (size_t i = 0; i < path.number_of_keyframes(); ++i) {
                     const auto frame = path.keyframe(i);
                     keyframes_.push_back(frame);
                     std::vector<vec3> points;
                     std::vector<unsigned> elements;
                     easy3d::shape::create_camera(points, elements, camera_width, camera.field_of_view(), aspect);
-                    const auto offset = uint32_t(vertices.size());
-                    for (auto index : elements)
-                        indices.push_back(offset + index);
                     const auto transform = frame.matrix();
-                    for (const auto &point : points) {
-                        graphics::Vertex v;
-                        v.position = transform * point;
-                        vertices.push_back(v);
+                    // One vertex per facet corner with the facet normal: the markers shade
+                    // exactly like the flat-shaded OpenGL triangles.
+                    for (size_t t = 0; t + 2 < elements.size(); t += 3) {
+                        const vec3 p0 = transform * points[elements[t]];
+                        const vec3 p1 = transform * points[elements[t + 1]];
+                        const vec3 p2 = transform * points[elements[t + 2]];
+                        vec3 normal = cross(p1 - p0, p2 - p0);
+                        const float factor = length(normal);
+                        normal = factor > 0 ? normal / factor : vec3(0, 0, 1);
+                        for (const auto &p : {p0, p1, p2}) {
+                            graphics::Vertex v;
+                            v.position = p;
+                            v.normal = normal;
+                            vertices.push_back(v);
+                        }
                     }
                 }
-                camera_command_.geometry =
-                    std::make_shared<graphics::Geometry>(std::move(vertices), std::move(indices));
+                camera_command_.geometry = std::make_shared<graphics::Geometry>(std::move(vertices));
                 camera_command_.overlay = camera_command_.overlay_depth_test = true;
                 camera_width_ = camera_width;
                 fov_ = camera.field_of_view();
@@ -115,6 +121,15 @@ namespace easy3d {
             auto result = camera_command_;
             result.model_view_projection = camera.model_view_projection_matrix();
             result.color = color;
+            result.lighting = result.material_lighting = true;
+            result.lighting_two_sides = setting::triangles_drawable_two_side_lighting;
+            result.distinct_back_color = true;
+            result.back_color = vec4(1, 0, 0, 1);
+            result.ambient = setting::material_ambient;
+            result.specular = setting::material_specular;
+            result.shininess = setting::material_shininess;
+            result.eye = camera.position();
+            result.light = vec3(inverse(camera.model_view_matrix()) * setting::light_position);
             return result;
         }
     } // namespace vulkan

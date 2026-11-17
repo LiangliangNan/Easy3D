@@ -10851,3 +10851,55 @@ test runs as `vulkan.camerapath`) and OpenGL 116/116 in 62 s. Mapple builds in b
 trees and launches with `sphere.obj` to "Mapple UI ready (Vulkan)" and "(OpenGL)";
 the camera-path keys and the guide overlay were not exercised through scripted input.
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 105: lit keyframe camera markers on the camera path
+
+**Problem.** The keyframe camera glyphs were red but flat. On OpenGL
+`KeyFrameInterpolator::draw_cameras()` builds a `TrianglesDrawable` whose default
+state is `lighting = true`, and `surface.frag` derives flat facet normals from
+`dFdx/dFdy` of the position, so the glyphs pick up the ambient and specular terms.
+The Vulkan renderer emitted the same glyphs as scene-depth annotations, whose
+pipeline (`overlay.vert`/`overlay.frag`) reads only position, color and texcoord and
+ignores the lighting push constant, so nothing could shade them. The historical
+tutorial was lit on OpenGL and flat on Vulkan; adding a second overlay shader pair
+for this was unnecessary, because the backend already shades annotation triangles
+without writing scene depth or IDs through the independent-depth HUD pair.
+
+**Change.** No new shaders. `render_device.cpp` now creates `hud.frag` for every
+color pass (it was only created when the pass had a 3D HUD) and builds a
+`depth_overlay_lit_pipeline` in subpass 1 from the existing `scene.vert` + `hud.frag`
+with the full vertex layout, scene-depth test (`LESS_OR_EQUAL`) and no depth write.
+Depth-tested annotations that set `lighting` bind it; all others keep the flat
+`overlay` pipeline. `render_device.h` documents the extended contract: scene-depth
+annotations are unlit unless `lighting` is set, lighting uses the material state
+below, and normals come from the geometry.
+
+**Renderer.** `vulkan::KeyFrameInterpolatorRenderer::draw_cameras()` emits one vertex
+per facet corner carrying the facet normal (unit length, `(0,0,1)` fallback for
+degenerate facets) so the markers shade like flat-shaded triangles, and fills the
+command's material state the way the OpenGL drawable defaults do: `lighting` and
+`material_lighting` on, two-sided lighting from `setting::triangles_drawable_two_side_lighting`,
+distinct red back color, and ambient/specular/shininess from the material settings,
+with the eye and the camera-space light transformed into world space.
+
+**OpenGL.** `KeyFrameInterpolator::draw_cameras()` no longer hard-codes the glyph
+color: it reapplies the `color` argument before every draw (`set_uniform_coloring`),
+so callers that pass a color get it. The drawable itself was already lit.
+
+**Tests.** `vulkan.camerapath` gains a marker-lighting block: it draws the renderer's
+camera command through a caller-supplied annotation set, checks `lighting`,
+`material_lighting`, scene-depth occlusion and unit facet normals, and requires the
+lit capture to differ from both the bare scene and the same geometry with lighting
+cleared. The new OpenGL-only `opengl.cameraguides` test (480x360, black background,
+corner axes hidden because they are red too) counts marker and lit pixels, requires
+the camera markers and the yellow path to render without leaking into each other, and
+requires deletion to clear both. Both assertions are mutation-checked: forcing the
+flat Vulkan pipeline and clearing the OpenGL drawable's lighting each make their test
+fail.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).**
+Both check trees rebuilt and the suites run serially: Vulkan 149/149 and OpenGL
+117/117 (one more than before: `opengl.cameraguides`). The Vulkan camera-path test
+was also run with the flat pipeline forced and failed; OpenGL likewise with
+`set_lighting(false)`. `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain
+separate gates.

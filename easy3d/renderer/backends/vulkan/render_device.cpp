@@ -788,6 +788,7 @@ namespace easy3d {
                 VkPipeline pipelines[7] = {};
                 VkPipeline overlay_pipeline = VK_NULL_HANDLE;
                 VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
+                VkPipeline depth_overlay_lit_pipeline = VK_NULL_HANDLE;
                 VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
                 VkPipeline depth_texture_pipeline = VK_NULL_HANDLE;
                 VkPipeline edl_pipeline = VK_NULL_HANDLE;
@@ -811,6 +812,8 @@ namespace easy3d {
                         c.vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
                     if (depth_overlay_pipeline)
                         c.vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
+                    if (depth_overlay_lit_pipeline)
+                        c.vkDestroyPipeline(c.device, depth_overlay_lit_pipeline, nullptr);
                     if (hud_3d_pipeline)
                         c.vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
                     if (depth_texture_pipeline)
@@ -1664,6 +1667,10 @@ namespace easy3d {
                         mi.pCode = overlay_frag;
                         check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]),
                               "create overlay fragment shader");
+                        mi.codeSize = sizeof(hud_frag);
+                        mi.pCode = hud_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[11]),
+                              "create lit overlay fragment shader");
                         if (pass.depth_preview) {
                             mi.codeSize = sizeof(depth_texture_frag);
                             mi.pCode = depth_texture_frag;
@@ -1681,12 +1688,6 @@ namespace easy3d {
                             mi.pCode = shadow_frag;
                             check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[14]),
                                   "create shadow fragment shader");
-                        }
-                        if (pass.independent_depth) {
-                            mi.codeSize = sizeof(hud_frag);
-                            mi.pCode = hud_frag;
-                            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[11]),
-                                  "create independent HUD fragment shader");
                         }
                         if (pass.kind != PassKind::ids) {
                             mi.codeSize = sizeof(oit_quad_vert);
@@ -1997,6 +1998,20 @@ namespace easy3d {
                             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
                                                                &pass.depth_overlay_pipeline),
                                   "create depth-tested overlay pipeline");
+                            // Lit scene-depth annotations reuse the HUD shader pair, so they
+                            // shade with the material state like scene triangles; the others
+                            // keep the flat overlay.
+                            stages[0].module = modules[0];
+                            stages[1].module = modules[11];
+                            vertex.vertexAttributeDescriptionCount = 6;
+                            vertex.pVertexAttributeDescriptions = attrs;
+                            check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                               &pass.depth_overlay_lit_pipeline),
+                                  "create lit depth-tested overlay pipeline");
+                            stages[0].module = modules[8];
+                            stages[1].module = modules[9];
+                            vertex.vertexAttributeDescriptionCount = 3;
+                            vertex.pVertexAttributeDescriptions = overlay_attrs;
                             if (pass.independent_depth) {
                                 pi.subpass = 2;
                                 depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
@@ -3630,7 +3645,8 @@ namespace easy3d {
                                                       : d.ambient_occlusion   ? pass.ao_pipeline
                                                       : d.eye_dome_lighting   ? pass.edl_pipeline
                                                       : d.scene_depth_texture ? pass.depth_texture_pipeline
-                                                      : phase == 0            ? pass.depth_overlay_pipeline
+                                                      : phase == 0 ? (d.lighting ? pass.depth_overlay_lit_pipeline
+                                                                                 : pass.depth_overlay_pipeline)
                                                       : phase == phases - 1   ? pass.overlay_pipeline
                                                                               : pass.hud_3d_pipeline;
                                 c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
