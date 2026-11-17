@@ -31,11 +31,16 @@
 
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_point_cloud.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/buffer.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -151,20 +156,51 @@ namespace easy3d {
                 PointCloud::Vertex vertex;
                 auto cloud = dynamic_cast<ToolPointCloudSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(vertex, x, y);
                 if (cloud && vertex.is_valid()) {
-                    auto drawable = cloud->renderer()->get_points_drawable("vertices");
-                    buffer::update_highlight_mask(drawable, vertex.idx(), vertex.idx());
+                    hover_cloud_ = cloud;
+                    hover_vertex_ = vertex;
                 }
             }
         }
 
         void MultitoolPointCloudSelectionClick::clear_hint() {
+            hover_cloud_ = nullptr;
+            hover_vertex_ = PointCloud::Vertex();
+        }
+
+        void MultitoolPointCloudSelectionClick::draw_hint() const {
+            if (!hover_cloud_ || !hover_vertex_.is_valid())
+                return;
+
+            bool exists = false;
             for (auto model : tool_manager()->viewer()->models()) {
-                auto cloud = dynamic_cast<PointCloud *>(model.get());
-                if (cloud) {
-                    auto drawable = cloud->renderer()->get_points_drawable("vertices");
-                    buffer::update_highlight_mask(drawable, -1, -1);
+                if (model.get() == hover_cloud_) {
+                    exists = true;
+                    break;
                 }
             }
+            if (!exists) // the hovered model has been removed
+                return;
+
+            auto camera = tool_manager()->viewer()->camera();
+            const mat4 mvp = camera->model_view_projection_matrix();
+            const vec3 p = hover_cloud_->manipulator()->matrix() * hover_cloud_->position(hover_vertex_);
+            if ((mvp * vec4(p, 1.0f)).w <= 0.0f) // the vertex is at/behind the eye
+                return;
+            const vec3 proj = camera->projected_coordinates_of(p);
+
+            auto drawable = hover_cloud_->renderer()->get_points_drawable("vertices");
+            const float half = 0.5f * drawable->point_size() + 1.5f;
+            const Rect marker(vec2(proj.x - half, proj.y - half), vec2(proj.x + half, proj.y + half));
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            // The cue is drawn every frame: it must not write depth, or it would hide later 3D hints
+            // (the manipulator frame) drawn in front of the vertex.
+            glDepthMask(GL_FALSE);
+            shape::draw_quad_filled(marker, vec4(setting::highlight_color.xyz(), 0.35f),
+                                    camera->screen_width(), camera->screen_height(), -0.9f);
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
         }
 
 

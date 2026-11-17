@@ -11337,7 +11337,7 @@ tint over the hovered face, and `clear_hint()` reset every mesh's mask to empty 
 selected the face (`f:select` set, mask built by `update_render_buffer()`), then the
 release's `clear_hint()` wiped the tint, and the next mouse move re-tinted only the
 face under the cursor: Shift+click selected faces but left them unhighlighted. (The
-same collision exists in Mapple-Qt's point-cloud click tool, which is unchanged.)
+same collision existed in Mapple-Qt's point-cloud click tool, fixed in batch 126.)
 
 **Change (application).** The click multitool no longer touches the highlight mask.
 It remembers the hovered `SurfaceMesh` and face, and `draw_hint()` draws the cue
@@ -11356,3 +11356,36 @@ so a selected face keeps its tint after the click and while other faces are hove
 and renders with a clean log. The hover and selection gestures were not scripted
 (no synthetic input), and the suites were not rerun because only the Qt app changed.
 `easy3d/util/version.h` is untouched. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 126: the Mapple-Qt point-cloud hover cue is a tool-drawn marker
+
+**Problem.** Batch 125 made Mapple-Qt's face hover cue a tool-drawn overlay but
+left the point-cloud click tool on the shared mask: `prepare_hint()` installed a
+one-vertex interval (`buffer::update_highlight_mask(drawable, idx, idx)`) and
+`clear_hint()` reset every cloud's mask to empty - and `ToolManager::press()`/
+`release()` call `clear_hint()` around every click. A click toggled `v:select` and
+`update_render_buffer()` rebuilt the selection tint, then the release's
+`clear_hint()` erased it, so selected vertices winked out the moment the mouse
+button came up.
+
+**Change (application).** `MultitoolPointCloudSelectionClick` no longer touches the
+mask. `prepare_hint()` records the hovered `PointCloud` and vertex, `clear_hint()`
+only resets them, and `draw_hint()` draws the cue itself after the scene: the vertex
+is transformed by the model manipulator and projected with
+`camera::projected_coordinates_of()`, and a small screen-space square around the
+projected point (half-side = half the drawable's point size + 1.5 px, so it scales
+with the glyph) is filled with `shape::draw_quad_filled()` in
+`setting::highlight_color` at alpha 0.35 (depth -0.9, depth writes off so the
+persistent cue does not hide the manipulator frame drawn later). The marker is
+skipped when the vertex is at or behind the eye plane or when the hovered cloud has
+been removed. Masks are again written only by `update_render_buffer()` from
+`v:select`, so a selected vertex keeps its tint after the click and while other
+vertices are hovered.
+
+**Validation.** Mapple-Qt rebuilt in the OpenGL release tree (`cmake-build-release`,
+`Easy3D_ENABLE_QT=ON`, Vulkan off); it launches with
+`resources/data/fountain/pointcloud.ply`, loads 479,187 vertices and renders with a
+clean log (the new `draw_hint`/`prepare_hint` symbols are in the binary). The hover
+and click gestures were not scripted (no synthetic input), and the suites were not
+rerun because only the Qt app changed. `easy3d/util/version.h` is untouched.
+Linux/Windows/CI remain separate gates.

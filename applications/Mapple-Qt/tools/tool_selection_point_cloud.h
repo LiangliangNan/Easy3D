@@ -107,7 +107,7 @@ namespace easy3d {
 
             void prepare_hint(ToolButton button, int x, int y) override;
             void clear_hint() override;
-            void draw_hint() const override {} //I will draw the highlighted vertex using shader
+            void draw_hint() const override;
 
             std::string instruction() const override {
                 return "Left: select; Right: deselect";
@@ -115,6 +115,10 @@ namespace easy3d {
 
         protected:
             PointCloudPicker *picker_;
+            // The hover cue is drawn as a screen-space marker (see draw_hint()), so it never touches
+            // the highlight mask that displays the selection.
+            PointCloud *hover_cloud_ = nullptr;
+            PointCloud::Vertex hover_vertex_;
         };
 
 
