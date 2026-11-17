@@ -458,6 +458,7 @@ void MappleViewer::update_camera_markers() {
     std::vector<unsigned int> glyph_indices;
     shape::create_camera(glyph_points, glyph_indices, width, camera()->field_of_view(),
                          float(camera()->screen_height()) / float(camera()->screen_width()));
+    camera_markers_faces_per_glyph_ = glyph_indices.size() / 3;
     std::vector<vec3> points;
     std::vector<unsigned int> indices;
     points.reserve(glyph_points.size() * count);
@@ -492,6 +493,88 @@ void MappleViewer::release_camera_markers() {
     camera_markers_.reset();
     camera_markers_frames_.clear();
     camera_markers_width_ = 0;
+    camera_markers_faces_per_glyph_ = 0;
+}
+
+bool MappleViewer::begin_keyframe_drag(int x, int y, bool upright_plane) {
+    if (!kfi_ || camera_markers_faces_per_glyph_ == 0 || !show_camera_path_ ||
+        kfi_->is_interpolation_started())
+        return false;
+    const PickResult hit = pick(x, y);
+    if (!hit || hit.drawable != camera_markers_ || hit.primitive == UINT32_MAX)
+        return false;
+    const int index = static_cast<int>(hit.primitive / camera_markers_faces_per_glyph_);
+    if (index < 0 || index >= static_cast<int>(kfi_->number_of_keyframes()))
+        return false;
+
+    dragged_keyframe_ = index;
+    camera_keyframe_index_ = index;
+    keyframe_drag_start_position_ = kfi_->keyframe_position(static_cast<std::size_t>(index));
+    keyframe_drag_plane_point_ = keyframe_drag_start_position_;
+    if (upright_plane) {
+        // The pose's own up: the terrain plane for a walking pose, the orbit plane
+        // for a turntable pose.
+        keyframe_drag_plane_normal_ = kfi_->keyframe(index).orientation().rotate(vec3(0.0f, 1.0f, 0.0f));
+        if (keyframe_drag_plane_normal_.length2() < epsilon_sqr<float>()) {
+            cancel_keyframe_drag();
+            return false;
+        }
+        keyframe_drag_plane_normal_.normalize();
+    } else // the screen plane through the pose: the drag follows the cursor
+        keyframe_drag_plane_normal_ = camera()->view_direction();
+    keyframe_drag_moved_ = false;
+    clear_hover();
+    update();
+    return true;
+}
+
+void MappleViewer::drag_keyframe(int x, int y) {
+    if (dragged_keyframe_ < 0 || dragged_keyframe_ >= static_cast<int>(kfi_->number_of_keyframes()))
+        return;
+    vec3 orig, dir;
+    camera()->convert_click_to_line(x, y, orig, dir);
+    const float denom = dot(dir, keyframe_drag_plane_normal_);
+    // The plane is seen edge-on (the pose's up points at the camera): no stable
+    // intersection, so keep the last position.
+    if (std::abs(denom) < 1e-5f)
+        return;
+    const float t = dot(keyframe_drag_plane_point_ - orig, keyframe_drag_plane_normal_) / denom;
+    if (t <= 0.0f)
+        return;
+    const vec3 position = orig + dir * t;
+
+    if (!keyframe_drag_moved_) {
+        // The gesture becomes an edit - and the undo point - only once it moves.
+        snapshot_camera_path();
+        keyframe_drag_moved_ = true;
+    }
+    kfi_->set_keyframe_position(static_cast<std::size_t>(dragged_keyframe_), position);
+    // Keep the moved pose inside the view frustum, as adding a keyframe does.
+    const float dist = distance(camera()->scene_center(), position);
+    if (dist > camera()->scene_radius())
+        camera()->set_scene_radius(dist);
+}
+
+void MappleViewer::end_keyframe_drag() {
+    if (dragged_keyframe_ < 0)
+        return;
+    if (keyframe_drag_moved_)
+        LOG(INFO) << "keyframe " << dragged_keyframe_ + 1 << " moved (Ctrl+Z restores it)";
+    dragged_keyframe_ = -1;
+    keyframe_drag_moved_ = false;
+    update();
+}
+
+void MappleViewer::cancel_keyframe_drag() {
+    if (dragged_keyframe_ < 0)
+        return;
+    if (keyframe_drag_moved_ && kfi_ &&
+        dragged_keyframe_ < static_cast<int>(kfi_->number_of_keyframes()))
+        kfi_->set_keyframe_position(static_cast<std::size_t>(dragged_keyframe_),
+                                    keyframe_drag_start_position_);
+    dragged_keyframe_ = -1;
+    keyframe_drag_moved_ = false;
+    update();
 }
 
 void MappleViewer::advance_camera_path() {
@@ -695,6 +778,14 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         return true;
     }
 
+    // Keyframe handles own the press when it lands on a visible glyph; a press
+    // anywhere else keeps its usual meaning. Shift moves in the pose's own plane
+    // (the terrain or orbit plane) instead of the screen plane.
+    if (edit_keyframes_ && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) &&
+        point_in_scene(x, y) &&
+        begin_keyframe_drag(x, y, (modifiers & MODIF_SHIFT) != 0))
+        return true;
+
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
     // gesture so the plane stays movable while a selection tool is active.
     if (select_mode_ != SelectMode::OFF && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) &&
@@ -749,6 +840,11 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         orbit_dragging_ = false;
         apply_orbit_gesture(orbit_drag_from_, vec2(static_cast<float>(x), static_cast<float>(y)));
         update();
+        return true;
+    }
+
+    if (dragged_keyframe_ >= 0 && button == BUTTON_LEFT) {
+        end_keyframe_drag();
         return true;
     }
 
@@ -816,6 +912,12 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
 
     if (orbit_dragging_) {
         orbit_drag_to_ = vec2(static_cast<float>(x), static_cast<float>(y));
+        update();
+        return true;
+    }
+
+    if (dragged_keyframe_ >= 0) {
+        drag_keyframe(x, y);
         update();
         return true;
     }
@@ -916,6 +1018,11 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
     if (key == KEY_ESCAPE && modifiers == 0 && camera_path_builder_ &&
         camera_path_builder_->mode() != CameraPathBuilder::Mode::Off) {
         cancel_camera_path_tool();
+        return true;
+    }
+    // A keyframe drag owns Esc while it runs: restore the pose instead of closing.
+    if (key == KEY_ESCAPE && modifiers == 0 && dragged_keyframe_ >= 0) {
+        cancel_keyframe_drag();
         return true;
     }
     // Escape leaves selection mode. With no selection tool active it would close the
@@ -1628,7 +1735,12 @@ void MappleViewer::append_selection_overlay(std::vector<graphics::DrawCommand> &
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {
     const bool stroke = tracing_route_ && route_stroke_screen_.size() >= 2;
-    if (!stroke && !orbit_dragging_)
+    const int selected = edit_keyframes_ && kfi_ && show_camera_path_ &&
+                                 !kfi_->is_interpolation_started() && camera_keyframe_index_ >= 0 &&
+                                 camera_keyframe_index_ < static_cast<int>(kfi_->number_of_keyframes())
+                         ? camera_keyframe_index_
+                         : -1;
+    if (!stroke && !orbit_dragging_ && selected < 0)
         return;
     const unsigned fw = static_cast<unsigned>(framebuffer_width());
     const unsigned fh = static_cast<unsigned>(framebuffer_height());
@@ -1660,6 +1772,26 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
         segments[0] = orbit_drag_from_ * dpi - dir * reach;
         segments[1] = orbit_drag_from_ * dpi + dir * reach;
         commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
+    }
+    if (selected >= 0) {
+        // The handle Insert/Delete act on: a small square around the pose's projected
+        // position (the glyph itself is the scene geometry being edited).
+        const vec3 projected =
+                camera()->projected_coordinates_of(kfi_->keyframe_position(static_cast<std::size_t>(selected)));
+        if (projected.z >= 0.0f && projected.z <= 1.0f) {
+            const float r = 7.0f; // logical pixels
+            const vec2 corners[4] = {vec2(projected.x - r, projected.y - r),
+                                     vec2(projected.x + r, projected.y - r),
+                                     vec2(projected.x + r, projected.y + r),
+                                     vec2(projected.x - r, projected.y + r)};
+            std::vector<vec2> segments;
+            segments.reserve(8);
+            for (int i = 0; i < 4; ++i) {
+                segments.push_back(corners[i] * dpi);
+                segments.push_back(corners[(i + 1) % 4] * dpi);
+            }
+            commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
+        }
     }
 }
 

@@ -479,8 +479,8 @@ private:
     // the path or is appended to it, as the Orbit tool is set.
     void apply_orbit_gesture(const easy3d::vec2 &from, const easy3d::vec2 &to);
 
-    // The path as it was when the last path tool was armed, for Ctrl+Z. One level:
-    // restoring it consumes the snapshot.
+    // The path as it was before the last path tool was armed or keyframe edit, for
+    // Ctrl+Z. One level: restoring it consumes the snapshot.
     struct CameraPathSnapshot {
         std::vector<easy3d::Frame> frames;
         std::vector<float> times;
@@ -488,8 +488,26 @@ private:
         bool valid = false;
     };
     void snapshot_camera_path();
-    // Restores the snapshot taken when a path tool started; false without one.
+    // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
+
+    // Keyframe handles: with editing on, a press on a visible keyframe glyph selects
+    // that keyframe and a drag moves it in the view plane through its position, or in
+    // the plane orthogonal to its up with Shift held. Esc restores the position.
+    bool begin_keyframe_drag(int x, int y, bool upright_plane);
+    void drag_keyframe(int x, int y);
+    void end_keyframe_drag();
+    void cancel_keyframe_drag();
+
+    // Inserts a keyframe after the selected one: midway to the next, with the pose and
+    // time interpolated the same way; past the last keyframe the last segment is
+    // extended so the new glyph does not sit on top of an existing one.
+    void insert_camera_keyframe();
+    // Deletes the selected keyframe.
+    void delete_camera_keyframe();
+    // Replaces every keyframe with \p frames and their \p times. The interpolator only
+    // appends, so the edits rebuild the path through this.
+    bool rebuild_camera_path(const std::vector<easy3d::Frame> &frames, const std::vector<float> &times);
 
     // The visible surface under (x, y): the ground-contact point of a route sample
     // and the walker's up direction there (the picked face's normal, turned to the
@@ -737,6 +755,15 @@ private:
     std::shared_ptr<easy3d::TrianglesDrawable> camera_markers_;
     std::vector<easy3d::Frame> camera_markers_frames_;
     float camera_markers_width_ = 0;
+    std::size_t camera_markers_faces_per_glyph_ = 0; // maps a picked triangle to its keyframe
+    // Keyframe handle editing: glyphs can be grabbed while this is on. The drag plane
+    // (a point and a normal) is fixed at the press so the pose follows the cursor.
+    bool edit_keyframes_ = false;
+    int dragged_keyframe_ = -1;
+    easy3d::vec3 keyframe_drag_plane_point_;
+    easy3d::vec3 keyframe_drag_plane_normal_;
+    easy3d::vec3 keyframe_drag_start_position_;
+    bool keyframe_drag_moved_ = false;
 #ifdef EASY3D_HAS_VULKAN
     mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
 #endif

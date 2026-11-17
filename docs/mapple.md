@@ -1639,3 +1639,44 @@ once those are decided on.
   upside down as the sign rule expects; a snapshot restore keeps every pose and
   time. The drag/press/clicks were not scripted; suites were not rerun
   (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — editable keyframe handles (batch 114)
+
+- The Camera Path window gains `Edit keyframe handles`. Turning it on shows the path
+  if it was hidden and selects the last keyframe; a plain press on a visible keyframe
+  camera glyph then grabs that keyframe. The grab uses the scene pick: the keyframe
+  glyphs stay one triangle drawable, and `update_camera_markers()` stores the
+  glyph's triangle count so the picked primitive maps back to its keyframe
+  (`primitive / faces_per_glyph`). A press anywhere else keeps its usual meaning
+  (camera navigation, selection); an armed path tool still owns the press.
+- The drag moves the pose's position only (the orientation is untouched) in the
+  screen plane through the pose, so it follows the cursor; holding Shift at the
+  press uses the pose's own up as the plane normal - the terrain plane for a walking
+  pose, the orbit plane for a turntable pose - which keeps the pose's height along
+  its up. The plane is fixed at the press; a ray parallel to it or a plane behind
+  the press is ignored, and the scene radius grows with the moved pose as when a
+  keyframe is added. Esc (or losing focus, or closing the window) restores the
+  position; the undo snapshot is taken on the first movement, so a press that only
+  selects does not consume the existing undo point.
+- `Insert After` inserts a keyframe between the selected keyframe and the next: the
+  pose is the position midpoint and the orientation slerp of the two, and the time is
+  their midpoint, so the section keeps its timing and shape. Past the last keyframe
+  the last segment is extended (the position step and the time gap are repeated) so
+  the new glyph does not sit on top of an existing one. `Delete Selected` removes the
+  selected keyframe. Both buttons act on the selection shared with Prev/Next and the
+  handle grab, and the overlay marks that handle with a highlight-colored square.
+- `KeyFrameInterpolator` only appends, so the edits rebuild the path:
+  `rebuild_camera_path()` stops playback, clears the path and re-adds the frames with
+  their times; `Ctrl+Z` uses the same rebuild from a snapshot, so an insert or a
+  delete can be undone. Both actions snapshot the path first.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees; both
+  backends launch with `domik.obj` ("Mapple UI ready (OpenGL)" / "(Vulkan)"). A
+  temporary headless probe (removed) checked the drag and rebuild arithmetic: the
+  screen-plane intersection starts under the cursor and follows it to a new cursor
+  within one logical pixel, stays in the screen plane, the pose-up plane keeps the
+  pose's height along its up (also for a 30-degree tilted pose), a ray parallel to
+  the plane and a plane behind the press are rejected; an insert produces the
+  midpoint pose and time (1.5 s between 1 s and 2 s), rebuilding keeps the ordering,
+  deleting keeps the surviving times, and the past-the-end extension repeats the last
+  step. The glyph pick, Shift modifier and buttons were not scripted; suites were not
+  rerun (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is unchanged.
