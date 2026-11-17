@@ -1795,10 +1795,10 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
                 has_previous = false;
                 continue;
             }
-            const vec2 screen(projected.x * dpi, projected.y * dpi);
+            const vec2 screen(projected.x, projected.y); // logical, like the stroke trail
             if (has_previous) {
-                track.push_back(previous);
-                track.push_back(screen);
+                track.push_back(previous * dpi);
+                track.push_back(screen * dpi);
             }
             previous = screen;
             has_previous = true;

@@ -684,13 +684,15 @@ void MappleViewer::commit_flight_aim() {
         return;
     }
 
-    if (route_segment_.size() >= 2)
-        route_segments_.push_back(route_segment_);
-    route_segment_.clear();
+    // The last segment may hold the click's single sample, so all of it is kept: one
+    // point aims every station, more are sampled along the aim stroke.
     std::vector<vec3> points;
     for (const auto &segment : route_segments_)
         for (const auto &sample : segment)
             points.push_back(sample.point);
+    for (const auto &sample : route_segment_)
+        points.push_back(sample.point);
+    route_segment_.clear();
     route_segments_.clear();
     if (points.empty()) {
         LOG(WARNING) << "the aim has to end on a visible model surface";
