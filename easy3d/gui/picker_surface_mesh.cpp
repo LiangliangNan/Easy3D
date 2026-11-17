@@ -81,38 +81,19 @@ namespace {
     }
 
     // Region membership with the region boundary included: the closing distance
-    // tolerance admits points that the polygon winding test reports as outside.
+    // tolerance admits points that the even-odd crossing test reports as outside.
     bool inside_polygon(const Polygon2& polygon,const vec2& p) {
         if(polygon.contains(p)) return true;
-        for(size_t j=0,k=polygon.size()-1;j<polygon.size();k=j++) {
-            const auto edge=polygon[j]-polygon[k];const float length2=edge.length2();
-            if(length2>0) {
-                const float t=std::max(0.f,std::min(1.f,dot(p-polygon[k],edge)/length2));
-                if((p-polygon[k]-t*edge).length2()<=1e-8f) return true;
-            }
-        }
+        for(size_t i=0,j=polygon.size()-1;i<polygon.size();j=i++)
+            if(Segment2(polygon[j],polygon[i]).squared_distance(p)<=1e-8f) return true;
         return false;
-    }
-
-    Rect polygon_bounds(const Polygon2& polygon) {
-        float min_x=polygon[0].x,max_x=min_x,min_y=polygon[0].y,max_y=min_y;
-        for(const auto& p:polygon) {
-            min_x=std::min(min_x,p.x);max_x=std::max(max_x,p.x);
-            min_y=std::min(min_y,p.y);max_y=std::max(max_y,p.y);
-        }
-        return Rect(min_x,max_x,min_y,max_y);
     }
 
     // Shared region contract: finite points describing a non-degenerate area.
     bool valid_region(const Polygon2& polygon) {
         if(polygon.size()<3) return false;
         for(const auto& p:polygon) if(!std::isfinite(p.x) || !std::isfinite(p.y)) return false;
-        bool area=false;
-        for(size_t i=1;i+1<polygon.size();++i) {
-            auto a=polygon[i]-polygon[0],b=polygon[i+1]-polygon[0];
-            area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
-        }
-        return area;
+        return polygon.area()>1e-8f;
     }
 
     // Maps rasterized triangle IDs to their source faces through f:triangle_range,
@@ -246,11 +227,12 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
     if(width<=0 || height<=0) return result;
     // Only the region's bounding rectangle is read back; pixels outside the polygon
     // are rejected on the CPU, so the polygon may be concave or self-crossing.
-    const Rect bounds=polygon_bounds(polygon);
-    const int x0=std::max(0,std::min(width-1,int(std::floor(bounds.x_min()))));
-    const int y0=std::max(0,std::min(height-1,int(std::floor(bounds.y_min()))));
-    const int x1=std::max(0,std::min(width-1,int(std::ceil(bounds.x_max()))));
-    const int y1=std::max(0,std::min(height-1,int(std::ceil(bounds.y_max()))));
+    const auto bounds=polygon.bbox();
+    const vec2 bmin=bounds.min_point(),bmax=bounds.max_point();
+    const int x0=std::max(0,std::min(width-1,int(std::floor(bmin.x))));
+    const int y0=std::max(0,std::min(height-1,int(std::floor(bmin.y))));
+    const int x1=std::max(0,std::min(width-1,int(std::ceil(bmax.x))));
+    const int y1=std::max(0,std::min(height-1,int(std::ceil(bmax.y))));
     if(x1<x0 || y1<y0) return result;
     const int region_width=x1-x0+1,region_height=y1-y0+1;
     const graphics::DrawCommand command=draw_command(drawable,0);
@@ -280,10 +262,11 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
     if(width<=0 || height<=0) return result;
     // The region lives in logical screen units; the bounding rectangle maps to
     // framebuffer rows, where the bottom-left row is what glReadPixels starts at.
-    const Rect bounds=polygon_bounds(polygon);
+    const auto bounds=polygon.bbox();
+    const vec2 bmin=bounds.min_point(),bmax=bounds.max_point();
     int gx0,gy0,gx1,gy1;
-    screen_to_opengl(int(std::floor(bounds.x_min())),int(std::floor(bounds.y_min())),gx0,gy0,width,height);
-    screen_to_opengl(int(std::ceil(bounds.x_max())),int(std::ceil(bounds.y_max())),gx1,gy1,width,height);
+    screen_to_opengl(int(std::floor(bmin.x)),int(std::floor(bmin.y)),gx0,gy0,width,height);
+    screen_to_opengl(int(std::ceil(bmax.x)),int(std::ceil(bmax.y)),gx1,gy1,width,height);
     const int left=std::max(0,std::min(width-1,std::min(gx0,gx1)));
     const int right=std::max(0,std::min(width-1,std::max(gx0,gx1)));
     // Larger top-left y values are lower framebuffer rows.

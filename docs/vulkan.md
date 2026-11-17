@@ -11171,3 +11171,21 @@ on both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)") with bunny.ply; the Rec
 gestures themselves were not scripted. Mapple-Qt (OpenGL release tree) also builds and
 launches with bunny.ply; its drag gestures were not scripted either. `easy3d/util/version.h`
 carries only the generated date bump. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 120: region picking reuses the Polygon2 API
+
+**Problem.** Batch 119's picker helpers hand-rolled what `Polygon2` already provides: the
+region bounds came from a min/max loop, the degeneracy test from a triangle-fan cross sum,
+and the boundary tolerance from a manual point-to-edge projection.
+
+**Change.** `polygon_bounds()` is gone; both backends clamp the readback rectangle from
+`Polygon2::bbox().min_point()/max_point()`. Region validation keeps the size and finite
+checks and uses `Polygon2::area()` for the non-degenerate test, and boundary membership uses
+`Segment2::squared_distance()` next to `Polygon2::contains()` instead of the hand-written
+closest-point loop. No behavior change is intended: the same regions are accepted and the
+same boundary tolerance applies.
+
+**Validation.** Both check trees rebuilt; `vulkan.meshpicker` and `opengl.meshpicker` pass;
+suites ran serially: Vulkan 150/150 (149 s) and OpenGL 118/118 (59 s). Mapple launches on
+both backends with bunny.ply; the drag/lasso gestures were not scripted. `easy3d/util/version.h`
+carries only the generated date bump. Linux/Windows/CI remain separate gates.
