@@ -112,7 +112,7 @@ void MappleViewer::draw_animation_window() {
         if (ImGui::Button("Cancel", ImVec2(70, 0)))
             cancel_camera_path_tool();
         ImGui::TextDisabled(tool == CameraPathBuilder::Mode::GroundWalk
-                                    ? "Drag along the ground to trace the route. Esc cancels."
+                                    ? "Drag over the ground surface to trace the route. Esc cancels."
                                     : "Click the scene to set the orbit axis. Esc cancels.");
     } else
         ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
@@ -166,12 +166,23 @@ void MappleViewer::draw_animation_window() {
 
     if (camera_path_builder_ && tool == CameraPathBuilder::Mode::GroundWalk) {
         ImGui::Separator();
+        const char *up_axes[] = {"Auto (box shortest)", "+X", "+Y", "+Z"};
+        int up_axis = static_cast<int>(camera_path_builder_->ground_up_axis());
+        if (ImGui::Combo("Up axis", &up_axis, up_axes, 4)) {
+            camera_path_builder_->set_ground_up_axis(static_cast<CameraPathBuilder::GroundUpAxis>(up_axis));
+            update();
+        }
+        ImGui::SetItemTooltip("The direction the scene is upright along. Auto uses the shortest "
+                              "extent of the visible scene box (the height of a building-like "
+                              "scene); the eye height is measured along this axis.");
+
         float height = camera_path_builder_->eye_height_in_scene_heights();
         if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_eye_height_in_scene_heights(height);
             update();
         }
-        ImGui::SetItemTooltip("The eye height above the ground, relative to the scene height.");
+        ImGui::SetItemTooltip("The eye height above the ground, relative to the scene extent "
+                              "along the up axis.");
 
         float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
         if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
@@ -369,7 +380,7 @@ void MappleViewer::arm_camera_path_tool(CameraPathBuilder::Mode tool) {
 
     camera_path_builder_->set_mode(tool);
     LOG(INFO) << (tool == CameraPathBuilder::Mode::GroundWalk
-                  ? "walk route tool armed: drag along the ground to trace the route"
+                  ? "walk route tool armed: drag over the ground surface to trace the route"
                   : "orbit tool armed: click the scene to set the orbit axis");
     update();
 }
@@ -385,27 +396,35 @@ void MappleViewer::cancel_path_gesture() {
     tracing_route_ = false;
     orbit_click_pending_ = false;
     route_stroke_screen_.clear();
-    route_stroke_points_.clear();
+    route_segment_.clear();
+    route_segments_.clear();
 }
 
 bool MappleViewer::route_point_at(int x, int y, vec3 &point) const {
-    const Picker picker(camera());
-    const Line3 ray = picker.picking_line(x, y);
-    if (!route_plane_.intersect(ray, point))
+    if (!point_in_scene(x, y))
         return false;
-    // A grazing ray meets the plane arbitrarily far away; reject those hits instead
-    // of letting one stray sample drag the route across the scene.
-    return distance(point, camera()->scene_center()) <= camera()->scene_radius() * 4.0f;
+    const PickResult result = pick(x, y);
+    if (!result)
+        return false;
+    point = result.position;
+    return true;
 }
 
 void MappleViewer::commit_ground_route() {
-    if (!camera_path_builder_ || route_stroke_points_.size() < 2)
-        return; // too short: the tool stays armed for another try
+    if (!camera_path_builder_)
+        return;
+    if (route_segment_.size() >= 2)
+        route_segments_.push_back(route_segment_);
+    route_segment_.clear();
 
-    const std::size_t added = camera_path_builder_->generate_ground_route(route_stroke_points_);
+    std::size_t added = 0;
+    for (const auto &segment : route_segments_)
+        added += camera_path_builder_->generate_ground_route(segment);
+    route_segments_.clear();
+
     if (added == 0) {
         LOG(WARNING) << "the stroke is too short to generate walking keyframes";
-        return;
+        return; // the tool stays armed for another try
     }
     camera_path_builder_->set_mode(CameraPathBuilder::Mode::Off); // one-shot
     camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;

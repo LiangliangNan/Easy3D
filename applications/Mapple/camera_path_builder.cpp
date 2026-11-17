@@ -73,7 +73,7 @@ namespace {
 }
 
 CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
-        : camera_(camera), kfi_(interpolator), mode_(Mode::Off), ground_plane_normal_(0, 0, 1),
+        : camera_(camera), kfi_(interpolator), mode_(Mode::Off), ground_up_axis_(GroundUpAxis::Auto),
           eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(1.0f),
           orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
           pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
@@ -98,6 +98,24 @@ void CameraPathBuilder::set_keyframe_spacing_in_character_heights(float spacing_
     keyframe_spacing_in_character_heights_ = spacing_in_character_heights;
 }
 
+vec3 CameraPathBuilder::ground_up_direction() const {
+    switch (ground_up_axis_) {
+        case GroundUpAxis::X: return vec3(1.0f, 0.0f, 0.0f);
+        case GroundUpAxis::Y: return vec3(0.0f, 1.0f, 0.0f);
+        case GroundUpAxis::Z: return vec3(0.0f, 0.0f, 1.0f);
+        case GroundUpAxis::Auto: break;
+    }
+    if (!scene_box_.is_valid())
+        return vec3(0.0f, 0.0f, 1.0f);
+
+    const vec3 extent = scene_box_.max_point() - scene_box_.min_point();
+    if (extent.x < extent.y && extent.x < extent.z)
+        return vec3(1.0f, 0.0f, 0.0f);
+    if (extent.y < extent.z)
+        return vec3(0.0f, 1.0f, 0.0f);
+    return vec3(0.0f, 0.0f, 1.0f);
+}
+
 std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
     if (stroke.size() < 2)
         return 0;
@@ -107,7 +125,7 @@ std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &st
         return 0;
     const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
     const std::vector<vec3> feet = resample_by_arc_length(stroke, spacing);
-    const std::vector<Frame> frames = ground_frames(feet, ground_plane_normal_, eye);
+    const std::vector<Frame> frames = ground_frames(feet, ground_up_direction(), eye);
     for (const auto &frame : frames)
         add_keyframe(frame);
     return frames.size();
@@ -202,6 +220,9 @@ std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &fee
     for (size_t i = 0; i < feet.size(); ++i) {
         vec3 dir = heading(i);
         dir -= normal * dot(dir, normal);
+        // A near-vertical step (steep terrain) leaves no in-plane heading.
+        if (dir.length2() < epsilon_sqr<float>())
+            dir = geom::orthogonal(normal);
         dir.normalize();
         frames.emplace_back(feet[i] + normal * eye_height, to_orientation(dir, normal));
     }
@@ -250,9 +271,16 @@ void CameraPathBuilder::add_keyframe(const Frame &frame) {
 }
 
 float CameraPathBuilder::eye_height() const {
-    if (scene_box_.is_valid())
-        return scene_box_.range(2) * eye_height_in_scene_heights_;
-    return camera_->scene_radius() * eye_height_in_scene_heights_;
+    if (!scene_box_.is_valid())
+        return camera_->scene_radius() * eye_height_in_scene_heights_;
+
+    // The scene "height" is its extent along the up axis, which is Z only when the
+    // box says so (Auto) or the caller chose Z.
+    const vec3 up = ground_up_direction();
+    const float scene_height = std::abs(up.x) * scene_box_.range(0) +
+                               std::abs(up.y) * scene_box_.range(1) +
+                               std::abs(up.z) * scene_box_.range(2);
+    return scene_height * eye_height_in_scene_heights_;
 }
 
 quat CameraPathBuilder::to_orientation(const vec3 &view_dir, const vec3 &up) {

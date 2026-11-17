@@ -46,13 +46,14 @@ namespace easy3d {
  *      KeyFrameInterpolator for preview, playback and recording. This class covers
  *      the sources that free recording cannot express:
  *
- *      - walking along the ground plane (generate_ground_route() turns a stroke on
- *        the ground into first-person eye-height poses aimed along the route),
+ *      - walking a traced ground route (generate_ground_route() turns a stroke of
+ *        picked ground points into first-person eye-height poses aimed along the
+ *        route),
  *      - orbiting a picked axis (generate_camera_path() turns a line into a closed
  *        orbit), and
  *      - pure builders for previewing or editing a path before it is inserted:
- *        orbit_frames(), ground_frames() (plane-constrained walking) and
- *        flight_frames() (a position track with a separate aim track).
+ *        orbit_frames(), ground_frames() (eye poses over ground-contact points)
+ *        and flight_frames() (a position track with a separate aim track).
  *
  *      Ported from the Qt app (Mapple-Qt/walk_through.h). Unlike the Qt version it
  *      borrows the viewer's camera and keyframe interpolator, so the keyframes it
@@ -67,7 +68,9 @@ namespace easy3d {
  *      and the interpolator fits a smooth curve through them. Per-segment timing
  *      (easing, slowing down near points of interest) is not exposed here.
  *
- * \attention The walking route assumes the scene is upright, i.e. (0, 0, 1) is up.
+ * \attention The walking route assumes the scene is upright along its ground up
+ *      axis: the scene box's shortest extent by default, or an explicit world axis.
+ *      The eye height is measured along that axis.
  */
 class CameraPathBuilder {
 public:
@@ -86,13 +89,33 @@ public:
 
     /// \name Walking route
     //@{
-    /// Bounds of the visible models, used by the eye height and the orbit. With no
-    /// visible model the box becomes invalid, so callers can refuse the gesture.
+    /// \brief The world axis the scene is upright along (default Auto).
+    /// \details Auto uses the shortest extent of the scene box: the height of a
+    ///      building- or terrain-like scene, e.g. domik.obj, which is Y-up. Override
+    ///      it for scenes whose height is not the shortest extent (a standing
+    ///      figure) or whose box cannot tell the height.
+    enum class GroundUpAxis {
+        Auto,  // the shortest extent of the scene box
+        X,     // world +X
+        Y,     // world +Y
+        Z      // world +Z
+    };
+
+    /// Bounds of the visible models, used by the eye height, the ground up axis and
+    /// the orbit. With no visible model the box becomes invalid, so callers can
+    /// refuse the gesture.
     void set_scene(const std::vector<std::shared_ptr<easy3d::Model>> &scene);
 
-    /// \brief The eye height above the walking plane, in scene heights (default 0.2).
-    /// \details The scene height is the scene box's z extent, or the scene radius
-    ///      before set_scene() has seen a visible model.
+    void set_ground_up_axis(GroundUpAxis axis) { ground_up_axis_ = axis; }
+    GroundUpAxis ground_up_axis() const { return ground_up_axis_; }
+
+    /// The resolved up direction of the walking route, a unit world axis.
+    easy3d::vec3 ground_up_direction() const;
+
+    /// \brief The eye height above the ground, in scene heights (default 0.2).
+    /// \details A scene height is the extent of the scene box along
+    ///      ground_up_direction(), or the scene radius before set_scene() has seen a
+    ///      visible model.
     void set_eye_height_in_scene_heights(float height_in_scene_heights);
     float eye_height_in_scene_heights() const { return eye_height_in_scene_heights_; }
 
@@ -101,12 +124,13 @@ public:
     void set_keyframe_spacing_in_character_heights(float spacing_in_character_heights);
     float keyframe_spacing_in_character_heights() const { return keyframe_spacing_in_character_heights_; }
 
-    /// \brief Generates a walking route along \p stroke on the ground plane.
-    /// \details The stroke is resampled at the keyframe spacing by arc length, each
-    ///      sample becomes a first-person pose at the eye height aiming along the
-    ///      route, and the poses are appended to the path (an existing path is kept
-    ///      so several strokes can build one walk). The stroke points are expected
-    ///      on the horizontal plane, i.e. only x and y are used.
+    /// \brief Generates a walking route through \p stroke on the ground.
+    /// \details The stroke points are ground-contact points, so passing the surface
+    ///      points picked under the cursor makes the route follow the terrain: each
+    ///      pose sits one eye height above its own stroke point, along the up
+    ///      direction, and aims level along the route. The stroke is resampled at
+    ///      the keyframe spacing by arc length, and the poses are appended to the
+    ///      path (an existing path is kept, so several strokes can build one walk).
     /// \return The number of keyframes added (0 if the stroke is degenerate or the
     ///      eye height is zero).
     std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke);
@@ -155,15 +179,14 @@ public:
     /// \param center The scene center the orbit is built around.
     std::vector<easy3d::Frame> orbit_frames(const easy3d::Line3 &axis, const easy3d::vec3 &center) const;
 
-    /// \brief Eye poses walking through \p feet on the plane with normal \p up.
-    /// \details Each pose aims along the path (central-difference tangent projected
-    ///      onto the plane), which keeps the heading continuous, and the
-    ///      interpolator smooths the path between the poses. The feet themselves
-    ///      are not projected; they are assumed to lie on the plane.
+    /// \brief Eye poses walking through \p feet with \p up as the up direction.
+    /// \details Each pose aims level along the path (central-difference tangent
+    ///      projected onto the horizon plane), which keeps the heading continuous,
+    ///      and the interpolator smooths the path between the poses. The feet may lie
+    ///      at different heights (terrain following); each pose uses its own foot.
     /// \param feet Ground-contact positions in path order; at least two are needed.
-    /// \param up Unit normal of the walking plane.
-    /// \param eye_height Eye height above the plane, in world units, used for every
-    ///      pose (terrain following needs per-foot heights and is not applied here).
+    /// \param up Unit up direction; the heading is kept perpendicular to it.
+    /// \param eye_height Eye height above each foot, in world units, along \p up.
     /// \return The poses, or an empty vector if fewer than two feet are given.
     std::vector<easy3d::Frame> ground_frames(const std::vector<easy3d::vec3> &feet, const easy3d::vec3 &up,
                                              float eye_height) const;
@@ -188,7 +211,7 @@ public:
 protected:
     void add_keyframe(const easy3d::Frame &frame);
 
-    // The eye height above the ground, in world units.
+    // The eye height above the ground, in world units along the up direction.
     float eye_height() const;
 
     /// Orientation looking along \p view_dir with \p up as the roll reference; the
@@ -207,7 +230,7 @@ protected:
 
     // Walking route
     easy3d::Box3 scene_box_;
-    easy3d::vec3 ground_plane_normal_;   // upright scenes only: (0, 0, 1)
+    GroundUpAxis ground_up_axis_;        // Auto: the box's shortest extent
     float eye_height_in_scene_heights_;
     float keyframe_spacing_in_character_heights_;
 

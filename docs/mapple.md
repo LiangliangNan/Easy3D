@@ -1447,3 +1447,43 @@ once those are decided on.
   spacing kept its two ends; a second stroke appended; a single point generated
   nothing. Suites were not rerun (Mapple-only change) and the arm/drag gestures were
   not scripted. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — route walks follow the picked surface (batch 109)
+
+- The walking route no longer assumes that world Z is up and that the walking plane
+  is a horizontal plane at the bottom of the scene box. That assumption is wrong for
+  any model that is not Z-up: `resources/data/domik/domik.obj` is Y-up (its extents
+  are 7207 x 3305 x 10858, so Z is the house's depth), and the old code put the
+  stroke plane on a vertical plane through the house (z = -5418.67) and lifted the
+  keyframes along Z, producing a path through the air along the house's depth.
+- Every drag sample is now picked on the visible surface with `Viewer::pick()`, so
+  the stroke heights follow the terrain: `route_point_at()` returns the hit position,
+  the `route_plane_` member is gone, and a drag that leaves the visible surface ends
+  the current segment (the remaining stroke becomes another route rather than a
+  straight cut through the gap). Samples are picked at least ~4 logical pixels apart
+  because each pick re-renders the scene into the pick target; the live ribbon still
+  shows the whole accepted drag trail in the overlay layer.
+- `CameraPathBuilder` gained
+  `enum class GroundUpAxis { Auto, X, Y, Z }`, `ground_up_axis()` /
+  `set_ground_up_axis()` and `ground_up_direction()`. Auto (the default) resolves to
+  the shortest extent of the visible scene box - the height of a building- or
+  terrain-like scene (domik: +Y) - and the Walk tool's parameters now show an
+  `Up axis` combo (`Auto (box shortest)`, `+X`, `+Y`, `+Z`) for scenes whose height
+  is not the shortest extent (a standing figure). The former member
+  `ground_plane_normal_` is removed.
+- Every pose is `foot + up * eye_height` and aims level along the route, so the feet
+  keep their own surface heights (the builder documents `ground_frames()` as
+  per-foot rather than plane-constrained). `eye_height_in_scene_heights` now scales
+  the scene extent along the up axis - the Z extent when +Z is chosen, exactly as
+  before; the eye height slider and tooltip say so.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees
+  (`build-opengl-check`, `build-vulkan-check`); both backends launch with `domik.obj`
+  ("Mapple UI ready (OpenGL)" / "(Vulkan)"). A temporary headless probe (removed
+  afterwards) set a renderer on `domik.obj` so `set_scene()` produced a valid box:
+  Auto resolved +Y; a stroke climbing 800 units in Y over 4000 in X produced
+  keyframes each 0.2 x 3304.89 = 660.98 above their own foot along Y, on the
+  stroke's Z plane, aiming level with zero vertical component, about one eye height
+  apart; the explicit +Z override measured the scene along Z (2171.53) and kept the
+  foot heights. Suites were not rerun (Mapple-only change), the arm/drag gestures
+  were not scripted (picking is the same `Viewer::pick()` path the hover readout
+  uses), and `easy3d/util/version.h` is unchanged.

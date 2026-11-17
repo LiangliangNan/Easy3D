@@ -468,17 +468,16 @@ private:
     void cancel_camera_path_tool();
     void cancel_path_gesture();
 
-    // Turns the traced stroke (ground points in drag order) into walking keyframes
-    // appended to the path.
+    // Turns the traced stroke into walking keyframes appended to the path. The
+    // stroke is split into segments where a drag sample missed the visible surface.
     void commit_ground_route();
 
     // Uses the ray through (x, y) as the orbit axis; a non-empty path is replaced
     // only after the Camera Path window asks.
     void apply_orbit_pick(int x, int y);
 
-    // Intersects the view ray through (x, y) with the ground plane captured at the
-    // start of the stroke. False when the ray misses the plane, hits it behind the
-    // camera, or hits it implausibly far from the scene.
+    // The visible surface point under (x, y): the ground-contact point of a route
+    // sample. False when the ray misses every visible primitive.
     bool route_point_at(int x, int y, easy3d::vec3 &point) const;
 
     // Draws the walking stroke being traced, in the scene's overlay layer.
@@ -709,11 +708,12 @@ private:
     std::unique_ptr<CameraPathBuilder> camera_path_builder_;
 
     // The gesture owned by the armed one-shot path tool. A route stroke keeps the
-    // screen path for the live preview and the ground points that become keyframes.
+    // accepted screen trail for the live preview and the picked ground points, split
+    // into segments where the drag left the visible surface.
     bool tracing_route_ = false;
-    std::vector<easy3d::vec2> route_stroke_screen_; // logical window coordinates
-    std::vector<easy3d::vec3> route_stroke_points_; // on route_plane_
-    easy3d::Plane3 route_plane_;                    // captured at the press
+    std::vector<easy3d::vec2> route_stroke_screen_;          // accepted drag trail, logical window coordinates
+    std::vector<easy3d::vec3> route_segment_;                // picked ground points of the current segment
+    std::vector<std::vector<easy3d::vec3>> route_segments_;  // segments completed by a missed pick
     // A left press on the scene may still become the orbit click.
     bool orbit_click_pending_ = false;
     int orbit_click_x_ = 0, orbit_click_y_ = 0;

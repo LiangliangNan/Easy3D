@@ -606,19 +606,18 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
         if (tool == CameraPathBuilder::Mode::GroundWalk) {
             if (camera_path_builder_->scene_box().is_valid()) {
-                // The route lies on the ground at the bottom of the scene box, so it
-                // needs no GPU pick and every stroke point is available immediately.
-                const float ground_z = camera_path_builder_->scene_box().min_point().z;
-                route_plane_ = Plane3(vec3(0.0f, 0.0f, ground_z), vec3(0.0f, 0.0f, 1.0f));
+                // The route follows the visible surface under the cursor, so the
+                // terrain supplies each stroke point's height; no ground plane is
+                // assumed (the up axis only sets the eye offset).
                 vec3 point;
                 if (route_point_at(x, y, point)) {
                     tracing_route_ = true;
                     route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
-                    route_stroke_points_.assign(1, point);
+                    route_segment_.assign(1, point);
                     clear_hover();
                     update();
                 } else
-                    LOG(WARNING) << "the view ray does not meet the ground plane there";
+                    LOG(WARNING) << "the route has to start on a visible model surface";
             } else
                 LOG(WARNING) << "the walking route needs a visible model";
         } else {
@@ -677,7 +676,6 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         tracing_route_ = false;
         commit_ground_route();
         route_stroke_screen_.clear();
-        route_stroke_points_.clear();
         update();
         return true;
     }
@@ -732,13 +730,22 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
         return true;
 
     if (tracing_route_) {
-        vec3 point;
-        if (point_in_scene(x, y) && route_point_at(x, y, point)) {
-            const vec2 sample(static_cast<float>(x), static_cast<float>(y));
-            const vec2 delta = sample - route_stroke_screen_.back();
-            if (delta.length2() >= 4.0f) { // sample at least ~2 pixels apart
-                route_stroke_screen_.push_back(sample);
-                route_stroke_points_.push_back(point);
+        const vec2 sample(static_cast<float>(x), static_cast<float>(y));
+        const vec2 delta = sample - route_stroke_screen_.back();
+        // One GPU pick per ~4 logical pixels keeps the surface sampling smooth
+        // without re-rendering the scene for every drag event.
+        if (delta.length2() >= 16.0f) {
+            route_stroke_screen_.push_back(sample);
+            vec3 point;
+            if (route_point_at(x, y, point)) {
+                route_segment_.push_back(point);
+            } else {
+                // Leaving the visible surface ends the current segment; the stroke
+                // continues as a new route when the drag comes back on it, instead
+                // of cutting straight through the gap.
+                if (route_segment_.size() >= 2)
+                    route_segments_.push_back(route_segment_);
+                route_segment_.clear();
             }
         }
         update();
