@@ -4,7 +4,7 @@ set(backend_sources)
 set(backend_headers)
 if(Easy3D_ENABLE_VULKAN)
     list(APPEND backend_sources backends/vulkan/drawable.cpp
-            backends/vulkan/key_frame_interpolator.cpp backends/vulkan/clipping_plane.cpp)
+            backends/vulkan/clipping_plane.cpp)
     include(backends/vulkan/CMakeLists.txt)
 endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)

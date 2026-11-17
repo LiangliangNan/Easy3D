@@ -88,7 +88,7 @@ namespace easy3d {
 
     CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
             : camera_(camera), kfi_(interpolator),
-              eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(1.0f),
+              eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(0.5f),
               flight_height_in_scene_heights_(0.5f),
               orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
               pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {

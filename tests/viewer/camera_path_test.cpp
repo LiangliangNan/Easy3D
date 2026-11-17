@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_206_CameraInterpolation/viewer.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/initializer.h>
@@ -14,28 +15,19 @@
 #include <vector>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
-void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
-    require(a.depth==b.depth && a.ids.size()==b.ids.size(),"path guides changed depth");
-    for (size_t i=0;i<a.ids.size();++i)
-        require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,"path guides changed IDs");
-}
 struct PathViewer : TutorialCameraInterpolation {
     using TutorialCameraInterpolation::TutorialCameraInterpolation;
-    // Hide the guides without touching the path or the scene bounds, so depth/IDs stay comparable.
+    // Hides the tutorial's guide drawables without touching the path or the scene bounds;
+    // the tutorial's own pre_draw() would show them again.
     bool show_path = true;
-    // Draw a caller-supplied annotation set instead of the tutorial's guides.
-    bool manual_annotations = false;
-    std::vector<graphics::DrawCommand> annotations;
-    void draw() const override {
-        if (manual_annotations) {
-            set_viewer_annotations(annotations);
-            Viewer::draw();
-        } else if (show_path)
-            TutorialCameraInterpolation::draw();
-        else {
-            set_viewer_annotations({});
-            Viewer::draw();
+    void pre_draw() override {
+        if (show_path) {
+            TutorialCameraInterpolation::pre_draw();
+            return;
         }
+        Viewer::pre_draw();
+        for (const auto& drawable : drawables())
+            drawable->set_visible(false);
     }
     bool has_usage() const {return hint_.find("Press 'k'")!=std::string::npos;}
 };
@@ -83,7 +75,13 @@ void tutorial_keys(PathViewer& v) {
     v.draw_frame();require(v.capture().rgba==with_path.rgba,"stationary path rendering changed");
     v.show_path=false;require(v.draw_frame(),"hidden-guide frame failed");const auto without_guides=v.capture();
     require(without_guides.rgba!=with_path.rgba,"keyframe path/markers were not visible");
-    same_picking(with_path,without_guides);
+    // Both guides are scene drawables: they write depth and object ids, so picking and the
+    // keyframe drag can land on the glyphs.
+    require(with_path.depth!=without_guides.depth,"the guides did not write depth");
+    bool guide_ids=false;
+    for (std::size_t i=0;i<with_path.ids.size();++i)
+        guide_ids|=with_path.ids[i].object!=without_guides.ids[i].object;
+    require(guide_ids,"the guides are not in the id buffer");
     v.show_path=true;v.draw_frame();
     // A modified key is not a keyframe command.
     press(Viewer::KEY_K,Viewer::MODIF_SHIFT);v.draw_frame();
@@ -107,38 +105,43 @@ void tutorial_keys(PathViewer& v) {
     require(v.camera()->position()==paused,"paused tutorial animation moved the camera");
     require(v.snapshot("vulkan-camera-path.png",1,1),"camera path snapshot failed");
 }
-void marker_lighting(PathViewer& v) {
+void scene_guides(PathViewer& v) {
+    // The path and the keyframe cameras are ordinary scene drawables: the callers own them,
+    // the capture includes them, they write depth, and removing them clears the scene. This
+    // viewer has no tutorial keyframes yet, so the counts below are the guides' own.
+    // Derive the fixture from the fitted view so it stays framed and unoccluded: two
+    // keyframes in the upper half of the frustum at the scene-center depth, clear of the
+    // model at the center.
+    const Camera *cam = v.camera();
+    const vec3 view = cam->view_direction();
+    const vec3 up = cam->up_vector();
+    const float depth = distance(cam->position(), cam->scene_center());
+    const float half_height = depth * std::tan(0.5f * cam->field_of_view());
+    const vec3 center = cam->position() + view * depth + 0.5f * half_height * up;
+    const vec3 first = center - 0.25f * half_height * up;
+    const vec3 second = center + 0.25f * half_height * up;
+    const float glyph_width = 0.2f * half_height;
     KeyFrameInterpolator path(v.camera()->frame());
-    require(path.add_keyframe(Frame(vec3(0,0,50),quat()),0) &&
-            path.add_keyframe(Frame(vec3(50,0,50),quat()),1),"lighting path fixture failed");
-    vulkan::KeyFrameInterpolatorRenderer renderer;
-    const auto lit=renderer.draw_cameras(path,*v.camera(),30);
-    require(lit.geometry && lit.lighting && lit.material_lighting,"keyframe cameras are drawn unlit");
-    require(lit.overlay_depth_test,"keyframe cameras lost scene-depth occlusion");
-    for (const auto& vertex:lit.geometry->vertices())
-        require(std::abs(length(vertex.normal)-1)<1e-4f,"keyframe camera facet normal is not unit length");
-    v.manual_annotations=true;
-    v.annotations={};v.draw_frame();const auto bare=v.capture();
-    v.annotations={lit};v.draw_frame();const auto shaded=v.capture();
-    auto flat=lit;flat.lighting=flat.material_lighting=false;
-    v.annotations={flat};v.draw_frame();const auto unshaded=v.capture();
-    v.manual_annotations=false;
-    require(shaded.rgba!=bare.rgba,"keyframe cameras were not visible");
-    require(shaded.rgba!=unshaded.rgba,"keyframe cameras ignore lighting");
-}
-void renderer_cache(PathViewer& v) {
-    KeyFrameInterpolator path(v.camera()->frame());
-    require(path.add_keyframe(Frame(vec3(0,0,50),quat()),0) &&
-            path.add_keyframe(Frame(vec3(50,0,50),quat()),1),"renderer path fixture failed");
-    vulkan::KeyFrameInterpolatorRenderer renderer;
-    const auto a=renderer.draw_path(path,*v.camera());const auto b=renderer.draw_path(path,*v.camera());
-    require(a.geometry && a.geometry==b.geometry,"stationary path re-created geometry");
-    const auto glyph=renderer.draw_cameras(path,*v.camera(),.4f);
-    require(glyph.geometry && glyph.geometry==renderer.draw_cameras(path,*v.camera(),.4f).geometry,
-            "stationary camera markers re-created geometry");
-    v.camera()->set_position(v.camera()->position()+vec3(1,0,0));
-    require(renderer.draw_path(path,*v.camera()).geometry!=a.geometry,"path did not follow the camera");
-    v.camera()->set_position(v.camera()->position()-vec3(1,0,0));
+    require(path.add_keyframe(Frame(first,quat()),0),"scene guide fixture failed");
+    auto line=std::make_shared<LinesDrawable>("scene guide path");
+    require(!path.update_path_drawable(*line),"one keyframe produced a path");
+    require(path.add_keyframe(Frame(second,quat()),1),"second keyframe failed");
+    require(path.update_path_drawable(*line),"scene path fill failed");
+    auto glyphs=std::make_shared<TrianglesDrawable>("scene guide glyphs");
+    require(!path.update_cameras_drawable(*glyphs,v.camera(),0),"a non-positive glyph width was accepted");
+    require(path.update_cameras_drawable(*glyphs,v.camera(),glyph_width),"scene glyph fill failed");
+    v.draw_frame();const auto bare=v.capture();
+    v.add_drawable(glyphs);v.draw_frame();const auto with_glyphs=v.capture();
+    require(with_glyphs.rgba!=bare.rgba,"scene glyphs were not visible");
+    require(with_glyphs.depth!=bare.depth,"scene glyphs did not write depth");
+    // The glyphs are 20 units wide and sit on the path; capture the path alone.
+    v.delete_drawable(glyphs.get());v.draw_frame();
+    v.add_drawable(line);v.draw_frame();const auto with_line=v.capture();
+    require(with_line.rgba!=bare.rgba,"scene path was not visible");
+    require(with_line.depth!=bare.depth,"scene path did not write depth");
+    v.delete_drawable(line.get());
+    v.draw_frame();const auto cleared=v.capture();
+    require(cleared.rgba==bare.rgba && cleared.depth==bare.depth,"removed scene guides still rendered");
 }
 int main(int argc,char**) {
     try {
@@ -148,10 +151,9 @@ int main(int argc,char**) {
         options.device.validation=options.device.sync_validation=argc>1;
         PathViewer v("Tutorial camera paths");set_size(v,options);require(v.has_usage(),"tutorial usage hint missing");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere load failed");
+        scene_guides(v);
         tutorial_keys(v);
-        marker_lighting(v);
-        renderer_cache(v);
         require(v.device().validation_errors()==0,"camera path validation errors");
-        std::cout<<"PASS: shared manual interpolation, tutorial timer playback and keys, native paths/cameras, lighting, depth/IDs, snapshot\n";
+        std::cout<<"PASS: shared manual interpolation, scene-drawable guides, tutorial timer playback and keys, snapshot\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

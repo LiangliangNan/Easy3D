@@ -11004,3 +11004,118 @@ Both check trees rebuilt; suites run serially: Vulkan 150/150 (151 s) and OpenGL
 trees. Mapple launches on both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)"); the
 flight gestures were not scripted. `easy3d/util/version.h` carries only the generated
 date bump. Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 117: keyframe cameras as scene glyphs
+
+**Problem.** Tutorial 206 showed the back side of a keyframe camera glyph through its
+front side. On Vulkan the glyphs were `overlay_depth_test` annotations: they test the
+scene depth but never write it, so a glyph's far-side triangles could paint over its
+near-side ones depending on submission order, and the models could not occlude the
+markers. On OpenGL `KeyFrameInterpolator::draw_cameras()` drew its cached
+`TrianglesDrawable` after the scene, which hides the glyph backs but keeps the same
+after-the-scene placement: the markers stayed outside the pick pass and the two
+backends implemented the same glyph separately (Mapple had a third copy).
+
+**Change (library).** `KeyFrameInterpolator::update_cameras_drawable(drawable, camera,
+camera_width, color)` fills a caller-owned `TrianglesDrawable` with every keyframe's
+camera glyph as solid, lit triangles, built by a shared `append_camera_glyphs()` that
+`draw_cameras()` now uses as well, so the two cannot drift.
+`camera_glyph_triangles()` publishes the per-glyph triangle count, which maps a picked
+triangle `i` to keyframe `i / count`. Because the drawable is ordinary scene geometry,
+the scene depth pass hides each glyph's back side behind its front side, the models
+and the glyphs occlude each other, and the glyphs are pickable; nothing is drawn after
+the scene. It refuses (leaving the drawable untouched) an empty path, a null camera,
+and a non-positive width. The `draw_path()` default color is now the blue
+`vec4(0.15, 0.45, 1.0)` on both backends (the Vulkan renderer already used it), since
+the yellow line was hard to perceive.
+
+**Change (Tutorial 206).** `pre_draw()` keeps one "keyframe cameras" scene drawable:
+created on the first keyframe, filled only when the keyframe count, the glyph width
+(5% of the scene radius), or the camera's field of view/screen aspect change, and
+hidden while the path is empty or animating. `draw()` now registers only the path
+annotation (Vulkan) or draws only the path line (OpenGL), and both backends share the
+glyph geometry.
+
+**Change (Mapple).** `update_camera_markers()` drops its private glyph builder and
+calls `update_cameras_drawable()`, keeping its change detection, visibility, width
+(3% of the model box diagonal) and picking map (now
+`KeyFrameInterpolator::camera_glyph_triangles()`); the marker color is the library
+default (0.2, 0.7, 0.3). The after-scene `draw_cameras()` stays for OpenGL callers
+(Mapple-Qt's walk-through and the camera-path tests); the Vulkan
+`KeyFrameInterpolatorRenderer` and the path annotation were retired in batch 118.
+
+**Test.** `tests/viewer/camera_guides_test.cpp` additionally fills a shared
+`TrianglesDrawable` through `update_cameras_drawable()`, requires a zero width to be
+refused, adds it to the scene, checks the glyphs render lit, removes it and checks
+they disappear; its path predicate expects the new blue default.
+
+**Validation (2026-11-17, macOS, Apple M4 Pro, MoltenVK/OpenGL, Release, serial).**
+Both check trees rebuilt; suites run serially: Vulkan 150/150 (146 s) and OpenGL
+118/118 (59 s), including `opengl.cameraguides` and `vulkan.camerapath`. Mapple
+launches on both backends ("Mapple UI ready (Vulkan)"/"(OpenGL)") with the settings
+files restored afterwards. The glyph depth behavior is covered by the
+scene-drawable registration test; it was not verified by scripted interaction.
+`easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
+separate gates.
+
+### 2026-11-17 — batch 118: the camera path as a scene drawable; Vulkan renderer retired
+
+**Problem.** After batch 117 the keyframe glyphs were scene geometry, but the path
+was still drawn after the scene: OpenGL through `KeyFrameInterpolator::draw_path()`'s
+lazily cached `LinesDrawable`, Vulkan through `vulkan::KeyFrameInterpolatorRenderer`,
+which turned the polyline into an `overlay_depth_test` annotation. Every caller
+carried both routes: Tutorial 206 registered annotations on Vulkan and called
+`draw_path()` on OpenGL, and Mapple kept `update_camera_path_annotations()` for the
+annotation slot plus `draw_camera_path()` for the immediate draw. The path therefore
+stayed outside the scene's pick/ID pass, never occluded models or was occluded by
+them, and the backend split outlived the renderer's only remaining use.
+
+**Change (library).** `KeyFrameInterpolator::update_path_drawable(drawable, thickness,
+color)` fills a caller-owned `LinesDrawable` with consecutive pairs of the interpolated
+samples, using a cylinder impostor so `thickness` is the on-screen width in pixels, and
+sets the uniform color. It returns `false` (leaving the drawable untouched) when the
+path yields fewer than two samples. The sample pairing is shared with `draw_path()`
+through one `path_segments()` helper, so the immediate and the scene routes cannot
+drift. A private `drop_immediate_drawables()` replaces the copy-pasted cache
+invalidation in `draw_path()`, `draw_cameras()` and `delete_path()`.
+
+**Change (Tutorial 206).** `pre_draw()` now owns both guides: one "keyframe cameras"
+`TrianglesDrawable` and one "camera path" `LinesDrawable`, created on demand, filled
+through the two shared helpers, and hidden while the path is empty or animating. The
+glyph drawable is refreshed only when the keyframe count, the 5%-scene-radius width or
+the projection changes; the path is refreshed when the keyframe count changes and
+shown only with at least two keyframes. The Vulkan include, the annotation
+registration and the `draw()` override are gone.
+
+**Change (Mapple).** `update_camera_markers()` became `update_camera_path_guides()`:
+it keeps the glyph drawable and adds the path line, both rebuilt on the same pose/width
+change, hidden while playback runs, the path is hidden, the width is 0 or the path is
+empty, and removed together by `release_camera_path_guides()` (the callers that restore
+the scene bounds use it unchanged). The annotation slot, the `draw()` override hooks,
+the Vulkan include and the `camera_path_renderer_` member are removed; a video capture
+now includes the guides like any other scene drawable.
+
+**Change (backend).** `backends/vulkan/key_frame_interpolator.{h,cpp}`
+(`vulkan::KeyFrameInterpolatorRenderer`) and their `CMakeLists.txt` entry are deleted.
+`draw_cameras()`/`draw_path()` remain as the immediate OpenGL route for Mapple-Qt's
+walk-through and `tests/viewer/camera_guides_test.cpp`; their docs now point scene
+users at the `update_*_drawable()` helpers.
+
+**Test.** `tests/viewer/camera_path_test.cpp` adds `scene_guides()`: a non-positive
+glyph width is refused, one keyframe yields no path, both drawables fill for two
+keyframes, each renders and writes depth when added to the scene, and removing them
+restores the bare capture. Its tutorial section now also requires the guides to write
+depth and appear in the ID buffer. The fixture is derived from the fitted view (view
+direction, up, field of view, scene-center depth) rather than a pinned camera: two
+keyframes in the upper frustum clear the model at the scene center, and the glyphs are
+filled after the last keyframe exists.
+
+**Validation.** Both check trees rebuilt; suites ran serially: Vulkan 149/150 (147 s)
+and OpenGL 117/118 (62 s), including `vulkan.camerapath` and `opengl.cameraguides`.
+The single failure in each tree, `vulkan.camerapathbuilder` / `opengl.camerapathbuilder`,
+is the working tree's uncommitted keyframe-spacing default (1.0 -> 0.5 character
+heights) whose test still asserts five stations; it is independent of this batch's
+files and was left untouched. Mapple launches on both backends ("Mapple UI ready
+(Vulkan)"/"(OpenGL)") with the settings files restored afterwards.
+`easy3d/util/version.h` carries only the generated date bump. Linux/Windows/CI remain
+separate gates.

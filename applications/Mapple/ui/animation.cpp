@@ -336,7 +336,7 @@ void MappleViewer::clear_camera_path() {
     kfi_->delete_path();
     camera_keyframe_index_ = -1;
     if (show_camera_path_) {
-        release_camera_markers();
+        release_camera_path_guides();
         restore_scene_bounds();
     }
     LOG(INFO) << "camera path cleared";
@@ -436,7 +436,7 @@ void MappleViewer::delete_camera_keyframe() {
     }
     camera_keyframe_index_ = frames.empty() ? -1 : std::min(index, static_cast<int>(frames.size()) - 1);
     if (frames.empty() && show_camera_path_) {
-        release_camera_markers();
+        release_camera_path_guides();
         restore_scene_bounds();
     }
     LOG(INFO) << "keyframe no. " << index + 1 << " deleted (" << frames.size() << " remaining)";
@@ -480,7 +480,7 @@ void MappleViewer::set_camera_path_visible(bool visible) {
     } else {
         // The glyphs are scene geometry; they must be gone before the bounds are
         // rebuilt from the scene, or they would keep the keyframes in the bounds.
-        release_camera_markers();
+        release_camera_path_guides();
         restore_scene_bounds();
     }
     update();
@@ -805,7 +805,7 @@ bool MappleViewer::undo_camera_path() {
     if (count > 0 && !show_camera_path_)
         set_camera_path_visible(true);
     else if (count == 0 && show_camera_path_) {
-        release_camera_markers();
+        release_camera_path_guides();
         restore_scene_bounds();
     }
     LOG(INFO) << "camera path restored: " << count << " keyframes";

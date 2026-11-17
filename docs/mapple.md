@@ -1501,10 +1501,12 @@ once those are decided on.
   `Up axis  (0.00, 1.00, 0.00)`, with a tooltip. `domik.obj` viewed upright still
   yields +Y, but the answer now follows the view rather than the box.
 - The keyframe camera glyphs are scene triangles instead of annotations
-  (`MappleViewer::update_camera_markers()`): one `shape::create_camera()` glyph per
-  keyframe, posed by `Frame::matrix()` into a standalone `TrianglesDrawable`
+  (`MappleViewer::update_camera_markers()`): one glyph per keyframe, posed by
+  `Frame::matrix()` into a standalone `TrianglesDrawable`
   ("camera path markers", uniform green `(0.2, 0.7, 0.3)`) added with
-  `add_drawable()`. They are rebuilt in `pre_draw()` only when the poses or the
+  `add_drawable()` (the glyph builder moved into the core as
+  `KeyFrameInterpolator::update_cameras_drawable()`, batch 117, which Tutorial 206
+  uses too). They are rebuilt in `pre_draw()` only when the poses or the
   glyph width change, hidden with `set_visible(false)` while playback runs (or when
   the width is 0), and removed by `release_camera_markers()` before
   `restore_scene_bounds()`
@@ -1525,7 +1527,8 @@ once those are decided on.
   (`KeyFrameInterpolatorRenderer::draw_path()`); Mapple no longer calls
   `draw_cameras()`, and the OpenGL `draw_camera_path()` likewise draws only the
   line. The core renderer's `draw_cameras()` stays for the camera-path tests and
-  Tutorial 206, and the viewer-level annotation pivot hook and the Vulkan
+  Mapple-Qt (Tutorial 206 switched to the shared scene drawable in batch 117), and
+  the viewer-level annotation pivot hook and the Vulkan
   culled-overlay pipeline tried on the way here were removed again (the core
   libraries are unchanged from HEAD).
 - Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees
@@ -1680,3 +1683,29 @@ once those are decided on.
   deleting keeps the surviving times, and the past-the-end extension repeats the last
   step. The glyph pick, Shift modifier and buttons were not scripted; suites were not
   rerun (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-17 — the camera path is scene geometry too; no Vulkan path renderer (batch 118)
+
+- The path polyline joins the keyframe glyphs as ordinary scene geometry:
+  `update_camera_markers()` became `update_camera_path_guides()`, which maintains
+  "camera path markers" (`TrianglesDrawable`) and "camera path line"
+  (`LinesDrawable`, filled by the new `KeyFrameInterpolator::update_path_drawable()`)
+  side by side. Both are rebuilt on the same pose/width change and hidden while
+  playback runs, while the path is hidden, when the width is 0, or (the line) when
+  there is no curve to show; `release_camera_path_guides()` removes both before
+  `restore_scene_bounds()`. The line is a 2-pixel cylinder impostor in the library's
+  blue, and because it is scene geometry the models occlude it and it writes depth
+  and IDs like the glyphs. A video capture includes both, since the capture renders
+  the scene the guides were just rebuilt into.
+- The Vulkan annotation slot and the immediate `draw_camera_path()` are gone, along
+  with `vulkan::KeyFrameInterpolatorRenderer` and its `camera_path_renderer_` member
+  (the class is deleted from the library, batch 118). `draw()` no longer refreshes or
+  draws a path itself, and `pre_draw()` no longer has an annotation refresh before a
+  video frame.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees; both
+  backends launch ("Mapple UI ready (OpenGL)" / "(Vulkan)") with the settings files
+  unchanged afterwards. The paths were not exercised by scripted interaction; the
+  suites (which cover the shared helpers through `vulkan.camerapath` and
+  `opengl.cameraguides`) ran with Vulkan 149/150 and OpenGL 117/118, the only
+  failures being `*.camerapathbuilder` against the working tree's uncommitted
+  keyframe-spacing default. See the batch-118 entry in docs/vulkan.md.

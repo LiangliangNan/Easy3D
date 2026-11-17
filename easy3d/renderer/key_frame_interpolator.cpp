@@ -147,11 +147,7 @@ namespace easy3d {
         pathIsValid_ = false;
         last_stopped_index_ = 0;
 
-        delete path_drawable_;
-        path_drawable_ = nullptr;
-
-        delete cameras_drawable_;
-        cameras_drawable_ = nullptr;
+        drop_immediate_drawables();
     }
 
 
@@ -286,14 +282,7 @@ namespace easy3d {
         if (keyframes_.empty())
             return;
         if (!pathIsValid_) {
-            if (path_drawable_) {
-                delete path_drawable_;
-                path_drawable_ = nullptr;
-            }
-            if (cameras_drawable_) {
-                delete cameras_drawable_;
-                cameras_drawable_ = nullptr;
-            }
+            drop_immediate_drawables();
             interpolated_path_ = interpolate();
             pathIsValid_ = true;
         }
@@ -303,21 +292,9 @@ namespace easy3d {
         if (!cameras_drawable_) {
             std::vector<vec3> points;
             std::vector<unsigned int> indices;
-
-            // camera representation
-            for (const auto& frame : keyframes_) {
-                std::vector<vec3> cam_points;
-                std::vector<unsigned int> cam_indices;
-                shape::create_camera(cam_points, cam_indices, camera_width, camera->field_of_view(),
-                                      static_cast<float>(camera->screen_height()) / static_cast<float>(camera->screen_width()));
-                unsigned int offset = static_cast<unsigned int>(points.size());
-                for (auto id : cam_indices)
-                    indices.push_back(offset + id);
-                const mat4 &m = Frame(frame.position(), frame.orientation()).matrix();
-                for (auto &p : cam_points)
-                    points.push_back(m * p);
-            }
-
+            append_camera_glyphs(camera_width, camera->field_of_view(),
+                                 static_cast<float>(camera->screen_height()) / static_cast<float>(camera->screen_width()),
+                                 points, indices);
             if (points.size() > 1) {
                 cameras_drawable_ = new TrianglesDrawable;
                 cameras_drawable_->update_vertex_buffer(points);
@@ -333,18 +310,95 @@ namespace easy3d {
     }
 
 
+    bool KeyFrameInterpolator::update_cameras_drawable(TrianglesDrawable &drawable, const Camera *camera,
+                                                       float camera_width, const vec4 &color) const {
+        if (keyframes_.empty() || !camera || !(camera_width > 0.0f) || !std::isfinite(camera_width))
+            return false;
+        std::vector<vec3> points;
+        std::vector<unsigned int> indices;
+        append_camera_glyphs(camera_width, camera->field_of_view(),
+                             static_cast<float>(camera->screen_height()) / static_cast<float>(camera->screen_width()),
+                             points, indices);
+        drawable.update_vertex_buffer(points);
+        drawable.update_element_buffer(indices);
+        drawable.set_uniform_coloring(color);
+        return true;
+    }
+
+
+    std::size_t KeyFrameInterpolator::camera_glyph_triangles() {
+        // The angle only moves the glyph vertices; the triangle count is the same.
+        std::vector<vec3> points;
+        std::vector<unsigned int> indices;
+        shape::create_camera(points, indices, 1.0f, 0.8f, 1.0f);
+        return indices.size() / 3;
+    }
+
+
+    void KeyFrameInterpolator::drop_immediate_drawables() {
+        delete path_drawable_;
+        path_drawable_ = nullptr;
+        delete cameras_drawable_;
+        cameras_drawable_ = nullptr;
+    }
+
+
+    void KeyFrameInterpolator::append_camera_glyphs(float camera_width, float fov, float aspect,
+                                                    std::vector<vec3> &points,
+                                                    std::vector<unsigned int> &indices) const {
+        if (keyframes_.empty())
+            return;
+        std::vector<vec3> glyph_points;
+        std::vector<unsigned int> glyph_indices;
+        shape::create_camera(glyph_points, glyph_indices, camera_width, fov, aspect);
+        points.reserve(points.size() + glyph_points.size() * keyframes_.size());
+        indices.reserve(indices.size() + glyph_indices.size() * keyframes_.size());
+        for (const auto &frame : keyframes_) {
+            const mat4 m = Frame(frame.position(), frame.orientation()).matrix();
+            const auto offset = static_cast<unsigned int>(points.size());
+            for (const auto &p : glyph_points)
+                points.push_back(m * p);
+            for (auto id : glyph_indices)
+                indices.push_back(offset + id);
+        }
+    }
+
+
+    namespace {
+        // Consecutive sample pairs, ready for a LinesDrawable.
+        std::vector<vec3> path_segments(const std::vector<Frame> &samples) {
+            std::vector<vec3> points;
+            if (samples.size() < 2)
+                return points;
+            points.reserve((samples.size() - 1) * 2);
+            for (std::size_t i = 0; i + 1 < samples.size(); ++i) {
+                points.push_back(samples[i].position());
+                points.push_back(samples[i + 1].position());
+            }
+            return points;
+        }
+    } // namespace
+
+
+    bool KeyFrameInterpolator::update_path_drawable(LinesDrawable &drawable, float thickness, const vec4 &color) {
+        if (!pathIsValid_)
+            drop_immediate_drawables();
+        const std::vector<vec3> points = path_segments(interpolate());
+        if (points.empty())
+            return false;
+        drawable.update_vertex_buffer(points);
+        drawable.set_uniform_coloring(color);
+        drawable.set_line_width(thickness);
+        drawable.set_impostor_type(LinesDrawable::CYLINDER);
+        return true;
+    }
+
+
     void KeyFrameInterpolator::draw_path(const Camera *camera, float thickness, const vec4 &color) {
         if (keyframes_.empty())
             return;
         if (!pathIsValid_) {
-            if (path_drawable_) {
-                delete path_drawable_;
-                path_drawable_ = nullptr;
-            }
-            if (cameras_drawable_) {
-                delete cameras_drawable_;
-                cameras_drawable_ = nullptr;
-            }
+            drop_immediate_drawables();
             interpolated_path_ = interpolate();
             pathIsValid_ = true;
         }
@@ -352,11 +406,7 @@ namespace easy3d {
             return;
 
         if (!path_drawable_) {
-            std::vector<vec3> points;
-            for (std::size_t i = 0; i < interpolated_path_.size() - 1; ++i) {
-                points.push_back(interpolated_path_[i].position());
-                points.push_back(interpolated_path_[i + 1].position());
-            }
+            auto points = path_segments(interpolated_path_);
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);

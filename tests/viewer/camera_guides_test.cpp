@@ -5,16 +5,19 @@
 // The Vulkan backend covers the same guides through viewer annotations
 // (vulkan.camerapath); here they are ordinary TrianglesDrawable/LinesDrawable
 // draws, so this checks that the path and the keyframe cameras render, that the
-// deleted path disappears, and that the camera markers are lit: unlit markers
-// would be the exact uniform color on every interior pixel, while lit facets
-// add the ambient and specular terms even where the diffuse term is zero.
+// deleted path disappears, that the camera markers are lit (unlit markers would be
+// the exact uniform color on every interior pixel, while lit facets add the ambient
+// and specular terms even where the diffuse term is zero), and that the shared
+// scene-glyph drawable renders and unregisters cleanly.
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/util/initializer.h>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 using namespace easy3d;
@@ -46,7 +49,7 @@ namespace {
     struct Counts {
         unsigned markers = 0;  //!< Pixels shaded with the red marker color, lit or unlit.
         unsigned lit = 0;      //!< Marker pixels carrying the ambient/specular grey term.
-        unsigned path = 0;     //!< Pixels of the yellow path line.
+        unsigned path = 0;     //!< Pixels of the blue path line.
     };
 
     Counts count(const graphics::FrameImage &frame) {
@@ -59,7 +62,7 @@ namespace {
                     ++counts.markers;
                 if (r > 100 && g > 8 && b > 8 && g < 200 && b < 200)
                     ++counts.lit;
-                if (r > 200 && g > 200 && b < 180)
+                if (b > 200 && r < 150 && g < 200)
                     ++counts.path;
             }
         return counts;
@@ -97,6 +100,23 @@ int main() {
         const auto line = count(viewer.capture(4));
         require(line.path > 100, "camera path did not render");
         require(line.markers == bare.markers, "camera path drew marker geometry");
+
+        // The shared scene-glyph drawable puts the keyframe cameras in the scene itself, where
+        // the depth pass hides each glyph's back side and picking maps a triangle to its
+        // keyframe. The viewer owns the drawable once added.
+        auto glyphs = std::make_shared<TrianglesDrawable>("keyframe cameras");
+        require(!path.update_cameras_drawable(*glyphs, viewer.camera(), 0.0f),
+                "a non-positive glyph width must be refused");
+        require(path.update_cameras_drawable(*glyphs, viewer.camera(), viewer.camera_width, vec4(1, 0, 0, 1)),
+                "filling the scene glyphs failed");
+        require(KeyFrameInterpolator::camera_glyph_triangles() > 0, "camera glyphs have no triangles");
+        viewer.add_drawable(glyphs);
+        const auto scene = count(viewer.capture(4));
+        require(scene.markers > 200, "scene camera glyphs did not render");
+        require(scene.lit > 100, "scene camera glyphs are not lit");
+        viewer.delete_drawable(glyphs.get());
+        const auto cleared = count(viewer.capture(4));
+        require(cleared.markers == bare.markers, "scene camera glyphs stayed after removal");
 
         path.delete_path();
         const auto deleted = count(viewer.capture(4));

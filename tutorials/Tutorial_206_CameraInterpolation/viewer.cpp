@@ -27,11 +27,10 @@
 #include "viewer.h"
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
-#endif
 #include <iostream>
 
 using namespace easy3d;
@@ -97,32 +96,54 @@ bool TutorialCameraInterpolation::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialCameraInterpolation::draw() const {
-#ifdef EASY3D_HAS_VULKAN
-    // Annotations are consumed by Viewer::draw(), so they must be registered first.
-    std::vector<graphics::DrawCommand> commands;
-    if (!interpolator_->is_interpolation_started() && interpolator_->number_of_keyframes()) {
-        if (!renderer_)
-            renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
-        auto path = renderer_->draw_path(*interpolator_, *camera());
-        auto cameras = renderer_->draw_cameras(*interpolator_, *camera(), camera()->scene_radius() * 0.05f);
-        if (path.geometry)
-            commands.push_back(path);
-        if (cameras.geometry)
-            commands.push_back(cameras);
-    }
-    set_viewer_annotations(std::move(commands));
+void TutorialCameraInterpolation::pre_draw() {
+    Viewer::pre_draw();
 
-    Viewer::draw();
-#else
-    Viewer::draw();
-
-    // shown only when it is not animating
-    if (!interpolator_->is_interpolation_started() && interpolator_->number_of_keyframes()) {
-        interpolator_->draw_cameras(camera(), camera()->scene_radius() * 0.05f);
-        interpolator_->draw_path(camera());
+    // Draw the keyframe cameras and the path as scene geometry: the scene pass hides the back
+    // side of each glyph behind its front side, and the models occlude the guides.
+    const std::size_t count = interpolator_->number_of_keyframes();
+    if (count == 0) {
+        // The path was deleted; forget what the guides were built from, so a newly recorded
+        // path with the same number of keyframes rebuilds them.
+        cameras_keyframes_ = path_keyframes_ = 0;
     }
-#endif
+    if (interpolator_->is_interpolation_started() || count == 0) {
+        if (cameras_)
+            cameras_->set_visible(false);
+        if (path_)
+            path_->set_visible(false);
+        return;
+    }
+
+    if (!cameras_) {
+        cameras_ = std::make_shared<TrianglesDrawable>("keyframe cameras");
+        add_drawable(cameras_);
+    }
+    if (!path_) {
+        path_ = std::make_shared<LinesDrawable>("camera path");
+        add_drawable(path_);
+    }
+
+    const float width = camera()->scene_radius() * 0.05f;
+    const float fov = camera()->field_of_view();
+    const float aspect = static_cast<float>(camera()->screen_height()) / static_cast<float>(camera()->screen_width());
+    if (count != cameras_keyframes_ || width != cameras_width_ ||
+        fov != cameras_field_of_view_ || aspect != cameras_aspect_) {
+        if (interpolator_->update_cameras_drawable(*cameras_, camera(), width)) {
+            cameras_keyframes_ = count;
+            cameras_width_ = width;
+            cameras_field_of_view_ = fov;
+            cameras_aspect_ = aspect;
+        }
+    }
+    cameras_->set_visible(true);
+
+    // A single keyframe has no path to interpolate; only the camera glyph is shown then.
+    if (count != path_keyframes_) {
+        if (interpolator_->update_path_drawable(*path_))
+            path_keyframes_ = count;
+    }
+    path_->set_visible(count > 1 && count == path_keyframes_);
 }
 
 // \endcond

@@ -33,9 +33,8 @@
 
 namespace easy3d {
     class KeyFrameInterpolator;
-#ifdef EASY3D_HAS_VULKAN
-    namespace vulkan { class KeyFrameInterpolatorRenderer; }
-#endif
+    class LinesDrawable;
+    class TrianglesDrawable;
 }
 
 // This tutorial shows how to interpolate camera frames to
@@ -45,8 +44,10 @@ namespace easy3d {
  * \brief A Viewer that records camera keyframes and plays them back as a smooth fly-through.
  * \details The base Viewer knows nothing about keyframe interpolation. This subclass owns a
  * KeyFrameInterpolator bound to the viewer's camera frame, records a keyframe on 'k', starts and
- * stops playback on 'space', deletes the path on 'd', and draws the path and keyframe cameras in
- * draw(). See the tutorial's main.cpp for the technique.
+ * stops playback on 'space', deletes the path on 'd', and shows the path and keyframe cameras.
+ * Both guides are scene drawables: the scene pass hides the back side of each glyph behind its
+ * front side and the models occlude the guides, on both backends. See the tutorial's main.cpp
+ * for the technique.
  */
 class TutorialCameraInterpolation : public easy3d::Viewer {
 public:
@@ -55,16 +56,20 @@ public:
 
 protected:
     bool key_press_event(int key, int modifiers) override;
-    void draw() const override;
+    void pre_draw() override;
 
 private:
     easy3d::KeyFrameInterpolator *interpolator_;
 
-#ifdef EASY3D_HAS_VULKAN
-    // The device backend renders the path and the keyframe camera markers as draw commands
-    // registered as scene annotations, so they are depth tested and appear in snapshots.
-    mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> renderer_;
-#endif
+    // The keyframe cameras and the path as scene drawables, plus what they were built from:
+    // they are rebuilt only when the keyframes, the projection or the guide sizes change.
+    std::shared_ptr<easy3d::TrianglesDrawable> cameras_;
+    std::shared_ptr<easy3d::LinesDrawable> path_;
+    std::size_t cameras_keyframes_ = 0;
+    std::size_t path_keyframes_ = 0;
+    float cameras_width_ = 0.0f;
+    float cameras_field_of_view_ = 0.0f;
+    float cameras_aspect_ = 0.0f;
 };
 
 

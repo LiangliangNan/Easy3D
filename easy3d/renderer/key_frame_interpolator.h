@@ -396,6 +396,8 @@ namespace easy3d {
 
         /**
          * \brief Draws the virtual 3D cameras for the keyframes.
+         * \details Draws immediately, after the scene, which is only available on OpenGL;
+         *      use update_cameras_drawable() to draw them as scene geometry on both backends.
          * \param camera The current camera used by the viewer.
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
          *      10% of the character height (in walking mode), for instance.
@@ -405,11 +407,59 @@ namespace easy3d {
 
         /**
          * \brief Draws the interpolated camera path.
+         * \details Draws immediately, after the scene, which is only available on OpenGL;
+         *      use update_path_drawable() to draw the path as scene geometry on both backends.
          * \param camera The current camera used by the viewer.
          * \param thickness The thickness of the path.
          * \param color The color of the path.
          */
-        void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 1.0f, 0.5f, 1.0f));
+        void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(0.15f, 0.45f, 1.0f, 1.0f));
+
+        /**
+         * \brief Fills \p drawable with the interpolated camera path, for drawing it as
+         *      scene geometry.
+         * \details The polyline takes part in the normal scene pass, so scene surfaces
+         *      occlude it and it is drawn like any other drawable on both backends. Add the
+         *      drawable to the viewer's scene (e.g. with Viewer::add_drawable()) and refresh
+         *      it when the keyframes change. The line uses a cylinder impostor, so
+         *      \p thickness is the on-screen width in pixels.
+         * \param drawable The drawable to fill; its buffers, color and line style are replaced.
+         * \param thickness The thickness of the path, in pixels.
+         * \param color The color of the path.
+         * \return \c false, leaving \p drawable untouched, if the path has fewer than two
+         *      interpolated samples (fewer than two keyframes, or interpolation failed).
+         */
+        bool update_path_drawable(LinesDrawable& drawable, float thickness = 2.0f,
+                                  const vec4& color = vec4(0.15f, 0.45f, 1.0f, 1.0f));
+
+        /**
+         * \brief Fills \p drawable with the keyframe cameras as solid glyphs, for drawing
+         *      them as scene geometry.
+         * \details Unlike draw_cameras(), which draws after the scene, a drawable filled
+         *      here takes part in the normal depth pass: the back side of each glyph is
+         *      hidden behind its front side, and scene surfaces occlude the glyphs (and
+         *      the glyphs occlude them) on both backends. Add the drawable to the viewer's
+         *      scene (e.g. with Viewer::add_drawable()) and refresh it when the keyframes,
+         *      the camera's projection, or \p camera_width changes. Because the glyphs are
+         *      ordinary triangles, they can also be picked: glyph \c i owns the triangles
+         *      [i * camera_glyph_triangles(), (i + 1) * camera_glyph_triangles()).
+         * \param drawable The drawable to fill; its buffers and color are replaced.
+         * \param camera The current camera; its field of view and screen aspect size the glyphs.
+         * \param camera_width Controls the size of the glyphs, in world units. A good value
+         *      can be 5% of the scene radius, or 10% of the character height (in walking mode).
+         * \param color The color of the glyphs.
+         * \return \c false, leaving \p drawable untouched, if the path has no keyframe, if
+         *      \p camera is null, or if \p camera_width is not a positive finite number.
+         */
+        bool update_cameras_drawable(TrianglesDrawable& drawable, const Camera* camera, float camera_width,
+                                     const vec4& color = vec4(0.2f, 0.7f, 0.3f, 1.0f)) const;
+
+        /**
+         * \brief The number of triangles one camera glyph occupies in update_cameras_drawable().
+         * \details Glyph \c i thus owns the triangles [i * camera_glyph_triangles(),
+         *      (i + 1) * camera_glyph_triangles()), which maps a picked triangle to its keyframe.
+         */
+        static std::size_t camera_glyph_triangles();
 
         //@}
 
@@ -453,6 +503,13 @@ namespace easy3d {
             quat q_;
             float time_;
         };
+
+        // Appends the keyframe cameras as glyph triangles to the given buffers.
+        void append_camera_glyphs(float camera_width, float fov, float aspect,
+                                  std::vector<vec3>& points, std::vector<unsigned int>& indices) const;
+
+        // Releases the drawables that draw_path()/draw_cameras() build lazily.
+        void drop_immediate_drawables();
 
     private:
         // Associated frame

@@ -55,6 +55,7 @@ namespace easy3d {
     class Drawable;
     class EyeDomeLighting;
     class KeyFrameInterpolator;
+    class LinesDrawable;
     class Model;
     class PointCloudPicker;
     class SoftShadow;
@@ -64,7 +65,6 @@ namespace easy3d {
     class Transparency;
     class VideoEncoder;
     namespace graphics { struct DrawCommand; }
-    namespace vulkan { class KeyFrameInterpolatorRenderer; }
 }
 
 
@@ -442,14 +442,6 @@ private:
     // from pre_draw() while playback runs, since the base Viewer no longer owns one.
     void advance_camera_path();
 
-    // Vulkan: rebuilds the path draw command in the scene annotation slot. Must run
-    // before Viewer::draw(), which replays the annotations. No-op on OpenGL.
-    void update_camera_path_annotations() const;
-
-    // OpenGL: draws the path into the live framebuffer after the scene. No-op on
-    // Vulkan, which uses the annotation slot instead.
-    void draw_camera_path() const;
-
     // Stops playback and moves the camera to a keyframe.
     void goto_camera_keyframe(int index);
 
@@ -535,14 +527,15 @@ private:
     // rebuilt geometry use the same width.
     float camera_marker_width() const;
 
-    // Rebuilds the keyframe camera glyphs in the scene, one camera per keyframe. They
-    // are ordinary triangles, so the scene hides them and the pivot gesture lands on
-    // them; they are hidden while the path plays and removed when it is hidden.
-    void update_camera_markers();
+    // Rebuilds the path and the keyframe camera glyphs in the scene: one camera glyph
+    // per keyframe and the interpolated polyline. They are ordinary drawables, so the
+    // scene occludes them and the pivot gesture lands on the glyphs; both are hidden
+    // while the path plays and removed when it is hidden.
+    void update_camera_path_guides();
 
-    // Removes the glyph drawable so the scene bounds no longer include it; the caller
-    // restores the bounds afterwards.
-    void release_camera_markers();
+    // Removes the guide drawables so the scene bounds no longer include them; the
+    // caller restores the bounds afterwards.
+    void release_camera_path_guides();
 
     // Draws the path gesture preview: the walking stroke being traced, or the orbit
     // axis being dragged, in the scene's overlay layer.
@@ -766,9 +759,10 @@ private:
     std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
     bool show_camera_path_ = false;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
-    // The keyframe camera glyphs: a standalone triangle drawable in the scene. The
-    // stored poses and width are the ones its buffers were built with.
+    // The keyframe camera glyphs and the interpolated path: standalone drawables in the
+    // scene. The stored poses and width are the ones the glyph buffers were built with.
     std::shared_ptr<easy3d::TrianglesDrawable> camera_markers_;
+    std::shared_ptr<easy3d::LinesDrawable> camera_path_line_;
     std::vector<easy3d::Frame> camera_markers_frames_;
     float camera_markers_width_ = 0;
     std::size_t camera_markers_faces_per_glyph_ = 0; // maps a picked triangle to its keyframe
@@ -780,9 +774,6 @@ private:
     easy3d::vec3 keyframe_drag_plane_normal_;
     easy3d::vec3 keyframe_drag_start_position_;
     bool keyframe_drag_moved_ = false;
-#ifdef EASY3D_HAS_VULKAN
-    mutable std::unique_ptr<easy3d::vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
-#endif
     // Walking, orbit and flight keyframe creation (created in init()).
     std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;
     // Which one-shot path tool owns the next gesture.

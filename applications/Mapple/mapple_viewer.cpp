@@ -46,13 +46,11 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
-#endif
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
@@ -216,9 +214,9 @@ MappleViewer::~MappleViewer() {
     }
     // Release selection colormaps before the graphics device dies with the viewer.
     selection_styles_.clear();
-    // The glyph drawable would otherwise outlive the scene cleanup (this class holds
-    // it too) and free its buffer after the window and device are gone.
-    release_camera_markers();
+    // The guide drawables would otherwise outlive the scene cleanup (this class holds
+    // them too) and free their buffers after the window and device are gone.
+    release_camera_path_guides();
     // The effects own framebuffers and shader programs, so they must go while the
     // graphics device is still alive. Destroying the shadow/AO/EDL objects also
     // unregisters them from the per-camera effect registries.
@@ -326,18 +324,15 @@ void MappleViewer::pre_draw() {
     imgui_->new_frame(dpi_scaling(), pixel_ratio());
     Viewer::pre_draw();
     advance_camera_path();
-    update_camera_markers();
+    update_camera_path_guides();
     draw_gui();
 
     // A video frame renders the scene on its own inside capture(), so it runs
     // between the UI build and the overlay submission: the freshly built UI
     // commands are installed afterwards and stay out of the captured frame.
-    if (recording_video()) {
-        // capture() replays the annotation slot, which is otherwise refreshed by draw();
-        // match the path to the camera advanced above.
-        update_camera_path_annotations();
+    // The guides are scene drawables, so the capture includes them as drawn above.
+    if (recording_video())
         advance_video_recording();
-    }
 
     std::vector<graphics::DrawCommand> commands = imgui_->render(framebuffer_width(), framebuffer_height());
     // The rubber band belongs to the scene layer: insert it before the UI geometry
@@ -358,15 +353,11 @@ void MappleViewer::post_resize(int w, int h) {
 }
 
 void MappleViewer::draw() const {
-    // The annotation slot is replayed by Viewer::draw(), so register the path first.
-    update_camera_path_annotations();
-
     // The effects wrap the same scene render the viewer would perform; the clipping
     // plane guide and the model drawables are all part of Viewer::draw(). The Qt app
     // had the same arrangement with the effect classes' own begin()/end().
     if (!ao_ && !edl_ && !shadow_ && !transparency_) {
         Viewer::draw();
-        draw_camera_path();
         return;
     }
 
@@ -402,41 +393,19 @@ void MappleViewer::draw() const {
         Viewer::draw();
         edl_->end();
     }
-
-    draw_camera_path();
 }
 
-void MappleViewer::update_camera_path_annotations() const {
-#ifdef EASY3D_HAS_VULKAN
-    std::vector<graphics::DrawCommand> commands;
-    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started()) {
-        if (!camera_path_renderer_)
-            camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
-        auto path = camera_path_renderer_->draw_path(*kfi_, *camera());
-        if (path.geometry)
-            commands.push_back(path);
-    }
-    set_viewer_annotations(std::move(commands));
-#endif
-}
-
-void MappleViewer::draw_camera_path() const {
-#ifndef EASY3D_HAS_VULKAN
-    // Shown only when it is not animating; on Vulkan this runs through the annotation slot.
-    if (show_camera_path_ && kfi_ && !kfi_->is_interpolation_started())
-        kfi_->draw_path(camera(), 2.0f);
-#endif
-}
-
-void MappleViewer::update_camera_markers() {
-    // The glyphs are ordinary scene triangles, so they occlude behind the surfaces and
-    // the pivot gesture resolves them like any other visible geometry.
+void MappleViewer::update_camera_path_guides() {
+    // The glyphs and the path are ordinary scene drawables, so they occlude behind the
+    // surfaces and the pivot gesture resolves the glyphs like any other visible geometry.
     const float width = camera_marker_width();
     const bool show = show_camera_path_ && kfi_ && !kfi_->is_interpolation_started() && width > 0 &&
                       kfi_->number_of_keyframes() > 0;
     if (!show) {
         if (camera_markers_)
             camera_markers_->set_visible(false);
+        if (camera_path_line_)
+            camera_path_line_->set_visible(false);
         return;
     }
 
@@ -450,46 +419,40 @@ void MappleViewer::update_camera_markers() {
     }
     if (same) {
         camera_markers_->set_visible(true);
+        if (camera_path_line_)
+            camera_path_line_->set_visible(true);
         return;
-    }
-
-    std::vector<vec3> glyph_points;
-    std::vector<unsigned int> glyph_indices;
-    shape::create_camera(glyph_points, glyph_indices, width, camera()->field_of_view(),
-                         float(camera()->screen_height()) / float(camera()->screen_width()));
-    camera_markers_faces_per_glyph_ = glyph_indices.size() / 3;
-    std::vector<vec3> points;
-    std::vector<unsigned int> indices;
-    points.reserve(glyph_points.size() * count);
-    indices.reserve(glyph_indices.size() * count);
-    camera_markers_frames_.clear();
-    for (std::size_t i = 0; i < count; ++i) {
-        const Frame frame = kfi_->keyframe(i);
-        camera_markers_frames_.push_back(frame);
-        const mat4 pose = frame.matrix();
-        const auto offset = static_cast<unsigned int>(points.size());
-        for (const auto &p : glyph_points)
-            points.push_back(pose * p);
-        for (auto index : glyph_indices)
-            indices.push_back(offset + index);
     }
 
     if (!camera_markers_) {
         camera_markers_ = std::make_shared<TrianglesDrawable>("camera path markers");
-        camera_markers_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
         add_drawable(camera_markers_);
     }
-    camera_markers_->update_vertex_buffer(points);
-    camera_markers_->update_element_buffer(indices);
+    if (!camera_path_line_) {
+        camera_path_line_ = std::make_shared<LinesDrawable>("camera path line");
+        add_drawable(camera_path_line_);
+    }
+    camera_markers_faces_per_glyph_ = KeyFrameInterpolator::camera_glyph_triangles();
+    kfi_->update_cameras_drawable(*camera_markers_, camera(), width);
+    // The curve follows the same poses, so it is rebuilt in this pass as well; with a
+    // single keyframe there is no curve to show.
+    camera_path_line_->set_visible(kfi_->update_path_drawable(*camera_path_line_));
+    camera_markers_frames_.clear();
+    for (std::size_t i = 0; i < count; ++i)
+        camera_markers_frames_.push_back(kfi_->keyframe(i));
     camera_markers_->set_visible(true);
     camera_markers_width_ = width;
 }
 
-void MappleViewer::release_camera_markers() {
-    if (!camera_markers_)
-        return;
-    delete_drawable(camera_markers_.get());
-    camera_markers_.reset();
+void MappleViewer::release_camera_path_guides() {
+    if (camera_path_line_) {
+        delete_drawable(camera_path_line_.get());
+        camera_path_line_.reset();
+    }
+    if (camera_markers_) {
+        delete_drawable(camera_markers_.get());
+        camera_markers_.reset();
+    }
     camera_markers_frames_.clear();
     camera_markers_width_ = 0;
     camera_markers_faces_per_glyph_ = 0;
