@@ -1578,3 +1578,29 @@ once those are decided on.
   scripted, so the on-screen tilt was not captured; suites were not rerun
   (Mapple-only change, core libraries at HEAD), and `easy3d/util/version.h` is
   unchanged.
+
+### 2026-11-17 — route ups turn to the camera-facing side (batch 112)
+
+- Batch 111 oriented each picked face normal toward the view's up, which is not
+  always the side of the surface the camera sees: a slope can face any way relative
+  to that up, so some `RouteSample::up` directions were inverted and the eye centers
+  landed behind the terrain. `MappleViewer::route_point_at()` now orients the normal
+  against the camera's view direction (`Camera::view_direction()` points from the
+  camera into the scene): the walker's up must oppose it - the front-facing side of
+  any rendered surface - and is negated otherwise. The view's up remains only the
+  fallback for hits without a face (point clouds, standalone drawables).
+- `CameraPathBuilder::generate_ground_route()` applies the same rule to the whole
+  input before resampling, so a route traced with arbitrary (or mixed) face winding
+  cannot cancel out in the interpolation; the 1-2-1 smoothing preserves the sign
+  because every sample is already on the camera side. `ground_up_direction()` no
+  longer flips the directions; it still supplies the no-normal fallback and the
+  eye-height scale.
+- Validation (2026-11-17, macOS, Release): Mapple rebuilt in both check trees;
+  both backends launch with `domik.obj` ("Mapple UI ready (OpenGL)" / "(Vulkan)").
+  A temporary headless probe (removed) looked down at a 30-degree ramp: keyframes
+  generated from the normal keep their up on the camera-facing side, the same
+  stroke with every normal inverted produces the same ups (the inversion is
+  corrected), and an every-other-sample inversion resolves to the same up
+  (resampling does not cancel). The drag itself was not scripted; suites were not
+  rerun (Mapple-only change, core at HEAD), and `easy3d/util/version.h` is
+  unchanged.

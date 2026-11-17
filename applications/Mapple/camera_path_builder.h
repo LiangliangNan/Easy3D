@@ -71,8 +71,10 @@ namespace easy3d {
  * \attention The walking route stands the walker upright on the traced surface:
  *      each pose rises from its own ground-contact point along the surface normal
  *      under it, and the eye height is measured along that normal, so the route
- *      tilts with the terrain. Poses without a surface normal (e.g. a point-cloud
- *      pick) use the current view's up direction instead.
+ *      tilts with the terrain. The normals are oriented to the side facing the
+ *      camera (the opposite of its view direction), so a face wound either way
+ *      cannot put the eye centers behind the surface. Poses without a surface
+ *      normal (e.g. a point-cloud pick) use the current view's up direction.
  */
 class CameraPathBuilder {
 public:
@@ -125,9 +127,10 @@ public:
     /// \param stroke Ground-contact points in path order.
     /// \param foot_up_directions The walker's up direction at each stroke point,
     ///      typically the surface normal there, in the same order as \p stroke.
-    ///      Each direction is normalized and flipped to face along
-    ///      ground_up_direction(); they are smoothed along the route before posing.
-    ///      An empty vector stands every pose along ground_up_direction().
+    ///      Each direction is normalized and flipped to oppose the camera's view
+    ///      direction, i.e. to point at the rendered side of the surface; they are
+    ///      smoothed along the route before posing. An empty vector stands every
+    ///      pose along ground_up_direction().
     /// \return The number of keyframes added (0 if the stroke is degenerate, the
     ///      directions do not pair with the stroke, or the eye height is zero).
     std::size_t generate_ground_route(const std::vector<easy3d::vec3> &stroke,

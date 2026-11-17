@@ -478,9 +478,9 @@ private:
     void apply_orbit_pick(int x, int y);
 
     // The visible surface under (x, y): the ground-contact point of a route sample
-    // and the walker's up direction there (the picked face's normal, aligned with
-    // the view's up; the view's up itself when the hit has no face). False when the
-    // ray misses every visible primitive.
+    // and the walker's up direction there (the picked face's normal, turned to the
+    // side facing the camera; the view's up itself when the hit has no face). False
+    // when the ray misses every visible primitive.
     bool route_point_at(int x, int y, easy3d::vec3 &point, easy3d::vec3 &up) const;
 
     // Width, in world units, of the keyframe camera glyphs; the drawn glyphs and their

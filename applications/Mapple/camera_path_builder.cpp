@@ -136,22 +136,32 @@ std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &st
     const std::vector<ArcSample> samples = arc_length_samples(stroke, spacing);
 
     const vec3 fallback_up = ground_up_direction();
+    const vec3 view_dir = camera_->view_direction();
+
+    // The face winding decides a normal's sign, but not the side of the surface the
+    // walker stands on: that is the side facing the camera, so every up must oppose
+    // the view direction. Sounding the eye offset off the far side would put the
+    // camera centers behind the surface. The input is oriented before resampling so
+    // arbitrary winding cannot cancel out in the interpolation.
+    std::vector<vec3> directions = foot_up_directions;
+    for (auto &up : directions) {
+        if (up.length2() < epsilon_sqr<float>())
+            up = fallback_up;
+        up.normalize();
+        if (dot(up, view_dir) > 0.0f)
+            up = -up;
+    }
+
     std::vector<vec3> feet, ups;
     feet.reserve(samples.size());
     ups.reserve(samples.size());
     for (const auto &sample : samples) {
         feet.push_back(sample_value(stroke, sample));
-        if (foot_up_directions.empty()) {
-            ups.push_back(fallback_up);
-            continue;
-        }
-        vec3 up = sample_value(foot_up_directions, sample);
-        // The face winding decides the normal's sign; the view's up says which side
-        // of the surface the walker stands on.
+        vec3 up = directions.empty() ? fallback_up : sample_value(directions, sample);
         if (up.length2() < epsilon_sqr<float>())
             up = fallback_up;
         up.normalize();
-        ups.push_back(dot(up, fallback_up) < 0.0f ? -up : up);
+        ups.push_back(up);
     }
 
     // Picked facet normals step at facet edges; smoothing along the route keeps the

@@ -412,18 +412,24 @@ bool MappleViewer::route_point_at(int x, int y, vec3 &point, vec3 &up) const {
         return false;
     point = result.position;
 
-    // The walker stands on the surface, so its up is the picked face's normal. A
-    // point cloud or a standalone drawable has no faces and falls back to the view's
-    // up direction. Winding decides the normal's sign, so align it with the view.
+    // The walker stands on the visible side of the surface, so its up is the picked
+    // face's normal pointing back at the camera; a point cloud or a standalone
+    // drawable has no faces and falls back to the view's up. The face winding is
+    // arbitrary and the view's up does not resolve it (a slope can face any way
+    // relative to it), so the camera's view direction decides the sign.
     up = camera_path_builder_->ground_up_direction();
     const auto mesh = std::dynamic_pointer_cast<SurfaceMesh>(result.model);
     if (mesh && result.face_index >= 0 && result.face_index < static_cast<int>(mesh->n_faces())) {
         vec3 normal = mesh->compute_face_normal(SurfaceMesh::Face(result.face_index));
         if (normal.length2() > epsilon_sqr<float>()) {
             normal.normalize();
-            up = dot(normal, up) < 0.0f ? -normal : normal;
+            up = normal;
         }
     }
+    // The view direction points from the camera into the scene, so the walker's up
+    // must oppose it; otherwise the eye centers would land behind the surface.
+    if (dot(up, camera()->view_direction()) > 0.0f)
+        up = -up;
     return true;
 }
 
