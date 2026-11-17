@@ -41,6 +41,7 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/state.h>
@@ -607,6 +608,10 @@ private:
 
     // Adds a file chosen from File > Open Recent and fits the camera to it.
     void open_recent_file(const std::string &file);
+
+    // File > Loading option: configures the process-wide Translator consulted by the
+    // file loaders, and logs the new mode.
+    void set_load_translation(easy3d::Translator::Status status);
 
     // ui/panels.cpp
     void draw_toolbar(float x, float y, float w, float h);

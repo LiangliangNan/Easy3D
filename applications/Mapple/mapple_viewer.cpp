@@ -37,6 +37,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/gui/picker.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
@@ -202,6 +203,9 @@ MappleViewer::MappleViewer(const std::string &title,
 
     // The camera path belongs to the app: the base Viewer does not own an interpolator.
     kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
+
+    // File > Loading option is session-only; every launch starts with no translation.
+    Translator::instance()->set_status(Translator::DISABLED);
 }
 
 MappleViewer::~MappleViewer() {

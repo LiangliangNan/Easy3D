@@ -42,6 +42,7 @@
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -503,6 +504,22 @@ bool MappleViewer::icon_menu_item(const char *icon_name, const char *label,
     return pressed;
 }
 
+void MappleViewer::set_load_translation(Translator::Status status) {
+    Translator::instance()->set_status(status);
+    switch (status) {
+        case Translator::DISABLED:
+            LOG(INFO) << "translation in file IO has been disabled";
+            break;
+        case Translator::TRANSLATE_USE_FIRST_POINT:
+            LOG(INFO) << "translation with respect to first vertex in file IO";
+            break;
+        case Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET:
+            LOG(INFO) << "translation with respect to last known vertex ("
+                      << Translator::instance()->translation() << ") in file IO";
+            break;
+    }
+}
+
 // The menu bar only exposes actions that exist. Shortcut strings are display-only;
 // the matching keys are handled by Viewer::key_press_event().
 void MappleViewer::draw_menu_bar() {
@@ -510,6 +527,22 @@ void MappleViewer::draw_menu_bar() {
         return;
 
     if (ImGui::BeginMenu("File")) {
+        // Session-only, like the Qt app: the choice is not saved and each launch starts
+        // with No translation.
+        if (ImGui::BeginMenu("Loading option")) {
+            const Translator::Status status = Translator::instance()->status();
+            if (ImGui::MenuItem("No translation", nullptr, status == Translator::DISABLED))
+                set_load_translation(Translator::DISABLED);
+            if (ImGui::MenuItem("Translate relative to first vertex", nullptr,
+                                status == Translator::TRANSLATE_USE_FIRST_POINT))
+                set_load_translation(Translator::TRANSLATE_USE_FIRST_POINT);
+            if (ImGui::MenuItem("Translate relative to last known vertex", nullptr,
+                                status == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET))
+                set_load_translation(Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET);
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Open...", "Ctrl+O"))
             open();
 

@@ -352,9 +352,10 @@ eye-dome lighting, soft shadow, depth-peeling transparency) and camera state fil
 entry). The Models panel's Qt extras (multi-select Duplicate/Merge/Decompose/Delete,
 Auto focus, Selected only, Apply to all and in-place rename) are migrated too (see the
 2026-11-17 "Models panel: selection and the remaining model commands" entry). The
-Qt-only capabilities left over from the capability pass are the load-translation
-options and the status-bar Graph/PolyMesh readout extras (deliberately skipped);
-retirement can proceed once those are decided on.
+load-translation options are migrated as File > Loading option (session-only, see the
+2026-11-17 "File > Loading option" entry). The only Qt-only capability left over from
+the capability pass is the status-bar Graph/PolyMesh readout (deliberately skipped);
+retirement can proceed once that is decided on.
 
 ## ImGui notes
 
@@ -1284,6 +1285,25 @@ retirement can proceed once those are decided on.
   moved when the load order changed. The shared trees could not relink while
   `easy3d/util/setting.cpp` was mid-edit, so the panel file was compiled with each
   check tree's flags and linked against its libraries. Suites not rerun (app-only).
+
+### 2026-11-17 — File > Loading option (load translation)
+
+- The File menu starts with a Loading option submenu holding the Qt actions as an
+  exclusive radio group: No translation (default), Translate relative to first vertex,
+  and Translate relative to last known vertex. A choice sets the process-wide
+  `easy3d::Translator` status that the file loaders consult and logs the mode; the
+  last-known choice also logs the recorded offset, like the Qt messages.
+- Session-only, as agreed: the choice is not saved in `settings.ini`, and the viewer
+  constructor resets the translator to `DISABLED`, so every launch starts with No
+  translation.
+- Validation (2026-11-17, macOS, Release): a temporary env-gated probe called
+  `set_load_translation` before loading two command-line models. First-vertex mode
+  logged each mesh's first vertex as the recorded offset and shifted the bounds
+  accordingly (`hemisphere.ply` by (0 0 1)); switching to last-known before the second
+  file applied exactly the recorded offset (`fandisk.off` z-range became -1.511..-0.489).
+  Default launches of both backends showed no translation log. The probe was removed,
+  both check trees rebuilt. Suites not rerun (app-only change); the menu was not
+  click-scripted.
 
 ### 2026-11-17 — Models panel: selection and the remaining model commands
 
