@@ -38,6 +38,7 @@
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
 #include <CGAL/Polygon_mesh_processing/orientation.h>
 #include <CGAL/Polygon_mesh_processing/clip.h>
+#include <CGAL/Polygon_mesh_processing/repair_degeneracies.h>
 #include <CGAL/Polygon_mesh_slicer.h>
 
 /// ToDo: useCGAL implementation: #include <CGAL/Polygon_mesh_processing/self_intersections.h>
@@ -70,6 +71,61 @@ namespace easy3d {
             }
         }
 
+        /// The faces of every connected component of the mesh, as a face list each.
+        std::vector<std::vector<SurfaceMesh::Face> > connected_components(SurfaceMesh *mesh) {
+            if (mesh->has_garbage())
+                mesh->collect_garbage();
+
+            std::vector<std::vector<SurfaceMesh::Face> > components;
+            std::vector<char> taken(mesh->n_faces(), 0);
+            std::vector<SurfaceMesh::Face> pending;
+            for (auto f : mesh->faces()) {
+                if (taken[f.idx()])
+                    continue;
+                components.emplace_back();
+                pending.push_back(f);
+                taken[f.idx()] = 1;
+                while (!pending.empty()) {
+                    const auto current = pending.back();
+                    pending.pop_back();
+                    components.back().push_back(current);
+                    const auto first = mesh->halfedge(current);
+                    auto h = first;
+                    do {
+                        const auto neighbor = mesh->face(mesh->opposite(h));
+                        h = mesh->next(h);
+                        if (neighbor.is_valid() && !taken[neighbor.idx()]) {
+                            taken[neighbor.idx()] = 1;
+                            pending.push_back(neighbor);
+                        }
+                    } while (h != first);
+                }
+            }
+            return components;
+        }
+
+        void to_cgal(SurfaceMesh *input, const std::vector<SurfaceMesh::Face> &faces, CGALMesh &output) {
+            if (input->has_garbage())
+                input->collect_garbage();
+
+            output.clear();
+
+            // Only the vertices the faces use, so that the part handed to corefinement is just that
+            // part and nothing else.
+            std::vector<CGALMesh::Vertex_index> map(input->n_vertices());
+            for (auto f : faces) {
+                std::vector<CGALMesh::Vertex_index> vts;
+                for (auto v : input->vertices(f)) {
+                    if (!map[v.idx()].is_valid()) {
+                        const vec3 &p = input->position(v);
+                        map[v.idx()] = output.add_vertex(K::Point_3(p.x, p.y, p.z));
+                    }
+                    vts.emplace_back(map[v.idx()]);
+                }
+                output.add_face(vts);
+            }
+        }
+
         void to_easy3d(CGALMesh &input, SurfaceMesh *output) {
             if (input.has_garbage())
                 input.collect_garbage();
@@ -89,6 +145,104 @@ namespace easy3d {
                     vts.emplace_back(SurfaceMesh::Vertex(static_cast<int>(v.idx())));
                 output->add_face(vts);
             }
+        }
+
+
+        /// Stacks a mesh on the end of another one. The parts cut below share nothing, so putting
+        /// them one after the other is the whole result.
+        void append(CGALMesh &input, CGALMesh *output) {
+            if (input.has_garbage())
+                input.collect_garbage();
+
+            std::vector<CGALMesh::Vertex_index> map(input.number_of_vertices());
+            for (auto v : input.vertices())
+                map[v.idx()] = output->add_vertex(input.point(v));
+
+            for (auto f : input.faces()) {
+                std::vector<CGALMesh::Vertex_index> vts;
+                auto h = input.halfedge(f);
+                for (auto v : input.vertices_around_face(h))
+                    vts.emplace_back(map[v.idx()]);
+                output->add_face(vts);
+            }
+        }
+
+
+        // Drops the faces that carry no area: two vertices at the same location, or three collinear
+        // ones. Corefinement cannot tolerate them - it asks an exact side-of-triangle predicate about
+        // the vertices it inserts, and such a face answers COLLINEAR in every coordinate projection,
+        // which CGAL asserts on (predicates/kernel_ftC3.h).
+        std::size_t drop_degenerate_faces(CGALMesh *mesh) {
+            std::size_t dropped = 0;
+            std::vector<CGALMesh::Face_index> degenerate;
+            // Removing a face can leave a neighbour degenerate, so scan until nothing is found.
+            // Every round drops at least one face, so the scan terminates.
+            for (;;) {
+                degenerate.clear();
+                CGAL::Polygon_mesh_processing::degenerate_faces(*mesh, std::back_inserter(degenerate));
+                if (degenerate.empty())
+                    break;
+                for (auto f : degenerate)
+                    mesh->remove_face(f);
+                dropped += degenerate.size();
+                mesh->collect_garbage();
+            }
+            return dropped;
+        }
+
+
+        // The same for a mesh of Easy3D's own, where the test is the one the surface mesh reports.
+        // Results of a corefinement come back through float coordinates, and two vertices that were
+        // distinct doubles can well land on the same float, so this is worth doing after conversion
+        // and not only before it: it is what keeps a plane operation from handing the next one - or
+        // the next render, or any other algorithm - faces it will call degenerate.
+        std::size_t drop_degenerate_faces(SurfaceMesh *mesh) {
+            std::vector<SurfaceMesh::Face> degenerate;
+            for (auto f : mesh->faces()) {
+                if (mesh->is_degenerate(f))
+                    degenerate.push_back(f);
+            }
+            for (auto f : degenerate)
+                mesh->delete_face(f);
+            if (!degenerate.empty())
+                mesh->collect_garbage();
+            return degenerate.size();
+        }
+
+
+        /// Distance from the plane, positive on the side its normal points to.
+        float distance_to(const Plane3 &plane, const vec3 &p) {
+            const float norm = vec3(plane.a(), plane.b(), plane.c()).length();
+            return (plane.a() * p.x + plane.b() * p.y + plane.c() * p.z + plane.d()) / norm;
+        }
+
+
+        /// How far a vertex may sit from the plane and still count as lying on it. A mesh that an
+        /// earlier plane operation cut already has border vertices on the plane, and writing them
+        /// out as floats leaves an error of this order rather than an exact zero.
+        float plane_slack(const SurfaceMesh *mesh) {
+            const vec3 extent =
+                    mesh->bounding_box().max_point() - mesh->bounding_box().min_point();
+            return 1e-6f * extent.length();
+        }
+
+
+        /// Whether some triangle has vertices on both sides of the plane. Without one of them the
+        /// plane cannot cut anything new, and the mesh must not be given to corefinement: the
+        /// splitter then runs along border edges the mesh already has, and the intersection nodes
+        /// collected on a constrained edge are no longer distinct points, which CGAL asserts on.
+        bool crosses_a_triangle(const SurfaceMesh *mesh, const Plane3 &plane, float slack) {
+            for (auto f : mesh->faces()) {
+                bool negative = false, positive = false;
+                for (auto v : mesh->vertices(f)) {
+                    const float distance = distance_to(plane, mesh->position(v));
+                    positive = positive || distance > slack;
+                    negative = negative || distance < -slack;
+                }
+                if (positive && negative)
+                    return true;
+            }
+            return false;
         }
 
 
@@ -386,34 +540,111 @@ namespace easy3d {
             return false;
         }
 
-        CGALMesh mesh;
-        internal::to_cgal(input_mesh, mesh);
+        // A plane that no triangle crosses cannot cut anything: it only runs along geometry the mesh
+        // already has, which corefinement refuses. Clipping then reduces to the selection between the
+        // parts that are already separated, and since no cut is made the result is as manifold as the
+        // mesh was.
+        const float slack = internal::plane_slack(input_mesh);
+        if (!internal::crosses_a_triangle(input_mesh, input_plane, slack)) {
+            std::vector<SurfaceMesh::Face> discard;
+            for (auto f : input_mesh->faces()) {
+                for (auto v : input_mesh->vertices(f)) {
+                    if (internal::distance_to(input_plane, input_mesh->position(v)) > slack) {
+                        discard.push_back(f);
+                        break;
+                    }
+                }
+            }
+            for (auto f : discard)
+                input_mesh->delete_face(f);
+            input_mesh->collect_garbage();
+            LOG(INFO) << "the plane does not cut the mesh: " << discard.size()
+                      << " faces on its positive side removed";
+            return true;
+        }
 
-        Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
-        bool status = CGAL::Polygon_mesh_processing::clip(
-                mesh,
-                plane,
-                CGAL::Polygon_mesh_processing::parameters::clip_volume(clip_volume)
-        );
+        const Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
+        CGALMesh cut;
+        bool status = true;
+        std::size_t dropped = 0;
+        // One component at a time, because corefinement cannot take them together: an earlier cut
+        // left the two sides of its opening at the same locations, and a plane crossing that opening
+        // then meets the same point twice on one of its own constrained edges, which CGAL asserts on.
+        // The components do not touch each other, so cutting them apart and putting the results back
+        // is the same cut as over the whole mesh.
+        for (const auto &component : internal::connected_components(input_mesh)) {
+            CGALMesh part;
+            internal::to_cgal(input_mesh, component, part);
+            dropped += internal::drop_degenerate_faces(&part);
+            try {
+                status = status && CGAL::Polygon_mesh_processing::clip(
+                        part,
+                        plane,
+                        CGAL::Polygon_mesh_processing::parameters::clip_volume(clip_volume)
+                );
+            } catch (const std::exception &e) {
+                // CGAL raises both its assertion failures and the corefinement errors as exceptions,
+                // and none of them leaves a usable result behind. Nothing has been written back yet,
+                // so the caller's mesh is left exactly as it was.
+                LOG(WARNING) << "clipping failed: " << e.what();
+                return false;
+            }
+            internal::append(part, &cut);
+        }
 
-        internal::to_easy3d(mesh, input_mesh);
+        if (dropped != 0)
+            LOG(INFO) << dropped << " degenerate faces removed before clipping";
+
+        internal::to_easy3d(cut, input_mesh);
+
+        if (const std::size_t removed = internal::drop_degenerate_faces(input_mesh))
+            LOG(INFO) << removed << " degenerate faces removed by clipping";
+
         return status;
     }
 
 
     void Surfacer::split(SurfaceMesh *input_mesh, const Plane3 &input_plane) {
         if (!input_mesh->is_triangle_mesh()) {
-            LOG(WARNING) << "only triangle meshes can be clipped";
+            LOG(WARNING) << "only triangle meshes can be split";
             return;
         }
 
-        CGALMesh mesh;
-        internal::to_cgal(input_mesh, mesh);
+        // See crosses_a_triangle(): a plane the mesh was already cut open along has nothing left to
+        // split, and the splitter coinciding with existing border edges is a configuration
+        // corefinement asserts on.
+        if (!internal::crosses_a_triangle(input_mesh, input_plane, internal::plane_slack(input_mesh))) {
+            LOG(INFO) << "the plane does not cut the mesh: nothing to split";
+            return;
+        }
 
-        Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
-        CGAL::Polygon_mesh_processing::split(mesh, plane);
+        const Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
+        CGALMesh cut;
+        std::size_t dropped = 0;
+        // One component at a time, for the reason given in clip(): the coincident borders an earlier
+        // cut leaves behind are what corefinement trips over, and apart from each other they are
+        // ordinary borders.
+        for (const auto &component : internal::connected_components(input_mesh)) {
+            CGALMesh part;
+            internal::to_cgal(input_mesh, component, part);
+            dropped += internal::drop_degenerate_faces(&part);
+            try {
+                CGAL::Polygon_mesh_processing::split(part, plane);
+            } catch (const std::exception &e) {
+                // Nothing has been written back yet, so the caller's mesh is left as it was.
+                LOG(WARNING) << "splitting failed: " << e.what();
+                return;
+            }
+            internal::append(part, &cut);
+        }
 
-        internal::to_easy3d(mesh, input_mesh);
+        if (dropped != 0)
+            LOG(INFO) << dropped << " degenerate faces removed before splitting";
+
+        internal::to_easy3d(cut, input_mesh);
+
+        if (const std::size_t removed = internal::drop_degenerate_faces(input_mesh))
+            LOG(INFO) << removed << " degenerate faces removed by splitting";
     }
 
 
