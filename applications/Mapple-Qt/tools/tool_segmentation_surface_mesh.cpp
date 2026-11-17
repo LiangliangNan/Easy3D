@@ -30,6 +30,7 @@
 #include <tools/canvas.h>
 
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
@@ -54,17 +55,6 @@ namespace easy3d {
 
 
         void MultitoolSurfaceMeshFaceSegmentation::prepare_hint(ToolButton button, int x, int y) {
-//            clear_hint();
-//            if (button == NO_BUTTON && picker_) {
-//                SurfaceMesh::Face face;
-//                auto *mesh = dynamic_cast<ToolSurfaceMeshFaceSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(face, x, y);
-//                if (mesh && face.is_valid()) {
-//                    auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-//                    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-//                    drawable->set_highlight(true);
-//                    drawable->set_highlight_range(triangle_range[face]);
-//                }
-//            }
         }
 
         void MultitoolSurfaceMeshFaceSegmentation::clear_hint() {
@@ -72,8 +62,7 @@ namespace easy3d {
                 auto mesh = dynamic_cast<SurfaceMesh *>(model.get());
                 if (mesh) {
                     auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-                    drawable->set_highlight(false);
-                    drawable->set_highlight_range({-1, -1});
+                    buffer::update_highlight_mask(drawable, -1, -1);
                 }
             }
         }

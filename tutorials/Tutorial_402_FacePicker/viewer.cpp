@@ -29,6 +29,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
@@ -58,7 +59,7 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
         // Clear any previous highlight so only the newly picked face stays lit.
         for (const auto &m : models())
             for (const auto &d : m->renderer()->triangles_drawables())
-                d->set_highlight(false);
+                d->update_highlight_mask({});
         // We can only highlight a face if the hit model is a surface mesh rendered as triangles.
         auto *model = dynamic_cast<SurfaceMesh *>(hit.model.get());
         auto *drawable = dynamic_cast<TrianglesDrawable *>(hit.drawable.get());
@@ -67,10 +68,10 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
             // maps each original face to the [first, last] range of triangles it produced.
             const auto ranges = model->get_face_property<std::pair<int, int>>("f:triangle_range");
             if (ranges) {
-                // Highlight the whole triangle range so the entire polygon lights up, not
+                // Tint the whole triangle range so the entire polygon lights up, not
                 // just the single triangle that happened to be under the cursor.
-                drawable->set_highlight_range(ranges[SurfaceMesh::Face(hit.face_index)]);
-                drawable->set_highlight(true);
+                const auto &range = ranges[SurfaceMesh::Face(hit.face_index)];
+                buffer::update_highlight_mask(drawable, range.first, range.second);
                 std::cout << "picked face f" << hit.face_index << std::endl;
             }
         }

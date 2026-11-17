@@ -88,18 +88,15 @@ def check_mesh_states(directory):
     unlit = probes("state_unlit.bmp")
     assert unlit == ((0, 0, 255), (0, 0, 255))
 
-    # Selection and primitive-range highlighting tint the final color with or
-    # without lighting.
+    # Selection and the highlight mask tint the final color with or without lighting.
     faces.set_selected(True)
     unlit_selected = probes("state_unlit_selected.bmp")
     assert unlit_selected[0] != unlit[0] and unlit_selected[1] != unlit[1]
     faces.set_selected(False)
-    faces.set_highlight(True)
-    faces.set_highlight_range((0, 1))
+    faces.update_highlight_mask([0.8, 0.8])
     unlit_range = probes("state_unlit_range.bmp")
     assert unlit_range[0] != unlit[0] and unlit_range[1] != unlit[1]
-    faces.set_highlight(False)
-    faces.set_highlight_range((-1, -1))
+    faces.update_highlight_mask([])
 
     # Lighting: the distinct back color must reach exactly the back-facing side.
     faces.set_lighting(True)
@@ -110,18 +107,16 @@ def check_mesh_states(directory):
     assert all(blue(p) for p in probes("state_front.bmp"))
     faces.set_distinct_back_color(True)
 
-    # Range highlighting follows rasterized primitive order: each range tints one
-    # triangle and leaves the other untouched.
-    faces.set_highlight(True)
-    faces.set_highlight_range((0, 0))
+    # The highlight mask follows rasterized primitive order: each strength tints
+    # one triangle and leaves the other untouched.
+    faces.update_highlight_mask([0.8, 0.0])
     first = probes("state_range0.bmp")
     assert (first[0] != back[0]) != (first[1] != back[1])
-    faces.set_highlight_range((1, 1))
+    faces.update_highlight_mask([0.0, 0.8])
     second = probes("state_range1.bmp")
     assert (second[0] != back[0]) != (second[1] != back[1])
     assert (first[0] == back[0]) != (second[0] == back[0])
-    faces.set_highlight_range((-1, -1))
-    faces.set_highlight(False)
+    faces.update_highlight_mask([])
     assert probes("state_clear.bmp") == back
 
     # Whole-drawable selection and visibility keep depth/IDs unchanged.
@@ -294,16 +289,14 @@ def check_point_line_states(directory):
     selected = image("points_plain_selected.bmp")
     assert thin(selected, left) != (0, 255, 0) and thin(selected, right) != (0, 0, 255)
     points.set_selected(False)
-    # An unlit primitive range tints exactly one point.
-    points.set_highlight(True)
-    points.set_highlight_range((0, 0))
+    # An unlit highlight mask tints exactly one point.
+    points.update_highlight_mask([0.8, 0.0])
     first = image("points_plain_range0.bmp")
     assert thin(first, left) != (0, 255, 0) and thin(first, right) == (0, 0, 255)
-    points.set_highlight_range((1, 1))
+    points.update_highlight_mask([0.0, 0.8])
     second = image("points_plain_range1.bmp")
     assert thin(second, left) == (0, 255, 0) and thin(second, right) != (0, 0, 255)
-    points.set_highlight_range((-1, -1))
-    points.set_highlight(False)
+    points.update_highlight_mask([])
     pixel = image("points_plain_clear.bmp")
     assert thin(pixel, left) == (0, 255, 0) and thin(pixel, right) == (0, 0, 255)
     points.set_visible(False)
@@ -325,12 +318,10 @@ def check_point_line_states(directory):
     assert at(pixel, left) == (0, 255, 0) and at(pixel, right) == (0, 255, 0)
     assert at(pixel, left, 0, 10) == (0, 255, 0)
     assert at(pixel, left, 0, 16) == (0, 0, 0)
-    spheres.set_highlight(True)
-    spheres.set_highlight_range((0, 0))
+    spheres.update_highlight_mask([0.8, 0.0])
     first = image("points_sphere_range0.bmp")
     assert at(first, left) != (0, 255, 0) and at(first, right) == (0, 255, 0)
-    spheres.set_highlight_range((-1, -1))
-    spheres.set_highlight(False)
+    spheres.update_highlight_mask([])
     spheres.set_lighting(True)
     spheres.set_material(easy3d.State.Material(easy3d.vec4(0, 0, 0, 0), easy3d.vec4(0, 0, 0, 0), 1))
     pixel = image("points_sphere_lit.bmp")
@@ -339,7 +330,7 @@ def check_point_line_states(directory):
     assert viewer.delete_drawable(spheres)
 
     # Plain lines of width 1: uniform color, per-vertex interpolation along the
-    # segment, and primitive-range highlighting (plain lines are never lit).
+    # segment, and mask highlighting (plain lines are never lit).
     a, b = easy3d.vec3(-0.7, -0.3, 0), easy3d.vec3(-0.1, -0.3, 0)
     c, d = easy3d.vec3(0.1, -0.3, 0), easy3d.vec3(0.7, -0.3, 0)
     mid_ab, mid_cd = easy3d.vec3(-0.4, -0.3, 0), easy3d.vec3(0.4, -0.3, 0)
@@ -357,12 +348,10 @@ def check_point_line_states(directory):
     pixel = image("lines_plain_colors.bmp")
     p = thin(pixel, mid_ab)
     assert p[0] > 60 and p[2] > 60 and p[1] < 60
-    lines.set_highlight(True)
-    lines.set_highlight_range((0, 0))
+    lines.update_highlight_mask([0.8, 0.0])
     first = image("lines_plain_range0.bmp")
     assert thin(first, mid_ab) != p and thin(first, mid_cd) == thin(pixel, mid_cd)
-    lines.set_highlight_range((-1, -1))
-    lines.set_highlight(False)
+    lines.update_highlight_mask([])
     lines.set_selected(True)
     selected = image("lines_plain_selected.bmp")
     assert thin(selected, mid_ab) != p and thin(selected, mid_cd) != thin(pixel, mid_cd)
@@ -375,26 +364,24 @@ def check_point_line_states(directory):
     lines.set_lighting(False)
 
     # Wide plain lines use the width-control shader: the width extends the
-    # coverage, primitive ranges tint individual segments, and lighting stays
+    # coverage, mask strengths tint individual segments, and lighting stays
     # irrelevant (plain lines are never lit).
     lines.set_line_width(9)
     pixel = image("lines_plain_wide.bmp")
     assert at(pixel, mid_ab, 0, 3) == at(pixel, mid_ab)
     assert at(pixel, mid_ab, 0, 8) == (0, 0, 0)
-    lines.set_highlight(True)
-    lines.set_highlight_range((0, 0))
+    lines.update_highlight_mask([0.8, 0.0])
     wide_range = image("lines_plain_wide_range.bmp")
     assert at(wide_range, mid_ab) != at(pixel, mid_ab)
     assert at(wide_range, mid_cd) == at(pixel, mid_cd)
-    lines.set_highlight_range((-1, -1))
-    lines.set_highlight(False)
+    lines.update_highlight_mask([])
     lines.set_lighting(True)
     lit = image("lines_plain_wide_lit.bmp")
     assert at(lit, mid_ab) == at(pixel, mid_ab) and at(lit, mid_cd) == at(pixel, mid_cd)
     lines.set_lighting(False)
     assert viewer.delete_drawable(lines)
 
-    # Cylinder impostors: selection and primitive ranges tint the final color
+    # Cylinder impostors: selection and the highlight mask tint the final color
     # with or without lighting.
     cylinders = easy3d.LinesDrawable("cylinder lines")
     cylinders.update_vertex_buffer([a, b, c, d])
@@ -406,13 +393,11 @@ def check_point_line_states(directory):
     pixel = image("lines_cylinder_lit.bmp")
     assert blue(at(pixel, mid_ab)) and blue(at(pixel, mid_cd))
     assert at(pixel, mid_ab, 0, 10) == (0, 0, 0)
-    cylinders.set_highlight(True)
-    cylinders.set_highlight_range((0, 0))
+    cylinders.update_highlight_mask([0.8, 0.0])
     lit_range = image("lines_cylinder_lit_range.bmp")
     assert at(lit_range, mid_ab) != at(pixel, mid_ab)
     assert at(lit_range, mid_cd) == at(pixel, mid_cd)
-    cylinders.set_highlight_range((-1, -1))
-    cylinders.set_highlight(False)
+    cylinders.update_highlight_mask([])
     cylinders.set_selected(True)
     lit_selected = image("lines_cylinder_lit_selected.bmp")
     assert at(lit_selected, mid_ab) != at(pixel, mid_ab)
@@ -424,12 +409,10 @@ def check_point_line_states(directory):
     unlit_selected = image("lines_cylinder_unlit_selected.bmp")
     assert at(unlit_selected, mid_ab) != (0, 0, 255) and at(unlit_selected, mid_cd) != (0, 0, 255)
     cylinders.set_selected(False)
-    cylinders.set_highlight(True)
-    cylinders.set_highlight_range((0, 0))
+    cylinders.update_highlight_mask([0.8, 0.0])
     unlit_range = image("lines_cylinder_unlit_range.bmp")
     assert at(unlit_range, mid_ab) != (0, 0, 255) and at(unlit_range, mid_cd) == (0, 0, 255)
-    cylinders.set_highlight_range((-1, -1))
-    cylinders.set_highlight(False)
+    cylinders.update_highlight_mask([])
     assert viewer.delete_drawable(cylinders)
 
     # Cone impostors follow the same highlight contract as cylinders.
@@ -443,12 +426,10 @@ def check_point_line_states(directory):
     assert viewer.add_drawable(cones)
     pixel = image("lines_cone_unlit.bmp")
     assert at(pixel, mid_ab) == (0, 0, 255) and at(pixel, mid_cd) == (0, 0, 255)
-    cones.set_highlight(True)
-    cones.set_highlight_range((1, 1))
+    cones.update_highlight_mask([0.0, 0.8])
     cone_range = image("lines_cone_range.bmp")
     assert at(cone_range, mid_ab) == (0, 0, 255) and at(cone_range, mid_cd) != (0, 0, 255)
-    cones.set_highlight_range((-1, -1))
-    cones.set_highlight(False)
+    cones.update_highlight_mask([])
     cones.set_selected(True)
     cone_selected = image("lines_cone_selected.bmp")
     assert at(cone_selected, mid_ab) != (0, 0, 255) and at(cone_selected, mid_cd) != (0, 0, 255)

@@ -48,8 +48,7 @@ namespace easy3d {
                 bool use_colors = false;
                 bool flat_shading = false;
                 bool textured = false;
-                bool selection_marked = false, range_marked = false;
-                std::pair<int, int> highlight_range = {-1, -1};
+                bool selection_marked = false;
                 vec4 highlight_color = vec4(0);
                 float repeat = 1;
                 std::shared_ptr<const graphics::Geometry> geometry;
@@ -189,20 +188,18 @@ namespace easy3d {
                 const auto *triangles = dynamic_cast<const TrianglesDrawable *>(&d);
                 const bool flat_shading = triangles && !triangles->smooth_shading();
                 const bool selected = model_selected || d.is_selected();
-                const bool highlighted = d.highlight();
                 const auto *lines = dynamic_cast<const LinesDrawable *>(&d);
                 const bool line_impostor = lines && lines->impostor_type() != LinesDrawable::PLAIN;
-                const auto range = d.highlight_range();
-                // Selection and primitive ranges tint the final shaded color in every
+                const auto &mask = d.highlight_mask();
+                // Selection and the highlight mask tint the final shaded color in every
                 // style, lit or not; the OpenGL shaders follow the same contract.
-                const bool range_marked = highlighted && range.first >= 0 && range.second >= range.first;
                 const bool selection_marked = selected;
-                const bool mask_marked = !buffers.highlights.empty();
+                const bool mask_marked = !mask.empty();
                 if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
                     entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
                     entry.textured != textured || (textured && entry.repeat != repeat) ||
-                    entry.selection_marked != selection_marked || entry.range_marked != range_marked ||
-                    entry.highlight_range != d.highlight_range() || entry.highlight_color != setting::highlight_color) {
+                    entry.selection_marked != selection_marked ||
+                    entry.highlight_color != setting::highlight_color) {
                     const auto n = buffers.vertices.size();
                     if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
                         (!buffers.normals.empty() && buffers.normals.size() != n))
@@ -272,7 +269,7 @@ namespace easy3d {
                         geometry =
                             std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
                     }
-                    if (selection_marked || range_marked || mask_marked) {
+                    if (selection_marked || mask_marked) {
                         const auto &source = geometry->vertices();
                         const auto &indices = geometry->indices();
                         const auto count = indices.empty() ? source.size() : indices.size();
@@ -280,19 +277,17 @@ namespace easy3d {
                                                 : topology == graphics::Topology::lines   ? 2
                                                                                           : 1;
                         const size_t primitives = (count + stride - 1) / stride;
-                        if (mask_marked && buffers.highlights.size() != primitives)
+                        if (mask_marked && mask.size() != primitives)
                             throw std::logic_error("highlight mask count does not match primitives");
                         std::vector<graphics::Vertex> marked(count);
                         for (size_t i = 0; i < count; ++i) {
                             marked[i] = source[indices.empty() ? i : indices[i]];
                             float strength = selection_marked ? 0.6f : 0;
-                            if (range_marked && i / stride >= size_t(range.first) && i / stride <= size_t(range.second))
-                                strength = 0.8f + 0.2f * strength;
                             // The mask is a per-primitive tint; compose it the same way the
                             // OpenGL shaders blend their successive tint passes.
                             if (mask_marked) {
-                                const float mask = buffers.highlights[i / stride];
-                                strength = mask + (1.0f - mask) * strength;
+                                const float m = mask[i / stride];
+                                strength = m + (1.0f - m) * strength;
                             }
                             marked[i].highlight = vec4(setting::highlight_color.x, setting::highlight_color.y,
                                                        setting::highlight_color.z, strength);
@@ -302,8 +297,6 @@ namespace easy3d {
                                                                  std::vector<uint32_t>{}, entry.points);
                     }
                     entry.selection_marked = selection_marked;
-                    entry.range_marked = range_marked;
-                    entry.highlight_range = d.highlight_range();
                     entry.highlight_color = setting::highlight_color;
                     entry.source = drawable;
                     entry.revision = buffers.revision;

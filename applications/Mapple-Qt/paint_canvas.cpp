@@ -529,13 +529,10 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             auto triangle_range = mesh->get_face_property<std::pair<int, int> >("f:triangle_range");
             if (triangle_range && picked_face.is_valid()) {
                 const auto& range = triangle_range[picked_face];
-                drawable->set_highlight_range(range);
-                drawable->set_highlight(true);
+                buffer::update_highlight_mask(drawable, range.first, range.second);
             }
-            else {
-                drawable->set_highlight_range({-1, -1});
-                drawable->set_highlight(false);
-            }
+            else
+                buffer::update_highlight_mask(drawable, -1, -1);
             update();
         }
         else if (dynamic_cast<PointCloud *>(currentModel())) {
@@ -547,14 +544,10 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             doneCurrent();
 
             auto drawable = cloud->renderer()->get_points_drawable("vertices");
-            if (picked_vertex_index_ >= 0) { // highlight the picked vertex
-                drawable->set_highlight(true);
-                drawable->set_highlight_range({picked_vertex_index_, picked_vertex_index_});
-            }
-            else {
-                drawable->set_highlight(false);
-                drawable->set_highlight_range({-1, -1});
-            }
+            if (picked_vertex_index_ >= 0) // highlight the picked vertex
+                buffer::update_highlight_mask(drawable, picked_vertex_index_, picked_vertex_index_);
+            else
+                buffer::update_highlight_mask(drawable, -1, -1);
             update();
         }
 
@@ -1237,7 +1230,6 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "ambient", setting::material_ambient)
             ->set_block_uniform("Material", "specular", setting::material_specular)
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-            ->set_uniform("highlight", false)
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("selected", false)
             ->set_uniform("highlight_color", setting::highlight_color)
@@ -1786,15 +1778,13 @@ void PaintCanvas::showPrimitiveIDUnderMouse(bool b) {
     auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
     if (mesh) {
         auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-        drawable->set_highlight(b);
-        drawable->set_highlight_range({-1, -1});
+        buffer::update_highlight_mask(drawable, -1, -1);
     }
 
     auto cloud = dynamic_cast<PointCloud *>(currentModel());
     if (cloud) {
         auto drawable = cloud->renderer()->get_points_drawable("vertices");
-        drawable->set_highlight(b);
-        drawable->set_highlight_range({-1, -1});
+        buffer::update_highlight_mask(drawable, -1, -1);
     }
 
     update();
@@ -1811,15 +1801,13 @@ void PaintCanvas::showPrimitivePropertyUnderMouse(bool b) {
     auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
     if (mesh) {
         auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-        drawable->set_highlight(b);
-        drawable->set_highlight_range({-1, -1});
+        buffer::update_highlight_mask(drawable, -1, -1);
     }
 
     auto cloud = dynamic_cast<PointCloud *>(currentModel());
     if (cloud) {
         auto drawable = cloud->renderer()->get_points_drawable("vertices");
-        drawable->set_highlight(b);
-        drawable->set_highlight_range({-1, -1});
+        buffer::update_highlight_mask(drawable, -1, -1);
     }
 
     update();

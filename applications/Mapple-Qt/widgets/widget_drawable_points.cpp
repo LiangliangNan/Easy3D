@@ -360,12 +360,10 @@ void WidgetPointsDrawable::updatePanel() {
     }
 
     {   // highlight
-        bool highlight = d->highlight();
-        ui_->checkBoxHighlight->setChecked(highlight);
-
-        const auto &range = d->highlight_range();
-        ui_->spinBoxHighlightMin->setValue(range.first);
-        ui_->spinBoxHighlightMax->setValue(range.second);
+        const auto &st = states_[d];
+        ui_->checkBoxHighlight->setChecked(st.highlight);
+        ui_->spinBoxHighlightMin->setValue(st.highlight_primitives.first);
+        ui_->spinBoxHighlightMax->setValue(st.highlight_primitives.second);
     }
 
     {   // scalar field

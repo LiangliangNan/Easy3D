@@ -41,7 +41,7 @@ namespace easy3d {
  * \brief A Viewer that highlights the surface-mesh face under a left click.
  *
  * Two overrides do the work: mouse_press_event() runs the GPU pick and converts the hit
- * triangle into the original face's highlight range, and add_model() ensures the mesh edges
+ * triangle into the original face's highlight mask, and add_model() ensures the mesh edges
  * are visible so the faces can be told apart. All other events go to the base Viewer.
  */
 class TutorialFacePicker : public easy3d::Viewer {

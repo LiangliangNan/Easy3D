@@ -26,7 +26,6 @@
 
 #version 150
 
-
 uniform sampler2D	textureID;
 
 uniform bool 	lighting;	// true if lighting is on
@@ -46,12 +45,7 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
-
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
-
-// property-based highlight: one strength per rendered primitive
+// highlight mask: one strength per rendered primitive
 uniform bool has_highlight_mask = false;
 uniform sampler2D highlight_mask;
 uniform int highlight_mask_width;
@@ -65,9 +59,7 @@ in Data{
 	vec3 normal;
 } DataIn;
 
-
 out vec4 outputF;	// Ouput data
-
 
 void main() 
 {
@@ -104,11 +96,6 @@ void main()
 	}
 
 	outputF = vec4(color, 1.0);
-	// Selection and primitive-range highlighting tint the final color, lit or not.
-	if (highlight) {
-		if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-			outputF = mix(outputF, highlight_color, 0.8);
-	}
 	if (has_highlight_mask) {
 		ivec2 coord = ivec2(gl_PrimitiveID % highlight_mask_width, gl_PrimitiveID / highlight_mask_width);
 		outputF = mix(outputF, highlight_color, texelFetch(highlight_mask, coord, 0).r);

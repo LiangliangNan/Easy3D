@@ -143,8 +143,7 @@ namespace easy3d {
 
 
     void Drawable::reset_highlight_mask() {
-        if (cpu_buffers_)
-            cpu_buffers_->highlights.clear();
+        highlight_strengths_.clear();
 #ifndef EASY3D_HAS_VULKAN
         highlight_primitives_ = 0;
 #endif
@@ -162,8 +161,10 @@ namespace easy3d {
                 if (!(s >= 0.0f && s <= 1.0f))
                     throw std::invalid_argument("highlight strengths must lie in [0, 1]");
         }
+        if (strengths == highlight_strengths_)
+            return;
+        highlight_strengths_ = strengths;
 #ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->highlights = strengths;
         ++cpu_buffers_->revision;
 #else
         opengl_update_highlight_mask(strengths, dynamic);

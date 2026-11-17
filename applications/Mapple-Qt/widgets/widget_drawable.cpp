@@ -28,6 +28,7 @@
 #include "widget_drawable.h"
 
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/core/model.h>
@@ -196,7 +197,13 @@ void WidgetDrawable::setScalarFieldClampUpper(double v) {
 
 
 void WidgetDrawable::setHighlight(bool b) {
-    drawable()->set_highlight(b);
+    auto d = drawable();
+    auto &st = states_[d];
+    st.highlight = b;
+    if (b)
+        buffer::update_highlight_mask(d, st.highlight_primitives.first, st.highlight_primitives.second);
+    else
+        buffer::update_highlight_mask(d, -1, -1);
     viewer_->update();
     disableUnavailableOptions();
 }
@@ -204,16 +211,20 @@ void WidgetDrawable::setHighlight(bool b) {
 
 void WidgetDrawable::setHighlightMin(int v) {
     auto d = drawable();
-    const auto &range = d->highlight_range();
-    d->set_highlight_range(std::make_pair(v, range.second));
+    auto &st = states_[d];
+    st.highlight_primitives.first = v;
+    if (st.highlight)
+        buffer::update_highlight_mask(d, st.highlight_primitives.first, st.highlight_primitives.second);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setHighlightMax(int v) {
     auto d = drawable();
-    const auto &range = d->highlight_range();
-    d->set_highlight_range(std::make_pair(range.first, v));
+    auto &st = states_[d];
+    st.highlight_primitives.second = v;
+    if (st.highlight)
+        buffer::update_highlight_mask(d, st.highlight_primitives.first, st.highlight_primitives.second);
     viewer_->update();
 }
 

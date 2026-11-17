@@ -152,8 +152,7 @@ namespace easy3d {
                 auto cloud = dynamic_cast<ToolPointCloudSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(vertex, x, y);
                 if (cloud && vertex.is_valid()) {
                     auto drawable = cloud->renderer()->get_points_drawable("vertices");
-                    drawable->set_highlight(true);
-                    drawable->set_highlight_range({vertex.idx(), vertex.idx()});
+                    buffer::update_highlight_mask(drawable, vertex.idx(), vertex.idx());
                 }
             }
         }
@@ -163,8 +162,7 @@ namespace easy3d {
                 auto cloud = dynamic_cast<PointCloud *>(model.get());
                 if (cloud) {
                     auto drawable = cloud->renderer()->get_points_drawable("vertices");
-                    drawable->set_highlight(false);
-                    drawable->set_highlight_range({-1, -1});
+                    buffer::update_highlight_mask(drawable, -1, -1);
                 }
             }
         }

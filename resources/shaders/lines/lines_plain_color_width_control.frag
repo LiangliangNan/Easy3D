@@ -26,16 +26,15 @@
 
 #version 330 core
 
-
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
-
 uniform bool selected = false;
 uniform vec4 	highlight_color;
+
+uniform bool has_highlight_mask = false;
+uniform sampler2D highlight_mask;
+uniform int highlight_mask_width;
 
 in vec4  gOutColor;
 in float gOutClipped;
@@ -49,10 +48,9 @@ void main()
         discard;
 
     outputF = gOutColor;
-    // Selection and primitive-range highlighting tint the final color.
-    if (highlight) {
-        if (line_id >= highlight_id_min && line_id <= highlight_id_max)
-            outputF = mix(outputF, highlight_color, 0.8);
+    if (has_highlight_mask) {
+        ivec2 coord = ivec2(line_id % highlight_mask_width, line_id / highlight_mask_width);
+        outputF = mix(outputF, highlight_color, texelFetch(highlight_mask, coord, 0).r);
     }
     if (selected)
         outputF = mix(outputF, highlight_color, 0.6);

@@ -79,8 +79,6 @@ namespace easy3d {
             std::vector<vec2> texcoords;
             /// Optional indices into the vertex arrays.
             std::vector<unsigned int> indices;
-            /// Per-primitive highlight strength in [0, 1], in draw order; empty when nothing is highlighted.
-            std::vector<float> highlights;
             /// Original SurfaceMesh face index for each rendered triangle; -1 means unknown.
             std::vector<int> source_faces;
             /// Incremented when the CPU-side buffer snapshot changes.
@@ -198,11 +196,18 @@ namespace easy3d {
          *      Normally the mask is produced from the highlight property by buffer::update_highlight_mask();
          *      use this function only when uploading the buffer yourself.
          * \param strengths One strength in [0, 1] per rendered primitive, or an empty vector to clear the highlight.
-         * \throws std::invalid_argument if the count does not match the rendered primitives or a value is not in
-         *      [0, 1].
+         * \throws std::invalid_argument if the count does not match the rendered primitives or a value is not in [0, 1].
          * \note The mask is associated with the current geometry and is cleared by a geometry upload.
          */
         void update_highlight_mask(const std::vector<float> &strengths, bool dynamic = false);
+
+        /**
+         * \brief Returns the per-primitive highlight mask currently in use.
+         * \return One strength in [0, 1] per rendered primitive in draw order, or an empty vector when nothing is
+         *      highlighted. Save this vector to restore the mask after temporarily clearing it (e.g. while rendering
+         *      a pick pass).
+         */
+        const std::vector<float> &highlight_mask() const { return highlight_strengths_; }
 
         /**
          * \brief Returns the vertex buffer ID.
@@ -492,6 +497,7 @@ namespace easy3d {
         unsigned int element_buffer_;   //!< The element buffer ID.
         unsigned int highlight_texture_;    //!< The highlight mask texture ID; owned by the OpenGL backend.
         std::size_t highlight_primitives_;  //!< Number of primitives described by highlight_texture_; 0 = no mask.
+        std::vector<float> highlight_strengths_;  //!< Per-primitive strengths backing the mask; empty = no mask.
 
         // drawables not attached to a model can also be manipulated
         std::shared_ptr<Manipulator> manipulator_;   //!< The manipulator for the drawable.

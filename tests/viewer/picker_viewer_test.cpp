@@ -71,21 +71,21 @@ int main(int argc,char**) {
             if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
             frame(viewer); const auto baseline=viewer.capture();
             click(viewer,vec3(-1.4f,.3f,0));
-            require(faces->highlight() && faces->highlight_range()==std::make_pair(0,1),"polygon face did not highlight both generated triangles");
+            require(faces->highlight_mask().size()==4 && faces->highlight_mask()[0]>0 && faces->highlight_mask()[1]>0 && faces->highlight_mask()[2]==0 && faces->highlight_mask()[3]==0,"polygon face did not highlight both generated triangles");
             const auto first=viewer.capture(); require(first.rgba!=baseline.rgba,"face selection was not displayed"); same_picking(baseline,first);
             click(viewer,vec3(1.6f,.3f,0));
-            require(faces->highlight() && faces->highlight_range()==std::make_pair(2,3),"face picker did not change source polygon");
+            require(faces->highlight_mask().size()==4 && faces->highlight_mask()[2]>0 && faces->highlight_mask()[3]>0 && faces->highlight_mask()[0]==0 && faces->highlight_mask()[1]==0,"face picker did not change source polygon");
             same_picking(baseline,viewer.capture());
             require(viewer.snapshot("vulkan-face-picking.png"),"face picker snapshot failed");
             viewer.resize(500,340); frame(viewer);
             click(viewer,vec3(-1.4f,.3f,0));
-            require(faces->highlight_range()==std::make_pair(0,1),"HiDPI/resize click selected wrong polygon");
+            require(faces->highlight_mask().size()==4 && faces->highlight_mask()[0]>0 && faces->highlight_mask()[1]>0 && faces->highlight_mask()[2]==0 && faces->highlight_mask()[3]==0,"HiDPI/resize click selected wrong polygon");
             viewer.set_samples(1); frame(viewer);
             click(viewer,vec3(1.6f,.3f,0));
-            require(faces->highlight_range()==std::make_pair(2,3),"sample count changed face picking");
+            require(faces->highlight_mask().size()==4 && faces->highlight_mask()[2]>0 && faces->highlight_mask()[3]>0 && faces->highlight_mask()[0]==0 && faces->highlight_mask()[1]==0,"sample count changed face picking");
             viewer.mouse_press_event(0,0,Viewer::BUTTON_LEFT,0);
             viewer.mouse_release_event(0,0,Viewer::BUTTON_LEFT,0);frame(viewer);
-            require(!faces->highlight(),"background click did not clear highlight");
+            require(faces->highlight_mask().empty(),"background click did not clear highlight");
             require(viewer.device().validation_errors()==0,"face picker validation errors");
         }
         std::cout << "PASS: model/face tutorial clicks, polygon highlights, unchanged MSAA picking/depth, HiDPI/resize, sample changes, background clear, snapshot\n";

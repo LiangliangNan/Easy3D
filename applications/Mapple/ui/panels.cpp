@@ -813,8 +813,8 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
 
     draw_vector_field_controls(model, active);
 
-    // A range of rendered primitives tinted with the highlight color. The range
-    // lives here rather than in the drawable so the hover aid can yield to it.
+    // A range of rendered primitives tinted with the highlight color, kept as a
+    // highlight mask so the hover aid and selection share one mechanism.
     ImGui::Spacing();
     HighlightRange &highlight = highlight_ranges_[model][active->name()];
     bool highlight_changed = ImGui::Checkbox("Highlight range", &highlight.enabled);
@@ -839,17 +839,14 @@ void MappleViewer::draw_rendering_panel(float x, float y, float w, float h) {
     }
 
     if (highlight_changed) {
-        if (highlight.enabled) {
-            active->set_highlight_range({highlight.first, highlight.last});
-            active->set_highlight(true);
-            // The hover aid must not replace this range; it re-applies on the next hover.
-            if (hover_drawable_.lock().get() == active) {
-                hover_drawable_.reset();
-                hover_range_ = {-1, -1};
-            }
-        } else {
-            active->set_highlight(false);
-            active->set_highlight_range({-1, -1});
+        if (highlight.enabled)
+            buffer::update_highlight_mask(active, highlight.first, highlight.last);
+        else
+            buffer::update_highlight_mask(active, -1, -1);
+        // The hover aid must not replace this range; it re-applies on the next hover.
+        if (hover_drawable_.lock().get() == active) {
+            hover_drawable_.reset();
+            hover_range_ = {-1, -1};
         }
         update();
     }

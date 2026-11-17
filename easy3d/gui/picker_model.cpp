@@ -128,17 +128,20 @@ namespace easy3d {
         if (dynamic_cast<const LinesDrawable2D*>(drawable))
             return;
         const State original = drawable->state();
+        const std::vector<float> original_mask = drawable->highlight_mask();
         drawable->set_lighting(false);
         drawable->set_selected(false);
-        drawable->set_highlight_range({-1, -1});
+        drawable->update_highlight_mask({});
         drawable->set_uniform_coloring(color);
 
         try {
             drawable->draw(camera());
         } catch (...) {
+            drawable->update_highlight_mask(original_mask);
             drawable->set_state(original);
             throw;
         }
+        drawable->update_highlight_mask(original_mask);
         drawable->set_state(original);
     }
 

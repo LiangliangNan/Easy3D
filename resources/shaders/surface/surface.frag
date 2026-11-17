@@ -48,11 +48,7 @@ uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 // smooth shading
 uniform bool        smooth_shading = true;
 
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
-
-// property-based highlight: one strength per rendered primitive
+// highlight mask: one strength per rendered primitive
 uniform bool has_highlight_mask = false;
 uniform sampler2D highlight_mask;
 uniform int highlight_mask_width;
@@ -151,11 +147,6 @@ void main(void) {
         outputF = color;
     }
 
-    // Selection and primitive-range highlighting tint the final color, lit or not.
-    if (highlight) {
-        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            outputF = mix(outputF, highlight_color, 0.8);
-    }
     if (has_highlight_mask) {
         ivec2 coord = ivec2(gl_PrimitiveID % highlight_mask_width, gl_PrimitiveID / highlight_mask_width);
         outputF = mix(outputF, highlight_color, texelFetch(highlight_mask, coord, 0).r);

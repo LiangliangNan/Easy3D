@@ -149,14 +149,16 @@ snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
 
 Phase 1 design notes:
 
-- Selection is stored as `v:select`/`f:select` booleans and displayed by temporarily
-  switching the faces/points drawable to scalar coloring with a 2x1 colormap (texel 0 =
-  the drawable's own color, texel 1 = `setting::highlight_color`). Click/region
-  changes only rewrite the texture-coordinate buffer. The selection display belongs to
-  the selection, not to the tool: switching between Off/Click/Rect/Lasso keeps both the
-  selection and its colors. The drawable's own appearance is saved once and restored
-  when the selection becomes empty (Clear Selection, deselecting everything, or a
-  replacement gesture that hits nothing).
+- Selection is stored as `v:select`/`f:select` booleans and displayed as a highlight
+  mask over the drawable's own coloring (batch 122):
+  `buffer::update_highlight_mask(model, drawable)` expands the property into one tint
+  strength per rendered primitive (`setting::highlight_color` at 0.8), so a scalar
+  field, colormap or texture stays visible while something is selected. Click/region
+  changes only rebuild the mask. The selection display belongs to the selection, not to
+  the tool: switching between Off/Click/Rect/Lasso keeps both the selection and the
+  tint. Clearing the selection (Clear Selection, deselecting everything, or a
+  replacement gesture that hits nothing) clears the mask, and the drawable's coloring
+  was never touched.
 - Deleting selected faces/points changes the topology, so the whole renderer is
   invalidated (`Renderer::update()`); otherwise edge/border/vertex drawables would keep
   drawing the deleted elements.
@@ -251,16 +253,16 @@ Phase 2 design notes:
 - After a command the whole renderer is invalidated (`Renderer::update()`) and the
   face/vertex normals are recomputed, so drawables and shading match the new geometry;
   the hover readout and the selection count cache are dropped. Polygonization rebuilds
-  the mesh and discards its properties, including the selection; a saved selection
-  style whose scalar property no longer exists falls back to uniform coloring through
-  `buffer::update`'s missing-field path.
+  the mesh and discards its properties, including `f:select`/`v:select`, so the
+  refreshed selection display is empty and the drawable keeps its own coloring.
 - Commands without parameters (subdivision, triangulation, dual mesh, connected
   components, planar partition, Delaunay 2D/3D, geodesic distance, clipping/splitting/
   slicing) execute straight from the menu item through `run_process`; only
-  parameterized commands open a window. The painting commands
-  replace the drawable's appearance with their color property, so they drop any saved
-  selection style and skip the post-command selection display refresh that would
-  otherwise repaint the mesh with the selection colormap.
+  parameterized commands open a window. The painting commands replace the
+  drawable's appearance with their color property; `finalize_process` then
+  refreshes the selection tint over that new appearance, so a selection survives
+  a command that only recolors the mesh (a topology rebuild drops its
+  `f:select`/`v:select` with the other properties).
 - Geodesic seeds are the vertices of the selected faces, which reuses the existing
   selection tools; the command clears the selection afterward so the distance field
   is visible.
@@ -442,7 +444,8 @@ migrated; retirement can proceed whenever it is wanted.
   scrollable property listing.
 - Status-bar pick readout: hovering resolves the nearest visible primitive and reports
   the model name, face/point index, and world position. In Click mode it also
-  highlights the primitive (`set_highlight_range`, `gl_PrimitiveID` on both backends);
+  highlights the primitive through the highlight mask (`buffer::update_highlight_mask`,
+  `gl_PrimitiveID` on both backends);
   Rectangle/Lasso/Off leave the scene untinted. Disable the readout with
   Select > Pick Readout.
 - Select menu and toolbar toggles for Click/Rect/Lasso; Shift adds, Ctrl removes,
@@ -450,9 +453,9 @@ migrated; retirement can proceed whenever it is wanted.
   Delete Selected (Del, native confirmation) operate on the active model's points or
   faces. Switching modes keeps the selection and its colors; an empty selection
   restores the drawable's own appearance.
-- Selection display uses a 2x1 colormap over `v:select`/`f:select`; the drawable's
-  appearance is snapshotted when the first selection is made and restored when the
-  selection becomes empty. Gestures are queued from input callbacks and executed in
+- Selection display is a highlight mask over `v:select`/`f:select` (batch 122); the
+  drawable keeps its own coloring and the mask is cleared when the selection becomes
+  empty. Gestures are queued from input callbacks and executed in
   `draw_gui()`; the rubber band/lasso is overlay geometry clipped to the scene area.
 - Deleting selected primitives invalidates all drawables of the model
   (`Renderer::update()`), so edges, borders, and vertices are rebuilt with the new

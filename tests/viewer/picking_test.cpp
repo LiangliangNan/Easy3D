@@ -108,12 +108,12 @@ void scene_picking(const VulkanOptions& options) {
     const auto selected=viewer.capture();
     require(selected.rgba!=baseline.rgba,"model selection did not change color"); same_picking(baseline,selected);
     auto* faces=front->renderer()->get_triangles_drawable("faces");
-    faces->set_highlight(true); faces->set_highlight_range({0,0});
+    faces->update_highlight_mask({0.8f, 0.0f});
     const auto highlighted=viewer.capture();
-    require(highlighted.rgba!=selected.rgba,"primitive-range highlight did not change selected color");
+    require(highlighted.rgba!=selected.rgba,"highlight mask did not change selected color");
     same_picking(selected,highlighted);
     require(viewer.pick(x,y).face_index==0,"highlight changed source picking");
-    faces->set_highlight(false); front->renderer()->set_selected(false);
+    faces->update_highlight_mask({}); front->renderer()->set_selected(false);
     require(viewer.capture().rgba==baseline.rgba,"clearing selection did not restore color");
     front->renderer()->set_visible(false);
     require(viewer.pick(x,y).model==back,"hidden model occluded picking");

@@ -2018,7 +2018,7 @@ namespace easy3d {
         }
 
 
-        void update_highlight_mask(Model *model, Drawable *drawable) {
+        void update_highlight_mask(Model *model, Drawable *drawable, float strength) {
             if (!drawable)
                 return;
             const std::string &name = drawable->highlight_property();
@@ -2027,8 +2027,6 @@ namespace easy3d {
                 return;
             }
 
-            // The same mix strength as the primitive-range highlight in the shaders.
-            const float strength = 0.8f;
             std::vector<float> mask;
 
             if (auto *mesh = dynamic_cast<SurfaceMesh *>(model)) {
@@ -2058,6 +2056,26 @@ namespace easy3d {
                     mask = vertex_highlight_mask(cloud, name, drawable, strength);
             }
 
+            drawable->update_highlight_mask(mask);
+        }
+
+
+        void update_highlight_mask(Drawable *drawable, int first, int last, float strength) {
+            if (!drawable)
+                return;
+            const std::size_t stride = drawable->type() == Drawable::DT_TRIANGLES      ? 3
+                                       : drawable->type() == Drawable::DT_LINES        ? 2
+                                                                                      : 1;
+            const std::size_t base = drawable->num_indices() ? drawable->num_indices() : drawable->num_vertices();
+            const std::size_t primitives = base / stride;
+            if (first < 0 || last < first || std::size_t(first) >= primitives) {
+                drawable->update_highlight_mask({});
+                return;
+            }
+            std::vector<float> mask(primitives, 0.0f);
+            const std::size_t stop = std::min(std::size_t(last), primitives - 1);
+            for (std::size_t i = std::size_t(first); i <= stop; ++i)
+                mask[i] = strength;
             drawable->update_highlight_mask(mask);
         }
 
@@ -2763,4 +2781,3 @@ namespace easy3d {
     }
 
 }
-

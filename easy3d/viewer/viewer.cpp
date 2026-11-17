@@ -2368,7 +2368,6 @@ namespace easy3d {
             ->set_block_uniform("Material", "ambient", setting::material_ambient)
             ->set_block_uniform("Material", "specular", setting::material_specular)
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-            ->set_uniform("highlight", false)
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("selected", false)
             ->set_uniform("highlight_color", setting::highlight_color)

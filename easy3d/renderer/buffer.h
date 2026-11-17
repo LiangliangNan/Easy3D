@@ -68,8 +68,24 @@ namespace easy3d {
          *      update(), which rebuilds the whole rendering buffer. update() calls it as well.
          * \param model     The model.
          * \param drawable  The drawable. An empty highlight property clears the mask.
+         * \param strength  The tint strength in [0, 1]; the default matches the selection mix.
+         * \see void update_highlight_mask(Drawable* drawable, int first, int last, float strength = 0.8f);
          */
-        void update_highlight_mask(Model* model, Drawable* drawable);
+        void update_highlight_mask(Model* model, Drawable* drawable, float strength = 0.8f);
+
+        /**
+         * \brief Tint one contiguous interval of rendered primitives (e.g. a hover aid or a preview).
+         * \details Builds the drawable's highlight mask with \p strength on rendered primitives
+         *      [first, last] and 0 elsewhere. Primitives are points, lines, or triangles in draw order, the
+         *      same numbering the fragment shaders see. A negative \p first, last < first, or first past the
+         *      rendered primitive count clears the mask, and last is clamped to the last primitive.
+         * \param drawable  The drawable, whose geometry must already be uploaded.
+         * \param first     Index of the first rendered primitive to tint.
+         * \param last      Index of the last rendered primitive to tint (inclusive).
+         * \param strength  The tint strength in [0, 1]; the default matches the selection mix.
+         * \see void update_highlight_mask(Model* model, Drawable* drawable, float strength = 0.8f);
+         */
+        void update_highlight_mask(Drawable* drawable, int first, int last, float strength = 0.8f);
         //@}
 
         /// \name Render buffer update for PointCloud

@@ -409,45 +409,15 @@ namespace easy3d {
         void set_plane_clip_discard_primitive(bool b) { plane_clip_discard_primitive_ = b; }
 
         /**
-         * \brief Checks if a subset of primitives of this drawable is highlighted.
-         * \return \c true if highlighted, \c false otherwise.
-         */
-        bool highlight() const { return highlight_; }
-        /**
-         * \brief Sets the highlight state of a subset of primitives of this drawable.
-         * \param b \c true to highlight, \c false to un-highlight.
-         */
-        void set_highlight(bool b) { highlight_ = b; }
-        /**
-         * \brief Sets the range of primitives to be highlighted.
-         * \details Primitives with indices within the range will be highlighted.
-         * \param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
-         *              un-highlight any previously highlighted primitives.
-         * \attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
-         *      unified rendering APIs. The range must be given on the triangulated faces! If you have face range,
-         *      you should convert the face range to triangle range. For each face, its triangles are defined on
-         *      SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range").
-         */
-        void set_highlight_range(const std::pair<int, int> &range) { highlight_range_ = range; }
-        /**
-         * \brief Returns the range of primitives to be highlighted.
-         * \details Primitives with indices within the range will be highlighted.
-         * \return The range of primitives to be highlighted.
-         */
-        const std::pair<int, int> &highlight_range() const { return highlight_range_; }
-
-        /**
          * \brief Sets a boolean property whose true elements are tinted on top of the drawable's own rendering.
-         * \details Unlike the primitive range above, the property can mark any subset of elements, e.g., the faces
-         *      selected by a click, a lasso, or a region gesture. The property is resolved when the rendering buffers
-         *      are updated (see buffer::update() and buffer::update_highlight_mask()), so the drawable keeps its
-         *      coloring method, scalar field, and texture while only the marked elements change their look.
-         *      Marked elements are mixed toward setting::highlight_color.
+         * \details The property can mark any subset of elements, e.g., the faces selected by a click, a lasso, or a
+         *      region gesture. The property is resolved when the rendering buffers are updated (see buffer::update()
+         *      and buffer::update_highlight_mask()), so the drawable keeps its coloring method, scalar field, and
+         *      texture while only the marked elements change their look. Marked elements are mixed toward
+         *      setting::highlight_color.
          * \param location The type of elements the property is defined on. Faces of a triangle drawable are mapped to
          *      their rendered triangles through SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range").
          * \param name The name of the boolean property. An empty name removes the highlight.
-         * \attention This is independent of the single primitive range: the hover aid can keep using
-         *      set_highlight()/set_highlight_range() while a selection is shown through the property.
          */
         void set_highlight_property(Location location, const std::string &name) {
             highlight_location_ = location;
@@ -510,10 +480,6 @@ namespace easy3d {
         //  - true: completely discard a primitive if one of its vertices has a negative clip distance
         //  - false: linearly interpolated (standard plane clipping behavior)
         bool plane_clip_discard_primitive_;
-
-        // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
-        bool highlight_;
-        std::pair<int, int> highlight_range_;
 
         // highlight the elements marked true in this boolean property
         Location highlight_location_;

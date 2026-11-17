@@ -26,10 +26,8 @@
 
 #version 330 core
 
-
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
-
 
 uniform mat4 PROJ;
 uniform bool	perspective;
@@ -44,12 +42,12 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
-
 uniform bool selected = false;
 uniform vec4 	highlight_color;
+
+uniform bool has_highlight_mask = false;
+uniform sampler2D highlight_mask;
+uniform int highlight_mask_width;
 
 in Data{
 	vec3 point;// camera space
@@ -65,7 +63,6 @@ in float gOutClipped;
 flat in int line_id;
 
 out vec4 outputF;
-
 
 vec3 shade(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color) {
 	float df = max(dot(N, L), 0);
@@ -132,12 +129,10 @@ void main()
 	// if the angle < 0, the point is outside of cone
 	float cap_test = dot((new_point - DataIn.base), DataIn.axis);
 
-
 	// Now I need to determine if the projection of the cone's peak (onto the base plane) is within the base disc
 	float tt = dot(DataIn.base - DataIn.end, -DataIn.axis) / dot(view_dir, -DataIn.axis);
 	vec3 projection = DataIn.end + view_dir * tt;
 	bool within_base = dot(projection - DataIn.base, projection - DataIn.base) < radius2;
-
 
 	if (cap_test < 0.0 || (within_base && dot(view_dir, DataIn.axis) < 0.0))
 	{
@@ -173,10 +168,9 @@ void main()
 		outputF = gOutColor;
 	}
 
-	// Selection and primitive-range highlighting tint the final color, lit or not.
-	if (highlight) {
-		if (line_id >= highlight_id_min && line_id <= highlight_id_max)
-			outputF = mix(outputF, highlight_color, 0.8);
+	if (has_highlight_mask) {
+	    ivec2 coord = ivec2(line_id % highlight_mask_width, line_id / highlight_mask_width);
+	    outputF = mix(outputF, highlight_color, texelFetch(highlight_mask, coord, 0).r);
 	}
 	if (selected)
 		outputF = mix(outputF, highlight_color, 0.6);

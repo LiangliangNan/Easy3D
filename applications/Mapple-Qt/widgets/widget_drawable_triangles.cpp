@@ -255,12 +255,10 @@ void WidgetTrianglesDrawable::updatePanel() {
     }
 
     {   // highlight
-        bool highlight = d->highlight();
-        ui_->checkBoxHighlight->setChecked(highlight);
-
-        const auto& range = states_[d].highlight_range;
-        ui_->spinBoxHighlightMin->setValue(range.first);
-        ui_->spinBoxHighlightMax->setValue(range.second);
+        const auto &st = states_[d];
+        ui_->checkBoxHighlight->setChecked(st.highlight);
+        ui_->spinBoxHighlightMin->setValue(st.highlight_range.first);
+        ui_->spinBoxHighlightMax->setValue(st.highlight_range.second);
     }
 
     {   // scalar field
@@ -613,14 +611,13 @@ namespace internal {
     }
 
 
-    void set_highlight_range(SurfaceMesh* m, Drawable* d, const std::pair<int, int>& range) {
+    // Converts a face range to the range of rendered triangles; returns {-1, -1} when empty.
+    std::pair<int, int> triangle_range_of_faces(SurfaceMesh* m, const std::pair<int, int>& range) {
         if (range.second < 0 || range.second < range.first) {
-            d->set_highlight_range(std::make_pair(-1, -1));
             LOG(INFO) << "no face can be highlighted";
-            return;
+            return {-1, -1};
         }
 
-        // convert to triangle range
         int f_min = (range.first < 0 ? 0 : range.first);
         int f_max = (range.second >= static_cast<int>(m->n_faces()) ? static_cast<int>(m->n_faces()) - 1 : range.second);
         int t_min = std::numeric_limits<int>::max();
@@ -634,15 +631,15 @@ namespace internal {
                 t_max = std::max(t_max, ran.second);
             }
 
-            d->set_highlight_range(std::make_pair(t_min, t_max));
             if (f_min != t_min || f_max != t_max)
                 LOG(INFO) << "highlighting faces [" << f_min << ", " << f_max << "] (= triangles ["
                           << t_min << ", " << t_max << "])";
             else
                 LOG(INFO) << "highlighting faces [" << f_min << ", " << f_max << "]";
-        } else {
-            LOG_N_TIMES(3, ERROR) << "face property \'f:triangle_range\' not defined. " << COUNTER;
+            return {t_min, t_max};
         }
+        LOG_N_TIMES(3, ERROR) << "face property \'f:triangle_range\' not defined. " << COUNTER;
+        return {-1, -1};
     }
 
 }
@@ -669,10 +666,12 @@ void WidgetTrianglesDrawable::setHighlightMin(int v) {
         return;
 
     // face range
-    auto& face_range = states_[d].highlight_range;
-    face_range.first = v;
+    auto& st = states_[d];
+    st.highlight_range.first = v;
 
-    internal::set_highlight_range(mesh, d, face_range);
+    st.highlight_primitives = internal::triangle_range_of_faces(mesh, st.highlight_range);
+    if (st.highlight)
+        buffer::update_highlight_mask(d, st.highlight_primitives.first, st.highlight_primitives.second);
     viewer_->update();
 }
 
@@ -687,10 +686,12 @@ void WidgetTrianglesDrawable::setHighlightMax(int v) {
         return;
 
     // face range
-    auto& face_range = states_[d].highlight_range;
-    face_range.second = v;
+    auto& st = states_[d];
+    st.highlight_range.second = v;
 
-    internal::set_highlight_range(mesh, d, face_range);
+    st.highlight_primitives = internal::triangle_range_of_faces(mesh, st.highlight_range);
+    if (st.highlight)
+        buffer::update_highlight_mask(d, st.highlight_primitives.first, st.highlight_primitives.second);
     viewer_->update();
 }
 

@@ -26,7 +26,6 @@
 
 #version 330 core
 
-
 in FragmentData
 {
     vec2 texcoord;
@@ -35,7 +34,6 @@ in FragmentData
     vec3 normal;
     flat int point_id;
 } FragmentIn;
-
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
@@ -48,11 +46,7 @@ uniform bool    two_sides_lighting = true;
 uniform bool    distinct_back_color = true;
 uniform vec3    backside_color = vec3(0.8f, 0.4f, 0.4f);
 
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
-
-// property-based highlight: one strength per rendered primitive
+// highlight mask: one strength per rendered primitive
 uniform bool has_highlight_mask = false;
 uniform sampler2D highlight_mask;
 uniform int highlight_mask_width;
@@ -65,7 +59,6 @@ layout(std140) uniform Material {
         vec3	specular;		// in [0, 1], r==g==b;
         float	shininess;
 };
-
 
 out vec4 fragmentColor;
 
@@ -109,11 +102,6 @@ void main()
         fragmentColor = vec4(color, 1.0);
     }
 
-    // Selection and primitive-range highlighting tint the final color, lit or not.
-    if (highlight) {
-        if (FragmentIn.point_id >= highlight_id_min && FragmentIn.point_id <= highlight_id_max)
-            fragmentColor = mix(fragmentColor, highlight_color, 0.8);
-    }
     if (has_highlight_mask) {
         ivec2 coord = ivec2(FragmentIn.point_id % highlight_mask_width, FragmentIn.point_id / highlight_mask_width);
         fragmentColor = mix(fragmentColor, highlight_color, texelFetch(highlight_mask, coord, 0).r);

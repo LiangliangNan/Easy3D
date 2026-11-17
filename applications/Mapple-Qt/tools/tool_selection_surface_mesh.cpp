@@ -122,8 +122,7 @@ namespace easy3d {
                 if (mesh && face.is_valid()) {
                     auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
                     auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-                    drawable->set_highlight(true);
-                    drawable->set_highlight_range(triangle_range[face]);
+                    buffer::update_highlight_mask(drawable, triangle_range[face].first, triangle_range[face].second);
                 }
             }
         }
@@ -133,8 +132,7 @@ namespace easy3d {
                 auto mesh = dynamic_cast<SurfaceMesh *>(model.get());
                 if (mesh) {
                     auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-                    drawable->set_highlight(false);
-                    drawable->set_highlight_range({-1, -1});
+                    buffer::update_highlight_mask(drawable, -1, -1);
                 }
             }
         }

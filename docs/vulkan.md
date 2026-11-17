@@ -11275,3 +11275,54 @@ rebuilt; suites ran serially: Vulkan 150/150 (153 s) and OpenGL 118/118 (64 s). 
 launches on both backends with torusknot.obj and no shader or validation errors; selection
 clicks were not scripted. `easy3d/util/version.h` carries only the generated date bump.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-17 — batch 123: the range highlight is a one-interval highlight mask
+
+**Problem.** The primitive-range highlight (`State::highlight()` +
+`State::set_highlight_range`) and the selection mask were the same effect built twice:
+the range was a pair of shader uniforms compared against `gl_PrimitiveID`, the mask a
+per-primitive strength table, and lines and impostor sprites had only the range path.
+Two mechanisms meant two ways to clear or compose, and the panel-owned range could
+silently survive a pick pass that rebuilt the drawable's state.
+
+**Change (library).** A range is a mask with one non-zero interval, so the range API is
+gone: `State::highlight()`, `set_highlight()`, `set_highlight_range()` and
+`highlight_range()` are removed, along with the `highlight`, `highlight_id_min` and
+`highlight_id_max` uniforms in every shader (surface, points, lines, transparency). A
+new builder, `buffer::update_highlight_mask(drawable, first, last, strength = 0.8f)`,
+fills the same per-primitive mask the property-based `buffer::update_highlight_mask`
+produces; it clears when `first < 0`, `last < first` or `first` is past the primitive
+count, and clamps `last` to the last primitive. Lines now sample the mask too, so
+hover and preview tints work on line drawables: the eight line draw paths bind the mask
+around their draw calls (including the textured paths), the geometry-shader
+fragments read it at the existing `line_id` varying (`gl_PrimitiveIDIn`, because
+`gl_PrimitiveID` in a geometry-shader fragment counts the emitted primitive) and the
+plain programs at `gl_PrimitiveID`. The sprite-sphere point path gained the same
+bind/release around its draw; it had only the range uniforms. The model picker now
+saves and restores the mask and the drawable state around its ID pass, so picking no
+longer wipes a configured range.
+
+**Change (apps).** Mapple's Rendering panel keeps its `HighlightRange` (enabled, two
+ends) in memory and applies it through the interval builder; unchecking, clearing and
+the hover aid all call the same builder with an empty interval, and a configured range
+still makes hover yield. Mapple-Qt's triangle widgets keep the face range for the spin
+boxes and cache its expanded triangle interval, its points and lines widgets apply the
+stored primitive interval, and the hover, selection and placeholder tools call the
+builder. Two stale `set_uniform("highlight", false)` calls
+(Mapple-Qt's corner axes and checker sphere) are removed; they warned for the removed
+uniform on every frame of that draw.
+
+**Change (bindings and docs).** The Python bindings drop the four `State` range
+definitions and expose `Drawable::update_highlight_mask(strengths, dynamic)` and
+`highlight_mask()`. Tutorial 402 and its docs use the interval builder, and
+`docs/mapple.md`'s selection notes describe the mask instead of the 2x1 colormap.
+
+**Validation.** `tests/python/rendering.py` tints faces, points, sprites, lines,
+cylinders and cones through masks (including line masks) and passes in the OpenGL
+release tree (`python.rendering`); the C++ picking tests assert the masks produced by
+tutorial clicks and by direct updates. Both check trees rebuilt; suites ran
+serially: Vulkan 150/150 (143 s) and OpenGL 118/118 (65 s). Mapple launches on both
+backends with torusknot.obj and shows texturing, selection and the mask path intact;
+Mapple-Qt was rebuilt and launches in the OpenGL release tree with no stale-uniform
+warnings. Interactive clicks and drags were not scripted. `easy3d/util/version.h` is
+untouched. Linux/Windows/CI remain separate gates.

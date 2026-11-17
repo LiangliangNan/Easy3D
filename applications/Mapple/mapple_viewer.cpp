@@ -1597,26 +1597,22 @@ void MappleViewer::update_hover(int x, int y) {
     bool changed = false;
     const std::shared_ptr<Drawable> previous = hover_drawable_.lock();
     // The highlight is a picking aid of the Click (pick) tool. Other modes still
-    // report the primitive in the status bar but must not tint the scene. A range
-    // configured in the Rendering panel owns the drawable's highlight.
+    // report the primitive in the status bar but must not tint the scene. A highlight
+    // configured in the Rendering panel owns the drawable's mask.
     const bool highlight = select_mode_ == SelectMode::CLICK &&
                            !has_configured_highlight(result.model.get(), result.drawable.get());
     if (!highlight) {
         if (previous) {
-            previous->set_highlight(false);
-            previous->set_highlight_range({-1, -1});
+            buffer::update_highlight_mask(previous.get(), -1, -1);
             changed = true;
         }
         hover_drawable_.reset();
         hover_range_ = {-1, -1};
     } else {
         if (previous != result.drawable) {
-            if (previous) {
-                previous->set_highlight(false);
-                previous->set_highlight_range({-1, -1});
-            }
+            if (previous)
+                buffer::update_highlight_mask(previous.get(), -1, -1);
             hover_drawable_ = result.drawable;
-            result.drawable->set_highlight(true);
             hover_range_ = {-1, -1}; // the range below belongs to the previous drawable
             changed = true;
         }
@@ -1624,13 +1620,13 @@ void MappleViewer::update_hover(int x, int y) {
             const std::pair<int, int> range(static_cast<int>(result.primitive),
                                             static_cast<int>(result.primitive));
             if (hover_range_ != range) {
-                result.drawable->set_highlight_range(range);
+                buffer::update_highlight_mask(result.drawable.get(), range.first, range.second);
                 hover_range_ = range;
                 changed = true;
             }
         } else if (hover_range_ != std::make_pair(-1, -1)) {
             // Same drawable, but this hit has no primitive index to highlight.
-            result.drawable->set_highlight_range({-1, -1});
+            buffer::update_highlight_mask(result.drawable.get(), -1, -1);
             hover_range_ = {-1, -1};
             changed = true;
         }
@@ -1660,8 +1656,7 @@ void MappleViewer::update_hover(int x, int y) {
 void MappleViewer::clear_hover() {
     bool changed = false;
     if (const std::shared_ptr<Drawable> drawable = hover_drawable_.lock()) {
-        drawable->set_highlight(false);
-        drawable->set_highlight_range({-1, -1});
+        buffer::update_highlight_mask(drawable.get(), -1, -1);
         changed = true;
     }
     hover_drawable_.reset();

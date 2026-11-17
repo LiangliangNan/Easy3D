@@ -48,7 +48,7 @@
  * internally triangulated, and the mesh stores a "f:triangle_range" face property mapping
  * each original face to the [first, last] range of triangles it produced. Highlighting must
  * therefore be expressed in triangle indices: we look up the picked face's triangle range
- * and pass it to the drawable's highlight state, so the whole polygon lights up, not just
+ * and pass it to buffer::update_highlight_mask(), so the whole polygon lights up, not just
  * the one triangle that happened to be under the cursor.
  *
  * <b>Easy3D API</b>
@@ -56,8 +56,10 @@
  *   original SurfaceMesh face under the cursor (-1 when nothing was hit).
  * - SurfaceMesh: the polygonal mesh data structure; get_face_property() retrieves the
  *   "f:triangle_range" mapping used to convert faces to triangle ranges.
- * - TrianglesDrawable (State): set_highlight() / set_highlight_range() mark a range of
- *   triangles to be drawn in the highlight color.
+ * - TrianglesDrawable: the drawable whose highlight mask marks the picked triangles to be
+ *   drawn in the highlight color.
+ * - buffer::update_highlight_mask(): builds the per-primitive mask from an interval of
+ *   rendered primitives (here the picked face's triangle range).
  * - LinesDrawable: the "edges" drawable is made visible so face boundaries can be seen.
  *
  * <b>Running it</b>

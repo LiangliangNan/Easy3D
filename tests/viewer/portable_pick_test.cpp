@@ -277,7 +277,7 @@ void tutorials() {
         const auto p=v.camera()->projected_coordinates_of(vec3(-.6f,.2f,0));
         v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
         auto* faces=m->renderer()->get_triangles_drawable("faces");
-        require(faces->highlight() && faces->highlight_range()==std::make_pair(0,1),"Tutorial 402 DPI conversion lost polygon highlight");
+        require(faces->highlight_mask().size()==2 && faces->highlight_mask()[0]>0 && faces->highlight_mask()[1]>0,"Tutorial 402 DPI conversion lost polygon highlight");
     }
 }
 int main(int argc,char**) {return test::run("portable picking depth, provenance, ownership, styles and tutorial input",[&] {

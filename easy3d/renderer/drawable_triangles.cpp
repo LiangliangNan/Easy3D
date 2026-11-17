@@ -115,9 +115,6 @@ namespace easy3d {
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
-                ->set_uniform("highlight", highlight())
-                ->set_uniform("highlight_id_min", highlight_range().first)
-                ->set_uniform("highlight_id_max", highlight_range().second)
                 ->set_uniform("selected", is_selected())
                 ->set_uniform("highlight_color", setting::highlight_color);
 

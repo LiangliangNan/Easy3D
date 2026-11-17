@@ -26,15 +26,14 @@
 
 #version 150
 
-
 uniform sampler2D	textureID;
-
-uniform bool highlight;
-uniform int  highlight_id_min;
-uniform int  highlight_id_max;
 
 uniform bool selected = false;
 uniform vec4 	highlight_color;
+
+uniform bool has_highlight_mask = false;
+uniform sampler2D highlight_mask;
+uniform int highlight_mask_width;
 
 in vec2  vOutTexcoord;
 in float vOutClipped;
@@ -48,11 +47,10 @@ void main()
 
 	outputF = texture(textureID, vOutTexcoord);
 
-	if (highlight) {
-		if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-		outputF = mix(outputF, highlight_color, 0.8);
+	if (has_highlight_mask) {
+	    ivec2 coord = ivec2(gl_PrimitiveID % highlight_mask_width, gl_PrimitiveID / highlight_mask_width);
+	    outputF = mix(outputF, highlight_color, texelFetch(highlight_mask, coord, 0).r);
 	}
-
 	if (selected)
 		outputF = mix(outputF, highlight_color, 0.6);
 

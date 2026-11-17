@@ -140,10 +140,6 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
-
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
 
@@ -189,16 +185,14 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
-
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
 
         ClippingPlane::instance()->set_program(program);
 
+        opengl_bind_highlight_mask(program);
         gl_draw();
+        opengl_release_highlight_mask();
         program->release();
 
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
@@ -234,10 +228,6 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
-
-        program->set_uniform("highlight", highlight())
-                ->set_uniform("highlight_id_min", highlight_range().first)
-                ->set_uniform("highlight_id_max", highlight_range().second);
 
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
@@ -299,10 +289,6 @@ namespace easy3d {
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
 
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
-
         ClippingPlane::instance()->set_program(program);
 
         opengl_bind_highlight_mask(program);
@@ -348,10 +334,6 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
-
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
@@ -408,10 +390,6 @@ namespace easy3d {
                 ->set_uniform("distinct_back_color",distinct_back_color())
                 ->set_uniform("backside_color",back_color());
 
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
-
         program->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
@@ -465,10 +443,6 @@ namespace easy3d {
                 ->set_uniform("two_sides_lighting",lighting_two_sides())
                 ->set_uniform("distinct_back_color",distinct_back_color())
                 ->set_uniform("backside_color",back_color());
-
-        program->set_uniform("highlight",highlight())
-                ->set_uniform("highlight_id_min",highlight_range().first)
-                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
         program->set_uniform("highlight_color", setting::highlight_color);
