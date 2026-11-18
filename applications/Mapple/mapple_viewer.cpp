@@ -2263,7 +2263,8 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
         // camera standing on this pose, the station is at the eye and has no screen
         // position, so the square is skipped.
         vec2 projected;
-        if (project_to_screen(camera(), kfi_->keyframe_position(static_cast<std::size_t>(selected)), projected)) {
+        const vec3 station = kfi_->keyframe_position(static_cast<std::size_t>(selected));
+        if (project_to_screen(camera(), station, projected)) {
             const float r = 7.0f; // logical pixels
             const vec2 corners[4] = {vec2(projected.x - r, projected.y - r),
                                      vec2(projected.x + r, projected.y - r),
@@ -2277,14 +2278,18 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
             }
             commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, 2.0f * dpi));
 
-            // Where this pose's camera looks: the segment from the station to the scene
-            // center, dimmed so it does not compete with the station and the gizmo.
-            vec2 target;
-            if (project_to_screen(camera(), camera()->scene_center(), target)) {
+            // The pose's aim: its stored orientation applied to the camera-space -Z
+            // axis (what Camera::view_direction() does for the live camera), drawn for
+            // one scene radius. Dimmed so it does not compete with the square and the
+            // gizmo.
+            const vec3 aim_direction = kfi_->keyframe_orientation(static_cast<std::size_t>(selected))
+                                               .rotate(vec3(0.0f, 0.0f, -1.0f));
+            vec2 tip;
+            if (project_to_screen(camera(), station + aim_direction * camera()->scene_radius(), tip)) {
                 const vec4 aim(setting::highlight_color.x, setting::highlight_color.y,
                                setting::highlight_color.z, 0.6f);
                 commands.push_back(graphics::shape::draw_lines_2d(
-                        {projected * dpi, target * dpi}, aim, fw, fh, dpi));
+                        {projected * dpi, tip * dpi}, aim, fw, fh, dpi));
             }
         }
     }
