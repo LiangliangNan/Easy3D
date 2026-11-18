@@ -63,13 +63,15 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install cmake ninja cgal qt ffmpeg
 
+      # setup-miniconda@v4 runs on the node24 runtime and takes auto-activate; the v3
+      # spellings warned on every Windows job. Both names feed the same condarc key.
       - name: Set up Conda (Windows)
         if: runner.os == 'Windows'
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           architecture: x64
           activate-environment: Easy3DDev
-          auto-activate-base: false
+          auto-activate: false
           channels: conda-forge,defaults
 
       - name: Dependencies (Windows)
