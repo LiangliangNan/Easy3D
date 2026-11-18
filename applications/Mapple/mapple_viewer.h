@@ -44,6 +44,7 @@
 #include <easy3d/fileio/translator.h>
 #include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/frame.h>
+#include <easy3d/renderer/keyframe_editor.h>
 #include <easy3d/renderer/state.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
@@ -503,40 +504,31 @@ private:
     // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
 
-    // Keyframe handles: with editing on, the selected keyframe shows a gizmo sized to
-    // its camera glyph. A press on the glyph drags it in the view plane through its
+    // Keyframe editing lives in KeyFrameEditor (easy3d/renderer/keyframe_editor.h):
+    // the selected keyframe, its gizmo (sized to the camera glyph, see
+    // camera_marker_width()), the handle and glyph drags, aiming at a clicked point,
+    // and the insert/delete edits on the path. With editing on, the selected keyframe
+    // shows its gizmo; a press on the glyph drags it in the view plane through its
     // position (the plane through its up with Shift), an axis arrow drags it along
     // that axis, and a ring turns its pose around that axis. Esc restores the pose.
-    enum class KeyframeHandle {
-        none, free,
-        move_x, move_y, move_z,
-        turn_x, turn_y, turn_z
-    };
-    // The selected keyframe whose gizmo is shown and edited, or -1.
-    int selected_keyframe() const;
-    // The gizmo's world axes, arrow length and ring radius: the keyframe's own axes,
-    // sized relative to camera_marker_width() so it hugs the drawn glyph.
-    void keyframe_handle_axes(easy3d::vec3 axes[3], float &arrow_length, float &ring_radius) const;
-    // The handle under the cursor (nearest screen element within a few pixels); none
-    // when no keyframe is selected or the element is seen end-on.
-    KeyframeHandle keyframe_handle_at(int x, int y) const;
-    bool begin_keyframe_drag(int x, int y, bool upright_plane);
-    void drag_keyframe(int x, int y);
-    void end_keyframe_drag();
-    void cancel_keyframe_drag();
+    // The editor performs no picking: keyframe_at() supplies the glyph under the
+    // cursor; the editor owns the selection the path UI acts on.
+    // The keyframe whose camera glyph is under the cursor, or -1 (the editor's glyph
+    // picking; the scene pick waits for the frame, as the app's other picks do).
+    int keyframe_at(int x, int y) const;
     // Turns the selected keyframe so its view direction points at the scene surface
     // under (x, y), keeping the pose's own up. False when the click misses the scene.
     bool aim_selected_keyframe_at(int x, int y);
 
-    // Inserts a keyframe after the selected one: midway to the next, with the pose and
-    // time interpolated the same way; past the last keyframe the last segment is
-    // extended so the new glyph does not sit on top of an existing one.
+    // Inserts a keyframe after the selected one (the pose and time are interpolated,
+    // see KeyFrameEditor) and shows the path.
     void insert_camera_keyframe();
     // Deletes the selected keyframe.
     void delete_camera_keyframe();
-    // Replaces every keyframe with \p frames and their \p times. The interpolator only
-    // appends, so the edits rebuild the path through this.
-    bool rebuild_camera_path(const std::vector<easy3d::Frame> &frames, const std::vector<float> &times);
+
+    // Tells the editor whether its handles are on: the user's edit mode, only while
+    // the path is visible (the editor also refuses to edit during playback).
+    void sync_keyframe_editing();
 
     // The visible surface under (x, y): the ground-contact point of a route sample
     // and the walker's up direction there (the picked face's normal, turned to the
@@ -561,11 +553,6 @@ private:
     // Draws the path gesture preview: the walking stroke being traced, or the orbit
     // axis being dragged, in the scene's overlay layer.
     void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
-
-    // Draws the selected keyframe's gizmo (three axis arrows and three turn rings)
-    // in the overlay layer; the grabbed or hovered handle is drawn prominent and the
-    // others are dimmed.
-    void append_keyframe_gizmo_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Video recording needs FFmpeg; without it recording_video() is always false.
 #ifdef HAS_FFMPEG
@@ -843,7 +830,6 @@ private:
     bool snapshot_samples_restored_ = false;
 
     bool show_animation_window_ = false;
-    int camera_keyframe_index_ = -1; // keyframe last jumped to, for Prev/Next
     // The camera path (keyframes, playback state and drawing) belongs to the app: the
     // base Viewer no longer owns a KeyFrameInterpolator.
     std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
@@ -856,25 +842,12 @@ private:
     std::vector<easy3d::Frame> camera_markers_frames_;
     float camera_markers_width_ = 0;
     std::size_t camera_markers_faces_per_glyph_ = 0; // maps a picked triangle to its keyframe
-    // Keyframe handle editing: the gizmo can be grabbed while this is on. The drag
-    // plane (a point and a normal) is fixed at the press so the pose follows the
-    // cursor; an axis drag keeps a line parameter, a ring drag an accumulated angle.
+    // The user's "Edit keyframe handles" choice; the editor also needs the path shown,
+    // so the handles come from sync_keyframe_editing(), which combines the two.
     bool edit_keyframes_ = false;
-    int dragged_keyframe_ = -1;
-    KeyframeHandle keyframe_handle_ = KeyframeHandle::none;
-    KeyframeHandle hovered_keyframe_handle_ = KeyframeHandle::none;
-    easy3d::vec3 keyframe_drag_plane_point_;
-    easy3d::vec3 keyframe_drag_plane_normal_;
-    easy3d::vec3 keyframe_drag_start_position_;
-    easy3d::quat keyframe_drag_start_orientation_;
-    easy3d::vec3 keyframe_drag_axis_;          // the grabbed arrow's or ring's axis
-    // Glyph grab: world offset from the press's plane point to the station, so the
-    // station keeps its position under the cursor instead of jumping to it.
-    easy3d::vec3 keyframe_drag_grab_offset_;
-    float keyframe_drag_start_scalar_ = 0.0f;  // arrow grab: line parameter at the press
-    float keyframe_drag_angle_ = 0.0f;         // ring grab: accumulated angle
-    float keyframe_drag_last_angle_ = 0.0f;    // ring grab: previous cursor angle
-    bool keyframe_drag_moved_ = false;
+    // Selection, handle and glyph drags, aiming, insert/delete, and the selected
+    // keyframe's overlay (created in init(), once the path exists).
+    std::unique_ptr<easy3d::KeyFrameEditor> keyframe_editor_;
     // Walking, orbit and flight keyframe creation (created in init()).
     std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;
     // Which one-shot path tool owns the next gesture.

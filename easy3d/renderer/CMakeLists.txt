@@ -44,6 +44,8 @@ list(APPEND renderer_headers
         frame.h
         frustum.h
         key_frame_interpolator.h
+        keyframe_editor.h
+        keyframe_gizmo.h
         manipulator.h
         manipulated_camera_frame.h
         manipulated_frame.h
@@ -72,6 +74,8 @@ list(APPEND renderer_sources
         frame.cpp
         frustum.cpp
         key_frame_interpolator.cpp
+        keyframe_editor.cpp
+        keyframe_gizmo.cpp
         manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp

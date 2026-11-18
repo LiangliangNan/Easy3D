@@ -73,11 +73,12 @@ void MappleViewer::draw_animation_window() {
             // toggles playback afterwards.
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
-            camera_keyframe_index_ = -1;
+            keyframe_editor_->set_selected(-1);
             // The tool disarms with its window; a gesture in progress is abandoned,
             // and the keyframe handles go away with the window that turns them on.
             path_tool_ = PathTool::Off;
             edit_keyframes_ = false;
+            sync_keyframe_editing();
             cancel_path_gesture();
             clear_flight_gesture();
         }
@@ -86,7 +87,7 @@ void MappleViewer::draw_animation_window() {
 
     KeyFrameInterpolator *kfi = kfi_.get();
     const int count = static_cast<int>(kfi->number_of_keyframes());
-    camera_keyframe_index_ = std::min(camera_keyframe_index_, count - 1);
+    const int selected_index = keyframe_editor_->selected();
 
     if (ImGui::Button("Import...", ImVec2(100, 0)))
         import_camera_path();
@@ -138,7 +139,7 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::Button("Clear", ImVec2(70, 0)))
         clear_camera_path();
 
-    const bool selected = camera_keyframe_index_ >= 0 && camera_keyframe_index_ < count;
+    const bool selected = selected_index >= 0;
     ImGui::BeginDisabled(!selected);
     if (ImGui::Button("Insert After", ImVec2(110, 0)))
         insert_camera_keyframe();
@@ -151,22 +152,22 @@ void MappleViewer::draw_animation_window() {
     ImGui::EndDisabled();
     ImGui::SameLine();
     if (selected)
-        ImGui::TextDisabled("no. %d selected", camera_keyframe_index_ + 1);
+        ImGui::TextDisabled("no. %d selected", selected_index + 1);
     else
         ImGui::TextDisabled("no keyframe selected");
 
     ImGui::BeginDisabled(count == 0);
     if (ImGui::Button("< Prev", ImVec2(80, 0)))
-        goto_camera_keyframe(camera_keyframe_index_ <= 0 ? count - 1 : camera_keyframe_index_ - 1);
+        goto_camera_keyframe(selected_index <= 0 ? count - 1 : selected_index - 1);
     ImGui::SameLine();
-    if (camera_keyframe_index_ >= 0)
-        ImGui::Text("Keyframe %d / %d", camera_keyframe_index_ + 1, count);
+    if (selected_index >= 0)
+        ImGui::Text("Keyframe %d / %d", selected_index + 1, count);
     else
         ImGui::TextDisabled("Keyframe - / %d", count);
     ImGui::SameLine();
     if (ImGui::Button("Next >", ImVec2(80, 0)))
-        goto_camera_keyframe(camera_keyframe_index_ < 0 || camera_keyframe_index_ >= count - 1
-                                     ? 0 : camera_keyframe_index_ + 1);
+        goto_camera_keyframe(selected_index < 0 || selected_index >= count - 1
+                                     ? 0 : selected_index + 1);
     ImGui::EndDisabled();
 
     ImGui::Separator();
@@ -193,16 +194,14 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
 
-    bool edit = edit_keyframes_;
-    if (ImGui::Checkbox("Edit keyframe handles", &edit)) {
-        edit_keyframes_ = edit;
-        if (edit) {
+    if (ImGui::Checkbox("Edit keyframe handles", &edit_keyframes_)) {
+        if (edit_keyframes_) {
             if (!show_camera_path_)
                 set_camera_path_visible(true);
-            if (camera_keyframe_index_ < 0 && count > 0)
-                camera_keyframe_index_ = count - 1;
-        } else
-            cancel_keyframe_drag();
+            if (selected_index < 0 && count > 0)
+                keyframe_editor_->set_selected(count - 1);
+        }
+        sync_keyframe_editing();
         update();
     }
     ImGui::SetItemTooltip("The selected keyframe shows a gizmo sized to its camera glyph. Drag the "
@@ -211,7 +210,7 @@ void MappleViewer::draw_animation_window() {
                           "to move it along that axis, or a ring to turn its pose around that axis. "
                           "Clicking the scene aims the selected keyframe at the clicked point. "
                           "Ctrl+Z restores the path from before the drag; Esc cancels it.");
-    if (edit_keyframes_ && selected_keyframe() >= 0 && !playing)
+    if (keyframe_editor_->editable_keyframe() >= 0 && !playing)
         ImGui::TextDisabled("Click the scene to aim the selected keyframe at the clicked point.");
 
     if (camera_path_builder_ && tool == PathTool::GroundWalk) {
@@ -319,7 +318,7 @@ void MappleViewer::draw_animation_window() {
 void MappleViewer::add_camera_keyframe() {
     if (!kfi_->add_keyframe(*camera()->frame()))
         return;
-    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << "keyframe " << kfi_->number_of_keyframes() << " added to the camera path";
@@ -330,7 +329,7 @@ void MappleViewer::remove_last_camera_keyframe() {
     if (kfi_->number_of_keyframes() == 0)
         return;
     kfi_->delete_last_keyframe();
-    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     LOG(INFO) << "last keyframe removed (" << kfi_->number_of_keyframes() << " remaining)";
     update();
 }
@@ -339,7 +338,7 @@ void MappleViewer::clear_camera_path() {
     if (kfi_->number_of_keyframes() == 0)
         return;
     kfi_->delete_path();
-    camera_keyframe_index_ = -1;
+    keyframe_editor_->set_selected(-1);
     if (show_camera_path_) {
         release_camera_path_guides();
         restore_scene_bounds();
@@ -348,103 +347,29 @@ void MappleViewer::clear_camera_path() {
     update();
 }
 
-bool MappleViewer::rebuild_camera_path(const std::vector<Frame> &frames, const std::vector<float> &times) {
-    if (!kfi_ || frames.size() != times.size())
-        return false;
-    if (kfi_->is_interpolation_started())
-        kfi_->stop_interpolation();
-    kfi_->delete_path();
-    for (std::size_t i = 0; i < frames.size(); ++i) {
-        if (!kfi_->add_keyframe(frames[i], times[i]))
-            return false;
-    }
-    return true;
-}
-
 void MappleViewer::insert_camera_keyframe() {
-    const int count = static_cast<int>(kfi_->number_of_keyframes());
-    if (count == 0)
-        return;
-    const int after = camera_keyframe_index_ >= 0 ? std::min(camera_keyframe_index_, count - 1) : count - 1;
-
-    // Halfway to the next keyframe, so the section keeps its timing and shape
-    // between the two neighbours; past the last keyframe the last segment is
-    // extended, so the new glyph does not land on top of an existing one.
-    Frame frame;
-    float time = 0.0f;
-    if (after + 1 < count) {
-        const Frame a = kfi_->keyframe(after);
-        const Frame b = kfi_->keyframe(after + 1);
-        frame.set_position_and_orientation(0.5f * (a.position() + b.position()),
-                                           quat::slerp(a.orientation(), b.orientation(), 0.5f));
-        time = 0.5f * (kfi_->keyframe_time(after) + kfi_->keyframe_time(after + 1));
-    } else {
-        const Frame last = kfi_->keyframe(after);
-        vec3 position = last.position();
-        float gap = 1.0f;
-        if (after > 0) {
-            position += last.position() - kfi_->keyframe_position(after - 1);
-            gap = kfi_->keyframe_time(after) - kfi_->keyframe_time(after - 1);
-        }
-        frame.set_position_and_orientation(position, last.orientation());
-        time = kfi_->keyframe_time(after) + std::max(gap, 1e-3f);
-    }
-
-    std::vector<Frame> frames;
-    std::vector<float> times;
-    frames.reserve(count + 1);
-    times.reserve(count + 1);
-    for (int i = 0; i < after + 1; ++i) {
-        frames.push_back(kfi_->keyframe(i));
-        times.push_back(kfi_->keyframe_time(i));
-    }
-    frames.push_back(frame);
-    times.push_back(time);
-    for (int i = after + 1; i < count; ++i) {
-        frames.push_back(kfi_->keyframe(i));
-        times.push_back(kfi_->keyframe_time(i));
-    }
-
-    snapshot_camera_path(); // Ctrl+Z restores the path from before the insert
-    if (!rebuild_camera_path(frames, times)) {
-        LOG(ERROR) << "failed to insert a keyframe after no. " << after + 1;
+    const int index = keyframe_editor_->insert_after_selected();
+    if (index < 0) {
+        LOG(ERROR) << "failed to insert a keyframe";
         return;
     }
-    camera_keyframe_index_ = after + 1;
     if (!show_camera_path_)
         set_camera_path_visible(true);
-    LOG(INFO) << "keyframe inserted after no. " << after + 1 << " (" << frames.size() << " keyframes)";
+    LOG(INFO) << "keyframe no. " << index + 1 << " inserted (" << kfi_->number_of_keyframes()
+              << " keyframes)";
     update();
 }
 
 void MappleViewer::delete_camera_keyframe() {
-    const int count = static_cast<int>(kfi_->number_of_keyframes());
-    if (count == 0 || camera_keyframe_index_ < 0 || camera_keyframe_index_ >= count)
+    const int index = keyframe_editor_->delete_selected();
+    if (index < 0)
         return;
-    const int index = camera_keyframe_index_;
-
-    std::vector<Frame> frames;
-    std::vector<float> times;
-    frames.reserve(count - 1);
-    times.reserve(count - 1);
-    for (int i = 0; i < count; ++i) {
-        if (i == index)
-            continue;
-        frames.push_back(kfi_->keyframe(i));
-        times.push_back(kfi_->keyframe_time(i));
-    }
-
-    snapshot_camera_path(); // Ctrl+Z restores the deleted keyframe
-    if (!rebuild_camera_path(frames, times)) {
-        LOG(ERROR) << "failed to delete keyframe no. " << index + 1;
-        return;
-    }
-    camera_keyframe_index_ = frames.empty() ? -1 : std::min(index, static_cast<int>(frames.size()) - 1);
-    if (frames.empty() && show_camera_path_) {
+    if (kfi_->number_of_keyframes() == 0 && show_camera_path_) {
         release_camera_path_guides();
         restore_scene_bounds();
     }
-    LOG(INFO) << "keyframe no. " << index + 1 << " deleted (" << frames.size() << " remaining)";
+    LOG(INFO) << "keyframe no. " << index + 1 << " deleted (" << kfi_->number_of_keyframes()
+              << " remaining)";
     update();
 }
 
@@ -471,13 +396,13 @@ void MappleViewer::goto_camera_keyframe(int index) {
         kfi_->stop_interpolation();
     const Frame frame = kfi_->keyframe(static_cast<std::size_t>(index));
     camera()->frame()->set_position_and_orientation(frame.position(), frame.orientation());
-    camera_keyframe_index_ = index;
+    keyframe_editor_->set_selected(index);
     update();
 }
 
 bool MappleViewer::aim_selected_keyframe_at(int x, int y) {
-    const int index = selected_keyframe();
-    if (index < 0 || !kfi_ || !point_in_scene(x, y))
+    const int index = keyframe_editor_->editable_keyframe();
+    if (index < 0 || !point_in_scene(x, y))
         return false;
 
     // Only scene content is a target: the glyphs, the path and the overlays are
@@ -486,24 +411,8 @@ bool MappleViewer::aim_selected_keyframe_at(int x, int y) {
     if (!hit || !hit.model)
         return false;
 
-    const Frame frame = kfi_->keyframe(static_cast<std::size_t>(index));
-    vec3 direction = hit.position - frame.position();
-    if (direction.length2() <= epsilon_sqr<float>())
+    if (!keyframe_editor_->aim_at(hit.position))
         return false;
-    direction.normalize();
-
-    // The least turn that points the pose's -Z (what Camera::view_direction() is for
-    // the live camera) at the target. The pose's own up preserves its roll; a target
-    // straight along that up leaves no side vector, so the pose's X axis is kept, the
-    // same fallback as Camera::set_view_direction().
-    vec3 right = cross(direction, frame.orientation().rotate(vec3(0.0f, 1.0f, 0.0f)));
-    if (right.length2() <= epsilon_sqr<float>())
-        right = frame.orientation().rotate(vec3(1.0f, 0.0f, 0.0f));
-    quat orientation;
-    orientation.set_from_rotated_basis(right, cross(right, direction), -direction);
-
-    snapshot_camera_path(); // Ctrl+Z restores the previous pose
-    kfi_->set_keyframe_orientation(static_cast<std::size_t>(index), orientation);
     LOG(INFO) << "keyframe " << index + 1 << " aimed at the clicked point (Ctrl+Z restores it)";
     update();
     return true;
@@ -522,6 +431,7 @@ void MappleViewer::set_camera_path_visible(bool visible) {
         release_camera_path_guides();
         restore_scene_bounds();
     }
+    sync_keyframe_editing();
     update();
 }
 
@@ -532,7 +442,7 @@ void MappleViewer::import_camera_path() {
     if (file_name.empty())
         return;
     if (kfi_->read_keyframes(file_name)) {
-        camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+        keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
         if (show_camera_path_)
             set_camera_path_visible(true);
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << file_name;
@@ -609,7 +519,7 @@ void MappleViewer::cancel_path_gesture() {
     route_stroke_screen_.clear();
     route_segment_.clear();
     route_segments_.clear();
-    cancel_keyframe_drag();
+    keyframe_editor_->cancel();
 }
 
 bool MappleViewer::route_point_at(int x, int y, vec3 &point, vec3 &up) const {
@@ -681,7 +591,7 @@ void MappleViewer::commit_ground_route() {
         return; // the tool stays armed for another try
     }
     path_tool_ = PathTool::Off; // one-shot
-    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << added << " walking keyframes added to the camera path";
@@ -761,7 +671,7 @@ void MappleViewer::commit_flight_aim() {
     path_tool_ = PathTool::Off; // one-shot
     flight_aim_ready_ = false;
     flight_positions_.clear();
-    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << added << " flight keyframes added to the camera path";
@@ -811,7 +721,7 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
     if (orbit_replaces_path_)
         kfi_->delete_path();
     camera_path_builder_->generate_orbit(axis, camera()->scene_center());
-    camera_keyframe_index_ = static_cast<int>(kfi_->number_of_keyframes()) - 1;
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << (orbit_replaces_path_ ? "camera path replaced by an orbit (Ctrl+Z restores it)"
@@ -826,7 +736,7 @@ void MappleViewer::snapshot_camera_path() {
         camera_path_snapshot_.frames.push_back(kfi_->keyframe(i));
         camera_path_snapshot_.times.push_back(kfi_->keyframe_time(i));
     }
-    camera_path_snapshot_.keyframe_index = camera_keyframe_index_;
+    camera_path_snapshot_.keyframe_index = keyframe_editor_->selected();
     camera_path_snapshot_.valid = true;
 }
 
@@ -840,7 +750,7 @@ bool MappleViewer::undo_camera_path() {
     for (std::size_t i = 0; i < camera_path_snapshot_.frames.size(); ++i)
         kfi_->add_keyframe(camera_path_snapshot_.frames[i], camera_path_snapshot_.times[i]);
     const int count = static_cast<int>(kfi_->number_of_keyframes());
-    camera_keyframe_index_ = std::min(camera_path_snapshot_.keyframe_index, count - 1);
+    keyframe_editor_->set_selected(camera_path_snapshot_.keyframe_index);
     camera_path_snapshot_.valid = false;
 
     if (count > 0 && !show_camera_path_)

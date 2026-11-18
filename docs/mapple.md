@@ -2139,3 +2139,45 @@ migrated; retirement can proceed whenever it is wanted.
   unchanged, and left as they were). The aim gesture and the clipped appearance
   were not exercised by scripted interaction (no clicks are synthesized); suites
   were not rerun (Mapple-only change) and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — the keyframe editing UI moves into the renderer library (batch 128)
+
+- The interactive keyframe editing had grown inside `MappleViewer`: handle hit
+  tests, the three drag kinds, Esc cancel, the gizmo/station/aim drawing and the
+  insert/delete path edits. It is now two classes in the renderer module (listed in
+  `easy3d/renderer/CMakeLists.txt`), so other viewers can reuse it and the app
+  keeps only its policy.
+- `easy3d/renderer/keyframe_gizmo.{h,cpp}` is stateless. `Handle` names the three
+  move arrows, the three turn rings, `free` and `none`; `geometry()` derives the
+  pose axes and handle sizes from the camera-glyph width, `handle_at()` hit-tests
+  the handles (arrows win over rings, end-on and edge-on elements are skipped),
+  `axis_parameter_at()`/`ring_angle_at()` map the cursor onto an arrow's line
+  parameter or a ring's angle, and `append_overlay()` draws the gizmo as
+  depth-tested line ribbons with the grabbed/hovered handle full and thick. The
+  per-pixel world size moved here as `pixel_size_at()` (the app's
+  `logical_pixel_size()` is gone).
+- `easy3d/renderer/keyframe_editor.{h,cpp}` is the stateful half: it borrows the
+  camera and the interpolator, owns the selection (clamped to the path), the
+  editing flag, the glyph width and the drag state, and implements `press()`,
+  `drag()`, `release()` (reporting the keyframe and whether it moved or turned),
+  `cancel()`, `aim_at()`, `insert_after_selected()`, `delete_selected()` and
+  `append_overlay()` (station square, aim ray, gizmo). It performs no picking: the
+  `press()` callback returns the keyframe whose glyph is under the cursor, and it
+  is only consulted after the editor's own handle hit test, so the handles take
+  precedence. It also draws nothing into the scene; the host submits the returned
+  overlay commands. `begin_edit` fires once when a change is about to happen
+  (first actual drag movement, insert, delete, aim) so the host snapshots for undo.
+- `MappleViewer` keeps `keyframe_at()` (its deferred pick resolves the glyph's
+  triangle to a keyframe), `sync_keyframe_editing()` (editing is on only while the
+  "Edit keyframe handles" checkbox is set and the path is visible), the undo hook
+  (`begin_edit = snapshot_camera_path`) and its UI, logging and path-visibility
+  handling; the `KeyframeHandle` enum, the five projection/geometry helpers, all
+  drag members and the gizmo/station overlay code are removed from the app. The
+  Camera Path window and the path tools select through the editor.
+- Validation: both check trees rebuilt; OpenGL (release) and Vulkan (debug) both
+  launch `resources/data/bunny.ply` with "Mapple UI ready" and an error-free
+  `Mapple.log` (the shared log was not deleted; the settings files were backed up,
+  found unchanged, and left as they were). No clicks are synthesized, so the drags
+  were not exercised; the suites were not rerun because the new classes are
+  self-contained and no existing library code changed; `easy3d/util/version.h` is
+  unchanged.
