@@ -80,7 +80,6 @@ void MappleViewer::draw_animation_window() {
             edit_keyframes_ = false;
             sync_keyframe_editing();
             cancel_path_gesture();
-            clear_flight_gesture();
         }
         return;
     }
@@ -115,18 +114,34 @@ void MappleViewer::draw_animation_window() {
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(70, 0)))
             cancel_camera_path_tool();
-        if (tool == PathTool::Flight)
-            ImGui::TextDisabled(flight_aim_ready_
-                                ? "Click to aim at one target, or drag to trace the aim along the track. "
-                                  "Esc cancels."
-                                : "Drag over the surface to trace the camera track. Esc cancels.");
+        if (tool == PathTool::Aim)
+            ImGui::TextDisabled("Click a point to aim every keyframe of the last path there, or drag "
+                                "to trace the aims along it. Esc cancels.");
+        else if (tool == PathTool::GroundWalk)
+            ImGui::TextDisabled("Drag over the ground surface to trace the route. Esc cancels.");
+        else if (tool == PathTool::Flight)
+            ImGui::TextDisabled("Drag over the surface to trace the camera track. Esc cancels.");
         else
-            ImGui::TextDisabled(tool == PathTool::GroundWalk
-                                    ? "Drag over the ground surface to trace the route. Esc cancels."
-                                    : "Drag across the scene to set the orbit axis; a click uses the "
-                                      "vertical axis. Esc cancels.");
-    } else
+            ImGui::TextDisabled("Drag across the scene to set the orbit axis; a click uses the "
+                                "vertical axis. Esc cancels.");
+    } else {
         ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
+        // A generated path is playable at once with its mode's default aims; the aim
+        // gesture is offered on demand, never forced after the path gesture.
+        if (aim_range_.valid && count > 0) {
+            ImGui::TextDisabled("Aims of the new path: %s.",
+                                aim_range_.mode == PathTool::GroundWalk ? "along the route"
+                                : aim_range_.mode == PathTool::Flight ? "straight down"
+                                                                      : "at the orbit axis");
+            if (ImGui::Button("Aim...", ImVec2(80, 0)))
+                arm_camera_path_tool(PathTool::Aim);
+            ImGui::SetItemTooltip("Click a point in the scene to aim every keyframe of the new path "
+                                  "there, or drag over the surface to trace the aims along it. "
+                                  "Ctrl+Z restores the previous poses.");
+            ImGui::SameLine();
+            ImGui::TextDisabled("Not satisfied with the aims?");
+        }
+    }
     if (camera_path_snapshot_.valid)
         ImGui::TextDisabled("Ctrl+Z restores the path from before the last tool or edit.");
 
@@ -219,7 +234,8 @@ void MappleViewer::draw_animation_window() {
         ImGui::SetItemTooltip("The walker stands upright on the traced surface: each pose rises along "
                               "the surface normal under its foot, so the route tilts with the terrain. "
                               "Where the surface has no normal (e.g. a point cloud), the view's up "
-                              "direction is used.");
+                              "direction is used. The poses look along the route; Aim... re-aims them "
+                              "at a clicked point or a traced stroke.");
 
         float height = camera_path_builder_->eye_height_in_scene_heights();
         if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
@@ -241,8 +257,9 @@ void MappleViewer::draw_animation_window() {
         ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
         ImGui::SetItemTooltip("The axis runs along the dragged screen segment through the surface under "
                               "the press, and the camera circles around it. A click (no drag) uses the "
-                              "view's up axis through that point. Ctrl+Z restores the path from before "
-                              "the tool was armed.");
+                              "view's up axis through that point. The poses look at the axis; Aim... "
+                              "re-aims them at a clicked point or a traced stroke. Ctrl+Z restores the "
+                              "path from before the tool was armed.");
         int apply = orbit_replaces_path_ ? 0 : 1;
         if (ImGui::RadioButton("Replace path", &apply, 0))
             orbit_replaces_path_ = true;
@@ -270,8 +287,8 @@ void MappleViewer::draw_animation_window() {
         ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
         ImGui::SetItemTooltip("The camera track follows the traced surface points, each lifted along "
                               "the surface normal under it. Where the surface has no normal (e.g. a "
-                              "point cloud), the view's up direction is used. After the track, click "
-                              "one point to aim at it, or drag to trace the aim along the track.");
+                              "point cloud), the view's up direction is used. The poses look straight "
+                              "down; Aim... re-aims them at a clicked point or a traced stroke.");
 
         float height = camera_path_builder_->flight_height_in_scene_heights();
         if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
@@ -318,6 +335,7 @@ void MappleViewer::draw_animation_window() {
 void MappleViewer::add_camera_keyframe() {
     if (!kfi_->add_keyframe(*camera()->frame()))
         return;
+    clear_aim_range(); // the edited path is no longer the one the aim prompt offers
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (show_camera_path_)
         set_camera_path_visible(true);
@@ -329,6 +347,7 @@ void MappleViewer::remove_last_camera_keyframe() {
     if (kfi_->number_of_keyframes() == 0)
         return;
     kfi_->delete_last_keyframe();
+    clear_aim_range();
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     LOG(INFO) << "last keyframe removed (" << kfi_->number_of_keyframes() << " remaining)";
     update();
@@ -338,6 +357,7 @@ void MappleViewer::clear_camera_path() {
     if (kfi_->number_of_keyframes() == 0)
         return;
     kfi_->delete_path();
+    clear_aim_range();
     keyframe_editor_->set_selected(-1);
     if (show_camera_path_) {
         release_camera_path_guides();
@@ -353,6 +373,7 @@ void MappleViewer::insert_camera_keyframe() {
         LOG(ERROR) << "failed to insert a keyframe";
         return;
     }
+    clear_aim_range(); // the inserted keyframe shifts the path's indices
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << "keyframe no. " << index + 1 << " inserted (" << kfi_->number_of_keyframes()
@@ -364,6 +385,7 @@ void MappleViewer::delete_camera_keyframe() {
     const int index = keyframe_editor_->delete_selected();
     if (index < 0)
         return;
+    clear_aim_range(); // the deleted keyframe shifts the path's indices
     if (kfi_->number_of_keyframes() == 0 && show_camera_path_) {
         release_camera_path_guides();
         restore_scene_bounds();
@@ -443,6 +465,7 @@ void MappleViewer::import_camera_path() {
         return;
     if (kfi_->read_keyframes(file_name)) {
         keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
+        clear_aim_range(); // the imported path has no mode default
         if (show_camera_path_)
             set_camera_path_visible(true);
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << file_name;
@@ -473,8 +496,7 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
     if (!camera_path_builder_)
         return;
 
-    cancel_path_gesture();
-    clear_flight_gesture(); // arming starts from a clean slate
+    cancel_path_gesture(); // arming starts from a clean slate
     if (path_tool_ == tool) { // clicking the armed tool disarms it
         path_tool_ = PathTool::Off;
         update();
@@ -492,6 +514,10 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
             return;
         }
     }
+    if (tool == PathTool::Aim && !aim_range_.valid) {
+        LOG(WARNING) << "there is no generated path to re-aim";
+        return;
+    }
 
     path_tool_ = tool;
     snapshot_camera_path(); // Ctrl+Z restores the path the tool started from
@@ -500,13 +526,14 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
                   : tool == PathTool::Orbit
                     ? "orbit tool armed: drag across the scene to set the orbit axis "
                       "(a click uses the vertical axis)"
-                    : "flight tool armed: drag over the surface to trace the camera track");
+                    : tool == PathTool::Flight
+                      ? "flight tool armed: drag over the surface to trace the camera track"
+                      : "aim tool armed: click a point or drag over the surface to re-aim the last path");
     update();
 }
 
 void MappleViewer::cancel_camera_path_tool() {
     cancel_path_gesture();
-    clear_flight_gesture();
     path_tool_ = PathTool::Off;
     update();
 }
@@ -514,8 +541,6 @@ void MappleViewer::cancel_camera_path_tool() {
 void MappleViewer::cancel_path_gesture() {
     tracing_route_ = false;
     orbit_dragging_ = false;
-    flight_tracking_ = false;
-    flight_aiming_ = false;
     route_stroke_screen_.clear();
     route_segment_.clear();
     route_segments_.clear();
@@ -573,6 +598,7 @@ void MappleViewer::commit_ground_route() {
 
     // The stroke carries a surface sample per point: the contact point and the
     // walker's up there, so the poses tilt with the terrain.
+    const int before = static_cast<int>(kfi_->number_of_keyframes());
     std::size_t added = 0;
     for (const auto &segment : route_segments_) {
         std::vector<vec3> points, ups;
@@ -591,10 +617,11 @@ void MappleViewer::commit_ground_route() {
         return; // the tool stays armed for another try
     }
     path_tool_ = PathTool::Off; // one-shot
+    set_aim_range(PathTool::GroundWalk, before, static_cast<int>(kfi_->number_of_keyframes()) - 1);
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
-    LOG(INFO) << added << " walking keyframes added to the camera path";
+    LOG(INFO) << added << " walking keyframes added to the camera path (aiming along the route)";
     update();
 }
 
@@ -617,26 +644,83 @@ void MappleViewer::commit_flight_track() {
     }
     route_segments_.clear();
 
-    flight_positions_ = camera_path_builder_->flight_stations(points, ups);
-    if (flight_positions_.size() < 2) {
-        flight_positions_.clear();
+    const std::vector<vec3> stations = camera_path_builder_->flight_stations(points, ups);
+    if (stations.size() < 2) {
         LOG(WARNING) << "the stroke is too short to trace a flight track";
         return; // the tool stays armed for another try
     }
-    flight_aim_ready_ = true;
-    LOG(INFO) << flight_positions_.size()
-              << " flight stations traced: click to aim at one target, or drag to trace the aim";
+
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+    const int before = static_cast<int>(kfi_->number_of_keyframes());
+    // No aims: the flight's default, straight down.
+    const std::size_t added = camera_path_builder_->generate_flight(stations, {});
+    if (added == 0) {
+        LOG(WARNING) << "the flight track could not be turned into keyframes";
+        return;
+    }
+    path_tool_ = PathTool::Off; // one-shot
+    set_aim_range(PathTool::Flight, before, static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    if (!show_camera_path_)
+        set_camera_path_visible(true);
+    LOG(INFO) << added << " flight keyframes added to the camera path (aiming straight down)";
     update();
 }
 
-void MappleViewer::commit_flight_aim() {
-    if (!camera_path_builder_ || !flight_aim_ready_ || flight_positions_.size() < 2) {
-        clear_flight_gesture();
+void MappleViewer::set_aim_range(PathTool mode, int first, int last) {
+    aim_range_.valid = first >= 0 && last >= first;
+    aim_range_.mode = mode;
+    aim_range_.first = first;
+    aim_range_.last = last;
+}
+
+void MappleViewer::clear_aim_range() {
+    aim_range_ = AimRange{};
+}
+
+void MappleViewer::aim_path_range(const std::vector<vec3> &targets) {
+    if (!camera_path_builder_ || !aim_range_.valid)
+        return;
+    const int count = aim_range_.last - aim_range_.first + 1;
+    if (count < 1 || static_cast<int>(targets.size()) != count)
+        return;
+
+    std::vector<Frame> frames;
+    frames.reserve(static_cast<std::size_t>(count));
+    for (int i = aim_range_.first; i <= aim_range_.last; ++i)
+        frames.push_back(kfi_->keyframe(static_cast<std::size_t>(i)));
+
+    // A walking pose keeps the up it stands on and an orbit pose keeps the orbit's
+    // up, so each pose's own up is the roll reference; a flight keeps the horizon
+    // level with the view's up instead (its straight-down default has no usable roll).
+    std::vector<vec3> roll_ups;
+    if (aim_range_.mode == PathTool::Flight)
+        roll_ups.assign(static_cast<std::size_t>(count), camera_path_builder_->ground_up_direction());
+
+    const std::vector<Frame> aimed = camera_path_builder_->aimed_frames(frames, targets, roll_ups);
+    if (static_cast<int>(aimed.size()) != count) {
+        LOG(WARNING) << "the aim could not be applied to the path";
         return;
     }
 
+    snapshot_camera_path(); // Ctrl+Z restores the aims from before the gesture
+    if (kfi_->is_interpolation_started())
+        kfi_->stop_interpolation();
+    for (int i = 0; i < count; ++i)
+        kfi_->set_keyframe_orientation(static_cast<std::size_t>(aim_range_.first + i),
+                                       aimed[i].orientation());
+    LOG(INFO) << count << " keyframe" << (count == 1 ? "" : "s")
+              << " re-aimed (Ctrl+Z restores their poses)";
+    update();
+}
+
+void MappleViewer::commit_aim_stroke() {
+    if (!camera_path_builder_)
+        return;
+
     // The last segment may hold the click's single sample, so all of it is kept: one
-    // point aims every station, more are sampled along the aim stroke.
+    // point aims every keyframe there, more are sampled along the aim stroke.
     std::vector<vec3> points;
     for (const auto &segment : route_segments_)
         for (const auto &sample : segment)
@@ -647,42 +731,29 @@ void MappleViewer::commit_flight_aim() {
     route_segments_.clear();
     if (points.empty()) {
         LOG(WARNING) << "the aim has to end on a visible model surface";
-        return; // the track keeps its stations for another aim
+        return; // the tool stays armed for another try
+    }
+    if (!aim_range_.valid) {
+        LOG(WARNING) << "the path to re-aim is gone (it was edited or replaced)";
+        path_tool_ = PathTool::Off;
+        update();
+        return;
     }
 
+    const int count = aim_range_.last - aim_range_.first + 1;
     std::vector<vec3> targets;
-    if (points.size() < 2) // a click: every station aims at the picked point
-        targets.assign(flight_positions_.size(), points.front());
+    if (points.size() < 2) // a click: every keyframe aims at the picked point
+        targets.assign(static_cast<std::size_t>(count), points.front());
     else
-        targets = camera_path_builder_->aim_targets(points, flight_positions_.size());
-    if (targets.size() != flight_positions_.size()) {
-        LOG(WARNING) << "the aim could not be sampled along the flight track";
+        targets = camera_path_builder_->aim_targets(points, static_cast<std::size_t>(count));
+    if (static_cast<int>(targets.size()) != count) {
+        LOG(WARNING) << "the aim could not be sampled along the path";
         return;
     }
 
-    if (kfi_->is_interpolation_started())
-        kfi_->stop_interpolation();
-    const std::size_t added = camera_path_builder_->generate_flight(flight_positions_, targets);
-    if (added == 0) {
-        LOG(WARNING) << "the flight track could not be turned into keyframes";
-        return;
-    }
-
+    aim_path_range(targets);
     path_tool_ = PathTool::Off; // one-shot
-    flight_aim_ready_ = false;
-    flight_positions_.clear();
-    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
-    if (!show_camera_path_)
-        set_camera_path_visible(true);
-    LOG(INFO) << added << " flight keyframes added to the camera path";
     update();
-}
-
-void MappleViewer::clear_flight_gesture() {
-    flight_tracking_ = false;
-    flight_aiming_ = false;
-    flight_aim_ready_ = false;
-    flight_positions_.clear();
 }
 
 void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
@@ -720,7 +791,9 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
     path_tool_ = PathTool::Off; // one-shot
     if (orbit_replaces_path_)
         kfi_->delete_path();
+    const int before = static_cast<int>(kfi_->number_of_keyframes());
     camera_path_builder_->generate_orbit(axis, camera()->scene_center());
+    set_aim_range(PathTool::Orbit, before, static_cast<int>(kfi_->number_of_keyframes()) - 1);
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
@@ -752,6 +825,7 @@ bool MappleViewer::undo_camera_path() {
     const int count = static_cast<int>(kfi_->number_of_keyframes());
     keyframe_editor_->set_selected(camera_path_snapshot_.keyframe_index);
     camera_path_snapshot_.valid = false;
+    clear_aim_range(); // the restored path need not be the one the prompt offered
 
     if (count > 0 && !show_camera_path_)
         set_camera_path_visible(true);

@@ -463,14 +463,15 @@ private:
         Off,         // no path tool is armed
         GroundWalk,  // the next drag on the ground becomes a walking route
         Orbit,       // the next click picks the orbit axis
-        Flight       // a ground drag traces the camera track, then a click or drag sets the aim
+        Flight,      // the next drag traces the camera track
+        Aim          // the next click or stroke re-aims the last generated path
     };
 
     // One-shot path tools. Arming makes the next gesture in the scene belong to the
-    // tool - a drag traces a walking route along the ground, a click picks the orbit
-    // axis, and a flight traces its camera track then its aim - and the tool disarms
-    // itself once its gestures are applied. Esc or the window's Cancel button disarms
-    // it immediately.
+    // tool and the tool disarms itself once its gesture is applied: a drag traces a
+    // walking route along the ground, a click or drag sets the orbit axis, a drag
+    // traces a flight track, and a click or drag re-aims the path the last of those
+    // generated. Esc or the window's Cancel button disarms a tool immediately.
     void arm_camera_path_tool(PathTool tool);
     void cancel_camera_path_tool();
     void cancel_path_gesture();
@@ -479,18 +480,35 @@ private:
     // stroke is split into segments where a drag sample missed the visible surface.
     void commit_ground_route();
 
-    // Turns the traced stroke into flight stations (lifted by the flight height) and
-    // waits for the aim gesture; a click aims every station at one target, a drag
-    // traces an aim stroke that is sampled per station.
+    // Turns the traced stroke into flight keyframes appended to the path: the stations
+    // rise along the surface normal under each foot and look straight down by default.
     void commit_flight_track();
-    void commit_flight_aim();
-    void clear_flight_gesture();
 
     // Applies the orbit gesture: the axis passes through the surface under \p from
     // and runs along the dragged screen segment; a click (no drag) keeps the
     // turntable default, the view's up axis through that point. The orbit replaces
     // the path or is appended to it, as the Orbit tool is set.
     void apply_orbit_gesture(const easy3d::vec2 &from, const easy3d::vec2 &to);
+
+    // The range of keyframes the Aim tool re-aims: what the last path gesture (or the
+    // last aim) produced. Any edit that adds, removes or replaces keyframes clears it,
+    // and the aim prompt goes away with it.
+    struct AimRange {
+        bool valid = false;
+        PathTool mode = PathTool::Off;
+        int first = 0;
+        int last = -1;
+    };
+    void set_aim_range(PathTool mode, int first, int last);
+    void clear_aim_range();
+
+    // Re-aims the keyframes of aim_range_ at one target per keyframe. The walking and
+    // orbit poses keep their own up as the roll reference; a flight keeps the horizon
+    // level with the view's up. Snapshots the path for Ctrl+Z first.
+    void aim_path_range(const std::vector<easy3d::vec3> &targets);
+    // The Aim tool's release: one picked point aims every keyframe there, a traced
+    // stroke supplies one target per keyframe in path order.
+    void commit_aim_stroke();
 
     // The path as it was before the last path tool was armed or keyframe edit, for
     // Ctrl+Z. One level: restoring it consumes the snapshot.
@@ -853,9 +871,9 @@ private:
     // Which one-shot path tool owns the next gesture.
     PathTool path_tool_ = PathTool::Off;
 
-    // The gesture owned by the armed one-shot path tool. A route stroke keeps the
-    // accepted screen trail for the live preview and the picked surface samples,
-    // split into segments where the drag left the visible surface.
+    // The gesture owned by the armed one-shot path tool. A route, track or aim stroke
+    // keeps the accepted screen trail for the live preview and the picked surface
+    // samples, split into segments where the drag left the visible surface.
     bool tracing_route_ = false;
     // A route sample: the surface point under the cursor and the walker's up there.
     struct RouteSample {
@@ -866,11 +884,6 @@ private:
     std::vector<RouteSample> route_segment_;                 // picked samples of the current segment
     std::vector<std::vector<RouteSample>> route_segments_;   // segments completed by a missed pick
 
-    // Flight: which phase the stroke belongs to, and the stations awaiting the aim.
-    bool flight_tracking_ = false;
-    bool flight_aiming_ = false;
-    bool flight_aim_ready_ = false;
-    std::vector<easy3d::vec3> flight_positions_;
     // The orbit gesture: a drag across the scene sets the axis (previewed as the
     // dragged segment); the release applies it.
     bool orbit_dragging_ = false;
@@ -878,6 +891,8 @@ private:
     easy3d::vec2 orbit_drag_to_;
     // The Orbit tool clears the path before generating instead of appending.
     bool orbit_replaces_path_ = true;
+    // The keyframes the Aim tool acts on; the aim prompt disappears when they change.
+    AimRange aim_range_;
     CameraPathSnapshot camera_path_snapshot_;
 
     float left_width_ = 250.0f;

@@ -698,38 +698,36 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     }
 
     // The armed one-shot path tool owns the next plain left press in the scene: a
-    // walk drag starts its route stroke there, and an orbit drag starts its axis.
-    // Alt still belongs to model manipulation and the clipping plane.
+    // walk, flight or aim stroke starts there (an aim stroke replaces the path's
+    // aims), and an orbit drag starts its axis. Alt still belongs to model
+    // manipulation and the clipping plane.
     const PathTool tool = path_tool_;
     if (tool != PathTool::Off && button == BUTTON_LEFT &&
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
-        if (tool == PathTool::GroundWalk || tool == PathTool::Flight) {
-            // The project stroke follows the visible surface under the cursor, so the
-            // terrain supplies each stroke point's contact point and its up direction
-            // (the surface normal) there; no ground plane is assumed. A flight's
-            // second gesture is the same kind of stroke, traced for the aim.
-            const bool aiming = tool == PathTool::Flight && flight_aim_ready_;
-            if (camera_path_builder_->scene_box().is_valid()) {
-                vec3 point, up;
-                if (route_point_at(x, y, point, up)) {
-                    tracing_route_ = true;
-                    flight_tracking_ = tool == PathTool::Flight && !aiming;
-                    flight_aiming_ = aiming;
-                    route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
-                    route_segment_.assign(1, RouteSample{point, up});
-                    clear_hover();
-                    update();
-                } else
-                    LOG(WARNING) << (aiming ? "the aim has to start on a visible model surface"
-                                            : "the stroke has to start on a visible model surface");
-            } else
-                LOG(WARNING) << "the path tools need a visible model";
-        } else {
+        if (tool == PathTool::Orbit) {
             orbit_dragging_ = true;
             orbit_drag_from_ = vec2(static_cast<float>(x), static_cast<float>(y));
             orbit_drag_to_ = orbit_drag_from_;
             clear_hover();
             update();
+        } else if (tool != PathTool::Aim && !camera_path_builder_->scene_box().is_valid())
+            LOG(WARNING) << "the path tools need a visible model";
+        else {
+            // Every stroke follows the visible surface under the cursor, so the
+            // terrain supplies each sample's contact point and its up direction there;
+            // no ground plane is assumed. The aim stroke is the same kind of stroke:
+            // its points become the aim targets.
+            vec3 point, up;
+            if (route_point_at(x, y, point, up)) {
+                tracing_route_ = true;
+                route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
+                route_segment_.assign(1, RouteSample{point, up});
+                clear_hover();
+                update();
+            } else
+                LOG(WARNING) << (tool == PathTool::Aim
+                                 ? "the aim has to start on a visible model surface"
+                                 : "the stroke has to start on a visible model surface");
         }
         return true;
     }
@@ -797,13 +795,11 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 
     if (tracing_route_ && button == BUTTON_LEFT) {
         tracing_route_ = false;
-        if (flight_tracking_) {
-            flight_tracking_ = false;
+        if (path_tool_ == PathTool::Aim)
+            commit_aim_stroke();
+        else if (path_tool_ == PathTool::Flight)
             commit_flight_track();
-        } else if (flight_aiming_) {
-            flight_aiming_ = false;
-            commit_flight_aim();
-        } else
+        else
             commit_ground_route();
         route_stroke_screen_.clear();
         update();
@@ -1812,8 +1808,7 @@ void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &co
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {
     const bool stroke = tracing_route_ && route_stroke_screen_.size() >= 2;
-    const bool pending_flight = flight_aim_ready_ && !flight_positions_.empty();
-    if (!stroke && !orbit_dragging_ && !pending_flight)
+    if (!stroke && !orbit_dragging_)
         return;
     const unsigned fw = static_cast<unsigned>(framebuffer_width());
     const unsigned fh = static_cast<unsigned>(framebuffer_height());
@@ -1845,38 +1840,6 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
         segments[0] = orbit_drag_from_ * dpi - dir * reach;
         segments[1] = orbit_drag_from_ * dpi + dir * reach;
         commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
-    }
-    if (pending_flight) {
-        // The traced track awaiting its aim: its stations, joined in order and
-        // marked, so the aim gesture visibly targets the sampled poses.
-        std::vector<vec2> track;
-        std::vector<vec2> marks;
-        bool has_previous = false;
-        vec2 previous;
-        for (const vec3 &station : flight_positions_) {
-            vec2 screen; // logical, like the stroke trail
-            if (!project_to_screen(camera(), station, screen)) {
-                has_previous = false;
-                continue;
-            }
-            if (has_previous) {
-                track.push_back(previous * dpi);
-                track.push_back(screen * dpi);
-            }
-            previous = screen;
-            has_previous = true;
-            const float r = 3.0f; // logical pixels
-            const vec2 corners[4] = {vec2(screen.x - r, screen.y - r), vec2(screen.x + r, screen.y - r),
-                                     vec2(screen.x + r, screen.y + r), vec2(screen.x - r, screen.y + r)};
-            for (int i = 0; i < 4; ++i) {
-                marks.push_back(corners[i] * dpi);
-                marks.push_back(corners[(i + 1) % 4] * dpi);
-            }
-        }
-        if (!track.empty())
-            commands.push_back(graphics::shape::draw_lines_2d(track, setting::highlight_color, fw, fh, dpi));
-        if (!marks.empty())
-            commands.push_back(graphics::shape::draw_lines_2d(marks, setting::highlight_color, fw, fh, dpi));
     }
 }
 

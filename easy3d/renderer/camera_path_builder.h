@@ -53,12 +53,18 @@ namespace easy3d {
  *        route,
  *      - orbiting a picked axis: generate_orbit() turns a line into a closed orbit,
  *      - recording a flight: flight_stations() lifts a traced ground stroke to camera
- *        stations at the flight height, aim_targets() turns an aim stroke into one
- *        target per station (a clicked target is a repeated aim_targets() value), and
- *        generate_flight() appends the aimed poses, and
+ *        stations at the flight height and generate_flight() appends the poses aiming
+ *        straight down by default, or at one target per station when a target list is
+ *        given (aim_targets() turns an aim stroke into such a list; a clicked target
+ *        is a repeated aim_targets() value),
  *      - pure builders for previewing or editing a path before it is inserted:
  *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
- *        flight_frames() (a position track with a separate aim track).
+ *        flight_frames() (a position track with a separate aim track), and
+ *      - aimed poses for any of them: every builder produces its mode's default aim
+ *        (ground: along the route, orbit: at the axis, flight: straight down), and
+ *        aimed_frames() re-aims existing poses at a target per pose, keeping their
+ *        position and roll reference. This is how an app lets the user replace a
+ *        mode's default aims by a clicked point or a traced aim stroke.
  *
  *      The class borrows a camera and a keyframe interpolator. The builders return
  *      plain frames; the generating functions append them to the interpolator the
@@ -325,10 +331,12 @@ public:
     /// \details Typically \p positions comes from flight_stations() (or recorded
     ///      poses) and \p targets from aim_targets(); the aim is exact at each station
     ///      and the interpolator smooths it in between. The roll reference is the
-    ///      view's up at the time of the call, so the camera never banks.
+    ///      view's up at the time of the call, so the camera never banks. An empty
+    ///      \p targets keeps the flight's default aim, straight down.
     /// \param positions Camera positions in path order; at least two are needed.
-    /// \param targets One aim point per position, in the same order. A target equal
-    ///      to its position looks down the reversed roll reference.
+    /// \param targets One aim point per position, in the same order, or empty for the
+    ///      default aim. A target equal to its position looks down the reversed roll
+    ///      reference.
     /// \return The number of poses generated, or 0 if there are fewer than two
     ///      positions or the inputs do not pair up.
     /// \note The interpolator may accept fewer keyframes; see the class description.
@@ -384,15 +392,38 @@ public:
     ///      interpolator smooths both; between stations the aim is the interpolated
     ///      orientation, not an exact target lock. Each station's orientation is an
     ///      exact look-at: a degenerate \p up falls back to +Z, and a target equal to
-    ///      its position looks down the reversed \p up.
+    ///      its position looks down the reversed \p up. An empty \p targets is the
+    ///      flight's default aim: every station looks straight down, along the
+    ///      reversed \p up (a straight-down view has no preferred roll, so the basis
+    ///      is deterministic but not tied to \p up).
     /// \param positions Camera positions in path order; at least two are needed.
-    /// \param targets One aim point per position, in the same order.
+    /// \param targets One aim point per position, in the same order, or empty for the
+    ///      default aim.
     /// \param up Unit up reference that keeps the camera roll level.
     /// \return The poses, or an empty vector if there are fewer than two positions or
-    ///      the inputs do not pair up.
+    ///      \p targets does not pair up with them.
     std::vector<Frame> flight_frames(const std::vector<vec3> &positions,
                                      const std::vector<vec3> &targets,
                                      const vec3 &up) const;
+
+    /// \brief \p frames re-aimed so each pose looks at the matching target.
+    /// \details The poses keep their positions and, by default, their own up as the
+    ///      roll reference: a walking pose keeps standing upright on its terrain and
+    ///      an orbit pose keeps the orbit's up. Some modes need another reference
+    ///      (a flight keeps the horizon level), which \p roll_ups supplies. The aim is
+    ///      an exact look-at per pose, with look_at_orientation()'s degenerate rules
+    ///      (a target equal to its position looks down the reversed roll reference).
+    ///      This is how a default-aimed path is aimed at a clicked point or a traced
+    ///      aim stroke.
+    /// \param frames The poses to re-aim; at least one is needed.
+    /// \param targets One aim point per pose, in the same order.
+    /// \param roll_ups One up reference per pose, in the same order, or empty to keep
+    ///      each pose's own up.
+    /// \return The re-aimed poses, or an empty vector if \p frames is empty or
+    ///      \p targets or a non-empty \p roll_ups does not pair up with it.
+    std::vector<Frame> aimed_frames(const std::vector<Frame> &frames,
+                                    const std::vector<vec3> &targets,
+                                    const std::vector<vec3> &roll_ups = {}) const;
     //@}
 
 protected:

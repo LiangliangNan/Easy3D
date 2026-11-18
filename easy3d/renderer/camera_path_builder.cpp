@@ -369,13 +369,37 @@ namespace easy3d {
     std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<vec3> &positions,
                                                         const std::vector<vec3> &targets, const vec3 &up) const {
         std::vector<Frame> frames;
-        if (positions.size() < 2 || positions.size() != targets.size())
+        if (positions.size() < 2 || (!targets.empty() && positions.size() != targets.size()))
             return frames;
 
         frames.reserve(positions.size());
-        for (size_t i = 0; i < positions.size(); ++i)
-            frames.emplace_back(positions[i], look_at_orientation(positions[i], targets[i], up));
+        for (size_t i = 0; i < positions.size(); ++i) {
+            // No targets: the default aim, straight down along the reversed up.
+            const vec3 target = targets.empty() ? positions[i] - up : targets[i];
+            frames.emplace_back(positions[i], look_at_orientation(positions[i], target, up));
+        }
         return frames;
+    }
+
+    std::vector<Frame> CameraPathBuilder::aimed_frames(const std::vector<Frame> &frames,
+                                                       const std::vector<vec3> &targets,
+                                                       const std::vector<vec3> &roll_ups) const {
+        std::vector<Frame> aimed;
+        if (frames.empty() || frames.size() != targets.size())
+            return aimed;
+        if (!roll_ups.empty() && roll_ups.size() != frames.size())
+            return aimed;
+
+        aimed.reserve(frames.size());
+        for (size_t i = 0; i < frames.size(); ++i) {
+            // Keep each pose's roll unless the caller supplies the mode's reference.
+            const vec3 up = roll_ups.empty()
+                                ? frames[i].orientation().rotate(vec3(0.0f, 1.0f, 0.0f))
+                                : roll_ups[i];
+            aimed.emplace_back(frames[i].position(),
+                               look_at_orientation(frames[i].position(), targets[i], up));
+        }
+        return aimed;
     }
 
     void CameraPathBuilder::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights) {

@@ -172,6 +172,51 @@ int main() {
                     "a flight pose does not aim at its target");
         }
 
+        // --- the flight's default aim: straight down -------------------------
+        const std::vector<Frame> down = builder.flight_frames(positions, {}, vec3(0.0f, 1.0f, 0.0f));
+        require(down.size() == positions.size(), "the default-aimed flight dropped stations");
+        for (std::size_t i = 0; i < down.size(); ++i) {
+            require(near(down[i].position(), positions[i]), "a default-aimed flight pose is not at its station");
+            require(near(down[i].orientation().rotate(local_forward), vec3(0.0f, -1.0f, 0.0f), 1e-4f),
+                    "a default-aimed flight pose does not look straight down");
+        }
+
+        // --- re-aiming default poses ----------------------------------------
+        kfi.delete_path();
+        const std::vector<Frame> default_orbit = builder.orbit_frames(axis, vec3(0.0f));
+        const std::vector<vec3> orbit_targets(default_orbit.size(), vec3(0.0f, 0.0f, 3.0f));
+        const std::vector<Frame> reaimed = builder.aimed_frames(default_orbit, orbit_targets);
+        require(reaimed.size() == default_orbit.size(), "aimed_frames dropped poses");
+        for (std::size_t i = 0; i < reaimed.size(); ++i) {
+            require(near(reaimed[i].position(), default_orbit[i].position()), "an aimed pose moved");
+            const vec3 view = normalize(orbit_targets[i] - reaimed[i].position());
+            require(near(reaimed[i].orientation().rotate(local_forward), view, 1e-4f),
+                    "an aimed pose does not look at its target");
+            const vec3 roll_up = default_orbit[i].orientation().rotate(local_up);
+            require(near(reaimed[i].orientation().rotate(vec3(1.0f, 0.0f, 0.0f)),
+                         normalize(cross(view, roll_up)), 1e-3f),
+                    "an aimed pose lost its own up as the roll reference");
+        }
+        require(builder.aimed_frames(default_orbit, {vec3(0.0f)}).empty(),
+                "aimed_frames accepted unpaired targets");
+        require(builder.aimed_frames(default_orbit, orbit_targets, {vec3(0.0f, 1.0f, 0.0f)}).empty(),
+                "aimed_frames accepted unpaired roll references");
+
+        // A flight re-aimed level: the supplied roll reference keeps the horizon
+        // level even though its default (straight-down) poses have no usable roll.
+        std::vector<vec3> level_targets;
+        for (const vec3 &p : positions)
+            level_targets.emplace_back(100.0f, p.y, p.z);
+        const std::vector<vec3> level_ups(positions.size(), vec3(0.0f, 1.0f, 0.0f));
+        const std::vector<Frame> level = builder.aimed_frames(down, level_targets, level_ups);
+        require(level.size() == positions.size(), "the aimed flight dropped stations");
+        for (std::size_t i = 0; i < level.size(); ++i) {
+            require(near(level[i].orientation().rotate(local_forward), vec3(1.0f, 0.0f, 0.0f), 1e-4f),
+                    "an aimed flight pose does not look at its target");
+            require(near(level[i].orientation().rotate(local_up), vec3(0.0f, 1.0f, 0.0f), 1e-4f),
+                    "an aimed flight pose does not use the supplied roll reference");
+        }
+
         // --- an interactive flight: stations, aim, keyframes -----------------
         // The flight height is relative to the scene height: 0.5 of the 10-unit
         // extent along the view's up is 5 world units. The stroke spans 8 units, so
@@ -223,6 +268,13 @@ int main() {
             require(near(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, -1.0f), 1e-4f),
                     "a flight keyframe does not use the view's up as its roll reference");
         }
+        kfi.delete_path();
+        require(builder.generate_flight(flying, {}) == flying.size(),
+                "the default-aimed flight did not reach the interpolator");
+        const vec3 down_dir = -builder.ground_up_direction();
+        for (std::size_t i = 0; i < flying.size(); ++i)
+            require(near(kfi.keyframe(i).orientation().rotate(local_forward), down_dir, 1e-4f),
+                    "a generated default-aimed flight pose does not look straight down");
         require(builder.generate_flight(flying, {vec3(0.0f)}) == 0, "generate_flight accepted unpaired aims");
     });
 }
