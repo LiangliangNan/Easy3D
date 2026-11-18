@@ -1995,9 +1995,19 @@ namespace easy3d {
 
         }
 
-        // Per-primitive highlight strengths of a vertex property, in draw order. A
-        // drawable whose vertices are indexed draws only the live ones, so the mask
-        // follows the vertex iteration order instead of the property slots.
+        /**
+         * \brief Per-primitive highlight strengths of a vertex property, in draw order.
+         * \details A drawable whose vertices are indexed draws only the live ones, so the
+         *      mask follows the vertex iteration order instead of the property slots.
+         * \param model The model that owns the property.
+         * \param name The name of the boolean vertex property that selects the
+         *      highlighted vertices.
+         * \param drawable The drawable being highlighted; its indices decide whether
+         *      the mask follows the vertex iteration order or the property slots.
+         * \param strength The strength written for every selected vertex.
+         * \return One strength per mask entry (0 for unselected vertices), or an empty
+         *      vector when the property does not exist.
+         */
         template <typename MODEL>
         std::vector<float> vertex_highlight_mask(MODEL *model, const std::string &name,
                                                  const Drawable *drawable, float strength) {

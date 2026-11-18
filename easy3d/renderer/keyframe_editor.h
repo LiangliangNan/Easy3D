@@ -75,6 +75,8 @@ namespace easy3d {
  */
 class KeyFrameEditor {
 public:
+    /// \brief The handle grabbed by a press: the KeyFrameGizmo handles plus the free
+    ///      grab of the camera glyph itself.
     using Handle = KeyFrameGizmo::Handle;
 
     /// \brief What release() ended: the keyframe the drag acted on, and whether it
@@ -101,33 +103,51 @@ public:
     /// \brief Sets the world size of the camera glyphs the handles are sized to.
     /// \details The host knows the glyph size (it draws them); the handles hug them.
     ///      A non-positive width draws no handles.
+    /// \param width The glyph's world size, i.e. the size the camera is drawn at.
     void set_glyph_width(float width);
+
+    /// \brief The glyph width set by set_glyph_width().
+    /// \return The glyph's world size.
     float glyph_width() const { return glyph_width_; }
 
     /// \brief Turns the handles on or off. Only the host knows whether the path is
     ///      visible and whether the user asked to edit it; both must hold.
+    /// \param editing \c true turns the handles on; \c false turns them off and
+    ///      abandons a drag in progress.
     void set_editing(bool editing);
+
+    /// \brief Whether the handles are on; see set_editing().
+    /// \return \c true when the handles are on.
     bool editing() const { return editing_; }
 
     /// \brief The keyframe that Prev/Next and the insert/delete operations act on, or
     ///      -1. Kept valid across path edits, so a selection of the last keyframe stays
     ///      on the last after a delete.
+    /// \return The selected keyframe index, or -1 when nothing is selected.
     int selected() const;
 
     /// \brief Selects \p index, clamped to the existing keyframes; a negative \p index
     ///      clears the selection.
+    /// \param index The keyframe to select; negative clears the selection.
     void set_selected(int index);
 
     /// \brief The selected keyframe whose handles are shown and edited, or -1 when
     ///      editing is off, nothing is selected or the interpolator is playing.
+    /// \return The index of the editable keyframe, or -1 when there is none.
     int editable_keyframe() const;
 
     /// \brief The handle under the cursor, or none; see KeyFrameGizmo::handle_at().
+    /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
+    /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
+    /// \return The handle under the cursor, or Handle::none.
     Handle handle_at(int x, int y) const;
 
     /// \brief Highlights the handle under the cursor; the overlay draws it prominent.
     /// \details Negative coordinates mean the cursor is not over the scene and clear
     ///      the highlight. Returns true when the highlight changed (the host redraws).
+    /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
+    /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
+    /// \return \c true when the highlight changed and the host should redraw.
     bool update_hover(int x, int y);
 
     /// \brief Starts a drag on an editable keyframe: a gizmo handle first, then the
@@ -136,21 +156,36 @@ public:
     ///      (x, y), or -1; it is only called when no handle was hit. \p upright_plane
     ///      makes a glyph drag follow the plane of the pose's own up instead of the
     ///      screen plane. Returns true when the press belongs to the editor.
+    /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
+    /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
+    /// \param upright_plane \c true makes a glyph drag follow the pose's own up plane
+    ///      instead of the screen plane.
+    /// \param keyframe_at Returns the index of the keyframe whose glyph is at the
+    ///      given (x, y), or -1; called only when no handle was hit.
+    /// \return \c true when the press grabbed a handle or a glyph and the drag started.
     bool press(int x, int y, bool upright_plane, const std::function<int(int, int)> &keyframe_at);
 
     /// \brief Applies an active drag to \p camera's cursor position (x, y).
+    /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
+    /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
     void drag(int x, int y);
 
     /// \brief Ends the drag and reports what it did.
+    /// \return The keyframe the drag acted on and whether it moved or turned.
     DragResult release();
 
     /// \brief Aborts the drag, restoring the pose captured at the press.
     void cancel();
 
+    /// \brief Whether a drag started by press() is in progress.
+    /// \return \c true while a drag is in progress.
     bool dragging() const { return dragged_keyframe_ >= 0; }
 
     /// \brief Turns the selected pose so its view direction points at \p target,
     ///      keeping the pose's own up (its roll). False when nothing is editable.
+    /// \param target The world point to aim at.
+    /// \return \c true when the pose was turned; \c false when nothing is editable or
+    ///      \p target coincides with the pose's position.
     bool aim_at(const vec3 &target);
 
     /// \brief Inserts a keyframe after the selected one; returns its index, or -1.
@@ -158,11 +193,14 @@ public:
     ///      timing; past the last keyframe the last segment is extended so the new
     ///      glyph does not land on top of an existing one. The new keyframe becomes
     ///      the selection.
+    /// \return The index of the inserted keyframe, or -1 when there is no path or the
+    ///      path could not be rebuilt.
     int insert_after_selected();
 
     /// \brief Deletes the selected keyframe; returns its index, or -1.
     /// \details The keyframe after it becomes the selection (the new last keyframe
     ///      when the deleted one was last, or no selection when the path is now empty).
+    /// \return The index the deleted keyframe had, or -1 when nothing was deleted.
     int delete_selected();
 
     /// \brief Appends the selected pose's annotations and handles to \p commands.
@@ -170,6 +208,7 @@ public:
     ///      act on and the aim ray shows its view direction; both are drawn for one
     ///      scene radius and depth tested, like the handles. Nothing is appended
     ///      without an editable keyframe.
+    /// \param commands The command list the overlays are appended to.
     /// \param fb_width The framebuffer width in pixels.
     /// \param fb_height The framebuffer height in pixels.
     /// \param dpi The DPI scaling, so the strokes keep their apparent size.
