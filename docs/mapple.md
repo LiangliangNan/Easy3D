@@ -2359,12 +2359,13 @@ migrated; retirement can proceed whenever it is wanted.
 
 - The window now opens with a mode row of radio buttons - Free, Orbit..., Walk...,
   Flight... - instead of the three tool buttons plus Cancel. Free is manual
-  keyframing (its hint is "Move the camera, then add keyframes (Alt+K)."); picking a
+  keyframing (its hint is "Add keyframes (Alt+K), or choose a mode."); picking a
   path mode arms its tool, which owns the scene's left press until its gesture
   commits (the window then returns to Free) or Esc/Free takes it back, so the
   redundant Cancel button is gone. The Aim tool is not a mode: while it is armed
   the radios show no selection and the Aim hint replaces the mode hint.
-- `Add Keyframe` is shown only in Free, because the path modes create their
+- `Add Keyframe` was shown only in Free (removed in batch 137, when the hint's
+  Alt+K and the Camera menu took over), because the path modes create their
   keyframes from the gesture; `Insert After`, `Remove Last`, `Delete Selected` and
   `Clear` stay available in every mode.
 - The widgets are ordered by what they belong to: the file row (Import/Export and
@@ -2384,3 +2385,70 @@ migrated; retirement can proceed whenever it is wanted.
   "Mapple UI ready" and error-free log tails; the settings files are byte-wise
   unchanged. The radio clicks and gestures were not scripted; `easy3d/util/version.h`
   is unchanged.
+
+### 2026-11-18 — Clear moves to the file row (batch 135)
+
+- `Clear` empties the whole path, unlike its neighbours in the keyframe row, which
+  act on the selection or the last keyframe. The button now closes the file row at
+  the far right - Import/Export, the `.kf` note, then `Clear` aligned to the right
+  edge of the content area - so it is visibly a path-wide action and kept apart
+  from the keyframe tools. The keyframe row kept `Add Keyframe` (Free) and
+  `Remove Last` (the latter moves beside `Delete Selected` in batch 136).
+- Validation (2026-11-18, macOS): both check trees rebuilt and both backends launch
+  with "Mapple UI ready" and error-free log tails; a startup-window probe capture
+  shows `Clear` flush right on the file row with nothing clipped (probe reverted
+  and the trees rebuilt), and the settings files are byte-wise unchanged. No
+  clicks were scripted and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — Remove Last joins the selection buttons (batch 136)
+
+- `Remove Last` drops the last keyframe and never depends on the selection, so it
+  used to sit alone at the start of a row while `Insert After` and `Delete
+  Selected` shared the next. It now sits between them - `Insert After`, `Remove
+  Last`, `Delete Selected`, with Remove Last directly left of Delete Selected - so
+  the three keyframe actions read as one row, and `Remove Last` stays enabled
+  while the selection-dependent pair is disabled. The selection note moves to its
+  own line under the row, flush right, so it is read next to `Delete Selected`; on
+  the button row itself it would widen the auto-sized window (the row needs 485 px
+  against 414), and right-aligning the note alone keeps the 430 px window (it moves
+  beside `Next` in batch 138). The three buttons measure 351 px against the 414 px
+  of content the window leaves, so the row fits without widening.
+- Validation (2026-11-18, macOS): both check trees rebuilt; startup-window probe
+  captures show the three buttons on one row with `Remove Last` enabled while
+  nothing is selected and the note flush right underneath, nothing clipped; a probe
+  logging `GetWindowSize()` confirmed the window stays at 430 px, where the note on
+  the row had widened it to 501 px (probe reverted and the trees rebuilt). Both
+  backends launch with "Mapple UI ready" and error-free log tails; the settings
+  files are byte-wise unchanged. No clicks were scripted and
+  `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — Add Keyframe leaves the panel (batch 137)
+
+- The `Add Keyframe` button duplicated the Alt+K shortcut (and the Camera menu's
+  Add Keyframe item), so it is removed; the Free hint already names Alt+K. The
+  keyframe group now opens with the count and goes straight to the `Insert After`,
+  `Remove Last`, `Delete Selected` row, so the panel loses one row and the height
+  follows it (the width stays at 430 px). `add_camera_keyframe()` is unchanged: the
+  shortcut and the menu still call it.
+- Validation (2026-11-18, macOS): both check trees rebuilt; a startup-window probe
+  capture shows the keyframe group without the button row, the three buttons and
+  the flush-right selection note unchanged and nothing clipped (probe reverted and
+  the trees rebuilt); both backends launch with "Mapple UI ready" and error-free
+  log tails; the settings files are byte-wise unchanged. No clicks were scripted
+  and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — The selection note follows Next (batch 138)
+
+- The selection note ("no keyframe selected" / "no. N selected") now ends the
+  keyframe navigation row, straight after `Next >`, instead of sitting flush right
+  on a line of its own. It is no longer right-aligned (so the `CalcTextSize` there
+  is gone) and stays outside the `BeginDisabled` block, so it is never greyed out
+  with the navigation when the path is empty. The row measures 395 px at most
+  (Prev 80, the count, Next 80, the note 132), inside the 414 px of content the
+  430 px window leaves.
+- Validation (2026-11-18, macOS): both check trees rebuilt; a startup-window probe
+  capture shows the note right after `Next >` with nothing clipped, and a probe
+  logging `GetWindowSize()` confirms the window stays at 430 px (probe reverted and
+  the trees rebuilt); both backends launch with "Mapple UI ready" and error-free
+  log tails; the settings files are byte-wise unchanged. No clicks were scripted
+  and `easy3d/util/version.h` is unchanged.

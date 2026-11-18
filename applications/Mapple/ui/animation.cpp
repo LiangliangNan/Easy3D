@@ -104,6 +104,13 @@ void MappleViewer::draw_animation_window() {
         export_camera_path();
     ImGui::SameLine();
     ImGui::TextDisabled(".kf files");
+    // Clear empties the whole path, so it sits apart from the keyframe tools, at the
+    // far right of the file row.
+    constexpr float kClearWidth = 70.0f;
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - kClearWidth);
+    if (ImGui::Button("Clear", ImVec2(kClearWidth, 0)))
+        clear_camera_path();
 
     // Mode: how the next path is made. Free keyframes by hand; a path tool owns the
     // scene's left press until its gesture commits, or Esc/Free takes it back.
@@ -219,6 +226,8 @@ void MappleViewer::draw_animation_window() {
         ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
     }
 
+    // Spline strategy
+    ImGui::Separator();
     // The spline strategy shapes the path every mode makes, so it sits with the
     // mode rather than with the playback.
     const char *methods[] = {"interpolation", "fitting"};
@@ -227,20 +236,10 @@ void MappleViewer::draw_animation_window() {
         kfi->set_interpolation_method(
                 method == 0 ? KeyFrameInterpolator::INTERPOLATION : KeyFrameInterpolator::FITTING);
 
-    // Keyframes: made by the gesture in a path mode, by hand in Free.
+    // Keyframes: made by the gesture in a path mode, by hand in Free (Alt+K or the
+    // menu).
     ImGui::Separator();
     ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
-
-    if (tool == PathTool::Off) {
-        if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
-            add_camera_keyframe();
-        ImGui::SameLine();
-    }
-    if (ImGui::Button("Remove Last", ImVec2(110, 0)))
-        remove_last_camera_keyframe();
-    ImGui::SameLine();
-    if (ImGui::Button("Clear", ImVec2(70, 0)))
-        clear_camera_path();
 
     const bool selected = selected_index >= 0;
     ImGui::BeginDisabled(!selected);
@@ -249,15 +248,17 @@ void MappleViewer::draw_animation_window() {
     ImGui::SetItemTooltip("Inserts one after the selected, halfway to the next (past the end the last "
                           "segment is extended); drag its glyph to place it.");
     ImGui::SameLine();
+    ImGui::EndDisabled();
+    // Remove Last needs no selection, so it sits between the two selection-dependent
+    // buttons, next to Delete Selected.
+    if (ImGui::Button("Remove Last", ImVec2(110, 0)))
+        remove_last_camera_keyframe();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(!selected);
     if (ImGui::Button("Delete Selected", ImVec2(115, 0)))
         delete_camera_keyframe();
     ImGui::SetItemTooltip("Deletes the selected keyframe.");
     ImGui::EndDisabled();
-    ImGui::SameLine();
-    if (selected)
-        ImGui::TextDisabled("no. %d selected", selected_index + 1);
-    else
-        ImGui::TextDisabled("no keyframe selected");
 
     ImGui::BeginDisabled(count == 0);
     if (ImGui::Button("< Prev", ImVec2(80, 0)))
@@ -272,6 +273,13 @@ void MappleViewer::draw_animation_window() {
         goto_camera_keyframe(selected_index < 0 || selected_index >= count - 1
                                      ? 0 : selected_index + 1);
     ImGui::EndDisabled();
+
+    // The selection note belongs with the keyframe navigation, so it follows Next.
+    ImGui::SameLine();
+    if (selected)
+        ImGui::TextDisabled("no. %d selected", selected_index + 1);
+    else
+        ImGui::TextDisabled("no keyframe selected");
 
     bool visible = show_camera_path_;
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
