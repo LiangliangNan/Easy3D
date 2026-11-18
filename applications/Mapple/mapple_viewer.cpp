@@ -183,6 +183,19 @@ namespace {
         return true;
     }
 
+    // World length of one logical pixel at \p point's depth, measured through the
+    // camera. Lets an annotation keep its on-screen size while being real world-space
+    // geometry (so scene depth can occlude it). Zero when \p point has no stable
+    // projection (e.g. the camera sits on it).
+    float logical_pixel_size(const Camera *camera, const vec3 &point) {
+        vec2 origin, offset;
+        if (!project_to_screen(camera, point, origin) ||
+            !project_to_screen(camera, point + camera->right_vector(), offset))
+            return 0.0f;
+        const float pixels_per_unit = distance(origin, offset);
+        return pixels_per_unit > 1e-6f ? 1.0f / pixels_per_unit : 0.0f;
+    }
+
     // Distance, in logical pixels, from \p p to the segment [a, b].
     float screen_segment_distance(const vec2 &p, const vec2 &a, const vec2 &b) {
         const vec2 ab = b - a;
@@ -2043,6 +2056,7 @@ void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawComma
     if (!project_to_screen(camera(), center, center_screen))
         return;
     const float dpi = dpi_scaling();
+    const mat4 mvp = camera()->model_view_projection_matrix();
     const KeyframeHandle active = dragged_keyframe_ >= 0 ? keyframe_handle_ : hovered_keyframe_handle_;
     // Axis colors, so an arrow and its ring read as the same axis.
     const vec4 colors[3] = {vec4(0.92f, 0.28f, 0.25f, 1.0f),
@@ -2053,41 +2067,45 @@ void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawComma
         return turn ? static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::turn_x) + axis)
                     : static_cast<KeyframeHandle>(static_cast<int>(KeyframeHandle::move_x) + axis);
     };
+    // The handles are world-space ribbons depth tested against the scene, so the parts
+    // behind the camera glyph or other geometry are hidden instead of floating over it.
     // The grabbed or hovered element is drawn full and thick; the rest dims, so the
     // handle a gesture will act on stays unmistakable.
-    auto emit = [&](bool turn, int axis, const std::vector<vec2> &segments) {
+    auto emit = [&](bool turn, int axis, const std::vector<vec3> &segments) {
         if (segments.size() < 2)
             return;
         const bool hot = handle_for(turn, axis) == active;
         const bool dim = active != KeyframeHandle::none && !hot;
         vec4 color = colors[axis];
         color.w = dim ? 0.25f : hot ? 1.0f : 0.8f;
-        std::vector<vec2> framebuffer_points;
-        framebuffer_points.reserve(segments.size());
-        for (const vec2 &p : segments)
-            framebuffer_points.push_back(p * dpi);
-        commands.push_back(graphics::shape::draw_lines_2d(framebuffer_points, color, fw, fh,
-                                                          (hot ? 4.5f : 3.0f) * dpi));
+        graphics::DrawCommand command = graphics::shape::draw_lines_3d(
+                segments, std::vector<vec3>(segments.size(), vec3(1.0f)), mvp, fw, fh,
+                (hot ? 4.5f : 3.0f) * dpi);
+        command.color = color;
+        commands.push_back(command);
     };
 
-    // Arrows: the shaft plus two screen-space head wings at the tip.
+    // Arrows: the shaft plus a camera-facing head drawn at the tip.
     for (int i = 0; i < 3; ++i) {
-        vec2 start, tip;
+        vec2 start, tip_screen;
+        const vec3 tip = center + axes[i] * arrow_length;
         if (!project_to_screen(camera(), center, start) ||
-            !project_to_screen(camera(), center + axes[i] * arrow_length, tip))
+            !project_to_screen(camera(), tip, tip_screen))
             continue;
-        const vec2 shaft = tip - start;
-        const float length = shaft.length();
-        if (length < 10.0f) // seen end-on: no stable grab and no readable arrow
+        if (distance(start, tip_screen) < 10.0f) // seen end-on: no stable grab and no readable arrow
             continue;
-        const vec2 dir = shaft / length;
-        const vec2 side(-dir.y, dir.x);
-        const float head = std::min(12.0f, 0.4f * length);
-        const std::vector<vec2> segments = {
-                start, tip,
-                tip, tip - dir * head + side * (head * 0.45f),
-                tip, tip - dir * head - side * (head * 0.45f)};
-        emit(false, i, segments);
+        // The head plane spans the axis and the screen-space side of the axis, so the
+        // arrow stays readable from any direction.
+        vec3 side = cross(axes[i], view);
+        if (side.length2() < 1e-8f)
+            continue;
+        side.normalize();
+        const float pixel = logical_pixel_size(camera(), tip);
+        const float head = pixel > 0.0f ? std::min(0.4f * arrow_length, 12.0f * pixel)
+                                        : 0.4f * arrow_length;
+        const vec3 back = tip - axes[i] * head;
+        const vec3 wing = side * (head * 0.45f);
+        emit(false, i, {center, tip, tip, back + wing, tip, back - wing});
     }
 
     // Rings: only when their plane is not seen edge-on.
@@ -2097,18 +2115,13 @@ void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawComma
         vec3 u, v;
         plane_basis(axes[i], u, v);
         const int sample_count = 64;
-        std::vector<vec2> segments;
+        std::vector<vec3> segments;
         segments.reserve(sample_count * 2);
-        vec2 previous;
-        bool valid = project_to_screen(camera(), center + u * ring_radius, previous);
-        for (int s = 1; valid && s <= sample_count; ++s) {
+        vec3 previous = center + u * ring_radius;
+        for (int s = 1; s <= sample_count; ++s) {
             const float angle = 2.0f * static_cast<float>(M_PI) * static_cast<float>(s) /
                                 static_cast<float>(sample_count);
-            vec2 current;
-            valid = project_to_screen(
-                    camera(), center + (u * std::cos(angle) + v * std::sin(angle)) * ring_radius, current);
-            if (!valid)
-                break;
+            const vec3 current = center + (u * std::cos(angle) + v * std::sin(angle)) * ring_radius;
             segments.push_back(previous);
             segments.push_back(current);
             previous = current;
@@ -2258,39 +2271,47 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
             commands.push_back(graphics::shape::draw_lines_2d(marks, setting::highlight_color, fw, fh, dpi));
     }
     if (selected >= 0) {
-        // The handle Insert/Delete act on: a small square around the pose's projected
-        // position (the glyph itself is the scene geometry being edited). With the
-        // camera standing on this pose, the station is at the eye and has no screen
-        // position, so the square is skipped.
+        // The handle Insert/Delete act on: a camera-facing square around the pose's
+        // position (the glyph itself is the scene geometry being edited). It is real
+        // world-space geometry depth tested against the scene, so the glyph and other
+        // objects hide the part of it behind them. With the camera standing on this
+        // pose, the station is at the eye and has no screen position, so it is skipped.
         vec2 projected;
         const vec3 station = kfi_->keyframe_position(static_cast<std::size_t>(selected));
         if (project_to_screen(camera(), station, projected)) {
-            const float r = 7.0f; // logical pixels
-            const vec2 corners[4] = {vec2(projected.x - r, projected.y - r),
-                                     vec2(projected.x + r, projected.y - r),
-                                     vec2(projected.x + r, projected.y + r),
-                                     vec2(projected.x - r, projected.y + r)};
-            std::vector<vec2> segments;
-            segments.reserve(8);
-            for (int i = 0; i < 4; ++i) {
-                segments.push_back(corners[i] * dpi);
-                segments.push_back(corners[(i + 1) % 4] * dpi);
+            const mat4 mvp = camera()->model_view_projection_matrix();
+            const float pixel = logical_pixel_size(camera(), station);
+            if (pixel > 0.0f) {
+                const float r = 7.0f * pixel;
+                const vec3 right = camera()->right_vector() * r;
+                const vec3 up = camera()->up_vector() * r;
+                const vec3 corners[4] = {station - right - up, station + right - up,
+                                         station + right + up, station - right + up};
+                std::vector<vec3> segments;
+                segments.reserve(8);
+                for (int i = 0; i < 4; ++i) {
+                    segments.push_back(corners[i]);
+                    segments.push_back(corners[(i + 1) % 4]);
+                }
+                graphics::DrawCommand square = graphics::shape::draw_lines_3d(
+                        segments, std::vector<vec3>(segments.size(), vec3(1.0f)), mvp, fw, fh, 2.0f * dpi);
+                square.color = setting::highlight_color;
+                commands.push_back(square);
             }
-            commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, 2.0f * dpi));
 
             // The pose's aim: its stored orientation applied to the camera-space -Z
             // axis (what Camera::view_direction() does for the live camera), drawn for
             // one scene radius. Dimmed so it does not compete with the square and the
-            // gizmo.
+            // gizmo, and depth tested so it disappears behind the scene like a real ray.
             const vec3 aim_direction = kfi_->keyframe_orientation(static_cast<std::size_t>(selected))
                                                .rotate(vec3(0.0f, 0.0f, -1.0f));
-            vec2 tip;
-            if (project_to_screen(camera(), station + aim_direction * camera()->scene_radius(), tip)) {
-                const vec4 aim(setting::highlight_color.x, setting::highlight_color.y,
-                               setting::highlight_color.z, 0.6f);
-                commands.push_back(graphics::shape::draw_lines_2d(
-                        {projected * dpi, tip * dpi}, aim, fw, fh, dpi));
-            }
+            const vec4 aim(setting::highlight_color.x, setting::highlight_color.y,
+                           setting::highlight_color.z, 0.6f);
+            graphics::DrawCommand ray = graphics::shape::draw_lines_3d(
+                    {station, station + aim_direction * camera()->scene_radius()},
+                    std::vector<vec3>(2, vec3(1.0f)), mvp, fw, fh, dpi);
+            ray.color = aim;
+            commands.push_back(ray);
         }
     }
 }
