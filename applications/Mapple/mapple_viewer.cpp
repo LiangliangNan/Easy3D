@@ -1010,6 +1010,7 @@ void MappleViewer::apply_effect_parameters() {
 
 bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_captured_ = imgui_ && imgui_->wants_mouse();
+    aim_click_pending_ = false;
     if (mouse_captured_)
         return true;
     // The processing, snapshot and recording windows are modal: clicks outside
@@ -1102,6 +1103,16 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         }
     }
 
+    // A plain click that reaches this point aims the selected keyframe at the picked
+    // surface point (see mouse_release_event). Modifiers keep their own meanings:
+    // Shift sets the pivot, Ctrl drags a zoom region, Alt manipulates the model.
+    if (button == BUTTON_LEFT && modifiers == 0 && edit_keyframes_ &&
+        selected_keyframe() >= 0 && point_in_scene(x, y)) {
+        aim_click_pending_ = true;
+        aim_click_x_ = x;
+        aim_click_y_ = y;
+    }
+
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
@@ -1174,12 +1185,31 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     }
 
+    // A click that did not become a drag aims the selected keyframe at the surface
+    // point under the cursor. The pick itself waits for draw_gui(), like the other
+    // deferred picks; a missed click simply does nothing.
+    if (aim_click_pending_) {
+        aim_click_pending_ = false;
+        if (button == BUTTON_LEFT && std::abs(x - aim_click_x_) <= 2 && std::abs(y - aim_click_y_) <= 2 &&
+            edit_keyframes_ && selected_keyframe() >= 0 && point_in_scene(x, y)) {
+            pending_aim_pick_ = true;
+            aim_pick_x_ = x;
+            aim_pick_y_ = y;
+        }
+    }
+
     return Viewer::mouse_release_event(x, y, button, modifiers);
 }
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
+
+    // Moving turns the press into a gesture (camera orbit here): it is no longer the
+    // click that aims the selected keyframe.
+    if (aim_click_pending_ &&
+        (std::abs(x - aim_click_x_) > 2 || std::abs(y - aim_click_y_) > 2))
+        aim_click_pending_ = false;
 
     if (tracing_route_) {
         const vec2 sample(static_cast<float>(x), static_cast<float>(y));
@@ -1539,6 +1569,11 @@ void MappleViewer::process_pending_work() {
     if (pending_measure_pick_) {
         pending_measure_pick_ = false;
         measure_click(measure_pick_x_, measure_pick_y_);
+    }
+
+    if (pending_aim_pick_) {
+        pending_aim_pick_ = false;
+        aim_selected_keyframe_at(aim_pick_x_, aim_pick_y_);
     }
 
     if (pending_hover_) {
@@ -2309,7 +2344,7 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
                            setting::highlight_color.z, 0.6f);
             graphics::DrawCommand ray = graphics::shape::draw_lines_3d(
                     {station, station + aim_direction * camera()->scene_radius()},
-                    std::vector<vec3>(2, vec3(1.0f)), mvp, fw, fh, dpi);
+                    std::vector<vec3>(2, vec3(1.0f)), mvp, fw, fh, 2.0f * dpi);
             ray.color = aim;
             commands.push_back(ray);
         }

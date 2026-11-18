@@ -524,6 +524,9 @@ private:
     void drag_keyframe(int x, int y);
     void end_keyframe_drag();
     void cancel_keyframe_drag();
+    // Turns the selected keyframe so its view direction points at the scene surface
+    // under (x, y), keeping the pose's own up. False when the click misses the scene.
+    bool aim_selected_keyframe_at(int x, int y);
 
     // Inserts a keyframe after the selected one: midway to the next, with the pose and
     // time interpolated the same way; past the last keyframe the last segment is
@@ -956,6 +959,12 @@ private:
     SelectCommand pending_command_ = SelectCommand::NONE;
     bool pending_hover_ = false;
     int hover_x_ = 0, hover_y_ = 0;
+    // The aim gesture is picked after the release like the other tools: the press only
+    // records where it landed, and a drag cancels it.
+    bool aim_click_pending_ = false;
+    int aim_click_x_ = 0, aim_click_y_ = 0;
+    bool pending_aim_pick_ = false;
+    int aim_pick_x_ = 0, aim_pick_y_ = 0;
 
     // Pickers borrow the camera and own backend pick resources; created on first use.
     std::unique_ptr<easy3d::PointCloudPicker> point_picker_;

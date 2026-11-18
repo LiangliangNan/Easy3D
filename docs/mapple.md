@@ -2091,3 +2091,51 @@ migrated; retirement can proceed whenever it is wanted.
   `bunny.ply` with an error-free `Mapple.log` and the settings files restored. The
   edit-mode appearance was not exercised by scripted interaction; suites were not
   rerun (Mapple-only change) and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — depth-tested keyframe annotations
+
+- The keyframe gizmo (three arrows and three turn rings), the selected station's
+  square and its aim segment are now world-space line ribbons built with
+  `graphics::shape::draw_lines_3d()` and the camera's view-projection matrix, so
+  the drawn glyph and the model hide the parts behind them instead of the
+  annotations floating over everything as before.
+- They stay overlays (`overlay_depth_test`), not scene drawables: the depth test
+  reads scene depth without writing it, and the annotations remain outside scene
+  picking, EDL, clipping planes and video capture - all of which a
+  `LinesDrawable` would join. Self-occlusion between the handles is consequently
+  not applied; where rings and shafts cross, they blend as before.
+- On-screen sizes are preserved in world units through a new
+  `logical_pixel_size()` helper (one logical pixel at a given depth, measured by
+  projection). The arrow heads are camera-facing triangles in the plane of the
+  axis and its screen side, capped at 12 logical pixels; the station square is a
+  camera-facing square with a 7-logical-pixel half-size, and the aim segment is
+  two logical pixels wide.
+- A ring is still sampled in 3D and clipped homogeneously by `draw_lines_3d`, so
+  segments crossing the eye plane no longer have to be dropped by the caller.
+
+### 2026-11-18 — click the scene to aim the selected keyframe
+
+- Turning the rings to aim a station is fiddly, so with "Edit keyframe handles"
+  on and a station selected, a plain click on the model now turns that station so
+  its view direction (the pose's -Z, as `Camera::view_direction()` for the live
+  camera) points at the picked surface point. The pose's own up is kept, so the
+  roll is unchanged; a target straight along that up falls back to the pose's X
+  axis, as `Camera::set_view_direction()` does.
+- The press only records the position and the pick runs in `draw_gui()` with the
+  other deferred picks; moving more than two pixels, a modifier (Shift sets the
+  pivot, Ctrl drags a zoom region, Alt manipulates), another tool or an ImGui
+  panel cancels it. Only model hits aim: the glyphs and the path are annotations,
+  and a click on them keeps its meaning. The pose edit snapshots the path first,
+  so Ctrl+Z restores it; a click that misses the scene does nothing.
+- The live camera does not move: the pose turns under the working view, which the
+  station's aim segment shows. With the camera standing on the station the click
+  is a no-op in effect, since the station already looks along the clicked ray.
+
+### 2026-11-18 — validation of the two entries above
+
+- Both check trees rebuilt; OpenGL (release) and Vulkan (debug) both launch
+  `resources/data/bunny.ply` with "Mapple UI ready" and an error-free `Mapple.log`
+  (the shared log was not deleted; the settings files were backed up, found
+  unchanged, and left as they were). The aim gesture and the clipped appearance
+  were not exercised by scripted interaction (no clicks are synthesized); suites
+  were not rerun (Mapple-only change) and `easy3d/util/version.h` is unchanged.

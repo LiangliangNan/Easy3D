@@ -209,7 +209,10 @@ void MappleViewer::draw_animation_window() {
                           "glyph itself to move it in the screen plane through its position (the "
                           "plane of its up - the terrain or orbit plane - with Shift), an axis arrow "
                           "to move it along that axis, or a ring to turn its pose around that axis. "
+                          "Clicking the scene aims the selected keyframe at the clicked point. "
                           "Ctrl+Z restores the path from before the drag; Esc cancels it.");
+    if (edit_keyframes_ && selected_keyframe() >= 0 && !playing)
+        ImGui::TextDisabled("Click the scene to aim the selected keyframe at the clicked point.");
 
     if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         ImGui::Separator();
@@ -470,6 +473,40 @@ void MappleViewer::goto_camera_keyframe(int index) {
     camera()->frame()->set_position_and_orientation(frame.position(), frame.orientation());
     camera_keyframe_index_ = index;
     update();
+}
+
+bool MappleViewer::aim_selected_keyframe_at(int x, int y) {
+    const int index = selected_keyframe();
+    if (index < 0 || !kfi_ || !point_in_scene(x, y))
+        return false;
+
+    // Only scene content is a target: the glyphs, the path and the overlays are
+    // annotations, and a click on those keeps its own meaning.
+    const PickResult hit = pick(x, y);
+    if (!hit || !hit.model)
+        return false;
+
+    const Frame frame = kfi_->keyframe(static_cast<std::size_t>(index));
+    vec3 direction = hit.position - frame.position();
+    if (direction.length2() <= epsilon_sqr<float>())
+        return false;
+    direction.normalize();
+
+    // The least turn that points the pose's -Z (what Camera::view_direction() is for
+    // the live camera) at the target. The pose's own up preserves its roll; a target
+    // straight along that up leaves no side vector, so the pose's X axis is kept, the
+    // same fallback as Camera::set_view_direction().
+    vec3 right = cross(direction, frame.orientation().rotate(vec3(0.0f, 1.0f, 0.0f)));
+    if (right.length2() <= epsilon_sqr<float>())
+        right = frame.orientation().rotate(vec3(1.0f, 0.0f, 0.0f));
+    quat orientation;
+    orientation.set_from_rotated_basis(right, cross(right, direction), -direction);
+
+    snapshot_camera_path(); // Ctrl+Z restores the previous pose
+    kfi_->set_keyframe_orientation(static_cast<std::size_t>(index), orientation);
+    LOG(INFO) << "keyframe " << index + 1 << " aimed at the clicked point (Ctrl+Z restores it)";
+    update();
+    return true;
 }
 
 void MappleViewer::set_camera_path_visible(bool visible) {
