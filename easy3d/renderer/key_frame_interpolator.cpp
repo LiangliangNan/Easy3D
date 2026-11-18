@@ -389,7 +389,7 @@ namespace easy3d {
         drawable.update_vertex_buffer(points);
         drawable.set_uniform_coloring(color);
         drawable.set_line_width(thickness);
-        drawable.set_impostor_type(LinesDrawable::CYLINDER);
+        // drawable.set_impostor_type(LinesDrawable::CYLINDER);
         return true;
     }
 
