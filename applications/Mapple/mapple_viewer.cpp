@@ -164,8 +164,18 @@ namespace {
     }
 
     // Projects a world point to logical window coordinates (top-left origin). False
-    // when it is behind the eye or outside the depth range.
+    // when it is behind the eye or outside the depth range. A perspective projection
+    // divides by the view depth, which is zero exactly at the eye (e.g. the camera
+    // sitting on a selected keyframe station), so that depth is rejected before the
+    // division; nothing nearer than the near plane is visible anyway.
     bool project_to_screen(const Camera *camera, const vec3 &point, vec2 &screen) {
+        if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z))
+            return false;
+        if (camera->type() == Camera::PERSPECTIVE) {
+            const float depth = dot(point - camera->position(), camera->view_direction());
+            if (!(depth > 0.5f * camera->z_near()))
+                return false;
+        }
         const vec3 p = camera->projected_coordinates_of(point);
         if (!std::isfinite(p.x) || !std::isfinite(p.y) || p.z < 0.0f || p.z > 1.0f)
             return false;
@@ -571,6 +581,12 @@ MappleViewer::KeyframeHandle MappleViewer::keyframe_handle_at(int x, int y) cons
     const vec3 view = camera()->view_direction();
     const vec2 cursor(static_cast<float>(x), static_cast<float>(y));
     const float tolerance = 7.0f; // logical pixels
+
+    // With the camera on the station the gizmo is not drawn either, so nothing of it
+    // can be grabbed.
+    vec2 center_screen;
+    if (!project_to_screen(camera(), center, center_screen))
+        return KeyframeHandle::none;
 
     float best = tolerance;
     KeyframeHandle result = KeyframeHandle::none;
@@ -2021,6 +2037,11 @@ void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawComma
 
     const vec3 center = kfi_->keyframe_position(static_cast<std::size_t>(index));
     const vec3 view = camera()->view_direction();
+    // Standing on the station (e.g. after Prev/Next) leaves no screen position for
+    // the center: the handles cannot be drawn meaningfully from inside the glyph.
+    vec2 center_screen;
+    if (!project_to_screen(camera(), center, center_screen))
+        return;
     const float dpi = dpi_scaling();
     const KeyframeHandle active = dragged_keyframe_ >= 0 ? keyframe_handle_ : hovered_keyframe_handle_;
     // Axis colors, so an arrow and its ring read as the same axis.
@@ -2139,10 +2160,10 @@ void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &co
     const float dpi = dpi_scaling();
     const vec4 color(1.0f, 0.55f, 0.1f, 1.0f);
     auto project = [this, dpi](const vec3 &point, vec2 &screen) {
-        const vec3 p = camera()->projected_coordinates_of(point);
-        if (!std::isfinite(p.x) || !std::isfinite(p.y) || p.z < 0.0f || p.z > 1.0f)
-            return false; // behind the eye or outside the depth range
-        screen = vec2(p.x, p.y) * dpi;
+        vec2 logical;
+        if (!project_to_screen(camera(), point, logical))
+            return false;
+        screen = logical * dpi;
         return true;
     };
 
@@ -2212,12 +2233,11 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
         bool has_previous = false;
         vec2 previous;
         for (const vec3 &station : flight_positions_) {
-            const vec3 projected = camera()->projected_coordinates_of(station);
-            if (projected.z < 0.0f || projected.z > 1.0f) {
+            vec2 screen; // logical, like the stroke trail
+            if (!project_to_screen(camera(), station, screen)) {
                 has_previous = false;
                 continue;
             }
-            const vec2 screen(projected.x, projected.y); // logical, like the stroke trail
             if (has_previous) {
                 track.push_back(previous * dpi);
                 track.push_back(screen * dpi);
@@ -2239,10 +2259,11 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
     }
     if (selected >= 0) {
         // The handle Insert/Delete act on: a small square around the pose's projected
-        // position (the glyph itself is the scene geometry being edited).
-        const vec3 projected =
-                camera()->projected_coordinates_of(kfi_->keyframe_position(static_cast<std::size_t>(selected)));
-        if (projected.z >= 0.0f && projected.z <= 1.0f) {
+        // position (the glyph itself is the scene geometry being edited). With the
+        // camera standing on this pose, the station is at the eye and has no screen
+        // position, so the square is skipped.
+        vec2 projected;
+        if (project_to_screen(camera(), kfi_->keyframe_position(static_cast<std::size_t>(selected)), projected)) {
             const float r = 7.0f; // logical pixels
             const vec2 corners[4] = {vec2(projected.x - r, projected.y - r),
                                      vec2(projected.x + r, projected.y - r),

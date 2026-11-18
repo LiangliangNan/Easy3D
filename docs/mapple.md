@@ -1968,6 +1968,23 @@ migrated; retirement can proceed whenever it is wanted.
   records the in-plane offset from that intersection to the station and adds it back
   on every move, so the grabbed point of the glyph stays under the cursor (a press
   that never moves no longer takes an undo snapshot or logs a move).
+- Fixed after the first build: `< Prev`/`Next >` call `goto_camera_keyframe()`, which
+  sets the camera exactly to the selected station. The station square, the gizmo and
+  the hover test then projected that station, whose homogeneous w is exactly zero at
+  the eye; `Camera::projected_coordinates_of()` rejects the division
+  (`invalid homogeneous coordinate`), the exception escaped the viewer loop, and
+  Mapple exited after stepping onto a keyframe with the edit handles on. The
+  keyframe data itself is current - `set_keyframe_position()`/`set_keyframe_orientation()`
+  mutate the interpolator's stored frames, the glyphs and `goto_camera_keyframe()`
+  read them back. Mapple's `project_to_screen()` now rejects a non-finite point and,
+  for a perspective camera, a view depth under half the near plane (nothing nearer
+  is visible), and the measure, flight-station and station-square overlays call it
+  instead of the checked projection directly. A station without a screen position
+  also has no usable gizmo: the handle hit-test and the gizmo overlay give up before
+  it, so the handles are neither grabbed nor drawn from inside the glyph. A headless
+  probe put a camera exactly on a keyframe frame: the direct projection threw with
+  w = 0 while a point three units in front projected normally; both check trees
+  rebuilt and launch cleanly.
 - The handling otherwise follows batch 114: an armed path tool or a running playback
   keeps its meaning, the gizmo appears only while the edit tool is on, and
   `Ctrl+Z` restores the path from before the drag. `ToDo.md`'s open "attach a
