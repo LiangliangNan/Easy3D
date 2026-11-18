@@ -165,7 +165,11 @@ int main() {
                 "flight_frames accepted unpaired targets");
 
         // --- turntable orbit -----------------------------------------------
+        // The orbit poses below are written against a turntable that is level and sits exactly at
+        // the scene diagonal, so pin the two orbit offsets instead of depending on the defaults.
         kfi.delete_path();
+        builder.set_orbit_radius_offset_in_object_heights(0.0f);
+        builder.set_orbit_vertical_offset_in_object_heights(0.0f);
         const Line3 axis = Line3::from_point_and_direction(vec3(0.0f), vec3(0.0f, 0.0f, -1.0f));
         const std::vector<Frame> orbit = builder.orbit_frames(axis, vec3(0.0f));
         const float diagonal = builder.scene_box().diagonal_length();
@@ -182,6 +186,19 @@ int main() {
             require(near(dot(f.orientation().rotate(local_forward), vec3(pos.x, pos.y, 0.0f)), -diagonal, 1e-2f),
                     "an orbit pose does not look at the axis");
         }
+
+        // The two offsets are what lift the turntable off the level plane and pull it back, which
+        // is what the shipped defaults use. One object height here is the 10-unit scene extent
+        // along the axis.
+        builder.set_orbit_vertical_offset_in_object_heights(0.1f);
+        builder.set_orbit_radius_offset_in_object_heights(0.5f);
+        const Frame raised = builder.orbit_frames(axis, vec3(0.0f)).front();
+        require(near(raised.position().z, 1.0f), "the vertical offset did not lift the orbit");
+        require(near(std::sqrt(raised.position().x * raised.position().x +
+                               raised.position().y * raised.position().y), diagonal + 5.0f, 1e-2f),
+                "the radius offset did not pull the orbit back");
+        builder.set_orbit_vertical_offset_in_object_heights(0.0f);
+        builder.set_orbit_radius_offset_in_object_heights(0.0f);
 
         const std::size_t added = builder.generate_orbit(axis, vec3(0.0f));
         require(added == orbit.size(), "generate_orbit did not append the orbit poses");
