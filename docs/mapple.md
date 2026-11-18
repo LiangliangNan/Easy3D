@@ -2073,3 +2073,18 @@ migrated; retirement can proceed whenever it is wanted.
   `Mapple.log`, with the settings files restored afterwards. The delete gesture was
   not scripted; suites were not rerun (Mapple-only change) and
   `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — heavier keyframe strokes and a station aim indicator
+
+- The selected station square is drawn 2 logical pixels wide (was 1), and the
+  keyframe gizmo's arrows and rings are 2 pixels thicker (3 dimmed, 4.5 for the
+  hovered or grabbed element, was 1 and 2.5), so both read against dense geometry.
+- The selected station now also draws a dim aim segment from the station to
+  `Camera::scene_center()`: the keyframe's rendered glyph alone does not say which
+  way its camera looks, and a flight path is only as good as its aims. It uses the
+  same guarded `project_to_screen()` as the square, so with the camera standing on
+  the station (the station at the eye) neither the square nor the aim line is drawn.
+- Validation (2026-11-18, macOS): both check trees rebuilt; both backends launch
+  `bunny.ply` with an error-free `Mapple.log` and the settings files restored. The
+  edit-mode appearance was not exercised by scripted interaction; suites were not
+  rerun (Mapple-only change) and `easy3d/util/version.h` is unchanged.

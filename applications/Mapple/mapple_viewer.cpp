@@ -2067,7 +2067,7 @@ void MappleViewer::append_keyframe_gizmo_overlay(std::vector<graphics::DrawComma
         for (const vec2 &p : segments)
             framebuffer_points.push_back(p * dpi);
         commands.push_back(graphics::shape::draw_lines_2d(framebuffer_points, color, fw, fh,
-                                                          (hot ? 2.5f : 1.0f) * dpi));
+                                                          (hot ? 4.5f : 3.0f) * dpi));
     };
 
     // Arrows: the shaft plus two screen-space head wings at the tip.
@@ -2275,7 +2275,17 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
                 segments.push_back(corners[i] * dpi);
                 segments.push_back(corners[(i + 1) % 4] * dpi);
             }
-            commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
+            commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, 2.0f * dpi));
+
+            // Where this pose's camera looks: the segment from the station to the scene
+            // center, dimmed so it does not compete with the station and the gizmo.
+            vec2 target;
+            if (project_to_screen(camera(), camera()->scene_center(), target)) {
+                const vec4 aim(setting::highlight_color.x, setting::highlight_color.y,
+                               setting::highlight_color.z, 0.6f);
+                commands.push_back(graphics::shape::draw_lines_2d(
+                        {projected * dpi, target * dpi}, aim, fw, fh, dpi));
+            }
         }
     }
 }
