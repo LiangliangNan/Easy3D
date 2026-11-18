@@ -890,8 +890,6 @@ private:
     bool orbit_dragging_ = false;
     easy3d::vec2 orbit_drag_from_;
     easy3d::vec2 orbit_drag_to_;
-    // The Orbit tool clears the path before generating instead of appending.
-    bool orbit_replaces_path_ = true;
     // The keyframes the Aim tool acts on; the aim prompt disappears when they change.
     AimRange aim_range_;
     CameraPathSnapshot camera_path_snapshot_;

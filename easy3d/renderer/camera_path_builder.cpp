@@ -45,9 +45,11 @@ namespace easy3d {
             float t;
         };
 
-        // Samples a polyline at constant arc length. The first point, every \p spacing
-        // sample and the stroke end are kept; a sample closer than a quarter spacing to
-        // the end is dropped so the last keyframes do not crowd.
+        // Samples a polyline at constant arc length, both ends included: the requested
+        // spacing decides how many intervals the stroke has (rounded to the nearest
+        // whole one) and the samples share the stroke evenly. A stroke whose length is
+        // not a multiple of the spacing is therefore still sampled uniformly, with no
+        // cramped last interval.
         std::vector<ArcSample> arc_length_samples(const std::vector<vec3> &points, float spacing) {
             std::vector<ArcSample> samples;
             if (points.empty())
@@ -63,8 +65,10 @@ namespace easy3d {
             if (total <= 1e-6f)
                 return samples;
 
+            const int intervals = std::max(1, static_cast<int>(std::lround(total / spacing)));
             std::size_t segment = 1;
-            for (float s = spacing; s < total - 0.25f * spacing; s += spacing) {
+            for (int i = 1; i < intervals; ++i) {
+                const float s = total * static_cast<float>(i) / static_cast<float>(intervals);
                 while (segment < points.size() && cumulative[segment] < s)
                     ++segment;
                 if (segment >= points.size())
@@ -90,7 +94,7 @@ namespace easy3d {
             : camera_(camera), kfi_(interpolator),
               eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(0.5f),
               flight_height_in_scene_heights_(0.5f),
-              orbit_radius_offset_in_object_heights_(0.0f), orbit_vertical_offset_in_object_heights_(0.0f),
+              orbit_radius_offset_in_object_heights_(0.2f), orbit_vertical_offset_in_object_heights_(0.05f),
               pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
     }
 

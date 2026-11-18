@@ -128,6 +128,25 @@ int main() {
                     "the heading does not follow the route");
         }
 
+        // --- equal steps along a stroke of odd length -----------------------
+        // The spacing rounds the stroke into whole intervals: 7 units at a 1.5-unit
+        // spacing (0.75 character heights) is five intervals of 1.4, and the poses
+        // stay on the stroke's ends, so no consecutive pair is cramped.
+        std::vector<vec3> odd_stroke;
+        for (int i = 0; i <= 7; ++i)
+            odd_stroke.emplace_back(static_cast<float>(i), -5.0f, 0.0f);
+        builder.set_keyframe_spacing_in_character_heights(0.75f);
+        const std::size_t odd_count = builder.generate_ground_route(
+                odd_stroke, std::vector<vec3>(odd_stroke.size(), vec3(0.0f, 1.0f, 0.0f)));
+        builder.set_keyframe_spacing_in_character_heights(1.0f);
+        require(odd_count == 6, "the odd-length route was not divided into equal intervals");
+        for (std::size_t i = 0; i < odd_count; ++i) {
+            const Frame f = kfi.keyframe(flat_count + ramp_count + i);
+            require(near(f.position().x, 1.4f * static_cast<float>(i)) && near(f.position().y, -3.0f) &&
+                    near(f.position().z, 0.0f),
+                    "an odd-length route pose is not at an equal arc-length step");
+        }
+
         // --- degenerate inputs ---------------------------------------------
         require(builder.generate_ground_route({vec3(0.0f)}, {}) == 0, "a single-point stroke was accepted");
         require(builder.generate_ground_route(flat_stroke, {ramp_up}) == 0,
@@ -242,8 +261,8 @@ int main() {
 
         // --- an interactive flight: stations, aim, keyframes -----------------
         // The flight height is relative to the scene height: 0.5 of the 10-unit
-        // extent along the view's up is 5 world units. The stroke spans 8 units, so
-        // the spacing (1 x height) resamples it to 3 stations.
+        // extent along the view's up is 5 world units. The 8-unit stroke at that
+        // spacing (1 x height) rounds to two equal intervals, i.e. 3 stations.
         require(near(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
         const std::vector<CameraPathBuilder::FlightStation> traced = builder.flight_stations(flat_stroke, flat_ups);
         require(traced.size() == 3, "the flight track was not resampled at the flight spacing");
@@ -252,6 +271,10 @@ int main() {
                     "a flight station is not one flight height above its foot");
             require(near(s.foot.y, -5.0f) && near(s.foot.z, 0.0f), "a flight station lost its foot");
         }
+        // The same equal-step rule as the walking route: 8 units in two intervals puts
+        // the middle foot halfway, matching the aim stroke's equal fractions.
+        require(near(traced[1].foot, vec3(0.0f, -5.0f, 0.0f)),
+                "the flight track is not sampled at equal distances along the stroke");
 
         const std::vector<CameraPathBuilder::FlightStation> over_ramp = builder.flight_stations(flat_stroke, ramp_ups);
         require(over_ramp.size() == traced.size(), "the tilted flight track changed the station count");

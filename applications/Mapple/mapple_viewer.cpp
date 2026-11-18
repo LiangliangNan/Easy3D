@@ -705,11 +705,17 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (tool != PathTool::Off && button == BUTTON_LEFT &&
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
         if (tool == PathTool::Orbit) {
-            orbit_dragging_ = true;
-            orbit_drag_from_ = vec2(static_cast<float>(x), static_cast<float>(y));
-            orbit_drag_to_ = orbit_drag_from_;
-            clear_hover();
-            update();
+            // The axis goes through the surface under the press, so a press in empty
+            // space neither previews an axis nor starts an orbit.
+            if (!pick(x, y))
+                LOG(WARNING) << "the orbit has to start on a visible model surface";
+            else {
+                orbit_dragging_ = true;
+                orbit_drag_from_ = vec2(static_cast<float>(x), static_cast<float>(y));
+                orbit_drag_to_ = orbit_drag_from_;
+                clear_hover();
+                update();
+            }
         } else if (tool != PathTool::Aim && !camera_path_builder_->scene_box().is_valid())
             LOG(WARNING) << "the path tools need a visible model";
         else {

@@ -2239,3 +2239,118 @@ migrated; retirement can proceed whenever it is wanted.
   than restored from the stale backup). No clicks are synthesized, so the aim
   gesture was not exercised; `easy3d/util/version.h` is unchanged.
 
+### 2026-11-18 — the Camera Path hints are shortened (batch 130)
+
+- The Camera Path window's hint lines and item tooltips were rewritten as one or
+  two short sentences each, without dropping what a control does, its default or
+  its undo. The armed-tool hints now read "Click to aim every keyframe there, or
+  drag to trace the aims along the path. Esc cancels." and "Drag to set the orbit
+  axis; a click uses the vertical axis. Esc cancels."
+- The `Aim...` button tooltip repeats the click-or-stroke choice and
+  "Ctrl+Z restores the previous aims."; `Insert After` is "Inserts one after the
+  selected, halfway to the next (past the end the last segment is extended); drag
+  its glyph to place it."; the `Edit keyframe handles` checkbox tooltip is "Drag
+  the glyph or a ring/arrow to move or turn the selected keyframe (Shift: its own
+  plane); click the scene to aim it. Ctrl+Z restores; Esc cancels."; and the
+  selected-keyframe line says "Click the scene to aim the selected keyframe there."
+- The parameter tooltips were cut to their definition: the walk `Up` tooltip is
+  "Poses stand on the normal under each foot (the view's up where there is none)
+  and look along the route; Aim... re-aims them.", eye height and flight height
+  are "as a fraction of the scene's extent along the view's up", and the spacings
+  are "Spacing along the route, in character heights." / "Spacing along the track,
+  in flight heights." The orbit `Axis` tooltip is "The camera circles around the
+  dragged segment through the surface under the press; a click uses the vertical
+  axis. Poses look at the axis; Aim... re-aims them. Ctrl+Z restores the path.",
+  which also stops calling the click axis the view's up while the hint calls it
+  vertical, and the flight `Track` tooltip is "Poses rise along the surface normal
+  under each traced point (the view's up where there is none) and look straight
+  down at the ground; Aim... re-aims them."
+- No behavior changed. Validation (2026-11-18, macOS): both check trees rebuilt;
+  the OpenGL (release) and Vulkan (debug) backends launch with "Mapple UI ready"
+  and no errors in the appended tail of the shared `Mapple.log` (not deleted);
+  the settings files were backed up before the smoke launches and are byte-wise
+  unchanged afterwards. No clicks are synthesized, so the tooltips were not
+  displayed; `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — camera stations are sampled at equal steps along the stroke (batch 131)
+
+- The stroke resampler walked the polyline in `spacing` steps and then forced the
+  last point, so a stroke whose length was not a multiple of the spacing ended with
+  a shortened interval (as small as a quarter spacing). The aim sampler, in turn,
+  spreads its targets over the aim stroke at `count` equal fractions with both ends
+  included, so the aims drifted out of step with the stations: the keyframe under
+  arc fraction 0.8 of the camera stroke aimed at fraction 0.8 of the aim stroke
+  only by accident.
+- `arc_length_samples()` now rounds `length / spacing` to a whole number of
+  intervals and places the samples at equal fractions of the stroke's arc length,
+  both ends included (a stroke shorter than half the spacing still keeps its two
+  ends). Walking routes and flight stations share the helper, so consecutive poses
+  and consecutive stations are always the same distance apart along the stroke -
+  and the surface ups, which are resampled and smoothed on the same samples, now sit
+  on evenly spaced feet. With the same rule on both sides, `aim_targets()`'s equal
+  fractions line up with the stations whenever the aim stroke follows the camera
+  stroke.
+- The builder header's contract is updated: the keyframe-spacing setter explains
+  that the spacing rounds to a number of equal intervals rather than being stepped
+  out verbatim, and `generate_ground_route()`, `flight_stations()` and
+  `resample_stroke()` say the ends are included and no interval is left short.
+- The builder test gains an equal-step block - a 7-unit stroke at a 1.5-unit
+  spacing becomes five intervals of 1.4, every pose exactly 1.4 apart - and pins
+  the interactive flight's middle station at the stroke's midpoint, which the old
+  fixed-spacing-plus-end rule put at 5 of 8 units. `opengl.camerapathbuilder` and
+  `vulkan.camerapathbuilder` pass.
+- Validation (2026-11-18, macOS): both check trees rebuilt; the OpenGL (release)
+  and Vulkan (debug) backends launch with "Mapple UI ready" and no warnings or
+  errors in the appended tail of the shared `Mapple.log` (not deleted); the
+  settings files were backed up and are byte-wise unchanged afterwards. The
+  gestures were not scripted; `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — the Camera Path window keeps a minimum width and a fitted height (batch 132)
+
+- The window was created 360 px wide on first use and never re-fit after that, so the
+  one-line tool hints were clipped (the Aim tool's hint is the longest) and the
+  taller modes - the orbit parameters, most of all - could need a scrollbar.
+- `draw_animation_window()` now sets `SetNextWindowSizeConstraints(ImVec2(w, 0),
+  ImVec2(FLT_MAX, FLT_MAX))` with `w = kCameraPathWindowWidth` (430 logical px) and
+  turns on `ImGuiWindowFlags_AlwaysAutoResize`: the width never drops below the
+  minimum that keeps the button rows and the parameter block from cramping, grows
+  by itself if a mode ever needs a longer row, and the height fits the widgets of
+  the current mode. Arming or disarming a tool (which swaps hints and parameter
+  blocks) no longer leaves a clipped hint or a stray scrollbar behind, and the
+  window opens at the same size every session.
+- The 430 px minimum was tuned by eye against the idle panel and the armed modes
+  (the orbit parameter block is the tallest); the one-line hints stay on one line
+  at the panel's width. Item tooltips are popups and are unaffected.
+- Validation (2026-11-18, macOS): both check trees rebuilt and both backends launch
+  with "Mapple UI ready" and no errors in the appended log tails; a capture with
+  the window shown at startup (one-line header toggle, reverted and the trees
+  rebuilt) shows Import/Export, the hints, Add/Remove/Clear, Insert/Delete,
+  Prev/Next, the playback and spline settings, the checkboxes and the
+  bitrate/record row with no clipping and no scrollbar, and the height fitting the
+  content. Window visibility is not persisted, so the settings files are
+  byte-wise unchanged. No clicks were scripted and `easy3d/util/version.h` is
+  unchanged.
+
+### 2026-11-18 — the orbit always replaces the path and only starts on a surface (batch 133)
+
+- The Orbit panel offered `Replace path` / `Add to the path` radios. An orbit is one
+  closed path around the axis, so appending it to an existing path only produced a
+  path that jumps between two unrelated routes.
+- The radios and the `orbit_replaces_path_` member are gone. `apply_orbit_gesture()`
+  always clears the path before `generate_orbit()` (the pre-arm snapshot keeps that
+  undoable through Ctrl+Z), logs "camera path replaced by an orbit (Ctrl+Z restores
+  it)" and records the aim range from keyframe 0. The `Axis` tooltip now says the
+  orbit replaces the path.
+- An orbit's press is validated up front: `mouse_press_event()` picks at the press
+  and only starts the drag - and therefore only shows the axis preview line - when
+  the press lands on a visible surface, which is the same requirement
+  `apply_orbit_gesture()` already enforced at the release. A press in empty space
+  now logs "the orbit has to start on a visible model surface" and leaves nothing
+  behind, instead of previewing an axis that the release would then refuse; a click
+  on the surface still supplies the turntable default, the vertical axis through
+  the picked point.
+- Validation (2026-11-18, macOS): both check trees rebuilt and both backends launch
+  with error-free appended log tails, and the settings files are byte-wise unchanged.
+  The armed panel and the drag cannot be reached without clicks, so they were
+  reviewed in the code rather than captured; no clicks were scripted and
+  `easy3d/util/version.h` is unchanged.

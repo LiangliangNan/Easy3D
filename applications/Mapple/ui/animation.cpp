@@ -55,6 +55,12 @@ namespace {
     std::vector<std::string> keyframe_filters() {
         return {"Keyframe files (*.kf)", "*.kf", "All files (*.*)", "*"};
     }
+
+    // The Camera Path window's fixed width (logical pixels): wide enough for the
+    // longest one-line tool hint at the default UI font, so no hint wraps or
+    // clips and arming another tool never resizes the panel. The height is
+    // auto-fitted instead.
+    constexpr float kCameraPathWindowWidth = 430.0f;
 }
 
 void MappleViewer::open_animation_window() {
@@ -65,8 +71,11 @@ void MappleViewer::draw_animation_window() {
     if (!show_animation_window_)
         return;
 
-    ImGui::SetNextWindowSize(ImVec2(360.0f, 0.0f), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("Camera Path", &show_animation_window_)) {
+    // Fixed width, auto height: the size constraints pin the width and
+    // AlwaysAutoResize fits the height to the current mode's widgets.
+    ImGui::SetNextWindowSizeConstraints(ImVec2(kCameraPathWindowWidth, 0),
+                                        ImVec2(FLT_MAX, FLT_MAX));
+    if (!ImGui::Begin("Camera Path", &show_animation_window_, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::End();
         if (!show_animation_window_) { // closed via the title bar
             // Do not leave the camera moving with no control in sight; Ctrl+K still
@@ -115,15 +124,14 @@ void MappleViewer::draw_animation_window() {
         if (ImGui::Button("Cancel", ImVec2(70, 0)))
             cancel_camera_path_tool();
         if (tool == PathTool::Aim)
-            ImGui::TextDisabled("Click a point to aim every keyframe of the last path there, or drag "
-                                "to trace the aims along it. Esc cancels.");
+            ImGui::TextDisabled("Click to aim every keyframe there, or drag to trace the aims along the "
+                                "path. Esc cancels.");
         else if (tool == PathTool::GroundWalk)
             ImGui::TextDisabled("Drag over the ground surface to trace the route. Esc cancels.");
         else if (tool == PathTool::Flight)
             ImGui::TextDisabled("Drag over the surface to trace the camera track. Esc cancels.");
         else
-            ImGui::TextDisabled("Drag across the scene to set the orbit axis; a click uses the "
-                                "vertical axis. Esc cancels.");
+            ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis. Esc cancels.");
     } else {
         ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
         // A generated path is playable at once with its mode's default aims; the aim
@@ -135,9 +143,8 @@ void MappleViewer::draw_animation_window() {
                                                                       : "at the orbit axis");
             if (ImGui::Button("Aim...", ImVec2(80, 0)))
                 arm_camera_path_tool(PathTool::Aim);
-            ImGui::SetItemTooltip("Click a point in the scene to aim every keyframe of the new path "
-                                  "there, or drag over the surface to trace the aims along it. "
-                                  "Ctrl+Z restores the previous poses.");
+            ImGui::SetItemTooltip("Click a point to aim every keyframe there, or drag to trace the "
+                                  "aims along the path. Ctrl+Z restores the previous aims.");
             ImGui::SameLine();
             ImGui::TextDisabled("Not satisfied with the aims?");
         }
@@ -158,8 +165,8 @@ void MappleViewer::draw_animation_window() {
     ImGui::BeginDisabled(!selected);
     if (ImGui::Button("Insert After", ImVec2(110, 0)))
         insert_camera_keyframe();
-    ImGui::SetItemTooltip("Inserts a keyframe after the selected one, halfway to the next (the last "
-                          "segment is extended past the end); drag its glyph to place it.");
+    ImGui::SetItemTooltip("Inserts one after the selected, halfway to the next (past the end the last "
+                          "segment is extended); drag its glyph to place it.");
     ImGui::SameLine();
     if (ImGui::Button("Delete Selected", ImVec2(115, 0)))
         delete_camera_keyframe();
@@ -219,53 +226,37 @@ void MappleViewer::draw_animation_window() {
         sync_keyframe_editing();
         update();
     }
-    ImGui::SetItemTooltip("The selected keyframe shows a gizmo sized to its camera glyph. Drag the "
-                          "glyph itself to move it in the screen plane through its position (the "
-                          "plane of its up - the terrain or orbit plane - with Shift), an axis arrow "
-                          "to move it along that axis, or a ring to turn its pose around that axis. "
-                          "Clicking the scene aims the selected keyframe at the clicked point. "
-                          "Ctrl+Z restores the path from before the drag; Esc cancels it.");
+    ImGui::SetItemTooltip("Drag the glyph or a ring/arrow to move or turn the selected keyframe (Shift: "
+                          "its own plane); click the scene to aim it. Ctrl+Z restores; Esc cancels.");
     if (keyframe_editor_->editable_keyframe() >= 0 && !playing)
-        ImGui::TextDisabled("Click the scene to aim the selected keyframe at the clicked point.");
+        ImGui::TextDisabled("Click the scene to aim the selected keyframe there.");
 
     if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         ImGui::Separator();
         ImGui::TextDisabled("Up  surface normal under each foot");
-        ImGui::SetItemTooltip("The walker stands upright on the traced surface: each pose rises along "
-                              "the surface normal under its foot, so the route tilts with the terrain. "
-                              "Where the surface has no normal (e.g. a point cloud), the view's up "
-                              "direction is used. The poses look along the route; Aim... re-aims them "
-                              "at a clicked point or a traced stroke.");
+        ImGui::SetItemTooltip("Poses stand on the normal under each foot (the view's up where there is "
+                              "none) and look along the route; Aim... re-aims them.");
 
         float height = camera_path_builder_->eye_height_in_scene_heights();
         if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_eye_height_in_scene_heights(height);
             update();
         }
-        ImGui::SetItemTooltip("The eye height above the ground, relative to the scene extent "
-                              "along the view's up direction; each pose rises along its foot's "
-                              "surface normal.");
+        ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene's extent along "
+                              "the view's up.");
 
         float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
         if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
             camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
             update();
         }
-        ImGui::SetItemTooltip("Distance between keyframes along the route, relative to the character height.");
+        ImGui::SetItemTooltip("Spacing along the route, in character heights.");
     } else if (camera_path_builder_ && tool == PathTool::Orbit) {
         ImGui::Separator();
         ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
-        ImGui::SetItemTooltip("The axis runs along the dragged screen segment through the surface under "
-                              "the press, and the camera circles around it. A click (no drag) uses the "
-                              "view's up axis through that point. The poses look at the axis; Aim... "
-                              "re-aims them at a clicked point or a traced stroke. Ctrl+Z restores the "
-                              "path from before the tool was armed.");
-        int apply = orbit_replaces_path_ ? 0 : 1;
-        if (ImGui::RadioButton("Replace path", &apply, 0))
-            orbit_replaces_path_ = true;
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Add to the path", &apply, 1))
-            orbit_replaces_path_ = false;
+        ImGui::SetItemTooltip("The camera circles around the dragged segment through the surface under "
+                              "the press; a click uses the vertical axis. Poses look at the axis; "
+                              "Aim... re-aims them. The orbit replaces the path; Ctrl+Z restores it.");
 
         float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
         if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
@@ -285,27 +276,24 @@ void MappleViewer::draw_animation_window() {
     } else if (camera_path_builder_ && tool == PathTool::Flight) {
         ImGui::Separator();
         ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
-        ImGui::SetItemTooltip("The camera track follows the traced surface points, each lifted along "
-                              "the surface normal under it. Where the surface has no normal (e.g. a "
-                              "point cloud), the view's up direction is used. The poses look straight "
-                              "down at the ground under them; Aim... re-aims them at a clicked point "
-                              "or a traced stroke.");
+        ImGui::SetItemTooltip("Poses rise along the surface normal under each traced point (the view's "
+                              "up where there is none) and look straight down at the ground; Aim... "
+                              "re-aims them.");
 
         float height = camera_path_builder_->flight_height_in_scene_heights();
         if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_flight_height_in_scene_heights(height);
             update();
         }
-        ImGui::SetItemTooltip("The camera height above the traced surface, relative to the scene extent "
-                              "along the view's up direction; each pose rises along its foot's "
-                              "surface normal.");
+        ImGui::SetItemTooltip("Height above the traced surface, as a fraction of the scene's extent "
+                              "along the view's up.");
 
         float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
         if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
             camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
             update();
         }
-        ImGui::SetItemTooltip("Distance between keyframes along the track, relative to the flight height.");
+        ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
     }
 
     // The orbit gesture applies Replace/Append directly; Ctrl+Z restores the path
@@ -791,16 +779,15 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
     path_tool_ = PathTool::Off; // one-shot
-    if (orbit_replaces_path_)
-        kfi_->delete_path();
-    const int before = static_cast<int>(kfi_->number_of_keyframes());
+    // An orbit is one closed path around the axis, so it replaces whatever path
+    // was there; Ctrl+Z restores the previous one.
+    kfi_->delete_path();
     camera_path_builder_->generate_orbit(axis, camera()->scene_center());
-    set_aim_range(PathTool::Orbit, before, static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    set_aim_range(PathTool::Orbit, 0, static_cast<int>(kfi_->number_of_keyframes()) - 1);
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
-    LOG(INFO) << (orbit_replaces_path_ ? "camera path replaced by an orbit (Ctrl+Z restores it)"
-                                       : "orbit added to the camera path (Ctrl+Z removes it)");
+    LOG(INFO) << "camera path replaced by an orbit (Ctrl+Z restores it)";
     update();
 }
 

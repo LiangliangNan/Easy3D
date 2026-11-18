@@ -174,7 +174,9 @@ public:
     ///      keyframe_spacing_in_character_heights() x eye_height_in_world_units(), and
     ///      flight_stations() at keyframe_spacing_in_character_heights() x
     ///      flight_height_in_world_units(): the same value gives different absolute
-    ///      spacing for the two tracks.
+    ///      spacing for the two tracks. The spacing chooses how many intervals the
+    ///      stroke is divided into (length / spacing, rounded); the intervals are then
+    ///      equal, with both stroke ends included.
     /// \param spacing_in_character_heights A positive multiple of the track's height.
     ///      The resulting world spacing is clamped to at least 1e-4, so a value at or
     ///      below zero is accepted but produces a keyframe every 1e-4 world units - an
@@ -189,11 +191,13 @@ public:
     ///      points picked under the cursor makes the route follow the terrain: each
     ///      pose sits one eye height above its own stroke point, along the walker's
     ///      up direction there, and aims level along the route. The stroke is
-    ///      resampled at keyframe_spacing_in_character_heights() x
-    ///      eye_height_in_world_units() by arc length, which keeps the stroke's first
-    ///      and last points (a stroke shorter than the spacing still yields two poses)
-    ///      and drops a sample that would crowd the end. The poses are appended to the
-    ///      path (an existing path is kept, so several strokes can build one walk).
+    ///      resampled by arc length at keyframe_spacing_in_character_heights() x
+    ///      eye_height_in_world_units(): the spacing rounds to a number of intervals
+    ///      and the stroke's first and last points and the equal steps between them
+    ///      make up the poses, so consecutive poses are always the same distance apart
+    ///      along the stroke (a stroke shorter than the spacing still yields two
+    ///      poses). The poses are appended to the path (an existing path is kept, so
+    ///      several strokes can build one walk).
     /// \param stroke Ground-contact points in path order; at least two are needed.
     /// \param foot_up_directions The walker's up direction at each stroke point,
     ///      typically the surface normal there, in the same order as \p stroke.
@@ -310,9 +314,10 @@ public:
     ///      the surface up there, so the track follows the terrain, and carries that
     ///      ground point as its foot. The stroke is
     ///      resampled by arc length at keyframe_spacing_in_character_heights() x
-    ///      flight_height_in_world_units(), keeping the stroke's first and last points,
-    ///      and the surface ups are oriented toward the camera and smoothed like the
-    ///      walking route's. It modifies neither the camera nor the interpolator.
+    ///      flight_height_in_world_units() with the same equal-step, both-ends-included
+    ///      rule as the walking route, and the surface ups are oriented toward the
+    ///      camera and smoothed like the walking route's. It modifies neither the
+    ///      camera nor the interpolator.
     /// \param stroke Ground-contact points in track order; at least two are needed.
     /// \param surface_up_directions The up direction at each stroke point, in the
     ///      same order; an empty vector stands every station along
@@ -448,8 +453,9 @@ protected:
 
     // Resamples stroke and its surface ups by arc length at spacing (world units):
     // feet receives the resampled ground points and ups the normalized,
-    // camera-oriented, smoothed up directions. A sample closer than a quarter
-    // spacing to the stroke end is dropped so the last keyframes do not crowd.
+    // camera-oriented, smoothed up directions. The stroke is divided into
+    // round(length / spacing) equal intervals with both ends included, so no two
+    // consecutive samples are closer than the rest.
     // Returns false if stroke has fewer than two points or surface_up_directions
     // does not pair with it; an empty direction vector means "every foot uses
     // ground_up_direction()", and a degenerate direction uses it for that foot.
