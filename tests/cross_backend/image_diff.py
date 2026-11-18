@@ -19,12 +19,10 @@ TOLERANCES = {
     "scaled-msaa.rgba": (1.5, 20, 0.04),
 }
 
-# OpenGL shades the virtual shadow receiver directly and writes its opacity to
-# alpha; Vulkan composites a shadow overlay onto an opaque scene. Compare visible
-# RGB for this effect, while bounding and reporting the known alpha divergence.
-ALPHA_MISMATCH_FRACTION_LIMITS = {
-    "soft-shadow.rgba": 0.04,
-}
+# Both backends render these opaque scenes into opaque images, so alpha must agree
+# exactly. It used to diverge for soft shadows because OpenGL wrote the shadow's
+# visibility into the receiver's alpha; a repeated regression would let every image
+# viewer composite the shadow with its own background.
 
 
 def read_rgba(path):
@@ -65,17 +63,16 @@ def compare(name, left_path, right_path):
     fraction_over_16 = sum(error > 16 for error in pixel_errors) / pixel_count
     mean_limit, p99_limit, fraction_limit = TOLERANCES[name]
     alpha_mismatch_fraction = alpha_mismatches / pixel_count
-    alpha_limit = ALPHA_MISMATCH_FRACTION_LIMITS.get(name, 0.0)
     print(
         f"{name}: {left_width}x{left_height}, mean RGB error {mean_error:.3f}/{mean_limit:.3f}, "
         f"p99 {p99}/{p99_limit}, >16 fraction {fraction_over_16:.4%}/{fraction_limit:.4%}, "
-        f"alpha mismatches {alpha_mismatch_fraction:.4%}/{alpha_limit:.4%}"
+        f"alpha mismatches {alpha_mismatch_fraction:.4%}"
     )
     return not (
         mean_error > mean_limit
         or p99 > p99_limit
         or fraction_over_16 > fraction_limit
-        or alpha_mismatch_fraction > alpha_limit
+        or alpha_mismatches
     )
 
 

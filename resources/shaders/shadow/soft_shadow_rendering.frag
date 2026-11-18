@@ -813,7 +813,7 @@ void main(void) {
         if (is_background)
             FragColor = color;
         else
-            FragColor = color + vec4(ambient, 1.0f);
+            FragColor = vec4(color.rgb + ambient, 1.0f);
     }
     else {
             vec2 uv = ProjCoords.xy;
@@ -830,8 +830,12 @@ void main(void) {
             shadow = (1.0 - darkness) + shadow * darkness;
 
             if (is_background)
-                FragColor = color * shadow;
+                // The virtual background receiver is opaque: the shadow scales its
+                // color, not its opacity. Multiplying the alpha as well would store a
+                // semi-transparent shadow in a snapshot image, and the image would then
+                // blend it with whatever it is displayed against.
+                FragColor = vec4(color.rgb * shadow, 1.0f);
             else
-                FragColor = color * shadow + vec4(ambient, 1.0f);
+                FragColor = vec4(color.rgb * shadow + ambient, 1.0f);
     }
 }

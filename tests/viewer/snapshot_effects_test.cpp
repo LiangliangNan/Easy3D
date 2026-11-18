@@ -8,6 +8,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/image_io.h>
+#include <easy3d/renderer/shadow.h>
 #include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/texture.h>
 #ifndef EASY3D_HAS_VULKAN
@@ -38,6 +39,16 @@ std::vector<unsigned char> read_snapshot(const std::string& file,int width,int h
     return data;
 }
 
+// The scene of this test is opaque, so every pixel of a snapshot taken over an
+// opaque background must be opaque. A pass that scales the alpha of the geometry it
+// darkens (the virtual background receiver of the shadow passes used to) stores a
+// semi-transparent shadow, which then blends with whatever shows the image.
+bool all_opaque(const std::vector<unsigned char>& rgba) {
+    for (size_t i=3;i<rgba.size();i+=4)
+        if (rgba[i]!=255) return false;
+    return true;
+}
+
 void write_rgba(const std::string& file,const std::vector<unsigned char>& rgba,int width,int height) {
     std::ofstream output(file.c_str(),std::ios::binary);
     require(bool(output),"could not create comparison image");
@@ -59,12 +70,14 @@ size_t count_blue(const std::vector<unsigned char>& pixels) {
 // do. Everything this function adds must therefore appear in a file snapshot.
 struct EffectViewer : Viewer {
     using Viewer::Viewer;
-    ~EffectViewer() override { delete occlusion_; delete blending_; delete shadow_; }
+    ~EffectViewer() override { delete occlusion_; delete blending_; delete shadow_; delete hard_shadow_; }
     void enable_effects() {
         occlusion_ = new AmbientOcclusion(camera());
         blending_ = new AverageColorBlending(camera());
         shadow_ = new SoftShadow(camera());
         shadow_->set_virtual_background_color(background_color());
+        hard_shadow_ = new Shadow(camera());
+        hard_shadow_->set_virtual_background_color(background_color());
     }
     std::vector<TrianglesDrawable*> surfaces() const {
         std::vector<TrianglesDrawable*> result;
@@ -74,7 +87,7 @@ struct EffectViewer : Viewer {
         return result;
     }
     mutable int draws = 0;
-    bool occlude = false, blend = false, cast_shadow = false;
+    bool occlude = false, blend = false, cast_shadow = false, cast_hard_shadow = false;
     std::vector<TrianglesDrawable*> blend_surfaces;
     // PaintCanvas's sequence: generate the AO term, hand it to the drawables,
     // then draw. OpenGL only, since generate() exists on that backend alone.
@@ -102,6 +115,12 @@ struct EffectViewer : Viewer {
             shadow_->end();
             return;
         }
+        if (cast_hard_shadow && hard_shadow_) {
+            hard_shadow_->begin(surfaces());
+            Viewer::draw();
+            hard_shadow_->end();
+            return;
+        }
         if (blend && blending_) {
             blending_->draw(blend_surfaces.empty() ? surfaces() : blend_surfaces);
             return;
@@ -111,6 +130,7 @@ struct EffectViewer : Viewer {
     AmbientOcclusion* occlusion_ = nullptr;
     AverageColorBlending* blending_ = nullptr;
     SoftShadow* shadow_ = nullptr;
+    Shadow* hard_shadow_ = nullptr;
 };
 
 int main(int argc,char** argv) {
@@ -161,6 +181,7 @@ int main(int argc,char** argv) {
         require(v.snapshot(output_path(output_dir,"cross-backend-plain.png"),1,1,1),"plain snapshot failed");
         require(v.draws>plain_calls,"the file snapshot did not run the virtual draw()");
         const auto plain = read_snapshot(output_path(output_dir,"cross-backend-plain.png"),fw,fh);
+        require(all_opaque(plain),"the plain snapshot is not opaque");
         write_rgba(output_path(output_dir,"plain.rgba"),plain,fw,fh);
 
         // The live frame carries the HUD (blue hint, corner axes); the file
@@ -184,6 +205,7 @@ int main(int argc,char** argv) {
         const auto ao=read_snapshot(output_path(output_dir,"cross-backend-ao.png"),fw,fh);
         require(ao!=plain,
                 "ambient occlusion is missing from the file snapshot");
+        require(all_opaque(ao),"the ambient-occlusion snapshot is not opaque");
         write_rgba(output_path(output_dir,"ambient-occlusion.rgba"),ao,fw,fh);
         v.occlude = false;
 
@@ -191,8 +213,21 @@ int main(int argc,char** argv) {
         require(v.snapshot(output_path(output_dir,"cross-backend-shadow.png"),1,1,1),"shadow snapshot failed");
         const auto shadow=read_snapshot(output_path(output_dir,"cross-backend-shadow.png"),fw,fh);
         require(shadow!=plain,"soft shadows are missing from the file snapshot");
+        // The shadow darkens the virtual background receiver's color only: the image
+        // must stay opaque, otherwise a viewer composites the shadow with its own
+        // background and the shadow looks washed out.
+        require(all_opaque(shadow),"the shadow snapshot is not opaque");
         write_rgba(output_path(output_dir,"soft-shadow.rgba"),shadow,fw,fh);
         v.cast_shadow = false;
+
+        // The hard-shadow pass draws the receiver through its own shader, which had
+        // the same alpha defect: its visibility is the shadow factor as well.
+        v.cast_hard_shadow = true;
+        require(v.snapshot(output_path(output_dir,"cross-backend-hard-shadow.png"),1,1,1),"hard-shadow snapshot failed");
+        const auto hard=read_snapshot(output_path(output_dir,"cross-backend-hard-shadow.png"),fw,fh);
+        require(hard!=plain,"hard shadows are missing from the file snapshot");
+        require(all_opaque(hard),"the hard-shadow snapshot is not opaque");
+        v.cast_hard_shadow = false;
 
         // The transparency method is chosen inside draw() as well, and reaches
         // the device through the same capture.
@@ -202,6 +237,7 @@ int main(int argc,char** argv) {
         const auto blended=read_snapshot(output_path(output_dir,"cross-backend-blended.png"),fw,fh);
         require(blended!=plain,
                 "the transparency method of draw() is missing from the file snapshot");
+        require(all_opaque(blended),"the transparency snapshot is not opaque");
         write_rgba(output_path(output_dir,"average-transparency.rgba"),blended,fw,fh);
         v.blend = false;
         for (auto* surface : v.surfaces()) surface->set_opacity(1.0f);
@@ -211,6 +247,7 @@ int main(int argc,char** argv) {
         v.occlude = true;
         require(v.snapshot(output_path(output_dir,"cross-backend-scaled.png"),2,4,1),"scaled snapshot failed");
         const auto scaled=read_snapshot(output_path(output_dir,"cross-backend-scaled.png"),fw*2,fh*2);
+        require(all_opaque(scaled),"the scaled snapshot is not opaque");
         write_rgba(output_path(output_dir,"scaled-msaa.rgba"),scaled,fw*2,fh*2);
         v.occlude = false;
 

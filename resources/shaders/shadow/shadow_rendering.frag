@@ -125,8 +125,12 @@ void main(void) {
         visibility = (visibility < 0.9) ? (1.0 - darkness) : 1.0f;
 
         if (is_background)
-            FragColor = color * visibility;
+            // The virtual background receiver is opaque: the shadow scales its color,
+            // not its opacity. Multiplying the alpha as well would store a
+            // semi-transparent shadow in a snapshot image, and the image would then
+            // blend it with whatever it is displayed against.
+            FragColor = vec4(color.rgb * visibility, 1.0);
         else
-            FragColor = color * visibility + vec4(ambient, 1.0);
+            FragColor = vec4(color.rgb * visibility + ambient, 1.0);
 }
 

@@ -244,10 +244,10 @@ public:
         /**
          * \brief Return the effective multisample count.
          * \details The requested count may be reduced to a supported count
-         * during viewer creation. A result of 1 means multisampling is disabled.
+         *      during viewer creation. A result of 1 means multisampling is disabled.
          * \return Effective sample count.
          */
-        int	 samples() const { return samples_ > 1 ? samples_ : 1; }
+        int	samples() const { return samples_ > 1 ? samples_ : 1; }
 #ifdef EASY3D_HAS_VULKAN
         /**
          * \brief Set the Vulkan window's multisample count.

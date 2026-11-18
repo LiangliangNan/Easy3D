@@ -8711,10 +8711,15 @@ The comparator reports all three and applies these workload-specific limits:
 |---|---:|---:|---:|---:|
 | Plain | 0.25 | 2 | 0.1% | 0% |
 | Ambient occlusion | 1 | 16 | 2% | 0% |
-| Soft shadows | 1.5 | 24 | 4% | 4% |
+| Soft shadows | 1.5 | 24 | 4% | 0% |
 | Average transparency | 1.5 | 24 | 4% | 0% |
 | Textured average transparency | 1.5 | 24 | 4% | 0% |
 | Scaled 4x MSAA | 1.5 | 20 | 4% | 0% |
+
+Batch 139 (2026-11-18) later made the OpenGL shadow receiver opaque, so alpha
+now matches exactly on every workload, the fourth column is 0%, and `image_diff.py`
+fails on any alpha mismatch. The measurement paragraphs below record the bounds and
+results of the time, when soft shadows were still granted 4%.
 
 These are regression bounds, not a claim of pixel identity for effects whose
 sampling or compositing differs by backend. On the local macOS/MoltenVK Release
@@ -8723,17 +8728,17 @@ shadows), 0.218 (uniform-color average transparency), 0.075 (textured/material
 average transparency), and 0.272 (scaled MSAA), all below their limits.
 Textured average transparency had p99 pixel error 0 and zero alpha mismatches.
 Soft-shadow alpha differed on 2.1357% of pixels because the two backends
-composite this effect differently; the explicit 4% bound prevents that known
-approximation from being mistaken for RGB failure while still detecting a
-wider regression.
+composited this effect differently; the explicit 4% bound of the time prevented
+that known approximation from being mistaken for RGB failure while still detecting
+a wider regression.
 
 On the Linux/lavapipe Release comparison (2026-11-13, Vulkan validation
 enabled), mean RGB errors were 0.005 (plain), 0.178 (AO), 0.498 (soft
 shadows), 0.369 (uniform-color average transparency), 0.234
 (textured/material average transparency), and 0.379 (scaled MSAA), all below
 their limits. Soft-shadow alpha mismatched on 2.1354% of pixels, matching the
-macOS result. This confirms the tolerance table on a second driver and
-platform.
+macOS result (before batch 139 made it exact). This confirms the tolerance table
+on a second driver and platform.
 
 The average-transparency comparison exposed a real implementation choice:
 Vulkan's original pass used the same texture and material-lighting semantics as
@@ -11389,3 +11394,73 @@ clean log (the new `draw_hint`/`prepare_hint` symbols are in the binary). The ho
 and click gestures were not scripted (no synthetic input), and the suites were not
 rerun because only the Qt app changed. `easy3d/util/version.h` is untouched.
 Linux/Windows/CI remain separate gates.
+
+### 2026-11-18 — batch 139: the OpenGL shadow snapshots keep the shadow receiver opaque
+
+**Problem.** Two Mapple snapshots of the same soft-shadowed scene differed in the
+shadow. The RGB values of the two images were the same, but the OpenGL one stored
+the shadowed background with alpha `1 - darkness` (0.4 at the default darkness 0.6)
+while the Vulkan one stored it with alpha 1. A viewer that honours the alpha channel
+- the macOS preview, a browser, any figure layout - then composited the OpenGL
+shadow with the page (over white, `(82, 54, 54)` at 0.4 becomes `(186, 175, 175)`),
+so the shadow looked washed out. The live window never showed it: the window system
+ignores the framebuffer alpha, so only the saved image carried the defect.
+
+Both OpenGL shadow passes draw the scene's surfaces and then the virtual background
+receiver through one shader, and both scaled every shaded fragment by the shadow
+factor - `FragColor = color * shadow` in `soft_shadow_rendering.frag`, `FragColor =
+color * visibility` in `shadow_rendering.frag`. For the surfaces that was harmless
+by accident: the next term adds `vec4(ambient, 1.0)`, so the alpha became
+`color.a + 1.0` (1.4 inside the shadow, 2.0 in the lit areas) and saturated to 1 in
+the framebuffer. The receiver has no such addition, so the shadow factor - exactly
+`1 - darkness` inside the shadow - went into the alpha channel. Both shaders had the
+defect, so both saved hard- and soft-shadow snapshots with a semi-transparent
+shadow.
+
+**Change (OpenGL shaders only).** `shadow_rendering.frag` (hard shadow) and
+`soft_shadow_rendering.frag` (soft shadow) now scale the receiver's color only:
+
+```glsl
+if (is_background)
+    FragColor = vec4(color.rgb * shadow_factor, 1.0);
+else
+    FragColor = vec4(color.rgb * shadow_factor + ambient, 1.0);
+```
+
+where `shadow_factor` is the shader's own variable (`shadow` in the soft shader,
+`visibility` in the hard one). The receiver's alpha is written as the literal `1.0`
+so the opaque contract does not depend on the background color staying a `vec3`.
+The surface branch writes its alpha explicitly instead of relying on the `1.4`
+saturation, and the soft shader's early-out branch does the same
+(`vec4(color.rgb + ambient, 1.0)` instead of `color + vec4(ambient, 1.0)`). The RGB
+values are bit-identical to the previous output, so the on-screen render and the
+stored shadow color do not change. Vulkan needed no change: its shadow is a
+full-screen overlay whose alpha is the shadow's complement over an opaque scene,
+and the background receiver is an ordinary opaque scene draw.
+
+**Validation.** A probe (a small Viewer that follows Mapple's `draw()`: `SoftShadow`
+or `Shadow` begin/end with the virtual background color set to the background,
+`bunny.ply`, an 800x600 window at the 2x display scale, so the saved images are
+3200x2400 = 7,680,000 pixels, snapshot at scale 2 and 4 samples) counted the
+non-opaque pixels of the saved images:
+
+| Probe | Before | After |
+| --- | --- | --- |
+| OpenGL, soft shadow | 119,278 (alpha 102 throughout the shadow) | 0 |
+| OpenGL, hard shadow | 96,236 | 0 |
+| Vulkan, soft and hard shadow | 0 | 0 |
+
+The OpenGL RGB before and after the fix is pixel-identical. The shared snapshot test
+now guards the contract: `tests/viewer/snapshot_effects_test.cpp` gains
+`all_opaque()`, a hard-shadow `EffectViewer` case, and requires every snapshot it
+writes (plain, ambient occlusion, soft shadow, hard shadow, transparency, scaled) to
+be opaque - temporarily reverting either shadow shader makes the corresponding
+assertion fail. `tests/cross_backend/image_diff.py` no longer grants soft shadows a
+4% alpha mismatch: the two backends must now agree on alpha exactly, so the
+cross-backend gate catches the regression as well. `opengl.snapshoteffects` and
+`vulkan.snapshoteffects` pass, and `opengl.tutorial502` (hard shadow) and
+`opengl.tutorial503` (soft shadow) pass with the modified shaders. In the
+transparent-background snapshot mode both backends still agree to 62 pixels
+(4,775,978 non-opaque pixels of 7,680,000 on OpenGL against 4,776,040 on Vulkan):
+the untouched background is the transparent part, so the receiver stays opaque
+there as well.

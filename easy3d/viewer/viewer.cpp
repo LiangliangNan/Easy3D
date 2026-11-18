@@ -1927,7 +1927,7 @@ namespace easy3d {
                    bool resizable /* = true */,
                    const OpenGLOptions &gl_options /* = {} */
                    )
-        : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0),
+        : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(samples),
           visible_(visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
           model_idx_(-1) {
@@ -2029,8 +2029,6 @@ namespace easy3d {
                                       int stencil_bits,
                                       int width,
                                       int height) {
-        if (samples == 1)
-            samples = 0; // One sample means no MSAA in the unified API.
         runtime_ = detail::GlfwRuntime::acquire();
 
         // Reset the hints, allowing viewers to have different hints.
@@ -2123,16 +2121,12 @@ namespace easy3d {
         glGetIntegerv(GL_MAX_SAMPLES, &max_num);
 
         // warn the user if the requests were not satisfied
-        if (samples > 0 && samples_ != samples) {
-            if (samples_ == 0)
-                LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
-            else
-                LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
-                             << " requested but max support is " << max_num << ")";
-        } else
-            VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support is " << max_num
-                    << ")";
-
+        if (samples_ == samples) {
+            VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support " << max_num << ")";
+        }
+        else {
+            LOG(WARNING) << "samples received: " << samples_ << " (" << samples << " requested, max support " << max_num << ")";
+        }
         // the request viewer size might not be satisfied, thus we query the actual size
         glfwGetWindowSize(window, &width_, &height_);
         VLOG(1) << "viewer size (width/height): " << width_ << "/" << height_;

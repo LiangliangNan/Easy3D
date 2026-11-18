@@ -133,8 +133,7 @@ namespace easy3d {
 #else // Advanced snapshot: image size, samples, and background can be customized.
 
 	bool Viewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
-        if (samples == 1) samples = 0;
-        glfwMakeContextCurrent(window_);
+	    glfwMakeContextCurrent(window_);
         if (!initialized_) {
             auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
         }
