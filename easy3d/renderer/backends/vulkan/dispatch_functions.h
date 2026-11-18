@@ -38,6 +38,7 @@
     X(vkDestroyInstance)                                                                                               \
     X(vkEnumeratePhysicalDevices)                                                                                      \
     X(vkGetPhysicalDeviceProperties)                                                                                   \
+    X(vkGetPhysicalDeviceProperties2)                                                                                  \
     X(vkGetPhysicalDeviceFeatures)                                                                                     \
     X(vkGetPhysicalDeviceQueueFamilyProperties)                                                                        \
     X(vkGetPhysicalDeviceMemoryProperties)                                                                             \

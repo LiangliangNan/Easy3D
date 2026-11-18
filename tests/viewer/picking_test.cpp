@@ -12,6 +12,7 @@
 #include <easy3d/util/setting.h>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;
@@ -77,16 +78,26 @@ void shader_highlights(const VulkanOptions& options) {
             draw.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{},topology);
             const auto selected=device->render(65,65,{draw},vec4(0),count);
             same_picking(baseline,selected);
-            unsigned hits=0;
+            unsigned hits=0,visible=0;
+            char detail[128];
             for (size_t i=0;i<baseline.ids.size();++i) {
                 require(baseline.rgba[4*i+3]==selected.rgba[4*i+3],"highlight changed MSAA coverage/alpha");
-                if (baseline.ids[i].object==77) {
-                    ++hits;
-                    require(selected.rgba[4*i]>0 && selected.rgba[4*i+1]==0 && selected.rgba[4*i+2]==0,
-                            "highlight failed after texture/lighting on a native style");
-                }
+                if (baseline.ids[i].object!=77) continue;
+                ++hits;
+                // A rim pixel can be inside the picking pass's center-sample rule and still get so
+                // little analytic coverage that alpha-to-coverage leaves it no sample and blending
+                // rounds its color away. Vulkan leaves that conversion to the driver, so the
+                // highlight is only demanded where the color pass actually put the geometry.
+                if (selected.rgba[4*i+3]==0) continue;
+                ++visible;
+                snprintf(detail,sizeof detail,
+                         "highlight failed after texture/lighting: style %d at %u samples, pixel %zu rgba %d,%d,%d,%d",
+                         style,count,i,(int)selected.rgba[4*i],(int)selected.rgba[4*i+1],
+                         (int)selected.rgba[4*i+2],(int)selected.rgba[4*i+3]);
+                require(selected.rgba[4*i]>0 && selected.rgba[4*i+1]==0 && selected.rgba[4*i+2]==0,detail);
             }
             require(hits>0,"highlight style test had no hits");
+            require(visible>0,"the highlight left no visible pixel");
         }
     }
     require(device->validation_errors()==0,"highlight pipeline validation errors");

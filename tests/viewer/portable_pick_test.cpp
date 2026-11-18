@@ -197,14 +197,26 @@ void sphere_snapshots(Viewer& v) {
                 std::vector<unsigned char> rgba;int w=0,h=0,channels=0;
                 require(ImageIO::load(file,rgba,w,h,channels,4,false),"sphere snapshot could not be decoded");
                 unsigned interior=0,mismatches=0;
-                for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
+                // Signed silhouette field of the ray through an image pixel center: positive
+                // inside the sphere, together with whether the sphere is in front at all.
+                auto disc=[&](int x,int y)->std::pair<bool,float> {
                     const vec4 near_point=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,-1,1);
                     const vec4 far_point=inv*vec4(2*(x+.5f)/w-1,1-2*(y+.5f)/h,1,1);
                     const vec3 origin=near_point.xyz()/near_point.w,direction=normalize(far_point.xyz()/far_point.w-origin);
                     const vec3 offset=center-origin,perpendicular=cross(offset,direction);
-                    const float discriminant=radius*radius-dot(perpendicular,perpendicular);
-                    if (std::abs(discriminant)<radius*radius*.05f) continue;
-                    const bool expected=dot(offset,direction)>0 && discriminant>0;
+                    return {dot(offset,direction)>0,radius*radius-dot(perpendicular,perpendicular)};
+                };
+                for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
+                    const auto here=disc(x,y);
+                    // points.frag spreads its silhouette over a coverage ramp one pixel wide,
+                    // the fwidth of this field, and Vulkan leaves the sample count of a partial
+                    // ramp to the driver: a pixel the center misses can gain samples and one it
+                    // touches can lose all of them. Only saturated pixels are comparable, and
+                    // the gradient varies over the sprite, so the width is measured per pixel.
+                    const float ramp=std::abs(disc(x+1<w?x+1:x-1,y).second-here.second)+
+                                     std::abs(disc(x,y+1<h?y+1:y-1).second-here.second);
+                    if (std::abs(here.second)<ramp) continue;
+                    const bool expected=here.first&&here.second>0;
                     const auto* pixel=rgba.data()+4*(size_t(y)*w+x);
                     const bool observed=pixel[0]>pixel[1]+32 && pixel[0]>pixel[2]+32;
                     interior+=expected;mismatches+=expected!=observed;

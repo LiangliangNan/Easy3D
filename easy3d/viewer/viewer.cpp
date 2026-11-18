@@ -1792,7 +1792,8 @@ namespace easy3d {
             Transparency::set_frame_renderer(camera(),
                                              [this](const std::vector<TrianglesDrawable *> &surfaces, int method,
                                                     int peels) { draw_transparency(surfaces, method, peels); });
-            VLOG(1) << "Vulkan device: " << impl_->device->name() << ", Samples: " << window_host_->samples;
+            VLOG(1) << "Vulkan device: " << impl_->device->name() << ", driver: "
+                    << impl_->device->driver_version() << ", Samples: " << window_host_->samples;
         } catch (...) {
             // A failed derived constructor destroys members before base classes.
             // Release the Vulkan surface before member-owned native-window cleanup.
@@ -1809,6 +1810,7 @@ namespace easy3d {
             glfwSetWindowUserPointer(window_, nullptr);
         Transparency::set_frame_renderer(camera(), nullptr);
         release_device();
+        LOG(INFO) << "viewer terminated. Bye!";
     }
     float Viewer::dpi_scaling() const {
         if (!window_)
@@ -2235,7 +2237,6 @@ namespace easy3d {
     }
     Viewer::~Viewer() {
         cleanup();
-
         LOG(INFO) << "viewer terminated. Bye!";
     }
     void Viewer::cleanup() {

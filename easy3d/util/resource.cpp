@@ -59,10 +59,8 @@ namespace easy3d {
         std::string directory() {
             // first check if the resource directory (with the Easy3D distribution) exist
             static std::string& dir = easy3d_resource_dir;
-            if (is_valid_resource_dir(dir)) {
-                VLOG_N_TIMES(1, 1) << "resource directory: " << dir;
+            if (is_valid_resource_dir(dir))
                 return dir;
-            }
 
             std::string parent = file_system::executable_directory();
             dir = file_system::convert_to_native_style(parent + "/resources");

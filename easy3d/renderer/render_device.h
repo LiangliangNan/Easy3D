@@ -467,6 +467,9 @@ namespace easy3d {
             /// Return a human-readable backend/device name.
             /// \return Backend/device name.
             virtual const std::string &name() const = 0;
+            /// Return the driver implementation and release, e.g. "MoltenVK 1.4.2".
+            /// \return Driver name and version, empty when the driver reports neither.
+            virtual const std::string &driver_version() const = 0;
             // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
             // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
             // No backend pipeline shades per sample, so the counts do not vary by style: an

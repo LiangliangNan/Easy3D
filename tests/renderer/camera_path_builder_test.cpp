@@ -17,9 +17,9 @@ using easy3d::test::require;
 
 namespace {
 
-bool near(float a, float b, float tolerance = 1e-3f) { return std::abs(a - b) <= tolerance; }
+bool close_to(float a, float b, float tolerance = 1e-3f) { return std::abs(a - b) <= tolerance; }
 
-bool near(const vec3 &a, const vec3 &b, float tolerance = 1e-3f) {
+bool close_to(const vec3 &a, const vec3 &b, float tolerance = 1e-3f) {
     return distance(a, b) <= tolerance;
 }
 
@@ -67,7 +67,7 @@ int main() {
         // Fix the spacing the route and flight counts below are written against instead of
         // depending on the default: one character height is one eye height, 2 world units.
         builder.set_keyframe_spacing_in_character_heights(1.0f);
-        require(near(builder.keyframe_spacing_in_character_heights(), 1.0f),
+        require(close_to(builder.keyframe_spacing_in_character_heights(), 1.0f),
                 "the keyframe spacing was not stored");
 
         // --- scene bounds and eye height ---------------------------------
@@ -81,13 +81,13 @@ int main() {
 
         builder.set_scene({box});
         require(builder.scene_box().is_valid(), "the visible model produced no bounds");
-        require(near(builder.scene_box().min_point(), vec3(-5.0f)) &&
-                near(builder.scene_box().max_point(), vec3(5.0f)),
+        require(close_to(builder.scene_box().min_point(), vec3(-5.0f)) &&
+                close_to(builder.scene_box().max_point(), vec3(5.0f)),
                 "the scene box does not match the model bounds");
-        require(near(builder.ground_up_direction(), vec3(0.0f, 0.0f, -1.0f)),
+        require(close_to(builder.ground_up_direction(), vec3(0.0f, 0.0f, -1.0f)),
                 "the fallback up is not the view's up direction");
         // 0.2 scene heights along the up direction, whose scene extent is 10.
-        require(near(builder.eye_height_in_world_units(), 2.0f), "the eye height in world units is wrong");
+        require(close_to(builder.eye_height_in_world_units(), 2.0f), "the eye height in world units is wrong");
 
         // --- a flat route --------------------------------------------------
         std::vector<vec3> flat_stroke;
@@ -99,11 +99,11 @@ int main() {
         require(kfi.number_of_keyframes() == flat_count, "the route poses did not reach the interpolator");
         for (std::size_t i = 0; i < flat_count; ++i) {
             const Frame f = kfi.keyframe(i);
-            require(near(f.position().y, -3.0f) && near(f.position().z, 0.0f),
+            require(close_to(f.position().y, -3.0f) && close_to(f.position().z, 0.0f),
                     "a flat route pose is not one eye height above its foot");
-            require(near(f.orientation().rotate(local_up), vec3(0.0f, 1.0f, 0.0f), 1e-4f),
+            require(close_to(f.orientation().rotate(local_up), vec3(0.0f, 1.0f, 0.0f), 1e-4f),
                     "a flat route pose does not stand upright");
-            require(near(f.orientation().rotate(local_forward), vec3(1.0f, 0.0f, 0.0f), 1e-4f),
+            require(close_to(f.orientation().rotate(local_forward), vec3(1.0f, 0.0f, 0.0f), 1e-4f),
                     "a flat route pose does not aim along the route");
         }
 
@@ -119,12 +119,12 @@ int main() {
             const Frame f = kfi.keyframe(i);
             const vec3 pose_up = f.orientation().rotate(local_up);
             // Winding was mixed, so every pose must stand on the camera-facing side.
-            require(near(pose_up, ramp_up, 1e-3f), "a tilted route pose does not follow the walker's up");
+            require(close_to(pose_up, ramp_up, 1e-3f), "a tilted route pose does not follow the walker's up");
             const vec3 foot = f.position() - pose_up * builder.eye_height_in_world_units();
-            require(near(foot.y, -5.0f), "a tilted route pose does not rise from its stroke point");
+            require(close_to(foot.y, -5.0f), "a tilted route pose does not rise from its stroke point");
             const vec3 heading = f.orientation().rotate(local_forward);
-            require(near(dot(heading, pose_up), 0.0f, 1e-4f), "the heading is not level on the slope");
-            require(near(dot(heading, vec3(1.0f, 0.0f, 0.0f)), 1.0f, 1e-3f),
+            require(close_to(dot(heading, pose_up), 0.0f, 1e-4f), "the heading is not level on the slope");
+            require(close_to(dot(heading, vec3(1.0f, 0.0f, 0.0f)), 1.0f, 1e-3f),
                     "the heading does not follow the route");
         }
 
@@ -142,8 +142,8 @@ int main() {
         require(odd_count == 6, "the odd-length route was not divided into equal intervals");
         for (std::size_t i = 0; i < odd_count; ++i) {
             const Frame f = kfi.keyframe(flat_count + ramp_count + i);
-            require(near(f.position().x, 1.4f * static_cast<float>(i)) && near(f.position().y, -3.0f) &&
-                    near(f.position().z, 0.0f),
+            require(close_to(f.position().x, 1.4f * static_cast<float>(i)) && close_to(f.position().y, -3.0f) &&
+                    close_to(f.position().z, 0.0f),
                     "an odd-length route pose is not at an equal arc-length step");
         }
 
@@ -175,15 +175,15 @@ int main() {
         const float diagonal = builder.scene_box().diagonal_length();
         require(static_cast<int>(orbit.size()) == builder.keyframes_per_loop() * builder.num_loops() + 1,
                 "the orbit does not cover the requested number of loops");
-        require(near(orbit.front().position(), orbit.back().position(), 1e-3f), "the orbit does not close");
+        require(close_to(orbit.front().position(), orbit.back().position(), 1e-3f), "the orbit does not close");
         for (const Frame &f : orbit) {
             const vec3 pos = f.position();
-            require(near(pos.z, 0.0f), "a level orbit pose left the horizontal plane");
-            require(near(std::sqrt(pos.x * pos.x + pos.y * pos.y), diagonal, 1e-2f),
+            require(close_to(pos.z, 0.0f), "a level orbit pose left the horizontal plane");
+            require(close_to(std::sqrt(pos.x * pos.x + pos.y * pos.y), diagonal, 1e-2f),
                     "an orbit pose is not at the scene diagonal from the axis");
-            require(near(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, 1.0f), 1e-3f),
+            require(close_to(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, 1.0f), 1e-3f),
                     "a turntable orbit pose does not have the axis as its up");
-            require(near(dot(f.orientation().rotate(local_forward), vec3(pos.x, pos.y, 0.0f)), -diagonal, 1e-2f),
+            require(close_to(dot(f.orientation().rotate(local_forward), vec3(pos.x, pos.y, 0.0f)), -diagonal, 1e-2f),
                     "an orbit pose does not look at the axis");
         }
 
@@ -193,8 +193,8 @@ int main() {
         builder.set_orbit_vertical_offset_in_object_heights(0.1f);
         builder.set_orbit_radius_offset_in_object_heights(0.5f);
         const Frame raised = builder.orbit_frames(axis, vec3(0.0f)).front();
-        require(near(raised.position().z, 1.0f), "the vertical offset did not lift the orbit");
-        require(near(std::sqrt(raised.position().x * raised.position().x +
+        require(close_to(raised.position().z, 1.0f), "the vertical offset did not lift the orbit");
+        require(close_to(std::sqrt(raised.position().x * raised.position().x +
                                raised.position().y * raised.position().y), diagonal + 5.0f, 1e-2f),
                 "the radius offset did not pull the orbit back");
         builder.set_orbit_vertical_offset_in_object_heights(0.0f);
@@ -215,8 +215,8 @@ int main() {
         const std::vector<Frame> flight = builder.flight_frames(flight_stations, targets, world_up);
         require(flight.size() == positions.size(), "flight_frames dropped stations");
         for (std::size_t i = 0; i < flight.size(); ++i) {
-            require(near(flight[i].position(), positions[i]), "a flight pose is not at its station");
-            require(near(flight[i].orientation().rotate(local_forward),
+            require(close_to(flight[i].position(), positions[i]), "a flight pose is not at its station");
+            require(close_to(flight[i].orientation().rotate(local_forward),
                          normalize(targets[i] - positions[i]), 1e-4f),
                     "a flight pose does not aim at its target");
         }
@@ -225,8 +225,8 @@ int main() {
         const std::vector<Frame> down = builder.flight_frames(flight_stations, {}, world_up);
         require(down.size() == positions.size(), "the default-aimed flight dropped stations");
         for (std::size_t i = 0; i < down.size(); ++i) {
-            require(near(down[i].position(), positions[i]), "a default-aimed flight pose is not at its station");
-            require(near(down[i].orientation().rotate(local_forward), -world_up, 1e-4f),
+            require(close_to(down[i].position(), positions[i]), "a default-aimed flight pose is not at its station");
+            require(close_to(down[i].orientation().rotate(local_forward), -world_up, 1e-4f),
                     "a straight lift does not default to a straight-down aim");
         }
 
@@ -236,7 +236,7 @@ int main() {
                 builder.flight_frames(make_stations(positions, ramp_up), {}, world_up);
         require(tilted_down.size() == positions.size(), "the tilted default-aimed flight dropped stations");
         for (std::size_t i = 0; i < tilted_down.size(); ++i) {
-            require(near(tilted_down[i].orientation().rotate(local_forward), -ramp_up, 1e-4f),
+            require(close_to(tilted_down[i].orientation().rotate(local_forward), -ramp_up, 1e-4f),
                     "a tilted lift does not default to the reverse of the lift");
         }
 
@@ -247,12 +247,12 @@ int main() {
         const std::vector<Frame> reaimed = builder.aimed_frames(default_orbit, orbit_targets);
         require(reaimed.size() == default_orbit.size(), "aimed_frames dropped poses");
         for (std::size_t i = 0; i < reaimed.size(); ++i) {
-            require(near(reaimed[i].position(), default_orbit[i].position()), "an aimed pose moved");
+            require(close_to(reaimed[i].position(), default_orbit[i].position()), "an aimed pose moved");
             const vec3 view = normalize(orbit_targets[i] - reaimed[i].position());
-            require(near(reaimed[i].orientation().rotate(local_forward), view, 1e-4f),
+            require(close_to(reaimed[i].orientation().rotate(local_forward), view, 1e-4f),
                     "an aimed pose does not look at its target");
             const vec3 roll_up = default_orbit[i].orientation().rotate(local_up);
-            require(near(reaimed[i].orientation().rotate(vec3(1.0f, 0.0f, 0.0f)),
+            require(close_to(reaimed[i].orientation().rotate(vec3(1.0f, 0.0f, 0.0f)),
                          normalize(cross(view, roll_up)), 1e-3f),
                     "an aimed pose lost its own up as the roll reference");
         }
@@ -270,9 +270,9 @@ int main() {
         const std::vector<Frame> level = builder.aimed_frames(down, level_targets, level_ups);
         require(level.size() == positions.size(), "the aimed flight dropped stations");
         for (std::size_t i = 0; i < level.size(); ++i) {
-            require(near(level[i].orientation().rotate(local_forward), vec3(1.0f, 0.0f, 0.0f), 1e-4f),
+            require(close_to(level[i].orientation().rotate(local_forward), vec3(1.0f, 0.0f, 0.0f), 1e-4f),
                     "an aimed flight pose does not look at its target");
-            require(near(level[i].orientation().rotate(local_up), vec3(0.0f, 1.0f, 0.0f), 1e-4f),
+            require(close_to(level[i].orientation().rotate(local_up), vec3(0.0f, 1.0f, 0.0f), 1e-4f),
                     "an aimed flight pose does not use the supplied roll reference");
         }
 
@@ -280,24 +280,24 @@ int main() {
         // The flight height is relative to the scene height: 0.5 of the 10-unit
         // extent along the view's up is 5 world units. The 8-unit stroke at that
         // spacing (1 x height) rounds to two equal intervals, i.e. 3 stations.
-        require(near(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
+        require(close_to(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
         const std::vector<CameraPathBuilder::FlightStation> traced = builder.flight_stations(flat_stroke, flat_ups);
         require(traced.size() == 3, "the flight track was not resampled at the flight spacing");
         for (const auto &s : traced) {
-            require(near(s.position.y, 0.0f) && near(s.position.z, 0.0f),
+            require(close_to(s.position.y, 0.0f) && close_to(s.position.z, 0.0f),
                     "a flight station is not one flight height above its foot");
-            require(near(s.foot.y, -5.0f) && near(s.foot.z, 0.0f), "a flight station lost its foot");
+            require(close_to(s.foot.y, -5.0f) && close_to(s.foot.z, 0.0f), "a flight station lost its foot");
         }
         // The same equal-step rule as the walking route: 8 units in two intervals puts
         // the middle foot halfway, matching the aim stroke's equal fractions.
-        require(near(traced[1].foot, vec3(0.0f, -5.0f, 0.0f)),
+        require(close_to(traced[1].foot, vec3(0.0f, -5.0f, 0.0f)),
                 "the flight track is not sampled at equal distances along the stroke");
 
         const std::vector<CameraPathBuilder::FlightStation> over_ramp = builder.flight_stations(flat_stroke, ramp_ups);
         require(over_ramp.size() == traced.size(), "the tilted flight track changed the station count");
         for (std::size_t i = 0; i < over_ramp.size(); ++i) {
-            require(near(over_ramp[i].foot, traced[i].foot), "the tilted flight track moved its feet");
-            require(near(over_ramp[i].position, over_ramp[i].foot + ramp_up * 5.0f),
+            require(close_to(over_ramp[i].foot, traced[i].foot), "the tilted flight track moved its feet");
+            require(close_to(over_ramp[i].position, over_ramp[i].foot + ramp_up * 5.0f),
                     "a tilted flight station does not rise along the surface normal under its foot");
         }
 
@@ -311,11 +311,11 @@ int main() {
         require(builder.aim_targets({}, 3).empty() && builder.aim_targets(aim_stroke, 0).empty(),
                 "an empty aim produced targets");
         const std::vector<vec3> spaced = builder.aim_targets(aim_stroke, 5);
-        require(spaced.size() == 5 && near(spaced.front(), aim_stroke.front()) &&
-                near(spaced.back(), aim_stroke.back()) && near(spaced[2], vec3(5.0f, 0.0f, 10.0f)),
+        require(spaced.size() == 5 && close_to(spaced.front(), aim_stroke.front()) &&
+                close_to(spaced.back(), aim_stroke.back()) && close_to(spaced[2], vec3(5.0f, 0.0f, 10.0f)),
                 "the aim targets are not evenly spaced along the aim stroke");
         const std::vector<vec3> clicked = builder.aim_targets({vec3(1.0f, 2.0f, 3.0f)}, 4);
-        require(clicked.size() == 4 && near(clicked[3], vec3(1.0f, 2.0f, 3.0f)),
+        require(clicked.size() == 4 && close_to(clicked[3], vec3(1.0f, 2.0f, 3.0f)),
                 "a clicked aim does not repeat its point for every station");
 
         kfi.delete_path();
@@ -331,17 +331,17 @@ int main() {
         require(kfi.number_of_keyframes() == flight_keys, "the flight poses did not reach the interpolator");
         for (std::size_t i = 0; i < flight_keys; ++i) {
             const Frame f = kfi.keyframe(i);
-            require(near(f.position(), flying[i]), "a flight keyframe is not at its station");
-            require(near(f.orientation().rotate(local_forward), normalize(aimed_at[i] - flying[i]), 1e-4f),
+            require(close_to(f.position(), flying[i]), "a flight keyframe is not at its station");
+            require(close_to(f.orientation().rotate(local_forward), normalize(aimed_at[i] - flying[i]), 1e-4f),
                     "a flight keyframe does not aim at its target");
-            require(near(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, -1.0f), 1e-4f),
+            require(close_to(f.orientation().rotate(local_up), vec3(0.0f, 0.0f, -1.0f), 1e-4f),
                     "a flight keyframe does not use the view's up as its roll reference");
         }
         kfi.delete_path();
         require(builder.generate_flight(flying_stations, {}) == flying.size(),
                 "the default-aimed flight did not reach the interpolator");
         for (std::size_t i = 0; i < flying.size(); ++i)
-            require(near(kfi.keyframe(i).orientation().rotate(local_forward), -world_up, 1e-4f),
+            require(close_to(kfi.keyframe(i).orientation().rotate(local_forward), -world_up, 1e-4f),
                     "a generated default-aimed flight pose does not look down at its foot");
         require(builder.generate_flight(flying_stations, {vec3(0.0f)}) == 0,
                 "generate_flight accepted unpaired aims");

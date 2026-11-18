@@ -41,7 +41,10 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <mutex>
+#include <set>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace easy3d {
@@ -129,7 +132,10 @@ namespace easy3d {
                 VkFence fence = VK_NULL_HANDLE;
                 VkPhysicalDeviceProperties properties{};
                 VkPhysicalDeviceMemoryProperties memory{};
+                std::string driver;
                 std::atomic<unsigned> errors{0};
+                std::mutex message_lock;
+                std::set<std::string> reported_messages;
                 bool profile_enabled = [] {
                     const char *value = std::getenv("EASY3D_VULKAN_PROFILE");
                     return value && *value;
@@ -186,9 +192,26 @@ namespace easy3d {
                                                             const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                             void *user) {
                     auto *self = static_cast<Context *>(user);
-                    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+                    const std::string message = data->pMessage ? data->pMessage : "";
+                    if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
                         ++self->errors;
-                    std::cerr << "Vulkan validation: " << data->pMessage << '\n';
+                        std::cerr << "Vulkan validation: " << message << '\n';
+                        LOG(ERROR) << "Vulkan validation: " << message;
+                        return VK_FALSE;
+                    }
+                    // An implementation reports one warning per pipeline or command buffer, and
+                    // the repetitions hide the next distinct problem. MoltenVK 1.4.2, for example,
+                    // rejects the picking ID attachment (VK_FORMAT_R32G32_UINT) as blend
+                    // unsupported once per pipeline without testing blendEnable, which every
+                    // Easy3D pipeline clears at that attachment index; upstream MoltenVK added
+                    // that test and stays silent.
+                    {
+                        std::lock_guard<std::mutex> guard(self->message_lock);
+                        if (!self->reported_messages.insert(message).second)
+                            return VK_FALSE;
+                    }
+                    std::cerr << "Vulkan validation: " << message << '\n';
+                    LOG(ERROR) << "Vulkan validation: " << message;
                     return VK_FALSE;
                 }
                 void init(bool validation,
@@ -372,6 +395,18 @@ namespace easy3d {
                         throw std::runtime_error(
                             "no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
                     vkGetPhysicalDeviceMemoryProperties(physical, &memory);
+                    // VkPhysicalDeviceProperties::driverVersion is vendor-encoded and says nothing about
+                    // the implementation release (MoltenVK 1.4.2 reports 0.2.2210), so the identity of
+                    // the translation layer comes from the driver properties instead.
+                    VkPhysicalDeviceDriverProperties driver_properties{};
+                    driver_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+                    VkPhysicalDeviceProperties2 extended{};
+                    extended.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+                    extended.pNext = &driver_properties;
+                    vkGetPhysicalDeviceProperties2(physical, &extended);
+                    driver = driver_properties.driverName;
+                    if (driver_properties.driverInfo[0])
+                        driver = driver + " " + driver_properties.driverInfo;
                     count = 0;
                     check_initialization(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, nullptr),
                                          "enumerate device extensions");
@@ -4402,6 +4437,9 @@ namespace easy3d {
                 }
                 const std::string &name() const override {
                     return name_;
+                }
+                const std::string &driver_version() const override {
+                    return c_.driver;
                 }
                 uint32_t supported_sample_counts(PointStyle) const override {
                     // Nothing shades per sample, so the usable counts depend only on the MSAA
