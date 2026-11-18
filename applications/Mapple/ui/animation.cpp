@@ -105,35 +105,33 @@ void MappleViewer::draw_animation_window() {
     ImGui::SameLine();
     ImGui::TextDisabled(".kf files");
 
+    // Mode: how the next path is made. Free keyframes by hand; a path tool owns the
+    // scene's left press until its gesture commits, or Esc/Free takes it back.
     ImGui::Separator();
-    ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
-
-    if (ImGui::Button("Walk a route...", ImVec2(120, 0)))
-        arm_camera_path_tool(PathTool::GroundWalk);
-    ImGui::SameLine();
-    if (ImGui::Button("Orbit...", ImVec2(80, 0)))
-        arm_camera_path_tool(PathTool::Orbit);
-    ImGui::SameLine();
-    if (ImGui::Button("Flight...", ImVec2(80, 0)))
-        arm_camera_path_tool(PathTool::Flight);
-
-    // Read after the buttons so arming shows its hint and its parameters at once.
-    const PathTool tool = path_tool_;
-    if (tool != PathTool::Off) {
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(70, 0)))
+    const auto select_mode = [this](PathTool mode) {
+        if (mode == path_tool_)
+            return;
+        if (mode == PathTool::Off)
             cancel_camera_path_tool();
-        if (tool == PathTool::Aim)
-            ImGui::TextDisabled("Click to aim every keyframe there, or drag to trace the aims along the "
-                                "path. Esc cancels.");
-        else if (tool == PathTool::GroundWalk)
-            ImGui::TextDisabled("Drag over the ground surface to trace the route. Esc cancels.");
-        else if (tool == PathTool::Flight)
-            ImGui::TextDisabled("Drag over the surface to trace the camera track. Esc cancels.");
         else
-            ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis. Esc cancels.");
-    } else {
-        ImGui::TextDisabled("Move the camera, then add keyframes (Alt+K).");
+            arm_camera_path_tool(mode);
+    };
+    if (ImGui::RadioButton("Free", path_tool_ == PathTool::Off))
+        select_mode(PathTool::Off);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Orbit...", path_tool_ == PathTool::Orbit))
+        select_mode(PathTool::Orbit);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Walk...", path_tool_ == PathTool::GroundWalk))
+        select_mode(PathTool::GroundWalk);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Flight...", path_tool_ == PathTool::Flight))
+        select_mode(PathTool::Flight);
+
+    // Read after the radios so a click shows the new mode's hint and parameters at once.
+    const PathTool tool = path_tool_;
+    if (tool == PathTool::Off) {
+        ImGui::TextDisabled("Add keyframes (Alt+K), or choose a mode.");
         // A generated path is playable at once with its mode's default aims; the aim
         // gesture is offered on demand, never forced after the path gesture.
         if (aim_range_.valid && count > 0) {
@@ -148,13 +146,96 @@ void MappleViewer::draw_animation_window() {
             ImGui::SameLine();
             ImGui::TextDisabled("Not satisfied with the aims?");
         }
-    }
-    if (camera_path_snapshot_.valid)
-        ImGui::TextDisabled("Ctrl+Z restores the path from before the last tool or edit.");
+    } else if (tool == PathTool::Aim)
+        ImGui::TextDisabled("Click to aim every keyframe there, or drag to trace the aims along the "
+                            "path. Esc cancels.");
+    else if (tool == PathTool::GroundWalk)
+        ImGui::TextDisabled("Drag over the ground surface to trace the route. Esc cancels.");
+    else if (tool == PathTool::Flight)
+        ImGui::TextDisabled("Drag over the surface to trace the camera track. Esc cancels.");
+    else
+        ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis. Esc cancels.");
 
-    if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
-        add_camera_keyframe();
-    ImGui::SameLine();
+    // The mode's own parameters, under its hint.
+    if (camera_path_builder_ && tool == PathTool::GroundWalk) {
+        ImGui::TextDisabled("Up  surface normal under each foot");
+        ImGui::SetItemTooltip("Poses stand on the normal under each foot (the view's up where there is "
+                              "none) and look along the route; Aim... re-aims them.");
+
+        float height = camera_path_builder_->eye_height_in_scene_heights();
+        if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            camera_path_builder_->set_eye_height_in_scene_heights(height);
+            update();
+        }
+        ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene's extent along "
+                              "the view's up.");
+
+        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
+        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
+            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
+            update();
+        }
+        ImGui::SetItemTooltip("Spacing along the route, in character heights.");
+    } else if (camera_path_builder_ && tool == PathTool::Orbit) {
+        ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
+        ImGui::SetItemTooltip("The camera circles around the dragged segment through the surface under "
+                              "the press; a click uses the vertical axis. Poses look at the axis; "
+                              "Aim... re-aims them. The orbit replaces the path; Ctrl+Z restores it.");
+
+        float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
+        if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
+            camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom);
+        float offset = camera_path_builder_->orbit_vertical_offset_in_object_heights();
+        if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height"))
+            camera_path_builder_->set_orbit_vertical_offset_in_object_heights(offset);
+        float pitch = camera_path_builder_->pitch_degrees();
+        if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg"))
+            camera_path_builder_->set_pitch_degrees(pitch);
+        int keyframes_per_loop = camera_path_builder_->keyframes_per_loop();
+        if (ImGui::DragInt("Keyframes per loop", &keyframes_per_loop, 0.5f, 1, 99))
+            camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop);
+        int loops = camera_path_builder_->num_loops();
+        if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99))
+            camera_path_builder_->set_num_loops(loops);
+    } else if (camera_path_builder_ && tool == PathTool::Flight) {
+        ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
+        ImGui::SetItemTooltip("Poses rise along the surface normal under each traced point (the view's "
+                              "up where there is none) and look straight down at the ground; Aim... "
+                              "re-aims them.");
+
+        float height = camera_path_builder_->flight_height_in_scene_heights();
+        if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            camera_path_builder_->set_flight_height_in_scene_heights(height);
+            update();
+        }
+        ImGui::SetItemTooltip("Height above the traced surface, as a fraction of the scene's extent "
+                              "along the view's up.");
+
+        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
+        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
+            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
+            update();
+        }
+        ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
+    }
+
+    // The spline strategy shapes the path every mode makes, so it sits with the
+    // mode rather than with the playback.
+    const char *methods[] = {"interpolation", "fitting"};
+    int method = kfi->interpolation_method() == KeyFrameInterpolator::INTERPOLATION ? 0 : 1;
+    if (ImGui::Combo("Spline strategy", &method, methods, 2))
+        kfi->set_interpolation_method(
+                method == 0 ? KeyFrameInterpolator::INTERPOLATION : KeyFrameInterpolator::FITTING);
+
+    // Keyframes: made by the gesture in a path mode, by hand in Free.
+    ImGui::Separator();
+    ImGui::Text("%d keyframe%s", count, count == 1 ? "" : "s");
+
+    if (tool == PathTool::Off) {
+        if (ImGui::Button("Add Keyframe", ImVec2(120, 0)))
+            add_camera_keyframe();
+        ImGui::SameLine();
+    }
     if (ImGui::Button("Remove Last", ImVec2(110, 0)))
         remove_last_camera_keyframe();
     ImGui::SameLine();
@@ -192,30 +273,11 @@ void MappleViewer::draw_animation_window() {
                                      ? 0 : selected_index + 1);
     ImGui::EndDisabled();
 
-    ImGui::Separator();
-    const bool playing = kfi->is_interpolation_started();
-    if (ImGui::Button(playing ? "Stop" : "Play", ImVec2(120, 0)))
-        toggle_camera_path_playback();
-    ImGui::SameLine();
-    ImGui::TextDisabled(playing ? "playing..." : "Ctrl+K");
-
-    float speed = kfi->interpolation_speed();
-    if (ImGui::SliderFloat("Speed", &speed, 0.1f, 10.0f, "%.2f") && speed != kfi->interpolation_speed())
-        kfi->set_interpolation_speed(speed);
-    int fps = kfi->frame_rate();
-    if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
-        kfi->set_frame_rate(fps);
-
-    const char *methods[] = {"interpolation", "fitting"};
-    int method = kfi->interpolation_method() == KeyFrameInterpolator::INTERPOLATION ? 0 : 1;
-    if (ImGui::Combo("Spline strategy", &method, methods, 2))
-        kfi->set_interpolation_method(
-                method == 0 ? KeyFrameInterpolator::INTERPOLATION : KeyFrameInterpolator::FITTING);
-
     bool visible = show_camera_path_;
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
 
+    const bool playing = kfi->is_interpolation_started();
     if (ImGui::Checkbox("Edit keyframe handles", &edit_keyframes_)) {
         if (edit_keyframes_) {
             if (!show_camera_path_)
@@ -230,86 +292,35 @@ void MappleViewer::draw_animation_window() {
                           "its own plane); click the scene to aim it. Ctrl+Z restores; Esc cancels.");
     if (keyframe_editor_->editable_keyframe() >= 0 && !playing)
         ImGui::TextDisabled("Click the scene to aim the selected keyframe there.");
+    if (camera_path_snapshot_.valid)
+        ImGui::TextDisabled("Ctrl+Z restores the path from before the last tool or edit.");
 
-    if (camera_path_builder_ && tool == PathTool::GroundWalk) {
-        ImGui::Separator();
-        ImGui::TextDisabled("Up  surface normal under each foot");
-        ImGui::SetItemTooltip("Poses stand on the normal under each foot (the view's up where there is "
-                              "none) and look along the route; Aim... re-aims them.");
+    // Playback and the interpolation it uses.
+    ImGui::Separator();
+    if (ImGui::Button(playing ? "Stop" : "Play", ImVec2(120, 0)))
+        toggle_camera_path_playback();
+    ImGui::SameLine();
+    ImGui::TextDisabled(playing ? "playing..." : "Ctrl+K");
 
-        float height = camera_path_builder_->eye_height_in_scene_heights();
-        if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
-            camera_path_builder_->set_eye_height_in_scene_heights(height);
-            update();
-        }
-        ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene's extent along "
-                              "the view's up.");
+    float speed = kfi->interpolation_speed();
+    if (ImGui::SliderFloat("Speed", &speed, 0.1f, 10.0f, "%.2f") && speed != kfi->interpolation_speed())
+        kfi->set_interpolation_speed(speed);
+    int fps = kfi->frame_rate();
+    if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
+        kfi->set_frame_rate(fps);
 
-        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
-        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
-            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
-            update();
-        }
-        ImGui::SetItemTooltip("Spacing along the route, in character heights.");
-    } else if (camera_path_builder_ && tool == PathTool::Orbit) {
-        ImGui::Separator();
-        ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
-        ImGui::SetItemTooltip("The camera circles around the dragged segment through the surface under "
-                              "the press; a click uses the vertical axis. Poses look at the axis; "
-                              "Aim... re-aims them. The orbit replaces the path; Ctrl+Z restores it.");
-
-        float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
-        if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
-            camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom);
-        float offset = camera_path_builder_->orbit_vertical_offset_in_object_heights();
-        if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height"))
-            camera_path_builder_->set_orbit_vertical_offset_in_object_heights(offset);
-        float pitch = camera_path_builder_->pitch_degrees();
-        if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg"))
-            camera_path_builder_->set_pitch_degrees(pitch);
-        int keyframes_per_loop = camera_path_builder_->keyframes_per_loop();
-        if (ImGui::DragInt("Keyframes per loop", &keyframes_per_loop, 0.5f, 1, 99))
-            camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop);
-        int loops = camera_path_builder_->num_loops();
-        if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99))
-            camera_path_builder_->set_num_loops(loops);
-    } else if (camera_path_builder_ && tool == PathTool::Flight) {
-        ImGui::Separator();
-        ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
-        ImGui::SetItemTooltip("Poses rise along the surface normal under each traced point (the view's "
-                              "up where there is none) and look straight down at the ground; Aim... "
-                              "re-aims them.");
-
-        float height = camera_path_builder_->flight_height_in_scene_heights();
-        if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
-            camera_path_builder_->set_flight_height_in_scene_heights(height);
-            update();
-        }
-        ImGui::SetItemTooltip("Height above the traced surface, as a fraction of the scene's extent "
-                              "along the view's up.");
-
-        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
-        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
-            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
-            update();
-        }
-        ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
-    }
-
-    // The orbit gesture applies Replace/Append directly; Ctrl+Z restores the path
-    // from before the tool was armed.
-
+    // Recording and its parameters.
     ImGui::Separator();
 #ifdef HAS_FFMPEG
-    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
-    if (count < 2)
-        ImGui::TextDisabled("Recording needs at least two keyframes.");
     ImGui::BeginDisabled(count < 2);
     if (ImGui::Button("Record Video...", ImVec2(140, 0)))
         record_camera_path();
     ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::TextDisabled("MP4, scene only");
+    if (count < 2)
+        ImGui::TextDisabled("Recording needs at least two keyframes.");
+    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
 #else
     ImGui::BeginDisabled();
     ImGui::Button("Record Video...", ImVec2(140, 0));

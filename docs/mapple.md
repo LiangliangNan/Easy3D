@@ -2354,3 +2354,33 @@ migrated; retirement can proceed whenever it is wanted.
   The armed panel and the drag cannot be reached without clicks, so they were
   reviewed in the code rather than captured; no clicks were scripted and
   `easy3d/util/version.h` is unchanged.
+
+### 2026-11-18 — the Camera Path window groups its widgets by mode and purpose (batch 134)
+
+- The window now opens with a mode row of radio buttons - Free, Orbit..., Walk...,
+  Flight... - instead of the three tool buttons plus Cancel. Free is manual
+  keyframing (its hint is "Move the camera, then add keyframes (Alt+K)."); picking a
+  path mode arms its tool, which owns the scene's left press until its gesture
+  commits (the window then returns to Free) or Esc/Free takes it back, so the
+  redundant Cancel button is gone. The Aim tool is not a mode: while it is armed
+  the radios show no selection and the Aim hint replaces the mode hint.
+- `Add Keyframe` is shown only in Free, because the path modes create their
+  keyframes from the gesture; `Insert After`, `Remove Last`, `Delete Selected` and
+  `Clear` stay available in every mode.
+- The widgets are ordered by what they belong to: the file row (Import/Export and
+  the `.kf` note), then the mode (radios, hint, the "Aims of the new path" prompt
+  with `Aim...`, the mode's own parameters - walk up/eye height/spacing, orbit
+  axis/zoom/offset/pitch/keyframes per loop/loops, flight track/height/spacing - and
+  the Spline strategy, which shapes the path every mode makes and so belongs with
+  the mode rather than the playback), then the keyframes (count, the add/remove/clear
+  row, insert/delete with the selection note, Prev/Next, the show-path and
+  edit-handles checkboxes with the click-to-aim line, and the Ctrl+Z hint), then
+  playback (Play with its Ctrl+K note, Speed, Frame rate), then recording (Record
+  Video with its MP4 note, the "needs at least two keyframes" note, and the bitrate).
+- Validation (2026-11-18, macOS): both check trees rebuilt. Probe captures with the
+  window shown at startup - as it opens in Free, and with the tool read forced to
+  Orbit for the longest parameter block (probe reverted and the trees rebuilt) -
+  show both layouts laid out as above with no clipping; both backends launch with
+  "Mapple UI ready" and error-free log tails; the settings files are byte-wise
+  unchanged. The radio clicks and gestures were not scripted; `easy3d/util/version.h`
+  is unchanged.
