@@ -214,9 +214,10 @@ namespace easy3d {
         return frames.size();
     }
 
-    std::vector<vec3> CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke,
-                                                         const std::vector<vec3> &surface_up_directions) const {
-        std::vector<vec3> stations;
+    std::vector<CameraPathBuilder::FlightStation>
+    CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke,
+                                       const std::vector<vec3> &surface_up_directions) const {
+        std::vector<FlightStation> stations;
         const float height = flight_height_in_world_units();
         if (height <= 1e-4f)
             return stations;
@@ -228,7 +229,7 @@ namespace easy3d {
 
         stations.reserve(feet.size());
         for (std::size_t i = 0; i < feet.size(); ++i)
-            stations.push_back(feet[i] + ups[i] * height);
+            stations.push_back(FlightStation{feet[i] + ups[i] * height, feet[i]});
         return stations;
     }
 
@@ -260,9 +261,9 @@ namespace easy3d {
         return targets;
     }
 
-    std::size_t CameraPathBuilder::generate_flight(const std::vector<vec3> &positions,
+    std::size_t CameraPathBuilder::generate_flight(const std::vector<FlightStation> &stations,
                                                    const std::vector<vec3> &targets) {
-        const std::vector<Frame> frames = flight_frames(positions, targets, ground_up_direction());
+        const std::vector<Frame> frames = flight_frames(stations, targets, ground_up_direction());
         for (const auto &frame : frames)
             add_keyframe(frame);
         return frames.size();
@@ -366,17 +367,17 @@ namespace easy3d {
         return frames;
     }
 
-    std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<vec3> &positions,
+    std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<FlightStation> &stations,
                                                         const std::vector<vec3> &targets, const vec3 &up) const {
         std::vector<Frame> frames;
-        if (positions.size() < 2 || (!targets.empty() && positions.size() != targets.size()))
+        if (stations.size() < 2 || (!targets.empty() && stations.size() != targets.size()))
             return frames;
 
-        frames.reserve(positions.size());
-        for (size_t i = 0; i < positions.size(); ++i) {
-            // No targets: the default aim, straight down along the reversed up.
-            const vec3 target = targets.empty() ? positions[i] - up : targets[i];
-            frames.emplace_back(positions[i], look_at_orientation(positions[i], target, up));
+        frames.reserve(stations.size());
+        for (size_t i = 0; i < stations.size(); ++i) {
+            // No targets: the default aim, back down at the foot the station rose from.
+            const vec3 target = targets.empty() ? stations[i].foot : targets[i];
+            frames.emplace_back(stations[i].position, look_at_orientation(stations[i].position, target, up));
         }
         return frames;
     }

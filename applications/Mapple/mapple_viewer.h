@@ -481,7 +481,8 @@ private:
     void commit_ground_route();
 
     // Turns the traced stroke into flight keyframes appended to the path: the stations
-    // rise along the surface normal under each foot and look straight down by default.
+    // rise along the surface normal under each foot and look down at that foot by
+    // default (the reverse of their lift).
     void commit_flight_track();
 
     // Applies the orbit gesture: the axis passes through the surface under \p from

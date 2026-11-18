@@ -131,7 +131,7 @@ void MappleViewer::draw_animation_window() {
         if (aim_range_.valid && count > 0) {
             ImGui::TextDisabled("Aims of the new path: %s.",
                                 aim_range_.mode == PathTool::GroundWalk ? "along the route"
-                                : aim_range_.mode == PathTool::Flight ? "straight down"
+                                : aim_range_.mode == PathTool::Flight ? "down at the ground"
                                                                       : "at the orbit axis");
             if (ImGui::Button("Aim...", ImVec2(80, 0)))
                 arm_camera_path_tool(PathTool::Aim);
@@ -288,7 +288,8 @@ void MappleViewer::draw_animation_window() {
         ImGui::SetItemTooltip("The camera track follows the traced surface points, each lifted along "
                               "the surface normal under it. Where the surface has no normal (e.g. a "
                               "point cloud), the view's up direction is used. The poses look straight "
-                              "down; Aim... re-aims them at a clicked point or a traced stroke.");
+                              "down at the ground under them; Aim... re-aims them at a clicked point "
+                              "or a traced stroke.");
 
         float height = camera_path_builder_->flight_height_in_scene_heights();
         if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
@@ -644,7 +645,8 @@ void MappleViewer::commit_flight_track() {
     }
     route_segments_.clear();
 
-    const std::vector<vec3> stations = camera_path_builder_->flight_stations(points, ups);
+    const std::vector<CameraPathBuilder::FlightStation> stations =
+        camera_path_builder_->flight_stations(points, ups);
     if (stations.size() < 2) {
         LOG(WARNING) << "the stroke is too short to trace a flight track";
         return; // the tool stays armed for another try
@@ -653,7 +655,7 @@ void MappleViewer::commit_flight_track() {
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
     const int before = static_cast<int>(kfi_->number_of_keyframes());
-    // No aims: the flight's default, straight down.
+    // No aims: the flight's default, straight down at each station's own foot.
     const std::size_t added = camera_path_builder_->generate_flight(stations, {});
     if (added == 0) {
         LOG(WARNING) << "the flight track could not be turned into keyframes";
@@ -664,7 +666,7 @@ void MappleViewer::commit_flight_track() {
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
-    LOG(INFO) << added << " flight keyframes added to the camera path (aiming straight down)";
+    LOG(INFO) << added << " flight keyframes added to the camera path (aiming down at the track)";
     update();
 }
 

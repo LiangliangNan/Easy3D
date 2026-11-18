@@ -55,6 +55,15 @@ int main() {
         camera.set_scene_radius(1.0f);
         KeyFrameInterpolator kfi(camera.frame());
         CameraPathBuilder builder(&camera, &kfi);
+        // A flight station is the lifted camera position and the ground foot it rose
+        // from; the default aim points back down at that foot.
+        auto make_stations = [](const std::vector<vec3> &positions, const vec3 &lift_up) {
+            std::vector<CameraPathBuilder::FlightStation> stations;
+            stations.reserve(positions.size());
+            for (const vec3 &p : positions)
+                stations.push_back(CameraPathBuilder::FlightStation{p, p - lift_up});
+            return stations;
+        };
         // Fix the spacing the route and flight counts below are written against instead of
         // depending on the default: one character height is one eye height, 2 world units.
         builder.set_keyframe_spacing_in_character_heights(1.0f);
@@ -132,7 +141,8 @@ int main() {
                 "ground_frames accepted unpaired directions");
         require(builder.ground_frames({vec3(0.0f), vec3(1.0f)}, {vec3(0.0f), vec3(0.0f, 1.0f, 0.0f)}, 1.0f).empty(),
                 "ground_frames accepted a degenerate direction");
-        require(builder.flight_frames({vec3(0.0f), vec3(1.0f)}, {vec3(1.0f)}, vec3(0.0f, 1.0f, 0.0f)).empty(),
+        require(builder.flight_frames(make_stations({vec3(0.0f), vec3(1.0f)}, vec3(0.0f, 1.0f, 0.0f)),
+                                      {vec3(1.0f)}, vec3(0.0f, 1.0f, 0.0f)).empty(),
                 "flight_frames accepted unpaired targets");
 
         // --- turntable orbit -----------------------------------------------
@@ -162,8 +172,11 @@ int main() {
         // --- flight poses ---------------------------------------------------
         const std::vector<vec3> positions = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f),
                                              vec3(0.0f, 10.0f, 10.0f)};
+        const vec3 world_up(0.0f, 1.0f, 0.0f);
+        const std::vector<CameraPathBuilder::FlightStation> flight_stations =
+                make_stations(positions, world_up);
         const std::vector<vec3> targets = {vec3(0.0f), vec3(0.0f), vec3(0.0f)};
-        const std::vector<Frame> flight = builder.flight_frames(positions, targets, vec3(0.0f, 1.0f, 0.0f));
+        const std::vector<Frame> flight = builder.flight_frames(flight_stations, targets, world_up);
         require(flight.size() == positions.size(), "flight_frames dropped stations");
         for (std::size_t i = 0; i < flight.size(); ++i) {
             require(near(flight[i].position(), positions[i]), "a flight pose is not at its station");
@@ -172,13 +185,23 @@ int main() {
                     "a flight pose does not aim at its target");
         }
 
-        // --- the flight's default aim: straight down -------------------------
-        const std::vector<Frame> down = builder.flight_frames(positions, {}, vec3(0.0f, 1.0f, 0.0f));
+        // --- the flight's default aim: down at each station's foot -----------
+        const std::vector<Frame> down = builder.flight_frames(flight_stations, {}, world_up);
         require(down.size() == positions.size(), "the default-aimed flight dropped stations");
         for (std::size_t i = 0; i < down.size(); ++i) {
             require(near(down[i].position(), positions[i]), "a default-aimed flight pose is not at its station");
-            require(near(down[i].orientation().rotate(local_forward), vec3(0.0f, -1.0f, 0.0f), 1e-4f),
-                    "a default-aimed flight pose does not look straight down");
+            require(near(down[i].orientation().rotate(local_forward), -world_up, 1e-4f),
+                    "a straight lift does not default to a straight-down aim");
+        }
+
+        // A tilted lift: the default aim is the reverse of the lift, i.e. the slope's
+        // normal under each station, not one global down.
+        const std::vector<Frame> tilted_down =
+                builder.flight_frames(make_stations(positions, ramp_up), {}, world_up);
+        require(tilted_down.size() == positions.size(), "the tilted default-aimed flight dropped stations");
+        for (std::size_t i = 0; i < tilted_down.size(); ++i) {
+            require(near(tilted_down[i].orientation().rotate(local_forward), -ramp_up, 1e-4f),
+                    "a tilted lift does not default to the reverse of the lift");
         }
 
         // --- re-aiming default poses ----------------------------------------
@@ -222,16 +245,21 @@ int main() {
         // extent along the view's up is 5 world units. The stroke spans 8 units, so
         // the spacing (1 x height) resamples it to 3 stations.
         require(near(builder.flight_height_in_world_units(), 5.0f), "the flight height in world units is wrong");
-        const std::vector<vec3> stations = builder.flight_stations(flat_stroke, flat_ups);
-        require(stations.size() == 3, "the flight track was not resampled at the flight spacing");
-        for (const vec3 &s : stations)
-            require(near(s.y, 0.0f) && near(s.z, 0.0f), "a flight station is not one flight height above its foot");
+        const std::vector<CameraPathBuilder::FlightStation> traced = builder.flight_stations(flat_stroke, flat_ups);
+        require(traced.size() == 3, "the flight track was not resampled at the flight spacing");
+        for (const auto &s : traced) {
+            require(near(s.position.y, 0.0f) && near(s.position.z, 0.0f),
+                    "a flight station is not one flight height above its foot");
+            require(near(s.foot.y, -5.0f) && near(s.foot.z, 0.0f), "a flight station lost its foot");
+        }
 
-        const std::vector<vec3> over_ramp = builder.flight_stations(flat_stroke, ramp_ups);
-        require(over_ramp.size() == stations.size(), "the tilted flight track changed the station count");
-        for (std::size_t i = 0; i < over_ramp.size(); ++i)
-            require(near(over_ramp[i], vec3(stations[i].x, -5.0f, 0.0f) + ramp_up * 5.0f),
+        const std::vector<CameraPathBuilder::FlightStation> over_ramp = builder.flight_stations(flat_stroke, ramp_ups);
+        require(over_ramp.size() == traced.size(), "the tilted flight track changed the station count");
+        for (std::size_t i = 0; i < over_ramp.size(); ++i) {
+            require(near(over_ramp[i].foot, traced[i].foot), "the tilted flight track moved its feet");
+            require(near(over_ramp[i].position, over_ramp[i].foot + ramp_up * 5.0f),
                     "a tilted flight station does not rise along the surface normal under its foot");
+        }
 
         builder.set_flight_height_in_scene_heights(0.0f);
         require(builder.flight_stations(flat_stroke, flat_ups).empty(), "a zero flight height was accepted");
@@ -257,7 +285,8 @@ int main() {
                                           vec3(10.0f, 10.0f, 0.0f)};
         const std::vector<vec3> aimed_at = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 10.0f, 0.0f),
                                             vec3(20.0f, 10.0f, 0.0f)};
-        const std::size_t flight_keys = builder.generate_flight(flying, aimed_at);
+        const std::vector<CameraPathBuilder::FlightStation> flying_stations = make_stations(flying, world_up);
+        const std::size_t flight_keys = builder.generate_flight(flying_stations, aimed_at);
         require(flight_keys == flying.size(), "generate_flight dropped stations");
         require(kfi.number_of_keyframes() == flight_keys, "the flight poses did not reach the interpolator");
         for (std::size_t i = 0; i < flight_keys; ++i) {
@@ -269,12 +298,12 @@ int main() {
                     "a flight keyframe does not use the view's up as its roll reference");
         }
         kfi.delete_path();
-        require(builder.generate_flight(flying, {}) == flying.size(),
+        require(builder.generate_flight(flying_stations, {}) == flying.size(),
                 "the default-aimed flight did not reach the interpolator");
-        const vec3 down_dir = -builder.ground_up_direction();
         for (std::size_t i = 0; i < flying.size(); ++i)
-            require(near(kfi.keyframe(i).orientation().rotate(local_forward), down_dir, 1e-4f),
-                    "a generated default-aimed flight pose does not look straight down");
-        require(builder.generate_flight(flying, {vec3(0.0f)}) == 0, "generate_flight accepted unpaired aims");
+            require(near(kfi.keyframe(i).orientation().rotate(local_forward), -world_up, 1e-4f),
+                    "a generated default-aimed flight pose does not look down at its foot");
+        require(builder.generate_flight(flying_stations, {vec3(0.0f)}) == 0,
+                "generate_flight accepted unpaired aims");
     });
 }

@@ -54,17 +54,18 @@ namespace easy3d {
  *      - orbiting a picked axis: generate_orbit() turns a line into a closed orbit,
  *      - recording a flight: flight_stations() lifts a traced ground stroke to camera
  *        stations at the flight height and generate_flight() appends the poses aiming
- *        straight down by default, or at one target per station when a target list is
- *        given (aim_targets() turns an aim stroke into such a list; a clicked target
- *        is a repeated aim_targets() value),
+ *        down at each station's foot by default (the reverse of its lift, so a tilted
+ *        track looks along its own surface normal), or at one target per station when
+ *        a target list is given (aim_targets() turns an aim stroke into such a list; a
+ *        clicked target is a repeated aim_targets() value),
  *      - pure builders for previewing or editing a path before it is inserted:
  *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
- *        flight_frames() (a position track with a separate aim track), and
+ *        flight_frames() (stations with a separate aim track), and
  *      - aimed poses for any of them: every builder produces its mode's default aim
- *        (ground: along the route, orbit: at the axis, flight: straight down), and
- *        aimed_frames() re-aims existing poses at a target per pose, keeping their
- *        position and roll reference. This is how an app lets the user replace a
- *        mode's default aims by a clicked point or a traced aim stroke.
+ *        (ground: along the route, orbit: at the axis, flight: down at each station's
+ *        foot), and aimed_frames() re-aims existing poses at a target per pose,
+ *        keeping their position and roll reference. This is how an app lets the user
+ *        replace a mode's default aims by a clicked point or a traced aim stroke.
  *
  *      The class borrows a camera and a keyframe interpolator. The builders return
  *      plain frames; the generating functions append them to the interpolator the
@@ -296,9 +297,18 @@ public:
     /// \return The flight height in world units.
     float flight_height_in_world_units() const;
 
+    /// \brief A flight camera station: the position its ground-stroke foot was lifted to.
+    /// \details The pair keeps the lift, so the default aim can point back down the
+    ///      direction the station rose along (the reverse of its surface up).
+    struct FlightStation {
+        vec3 position;  ///< The camera position, lifted from \p foot along the surface up.
+        vec3 foot;      ///< The ground-stroke point the station was lifted from.
+    };
+
     /// \brief Camera stations of a flight track through \p stroke.
     /// \details Each station sits one flight height above its own ground point along
-    ///      the surface up there, so the track follows the terrain. The stroke is
+    ///      the surface up there, so the track follows the terrain, and carries that
+    ///      ground point as its foot. The stroke is
     ///      resampled by arc length at keyframe_spacing_in_character_heights() x
     ///      flight_height_in_world_units(), keeping the stroke's first and last points,
     ///      and the surface ups are oriented toward the camera and smoothed like the
@@ -311,8 +321,8 @@ public:
     /// \return One station per resampled foot, or an empty vector if the stroke has
     ///      fewer than two points, the directions do not pair with it, or the flight
     ///      height's world value is at most 1e-4.
-    std::vector<vec3> flight_stations(const std::vector<vec3> &stroke,
-                                      const std::vector<vec3> &surface_up_directions) const;
+    std::vector<FlightStation> flight_stations(const std::vector<vec3> &stroke,
+                                               const std::vector<vec3> &surface_up_directions) const;
 
     /// \brief One aim point per station, sampled along \p stroke.
     /// \details The stroke is sampled at \p count equal arc-length fractions, so the
@@ -325,22 +335,24 @@ public:
     /// \return \p count aim points in path order.
     std::vector<vec3> aim_targets(const std::vector<vec3> &stroke, std::size_t count) const;
 
-    /// \brief Appends flight poses over \p positions aimed at the matching \p targets,
+    /// \brief Appends flight poses over \p stations aimed at the matching \p targets,
     ///      with roll referenced to ground_up_direction(). Nothing is replaced:
     ///      callers clear the path first when a replacement is intended.
-    /// \details Typically \p positions comes from flight_stations() (or recorded
-    ///      poses) and \p targets from aim_targets(); the aim is exact at each station
-    ///      and the interpolator smooths it in between. The roll reference is the
-    ///      view's up at the time of the call, so the camera never banks. An empty
-    ///      \p targets keeps the flight's default aim, straight down.
-    /// \param positions Camera positions in path order; at least two are needed.
-    /// \param targets One aim point per position, in the same order, or empty for the
-    ///      default aim. A target equal to its position looks down the reversed roll
-    ///      reference.
+    /// \details Typically \p stations comes from flight_stations() and \p targets from
+    ///      aim_targets(); the aim is exact at each station and the interpolator
+    ///      smooths it in between. The roll reference is the view's up at the time of
+    ///      the call, so the camera never banks. An empty \p targets keeps the flight's
+    ///      default aim: each station looks straight down at its own foot, i.e. along
+    ///      the reverse of the direction it was lifted from that foot.
+    /// \param stations Camera stations in path order; at least two are needed.
+    /// \param targets One aim point per station, in the same order, or empty for the
+    ///      default aim. A target equal to its station's position looks down the
+    ///      reversed roll reference.
     /// \return The number of poses generated, or 0 if there are fewer than two
-    ///      positions or the inputs do not pair up.
+    ///      stations or the inputs do not pair up.
     /// \note The interpolator may accept fewer keyframes; see the class description.
-    std::size_t generate_flight(const std::vector<vec3> &positions, const std::vector<vec3> &targets);
+    std::size_t generate_flight(const std::vector<FlightStation> &stations,
+                                const std::vector<vec3> &targets);
     //@}
 
     /// \name Path builders
@@ -386,23 +398,25 @@ public:
                                      const std::vector<vec3> &up_directions,
                                      float eye_height) const;
 
-    /// \brief Flight poses along \p positions, each aiming at the matching target.
-    /// \details The motion track and the aim track are independent: positions are
-    ///      the camera stations, targets what the camera points at there. The
+    /// \brief Flight poses at \p stations, each aiming at the matching target.
+    /// \details The motion track and the aim track are independent: stations are
+    ///      the camera positions, targets what the camera points at there. The
     ///      interpolator smooths both; between stations the aim is the interpolated
     ///      orientation, not an exact target lock. Each station's orientation is an
     ///      exact look-at: a degenerate \p up falls back to +Z, and a target equal to
-    ///      its position looks down the reversed \p up. An empty \p targets is the
-    ///      flight's default aim: every station looks straight down, along the
-    ///      reversed \p up (a straight-down view has no preferred roll, so the basis
-    ///      is deterministic but not tied to \p up).
-    /// \param positions Camera positions in path order; at least two are needed.
-    /// \param targets One aim point per position, in the same order, or empty for the
+    ///      its station's position looks down the reversed \p up. An empty \p targets
+    ///      is the flight's default aim: every station looks at its own foot, i.e.
+    ///      along the reverse of the direction it was lifted (a station lifted
+    ///      straight up looks straight down; on a slope it looks along that slope's
+    ///      normal). A view along the reversed \p up has no preferred roll, so the
+    ///      basis is deterministic but not tied to \p up.
+    /// \param stations Camera stations in path order; at least two are needed.
+    /// \param targets One aim point per station, in the same order, or empty for the
     ///      default aim.
     /// \param up Unit up reference that keeps the camera roll level.
-    /// \return The poses, or an empty vector if there are fewer than two positions or
+    /// \return The poses, or an empty vector if there are fewer than two stations or
     ///      \p targets does not pair up with them.
-    std::vector<Frame> flight_frames(const std::vector<vec3> &positions,
+    std::vector<Frame> flight_frames(const std::vector<FlightStation> &stations,
                                      const std::vector<vec3> &targets,
                                      const vec3 &up) const;
 

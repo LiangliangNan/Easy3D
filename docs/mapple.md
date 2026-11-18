@@ -2187,10 +2187,11 @@ migrated; retirement can proceed whenever it is wanted.
 - The three path modes now share one way of choosing aims. Each path gesture
   commits with its mode's default aim and the result is playable at once - the
   walking poses aim along the route, the orbit poses at the axis, and the flight
-  poses straight down (the flight's previous default, aiming at nothing, is gone).
-  The Camera Path window then shows "Aims of the new path: along the route /
-  straight down / at the orbit axis", "Not satisfied with the aims?" and an
-  `Aim...` button; the second step is never forced.
+  poses aim down at the ground they were lifted from (the flight's previous
+  default, aiming at nothing, is gone). The Camera Path window then shows "Aims of
+  the new path: along the route / down at the ground / at the orbit axis", "Not
+  satisfied with the aims?" and an `Aim...` button; the second step is never
+  forced.
 - `Aim...` arms the one-shot `PathTool::Aim`: a click on a visible model aims every
   keyframe of the new path at the picked surface point, and a drag over the surface
   traces the aims along the path, one target per keyframe in path order (the stroke
@@ -2198,16 +2199,19 @@ migrated; retirement can proceed whenever it is wanted.
   points go through `aim_targets()`). The tool refuses to arm without a generated
   range, disarms on Esc, Cancel or clicking the armed button, and its gesture
   snapshots the path first so Ctrl+Z restores the previous aims.
-- In the builder library, `flight_frames(positions, {}, up)` and
-  `generate_flight(stations, {})` take an empty target list as the flight default:
-  every station looks straight down along the reversed up (a straight-down view has
-  no preferred roll, so the basis is deterministic but not tied to that up). The
-  new `aimed_frames(frames, targets, roll_ups)` re-aims existing poses at one
-  target per pose: positions are kept, the default roll reference is each pose's
-  own up (a walking pose keeps standing on its terrain, an orbit pose keeps the
-  orbit's up), and a supplied `roll_ups` list replaces it per pose (the flight
-  passes the view's up, since its straight-down poses have no usable roll).
-  Mismatched or empty inputs return no poses.
+- In the builder library, `flight_stations()` now returns `FlightStation
+  {position, foot}` pairs: the lifted camera position and the ground-stroke point it
+  rose from. The flight default - `flight_frames(stations, {}, up)` and
+  `generate_flight(stations, {})` with an empty target list - aims every station at
+  its own foot, i.e. along the reverse of its lift: a station lifted straight up
+  looks straight down, and a station lifted along a slope's normal looks along that
+  normal, so a tilted track is not forced to one global down. The roll reference
+  stays the view's up (level horizon). The new `aimed_frames(frames, targets,
+  roll_ups)` re-aims existing poses at one target per pose: positions are kept, the
+  default roll reference is each pose's own up (a walking pose keeps standing on its
+  terrain, an orbit pose keeps the orbit's up), and a supplied `roll_ups` list
+  replaces it per pose (the flight passes the view's up). Mismatched or empty inputs
+  return no poses.
 - Mapple keeps an `AimRange {valid, mode, first, last}` for the keyframes the last
   path gesture produced; `commit_ground_route()`, `commit_flight_track()` and
   `apply_orbit_gesture()` record it after appending, `aim_path_range()` applies the
@@ -2218,16 +2222,20 @@ migrated; retirement can proceed whenever it is wanted.
   old pending-flight aim gesture (`flight_tracking_`, `flight_aiming_`,
   `flight_aim_ready_`, `flight_positions_`, `commit_flight_aim()`,
   `clear_flight_gesture()`) is removed; aiming is no longer a flight-only step.
-- The `camera_path_builder` test covers the new behavior: a default-aimed flight
-  through both `flight_frames()` and `generate_flight()` looks along the reversed
-  view up, `aimed_frames()` re-aims the orbit's default poses without moving them
-  while keeping each pose's own up as the roll reference, a re-aimed flight with
-  the `(0,1,0)` roll list looks level, and unpaired targets or roll references are
-  refused. `opengl.camerapathbuilder` (release tree) and `vulkan.camerapathbuilder`
-  (debug tree) pass.
+- The `camera_path_builder` test covers the new behavior: `flight_stations()` keeps
+  each station's foot and lifts it along the surface normal there, a default-aimed
+  flight through both `flight_frames()` and `generate_flight()` looks along the
+  reverse of its lift (straight down for an upright lift, the slope's normal for a
+  30-degree one), `aimed_frames()` re-aims the orbit's default poses without moving
+  them while keeping each pose's own up as the roll reference, a re-aimed flight
+  with the `(0,1,0)` roll list looks level, and unpaired targets or roll references
+  are refused. `opengl.camerapathbuilder` (release tree) and
+  `vulkan.camerapathbuilder` (debug tree) pass.
 - Validation: both check trees rebuilt; OpenGL (release) and Vulkan (debug) both
   launch `resources/data/bunny.ply` with "Mapple UI ready" and an error-free
-  `Mapple.log` (the shared log was not deleted; the settings files were backed up,
-  found unchanged, and left as they were). No clicks are synthesized, so the aim
+  `Mapple.log` (the shared log was not deleted; the settings files were backed up
+  before the smoke launches and, because the maintainer's own debug session had
+  changed the panel toggles in between, were left as the maintainer set them rather
+  than restored from the stale backup). No clicks are synthesized, so the aim
   gesture was not exercised; `easy3d/util/version.h` is unchanged.
 
