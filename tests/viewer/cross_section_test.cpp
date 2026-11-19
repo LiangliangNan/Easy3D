@@ -25,7 +25,7 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
     for (size_t i=0;i<a.ids.size();++i)
         require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,"guide/MSAA changed source IDs");
 }
-void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
+void check_planes(CrossSection& viewer,const graphics::FrameImage& image,const char* site) {
     const auto inverse_mvp=inverse(viewer.camera()->model_view_projection_matrix());
     const auto world_at=[&](unsigned x,unsigned y) {
         const auto i=size_t(y)*image.width+x;
@@ -60,7 +60,7 @@ void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
         const int nx=int(double(nearest%image.width)*viewer.width()/image.width);
         const int ny=int(double(nearest/image.width)*viewer.height()/image.height);
         std::ostringstream out;
-        out << "cross-section fixture produced no scene pick: " << hits(image) << " of " << image.width*image.height
+        out << "cross-section fixture produced no scene pick " << site << ": " << hits(image) << " of " << image.width*image.height
             << " texels covered, window " << viewer.width() << 'x' << viewer.height() << " against framebuffer "
             << fw << 'x' << fh << ", capture " << image.width << 'x' << image.height << ", nearest covered texel ("
             << nearest%image.width << ',' << nearest/image.width << ") maps to logical (" << nx << ',' << ny
@@ -114,7 +114,7 @@ int main(int argc,char**) {
         for (unsigned c=0;c<4;++c) require(behind.rgba[4*bi+c]==reference.rgba[4*bi+c],"filled guide showed through nearer opaque geometry");
         *viewer.camera()=saved; frame(viewer);
         const auto initial=viewer.capture();
-        require(viewer.clipping_planes().size()==1 && hits(initial)>100,"cross-section did not enable a clipping plane"); check_planes(viewer,initial);
+        require(viewer.clipping_planes().size()==1 && hits(initial)>100,"cross-section did not enable a clipping plane"); check_planes(viewer,initial,"after the first frame");
         require((plane->center()-viewer.camera()->scene_center()).norm()<1e-6f &&
                 std::abs(plane->scene_radius()-viewer.camera()->scene_radius())<1e-6f,"shared plane was not fitted to tutorial scene");
         // Changes through the public controller must be visible without a
@@ -148,7 +148,7 @@ int main(int argc,char**) {
         require(viewer.clipping_planes().empty() && hits(full)>hits(initial),"disabling clipping did not restore full model");
         press(Viewer::KEY_C); require(viewer.capture().rgba==initial.rgba,"clipping toggle did not restore cut geometry");
         press(Viewer::KEY_X); const auto slab=viewer.capture();
-        require(viewer.clipping_planes().size()==2 && hits(slab)>0 && hits(slab)<hits(initial),"cross-section did not retain a thin slab"); check_planes(viewer,slab);
+        require(viewer.clipping_planes().size()==2 && hits(slab)>0 && hits(slab)<hits(initial),"cross-section did not retain a thin slab"); check_planes(viewer,slab,"after the slab toggle");
         auto mouse=glfwSetMouseButtonCallback(viewer.window(),nullptr); glfwSetMouseButtonCallback(viewer.window(),mouse);
         auto cursor=glfwSetCursorPosCallback(viewer.window(),nullptr); glfwSetCursorPosCallback(viewer.window(),cursor);
         auto drag=[&](int button,double dx,double dy) {
@@ -160,9 +160,9 @@ int main(int argc,char**) {
         auto before=viewer.clipping_planes(); drag(Viewer::BUTTON_LEFT,35,15);
         require(viewer.clipping_planes()!=before,"registered left drag did not rotate clipping plane");
         before=viewer.clipping_planes(); drag(Viewer::BUTTON_RIGHT,22,18);
-        require(viewer.clipping_planes()!=before,"registered right drag did not translate clipping plane"); check_planes(viewer,viewer.capture());
+        require(viewer.clipping_planes()!=before,"registered right drag did not translate clipping plane"); check_planes(viewer,viewer.capture(),"after the registered drag");
         viewer.resize(460,320); frame(viewer); const auto resized=viewer.capture();
-        check_planes(viewer,resized); viewer.set_samples(1); frame(viewer); same_picking(resized,viewer.capture());
+        check_planes(viewer,resized,"after the resize"); viewer.set_samples(1); frame(viewer); same_picking(resized,viewer.capture());
         require(viewer.snapshot("vulkan-cross-section.png"),"cross-section snapshot failed");
         require(viewer.device().validation_errors()==0,"cross-section validation errors");
         std::cout << "PASS: native clipping/slab controls, guide-only visibility, registered rotation/translation, world-depth picking, resize, MSAA and snapshot\n";

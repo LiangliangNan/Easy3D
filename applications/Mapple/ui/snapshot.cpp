@@ -78,10 +78,28 @@ void MappleViewer::draw_snapshot_dialog() {
     const int height = static_cast<int>(std::ceil(framebuffer_height() * p.scale));
     ImGui::TextDisabled("Output: %d x %d pixels", width, height);
 
-    ImGui::InputInt("Samples", &p.samples);
-    // Show the count the snapshot will really use: a number that is not a supported
-    // power of two steps down and says so once, because the result is written back.
-    p.samples = supported_sample_count(p.samples);
+    // Easy3D accepts the powers of two only, and a number field with + - buttons
+    // cannot step along that ladder: a click from 2 lands on 3, which rounds back to
+    // 2, so 4 is never reached. The list is filtered by what this viewer can render,
+    // through the silent capability query - a request that is affordable on another
+    // machine but not here is normalized to the largest offered value at most it, so
+    // the number in the dialog is the number in the image and nothing warns.
+    static const int ladder[] = {1, 2, 4, 8, 16, 32, 64};
+    static const char *const names[] = {"1", "2", "4", "8", "16", "32", "64"};
+    const unsigned available = supported_sample_mask();
+    const char *shown[IM_ARRAYSIZE(ladder)];
+    int values[IM_ARRAYSIZE(ladder)], shown_count = 0, current = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(ladder); ++i)
+        if (available & unsigned(ladder[i])) {
+            shown[shown_count] = names[i];
+            values[shown_count] = ladder[i];
+            if (p.samples >= ladder[i]) current = shown_count;
+            ++shown_count;
+        }
+    p.samples = values[current]; // 1 is always offered, so the list is never empty
+    if (ImGui::Combo("Samples", &current, shown, shown_count))
+        p.samples = values[current];
+    ImGui::TextDisabled("1 means no multisampling; only the counts this device supports are listed.");
 
     const char *backgrounds[] = {"current color", "white", "transparent"};
     ImGui::Combo("Background", &p.background, backgrounds, 3);

@@ -296,11 +296,31 @@ public:
          *      offscreen target can really hold (\ref multisample_counts).
          * \details snapshot(), capture(), set_samples(), OffScreen::render() and the
          *      constructors resolve their request with this function, so the value a
-         *      caller sees here is the value rendering uses. It warns when it changes
-         *      the request; callers that offer the number in an interface should store
-         *      the answer back, which keeps the warning to one line per request.
+         *      caller sees here is the value rendering uses, and it warns whenever it
+         *      changes the request. An interface where the user picks a count offers
+         *      the values of \ref supported_sample_mask instead of rounding whatever
+         *      was entered: a stepped number field rounded here cannot climb the
+         *      ladder, because every click from 2 lands on 3 and is returned to 2.
          */
         int supported_sample_count(int requested) const;
+
+        /**
+         * \brief The multisample counts that can be rendered here.
+         * \return Flags holding the supported counts as their numeric values (so 1, 2,
+         *      4, ... are flagged by 0x1, 0x2, 0x4), always including 1, the count that
+         *      means no multisampling (\ref multisample_counts). The answer is the
+         *      offscreen capability: \c GL_MAX_SAMPLES on OpenGL and the device's color
+         *      sample counts on Vulkan, the same form as the Vulkan-only
+         *      \c RenderDevice::supported_sample_counts().
+         * \details Querying costs nothing and warns about nothing, which is what an
+         *      interface that lists the choices needs: it can ask on every frame and
+         *      offer only the counts this viewer can render. A caller holding a request
+         *      instead calls \ref supported_sample_count, which resolves it and says so
+         *      when it changes. Reading the mask needs care, because a flag holds a
+         *      count and not a bit position: \c mask & 3 is nonzero even when three
+         *      samples are unavailable.
+         */
+        unsigned supported_sample_mask() const;
 #ifdef EASY3D_HAS_VULKAN
         /**
          * \brief Set the Vulkan window's multisample count.
@@ -995,12 +1015,6 @@ public:
         // Sample count the backend window actually uses, for the base class's
         // capture/quality decisions; equals the clamped samples() value.
         unsigned window_samples() const override { return unsigned(samples()); }
-
-        // Offscreen sample counts available here, as flags holding the numeric values
-        // (1, 2, 4, ...): the device's color sample counts on Vulkan, GL_MAX_SAMPLES on
-        // OpenGL. Only supported_sample_count() reads it, because a count is a flag and
-        // not a bit position - 3 would "match" the 1 and 2 bits of such a mask.
-        unsigned supported_sample_mask() const;
 
 	protected:
 	    GLFWwindow*	window_;        // the GLFW window: created by this Viewer, or adopted from a host window

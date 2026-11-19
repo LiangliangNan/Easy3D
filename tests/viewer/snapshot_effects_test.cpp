@@ -275,6 +275,14 @@ int main(int argc,char** argv) {
         // image of the count it stepped down to.
         {
         const int maximum = v.supported_sample_count(64);
+        // The silent capability query and the resolving one agree: a count resolves to
+        // itself exactly when it is offered, which is what an interface listing the
+        // supported counts relies on.
+        const unsigned mask = v.supported_sample_mask();
+        require(mask & 1u,"the sample mask does not offer the single-sample count");
+        for (int count = 1; count <= 64; count <<= 1)
+            require((bool(mask & unsigned(count))) == (v.supported_sample_count(count) == count),
+                    "the sample mask and the resolution of that count disagree");
         require(v.supported_sample_count(0)==1 && v.supported_sample_count(1)==1,
                 "the no-multisampling request is not reported as 1");
         require(v.supported_sample_count(maximum)==maximum,"the supported count is not its own answer");

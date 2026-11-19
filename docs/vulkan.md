@@ -1359,8 +1359,12 @@ to the largest supported one with one warning naming both numbers.
 now support the device's RGBA8/D32 sample counts. `capture()` defaults to one
 sample; file-output `render()` defaults to four, matching `OffScreen::render()`.
 `RenderDevice::render()` and `present()` also accept a trailing sample-count
-argument. Query `device().supported_sample_counts()` before offering a count:
-`mask & 4` means four samples are available, and the mask always contains 1.
+argument. Offer only the counts the viewer can render: `Viewer::supported_sample_mask()`
+is the portable query (`GL_MAX_SAMPLES` on OpenGL, the device's color counts on Vulkan,
+the same shape as the Vulkan-only `device().supported_sample_counts()`), `mask & 4` means
+four samples are available, and the mask always contains 1. It warns about nothing, so a
+user interface can call it on every frame; `Viewer::supported_sample_count()` resolves a
+held request and says so when it changes, which is what the sample-count APIs use.
 Outside the constructors a malformed count is rejected explicitly, while a well-formed
 count beyond the device is reduced - by `Viewer::supported_sample_count()`, which every
 sample-count entry point applies - and says so. Only `RenderDevice::render()` and
@@ -11653,12 +11657,14 @@ so it steps down to the largest supported count with one warning naming both num
 - `easy3d/viewer/viewer.{h,cpp}` - `int supported_sample_count(int) const` is the public answer to
   the second case: the largest power of two at most the request that is supported here, never below
   1, warning whenever it changes the request. It is one implementation compiled for both backends
-  over a protected per-backend `supported_sample_mask()`: the device's color
-  `supported_sample_counts()` on Vulkan, `GL_MAX_SAMPLES` on OpenGL - read with the caller's
-  context if there is one, borrowing the viewer's window otherwise, and promising only 1 when
-  neither exists. The mask's flags hold the numeric counts (1, 2, 4, ...), so the ladder is walked
-  from 64 down rather than the request tested against the mask: `mask & 3` is nonzero and would
-  read as support for 3 samples.
+  over `unsigned supported_sample_mask() const`, which started as a protected helper and became
+  public in the same batch because an interface that lists the choices cannot call the resolving
+  function on every frame without filling the log: the device's color `supported_sample_counts()`
+  on Vulkan, `GL_MAX_SAMPLES` on OpenGL - read with the caller's context if there is one, borrowing
+  the viewer's window otherwise, and promising only 1 when neither exists - reported as flags
+  holding the numeric counts (1, 2, 4, ...), silently. That flag shape is also why the ladder is
+  walked from 64 down rather than the request tested against the mask: `mask & 3` is nonzero and
+  would read as support for 3 samples.
 - Applied wherever a count crosses into a render target: `Viewer::snapshot()` on both backends,
   both `Viewer::capture(unsigned[, readback])` legs, `scan_visible_points()`, `set_samples()`, the
   Vulkan window constructor's default of 4, and `MultiViewer::snapshot()`'s OpenGL grid target
@@ -11667,26 +11673,62 @@ so it steps down to the largest supported count with one warning naming both num
   `throw std::invalid_argument` for the calls that already threw, `false` with the reason logged
   for the boolean-returning ones. `graphics::RenderDevice::render()/present()` keep taking an exact
   `VkSampleCountFlagBits` - they are the backend's own vocabulary, not a user request.
-- Callers that offer the number - Mapple's `Samples` input and Mapple-Qt's snapshot dialog - now
-  store the resolved value back, which is what the API documents: one warning per request and the
-  number in the field is the number in the image. Mapple-Qt's spin box minimum moves from the old
-  OpenGL 0 to 1, since Easy3D counts samples the Vulkan way.
-- Documentation - the anchor, `supported_sample_count()`, `set_samples()`, both `capture()`
-  overloads, `snapshot()`, `ViewerBase::snapshot()` and `OffScreen::render()` state the two cases;
-  the Python bindings expose `supported_sample_count()` next to `samples()`.
+- The two dialogs that offer the number had to stop offering counts Easy3D rejects. Writing the
+  resolved value back into Mapple's `ImGui::InputInt("Samples")` was the first attempt and is
+  wrong: the `+` button steps by one, so a click from 2 lands on 3, the round-down puts it straight
+  back on 2, and 4 can never be reached. `Samples` is now a combo built from
+  `supported_sample_mask()` on every frame: only counts this viewer can render appear, the stored
+  count is normalized to the largest offered value at most it (a figure's state file only checked
+  it against `>= 1`), and nothing warns, because the dialog can no longer ask for a count that
+  rendering would have to reduce. Mapple-Qt's snapshot dialog keeps its spin box - a `QSpinBox`
+  cannot enumerate powers of two, and replacing it was judged not worth an unverifiable `.ui` edit
+  in the retiring Qt app - so a number that is not a supported count still resolves at save time,
+  to the largest supported power of two at most it, with the warning; its minimum moves from the
+  old OpenGL `0` to `1`, since Easy3D counts samples the Vulkan way.
+- Documentation - the anchor, `supported_sample_count()`, `supported_sample_mask()`,
+  `set_samples()`, both `capture()` overloads, `snapshot()`, `ViewerBase::snapshot()` and
+  `OffScreen::render()` state the two cases, and the Python bindings expose both new queries next
+  to `samples()`.
 
 **Validation.** The shared block of `tests/viewer/snapshot_effects_test.cpp` asserts the resolution
 itself (`supported_sample_count()` of 0 and 1 is 1, of the device maximum is that maximum, of 3 is
-what 2 is) and, when the maximum is below 64, that a snapshot at twice the maximum succeeds and is
-pixel-identical to the snapshot at the maximum, that `capture()` at the two counts returns the same
+what 2 is), the contract the dialog relies on (the mask always offers 1, and a count resolves to
+itself exactly when the mask carries its flag), and, when the maximum is below 64, that a snapshot at
+twice the maximum succeeds and is pixel-identical to the snapshot at the maximum, that `capture()` at
+the two counts returns the same
 image, and that `capture(3)` still throws. Both backends take that branch on this machine: OpenGL
 resolves 64 to 4 through `GL_MAX_SAMPLES`, and Vulkan reports `1 2 4` (printed by `vulkan.render`),
 so 8 is the stepped-down request in both runs. Replacing the ladder test with an exact-match-only
 condition - so an unaffordable count is no longer resolved - turns `opengl.snapshoteffects` red at
 "a count between two powers of two is not stepped down"; restoring the ladder turns it green.
-Both check trees fully rebuilt, serial suites OpenGL 118/118 and Vulkan 151/151.
+Both check trees fully rebuilt: OpenGL 118/118, Vulkan 150/151 with the only failure the
+intermittent `vulkan.crosssection` recorded below (`vulkan.snapshoteffects` is green in that run and
+in three re-runs).
+Mapple was rebuilt in both trees and the dialog was then measured, not assumed: a temporary probe
+opened it on the first drawn frame with `samples` forced to 3, and both backends logged
+`mask=7 listed=1,2,4 normalized_from_3_to=2` - the list holds only the counts this device renders,
+and the restored 3 became 2. The probe is removed and both Mapple binaries rebuilt without it.
 Mapple-Qt is not configured in either tree (Qt is on only in the Vulkan tree, where the app is
 skipped as OpenGL-only, and the OpenGL check tree sets `Easy3D_ENABLE_QT=OFF`), so its snapshot
 dialog change is left to CI, which builds it with `-DEasy3D_ENABLE_QT=ON` on the Vulkan-off jobs.
+
+**A recurrence of the intermittent `vulkan.crosssection`, with a different number.** The 2026-11-14
+entry left the cause open and said the next occurrence should arrive with the measurements attached;
+it arrived during this batch's full suite, and the report says something new. Recorded then: 95728 of
+403200 texels covered, so the picking pass demonstrably drew the scene and `pick()` still found
+nothing. This time: `0 of 403200 texels covered` - the ID attachment was entirely background, which
+rules out the coordinate mapping (nothing to map) and the scan missing the probe texel (there is no
+probe texel; `nearest` degrades to `(0,0)` and the direct pick there proves nothing). A blank capture
+is the third shape, and it is not the first check: `cross_section_test.cpp:117` shares its statement
+with `hits(initial) > 100`, so a blank *initial* frame fails there with a different message and this
+report came from a later leg - the slab toggle, the registered drag, or the resize, all of which the
+11-14 entry already named as places where a blank capture is plausible.
+That also exposes a gap in the earlier claim: the message never said *which* leg reported, so the
+entry's "which of the four it was is now in the report" was wrong. Each `check_planes()` call now
+passes a site string that the report prints (`produced no scene pick after the resize: ...`), verified
+by forcing the branch, which printed `after the first frame` on a healthy 95728-covered capture before
+being reverted. Rate on this host since: 15 isolated runs of the binary and 3 paired `ctest` runs with
+`vulkan.snapshoteffects` - all green - against 2 failures in the runs above, so it stays intermittent
+and cause-open, now with a leg name to go with the numbers.
 
 
