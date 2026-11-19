@@ -258,10 +258,18 @@ public:
          * \c 2/4/8/16/32/64 request that many samples per pixel. Only the
          * constructors additionally accept \c 0 as a synonym of \c 1, because that is
          * how the OpenGL backend spells the disabled case when it chooses a window
-         * pixel format. Everywhere else \c 0 is rejected, identically on both
-         * backends: a per-call count is an explicit request for one image, and
-         * treating \c 0 as a second spelling of "off" there would turn a mistake into
-         * a silently lower-quality render.
+         * pixel format; everywhere else \c 0 is rejected, identically on both backends.
+         *
+         * Any other sample count is then split into two cases, and they do not meet
+         * the same fate:
+         * - a count that is not a power of two from 1 to 64 says the caller does not
+         *   know what it asked for, so it is rejected (thrown, or false from the
+         *   file-output functions) on both backends;
+         * - a count that is valid but beyond what this device can do is a quality
+         *   request, and it steps down to the largest supported count with a warning
+         *   naming both numbers, exactly as the constructors have always done.
+         * supported_sample_count() answers the question for callers that want to show
+         * or store the effective count; the sample-count APIs apply it themselves.
          *
          * The two backends need different numbers internally, and the translation
          * happens once per backend instead of in each caller:
@@ -278,13 +286,29 @@ public:
          *   whose color is resolved into the output image.
          */
         int	 samples() const { return samples_ > 1 ? samples_ : 1; }
+
+        /**
+         * \brief Step a sample-count request down to what this viewer can render.
+         * \param requested Desired multisample count; anything below 1 asks for none.
+         * \return The largest power of two that is at most \c requested and supported
+         *      here, and never less than 1. The limit is \c GL_MAX_SAMPLES on OpenGL
+         *      and the device's color sample counts on Vulkan, so the answer is what an
+         *      offscreen target can really hold (\ref multisample_counts).
+         * \details snapshot(), capture(), set_samples(), OffScreen::render() and the
+         *      constructors resolve their request with this function, so the value a
+         *      caller sees here is the value rendering uses. It warns when it changes
+         *      the request; callers that offer the number in an interface should store
+         *      the answer back, which keeps the warning to one line per request.
+         */
+        int supported_sample_count(int requested) const;
 #ifdef EASY3D_HAS_VULKAN
         /**
          * \brief Set the Vulkan window's multisample count.
-         * \param samples Supported power-of-two count; 1 disables MSAA, see
-         *      \ref multisample_counts.
-         * \throws std::invalid_argument if the count is 0 or not supported by the
-         *      device. Unlike the constructor, no step-down is attempted.
+         * \param samples Power-of-two count; 1 disables MSAA, see
+         *      \ref multisample_counts. A count the device cannot do steps down to the
+         *      largest supported count, which samples() then reports.
+         * \throws std::invalid_argument if the count is 0, not a power of two, or above
+         *      64. Nothing steps down here; support is checked against the device.
          */
 	    void set_samples(unsigned samples);
 #endif
@@ -537,8 +561,9 @@ public:
          * \param samples Sample count of the offscreen target used for the snapshot,
          *      which can differ from that of the default framebuffer; 1 renders
          *      without multisampling (\ref multisample_counts). The default value is 4.
-         *      On OpenGL a count above the device maximum is rejected; on Vulkan an
-         *      unsupported count throws.
+         *      A count the device cannot do renders at the largest supported count
+         *      instead, and the function returns false - after logging - only for a
+         *      count that is not a power of two from 1 to 64.
          * \param background Determines the background color. 0: current color (default); 1: white; 2: transparent.
          * \param expand If true, expand the frustum as needed to match the
          *        output aspect ratio while retaining the visible scene.
@@ -802,20 +827,23 @@ public:
         /**
          * \brief Capture the current viewer image with a requested color sample count.
          * \param samples Requested multisample count for color rendering; 1 renders
-         *        without multisampling (\ref multisample_counts).
+         *        without multisampling (\ref multisample_counts). A count the device
+         *        cannot do renders at the largest supported count.
          * \return Frame image containing composited RGBA color plus available
          *         scene depth and object/primitive identifiers.
          * \details Depth and object identifiers are center-sampled and exclude
          * HUD overlays. Default object IDs index models() followed by standalone
          * drawables(). OpenGL may report UINT32_MAX when a primitive identifier
-         * is unavailable. Invalid or unsupported requests may throw.
+         * is unavailable. A count that is not a power of two from 1 to 64 throws, and
+         * so does a request the render target cannot size.
          */
 	    virtual graphics::FrameImage capture(unsigned samples) const;
 
         /**
          * \brief Capture the current viewer image with a requested color sample count and readback content.
          * \param samples Requested multisample count for color rendering; 1 renders
-         *        without multisampling (\ref multisample_counts).
+         *        without multisampling and a count the device cannot do steps down to
+         *        the largest supported one (\ref multisample_counts).
          * \param readback Scene data to copy back. FrameReadback::color skips the
          *        per-drawable depth/ID passes, leaving depth() and ids() empty.
          * \return Frame image containing composited RGBA color and, when requested,
@@ -967,6 +995,12 @@ public:
         // Sample count the backend window actually uses, for the base class's
         // capture/quality decisions; equals the clamped samples() value.
         unsigned window_samples() const override { return unsigned(samples()); }
+
+        // Offscreen sample counts available here, as flags holding the numeric values
+        // (1, 2, 4, ...): the device's color sample counts on Vulkan, GL_MAX_SAMPLES on
+        // OpenGL. Only supported_sample_count() reads it, because a count is a flag and
+        // not a bit position - 3 would "match" the 1 and 2 bits of such a mask.
+        unsigned supported_sample_mask() const;
 
 	protected:
 	    GLFWwindow*	window_;        // the GLFW window: created by this Viewer, or adopted from a host window

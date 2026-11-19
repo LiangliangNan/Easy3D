@@ -4541,7 +4541,7 @@ namespace easy3d {
                 // the "no MSAA" spelling of the OpenGL backend is normalized to 1 before
                 // it reaches this code.
                 void require_samples(unsigned samples) const {
-                    if (!samples || samples > 64 || (samples & (samples - 1)))
+                    if (!samples || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
                         throw std::invalid_argument("sample count must be a power of two from 1 to 64");
                     if (!(sample_counts_ & samples))
                         throw std::invalid_argument("sample count " + std::to_string(samples) +

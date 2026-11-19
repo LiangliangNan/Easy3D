@@ -429,6 +429,10 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&draw_fbo);glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&read_fbo);
     const auto saved=views_;
     try {
+        // The grid is rendered once into one target, so an unaffordable count must
+        // become an affordable one here rather than mid-tiling; the base class resolves
+        // it against GL_MAX_SAMPLES and says what it changed.
+        count=Viewer::supported_sample_count(count);
         FramebufferObject target(w,h,count);
         if(!target.add_color_buffer() || !target.add_depth_buffer() || !target.is_valid() || !target.bind()) throw std::runtime_error("cannot create multi-view snapshot target");
         for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {auto vp=cell_bounds(r,c,num_rows_,num_cols_,w,h);vp.y=h-vp.y-vp.w;self->views_[r][c].viewport=vp;}

@@ -270,6 +270,35 @@ int main(int argc,char** argv) {
         require(!v.snapshot(output_path(output_dir,"cross-backend-zero-samples.png"),1,0,1),
                 "a zero snapshot sample count was accepted");
 
+        // A count that is a valid power of two but beyond this device is a quality
+        // request, so it steps down instead of failing the frame: the snapshot is the
+        // image of the count it stepped down to.
+        {
+        const int maximum = v.supported_sample_count(64);
+        require(v.supported_sample_count(0)==1 && v.supported_sample_count(1)==1,
+                "the no-multisampling request is not reported as 1");
+        require(v.supported_sample_count(maximum)==maximum,"the supported count is not its own answer");
+        require(v.supported_sample_count(3)==v.supported_sample_count(2),
+                "a count between two powers of two is not stepped down");
+        if (maximum<64) {
+            const int above=maximum*2;
+            require(v.supported_sample_count(above)==maximum,
+                    "an unaffordable count does not step down to the supported maximum");
+            require(v.snapshot(output_path(output_dir,"cross-backend-stepped.png"),1,above,1),
+                    "an unaffordable snapshot sample count failed the snapshot");
+            const auto stepped=read_snapshot(output_path(output_dir,"cross-backend-stepped.png"),fw,fh);
+            require(v.snapshot(output_path(output_dir,"cross-backend-supported-max.png"),1,maximum,1),
+                    "snapshot at the supported maximum failed");
+            require(stepped==read_snapshot(output_path(output_dir,"cross-backend-supported-max.png"),fw,fh),
+                    "a stepped-down snapshot is not the image of the count it stepped down to");
+            require(v.capture(unsigned(above)).rgba==v.capture(unsigned(maximum)).rgba,
+                    "capture() does not step an unaffordable sample count down");
+        }
+        bool malformed=false;
+        try { v.capture(3u); } catch (const std::invalid_argument&) { malformed=true; }
+        require(malformed,"a non-power-of-two capture sample count was accepted");
+        }
+
         // The snapshot borrows the camera and the frame path; both are back. The camera
         // carries logical window dimensions on both backends (Batch 46), not the framebuffer.
         require(v.camera()->screen_width()==v.width() && v.camera()->screen_height()==v.height(),

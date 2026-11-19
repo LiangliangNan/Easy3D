@@ -113,14 +113,17 @@
         </item>
         <item>
          <widget class="QSpinBox" name="spinBoxSamples">
+          <property name="toolTip">
+           <string>1 renders without multisampling; 2, 4 and 8 request that many samples per pixel. A count this device cannot do is stepped down to the largest one it can.</string>
+          </property>
           <property name="minimum">
-           <number>0</number>
+           <number>1</number>
           </property>
           <property name="maximum">
            <number>8</number>
           </property>
           <property name="value">
-           <number>0</number>
+           <number>1</number>
           </property>
          </widget>
         </item>

@@ -61,10 +61,19 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     makeCurrent();
     glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
     doneCurrent();
-    if (samples > max_samples) {
-        LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples
-                     << ")";
-        return false;
+    // Easy3D counts samples the way Vulkan does - 1 means no multisampling, and a
+    // request is a power of two - so the dialog's free-form number becomes the largest
+    // supported power of two rather than failing the save.
+    int effective = 1;
+    for (int candidate = 64; candidate > 1; candidate >>= 1)
+        if (samples >= candidate && candidate <= max_samples) {
+            effective = candidate;
+            break;
+        }
+    if (effective != samples) {
+        LOG(WARNING) << "requested sample count (" << samples << ") is not available (maximum is "
+                     << max_samples << "), using " << effective;
+        samples = effective;
     }
 
     int sub_w = static_cast<int>(static_cast<float>(width()) * dpiScaling());

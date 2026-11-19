@@ -95,7 +95,7 @@ namespace easy3d {
     bool OffScreen::render(const std::string &file, float scale, int samples, int bg, bool expand) const {
         if (!std::isfinite(scale) || scale <= 0 || double(width()) * scale > std::numeric_limits<int>::max() ||
             double(height()) * scale > std::numeric_limits<int>::max() || samples <= 0 || samples > 64 ||
-            (samples & (samples - 1)) || bg < 0 || bg > 2)
+            (samples & (samples - 1)) || bg < 0 || bg > 2) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
             return false;
         activate();
         // samples == 1 requests no multisampling; FramebufferObject allocates plain

@@ -79,7 +79,9 @@ void MappleViewer::draw_snapshot_dialog() {
     ImGui::TextDisabled("Output: %d x %d pixels", width, height);
 
     ImGui::InputInt("Samples", &p.samples);
-    p.samples = std::max(1, p.samples);
+    // Show the count the snapshot will really use: a number that is not a supported
+    // power of two steps down and says so once, because the result is written back.
+    p.samples = supported_sample_count(p.samples);
 
     const char *backgrounds[] = {"current color", "white", "transparent"};
     ImGui::Combo("Background", &p.background, backgrounds, 3);

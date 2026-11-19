@@ -490,6 +490,25 @@ namespace easy3d {
         request_close();
     }
 
+    int Viewer::supported_sample_count(int requested) const {
+        // One rule for every sample-count entry point: a request of 1 - and the
+        // constructors' 0, which means the same - needs no device to answer for, and
+        // anything above it becomes the largest count this backend can render with.
+        // The ladder is walked instead of testing the request against the mask, whose
+        // flags hold numeric counts: a request of 3 would "match" the flags of 1 and 2.
+        if (requested <= 1)
+            return 1;
+        const unsigned available = supported_sample_mask();
+        for (unsigned candidate : {64u, 32u, 16u, 8u, 4u, 2u})
+            if (unsigned(requested) >= candidate && (available & candidate)) {
+                if (int(candidate) != requested)
+                    LOG(WARNING) << "sample count " << requested << " is not supported, using " << candidate;
+                return int(candidate);
+            }
+        LOG(WARNING) << "sample count " << requested << " is not supported, using 1 (no multisampling)";
+        return 1;
+    }
+
     void Viewer::update() const {
         glfwPostEmptyEvent();
     }
@@ -1544,6 +1563,8 @@ namespace easy3d {
         return impl_->active_clipping_planes();
     }
     std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
+        if (!samples || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
+            throw std::invalid_argument("invalid capture sample count");
         Camera snapshot(*camera());
         // Camera's copy constructor regenerates matrices from its parameters. Keep
         // effective matrices too, including externally calibrated/custom cameras.
@@ -1551,7 +1572,8 @@ namespace easy3d {
         snapshot.set_projection_matrix(camera()->projection_matrix());
         snapshot.set_model_view_matrix(camera()->model_view_matrix());
         const auto inv = transform::checked_inverse(snapshot.model_view_projection_matrix());
-        const auto frame = impl_->capture(snapshot, background_color(), samples, framebuffer_width(), framebuffer_height());
+        const auto frame = impl_->capture(snapshot, background_color(), unsigned(supported_sample_count(int(samples))),
+                                          framebuffer_width(), framebuffer_height());
         std::vector<vec3> points;
         points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
         for (unsigned y = 0; y < frame.height; ++y)
@@ -1769,19 +1791,14 @@ namespace easy3d {
 
             impl_->device = window_host_->device(options);
             manual_ = default_manual;
-            { // The default of 4 samples must not fail on a device without 4x MSAA: step a valid
-                // power of two down to a supported count with a warning (as OpenGL does); invalid
-                // counts are still rejected by set_samples(). A count of 1 is this backend's
-                // "no MSAA" and is always supported, so it never enters the step-down.
-                unsigned s = window_host_->samples;
-                const unsigned supported = device().supported_sample_counts();
-                if (s > 1 && s <= 64 && !(s & (s - 1)))
-                    while (s > 1 && !(supported & s))
-                        s >>= 1;
-                if (s != window_host_->samples) {
-                    LOG(WARNING) << "MSAA with " << window_host_->samples << " samples is not supported, using " << s;
-                    window_host_->samples = s;
-                }
+            { // The default of 4 samples must not fail on a device without 4x MSAA: a valid
+                // power of two steps down to a supported count with a warning (as OpenGL's
+                // pixel-format chooser does). Malformed counts are left for set_samples() to
+                // reject, and a count of 1 - like the constructor's 0 alias - is this
+                // backend's "no MSAA", already supported by definition.
+                const unsigned requested = window_host_->samples;
+                if (requested > 1 && requested <= 64 && !(requested & (requested - 1)))
+                    window_host_->samples = unsigned(supported_sample_count(int(requested)));
             }
             set_samples(window_host_->samples);
             window_host_->callbacks(this);
@@ -1824,15 +1841,22 @@ namespace easy3d {
         glfwGetWindowSize(window(), &w, &h);
         return w > 0 ? float(framebuffer_width()) / w : 1.0f;
     }
+    unsigned Viewer::supported_sample_mask() const {
+        // The device's color MSAA counts; 1 is always present, because Vulkan has no
+        // zero sample count and VK_SAMPLE_COUNT_1_BIT is what disables multisampling.
+        return impl_->device ? device().supported_sample_counts() : 1u;
+    }
     void Viewer::set_samples(unsigned samples) {
-        // Supported counts only, with 1 meaning "no MSAA" (this backend has no zero
-        // sample count). Unlike the constructor, an unsupported count is rejected
-        // rather than stepped down: an explicit call should not silently render at a
-        // different quality than the caller asked for.
-        if (!samples || samples > 64 || (samples & (samples - 1)) || !(device().supported_sample_counts() & samples))
-            throw std::invalid_argument("unsupported Vulkan viewer sample count");
-        window_host_->samples = samples;
-        samples_ = int(samples);
+        // 1 means "no MSAA" (this backend has no zero sample count) and 0 is the
+        // constructor's alias, so neither is accepted here; the same goes for a count
+        // that is not a power of two or above 64. A well-formed count the device cannot
+        // do steps down to the largest it can, like the constructor does, and samples()
+        // then reports the count actually in use.
+        if (!samples || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
+            throw std::invalid_argument("Vulkan viewer sample count must be a power of two from 1 to 64");
+        const unsigned count = unsigned(supported_sample_count(int(samples)));
+        window_host_->samples = count;
+        samples_ = int(count);
     }
     void Viewer::draw_corner_axes() const {
         if (!show_corner_axes_) {
@@ -1918,7 +1942,13 @@ namespace easy3d {
         if (window_) {
             update_interaction_overlays();
         }
-        return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height(),
+        // A count that is not a power of two from 1 to 64 is the caller's mistake and
+        // throws, as on OpenGL; a well-formed count the device cannot do steps down to
+        // the largest it can, because the capture itself is not a quality debate.
+        if (!sample_count || sample_count > 64 || (sample_count & (sample_count - 1)))
+            throw std::invalid_argument("invalid capture sample count");
+        return impl_->capture(*camera(), background_color(), unsigned(supported_sample_count(int(sample_count))),
+                              framebuffer_width(), framebuffer_height(),
                               snapshot_hud_, readback);
     }
 } // namespace easy3d
@@ -1942,7 +1972,7 @@ namespace easy3d {
           model_idx_(-1) {
         if (width <= 0 || height <= 0)
             throw std::invalid_argument("window dimensions must be positive");
-        if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1))))
+        if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1)))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
             throw std::invalid_argument("invalid viewer sample count");
         // Avoid locale-related number parsing issues.
         setlocale(LC_NUMERIC, "C");
@@ -2635,6 +2665,26 @@ namespace easy3d {
                                     draw_scene(snapshot);
                                 });
     }
+    unsigned Viewer::supported_sample_mask() const {
+        // Offscreen multisample storage is capped by GL_MAX_SAMPLES, and reading it
+        // needs a current context: borrow this viewer's window when the caller has
+        // none and hand the context back afterwards. Without either, only the
+        // single-sample count can be promised.
+        GLFWwindow *restore = glfwGetCurrentContext();
+        if (!restore) {
+            if (!window_)
+                return 1;
+            glfwMakeContextCurrent(window_);
+        }
+        GLint maximum = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &maximum);
+        if (!restore)
+            glfwMakeContextCurrent(restore);
+        unsigned mask = 1;
+        for (unsigned count = 2; count <= 64 && count <= unsigned(std::max(0, maximum)); count <<= 1)
+            mask |= count;
+        return mask;
+    }
     graphics::FrameImage Viewer::capture() const {
         return capture(samples());
     }
@@ -2646,12 +2696,14 @@ namespace easy3d {
             throw std::invalid_argument("invalid capture sample count");
         QueryContext context(window_);
         QueryState state;
-        GLint maximum = 0, extent = 0;
-        glGetIntegerv(GL_MAX_SAMPLES, &maximum);
+        GLint extent = 0;
         glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &extent);
         const int w = framebuffer_width(), h = framebuffer_height();
-        if (w <= 0 || h <= 0 || w > extent || h > extent || (count > 1 && count > unsigned(maximum)))
-            throw std::invalid_argument("unsupported capture dimensions or samples");
+        if (w <= 0 || h <= 0 || w > extent || h > extent)
+            throw std::invalid_argument("unsupported capture dimensions");
+        // The dimensions are not negotiable but the quality is: a count above
+        // GL_MAX_SAMPLES renders at the largest supported one, as on Vulkan.
+        count = unsigned(supported_sample_count(int(count)));
         state.prepare(w, h);
         auto *self = const_cast<Viewer *>(this);
         if (!initialized_) {

@@ -446,13 +446,17 @@ namespace easy3d {
          * \brief Render the scene to an image file.
          * \param file_name Destination image path.
          * \param scaling Output-size multiplier relative to the logical canvas size.
-         * \param samples Requested antialiasing sample count.
+         * \param samples Requested antialiasing sample count; 1 renders without
+         *        multisampling and a count the device cannot do steps down to the
+         *        largest supported one (\ref multisample_counts).
          * \param background Background mode: 0 uses the host background, 1 uses
          *        white, and 2 uses transparency.
          * \param expand If true, expand the frustum as needed to preserve the
          *        original view while matching the output aspect ratio.
          * \return True on success, false if the image could not be written.
-         * \details The concrete implementation may reject unsupported parameters.
+         * \details The concrete implementation rejects a sample count that is not a
+         *        power of two from 1 to 64 and a scaling or background value that is
+         *        out of range.
          * File snapshots do not change the live camera, visibility, or animation
          * state.
          */

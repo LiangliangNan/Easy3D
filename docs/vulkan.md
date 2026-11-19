@@ -1350,9 +1350,10 @@ Because of that, the translation happens exactly once per backend and never in t
 `Viewer::create_window()` maps the unified 1 to GLFW's 0, and `Viewer::samples()` maps the
 received value (0 on OpenGL, never below 1 on Vulkan) back to the unified 1. The 0 alias stops at
 the constructors: every per-call sample count - `set_samples()`, `capture()`, `snapshot()` and
-`OffScreen::render()` - is validated the same way in both builds (a power of two from 1 to 64,
-with the device maximum checked afterwards), so a mistyped count cannot mean "renders in an OpenGL
-build and fails in a Vulkan build".
+`OffScreen::render()` - has to be a power of two from 1 to 64 in both builds, so a mistyped count
+cannot mean "renders in an OpenGL build and fails in a Vulkan build". What the device can not do is
+a different question and is answered the same way everywhere since batch 142: the count steps down
+to the largest supported one with one warning naming both numbers.
 
 `VulkanOffScreen::capture(samples)` and `render(filename, scaling, samples, ...)`
 now support the device's RGBA8/D32 sample counts. `capture()` defaults to one
@@ -1360,9 +1361,11 @@ sample; file-output `render()` defaults to four, matching `OffScreen::render()`.
 `RenderDevice::render()` and `present()` also accept a trailing sample-count
 argument. Query `device().supported_sample_counts()` before offering a count:
 `mask & 4` means four samples are available, and the mask always contains 1.
-Outside the constructors, unsupported counts are rejected explicitly rather than
-silently reduced - the constructor step-down above is the only place a count changes
-on its own.
+Outside the constructors a malformed count is rejected explicitly, while a well-formed
+count beyond the device is reduced - by `Viewer::supported_sample_count()`, which every
+sample-count entry point applies - and says so. Only `RenderDevice::render()` and
+`present()` keep rejecting an unaffordable count: they take the backend's own enumerant
+rather than a user request.
 
 For a window, pass `samples` to the constructor or call
 `viewer.set_samples(4)`. No-argument `capture()` uses the window's
@@ -11626,3 +11629,64 @@ count of 0 fails); relaxing only the `samples <= 0` term of the new OpenGL check
 `opengl.snapshoteffects` red. With everything in place both trees are fully rebuilt and their
 serial suites pass: OpenGL 118/118 and Vulkan 151/151, where the Vulkan numbers are unchanged by
 the removals - that backend never coerced anything - and only the shared snapshot assertion is new.
+
+### 2026-11-19 — batch 142: an unaffordable sample count steps down instead of failing
+
+**Problem.** Batch 141 made the sample-count *grammar* identical on both backends and left the
+second half of the question unanswered: what to do with a count that is well formed but beyond
+what this device can render. Three answers were in use at once. `FramebufferObject` and the
+`Viewer` constructors stepped down to the largest supported count with a warning, because the
+window system and `GL_MAX_SAMPLES` make that the only feasible thing; `Viewer::snapshot()` on
+Vulkan and `Viewer::capture()` on both backends *failed* the call outright (the OpenGL `capture()`
+kept its `GL_MAX_SAMPLES` term inside the `throw`, the Vulkan snapshot handed `snapshot_frame()` a
+count the device refuses); and the OpenGL `Viewer::snapshot()` stepped down only implicitly,
+because the `FramebufferObject` below it did. Mapple's snapshot dialog exposes the count as a free
+text field, so typing 8 on a machine whose maximum is 4 produced a picture on one backend and an
+error line plus no file on the other - and the ToDo item recorded that the field still accepted
+arbitrary integers.
+
+**Change.** The rule has two cases, stated once at the `multisample_counts` anchor: a count that is
+*not* a power of two from 1 to 64 says the caller does not know what it asked for and is rejected
+identically on both backends; a count that *is* valid but beyond this device is a quality request,
+so it steps down to the largest supported count with one warning naming both numbers.
+
+- `easy3d/viewer/viewer.{h,cpp}` - `int supported_sample_count(int) const` is the public answer to
+  the second case: the largest power of two at most the request that is supported here, never below
+  1, warning whenever it changes the request. It is one implementation compiled for both backends
+  over a protected per-backend `supported_sample_mask()`: the device's color
+  `supported_sample_counts()` on Vulkan, `GL_MAX_SAMPLES` on OpenGL - read with the caller's
+  context if there is one, borrowing the viewer's window otherwise, and promising only 1 when
+  neither exists. The mask's flags hold the numeric counts (1, 2, 4, ...), so the ladder is walked
+  from 64 down rather than the request tested against the mask: `mask & 3` is nonzero and would
+  read as support for 3 samples.
+- Applied wherever a count crosses into a render target: `Viewer::snapshot()` on both backends,
+  both `Viewer::capture(unsigned[, readback])` legs, `scan_visible_points()`, `set_samples()`, the
+  Vulkan window constructor's default of 4, and `MultiViewer::snapshot()`'s OpenGL grid target
+  (resolved before the tiling loop, since the grid renders into one target once). `OffScreen` and
+  `MultiViewer` reach it through those. The malformed half of the check stays where it was:
+  `throw std::invalid_argument` for the calls that already threw, `false` with the reason logged
+  for the boolean-returning ones. `graphics::RenderDevice::render()/present()` keep taking an exact
+  `VkSampleCountFlagBits` - they are the backend's own vocabulary, not a user request.
+- Callers that offer the number - Mapple's `Samples` input and Mapple-Qt's snapshot dialog - now
+  store the resolved value back, which is what the API documents: one warning per request and the
+  number in the field is the number in the image. Mapple-Qt's spin box minimum moves from the old
+  OpenGL 0 to 1, since Easy3D counts samples the Vulkan way.
+- Documentation - the anchor, `supported_sample_count()`, `set_samples()`, both `capture()`
+  overloads, `snapshot()`, `ViewerBase::snapshot()` and `OffScreen::render()` state the two cases;
+  the Python bindings expose `supported_sample_count()` next to `samples()`.
+
+**Validation.** The shared block of `tests/viewer/snapshot_effects_test.cpp` asserts the resolution
+itself (`supported_sample_count()` of 0 and 1 is 1, of the device maximum is that maximum, of 3 is
+what 2 is) and, when the maximum is below 64, that a snapshot at twice the maximum succeeds and is
+pixel-identical to the snapshot at the maximum, that `capture()` at the two counts returns the same
+image, and that `capture(3)` still throws. Both backends take that branch on this machine: OpenGL
+resolves 64 to 4 through `GL_MAX_SAMPLES`, and Vulkan reports `1 2 4` (printed by `vulkan.render`),
+so 8 is the stepped-down request in both runs. Replacing the ladder test with an exact-match-only
+condition - so an unaffordable count is no longer resolved - turns `opengl.snapshoteffects` red at
+"a count between two powers of two is not stepped down"; restoring the ladder turns it green.
+Both check trees fully rebuilt, serial suites OpenGL 118/118 and Vulkan 151/151.
+Mapple-Qt is not configured in either tree (Qt is on only in the Vulkan tree, where the app is
+skipped as OpenGL-only, and the OpenGL check tree sets `Easy3D_ENABLE_QT=OFF`), so its snapshot
+dialog change is left to CI, which builds it with `-DEasy3D_ENABLE_QT=ON` on the Vulkan-off jobs.
+
+

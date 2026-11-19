@@ -50,8 +50,11 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
     if (window_) update_interaction_overlays();
     try {
         // Vulkan has no zero sample count: VK_SAMPLE_COUNT_1_BIT is its "no MSAA"
-        // value, so 1 is the only spelling of multisampling being disabled here.
-        if (samples <= 0) throw std::invalid_argument("sample count must be positive");
+        // value, so 1 is the only spelling of multisampling being disabled here, and a
+        // count that is not a power of two from 1 to 64 is the caller's error exactly
+        // as it is on OpenGL. A well-formed count the device cannot do steps down.
+        if (samples <= 0 || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
+            throw std::invalid_argument("sample count must be a power of two from 1 to 64");
         if (!std::isfinite(scaling) || scaling <= 0 || double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
             double(framebuffer_height()) * scaling > std::numeric_limits<int>::max() || back_ground < 0 || back_ground > 2)
             throw std::invalid_argument("invalid snapshot scaling/background");
@@ -75,7 +78,8 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
         const vec4 background = back_ground == 0 ? background_color() : back_ground == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0);
 
         graphics::FrameImage frame;
-        if (!const_cast<Viewer*>(this)->snapshot_frame(w, h, projection, background, unsigned(samples), frame))
+        if (!const_cast<Viewer*>(this)->snapshot_frame(w, h, projection, background,
+                                                       unsigned(supported_sample_count(samples)), frame))
             throw std::runtime_error("the snapshot frame could not be rendered");
         if (back_ground == 2) {
             // Alpha overlays and MSAA coverage against transparent black produce
@@ -141,7 +145,7 @@ namespace easy3d {
 		// count Vulkan rejects would still render here, because the framebuffer
 		// accepts any number of samples the device allows. The device maximum is
 		// checked below, where it can be queried.
-		if (samples <= 0 || samples > 64 || (samples & (samples - 1))) {
+		if (samples <= 0 || samples > 64 || (samples & (samples - 1))) { // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
 			LOG(WARNING) << "sample count must be a power of two from 1 to 64 (1 means no multisampling)";
 			return false;
 		}
@@ -149,13 +153,10 @@ namespace easy3d {
         if (!initialized_) {
             auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
         }
-		int max_samples = 0;
-		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
-		if (samples > max_samples) {
-			LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples
-				<< ")";
-			return false;
-		}
+		// A count above GL_MAX_SAMPLES renders at the largest supported count instead of
+		// failing the snapshot, as it does on Vulkan. Malformed counts were rejected
+		// above, where a context is not needed.
+		samples = supported_sample_count(samples);
 
 		int w, h;
 		framebuffer_size(w, h);
