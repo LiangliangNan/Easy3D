@@ -6,9 +6,13 @@
 
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
-#### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
-Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
-Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithmic aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering. It supports two rendering backends — native **Vulkan** (the default) and **OpenGL** — selected at build time with a single CMake option, with the same client code building against either backend.
+#### For 3D modeling, geometry processing, and rendering, designed for simplicity and efficiency. 
+Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and education, but it
+also serves as a good starting point for developing sophisticated 3D applications. Compared to existing geometry processing 
+libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the 
+algorithmic aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering. It supports 
+two rendering backends — native **Vulkan** (the default) and **OpenGL** — selected at build time with a single CMake option, 
+with the same client code building against either backend.
 
 <p align="center"> 
      <img src="./resources/images/overview.jpg" width="600"> 
@@ -99,7 +103,7 @@ the source code of most third-party libraries (for the core functionalities and 
 few optional (for a few additional features that are typically not needed by most users). 
 
 #### Rendering backends
-Easy3D provides two rendering backends, selected at configure time with the CMake option `Easy3D_ENABLE_VULKAN`:
+Easy3D provides two rendering backends, selected at configuration time with the CMake option `Easy3D_ENABLE_VULKAN`:
 
 - **Vulkan** (`Easy3D_ENABLE_VULKAN=ON`, the default): a native Vulkan renderer whose shaders are compiled to SPIR-V 
   at build time. Building it requires a [Vulkan SDK](https://vulkan.lunarg.com/) (on Linux, the `libvulkan-dev` and 
@@ -114,11 +118,11 @@ the OpenGL backend (`Easy3D_ENABLE_VULKAN=OFF`).
 
 **Migrating from the OpenGL-only Easy3D:** class names, headers, and the `virtual void draw() const` frame hook are 
 unchanged. The one deliberate API change is the viewer constructor: 
-`Viewer(title, width, height, samples, full_screen, visible, resizable, options)`, where `options` is `VulkanOptions` 
-or `OpenGLOptions` for the configured backend and `samples` defaults to 1. Old positional calls such as 
-`Viewer(title, 4, 3, 2, false, false)` still compile but now request a 4x3 window with 2 samples (instead of 4 samples 
-with OpenGL 3.2) — update such calls explicitly. See [the Vulkan migration guide](https://github.com/LiangliangNan/Easy3D/blob/main/docs/vulkan.md)
-for the full backend and migration details.
+`Viewer(title, window, options)`, where `window` is a struct of window options (`width`, `height`, `samples`, `full_screen`, 
+`visible`, `resizable`), and `options` is `VulkanOptions` or `OpenGLOptions` for the configured backend. Old positional 
+calls such as `Viewer(title, 4, 3, 2, false, false)` will not compile and must be updated explicitly. 
+See [the Vulkan migration guide](https://github.com/LiangliangNan/Easy3D/blob/main/docs/vulkan.md) for the full backend 
+and migration details.
 
 The **optional** third-party libraries are:
 - **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
@@ -149,7 +153,7 @@ Tutorials are not built by default; enable them with `-DEasy3D_BUILD_TUTORIALS=O
 - Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio). 
   - On Linux or macOS, you can simply
-    ```bash
+    ```cmd
         $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release
@@ -169,7 +173,7 @@ Tutorials are not built by default; enable them with `-DEasy3D_BUILD_TUTORIALS=O
   Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
 [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). For Windows users: your IDE must be set for `x64`.
   
-- Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
+- Option 3: Use CMake-GUI to generate project files for your IDE. Then load the project into your IDE and build it. For Windows users: your IDE must be set for `x64`.
 
 Do not have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
@@ -189,7 +193,9 @@ manual interaction. Python package tests are included when bindings are built.
 
 ### Use Easy3D in your project
 This is quite easy, like many other open-source libraries :-) 
-After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
+After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D 
+when running CMake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, 
+are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
 The `CMakeLists.txt` looks like:
 
 ```cmake
@@ -200,7 +206,7 @@ find_package(Easy3D COMPONENTS viewer REQUIRED)  # request Easy3D (recommended t
 add_executable(Test main.cpp)                    # create an executable target
 target_link_libraries(Test easy3d::viewer)       # link to necessary Easy3D modules (add more if needed, e.g., algo)
 ```
-and the `main.cpp` with minimum code:
+and the `main.cpp` with minimal code:
 ```c++
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
