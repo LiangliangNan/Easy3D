@@ -61,7 +61,8 @@ namespace easy3d {
          * \param title Window title.
          * \param width Initial logical window width.
          * \param height Initial logical window height.
-         * \param samples Requested multisample count.
+         * \param samples Multisample count to request; 1 (the default) and 0 both
+         *        disable MSAA, see \ref multisample_counts.
          * \param full_screen Whether to use fullscreen mode.
          * \param visible Whether the window is initially visible.
          * \param resizable Whether the user can resize the window.
@@ -148,7 +149,8 @@ namespace easy3d {
          * \brief Render the grid scene to an image file.
          * \param filename Destination image path.
          * \param scaling Output-size multiplier relative to the viewer canvas.
-         * \param samples Requested antialiasing sample count.
+         * \param samples Sample count of the offscreen target; 1 renders without
+         *        multisampling, see \ref multisample_counts.
          * \param background Background mode: 0 uses the viewer background,
          *        1 uses white, 2 uses transparency.
          * \param expand If true, expand the view to match the output aspect ratio.

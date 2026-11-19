@@ -98,7 +98,9 @@ namespace easy3d {
             (samples & (samples - 1)) || bg < 0 || bg > 2)
             return false;
         activate();
-        return snapshot(file, scale, samples == 1 ? 0 : samples, bg, expand);
+        // samples == 1 requests no multisampling; FramebufferObject allocates plain
+        // single-sample storage for it, as every other OpenGL layer does.
+        return snapshot(file, scale, samples, bg, expand);
     }
     Model *OffScreen::add_model(const std::string &file, bool create, bool fit_scene) {
         return Viewer::add_model(file, create, fit_scene);

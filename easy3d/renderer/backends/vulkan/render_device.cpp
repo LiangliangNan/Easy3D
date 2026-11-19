@@ -1067,6 +1067,8 @@ namespace easy3d {
                     auto found = color.find(key);
                     if (found != color.end())
                         return *found->second;
+                    // A single-sample target keeps color and depth in one pass; a
+                    // multisampled one adds the center-sample ID pass (PassKind differs).
                     std::unique_ptr<RenderPass> pass(
                         new RenderPass(c, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
                                        static_cast<VkSampleCountFlagBits>(samples)));
@@ -4534,6 +4536,10 @@ namespace easy3d {
                         .create();
                     color_pass(1);
                 }
+                // Rejects counts this device cannot rasterize. Note that 1 is legal and
+                // means single-sample output: VkSampleCountFlagBits has no zero value, so
+                // the "no MSAA" spelling of the OpenGL backend is normalized to 1 before
+                // it reaches this code.
                 void require_samples(unsigned samples) const {
                     if (!samples || samples > 64 || (samples & (samples - 1)))
                         throw std::invalid_argument("sample count must be a power of two from 1 to 64");

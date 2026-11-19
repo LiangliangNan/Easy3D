@@ -116,6 +116,9 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
         for(unsigned c=0;c<3;++c)require(std::abs(int(pixel[c])-int(std::lround(255*bg[c])))<=1,"tutorial retained color from an earlier frame");
         require(depth==1 && glGetError()==GL_NO_ERROR,"tutorial retained depth from an earlier frame");
         target.release();
+        // Easy3D spells "no MSAA" as one sample, so a one-sample framebuffer must not
+        // allocate multisample storage - the rule Viewer's sample API relies on.
+        require(FramebufferObject(16,16,1).samples()==0,"one-sample framebuffer is multisampled");
 #endif
     };
     cleared_frame();

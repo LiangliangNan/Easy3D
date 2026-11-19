@@ -106,7 +106,13 @@ public:
          * \param title The window title, which can be changed by set_title().
          * \param width Initial logical window width (positive).
          * \param height Initial logical window height (positive).
-         * \param samples Requested multisample count; 0 or 1 disables MSAA.
+         * \param samples Multisample count to request, see
+         *      \ref multisample_counts: 1 (the default) and 0 both disable MSAA,
+         *      while 2, 4, 8, 16, 32 or 64 enable it at that quality. A power of two
+         *      the device cannot do steps down to the largest supported count with a
+         *      warning, so a request such as 4 never makes the constructor throw;
+         *      negative and other non-power-of-two counts are rejected. Ask
+         *      samples() for the count actually obtained.
          * \param full_screen Whether to use the primary monitor in fullscreen mode.
          * \param visible Whether the window is initially visible.
          * \param resizable Whether the user can resize the window.
@@ -244,15 +250,41 @@ public:
         /**
          * \brief Return the effective multisample count.
          * \details The requested count may be reduced to a supported count
-         *      during viewer creation. A result of 1 means multisampling is disabled.
+         * during viewer creation. A result of 1 means multisampling is disabled.
          * \return Effective sample count.
+         * \par Multisample counts \anchor multisample_counts
+         * Easy3D counts samples the way Vulkan does, where \c VK_SAMPLE_COUNT_1_BIT
+         * is the value that means "no multisampling": \c 1 disables MSAA and
+         * \c 2/4/8/16/32/64 request that many samples per pixel. Only the
+         * constructors additionally accept \c 0 as a synonym of \c 1, because that is
+         * how the OpenGL backend spells the disabled case when it chooses a window
+         * pixel format. Everywhere else \c 0 is rejected, identically on both
+         * backends: a per-call count is an explicit request for one image, and
+         * treating \c 0 as a second spelling of "off" there would turn a mistake into
+         * a silently lower-quality render.
+         *
+         * The two backends need different numbers internally, and the translation
+         * happens once per backend instead of in each caller:
+         * - OpenGL: \c GLFW_SAMPLES is a minimum, so any positive hint asks the
+         *   native pixel-format chooser for a real multisample buffer (a request of
+         *   1 measured 2x on macOS) while 0 asks for none; \c GL_SAMPLES then reports
+         *   0 for a plain window. Viewer::create_window() maps the unified 1 to that
+         *   0, and this function maps the received value back: the stored count is 0
+         *   or 1 exactly when multisampling is off. FramebufferObject applies the same
+         *   rule, allocating plain single-sample storage for a request of 1.
+         * - Vulkan: \c VkSampleCountFlagBits has no zero value, so a count of 1 needs
+         *   no arithmetic at all: it selects the single-sample render pass and
+         *   single-sample attachments, and 2 or more selects the multisampled pass
+         *   whose color is resolved into the output image.
          */
-        int	samples() const { return samples_ > 1 ? samples_ : 1; }
+        int	 samples() const { return samples_ > 1 ? samples_ : 1; }
 #ifdef EASY3D_HAS_VULKAN
         /**
          * \brief Set the Vulkan window's multisample count.
-         * \param samples Supported nonzero power-of-two sample count.
-         * \throws std::invalid_argument if the device does not support the count.
+         * \param samples Supported power-of-two count; 1 disables MSAA, see
+         *      \ref multisample_counts.
+         * \throws std::invalid_argument if the count is 0 or not supported by the
+         *      device. Unlike the constructor, no step-down is attempted.
          */
 	    void set_samples(unsigned samples);
 #endif
@@ -502,8 +534,11 @@ public:
          * \param scaling The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e.,
          *      image_width = viewer_width * scaling;
          *      image_height = viewer_height * scaling;
-         * \param samples The required number of samples for antialiased rendering (which can be different from
-         *      that of the default framebuffer). The default value is 4.
+         * \param samples Sample count of the offscreen target used for the snapshot,
+         *      which can differ from that of the default framebuffer; 1 renders
+         *      without multisampling (\ref multisample_counts). The default value is 4.
+         *      On OpenGL a count above the device maximum is rejected; on Vulkan an
+         *      unsupported count throws.
          * \param background Determines the background color. 0: current color (default); 1: white; 2: transparent.
          * \param expand If true, expand the frustum as needed to match the
          *        output aspect ratio while retaining the visible scene.
@@ -759,13 +794,15 @@ public:
          * \brief Capture the current viewer image and scene attachments.
          * \return Frame image containing composited RGBA color plus available
          *         scene depth and object/primitive identifiers.
-         * \details Uses the viewer's effective sample count for color rendering.
+         * \details Uses the viewer's effective sample count, samples(), for color
+         * rendering, so a viewer without multisampling captures single-sample color.
          */
 	    graphics::FrameImage capture() const;
 
         /**
          * \brief Capture the current viewer image with a requested color sample count.
-         * \param samples Requested multisample count for color rendering.
+         * \param samples Requested multisample count for color rendering; 1 renders
+         *        without multisampling (\ref multisample_counts).
          * \return Frame image containing composited RGBA color plus available
          *         scene depth and object/primitive identifiers.
          * \details Depth and object identifiers are center-sampled and exclude
@@ -777,7 +814,8 @@ public:
 
         /**
          * \brief Capture the current viewer image with a requested color sample count and readback content.
-         * \param samples Requested multisample count for color rendering.
+         * \param samples Requested multisample count for color rendering; 1 renders
+         *        without multisampling (\ref multisample_counts).
          * \param readback Scene data to copy back. FrameReadback::color skips the
          *        per-drawable depth/ID passes, leaving depth() and ids() empty.
          * \return Frame image containing composited RGBA color and, when requested,
@@ -791,7 +829,8 @@ public:
 
         /**
          * \brief Scan visible scene surfaces into one point per covered pixel.
-         * \param samples Requested color sample count for the capture.
+         * \param samples Requested color sample count for the capture; the default 1
+         *         renders without multisampling (\ref multisample_counts).
          * \return World-space points in framebuffer row order, top to bottom,
          *         with one point for each non-background pixel.
          * \details Uses pixel centers and one camera snapshot. Overlays are
@@ -937,7 +976,8 @@ public:
 	    std::unique_ptr<Camera> camera_;   // the one camera manipulated by events, animations and picking
 	    std::string manual_;        // shortcut manual printed once on the first drawn frame (empty = none)
 	    std::string hint_; // shown in the top-left corner of the screen
-	    int		samples_;	// the actual samples
+	    int		samples_;	// count in use, in the backend's own dialect: OpenGL reports 0 for no
+	                            // multisampling, Vulkan never stores less than 1. samples() normalizes both to 1.
 	    vec4	background_color_;  // clear color of the color/depth pass
 	    bool    show_frame_rate_;   // HUD toggle: show the frame-rate readout
 	    bool    show_easy3d_logo_;  // HUD toggle: show the Easy3D logo text

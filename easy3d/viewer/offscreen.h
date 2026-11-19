@@ -68,7 +68,8 @@ namespace easy3d {
      * \brief Render the current scene to an image file.
      * \param filename Destination image path.
      * \param scaling Output-size multiplier relative to the canvas size.
-     * \param samples Requested antialiasing sample count.
+     * \param samples Sample count of the offscreen target; 1 renders without
+     *        multisampling and 0 is rejected, see \ref multisample_counts.
      * \param background Background mode: 0 uses the configured background,
      *        1 uses white, and 2 uses transparency.
      * \param expand If true, expand the frustum as needed for the output aspect ratio.

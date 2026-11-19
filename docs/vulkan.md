@@ -183,9 +183,11 @@ needs no change.
   force the portable expanded-point path for diagnostics and controlled comparisons; it
   defaults to `true` and has no effect on devices without the feature. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
-  uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
+  uses the primary monitor's video mode in both. `samples` counts samples the way Vulkan does,
+  so `1` (the default) means no MSAA and `0` is accepted as its alias; a valid
   power of two the device does not support steps down with a warning, so a request such as 4
-  never makes `Viewer()` fail (non-power-of-two counts are still rejected).
+  never makes `Viewer()` fail (non-power-of-two counts are still rejected). See "Multisampling
+  and test diagnostics" for what each backend does with the number internally.
 - **D2 Inheritance** follows `main`: `OffScreen : protected Viewer` and
   `MultiViewer : public Viewer`. The Vulkan device and capture code now lives in `Viewer`; its offscreen
   construction path creates neither a GLFW window nor a Vulkan surface. `ViewerBase` declares the API as virtual
@@ -1323,13 +1325,44 @@ package exports the normal `renderer` component and finds its Vulkan dependency.
 
 ## Multisampling and test diagnostics
 
+### The sample-count rule, and why the backends disagree about 1
+
+Easy3D's public API counts samples the way Vulkan does: **1 means no MSAA**, the values
+2/4/8/16/32/64 request that many samples per pixel, and the constructors also accept 0 as an
+alias of 1 because that is how OpenGL spells the disabled case. Internally the two APIs are
+opposite about the number 1:
+
+- **OpenGL** has no "one sample" state to ask for. `GLFW_SAMPLES` is a minimum, and GLFW counts a
+  zero-sample visual as *missing* for any positive request
+  (`3rd_party/glfw/src/context.c:223`); its macOS pixel-format builder sets
+  `NSOpenGLPFASampleBuffers` to 0 only for a request of 0 and to 1 plus `NSOpenGLPFASamples`
+  otherwise (`3rd_party/glfw/src/nsgl_context.m:291-301`). A hint of 1 therefore asks the window
+  system for a real multisample buffer - measured as a 2x context on an Apple M4 Pro - and
+  `GL_SAMPLES` reports 0 for a plain window. `FramebufferObject` follows the same convention:
+  a request of 1 or below allocates plain single-sample storage, because
+  `glTexImage2DMultisample()`/`glRenderbufferStorageMultisample()` would otherwise create a
+  multisample object whose resolve path differs.
+- **Vulkan** has no zero sample count: `VK_SAMPLE_COUNT_1_BIT` *is* the single-sample, no-MSAA
+  value, so a count of 1 needs no arithmetic. `VK_KHR_maintenance5` (promoted into Vulkan 1.4)
+  adds no "0 means 1" relaxation for pipeline sample counts, so nothing may rely on one.
+
+Because of that, the translation happens exactly once per backend and never in the callers:
+`Viewer::create_window()` maps the unified 1 to GLFW's 0, and `Viewer::samples()` maps the
+received value (0 on OpenGL, never below 1 on Vulkan) back to the unified 1. The 0 alias stops at
+the constructors: every per-call sample count - `set_samples()`, `capture()`, `snapshot()` and
+`OffScreen::render()` - is validated the same way in both builds (a power of two from 1 to 64,
+with the device maximum checked afterwards), so a mistyped count cannot mean "renders in an OpenGL
+build and fails in a Vulkan build".
+
 `VulkanOffScreen::capture(samples)` and `render(filename, scaling, samples, ...)`
 now support the device's RGBA8/D32 sample counts. `capture()` defaults to one
 sample; file-output `render()` defaults to four, matching `OffScreen::render()`.
 `RenderDevice::render()` and `present()` also accept a trailing sample-count
 argument. Query `device().supported_sample_counts()` before offering a count:
-`mask & 4` means four samples are available. Unsupported counts are rejected
-explicitly rather than silently reduced.
+`mask & 4` means four samples are available, and the mask always contains 1.
+Outside the constructors, unsupported counts are rejected explicitly rather than
+silently reduced - the constructor step-down above is the only place a count changes
+on its own.
 
 For a window, pass `samples` to the constructor or call
 `viewer.set_samples(4)`. No-argument `capture()` uses the window's
@@ -11464,3 +11497,132 @@ transparent-background snapshot mode both backends still agree to 62 pixels
 (4,775,978 non-opaque pixels of 7,680,000 on OpenGL against 4,776,040 on Vulkan):
 the untouched background is the transparent part, so the receiver stays opaque
 there as well.
+
+### 2026-11-19 — batch 140: restore the OpenGL "one sample means no MSAA" semantics
+
+**Problem.** Batch 139 bundled the shadow-receiver opacity fix with an MSAA
+bookkeeping refactor that was collateral to it: the OpenGL `Viewer` constructor member
+initializer switched from the disabled sentinel (`samples_(0)`) to the requested count,
+`Viewer::create_window` dropped the `if (samples == 1) samples = 0;` coercion before the
+`GLFW_SAMPLES` hint, the MSAA warning block was rewritten, and the advanced
+`Viewer::snapshot()` dropped the same coercion. The unified OpenGL API contract is that
+"one sample means no multisampling" - the public `samples()` reports 1 for the disabled
+case and `FramebufferObject` maps a requested count `<= 1` to no multisampling - so the
+batch-139 refactor made a default-requested viewer and every snapshot taken at the
+default/sample-1 quality request a real multisample target (or a mismatched sample
+count) again.
+
+The consequence showed up only after a rebuild from the batch-139 tree: the Linux
+CI (ubuntu-24.04, Mesa llvmpipe/Xvfb) and the local Linux build tree went red with
+eight snapshot-family failures -
+
+- `opengl.independenthud` - “HUD ordering/depth/alpha or tile composition differs”
+  (the strict MSAA silhouette/coverage assertions lost their reference after the
+  composition path changed);
+- `opengl.snapshoteffects` - “the plain snapshot is not opaque”;
+- `opengl.snapshotseam` - “flat-shaded DDP rendered no lit surface”;
+- `opengl.ddpseam` - “ambient occlusion is missing from the scaled snapshot”;
+- `opengl.imgui` - “GUI clip viewport did not scale with file output”;
+- `opengl.annotations` / `opengl.annotationtutorials` - annotation tile composition and
+  GPU depth preview mismatches;
+- `python.rendering` - the shared mesh-state assertion in the Python rendering check.
+
+The accompanying warning (`W ... viewer.cpp:2128] samples received: 0 (1 requested, max
+support 4)` / `samples received: 2 (1 requested, max support 4)`) confirmed the request
+no longer reached the coerced value.
+
+**Change (OpenGL backend only).** Restore the unified-API semantics in the three places
+the batch-139 refactor had altered:
+
+- `easy3d/viewer/viewer.cpp` - the OpenGL `Viewer` constructor initializes `samples_` to
+  the disabled sentinel (0) again, and `Viewer::create_window` coerces `samples == 1` to 0
+  before the `GLFW_SAMPLES` hint and before the MSAA comparison;
+- `easy3d/viewer/snapshot.cpp` - the advanced `Viewer::snapshot()` coerces `samples == 1` to 0
+  before building the offscreen `FramebufferObject` (at this batch the framebuffer layer still
+  allocated multisample storage for a request of 1; batch 141 moved that rule into
+  `FramebufferObject` itself so the coercion is no longer needed);
+
+The shadow-receiver opacity fix of batch 139 is unchanged and still required; this batch
+only restores the sample-request semantics it had refactored.
+
+**Validation.** Fresh rebuild of the migration's own OpenGL tree (`build-opengl-check`);
+the previously failing set passes again, and the full OpenGL serial CTest passes
+118/118 (the OpenGL/Vulkan backend suites were green before the batch-139 samples
+refactor and stay green after the restore; the Vulkan backend is untouched).
+
+### 2026-11-19 — batch 141: state the sample-count rule once and translate it once per backend
+
+**Problem.** Batch 140 restored the OpenGL "one sample means no MSAA" semantics by putting the
+same arithmetic back in three places - `Viewer::create_window()` and `Viewer::snapshot()` each
+carried `if (samples == 1) samples = 0;`, `OffScreen::render()` carried
+`samples == 1 ? 0 : samples` - and two more copies of the same idea were already committed, in the
+`FramebufferObject(w, h, count <= 1 ? 0 : count)` of `Viewer::capture()` and
+`MultiViewer::snapshot()`; the Vulkan `Window` constructor carried the mirror image
+(`sample_count ? sample_count : 1`). Every future caller that receives a sample count had to
+know to repeat the pattern, and the reason for it was written nowhere.
+
+**What the two APIs actually require.**
+
+- OpenGL: `GLFW_SAMPLES` is a *minimum*, and GLFW counts a zero-sample visual as missing for any
+  positive request (`3rd_party/glfw/src/context.c:223`); its macOS pixel-format builder emits
+  `NSOpenGLPFASampleBuffers, 0` only for a request of 0 and otherwise
+  `NSOpenGLPFASampleBuffers, 1` plus `NSOpenGLPFASamples`
+  (`3rd_party/glfw/src/nsgl_context.m:291-301`). A hint of 1 therefore asks the window system for
+  a real multisample buffer, which this repository measured as a 2x context on an Apple M4 Pro
+  (recorded in the batch at docs/vulkan.md:4279-4283). `GL_SAMPLES` reports 0 for a plain window.
+  So in OpenGL "no MSAA" is 0, and 1 is not a way to spell it.
+- Vulkan: `VkSampleCountFlagBits` has no zero enumerant, and `VK_SAMPLE_COUNT_1_BIT` *is* the
+  single-sample value (the rasterization rules use the fragment center when
+  `rasterizationSamples` is `VK_SAMPLE_COUNT_1_BIT`). The claim that a request of 0 "sets
+  `rasterizationSamples` to `VK_SAMPLE_COUNT_1_BIT`" is not a spec rule: `VK_KHR_maintenance5`,
+  promoted into Vulkan 1.4, was checked for it and its change list contains no sample-count
+  relaxation, only permission to call *physical-device queries* with values outside the defined
+  enumerants. Applications keep normalizing the 0 themselves, which is what the Vulkan `Window`
+  constructor does.
+
+**Change.** One translation per direction, and the layers below now agree with the rule:
+
+- `easy3d/renderer/framebuffer_object.{h,cpp}` - `FramebufferObject` treats a request of 1 as
+  "no multisampling" and allocates plain single-sample storage. It used to clamp
+  `samples > 0`, so a request of 1 built a real one-sample multisample object whose resolve path
+  differs from single-sample storage; the rule now lives in the OpenGL layer that has to honour
+  it. The duplicated `if (samples > 0)` nesting in `init()` collapsed while doing this.
+- `easy3d/viewer/snapshot.cpp`, `easy3d/viewer/offscreen.cpp` - the two `samples == 1 -> 0`
+  coercions are deleted; both pass the count through and the Vulkan snapshot branch says why it
+  rejects 0 instead of translating it.
+- `easy3d/viewer/viewer.cpp`, `easy3d/viewer/multi_viewer.cpp` - the two remaining caller-side
+  coercions of the same kind, `FramebufferObject(w, h, count <= 1 ? 0 : count)` in `Viewer::capture()`
+  and `MultiViewer::snapshot()`, are gone as well. They were only needed while a request of 1
+  allocated multisample storage; `FramebufferObject` now handles that, and both call sites had
+  already rejected a count below 1.
+- Argument checking is now the same on both backends. `Viewer::snapshot()` on OpenGL accepted any
+  non-negative count - a 0 or a 3 rendered there while Vulkan failed the same call - while
+  `OffScreen::render()`, `set_samples()` and `capture()` rejected them on both. The OpenGL
+  snapshot now applies the same contract as the Vulkan one (`1/2/4/8/16/32/64`, with the device
+  maximum checked afterwards) and returns false with a warning otherwise, so an invalid request
+  has one answer in Easy3D instead of one per backend.
+- `easy3d/viewer/viewer.cpp` - `Viewer::create_window()` keeps the one unavoidable translation,
+  now named (`const int msaa_hint = samples > 1 ? samples : 0;`) and annotated, and its
+  received-vs-requested comparison uses the hint so a request of 1 still never warns while the
+  message reports the caller's request. The Vulkan `Window` constructor normalizes 0 and 1 to 1
+  with the matching explanation, `set_samples()` says why unsupported counts are rejected rather
+  than stepped down, and the step-down block notes that 1 never enters it.
+- Documentation - `Viewer`'s constructor `\param samples` is the how-to, `Viewer::samples()`
+  carries the rule itself (anchor `multisample_counts`) with both dialects and where each
+  translation happens, and `set_samples()`, both `capture()` overloads, `snapshot()`,
+  `scan_visible_points()`, `OffScreen::render()`, the `samples_` member and
+  `RenderDevice::supported_sample_counts()` reference it. In this file, D1's "`samples = 0` means
+  no MSAA" and the "Multisampling and test diagnostics" claim that unsupported counts are "never
+  silently reduced" are corrected (the constructor step-down has always reduced one), and
+  batch 140's parenthetical about `FramebufferObject` mapping a count `<= 1` to no multisampling
+  is marked as the batch-141 behaviour it became rather than the state at the time.
+
+**Validation.** `portable_selection_test.cpp` now asserts the centralized rule directly
+(`FramebufferObject(16,16,1).samples() == 0`). Reverting just the `samples > 1` test in
+`FramebufferObject::init()` - the batch-139 state - turns `opengl.portableselection`,
+`opengl.snapshoteffects` and `opengl.independenthud` red (3/3). The shared
+`snapshot_effects_test.cpp` asserts the snapshot contract on both backends (`snapshot()` with a
+count of 0 fails); relaxing only the `samples <= 0` term of the new OpenGL check turns
+`opengl.snapshoteffects` red. With everything in place both trees are fully rebuilt and their
+serial suites pass: OpenGL 118/118 and Vulkan 151/151, where the Vulkan numbers are unchanged by
+the removals - that backend never coerced anything - and only the shared snapshot assertion is new.

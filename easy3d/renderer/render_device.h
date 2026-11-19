@@ -472,6 +472,9 @@ namespace easy3d {
             virtual const std::string &driver_version() const = 0;
             // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
             // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
+            // The mask always contains 1, which is this API's "no MSAA" count: Vulkan has
+            // no zero sample count, so VK_SAMPLE_COUNT_1_BIT is what disables multisampling
+            // and a count of 2 or more selects the multisampled color pass.
             // No backend pipeline shades per sample, so the counts do not vary by style: an
             // analytic impostor silhouette takes part in MSAA only through the coverage of the
             // pixels it rasterizes, and a discard that is evaluated per pixel is all-or-nothing.

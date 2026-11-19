@@ -49,6 +49,8 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
     }
     if (window_) update_interaction_overlays();
     try {
+        // Vulkan has no zero sample count: VK_SAMPLE_COUNT_1_BIT is its "no MSAA"
+        // value, so 1 is the only spelling of multisampling being disabled here.
         if (samples <= 0) throw std::invalid_argument("sample count must be positive");
         if (!std::isfinite(scaling) || scaling <= 0 || double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
             double(framebuffer_height()) * scaling > std::numeric_limits<int>::max() || back_ground < 0 || back_ground > 2)
@@ -133,7 +135,17 @@ namespace easy3d {
 #else // Advanced snapshot: image size, samples, and background can be customized.
 
 	bool Viewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
-	    glfwMakeContextCurrent(window_);
+		// The same contract as the Vulkan branch and OffScreen::render(): 1 is the
+		// request for no multisampling, 0 is an alias only in the constructors, and
+		// the count is never silently stepped down. Without this check a zero or a
+		// count Vulkan rejects would still render here, because the framebuffer
+		// accepts any number of samples the device allows. The device maximum is
+		// checked below, where it can be queried.
+		if (samples <= 0 || samples > 64 || (samples & (samples - 1))) {
+			LOG(WARNING) << "sample count must be a power of two from 1 to 64 (1 means no multisampling)";
+			return false;
+		}
+        glfwMakeContextCurrent(window_);
         if (!initialized_) {
             auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
         }

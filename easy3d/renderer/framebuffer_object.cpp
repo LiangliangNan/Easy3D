@@ -79,19 +79,22 @@ namespace easy3d {
         if (!valid_)
             return;
 
-        if (samples > 0) {// multisample requested
+        // A request of exactly one sample must not allocate multisample storage:
+        // glTexImage2DMultisample() and glRenderbufferStorageMultisample() accept 1
+        // and would create a real (1-sample) multisample buffer, whose resolve path
+        // differs from single-sample storage. Easy3D spells "no MSAA" as one sample,
+        // so the translation belongs here rather than in every caller.
+        if (samples > 1) {// multisample requested
             // using the core profile, multisampling is for sure supported.
-			if (samples > 0) {
-				GLint max_samples;
-				glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
-				samples_ = std::max(0, std::min(samples, max_samples));
+            GLint max_samples;
+            glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
+            samples_ = std::max(0, std::min(samples, max_samples));
 
-                // warn the user if the expected request was not satisfied
-                if (samples_ != samples)
-                    LOG_IF(samples != samples_, WARNING) << "MSAA is available with "
-                                                         << samples_ << " samples (" << samples
-                                                         << " requested, max support is " << max_samples << ")";
-			}
+            // warn the user if the expected request was not satisfied
+            if (samples_ != samples)
+                LOG_IF(samples != samples_, WARNING) << "MSAA is available with "
+                                                     << samples_ << " samples (" << samples
+                                                     << " requested, max support is " << max_samples << ")";
         }
 
         glGenFramebuffers(1, &fbo_id_);

@@ -264,6 +264,12 @@ int main(int argc,char** argv) {
         require(plain[corner]==255 && plain[corner+1]==255 && plain[corner+2]==255,
                 "the explicit white background was ignored");
 
+        // Both backends enforce the sample-count rule the same way: 1 is the request
+        // for no multisampling and 0 is a caller error, not a silent fallback - only
+        // the constructors accept 0 as the OpenGL spelling of the disabled case.
+        require(!v.snapshot(output_path(output_dir,"cross-backend-zero-samples.png"),1,0,1),
+                "a zero snapshot sample count was accepted");
+
         // The snapshot borrows the camera and the frame path; both are back. The camera
         // carries logical window dimensions on both backends (Batch 46), not the framebuffer.
         require(v.camera()->screen_width()==v.width() && v.camera()->screen_height()==v.height(),

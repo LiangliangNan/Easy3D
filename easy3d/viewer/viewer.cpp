@@ -318,8 +318,12 @@ namespace easy3d {
         std::string title;
         int width, height;
         unsigned samples;
+        // Vulkan expresses "no MSAA" as VK_SAMPLE_COUNT_1_BIT, which is what this field
+        // holds: the constructor's 0 (the OpenGL spelling of no multisampling) and a
+        // request of 1 both normalize to the single sample count. The OpenGL backend
+        // needs the opposite translation, done in Viewer::create_window().
         Window(const std::string &text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
-            : title(text), width(w), height(h), samples(sample_count ? sample_count : 1) { // 0: no MSAA, as in OpenGL
+            : title(text), width(w), height(h), samples(sample_count > 1 ? unsigned(sample_count) : 1u) {
             if (w <= 0 || h <= 0)
                 throw std::invalid_argument("window dimensions must be positive");
             if (sample_count < 0 || sample_count > 64 || (sample_count && (sample_count & (sample_count - 1))))
@@ -1767,7 +1771,8 @@ namespace easy3d {
             manual_ = default_manual;
             { // The default of 4 samples must not fail on a device without 4x MSAA: step a valid
                 // power of two down to a supported count with a warning (as OpenGL does); invalid
-                // counts are still rejected by set_samples().
+                // counts are still rejected by set_samples(). A count of 1 is this backend's
+                // "no MSAA" and is always supported, so it never enters the step-down.
                 unsigned s = window_host_->samples;
                 const unsigned supported = device().supported_sample_counts();
                 if (s > 1 && s <= 64 && !(s & (s - 1)))
@@ -1820,6 +1825,10 @@ namespace easy3d {
         return w > 0 ? float(framebuffer_width()) / w : 1.0f;
     }
     void Viewer::set_samples(unsigned samples) {
+        // Supported counts only, with 1 meaning "no MSAA" (this backend has no zero
+        // sample count). Unlike the constructor, an unsupported count is rejected
+        // rather than stepped down: an explicit call should not silently render at a
+        // different quality than the caller asked for.
         if (!samples || samples > 64 || (samples & (samples - 1)) || !(device().supported_sample_counts() & samples))
             throw std::invalid_argument("unsupported Vulkan viewer sample count");
         window_host_->samples = samples;
@@ -1927,7 +1936,7 @@ namespace easy3d {
                    bool resizable /* = true */,
                    const OpenGLOptions &gl_options /* = {} */
                    )
-        : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(samples),
+        : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0), // Liangliang: actual samples received known only after window creation
           visible_(visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
           model_idx_(-1) {
@@ -2029,12 +2038,19 @@ namespace easy3d {
                                       int stencil_bits,
                                       int width,
                                       int height) {
+        // The only place the unified sample count is translated into the OpenGL dialect.
+        // GLFW_SAMPLES is a *minimum*, and any positive value asks the native pixel-format
+        // chooser for a real multisample buffer (a request of 1 measured a 2x context on
+        // macOS), while 0 asks for none -- so "one sample means no MSAA" is a zero-sample
+        // hint here. The count actually obtained is read back from GL_SAMPLES below.
+        const int msaa_hint = samples > 1 ? samples : 0;
+
         runtime_ = detail::GlfwRuntime::acquire();
 
         // Reset the hints, allowing viewers to have different hints.
         glfwDefaultWindowHints();
 
-        glfwWindowHint(GLFW_SAMPLES, samples);
+        glfwWindowHint(GLFW_SAMPLES, msaa_hint);
 
         glfwWindowHint(GLFW_STENCIL_BITS, stencil_bits);
         glfwWindowHint(GLFW_DEPTH_BITS, depth_bits);
@@ -2116,17 +2132,22 @@ namespace easy3d {
         VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
         VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+        // GL_SAMPLES reports the OpenGL dialect (0 for a plain window), and samples_
+        // keeps that value; the public samples() normalizes it to the unified 1.
         glGetIntegerv(GL_SAMPLES, &samples_);
         int max_num = 0;
         glGetIntegerv(GL_MAX_SAMPLES, &max_num);
 
-        // warn the user if the requests were not satisfied
-        if (samples_ == samples) {
-            VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support " << max_num << ")";
-        }
-        else {
-            LOG(WARNING) << "samples received: " << samples_ << " (" << samples << " requested, max support " << max_num << ")";
-        }
+        // warn the user if the requests were not satisfied. msaa_hint == 0 is the
+        // request for no MSAA, which is satisfied by the 0 samples received.
+        if (msaa_hint > 0 && samples_ != msaa_hint) {
+            if (samples_ == 0)
+                LOG(WARNING) << "MSAA not available (samples received: " << samples_ << ", requested: " << samples << ", max support: " << max_num << ")";
+            else
+                LOG(WARNING) << "MSAA with " << samples_ << " samples (requested: " << samples << ", max support: " << max_num << ")";
+        } else
+            VLOG(1) << "samples received: " << samples_ << " (requested: " << samples << ", max support: " << max_num << ")";
+
         // the request viewer size might not be satisfied, thus we query the actual size
         glfwGetWindowSize(window, &width_, &height_);
         VLOG(1) << "viewer size (width/height): " << width_ << "/" << height_;
@@ -2650,7 +2671,7 @@ namespace easy3d {
         frame.width = w;
         frame.height = h;
         {
-            FramebufferObject color(w, h, count <= 1 ? 0 : int(count));
+            FramebufferObject color(w, h, int(count));
             if (!color.add_color_buffer() || !color.add_depth_buffer() || !color.bind())
                 throw std::runtime_error("cannot create capture color target");
             state.prepare(w, h);

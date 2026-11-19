@@ -131,7 +131,9 @@ namespace easy3d {
          * \brief Constructor.
          * \param w The width of the framebuffer.
          * \param h The height of the framebuffer.
-         * \param samples The number of samples per pixel.
+         * \param samples The requested number of samples per pixel. A value <= 1
+         *      allocates plain single-sample storage, because Easy3D defines one
+         *      sample as "no multisampling" (the rule Viewer::samples() reports).
          */
         FramebufferObject(int w, int h, int samples = 0);
         /// Destructor.
