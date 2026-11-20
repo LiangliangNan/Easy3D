@@ -1972,9 +1972,7 @@ namespace easy3d {
             logging::initialize(false, true, true, false, "default", 9);
 
         // create and setup window
-        window_ = create_window(title, samples, gl_options.major, gl_options.minor, window.full_screen,
-                                window.resizable,
-                                gl_options.depth_bits, gl_options.stencil_bits, window.width, window.height);
+        window_ = create_window(title, window, gl_options);
         try {
             setup_callbacks(window_);
 
@@ -2043,15 +2041,14 @@ namespace easy3d {
         }
     }
     GLFWwindow *Viewer::create_window(const std::string &title,
-                                      int samples,
-                                      int gl_major,
-                                      int gl_minor,
-                                      bool full_screen,
-                                      bool resizable,
-                                      int depth_bits,
-                                      int stencil_bits,
-                                      int width,
-                                      int height) {
+                                      const ViewerOptions &window,
+                                      const OpenGLOptions &gl_options) {
+        const int samples = window.samples;
+        const int gl_major = gl_options.major;
+        const int gl_minor = gl_options.minor;
+        int width = window.width;
+        int height = window.height;
+
         // The only place the unified sample count is translated into the OpenGL dialect.
         // GLFW_SAMPLES is a *minimum*, and any positive value asks the native pixel-format
         // chooser for a real multisample buffer (a request of 1 measured a 2x context on
@@ -2066,8 +2063,8 @@ namespace easy3d {
 
         glfwWindowHint(GLFW_SAMPLES, msaa_hint);
 
-        glfwWindowHint(GLFW_STENCIL_BITS, stencil_bits);
-        glfwWindowHint(GLFW_DEPTH_BITS, depth_bits);
+        glfwWindowHint(GLFW_STENCIL_BITS, gl_options.stencil_bits);
+        glfwWindowHint(GLFW_DEPTH_BITS, gl_options.depth_bits);
 
         /* Request a forward compatible OpenGL glMajor.glMinor core profile context.
            Default value is an OpenGL 3.2 core profile context. */
@@ -2092,7 +2089,7 @@ namespace easy3d {
         //glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, window.resizable ? GL_TRUE : GL_FALSE);
 
 #ifndef NDEBUG
         const std::string title_str = title + " - Debug Version";
@@ -2100,18 +2097,18 @@ namespace easy3d {
         const std::string title_str = title;
 #endif
 
-        GLFWwindow *window = nullptr;
-        if (full_screen) {
+        GLFWwindow *glfw_window = nullptr;
+        if (window.full_screen) {
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
             width = mode->width;
             height = mode->height;
-            window = glfwCreateWindow(width, height, title_str.c_str(), monitor, runtime_->opengl_share_window());
+            glfw_window = glfwCreateWindow(width, height, title_str.c_str(), monitor, runtime_->opengl_share_window());
         } else {
-            window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, runtime_->opengl_share_window());
+            glfw_window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, runtime_->opengl_share_window());
         }
 
-        if (!window) {
+        if (!glfw_window) {
             std::string error_message =
                 "could not create an OpenGL " + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
             LOG(ERROR) << error_message;
@@ -2122,12 +2119,12 @@ namespace easy3d {
             glfwDestroyWindow(failed);
             glfwMakeContextCurrent(previous_context);
         };
-        std::unique_ptr<GLFWwindow, decltype(close_failed_window)> guard(window, close_failed_window);
-        glfwSetWindowUserPointer(window, this);
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        std::unique_ptr<GLFWwindow, decltype(close_failed_window)> guard(glfw_window, close_failed_window);
+        glfwSetWindowUserPointer(glfw_window, this);
+        glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
         // Enable vsync
-        glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(glfw_window);
         glfwSwapInterval(1);
 
         // Load OpenGL and its extensions
@@ -2163,18 +2160,18 @@ namespace easy3d {
             VLOG(1) << "samples received: " << samples_ << " (requested: " << samples << ", max support: " << max_num << ")";
 
         // the request viewer size might not be satisfied, thus we query the actual size
-        glfwGetWindowSize(window, &width_, &height_);
+        glfwGetWindowSize(glfw_window, &width_, &height_);
         VLOG(1) << "viewer size (width/height): " << width_ << "/" << height_;
 
         float xscale(0), yscale(0);
-        glfwGetWindowContentScale(window, &xscale, &yscale);
-        LOG_IF(xscale != yscale, ERROR) << "window content scale in X and Y directions not identical (X: " << xscale
+        glfwGetWindowContentScale(glfw_window, &xscale, &yscale);
+        LOG_IF(xscale != yscale, ERROR) << "glfw_window content scale in X and Y directions not identical (X: " << xscale
                                         << ", Y: " << yscale << ")";
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
         VLOG(1) << "DPI scaling: " << dpi_scaling();
 
-        glfwGetFramebufferSize(window, &framebuffer_width_, &framebuffer_height_);
-        runtime_->attach_opengl_window(window);
+        glfwGetFramebufferSize(glfw_window, &framebuffer_width_, &framebuffer_height_);
+        runtime_->attach_opengl_window(glfw_window);
         return guard.release();
     }
     template <class Callback> void Viewer::dispatch_callback(GLFWwindow *window, const Callback &callback) noexcept {

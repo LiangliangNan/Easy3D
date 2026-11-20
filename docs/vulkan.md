@@ -11829,6 +11829,13 @@ not compile.
   `#ifdef EASY3D_HAS_VULKAN` guard because the OpenGL tree needs it too. `installed/viewer.cpp`,
   which is a public-API consumer rather than a test, writes the struct the way a user would:
   default-construct, then assign `width`, `height`, `visible`.
+- `Viewer::create_window()`, the OpenGL backend's private window-and-context helper, took nine of
+  the settings the old public constructor took (samples, context version, full-screen, resizable,
+  depth/stencil bits, size) plus the title, and the constructor call unpacked all of them again. It
+  now takes the same two structs the caller was handed: `create_window(title, window, gl_options)`.
+  Its body keeps its own vocabulary (`samples`, `gl_major`, `msaa_hint`, `width`...) bound once at
+  the top, and the local `GLFWwindow *window` became `glfw_window` because the parameter owns the
+  shorter name. It is private and has exactly one caller, so no user code is affected.
 - The `<= 16` "unusually small dimensions" advisory is removed from both constructors. It existed
   to catch positional context-version arguments reaching a viewer as a size; with the struct that
   misread cannot be compiled, and a warning about small windows would only second-guess a caller
@@ -11858,7 +11865,9 @@ keep-going build of both trees (`cmake --build … -- -k`), whose first pass rep
 `test_window.h` include were fixed, both trees built with 0 errors.
 
 - Fully rebuilt and run serially (never `-j4` on this host): **OpenGL 118/118 and Vulkan 151/151**,
-  219 s and 35 s. `vulkan.crosssection`, the known intermittent, passed in this run.
+  219 s and 35 s. `vulkan.crosssection`, the known intermittent, passed in this run. Rerun after the
+  private `create_window()` took the same two structs, with the same result: OpenGL 118/118 (65 s)
+  and Vulkan 151/151, both trees rebuilt keep-going with 0 errors.
 - `python.rendering` passed, and it is the only test that could have caught the binding mistake:
   it is the only Python consumer that passes the window keywords, the only one that subclasses a
   binding, and it exists only in the Vulkan tree (`ctest -N -R python` in the OpenGL tree reports 0

@@ -1279,20 +1279,14 @@ namespace easy3d {
         // Selects the framebuffer region used by the primitive-ID picking pass.
         // All four arguments are in framebuffer pixels (top-left origin).
         virtual void prepare_pick_view(int x, int y, int width, int height) const;
-        // Creates the GLFW window and its context: sets the window hints (MSAA samples,
-        // depth/stencil bits, a forward-compatible core profile at gl_major.gl_minor,
-        // full-screen or resizable), acquires the shared GLFW runtime, makes the context
-        // current and stores the window pointer. Returns null when creation fails.
-        GLFWwindow *create_window(const std::string &title,
-                                  int samples,
-                                  int gl_major,   // must >= 3
-                                  int gl_minor,   // must >= 2
-                                  bool full_screen,
-                                  bool resizable,
-                                  int depth_bits,
-                                  int stencil_bits,
-                                  int width,
-                                  int height);
+        // Creates the GLFW window and its context: sets the window hints from the two
+        // option structs (MSAA samples, full-screen or resizable from ViewerOptions;
+        // depth/stencil bits and a forward-compatible core profile at
+        // gl_options.major.gl_minor from OpenGLOptions), acquires the shared GLFW
+        // runtime, makes the context current and stores the window pointer. Returns
+        // null when creation fails. ViewerOptions::visible is not a hint here: the
+        // window is always created hidden, and run() reveals it through show().
+        GLFWwindow *create_window(const std::string &title, const ViewerOptions &window, const OpenGLOptions &gl_options);
 
         // Installs the GLFW callback trampolines on the window; each one resolves the
         // user pointer back to this Viewer through dispatch_callback() and forwards to
