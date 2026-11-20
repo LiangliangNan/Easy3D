@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/text_layout.h>
@@ -28,7 +29,7 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
 #else
     OpenGLOptions options;
 #endif
-    AnnotationView v("Annotations",161,121,4,false,false,true,options);v.set_usage("");v.hide_logo();
+    AnnotationView v("Annotations",window_options(161,121,4,false,false,true),options);v.set_usage("");v.hide_logo();
     v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
     v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
     const int w=v.framebuffer_width(),h=v.framebuffer_height();
@@ -97,7 +98,7 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     require(dark>20,"foreground font atlas was not rendered");
     v.set_overlays({});frame(v);require(v.validation_errors()==0,"annotation validation errors");
     {
-        MultiViewer grid(1,2,"Shared grid annotations",201,151,4,false,false,true,options);
+        MultiViewer grid(1,2,"Shared grid annotations",window_options(201,151,4,false,false,true),options);
         grid.set_usage("");grid.set_division_visible(false);
         for(bool foreground:{false,true}) {
             grid.set_overlays({d},foreground);frame(grid);

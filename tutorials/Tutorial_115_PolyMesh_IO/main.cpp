@@ -30,16 +30,18 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_115_PolyMesh_IO/main.cpp
+ * \example Tutorial_115_PolyMesh_IO
  *
- * \brief Loading a polyhedral mesh from a file and saving it back out.
+ * Loading a polyhedral mesh from a file and saving it back out.
  *
  * <b>Overview</b>
+ *
  * This console tutorial completes the PolyMesh series (112-114) by showing file input/output. It
  * loads a polyhedral sphere from disk, reports how many vertices, edges, faces, and cells it
  * contains, then writes an identical copy to a new file. No viewer is opened.
  *
  * <b>The technique</b>
+ *
  * Persisting geometry means serializing both the element coordinates and the connectivity (which
  * vertices form each face, which faces bound each cell). Easy3D provides a dedicated PolyMeshIO
  * helper for this. The file extension selects the format: ".plm" is Easy3D's built-in ASCII
@@ -48,6 +50,7 @@
  * returns true on success. Because the caller owns the loaded mesh, it must delete it when done.
  *
  * <b>Easy3D API</b>
+ *
  * - PolyMeshIO::load(file_name): reads a polyhedral mesh; returns PolyMesh* (nullptr on failure).
  * - PolyMeshIO::save(file_name, mesh): writes the mesh; returns bool.
  * - PolyMesh::n_vertices() / n_edges() / n_faces() / n_cells(): element counts for the four
@@ -55,9 +58,12 @@
  * - resource::directory(): locates Easy3D's bundled sample data (here "data/sphere.plm").
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints "mesh loaded." followed by the four element counts, then
  * "mesh saved to './sphere-copy.plm'". A copy of the sphere is written to the current working
  * directory. The mesh is explicitly deleted before exit.
+ *
+ * \include{lineno} Tutorial_115_PolyMesh_IO/main.cpp
  *
  * \see PolyMesh, PolyMeshIO, Tutorial_112_PolyMesh, Tutorial_107_SurfaceMesh_IO
  */

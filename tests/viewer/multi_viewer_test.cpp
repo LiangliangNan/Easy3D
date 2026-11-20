@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <applications/FigureMaker/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -70,9 +71,9 @@ int main(int argc,char**) {
         initialize(false,false,false);
 #ifdef EASY3D_HAS_VULKAN
         VulkanOptions options;options.validation=options.sync_validation=argc>1;
-        Grid grid(2,3,"Shared multi-view test",301,223,1,false,false,true,options);
+        Grid grid(2,3,"Shared multi-view test",window_options(301,223,1,false,false,true),options);
 #else
-        Grid grid(2,3,"Shared multi-view test",301,223,1,false,false,true);
+        Grid grid(2,3,"Shared multi-view test",window_options(301,223,1,false,false,true));
 #endif
         grid.set_background_color(vec4(1));grid.set_division_visible(false);
         auto red=triangle("red"),blue=triangle("blue");grid.add_model(red);grid.add_model(blue);

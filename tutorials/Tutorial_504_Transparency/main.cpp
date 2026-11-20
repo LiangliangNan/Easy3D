@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_504_Transparency/main.cpp
+ * \example Tutorial_504_Transparency
  *
- * \brief Rendering a surface mesh with order-independent transparency (OIT).
+ * Rendering a surface mesh with order-independent transparency (OIT).
  *
  * <b>Overview</b>
+ *
  * This tutorial shows how to render a semi-transparent surface mesh so that all overlapping
  * layers remain visible and correctly composited. It renders a torus knot — a shape whose
  * tube overlaps itself many times from most viewpoints, which makes incorrect transparency
@@ -47,6 +48,7 @@
  * file).
  *
  * <b>The technique</b>
+ *
  * Standard alpha blending is order dependent: fragments must be composited back-to-front for
  * the "over" operator to give the right color, but the GPU rasterizes triangles in submission
  * order and the depth buffer keeps only the nearest fragment. Order-independent transparency
@@ -68,6 +70,7 @@
  *   Depth Peeling there).
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override draw() and key_press_event().
  * - Transparency: abstract base of the OIT effects. Unlike the shadow/AO effects, its
  *   interface is a single draw(surfaces) call that takes over rendering of the surfaces.
@@ -77,11 +80,13 @@
  *   set_distinct_back_color(false) gives front and back faces the same color.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to cycle through the methods (disabled → Average Color Blending → Dual Depth
  * Peeling → Per Pixel Linked Lists); the active method is printed and shown in the usage
  * help. Press 'up'/'down' to increase/decrease the surface opacity. Rotate the torus knot and
  * compare how each method handles the self-overlapping tube.
  *
+ * \include{lineno} Tutorial_504_Transparency/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_504_Transparency/viewer.h
  * The source file of the viewer class:

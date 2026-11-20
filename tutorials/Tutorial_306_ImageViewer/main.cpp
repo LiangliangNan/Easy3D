@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_306_ImageViewer/main.cpp
+ * \example Tutorial_306_ImageViewer
  *
- * \brief A minimal 2D image viewer built on the Easy3D Viewer, with zoom, fit, and file loading.
+ * A minimal 2D image viewer built on the Easy3D Viewer, with zoom, fit, and file loading.
  *
  * <b>Overview</b>
+ *
  * This tutorial turns the 3D Viewer into a simple image viewer: it displays a photograph in
  * screen space (no 3D camera involved), supports mouse-wheel zoom, 'f' to fit the image to
  * the window, Ctrl+O to open another image, and drag-and-drop of image files. It demonstrates
@@ -42,6 +43,7 @@
  * file); main() only picks the initial image and starts the viewer.
  *
  * <b>The technique</b>
+ *
  * An image is displayed by texture-mapping it onto a screen-space quad: four vertices whose
  * positions are framebuffer pixel coordinates and whose UVs cover the full [0,1] image
  * square. An orthographic "screen-space projection" maps pixel coordinates directly to clip
@@ -53,6 +55,7 @@
  * as Tutorial_305_Texture, but driven in pixel coordinates instead of world coordinates.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: subclassed as TutorialImageViewer; the overrides used are key_press_event(),
  *   mouse_scroll_event(), drop_event(), post_resize(), and pre_draw().
  * - ImageIO::load(): decodes an image file into an RGBA byte buffer.
@@ -62,17 +65,19 @@
  *   overlay; graphics::screen_space_projection() provides the pixel-to-clip-space matrix.
  *
  * <b>Running it</b>
+ *
  * The window opens showing data/fountain/images/0000.jpg fitted to the window. Scroll the
  * mouse wheel to zoom in/out, press 'f' to fit the image again, press Ctrl+O to open a
  * different image via a file dialog, or drag an image file onto the window. If the initial
  * image cannot be loaded, the constructor throws and the program terminates with an error.
  *
+ * \include{lineno} Tutorial_306_ImageViewer/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_306_ImageViewer/viewer.h
  * The source file of the viewer class:
  * \include{lineno} Tutorial_306_ImageViewer/viewer.cpp
  *
- * \see Viewer, TutorialImageViewer, Tutorial_305_Texture
+ * \see Viewer, Tutorial_305_Texture
  */
 
 using namespace easy3d;

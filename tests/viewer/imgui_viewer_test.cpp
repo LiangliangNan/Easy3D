@@ -60,7 +60,7 @@ void run(bool validation) {
 #else
     OpenGLOptions options;
 #endif
-    ImGuiViewer v("ImGui backend regression",800,600,1,false,true,true,options);
+    ImGuiViewer v("ImGui backend regression",window_options(800,600,1,false,true,true),options);
     v.show(); // OpenGL Viewer normally shows its window in run(), not draw_frame().
 #ifdef EASY3D_HAS_VULKAN
     TestWindow size;size.width=320;size.height=240;set_size(v,size);

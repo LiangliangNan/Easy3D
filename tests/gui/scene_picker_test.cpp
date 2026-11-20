@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/viewer/viewer.h>
@@ -15,7 +16,7 @@ using test::require;
 
 int main() {
     return test::run("GUI model and point-cloud picking", [] {
-        Viewer viewer("Scene picker test", 201, 151, 1, false, false);
+        Viewer viewer("Scene picker test", window_options(201, 151, 1, false, false));
         viewer.set_usage("");
         auto cloud = std::make_shared<PointCloud>();
         const auto dead = cloud->add_vertex(vec3(0, 0, .4f));

@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_807_Mesh_Subdivision/main.cpp
+ * \example Tutorial_807_Mesh_Subdivision
  *
- * \brief Refining a coarse mesh into a smooth surface with Catmull-Clark, Loop, and sqrt(3) subdivision.
+ * Refining a coarse mesh into a smooth surface with Catmull-Clark, Loop, and sqrt(3) subdivision.
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates subdivision surfaces with SurfaceMeshSubdivision. Starting from a coarse
  * cube, each shortcut applies one subdivision step (and can be repeated), turning the faceted control
  * mesh into an increasingly smooth limit surface. Three classic schemes are available: Catmull-Clark
@@ -47,6 +48,7 @@
  * is widely used in animation and CAD.
  *
  * <b>The technique</b>
+ *
  * Subdivision repeatedly refines the mesh topology and repositions vertices with weighted averaging
  * rules so that, in the limit, the mesh converges to a smooth surface. Catmull-Clark (Catmull and Clark,
  * 1978) works on arbitrary polygon meshes: each face gains a face point, each edge an edge point, and
@@ -60,6 +62,7 @@
  * require triangles, the mesh is triangulated first for those two schemes.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshSubdivision::catmull_clark() / loop() / sqrt3(): static methods that apply one subdivision
  *   step in place and return success.
  * - SurfaceMesh::triangulate(): converts polygons to triangles before Loop/sqrt(3).
@@ -68,8 +71,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+c for Catmull-Clark, Ctrl+l for Loop, and Ctrl+t for sqrt(3) subdivision; press repeatedly
  * to apply further refinement steps and watch the cube smooth out.
+ *
+ * \include{lineno} Tutorial_807_Mesh_Subdivision/main.cpp
  *
  * \see SurfaceMeshSubdivision, SurfaceMesh, DrawableLines, Tutorial_805_Mesh_Remeshing, Tutorial_806_Mesh_Simplification
  */

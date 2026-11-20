@@ -156,7 +156,7 @@ int main(int argc,char** argv) {
 #endif
         {
         const int width=320,height=240,samples=1;
-        EffectViewer v("Snapshot effects",width,height,samples,false,false,true,options);
+        EffectViewer v("Snapshot effects",window_options(width,height,samples,false,false,true),options);
         v.enable_effects();
         require(v.add_model(resource::directory()+"/data/room.obj"),"scene missing");
         v.camera()->set_up_vector(vec3(0,1,0));
@@ -326,7 +326,7 @@ int main(int argc,char** argv) {
         // hands them the generated texture on every frame. An enabled flag with
         // a zero texture used to bind an unloadable unit 1, which macOS
         // reported and which the surface shader sampled as black.
-        EffectViewer v("AO texture handoff",320,240,1,false,false,true,options);
+        EffectViewer v("AO texture handoff",window_options(320,240,1,false,false,true),options);
         v.enable_effects();
         require(v.add_model(resource::directory()+"/data/room.obj"),"AO handoff scene missing");
         v.camera()->set_up_vector(vec3(0,1,0));
@@ -370,7 +370,7 @@ int main(int argc,char** argv) {
 #endif
 
         {
-        EffectViewer v("Textured average transparency",320,240,1,false,false,true,options);
+        EffectViewer v("Textured average transparency",window_options(320,240,1,false,false,true),options);
         v.enable_effects();
         auto mesh=std::make_shared<SurfaceMesh>();
         auto a=mesh->add_vertex(vec3(-2,-1,0)), b=mesh->add_vertex(vec3(0,-1,0));

@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_405_VirtualScanner/main.cpp
+ * \example Tutorial_405_VirtualScanner
  *
- * \brief Simulating a 3D scanner: capturing the currently visible surface of a model as a point cloud.
+ * Simulating a 3D scanner: capturing the currently visible surface of a model as a point cloud.
  *
  * <b>Overview</b>
+ *
  * This tutorial turns the viewer into a virtual range scanner. The user navigates to a
  * viewpoint and presses 'space'; everything visible from that viewpoint (and only that) is
  * captured as a new PointCloud and added to the scene. Repeating this from different
@@ -44,6 +45,7 @@
  * 3D reconstruction pipeline. An optional Gaussian noise mode imitates sensor noise.
  *
  * <b>The technique</b>
+ *
  * A range scanner (LiDAR, structured light, depth camera) measures the distance to the
  * nearest surface along many viewing directions. Rendering already computes exactly that:
  * the depth buffer stores, for every pixel, the nearest visible surface point — hidden
@@ -58,6 +60,7 @@
  * measurement error of a real scanner.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer::capture(): renders the scene off screen and returns a graphics::FrameImage with
  *   color, per-pixel depth, and object/primitive IDs (used here to reject background pixels).
  * - Camera::model_view_projection_matrix() and mat4 inverse(): the transform (and its inverse)
@@ -67,10 +70,12 @@
  *   the scene change so the scan view is not disturbed.
  *
  * <b>Running it</b>
+ *
  * Navigate with the mouse as usual. Press 'space' to capture a scan from the current view
  * (a new model named "Virtual scan" appears); press 'n' to toggle Gaussian noise on the
  * captured points. Scan from several viewpoints to build up multi-view coverage.
  *
+ * \include{lineno} Tutorial_405_VirtualScanner/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_405_VirtualScanner/viewer.h
  * The source file of the viewer class:

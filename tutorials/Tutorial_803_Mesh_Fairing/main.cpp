@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_803_Mesh_Fairing/main.cpp
+ * \example Tutorial_803_Mesh_Fairing
  *
- * \brief Fairing a noisy open surface by minimizing area (degree 1) or curvature (degree 2).
+ * Fairing a noisy open surface by minimizing area (degree 1) or curvature (degree 2).
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates implicit mesh fairing with SurfaceMeshFairing. The input is a noisy
  * hemisphere — an open surface patch whose circular boundary is kept fixed. Two fairing modes are
  * available: minimizing surface area (degree 1) and minimizing surface curvature (degree 2). Gaussian
@@ -48,6 +49,7 @@
  * reconstruction need.
  *
  * <b>The technique</b>
+ *
  * Fairing solves a k-harmonic equation L^k x = 0 on the interior vertices, where L is the (cotangent)
  * Laplace-Beltrami operator and the boundary vertices are held fixed as constraints. The degree k
  * selects which energy is minimized: k = 1 minimizes surface area (a membrane / mean-curvature flow,
@@ -59,6 +61,7 @@
  * selection, the whole interior of the mesh is faired; locked/selected vertices act as constraints.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshFairing: minimize_area() fairs with degree 1; minimize_curvature() fairs with degree 2
  *   (both forward to fair(k)). Boundary vertices are automatically treated as fixed constraints.
  * - GaussianNoise::apply(mesh, sigma, true): adds noise while preserving the boundary, so the patch
@@ -67,8 +70,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
+ *
  * The hemisphere starts noisy. Press Ctrl+a to minimize surface area (degree 1), Ctrl+c to minimize
  * surface curvature (degree 2), and Ctrl+n to add Gaussian noise again for another comparison.
+ *
+ * \include{lineno} Tutorial_803_Mesh_Fairing/main.cpp
  *
  * \see SurfaceMeshFairing, GaussianNoise, SurfaceMesh, Tutorial_802_Mesh_Smoothing, Tutorial_804_Mesh_HoleFilling
  */

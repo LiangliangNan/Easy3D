@@ -69,17 +69,17 @@ int main(int argc, char**) {
         options.device.sync_validation = options.device.validation;
         {   // Constructor with explicit parameters: a requested count of 4 never fails (it steps down on
             // devices without 4x MSAA), 0 means no MSAA, and negative or non-power-of-two counts are rejected.
-            Viewer four("Explicit parameters", 171, 129, 4, false, false, true, options.device);
+            Viewer four("Explicit parameters", window_options(171, 129, 4, false, false, true), options.device);
             require(four.samples() >= 1 && four.samples() <= 4 && four.width() == 171 && four.height() == 129,
                     "explicit constructor ignored its parameters");
-            Viewer none("No MSAA", 171, 129, 0, false, false, true, options.device);
+            Viewer none("No MSAA", window_options(171, 129, 0, false, false, true), options.device);
             require(none.samples() == 1, "0 samples did not mean no MSAA");
             bool rejected = false;
-            try { Viewer bad("Negative samples", 171, 129, -1, false, false, true, options.device); }
+            try { Viewer bad("Negative samples", window_options(171, 129, -1, false, false, true), options.device); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "negative sample count was accepted");
         }
-        Viewer viewer("Vulkan window test", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        Viewer viewer("Vulkan window test", options.window(), options.device);
         require(glfwGetWindowAttrib(viewer.window(), GLFW_CLIENT_API) == GLFW_NO_API, "window created a graphics context");
         require(glfwGetCurrentContext() == nullptr, "OpenGL context exists in native test");
         auto* model = viewer.add_model(resource::directory() + "/data/bunny.ply");
@@ -197,14 +197,14 @@ int main(int argc, char**) {
             auto unavailable = options;
             unavailable.device.device_name = "__Easy3D_no_such_physical_device__";
             bool rejected = false;
-            try { Viewer bad("Expected initialization failure", unavailable.width, unavailable.height, unavailable.samples, false, unavailable.visible, unavailable.resizable, unavailable.device); }
+            try { Viewer bad("Expected initialization failure", unavailable.window(), unavailable.device); }
             catch (const std::runtime_error&) { rejected = true; }
             require(rejected, "unavailable device was accepted");
         }
         frame(viewer);
         // Native GLFW lifetime and GPU caches must survive a second window closing.
         {
-            Viewer second("Independent Vulkan device", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+            Viewer second("Independent Vulkan device", options.window(), options.device);
             if (msaa) second.set_samples(4);
             require(second.add_model(resource::directory() + "/data/bunny.ply"), "second mesh load failed");
             for (unsigned i = 0; i < 4; ++i) { frame(viewer); frame(second); }
@@ -212,7 +212,7 @@ int main(int argc, char**) {
         }
         frame(viewer);
         {
-            ThrowingViewer bad("Callback error containment", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+            ThrowingViewer bad("Callback error containment", options.window(), options.device);
             auto callback = glfwSetKeyCallback(bad.window(), nullptr);
             glfwSetKeyCallback(bad.window(), callback);
             callback(bad.window(), Viewer::KEY_A, 0, GLFW_PRESS, 0);
@@ -225,7 +225,7 @@ int main(int argc, char**) {
         {
             auto invalid = options; invalid.samples = 3;
             bool rejected = false;
-            try { Viewer bad("Expected invalid MSAA initialization", invalid.width, invalid.height, invalid.samples, false, invalid.visible, invalid.resizable, invalid.device); }
+            try { Viewer bad("Expected invalid MSAA initialization", invalid.window(), invalid.device); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid initial sample count was accepted");
         }
@@ -270,7 +270,7 @@ int main(int argc, char**) {
             require(std::abs(camera_after[i]-camera_before[i])<1e-6f,
                     "snapshot changed the live camera");
         {
-            RunViewer run_viewer("run(bool) parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+            RunViewer run_viewer("run(bool) parity", options.window(), options.device);
             require(run_viewer.add_model(resource::directory()+"/data/bunny.ply"), "run test model missing");
             run_viewer.camera()->set_position(run_viewer.camera()->position()+vec3(1,2,3));
             const auto position=run_viewer.camera()->position();

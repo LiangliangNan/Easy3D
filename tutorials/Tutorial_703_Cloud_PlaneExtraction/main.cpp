@@ -34,16 +34,18 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_703_Cloud_PlaneExtraction/main.cpp
+ * \example Tutorial_703_Cloud_PlaneExtraction
  *
- * \brief Detecting planar regions in a point cloud with RANSAC and coloring each detected plane.
+ * Detecting planar regions in a point cloud with RANSAC and coloring each detected plane.
  *
  * <b>Overview</b>
+ *
  * This interactive tutorial loads the polyhedron point cloud and, on Ctrl+E, extracts its planar
  * faces automatically. Each detected plane is assigned a distinct color so the segmentation is
  * visible. Like Tutorial_702, it requires per-point normals (see Tutorial_701 for estimating them).
  *
  * <b>The technique</b>
+ *
  * RANSAC (RANdom SAmple Consensus; Fischler and Bolles, 1981) fits a model robustly in the presence
  * of outliers: repeatedly draw a minimal random sample (three points define a plane), fit the
  * candidate plane, and count how many points lie within a distance threshold (the "inliers"). The
@@ -55,6 +57,7 @@
  * 0.02, normal compatibility threshold = 0.8, and overlook probability = 0.001.
  *
  * <b>Easy3D API</b>
+ *
  * - PrimitivesRansac: the detector. add_primitive_type(PrimitivesRansac::PLANE) selects planes;
  *   detect(cloud, ...) returns the number of primitives found and stores a "v:primitive_index"
  *   per-point label.
@@ -63,8 +66,11 @@
  * - PointsDrawable::set_property_coloring(State::VERTEX, name): colors each point from that property.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+E to extract planes. The console reports how many primitives were found, and each
  * planar region is drawn in its own color (points not on any detected plane stay black).
+ *
+ * \include{lineno} Tutorial_703_Cloud_PlaneExtraction/main.cpp
  *
  * \see PrimitivesRansac, Renderer, Tutorial_701_Cloud_NormalEstimation
  */

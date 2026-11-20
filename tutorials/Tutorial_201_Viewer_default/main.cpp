@@ -30,11 +30,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_201_Viewer_default/main.cpp
+ * \example Tutorial_201_Viewer_default
  *
- * \brief Opening the default Easy3D Viewer to interactively inspect a 3D model.
+ * Opening the default Easy3D Viewer to interactively inspect a 3D model.
  *
  * <b>Overview</b>
+ *
  * This is the first interactive tutorial: it loads a model from disk and hands it to the
  * built-in Viewer, which opens a window with a complete navigation interface (rotate, pan,
  * zoom, picking, snapshots, ...). Almost every graphical Easy3D example builds on this same
@@ -43,6 +44,7 @@
  * rendering, and camera control.
  *
  * <b>The technique</b>
+ *
  * An interactive 3D viewer is driven by a render loop: the windowing system delivers input
  * events (mouse drags, key presses, resize), the viewer updates the camera and scene state in
  * response, and then redraws the framebuffer. Viewer::run() enters this loop and only returns
@@ -53,6 +55,7 @@
  * looking down the -Z axis with +Y up, i.e. a standard "front" view.
  *
  * <b>Easy3D API</b>
+ *
  * - initialize(): bootstraps the library (logging, resource paths, ...); call it once first.
  * - Viewer: the interactive window. add_model() loads a file and takes ownership of the model;
  *   run() starts the event/render loop.
@@ -60,9 +63,12 @@
  * - resource::directory(): the path to Easy3D's bundled sample data.
  *
  * <b>Running it</b>
+ *
  * A window opens showing the "easy3d" logo model. Drag with the left mouse button to rotate,
  * the right button (or wheel) to pan/zoom, and use the built-in shortcuts for snapshots and
  * display options. Close the window to exit; run() then returns and the program ends.
+ *
+ * \include{lineno} Tutorial_201_Viewer_default/main.cpp
  *
  * \see Viewer, Camera, Tutorial_202_Viewer_imgui, Tutorial_203_MultiView
  */

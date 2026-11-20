@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_104_SurfaceMesh/main.cpp
+ * \example Tutorial_104_SurfaceMesh
  *
- * \brief Constructing a SurfaceMesh (a tetrahedron) from vertices and face connectivity, two ways.
+ * Constructing a SurfaceMesh (a tetrahedron) from vertices and face connectivity, two ways.
  *
  * <b>Overview</b>
+ *
  * This is the first surface-mesh tutorial. Where a PointCloud is just a bag of points, a
  * SurfaceMesh also records how the points are connected into faces. We build the simplest closed
  * surface — a tetrahedron with 4 vertices and 4 triangular faces — and print its element counts.
@@ -41,6 +42,7 @@
  * compare them. It is console-only; later tutorials (105/106/107) reuse this tetrahedron.
  *
  * <b>The technique</b>
+ *
  * SurfaceMesh is a halfedge data structure for orientable 2-manifold polygonal meshes. Every
  * edge is split into two oppositely oriented halfedges, and each halfedge stores links to its
  * target vertex, its opposite twin, the next halfedge around the face, and the face it bounds.
@@ -56,6 +58,7 @@
  * like surface.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMesh: the halfedge mesh; add_vertex(pos) returns a Vertex handle, add_triangle(a,b,c)
  *   adds an oriented face; n_vertices()/n_edges()/n_faces() report the element counts.
  * - SurfaceMeshBuilder: wraps a SurfaceMesh and is driven by begin_surface() ... add_vertex() /
@@ -63,9 +66,12 @@
  * - vec3: the single-precision 3D position type used for the four corners.
  *
  * <b>Running it</b>
+ *
  * Console-only. With the default option (2) it prints "#face: 4", "#vertex: 4", "#edge: 6".
  * Change the 'option' variable to 1 to build the same mesh through the direct SurfaceMesh API
  * and observe identical counts. The mesh is a local object, so it is freed when main returns.
+ *
+ * \include{lineno} Tutorial_104_SurfaceMesh/main.cpp
  *
  * \see SurfaceMesh, SurfaceMeshBuilder, Tutorial_105_SurfaceMesh_Connectivity, Tutorial_106_SurfaceMesh_Property
  */

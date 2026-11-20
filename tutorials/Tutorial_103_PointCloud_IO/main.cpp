@@ -30,17 +30,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_103_PointCloud_IO/main.cpp
+ * \example Tutorial_103_PointCloud_IO
  *
- * \brief Loading a point cloud from disk and writing it back out, including a hand-rolled text export.
+ * Loading a point cloud from disk and writing it back out, including a hand-rolled text export.
  *
  * <b>Overview</b>
+ *
  * This console tutorial covers file input/output for PointCloud. It loads the bundled "bunny"
  * cloud, reports how many points it contains, and then exports the data to a plain-text file,
  * one point per line. It complements Tutorial_102_PointCloud_Property by showing that the same
  * named properties used to store attributes are also what get read from and written to files.
  *
  * <b>The technique</b>
+ *
  * Easy3D dispatches on the file extension: PointCloudIO::load()/save() understand several point
  * formats (bin, xyz/bxyz, ply, las/laz, vg/bvg), so the same call works regardless of the concrete
  * format. Here we load Easy3D's compact binary ".bin" file. For the export we deliberately do
@@ -52,6 +54,7 @@
  * "if (normals)" is a safe existence check.
  *
  * <b>Easy3D API</b>
+ *
  * - PointCloudIO::load(file): reads a cloud, returning a heap-allocated PointCloud* (nullptr on
  *   failure); the caller owns it and must delete it.
  * - resource::directory(): locates Easy3D's bundled data folder so the example file is found.
@@ -59,9 +62,12 @@
  * - PointCloud::vertices(): the range of point handles to iterate when writing each line.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints the loaded point count, then "saving the point cloud..." and "point
  * cloud saved to './bunny-copy.txt'". The export is written to the current working directory;
  * open it to see one "x y z [nx ny nz] [r g b]" line per point.
+ *
+ * \include{lineno} Tutorial_103_PointCloud_IO/main.cpp
  *
  * \see PointCloud, PointCloudIO, Tutorial_102_PointCloud_Property, Tutorial_107_SurfaceMesh_IO
  */

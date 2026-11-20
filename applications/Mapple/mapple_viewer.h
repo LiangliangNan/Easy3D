@@ -81,12 +81,7 @@ class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger, publ
 public:
     explicit MappleViewer(
             const std::string &title = "Mapple",
-            int width = 1440,
-            int height = 900,
-            int samples = 4,
-            bool full_screen = false,
-            bool visible = true,
-            bool resizable = true,
+            const easy3d::ViewerOptions &window = {},
 #ifdef EASY3D_HAS_VULKAN
             const easy3d::VulkanOptions &options = {}
 #else

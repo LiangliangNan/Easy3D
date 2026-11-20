@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_113_PolyMesh_Connectivity/main.cpp
+ * \example Tutorial_113_PolyMesh_Connectivity
  *
- * \brief Walking the full adjacency of a PolyMesh through its half-face links.
+ * Walking the full adjacency of a PolyMesh through its half-face links.
  *
  * <b>Overview</b>
+ *
  * Using the single-tetrahedron mesh from Tutorial_112_PolyMesh, this console tutorial prints every
  * adjacency relationship of a polyhedral mesh:
  *      - the incident vertices of each vertex
@@ -53,6 +54,7 @@
  * It is the volumetric counterpart of Tutorial_105_SurfaceMesh_Connectivity.
  *
  * <b>The technique</b>
+ *
  * A PolyMesh stores connectivity with halffaces: every face is split into two oppositely oriented
  * halffaces, one for each cell it separates, with the normal pointing out of its cell. cell(h)
  * gives the cell that halfface h bounds, and opposite(h) crosses the face to the twin halfface in
@@ -65,6 +67,7 @@
  * neighbors, boundary extraction, and finite-element assembly.
  *
  * <b>Easy3D API</b>
+ *
  * - PolyMesh::vertices(x)/edges(x)/halffaces(x)/cells(x): incident elements of a vertex, edge,
  *   halfface or cell (the overloads relevant to each are used below).
  * - PolyMesh::vertex(e, i): an edge endpoint; halfface(f, i): the i-th halfface of a face.
@@ -72,9 +75,12 @@
  * - PolyMesh::vertices()/edges()/halffaces()/faces()/cells(): ranges over all elements.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints a titled section for each query, listing element handles (e.g. "v0",
  * "e1", "h2", "f0", "c0"). For the boundary faces the opposite halfface/cell print as invalid
  * handles. The mesh is heap-allocated and deleted at the end.
+ *
+ * \include{lineno} Tutorial_113_PolyMesh_Connectivity/main.cpp
  *
  * \see PolyMesh, Tutorial_112_PolyMesh, Tutorial_105_SurfaceMesh_Connectivity, Tutorial_109_Graph_Connectivity
  */

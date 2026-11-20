@@ -185,20 +185,16 @@ namespace {
 
 } // namespace
 
+
 MappleViewer::MappleViewer(const std::string &title,
-                           int width,
-                           int height,
-                           int samples,
-                           bool full_screen,
-                           bool visible,
-                           bool resizable,
+                           const ViewerOptions &window,
 #ifdef EASY3D_HAS_VULKAN
                            const VulkanOptions &options
 #else
                            const OpenGLOptions &options
 #endif
         )
-        : Viewer(title, width, height, samples, full_screen, visible, resizable, options) {
+        : Viewer(title, window, options) {
     // The vendored GLFW is a private dependency of easy3d_viewer, so an app that also calls
     // GLFW (here through the ImGui backend) links its own static copy. On Windows that copy
     // must be initialized before it can operate on the viewer's window. See issue #178.

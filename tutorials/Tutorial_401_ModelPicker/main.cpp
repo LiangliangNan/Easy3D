@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_401_ModelPicker/main.cpp
+ * \example Tutorial_401_ModelPicker
  *
- * \brief Selecting (and deselecting) one of several models by clicking on it with the mouse.
+ * Selecting (and deselecting) one of several models by clicking on it with the mouse.
  *
  * <b>Overview</b>
+ *
  * This tutorial loads six letter meshes (spelling "easy3d") and lets the user click a letter
  * to toggle its selection, shown by coloring it red. It is the first of the interaction
  * tutorials: the pattern is to subclass Viewer, override a mouse event handler, and ask the
@@ -42,6 +43,7 @@
  * the picked model).
  *
  * <b>The technique</b>
+ *
  * "Picking" means mapping a 2D cursor position back to the 3D content the user sees. The two
  * classic approaches are:
  * - Ray casting: unproject the cursor into a 3D ray and intersect it with the geometry on the
@@ -59,6 +61,7 @@
  * of the result; the primitive/face fields are used in Tutorial_402_FacePicker.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override mouse_press_event() to react to
  *   clicks. Unknown events are forwarded to the base class so navigation keeps working.
  * - Viewer::pick() / Viewer::PickResult: the scene-wide GPU picking query and its result
@@ -68,10 +71,12 @@
  * - Camera: the view is set up to look straight at the front of the logo.
  *
  * <b>Running it</b>
+ *
  * Left-click a letter to select it (it turns red and its name is printed to the console);
  * click it again to deselect. All other mouse actions (drag to rotate, etc.) still control
  * the camera because the handler forwards unhandled events to Viewer.
  *
+ * \include{lineno} Tutorial_401_ModelPicker/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_401_ModelPicker/viewer.h
  * The source file of the viewer class:

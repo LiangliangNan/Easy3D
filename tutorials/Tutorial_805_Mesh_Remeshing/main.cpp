@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_805_Mesh_Remeshing/main.cpp
+ * \example Tutorial_805_Mesh_Remeshing
  *
- * \brief Improving triangle quality with uniform and curvature-adaptive incremental remeshing.
+ * Improving triangle quality with uniform and curvature-adaptive incremental remeshing.
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates surface remeshing with SurfaceMeshRemeshing. Remeshing rebuilds the
  * triangulation of a surface so that the triangles are well-shaped and appropriately sized, while
  * staying close to the original geometry. Two schemes are shown on the bunny: uniform remeshing toward
@@ -48,6 +49,7 @@
  * triangles cause artifacts.
  *
  * <b>The technique</b>
+ *
  * Easy3D uses incremental remeshing (Botsch and Kobbelt, "A remeshing approach to multiresolution
  * modeling", SGP 2004): it repeatedly applies four local operations — split edges that are too long,
  * collapse edges that are too short, flip edges to improve valence/shape (toward the Delaunay-like
@@ -59,6 +61,7 @@
  * approximation error, so detail is concentrated where it matters and flat regions stay coarse.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshRemeshing::uniform_remeshing(edge_length): isotropic remeshing toward a target length.
  * - SurfaceMeshRemeshing::adaptive_remeshing(min_len, max_len, approx_error): curvature-driven remeshing
  *   within the given edge-length bounds and approximation tolerance (lengths here are fractions of the
@@ -68,8 +71,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+u for uniform remeshing (target = 1.5 x the current average edge length) and Ctrl+a for
  * adaptive remeshing; the console prints the resulting vertex/face counts after each operation.
+ *
+ * \include{lineno} Tutorial_805_Mesh_Remeshing/main.cpp
  *
  * \see SurfaceMeshRemeshing, SurfaceMesh, DrawableLines, Tutorial_806_Mesh_Simplification, Tutorial_807_Mesh_Subdivision
  */

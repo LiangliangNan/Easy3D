@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_503_SoftShadow/main.cpp
+ * \example Tutorial_503_SoftShadow
  *
- * \brief Rendering a scene with soft shadows using Percentage-Closer Soft Shadows (PCSS).
+ * Rendering a scene with soft shadows using Percentage-Closer Soft Shadows (PCSS).
  *
  * <b>Overview</b>
+ *
  * This tutorial upgrades the hard shadow mapping of Tutorial_502_HardShadow to soft shadows.
  * The program structure is identical — subclass Viewer, own an effect object, wrap the scene
  * draw() with begin()/end() — only the effect class changes from Shadow to SoftShadow (a
@@ -44,6 +45,7 @@
  * gray material; all shadow logic lives in the TutorialSoftShadow class (shown after this file).
  *
  * <b>The technique</b>
+ *
  * Real light sources have a finite area, so shadow boundaries are not sharp: near a shadow
  * edge there is a penumbra where the receiver sees only part of the light. Percentage-Closer
  * Soft Shadows (Randima Fernando, GPU Gems, 2005) approximates this on top of a standard
@@ -59,6 +61,7 @@
  * and links to the original NVIDIA paper.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override draw() (to insert the effect) and
  *   key_press_event() (to control it).
  * - SoftShadow: the PCSS effect, derived from Shadow, so it uses the same begin(surfaces)/end()
@@ -69,10 +72,12 @@
  *   to read.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to toggle shadowing on/off. Look at where objects meet the floor: the shadow
  * is sharp at contact and softens with distance — compare with the uniformly hard edges of
  * Tutorial_502_HardShadow. Standard Viewer navigation (mouse drag, wheel) applies.
  *
+ * \include{lineno} Tutorial_503_SoftShadow/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_503_SoftShadow/viewer.h
  * The source file of the viewer class:

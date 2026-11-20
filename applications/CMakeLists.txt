@@ -1,9 +1,5 @@
-if (Easy3D_ENABLE_QT)
-    if (Easy3D_ENABLE_VULKAN) # Mapple-Qt is OpenGL only
-        message(WARNING "Vulkan is enabled but Mapple-Qt only supports OpenGL. To build Mapple-Qt with OpenGL, set 'Easy3D_ENABLE_VULKAN' to OFF.")
-    else ()
-        add_subdirectory(Mapple-Qt)
-    endif ()
+if (Easy3D_ENABLE_QT AND NOT Easy3D_ENABLE_VULKAN)  # Mapple-Qt is OpenGL only
+    add_subdirectory(Mapple-Qt)
 endif ()
 
 add_subdirectory(Mapple)

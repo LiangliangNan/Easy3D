@@ -33,11 +33,12 @@
 #include "point_worker.h"
 
 /**
- * \example{lineno} Tutorial_312_MultiThread/main.cpp
+ * \example Tutorial_312_MultiThread
  *
- * \brief Streaming data from a worker thread into a live viewer with a safe producer/consumer handoff.
+ * Streaming data from a worker thread into a live viewer with a safe producer/consumer handoff.
  *
  * <b>Overview</b>
+ *
  * This tutorial grows a point cloud while the viewer is running: a background worker thread
  * generates batches of 100 random colored points every 300 ms, and the UI thread picks them up
  * and appends them to the displayed cloud. It demonstrates the pattern every interactive
@@ -45,6 +46,7 @@
  * rule that makes it safe: only the UI thread ever touches scene or graphics state.
  *
  * <b>The technique</b>
+ *
  * Graphics APIs (OpenGL contexts, Vulkan command submission) and Easy3D's scene structures are
  * not thread-safe, so the classic mistake is letting a worker thread modify a model or drawable
  * directly. The correct design is a producer/consumer pipeline: the worker (producer) computes
@@ -59,6 +61,7 @@
  * including when the user closes the window early.
  *
  * <b>Easy3D API</b>
+ *
  * - PointCloud + vertex properties: the cloud carries a "v:color" per-point color property;
  *   PointsDrawable::set_coloring() visualizes it.
  * - Viewer::animation_func_ / set_animation(): the per-frame UI-thread hook doubles as the
@@ -68,11 +71,13 @@
  *   the producer and the UI-thread-only application step.
  *
  * <b>Running it</b>
+ *
  * The cloud starts with 100 red points and gains 100 randomly colored points every ~300 ms
  * (66 batches total); the point count is printed to the console. Press F2 to pause/resume
  * consumption — while paused the worker waits instead of producing more. When all batches are
  * consumed the animation stops automatically.
  *
+ * \include{lineno} Tutorial_312_MultiThread/main.cpp
  * The worker helper (producer/consumer implementation):
  * \include{lineno} Tutorial_312_MultiThread/point_worker.h
  *

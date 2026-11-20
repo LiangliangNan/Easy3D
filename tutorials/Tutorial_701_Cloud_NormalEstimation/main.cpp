@@ -35,11 +35,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_701_Cloud_NormalEstimation/main.cpp
+ * \example Tutorial_701_Cloud_NormalEstimation
  *
- * \brief Estimating per-point normals for a point cloud, then making their orientations consistent.
+ * Estimating per-point normals for a point cloud, then making their orientations consistent.
  *
  * <b>Overview</b>
+ *
  * This interactive tutorial loads the bunny point cloud and adds two keyboard-triggered steps:
  * estimate a normal at every point (Ctrl+E), then reorient the normals so they all point the same
  * way (Ctrl+R). The resulting normals are uploaded to the GPU so the points can be shaded. Normal
@@ -47,6 +48,7 @@
  * (Tutorial_702_Cloud_SurfaceReconstruction) and RANSAC plane extraction (Tutorial_703).
  *
  * <b>The technique</b>
+ *
  * A raw point cloud has no normals — only positions. To estimate one, we look at a point's k
  * nearest neighbors and fit a local plane: the covariance matrix of the neighbor positions has
  * three eigenvectors, and the one with the smallest eigenvalue (least variance) is perpendicular
@@ -57,6 +59,7 @@
  * unorganized points", SIGGRAPH 1992).
  *
  * <b>Easy3D API</b>
+ *
  * - PointCloudNormals::estimate(cloud, k): PCA normal estimation; stores the result in the "v:normal"
  *   vertex property. PointCloudNormals::reorient(cloud, k): makes the orientations consistent.
  * - PointCloud::get_vertex_property<vec3>("v:normal"): retrieves the computed normals.
@@ -64,8 +67,11 @@
  * - Viewer::bind_shortcut(func, model, key, modifier): registers a callback on a keyboard shortcut.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+E to estimate normals, then Ctrl+R to reorient them. Points use a distinct back color,
  * so inconsistently oriented normals are visible as differently colored patches before reorientation.
+ *
+ * \include{lineno} Tutorial_701_Cloud_NormalEstimation/main.cpp
  *
  * \see PointCloudNormals, PointCloud, PointsDrawable, Tutorial_702_Cloud_SurfaceReconstruction, Tutorial_703_Cloud_PlaneExtraction
  */

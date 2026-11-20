@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
@@ -47,7 +48,7 @@ std::vector<unsigned char> read(const std::string& file, int width, int height) 
 int main() {
     try {
         initialize(false, false, false);
-        AOViewer v("AO snapshot seam", 320, 240, 1, false, false, true);
+        AOViewer v("AO snapshot seam", window_options(320, 240, 1, false, false, true));
         v.enable();
         require(v.add_model(resource::directory() + "/data/torusknot.obj"), "scene missing");
         v.fit_screen();

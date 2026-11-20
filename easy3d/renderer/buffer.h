@@ -148,7 +148,7 @@ namespace easy3d {
         /**
          * \brief Update render buffers for a vector field defined on a surface mesh.
          * \param model     The model.
-         * \param drawable  The The drawable for visualizing the vector field.
+         * \param drawable  The drawable for visualizing the vector field.
          * \param field The name of the vector field.
          * \param location The location where the vector field is defined.
          * \param scale The scale of the vector length w.r.t. half of the average edge length of the surface mesh.

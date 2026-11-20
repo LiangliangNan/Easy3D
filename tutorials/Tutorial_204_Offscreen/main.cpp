@@ -32,11 +32,12 @@
 #include <easy3d/util/resource.h>
 
 /**
- * \example{lineno} Tutorial_204_Offscreen/main.cpp
+ * \example Tutorial_204_Offscreen
  *
- * \brief Rendering a model straight to an image file with no window, using the OffScreen renderer.
+ * Rendering a model straight to an image file with no window, using the OffScreen renderer.
  *
  * <b>Overview</b>
+ *
  * Sometimes you want a picture of a scene without any user interaction — for batch processing,
  * automated thumbnails, or headless servers with no display. OffScreen provides the same scene
  * management and rendering pipeline as Viewer but draws into an offscreen framebuffer and
@@ -44,6 +45,7 @@
  * the Stanford bunny, gives it a flat color, and saves a PNG.
  *
  * <b>The technique</b>
+ *
  * Offscreen rendering means the GPU draws into a framebuffer object (a texture-backed render
  * target) rather than the default on-screen framebuffer. The geometry, camera, and shading are
  * identical to interactive rendering; only the destination differs. After the draw, the pixels
@@ -53,14 +55,18 @@
  * (the samples argument) and scaling let you trade speed for image quality.
  *
  * <b>Easy3D API</b>
+ *
  * - OffScreen: construct it with a pixel width/height; add_model() loads geometry; render()
  *   draws the scene and saves it to the given filename, returning true on success.
  * - Renderer / TrianglesDrawable: get_triangles_drawable("faces") fetches the surface drawable;
  *   set_uniform_coloring() assigns a constant material color.
  *
  * <b>Running it</b>
+ *
  * This example is non-interactive: it prints "surface rendering saved to 'offscreen.png'" and
  * exits, leaving offscreen.png in the working directory. No window appears.
+ *
+ * \include{lineno} Tutorial_204_Offscreen/main.cpp
  *
  * \see OffScreen, Viewer, TrianglesDrawable, Tutorial_201_Viewer_default
  */

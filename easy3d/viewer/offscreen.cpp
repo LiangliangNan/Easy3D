@@ -59,14 +59,17 @@ namespace easy3d {
 #include <stdexcept>
 namespace easy3d {
     OffScreen::OffScreen(int w, int h, const OpenGLOptions &gl_options)
-        : Viewer("Easy3D OffScreen Renderer",
-                 w > 0 ? w : throw std::invalid_argument("offscreen width must be positive"),
-                 h > 0 ? h : throw std::invalid_argument("offscreen height must be positive"),
-                 4,
-                 false,
-                 false,
-                 true,
-                 gl_options) {
+        : Viewer("Easy3D OffScreen Renderer", [&] {
+            // A hidden, fixed-size window that is only ever captured, so these are
+            // decided here rather than by the caller. 4 samples is what the canvas
+            // has always asked for.
+            ViewerOptions window;
+            window.width = w > 0 ? w : throw std::invalid_argument("offscreen width must be positive");
+            window.height = h > 0 ? h : throw std::invalid_argument("offscreen height must be positive");
+            window.samples = 4;
+            window.visible = false;
+            return window;
+        }(), gl_options) {
         snapshot_hud_ = false;
         manual_.clear();
         width_ = w;

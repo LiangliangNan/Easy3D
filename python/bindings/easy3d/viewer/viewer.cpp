@@ -305,7 +305,23 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                     )doc"
         );
 
-        cl.def(pybind11::init<const std::string&, int, int, int, bool, bool, bool>(),
+        // C++ takes the window settings as a ViewerOptions struct; the keyword
+        // arguments stay, so easy3d.Viewer("t", width=1600, samples=4) is unchanged.
+        // The factory returns the trampoline alias, which is what py::init<Args...> did
+        // implicitly by constructing Alias<Class> in place: a lambda returning
+        // easy3d::Viewer* would instead have to move it into an alias, and Viewer is not
+        // movable. Python-side subclasses (tests/python/rendering.py) need the alias.
+        cl.def(pybind11::init([](const std::string& title, int width, int height, int samples, bool full_screen,
+                                bool visible, bool resizable) {
+            easy3d::ViewerOptions window;
+            window.width = width;
+            window.height = height;
+            window.samples = samples;
+            window.full_screen = full_screen;
+            window.visible = visible;
+            window.resizable = resizable;
+            return new PyCallBack_easy3d_Viewer(title, window);
+        }),
                pybind11::arg("title") = "Easy3D Viewer", pybind11::arg("width") = 800,
                pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
                pybind11::arg("full_screen") = false, pybind11::arg("visible") = true,

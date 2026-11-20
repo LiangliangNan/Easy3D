@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_403_PointSelection/main.cpp
+ * \example Tutorial_403_PointSelection
  *
- * \brief Selecting a subset of a point cloud by sketching a rectangle or a lasso with the mouse.
+ * Selecting a subset of a point cloud by sketching a rectangle or a lasso with the mouse.
  *
  * <b>Overview</b>
+ *
  * This tutorial implements region selection on a point cloud: while holding Shift, the user
  * drags out a rectangle (key 'R') or a free-form lasso (key 'L'), and every point projecting
  * inside the region becomes selected (colored red). Dragging with the right button instead
@@ -44,6 +45,7 @@
  * selects many elements at once — the standard "marquee/lasso" interaction of 3D editors.
  *
  * <b>The technique</b>
+ *
  * Region selection asks a different question than picking: not "what is the nearest element
  * at this pixel?" but "which elements project inside this 2D region?". Note that this is a
  * through-selection: points hidden behind other points are still selected, because selection
@@ -59,6 +61,7 @@
  * self-overlapping, so a simple fan would not do) and the outline is built from thin quads.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer::select_points() with graphics::PointSelectionRequest: the GPU region-selection
  *   query (polygon, point positions, MVP, clipping planes, input/output bitmasks).
  * - Viewer::point_resource(): the immutable point-position snapshot shared by rendering and
@@ -69,10 +72,12 @@
  *   in framebuffer-pixel coordinates on top of the scene; Tessellator triangulates the lasso.
  *
  * <b>Running it</b>
+ *
  * Hold Shift and drag with the left button to select points, or with the right button to
  * deselect. Press 'L' for lasso mode (default), 'R' for rectangle mode, and Escape to cancel
  * an ongoing gesture. Selected points turn red.
  *
+ * \include{lineno} Tutorial_403_PointSelection/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_403_PointSelection/viewer.h
  * The source file of the viewer class:

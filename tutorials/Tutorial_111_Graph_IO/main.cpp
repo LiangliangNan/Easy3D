@@ -30,17 +30,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_111_Graph_IO/main.cpp
+ * \example Tutorial_111_Graph_IO
  *
- * \brief Loading a Graph from a PLY file and saving it back out with GraphIO.
+ * Loading a Graph from a PLY file and saving it back out with GraphIO.
  *
  * <b>Overview</b>
+ *
  * The graph counterpart of Tutorial_103 (point clouds) and Tutorial_107 (surface meshes). This
  * console program loads the bundled "graph.ply", prints its vertex and edge counts, leaves a
  * placeholder for processing, and writes a copy "graph-copy.ply". It follows the same
  * load -> use -> save -> free lifecycle as the other I/O tutorials.
  *
  * <b>The technique</b>
+ *
  * GraphIO currently supports only the PLY format. PLY (the Polygon File Format, from Stanford)
  * is a flexible, self-describing format: a header declares the elements and their properties,
  * followed by the data, in ASCII or binary. For a graph it stores the vertex positions and the
@@ -50,13 +52,17 @@
  * supported, both the input and output files use the ".ply" extension.
  *
  * <b>Easy3D API</b>
+ *
  * - GraphIO::load(file) / GraphIO::save(file, graph): PLY-only graph I/O.
  * - resource::directory(): locates the bundled data folder containing graph.ply.
  * - Graph::n_vertices()/n_edges(): element counts printed after loading.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints "graph loaded." with the vertex and edge counts, then "graph saved to
  * './graph-copy.ply'". The copy is written to the current working directory.
+ *
+ * \include{lineno} Tutorial_111_Graph_IO/main.cpp
  *
  * \see Graph, GraphIO, Tutorial_107_SurfaceMesh_IO, Tutorial_103_PointCloud_IO, Tutorial_115_PolyMesh_IO
  */

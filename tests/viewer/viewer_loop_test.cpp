@@ -28,10 +28,10 @@ TestWindow options(bool validation) {
 #endif
 struct LoopViewer : TestHost {
 #ifdef EASY3D_TEST_OPENGL_VIEWER
-    explicit LoopViewer(bool) : TestHost("Frame loop", 151, 117, 4) { ensure_test_glfw(); manual_.clear(); }
+    explicit LoopViewer(bool) : TestHost("Frame loop", window_options(151, 117, 4)) { ensure_test_glfw(); manual_.clear(); }
 #else
     explicit LoopViewer(bool validation) : LoopViewer(options(validation)) {}
-    explicit LoopViewer(const TestWindow& o) : TestHost("Frame loop", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device) { manual_.clear(); }
+    explicit LoopViewer(const TestWindow& o) : TestHost("Frame loop", o.window(), o.device) { manual_.clear(); }
 #endif
     unsigned initializations = 0;
     bool throw_init = false;
@@ -208,7 +208,7 @@ int main(int argc, char**) {
                                  ivec3(81,-1,1), ivec3(81,61,-1),
                                  ivec3(81,61,std::numeric_limits<int>::min()), ivec3(81,61,3)}) {
             bool rejected = false;
-            try { Viewer invalid("Invalid constructor", args.x, args.y, args.z, false, false); }
+            try { Viewer invalid("Invalid constructor", window_options(args.x, args.y, args.z, false, false)); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid signed Viewer constructor input was accepted");
         }

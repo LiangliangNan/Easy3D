@@ -35,17 +35,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_702_Cloud_SurfaceReconstruction/main.cpp
+ * \example Tutorial_702_Cloud_SurfaceReconstruction
  *
- * \brief Reconstructing a smooth surface mesh from an oriented point cloud (Poisson reconstruction).
+ * Reconstructing a smooth surface mesh from an oriented point cloud (Poisson reconstruction).
  *
  * <b>Overview</b>
+ *
  * This interactive tutorial loads the polyhedron point cloud (which already carries normals) and,
  * on Ctrl+R, reconstructs a continuous surface from it. The point cloud is then replaced by the
  * resulting triangle mesh in the viewer. It builds directly on Tutorial_701_Cloud_NormalEstimation:
  * Poisson reconstruction needs consistently oriented normals as input.
  *
  * <b>The technique</b>
+ *
  * Poisson surface reconstruction (Kazhdan, Bolitho, and Hoppe, "Poisson Surface Reconstruction",
  * Symposium on Geometry Processing 2006) casts reconstruction as a spatial Poisson problem. The
  * oriented normals define a vector field; the method finds an indicator function (1 inside the
@@ -55,6 +57,7 @@
  * detail at greater memory/time cost. The result is a smooth, watertight SurfaceMesh.
  *
  * <b>Easy3D API</b>
+ *
  * - PoissonReconstruction: the algorithm wrapper. set_depth(d) caps the octree depth; apply(cloud)
  *   runs the reconstruction and returns a new SurfaceMesh (or nullptr on failure).
  * - PointCloud::get_vertex_property<vec3>("v:normal"): checks that normals exist before reconstructing.
@@ -62,9 +65,12 @@
  * - TrianglesDrawable::set_coloring_method(State::UNIFORM_COLOR): draw the mesh in a single color.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+R to run the reconstruction (depth 6, printed to the console). The point cloud is
  * removed and the reconstructed surface is shown in its place. If the cloud has no normals, an
  * error message points you to Tutorial_701 for estimating them first.
+ *
+ * \include{lineno} Tutorial_702_Cloud_SurfaceReconstruction/main.cpp
  *
  * \see PoissonReconstruction, SurfaceMesh, Tutorial_701_Cloud_NormalEstimation
  */

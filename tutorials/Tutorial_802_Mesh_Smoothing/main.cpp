@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_802_Mesh_Smoothing/main.cpp
+ * \example Tutorial_802_Mesh_Smoothing
  *
- * \brief Removing noise from a triangle mesh with explicit and implicit Laplacian smoothing.
+ * Removing noise from a triangle mesh with explicit and implicit Laplacian smoothing.
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates mesh smoothing (denoising) with SurfaceMeshSmoothing. To make the
  * effect obvious, Gaussian noise is first added to the bunny mesh; the smoothing shortcuts then
  * progressively remove it. Two variants are shown side by side: explicit Laplacian smoothing (a few
@@ -46,6 +47,7 @@
  * the workhorse for cleaning up scanned or reconstructed geometry before further processing.
  *
  * <b>The technique</b>
+ *
  * Laplacian smoothing moves each vertex toward the average of its neighbors, which attenuates
  * high-frequency noise. The discrete Laplacian of the vertex positions is L(p); with the cotangent
  * weights it approximates the mean-curvature normal, so iterating p <- p + dt * L(p) is a discretization
@@ -60,6 +62,7 @@
  * cotangent (geometry-aware) Laplacian rather than uniform weights.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshSmoothing: explicit_smoothing(iters) runs local averaging iterations;
  *   implicit_smoothing(timestep) solves the global implicit system.
  * - GaussianNoise::apply(): perturbs vertex positions along their normals with a given standard
@@ -68,8 +71,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
+ *
  * The model starts noisy. Press Ctrl+e for explicit smoothing (10 iterations), Ctrl+i for implicit
  * smoothing, and Ctrl+n to add Gaussian noise again so you can repeat the comparison.
+ *
+ * \include{lineno} Tutorial_802_Mesh_Smoothing/main.cpp
  *
  * \see SurfaceMeshSmoothing, GaussianNoise, SurfaceMesh, Tutorial_803_Mesh_Fairing
  */

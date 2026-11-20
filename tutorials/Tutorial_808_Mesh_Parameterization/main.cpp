@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_808_Mesh_Parameterization/main.cpp
+ * \example Tutorial_808_Mesh_Parameterization
  *
- * \brief Computing a 2D texture parameterization of an open surface and visualizing it with a checkerboard.
+ * Computing a 2D texture parameterization of an open surface and visualizing it with a checkerboard.
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates surface parameterization with SurfaceMeshParameterization. It computes a
  * (u, v) coordinate for every vertex of the girl_face mesh — an open surface patch (a scanned face) with
  * a boundary — and visualizes the result by mapping a checkerboard texture onto the surface. Two methods
@@ -47,6 +48,7 @@
  * where images live, so a texture can be painted or stored without seams or excessive distortion.
  *
  * <b>The technique</b>
+ *
  * A parameterization is a map from the surface to the plane; the goal is to minimize distortion (of
  * angles and/or areas) while keeping the map bijective. Both methods here require a mesh with a boundary
  * (disk topology) and store the resulting 2D coordinates in the "v:texcoord" vertex property. Discrete
@@ -61,6 +63,7 @@
  * stretched cells reveal angle/area distortion.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshParameterization::harmonic(): discrete harmonic map (boundary mapped to the unit circle).
  * - SurfaceMeshParameterization::lscm(): least squares conformal map; requires a triangle mesh, so the
  *   mesh is triangulated first. Both fill the "v:texcoord" vertex property.
@@ -70,8 +73,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcuts and the help text.
  *
  * <b>Running it</b>
+ *
  * The harmonic parameterization is shown first. Press Ctrl+a for harmonic parameterization and Ctrl+l for
  * LSCM; compare how the checkerboard cells deform under each method.
+ *
+ * \include{lineno} Tutorial_808_Mesh_Parameterization/main.cpp
  *
  * \see SurfaceMeshParameterization, SurfaceMesh, DrawableTriangles, Tutorial_801_Mesh_Curvature
  */

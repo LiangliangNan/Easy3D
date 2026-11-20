@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -38,7 +39,7 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
 #else
     OpenGLOptions options;
 #endif
-    HudView v("Independent HUD",161,121,4,false,false,true,options);v.hide_hud();
+    HudView v("Independent HUD",window_options(161,121,4,false,false,true),options);v.hide_hud();
     v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));
     v.camera()->set_type(Camera::ORTHOGRAPHIC);v.camera()->set_scene_bounding_box(vec3(-1),vec3(1));v.camera()->show_entire_scene();
     auto scene=std::make_shared<TrianglesDrawable>("scene");
@@ -121,7 +122,7 @@ int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting 
     bool found=true;v.point_under_pixel(v.width()*3/4,v.height()/2,found);require(!found,"3D HUD leaked into surface query");
     v.set_overlays({});require(v.run_frames(1)==0,"HUD clear frame failed");
     {
-        MultiViewer grid(1,2,"Independent grid HUD",201,151,4,false,false,true,options);
+        MultiViewer grid(1,2,"Independent grid HUD",window_options(201,151,4,false,false,true),options);
         grid.set_usage("");grid.set_division_visible(false);
         front.viewport=ivec4(0);front.color=vec4(1,0,0,.5f);back.color=vec4(0,1,0,1);
         for(bool foreground:{false,true}) {

@@ -65,8 +65,8 @@ namespace easy3d {
         /**
          * \brief CPU-side snapshot of drawable geometry and optional provenance.
          * \details Available when the drawable uses CPU buffers (as in Vulkan
-         * builds). Buffer updates change the revision and invalidate any
-         * source-face provenance associated with prior geometry.
+         *      builds). Buffer updates change the revision and invalidate any
+         *      source-face provenance associated with prior geometry.
          */
         struct BufferData {
             /// Uploaded vertex positions in drawable order.
@@ -184,7 +184,7 @@ namespace easy3d {
          *        a triangle drawable.
          * \throws std::invalid_argument if the count or an index is invalid.
          * \details Set this after uploading triangle geometry; geometry uploads
-         * invalidate the mapping.
+         *      invalidate the mapping.
          */
         void set_source_faces(const std::vector<int>& faces);
 
@@ -197,11 +197,10 @@ namespace easy3d {
          *      or as one contiguous interval (e.g. a hover aid or a preview); call this function directly only when
          *      you build the strengths yourself.
          * \param strengths One strength in [0, 1] per rendered primitive, or an empty vector to clear the highlight.
-         * \param dynamic Ignored; provided for symmetry with the other buffer updates.
          * \throws std::invalid_argument if the count does not match the rendered primitives or a value is not in [0, 1].
          * \note The mask is associated with the current geometry and is cleared by a geometry upload.
          */
-        void update_highlight_mask(const std::vector<float> &strengths, bool dynamic = false);
+        void update_highlight_mask(const std::vector<float> &strengths);
 
         /**
          * \brief Returns the per-primitive highlight mask currently in use.
@@ -435,7 +434,7 @@ namespace easy3d {
         // Uploads the index array into the element buffer.
         void opengl_update_element_buffer(const std::vector<unsigned int>&);
         // Uploads the per-primitive highlight mask and rebuilds the lookup texture.
-        void opengl_update_highlight_mask(const std::vector<float>&, bool);
+        void opengl_update_highlight_mask(const std::vector<float>&);
 
         // Version of the position storage, bumped on every buffer change so that
         // point selection can tell that its cached snapshot is stale.

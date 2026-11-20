@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_105_SurfaceMesh_Connectivity/main.cpp
+ * \example Tutorial_105_SurfaceMesh_Connectivity
  *
- * \brief Walking the adjacency (connectivity) of a SurfaceMesh through its halfedge links.
+ * Walking the adjacency (connectivity) of a SurfaceMesh through its halfedge links.
  *
  * <b>Overview</b>
+ *
  * Using the tetrahedron from Tutorial_104_SurfaceMesh, this console tutorial prints every common
  * adjacency relationship a geometry algorithm needs:
  *      - the incident vertices of each vertex
@@ -46,6 +47,7 @@
  * circulator — selected by the USE_FOR_LOOP macro, so you can see both traversal styles.
  *
  * <b>The technique</b>
+ *
  * In a halfedge data structure every edge is two directed halfedges. A halfedge knows its target
  * vertex, its opposite twin, the next halfedge around its face, and the face it bounds; a vertex
  * and a face each remember one incident halfedge. From those few links you can "circulate"
@@ -57,6 +59,7 @@
  * border has a halfedge whose face is null, which we detect with is_border() and print as NULL.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMesh::vertices(v) / halfedges(v) / faces(v): the neighbors of a vertex.
  * - SurfaceMesh::vertices(f) / halfedges(f): the corners and boundary halfedges of a face.
  * - SurfaceMesh::vertex(e, i) and halfedge(e, i): the i-th (0 or 1) endpoint / halfedge of an edge.
@@ -65,9 +68,12 @@
  * - The *Circulator types (e.g. VertexAroundVertexCirculator) are the explicit traversal form.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints a titled section for each of the seven queries above, listing the
  * incident element handles (e.g. "v0", "h1", "f2") for every vertex, face and edge of the
  * tetrahedron. Border faces print "NULL". The mesh is heap-allocated and deleted at the end.
+ *
+ * \include{lineno} Tutorial_105_SurfaceMesh_Connectivity/main.cpp
  *
  * \see SurfaceMesh, Tutorial_104_SurfaceMesh, Tutorial_109_Graph_Connectivity, Tutorial_113_PolyMesh_Connectivity
  */

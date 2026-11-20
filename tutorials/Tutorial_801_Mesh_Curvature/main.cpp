@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_801_Mesh_Curvature/main.cpp
+ * \example Tutorial_801_Mesh_Curvature
  *
- * \brief Estimating per-vertex curvature on a triangle mesh and visualizing it as a color-mapped scalar field.
+ * Estimating per-vertex curvature on a triangle mesh and visualizing it as a color-mapped scalar field.
  *
  * <b>Overview</b>
+ *
  * This tutorial is the first of the surface-mesh geometry-processing series. It loads the bunny
  * triangle mesh, estimates discrete curvature at every vertex with SurfaceMeshCurvature, and paints
  * the result on the surface with a colormap. Three scalar fields are available (mean, Gaussian, and
@@ -47,6 +48,7 @@
  * and it drives many downstream algorithms (smoothing, remeshing, feature detection).
  *
  * <b>The technique</b>
+ *
  * On a smooth surface, curvature describes how fast the surface turns. At each point there are two
  * principal curvatures k1 and k2 (the extreme bending rates over all tangent directions); from them
  * we form the mean curvature H = (k1 + k2) / 2 and the Gaussian curvature K = k1 * k2. H is zero on
@@ -62,6 +64,7 @@
  * strongest bending regardless of sign, which is useful for spotting creases and corners.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshCurvature: construct it on a SurfaceMesh, call analyze() to estimate the principal
  *   curvatures (stored as "v:curv-min" / "v:curv-max"), then compute_mean_curvature(),
  *   compute_gauss_curvature(), or compute_max_abs_curvature() to fill the derived vertex properties
@@ -72,8 +75,11 @@
  * - Renderer::update(): re-extracts rendering buffers after the property used for coloring changes.
  *
  * <b>Running it</b>
+ *
  * The mean curvature is shown first. Press Ctrl+e for mean curvature, Ctrl+g for Gaussian curvature,
  * and Ctrl+k for maximum absolute curvature; the surface is recolored each time.
+ *
+ * \include{lineno} Tutorial_801_Mesh_Curvature/main.cpp
  *
  * \see SurfaceMeshCurvature, SurfaceMesh, DrawableTriangles, Tutorial_802_Mesh_Smoothing
  */

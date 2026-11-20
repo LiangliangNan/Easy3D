@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_501_AmbientOcclusion/main.cpp
+ * \example Tutorial_501_AmbientOcclusion
  *
- * \brief Rendering a surface mesh with screen-space ambient occlusion (AO) to improve depth perception.
+ * Rendering a surface mesh with screen-space ambient occlusion (AO) to improve depth perception.
  *
  * <b>Overview</b>
+ *
  * This tutorial adds ambient occlusion to the standard Easy3D Viewer. The pattern is the one
  * used by most rendering-effect tutorials: subclass Viewer, own an effect object, and wrap the
  * base-class scene draw() with the effect's begin()/end() pair. The entry point below simply
@@ -44,6 +45,7 @@
  * effect logic lives in the TutorialAmbientOcclusion class (shown after this file).
  *
  * <b>The technique</b>
+ *
  * Ambient occlusion approximates how much diffuse ambient light reaches each surface point.
  * A point sitting in a crease, corner, or contact region is surrounded by nearby geometry that
  * blocks part of the incoming hemisphere, so it receives less light and should look darker;
@@ -65,6 +67,7 @@
  * occlusion through its vertex colors.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override draw() (to insert the effect) and
  *   key_press_event() (to control it).
  * - AmbientOcclusion: the screen-space effect. begin()/end() bracket the scene render;
@@ -75,10 +78,12 @@
  *   color so that the shading variation comes purely from the occlusion, not from texture.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to toggle ambient occlusion on/off and compare the depth cues; press 'up'/'down'
  * to increase/decrease the occlusion radius ratio (the current value is printed to the console);
  * press 'b' to bake the occlusion into vertex colors and compare the view-independent result.
  *
+ * \include{lineno} Tutorial_501_AmbientOcclusion/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_501_AmbientOcclusion/viewer.h
  * The source file of the viewer class:

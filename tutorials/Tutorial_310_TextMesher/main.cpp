@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_310_TextMesher/main.cpp
+ * \example Tutorial_310_TextMesher
  *
- * \brief Turning text strings into 3D surface meshes (or 2D outline contours) with TextMesher.
+ * Turning text strings into 3D surface meshes (or 2D outline contours) with TextMesher.
  *
  * <b>Overview</b>
+ *
  * This tutorial converts the strings "Easy3D" and "Makes 3D Easy!" — in two different fonts —
  * into real geometry that can be rendered, processed, or exported like any other mesh. Unlike
  * Tutorial_309_TextRendering, which draws text as 2D image overlays, here the letters become
@@ -46,6 +47,7 @@
  * extruded 3D meshes and the flat 2D glyph contours drawn as colored lines.
  *
  * <b>The technique</b>
+ *
  * TrueType fonts describe each glyph as closed 2D contours made of line segments and quadratic
  * Bezier curves. To mesh a string, the mesher (1) scales and places each glyph's contours at the
  * requested position and font size, (2) flattens the curves into polylines (the "quality"
@@ -59,6 +61,7 @@
  * colors).
  *
  * <b>Easy3D API</b>
+ *
  * - TextMesher: constructed from a .ttf font file; set_font() switches fonts; generate() has
  *   three overloads — new SurfaceMesh, append to an existing mesh, or append 2D contours
  *   (std::vector<std::vector<Polygon2>>, one contour list per character).
@@ -70,9 +73,12 @@
  *   plane and is extruded along the Z axis).
  *
  * <b>Running it</b>
+ *
  * A window shows the two extruded text lines viewed from the front; navigate with the usual
  * viewer controls to see the thickness of the letters. Flip the \#if to \#else (0) and rebuild to
  * inspect the raw 2D contours instead: red = clockwise, green = counter-clockwise.
+ *
+ * \include{lineno} Tutorial_310_TextMesher/main.cpp
  *
  * \see TextMesher, SurfaceMesh, LinesDrawable, Polygon2, Tutorial_309_TextRendering
  */

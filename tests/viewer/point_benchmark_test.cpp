@@ -108,18 +108,18 @@ int main() {
         {
             VulkanOptions options;
             options.use_native_large_points = true;
-            Viewer v("Point benchmark", 1600, 917, 4, false, false, true, options);
+            Viewer v("Point benchmark", window_options(1600, 917, 4, false, false, true), options);
             measure(v, "vulkan-native");
         }
         {
             VulkanOptions options;
             options.use_native_large_points = false;
-            Viewer v("Point benchmark", 1600, 917, 4, false, false, true, options);
+            Viewer v("Point benchmark", window_options(1600, 917, 4, false, false, true), options);
             measure(v, "vulkan-expanded");
         }
 #else
         {
-            Viewer v("Point benchmark", 1600, 917, 4, false, false, true);
+            Viewer v("Point benchmark", window_options(1600, 917, 4, false, false, true));
             measure(v, "opengl");
         }
 #endif

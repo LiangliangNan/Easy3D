@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_406_CollisionDetection/main.cpp
+ * \example Tutorial_406_CollisionDetection
  *
- * \brief Real-time collision detection between two meshes, with intersecting faces highlighted.
+ * Real-time collision detection between two meshes, with intersecting faces highlighted.
  *
  * <b>Overview</b>
+ *
  * This tutorial loads two meshes (a bunny and a mannequin), animates the bunny, and
  * continuously reports which faces of the two meshes intersect, painting them red. Pausing
  * the animation lets the user drag the bunny around (as in Tutorial_404_ObjectManipulation)
@@ -41,6 +42,7 @@
  * runs it.
  *
  * <b>The technique</b>
+ *
  * Testing every face of one mesh against every face of the other is O(n*m) — far too slow
  * for interactive rates on large meshes. The standard solution is a bounding volume
  * hierarchy (BVH): each mesh is preprocessed once into a tree of axis-aligned bounding boxes
@@ -55,6 +57,7 @@
  * intersecting face pair is painted red.
  *
  * <b>Easy3D API</b>
+ *
  * - Collider: constructed from two triangle meshes (builds the AABB trees); detect(t0, t1)
  *   returns the intersecting face pairs for the given model transforms.
  * - Manipulator / ManipulatedFrame: pose the bunny interactively (Alt + drag) and provide
@@ -63,10 +66,12 @@
  *   visualization; Viewer::animation_func_ / set_animation() run the demo animation.
  *
  * <b>Running it</b>
+ *
  * On start, an animation rotates the bunny and highlights intersecting faces in red. Press
  * 'space' (or F2) to pause/resume. While paused, Alt + left-drag rotates the bunny and
  * Alt + right-drag translates it; collisions are recomputed during every drag.
  *
+ * \include{lineno} Tutorial_406_CollisionDetection/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_406_CollisionDetection/viewer.h
  * The source file of the viewer class:

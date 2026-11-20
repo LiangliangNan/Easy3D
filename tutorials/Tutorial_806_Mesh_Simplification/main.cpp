@@ -36,11 +36,12 @@
 #include <algorithm>
 
 /**
- * \example{lineno} Tutorial_806_Mesh_Simplification/main.cpp
+ * \example Tutorial_806_Mesh_Simplification
  *
- * \brief Reducing a mesh's vertex count with quadric-error-metric edge collapse (decimation).
+ * Reducing a mesh's vertex count with quadric-error-metric edge collapse (decimation).
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates mesh simplification (decimation) with SurfaceMeshSimplification. Each press
  * of the shortcut collapses the mesh down to half of its current vertices (with a floor of 100), so you
  * can watch detail disappear progressively while the overall shape is preserved. The edges are drawn to
@@ -48,6 +49,7 @@
  * processing, and compact storage of high-resolution scans.
  *
  * <b>The technique</b>
+ *
  * The algorithm is incremental greedy decimation by halfedge collapse: repeatedly merge one vertex into
  * a neighbor, removing the two adjacent triangles, until the target vertex count is reached. The key
  * question is which collapse to do next and where to place the surviving vertex. Easy3D uses the quadric
@@ -60,6 +62,7 @@
  * 1998), with optional fairness/quality constraints (aspect ratio, normal deviation, Hausdorff error).
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshSimplification: initialize() sets up the quadrics and priority queue; simplify(n_vertices)
  *   collapses edges until roughly n_vertices remain.
  * - DrawableLines ("edges"): made visible to reveal the coarsening triangulation.
@@ -67,8 +70,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcut and the help text.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+d to simplify to half of the current vertices; repeat to decimate further. The console
  * prints the resulting vertex/face counts after each pass.
+ *
+ * \include{lineno} Tutorial_806_Mesh_Simplification/main.cpp
  *
  * \see SurfaceMeshSimplification, SurfaceMesh, DrawableLines, Tutorial_805_Mesh_Remeshing, Tutorial_807_Mesh_Subdivision
  */

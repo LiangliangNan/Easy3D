@@ -31,11 +31,12 @@
 #include "viewer.h"
 
 /**
- * \example{lineno} Tutorial_307_CrossSection/main.cpp
+ * \example Tutorial_307_CrossSection
  *
- * \brief Inspecting a model's interior with an interactively movable clipping plane and cross-sections.
+ * Inspecting a model's interior with an interactively movable clipping plane and cross-sections.
  *
  * <b>Overview</b>
+ *
  * This tutorial shows how to cut a model open while rendering it: everything on one side of a
  * plane is hidden, so you can look inside the geometry. Easy3D ships a ready-made, manipulable
  * ClippingPlane; the custom CrossSection viewer below simply enables it and re-routes mouse
@@ -43,6 +44,7 @@
  * loads the Stanford bunny and picks a viewing direction that makes the cut easy to see.
  *
  * <b>The technique</b>
+ *
  * A plane splits space into two half-spaces: for a plane with normal n and offset d, the sign
  * of dot(n, p) + d tells on which side a point p lies. Clipping evaluates this test per fragment
  * in the shader and discards fragments on the forbidden side — the mesh itself is never
@@ -55,6 +57,7 @@
  * and slide the plane through the model.
  *
  * <b>Easy3D API</b>
+ *
  * - ClippingPlane: a program-wide singleton (instance()) controlling clipping; set_enabled()
  *   turns it on, and its built-in viewer shortcuts toggle visibility and cross-section mode.
  * - Manipulator / ManipulatedFrame: the interaction machinery; frame()->action_rotate() and
@@ -63,10 +66,12 @@
  *   the initial view.
  *
  * <b>Running it</b>
+ *
  * Drag with the left button to rotate the clipping plane, drag with the right button to
  * translate it. Alt+'c' enables/disables clipping, Alt+'v' shows/hides the plane guide, and
  * Alt+'x' toggles cross-section (slab) mode.
  *
+ * \include{lineno} Tutorial_307_CrossSection/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_307_CrossSection/viewer.h
  * The source file of the viewer class:

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <tutorials/Tutorial_205_RealCamera/viewer.h>
 #include <tutorials/Tutorial_404_ObjectManipulation/viewer.h>
 #include <tutorials/Tutorial_506_DepthMap/viewer.h>
@@ -70,7 +71,7 @@ void depth_preview() {
     v.clear_scene();frame(v);verify_depth(v,1,1,1);require(v.validation_errors()==0,"depth preview validation errors");
 }
 void multi_depth_preview() {
-    MultiViewer v(1,2,"Multi-view GPU depth",320,280,4,false,false,true);v.set_division_visible(false);
+    MultiViewer v(1,2,"Multi-view GPU depth",window_options(320,280,4,false,false,true));v.set_division_visible(false);
     auto faces=std::make_shared<TrianglesDrawable>("left cell");faces->update_vertex_buffer(plane(0));faces->set_lighting(false);
     v.add_drawable(faces);v.assign(0,0,faces.get());front(v);frame(v);
     bool found=false;const auto point=v.point_under_pixel(v.width()/4,v.height()/2,found);require(found,"multi-view depth fixture missed");

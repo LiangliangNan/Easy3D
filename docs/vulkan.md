@@ -97,11 +97,21 @@ struct OpenGLOptions {
 };
 #endif
 
+/// The window settings of both backends, outside the #ifdef because they are the
+/// same on both.
+struct ViewerOptions {
+    int width = 800;
+    int height = 600;
+    int samples = 1;
+    bool full_screen = false;
+    bool visible = true;
+    bool resizable = true;
+};
+
 class Viewer : public ViewerBase {
 public:
     explicit Viewer(const std::string& title = "Easy3D Viewer",
-                    int width = 800, int height = 600, int samples = 1,
-                    bool full_screen = false, bool visible = true, bool resizable = true,
+                    const ViewerOptions& window = {},
 #ifdef EASY3D_HAS_VULKAN
                     const VulkanOptions& vk_options = {});
 #else
@@ -123,7 +133,12 @@ protected: /* or */ private:
 ```
 
 The constructor is the one public place where the backends differ: the last parameter is
-`VulkanOptions` or `OpenGLOptions` (D1), so everything before it is portable.
+`VulkanOptions` or `OpenGLOptions` (D1), so everything before it is portable — and the
+portable window settings are grouped in `ViewerOptions` rather than passed positionally.
+All three option structs are filled the same way, by default construction plus field
+assignment: default member initializers make a struct non-aggregate in C++11, so
+`ViewerOptions{171, 129, 4}` does not compile and `ViewerOptions window; window.samples = 4;`
+is the portable form.
 
 Overriding declarations use `override` without a redundant `virtual` specifier.
 Keep `virtual` on functions that introduce a virtual interface.
@@ -161,23 +176,33 @@ in `main`; add conditions only where a dependency or source genuinely differs by
 `OFF` (this defines or leaves undefined the C++ macro `EASY3D_HAS_VULKAN`). Their code
 needs no change.
 
-**Decisions (2026-10-31, constructor types revised 2026-11-04):**
+**Decisions (2026-10-31, constructor types revised 2026-11-04, window settings grouped 2026-11-19):**
 
-- **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, width, height, samples,
-  full_screen, visible, resizable, options)` with `width`, `height` and `samples` of type
-  `int` (revised 2026-11-04), `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
+- **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, window, options)`, where
+  `window` is a `ViewerOptions` holding `width`, `height` and `samples` of type `int` (revised 2026-11-04)
+  plus `full_screen`, `visible` and `resizable`, `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
   version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
   validation, device name, and native large-points preference), as in the layout of P2.
+  The struct is named *plural*, after the two option structs it sits beside in the same
+  header; a singular "option" would read as one choice rather than a set of them.
   Consequences, recorded because they break
   the otherwise unchanged client code: `main`'s order was `(title, samples, gl_major,
   gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)` and its default
-  was 4 samples. The new order differs, and `width`, `height` and `samples` are all integers,
-  so an old positional call such as `Viewer(title, 4, 3, 2, false, false)` still compiles and
-  silently means width 4, height 3, 2 samples; OpenGL viewers also no longer get 4× MSAA by
+  was 4 samples. A positional call such as `Viewer(title, 4, 3, 2, false, false)` no longer
+  compiles: the second parameter is a struct, so the mismatch is a compile error at the call
+  site — which is exactly the hazard the positional list carried, since while all six settings
+  were integers that same call silently meant a 4x3 window with 2 samples.
+  OpenGL viewers also no longer get 4× MSAA by
   default. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass more than a
   title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
-  audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` uses default member initializers, like `VulkanOptions`;
-  default construction with `{}` works in C++11, while custom values are assigned to fields; `VulkanOptions` is defined directly in `viewer.h`, alongside `OpenGLOptions`.
+  audit. *Status: implemented on the OpenGL and Vulkan viewers, on `MultiViewer` and on Mapple's
+  own `MappleViewer`.* `ViewerOptions` uses default member initializers, like `VulkanOptions` and
+  `OpenGLOptions`;
+  default construction with `{}` works in C++11, while custom values are assigned to fields; `ViewerOptions` is defined directly in `viewer.h`,
+  outside the two backend structs' `#ifdef` because its fields mean the same on both backends.
+  The Python bindings keep their keyword arguments (`easy3d.Viewer(title=..., width=1600, samples=4)`)
+  through a lambda that fills the struct, and bind no `ViewerOptions` type, exactly as
+  `VulkanOptions` and `OpenGLOptions` have never been bound.
   Renderer factories take validation, sync-validation, device-name, and native large-points
   preference arguments directly. Set `VulkanOptions::use_native_large_points` to `false` to
   force the portable expanded-point path for diagnostics and controlled comparisons; it
@@ -201,11 +226,12 @@ needs no change.
 - **D4 Vulkan-only options** enter through the last constructor parameter (`VulkanOptions`).
   `VulkanViewerOptions` and the convenience overload that took it are removed.
 - **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
-  `MultiViewer(rows, cols, title, width, height, samples, full_screen, visible, resizable,
-  options)` (both backends) and `OffScreen(width, height,
-  options)`, with `width`, `height`, and MultiViewer row/column counts of type `int`. `OffScreen` omits `samples`, `full_screen`,
-  `visible` and `resizable` because they have no meaning for a window-less renderer, and
-  `render()` takes its own sample count.
+  `MultiViewer(rows, cols, title, window, options)` (both backends), where `window` is the same
+  `ViewerOptions` as D1 and the row/column counts stay `int`, and `OffScreen(width, height,
+  options)`. `OffScreen` keeps its own two `int` dimensions and takes no `ViewerOptions`, because
+  `samples`, `full_screen`, `visible` and `resizable` have no meaning for a window-less renderer,
+  and `render()` takes its own sample count; its constructor builds the `ViewerOptions` the base
+  class needs (hidden, 4 samples) itself.
 - **D6 Bounded tests** run the tutorials unchanged: a visible window (which the desktop tests
   already have under Xvfb) for a bounded number of frames, with no options injected. The
   tutorial subclasses therefore take only what `main`'s do (Tutorial 207 keeps `main`'s
@@ -1476,17 +1502,21 @@ maintainability/performance follow-ups.
 The portable API is the shared `ViewerBase`, `Viewer`, `MultiViewer`, and
 `OffScreen` surface, including their common construction and rendering
 operations. The intentional D1 `Viewer` constructor change is a source
-compatibility hazard: the old OpenGL positional overloads can compile while
-silently changing the requested window size, sample count, or other settings.
-Replace old positional calls with the D1 order
-`Viewer(title, width, height, samples, full_screen, visible, resizable, options)`.
-No deprecated compatibility overload is provided; callers must migrate old
-positional calls to this order.
-The default sample count is now one. Both Viewer constructors emit a warning
-when both requested dimensions are at most 16 pixels, as this may indicate that
-old OpenGL context-version arguments were supplied positionally. This is only
-an advisory heuristic and does not reject tiny windows. `OpenGLOptions` and
-`VulkanOptions` are available only in their respective configured builds.
+compatibility hazard, and now a loud one: the six window settings are grouped in
+a `ViewerOptions` struct, so an old positional call such as
+`Viewer(title, 4, 3, 2, false, false)` cannot compile instead of silently
+changing the requested window size and sample count. Migrate by default
+constructing a `ViewerOptions`, assigning the fields that differ from their
+defaults (`width`, `height`, `samples`, `full_screen`, `visible`, `resizable`),
+and passing it as the second argument; a braced list does not work because
+default member initializers make the struct non-aggregate in C++11.
+No deprecated compatibility overload is provided.
+The default sample count is now one. The OpenGL-era heuristic that warned when both
+requested dimensions were at most 16 pixels is gone from both constructors: with
+`ViewerOptions` a positional misread cannot happen, and a warning would only
+second-guess a caller who sized a window deliberately. `OpenGLOptions` and
+`VulkanOptions` are available only in their respective configured builds, while
+`ViewerOptions` is defined in both.
 
 The following `Viewer` extensions are Vulkan-only, guarded by
 `EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,
@@ -4858,6 +4888,8 @@ Its parameter order and default sample count now follow Viewer. Its existing
 main constructs with title only and needs no changes. The Vulkan ImGui counterpart
 is still pending W10; it will use the same signature with `const VulkanOptions&`.
 This change does not introduce a stub or claim Vulkan ImGui support.
+*(The positional window settings above are the batch-143 `ViewerOptions` struct:
+the state at the time, not the current signature.)*
 
 Validation: Tutorial 202 and the full OpenGL configuration (including Python
 bindings) built under C++11; all **40/40 OpenGL tests** passed on this Mac.
@@ -11732,3 +11764,116 @@ being reverted. Rate on this host since: 15 isolated runs of the binary and 3 pa
 and cause-open, now with a leg name to go with the numbers.
 
 
+
+### 2026-11-19 — batch 143: the window settings become a ViewerOptions struct
+
+**Problem.** `Viewer`'s main constructor took the window settings as six positional parameters
+between the title and the backend's options struct. Three costs were already recorded against
+that list.
+
+- D1's own compatibility hazard was *silent*. `width`, `height` and `samples` are all `int`, so a
+  `main`-era positional call — `Viewer(title, 4, 3, 2, false, false)`, meaning 4 samples on
+  OpenGL 3.2 — compiled and produced a 4x3 window with 2 samples. The migration guide had to
+  document the misreading because the signature could not prevent it.
+- Asking for one setting meant spelling six. Tutorial 205 wanted nothing beyond the title and
+  passed `Viewer(title, 800, 600, 1)`; a call ending `..., false, true, true` says nothing to the
+  reader; and the same six-parameter list was repeated by `MappleViewer`, Tutorial 202's
+  `ViewerImGui`, `applications/VulkanViewer`, `OffScreen`'s internal call, `MultiViewer` and the
+  test helpers — seven copies of one signature to keep in step.
+- A caller who wanted a non-default size had no way to say so that scales: adding a seventh
+  window setting to `Viewer` would mean editing every one of those copies.
+
+**Change.** `ViewerOptions` is the third option struct in `easy3d/viewer/viewer.h`. It is named
+*plural*, after the two structs it sits beside — a singular "option" would read as one choice
+rather than a set of them — and it is defined **outside** their `#ifdef EASY3D_HAS_VULKAN`,
+because unlike `VulkanOptions`/`OpenGLOptions` its fields mean the same thing on both backends.
+It is filled the same way they are: default construction plus field assignment, since default
+member initializers make a struct non-aggregate in C++11 and `ViewerOptions{171, 129, 4}` does
+not compile.
+
+- `easy3d/viewer/viewer.{h,cpp}` — `Viewer(title, window, options)` on both backends; the six
+  positional parameters are gone, so the D1 hazard is now a compile error at the call site rather
+  than a reparsed window size. `MultiViewer(rows, cols, title, window, options)` matches it
+  (`easy3d/viewer/multi_viewer.{h,cpp}`), and `OffScreen` keeps its own `(width, height, options)`
+  — `samples`, `full_screen`, `visible` and `resizable` have no meaning for a window-less
+  renderer — building the hidden, 4-sample struct in its mem-init list so its
+  "offscreen width must be positive" throws still run before any window exists.
+- `applications/Mapple/mapple_viewer.{h,cpp}` — `MappleViewer(title, window, options)`. The app's
+  own defaults (1440x900, 4 samples) are now `MappleViewer::default_window_options()`, declared
+  before the constructor so it can serve as its default argument; the values the old parameter
+  list carried are unchanged, they are just no longer six separate parameters.
+  `tutorials/Tutorial_202_Viewer_imgui` took the same treatment for the same reason.
+- `applications/VulkanViewer/main.cpp` takes its sample count from the command line and leaves the
+  rest default; `Tutorial_205_RealCamera/viewer.cpp` calls `Viewer(title)` where it used to repeat
+  three defaults.
+- `python/bindings/easy3d/viewer/{viewer,multi_viewer}.cpp` — the keyword arguments stay exactly as
+  they were (`easy3d.Viewer(title=..., width=1600, samples=4)`), translated by a `py::init` lambda
+  that fills the struct. `ViewerOptions` is not bound, exactly as `VulkanOptions` and
+  `OpenGLOptions` were never bound: the only Python code that asks for a window size at all is
+  `tests/python/rendering.py`, which passes keywords including `samples=0` and `visible=False`,
+  while the 21 scripts in `python/tutorials/` pass only a title plus, for `MultiViewer`, rows and
+  cols. Neither group needed an edit.
+  The lambda must return the *trampoline alias* (`PyCallBack_easy3d_Viewer`,
+  `PyCallBack_easy3d_MultiViewer`) rather than `easy3d::Viewer*`: `py::init<Args...>` constructed
+  `Alias<Class>` in place, whereas a factory returning a base pointer makes pybind11 build the
+  alias by move-constructing it from `Class &&` (`3rd_party/pybind11/include/pybind11/detail/init.h`,
+  the `construct(value_and_holder&, Cpp<Class>*, bool)` path), and `Viewer` is not movable. The
+  first version returned `new easy3d::Viewer(...)` and `python.rendering` failed on the first
+  Python-side subclass with `unable to convert returned instance to required alias class` — a
+  failure the C++ tutorials could not have shown, because only a subclassed binding needs an alias.
+- `tests/viewer/test_window.h` — two helpers, so that the 86 converted call sites in 30 files read
+  as close to their old form as possible: `window_options(width, height, samples, full_screen,
+  visible, resizable)` keeps the *old positional order* for the 33 literal sites, and the Vulkan
+  `TestWindow` gained `window()`, which hands out the portable half for the 53 sites that were
+  already reading fields off a `TestWindow`. `window_options()` is declared outside the file's
+  `#ifdef EASY3D_HAS_VULKAN` guard because the OpenGL tree needs it too. `installed/viewer.cpp`,
+  which is a public-API consumer rather than a test, writes the struct the way a user would:
+  default-construct, then assign `width`, `height`, `visible`.
+- The `<= 16` "unusually small dimensions" advisory is removed from both constructors. It existed
+  to catch positional context-version arguments reaching a viewer as a size; with the struct that
+  misread cannot be compiled, and a warning about small windows would only second-guess a caller
+  who sized one deliberately.
+- Docs updated for the new signature: P2's layout example now shows the struct and the rule for
+  filling it, D1 states the grouped/reordered constructor with the plural-naming choice and the
+  Python decision, D5 covers `MultiViewer`/`OffScreen`, the "Viewer API boundary" section no longer
+  promises the deleted advisory, `README.md`'s migration paragraph tells old positional callers
+  their call no longer compiles, and the 2026-11-04 ImGui entry is annotated as the state at the
+  time rather than the current signature.
+- `viewer.h`'s new doc block fixed two doxygen defects found by the build log. `\ref` to one of the
+  sibling option structs resolves only for the branch doxygen actually parses: `docs/Doxyfile.in`
+  predefines `EASY3D_HAS_VULKAN`, so `\ref OpenGLOptions` warns `unable to resolve reference`, and
+  with the define dropped the same happens to `\ref VulkanOptions` (both cases reproduced in a
+  two-struct minimal project). Prose instead of `\ref` is what makes the comment independent of the
+  configured backend. The second defect was `\ref multisample_counts:` swallowing the colon into the
+  reference name, which doxygen reported as `multisample_counts:`; it now uses the file's
+  established `(\ref multisample_counts)` form.
+
+**Validation.** The old parameter list could not be enumerated by searching for it: `Grid`,
+`EffectViewer`, `AnimationViewer`, `StreamViewer`, `RateViewer`, `ClipViewer`, `AxesViewer`,
+`CloudViewer`, `GeometryViewer`, `HintViewer`, `RunViewer`, `InputViewer`, `AnnotationView`,
+`HudView` and `ImGuiViewer` inherit the constructor through `using Viewer::Viewer;`, so they carry
+no signature of their own and only the compiler knows they exist. The enumerator therefore was a
+keep-going build of both trees (`cmake --build … -- -k`), whose first pass reported 17
+`no matching constructor` errors; after those sites and `multi_viewer_test.cpp`'s missing
+`test_window.h` include were fixed, both trees built with 0 errors.
+
+- Fully rebuilt and run serially (never `-j4` on this host): **OpenGL 118/118 and Vulkan 151/151**,
+  219 s and 35 s. `vulkan.crosssection`, the known intermittent, passed in this run.
+- `python.rendering` passed, and it is the only test that could have caught the binding mistake:
+  it is the only Python consumer that passes the window keywords, the only one that subclasses a
+  binding, and it exists only in the Vulkan tree (`ctest -N -R python` in the OpenGL tree reports 0
+  tests, so the green OpenGL suite said nothing about `ViewerOptions` reaching Python). Run by hand
+  it prints `Packaged Python Viewer, MultiViewer and OffScreen passed`.
+- `tests/viewer/installed/` is compiled only in CI (`cmake -S tests/viewer/installed` against the
+  installed package), so the three consumers were checked locally by syntax-only compiles using each
+  tree's own `flags.make`: `viewer.cpp` and `main.cpp` against the Vulkan tree, and `unified.cpp` in
+  both legs (`-DEASY3D_EXPECT_VULKAN=1` with the Vulkan flags, `=0` with the OpenGL flags). All four
+  compile clean. A staged install was not rebuilt, so this is evidence about the API call, not about
+  the package.
+- `Mapple` rebuilt in both trees; `VulkanViewer` only in the Vulkan one, which is where
+  `applications/CMakeLists.txt` adds it (`if(Easy3D_ENABLE_VULKAN)`).
+  Mapple-Qt is configured in neither (Qt is on only in the Vulkan tree, where the app is skipped as
+  OpenGL-only, and the OpenGL check tree sets `Easy3D_ENABLE_QT=OFF`), as before.
+- `doxygen Doxyfile` in the Vulkan tree now reports **0 warnings**; the 62 `error:` lines in the same
+  output are the tutorial-directory copy step (`file '.../tutorials/Tutorial_101_PointCloud' not
+  found`), which predates this batch and is unrelated to it.

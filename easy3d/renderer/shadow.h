@@ -120,7 +120,7 @@ namespace easy3d {
         /// \return Registered drawable pointers.
         const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
 
-        // Shadow frame parameters published by begin() for the registered camera.
+        /// Shadow frame parameters published by begin() for the registered camera.
         struct FrameData {
             /// Transform from world positions to shadow texture coordinates.
             mat4 shadow_matrix;                 // world position -> shadow texture coordinates

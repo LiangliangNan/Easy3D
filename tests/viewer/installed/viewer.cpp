@@ -40,8 +40,13 @@ int main() {
 #else
         const OpenGLOptions options{};
 #endif
-        std::shared_ptr<ViewerBase> viewer = std::make_shared<FrameCounter>(
-            "Installed Viewer", 181, 151, 1, false, false, true, options);
+        // Written the way a user sets the struct: default-construct, then assign
+        // what differs. samples 1 and a resizable window are already the defaults.
+        ViewerOptions window;
+        window.width = 181;
+        window.height = 151;
+        window.visible = false;
+        std::shared_ptr<ViewerBase> viewer = std::make_shared<FrameCounter>("Installed Viewer", window, options);
         auto& counter = static_cast<FrameCounter&>(*viewer);
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));
@@ -69,7 +74,7 @@ int main() {
         const auto center = (size_t(h / 2) * w + w / 2) * 4;
         require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center+1]) - 51) <= 2,
                 "installed viewer material/default camera did not render the model");
-        MultiViewer grid(1,2,"Installed MultiViewer",181,151,1,false,false,true,options);
+        MultiViewer grid(1, 2, "Installed MultiViewer", window, options);
         auto shared=std::make_shared<SurfaceMesh>();
         auto ga=shared->add_vertex(vec3(0,-1,-1)),gb=shared->add_vertex(vec3(0,1,-1)),gc=shared->add_vertex(vec3(0,0,1));
         shared->add_triangle(ga,gb,gc);grid.add_model(shared);

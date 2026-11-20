@@ -154,7 +154,7 @@ namespace easy3d
                     auto size_bytes = static_cast<std::size_t>(output.tellp());
                     if (size_bytes > 0)
                         output << "\n\n";
-                    output << "================================================================= program started ...\n";
+                    output << "======================== program started ... ========================\n";
                     output.close();
                     log_file_name = file_system::convert_to_native_style(full_path_log_file);
                 }

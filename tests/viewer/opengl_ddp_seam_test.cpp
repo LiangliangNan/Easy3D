@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
@@ -83,7 +84,7 @@ size_t black_pixels(const std::vector<unsigned char>& p) {
 int main() {
     try {
         initialize(false, false, false);
-        PeelViewer v("DDP flat-normal seam", 320, 240, 1, false, false, true);
+        PeelViewer v("DDP flat-normal seam", window_options(320, 240, 1, false, false, true));
         v.enable();
         auto mesh = std::make_shared<SurfaceMesh>();
         add_cube(*mesh, vec3(0, 0, 0), 1.0f);

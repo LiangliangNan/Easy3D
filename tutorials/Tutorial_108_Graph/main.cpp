@@ -28,16 +28,18 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_108_Graph/main.cpp
+ * \example Tutorial_108_Graph
  *
- * \brief Building a Graph from vertices and edges — the 1D connectivity counterpart of a mesh.
+ * Building a Graph from vertices and edges — the 1D connectivity counterpart of a mesh.
  *
  * <b>Overview</b>
+ *
  * This console tutorial creates the simplest Graph: four vertices positioned in 3D and five edges
  * joining them, then prints the vertex and edge counts. It is the starting point for the graph
  * series (109 connectivity, 110 properties, 111 I/O), just as Tutorial_104 was for surface meshes.
  *
  * <b>The technique</b>
+ *
  * A Graph stores only vertices and edges — there are no faces and no halfedges. It models pure 1D
  * connectivity: networks, curves, skeletons, road maps, or the edge graph extracted from a mesh.
  * Each vertex still carries a 3D position (the built-in "v:point" property) so the graph can be
@@ -48,14 +50,18 @@
  * (halffaces). The five edges here form a 4-cycle (v0-v1-v2-v3-v0) plus one diagonal (v1-v3).
  *
  * <b>Easy3D API</b>
+ *
  * - Graph: the core graph data structure (a Model subclass).
  * - Graph::add_vertex(pos): appends a positioned vertex, returning a Vertex handle.
  * - Graph::add_edge(a, b): connects two vertices, returning an Edge handle.
  * - Graph::n_vertices()/n_edges(): element counts.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints "vertices: 4" and "edges: 5". The graph is heap-allocated with new and
  * explicitly deleted at the end to release its memory.
+ *
+ * \include{lineno} Tutorial_108_Graph/main.cpp
  *
  * \see Graph, Tutorial_109_Graph_Connectivity, Tutorial_110_Graph_Property, Tutorial_104_SurfaceMesh
  */

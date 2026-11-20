@@ -34,17 +34,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_303_ScalarField/main.cpp
+ * \example Tutorial_303_ScalarField
  *
- * \brief Visualizing a scalar field on a mesh by mapping values to colors with a colormap.
+ * Visualizing a scalar field on a mesh by mapping values to colors with a colormap.
  *
  * <b>Overview</b>
+ *
  * This tutorial renders a scalar field defined on the vertices of a surface mesh: the
  * elevation (Z coordinate) of each vertex of a building model. The values are turned into
  * colors through a colormap texture, producing the familiar "heatmap" look used to inspect
  * simulation results, measured quantities, or any per-vertex/per-face attribute.
  *
  * <b>The technique</b>
+ *
  * A scalar field assigns one number to each mesh element (here: one float per vertex).
  * To visualize it, the numbers are first normalized to the field's [min, max] range and then
  * used as a 1D texture coordinate into a colormap — a thin image whose pixels encode a color
@@ -59,6 +61,7 @@
  * data range is used.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMesh: add_vertex_property<float>() attaches a named per-vertex attribute
  *   ("v:elevation"); position(v) gives a vertex's coordinates.
  * - DrawableTriangles: set_scalar_coloring(State::VERTEX, "v:elevation", ...) tells the "faces"
@@ -68,9 +71,12 @@
  *   optional colormap-customization block).
  *
  * <b>Running it</b>
+ *
  * The building is displayed colored by height: low parts take the low end of the colormap and
  * high parts the high end. Navigate with the standard Viewer controls ('h' for help). To try
  * a different colormap, uncomment the block that requests "rainbow.png" before running.
+ *
+ * \include{lineno} Tutorial_303_ScalarField/main.cpp
  *
  * \see DrawableTriangles, SurfaceMesh, Texture, TextureManager, Tutorial_304_VectorField, Tutorial_305_Texture
  */

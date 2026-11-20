@@ -112,10 +112,10 @@ int main(int argc,char**) {
 #ifdef EASY3D_HAS_VULKAN
         TestWindow options; options.visible=false; options.width=241; options.height=181;
         options.device.validation=options.device.sync_validation=argc>1;
-        InputViewer v("Input parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        InputViewer v("Input parity", options.window(), options.device);
 #else
         (void)argc;
-        InputViewer v("Input parity", 241, 181, 1);
+        InputViewer v("Input parity", window_options(241, 181, 1));
         v.hide();
 #endif
         ensure_test_glfw();

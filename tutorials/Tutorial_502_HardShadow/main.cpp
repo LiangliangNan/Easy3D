@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_502_HardShadow/main.cpp
+ * \example Tutorial_502_HardShadow
  *
- * \brief Rendering a scene with hard shadows using the shadow mapping technique.
+ * Rendering a scene with hard shadows using the shadow mapping technique.
  *
  * <b>Overview</b>
+ *
  * This tutorial adds hard shadows to the standard Easy3D Viewer. It follows the same pattern
  * as the other rendering-effect tutorials (e.g. Tutorial_501_AmbientOcclusion): subclass Viewer,
  * own an effect object, and wrap the base-class scene draw() with the effect's begin()/end()
@@ -46,6 +47,7 @@
  * physically more plausible soft shadow edges.
  *
  * <b>The technique</b>
+ *
  * Shadow mapping (Lance Williams, "Casting curved shadows on curved surfaces", SIGGRAPH 1978)
  * answers the visibility question "can the light see this point?" with a depth-buffer trick.
  * In a first pass the scene is rendered from the light's point of view into a depth texture
@@ -61,6 +63,7 @@
  * ground shadow even when the model has no floor.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override draw() (to insert the effect) and
  *   key_press_event() (to control it).
  * - Shadow: the hard-shadow effect. begin(surfaces) registers the shadow-casting surfaces for
@@ -71,9 +74,11 @@
  *   color and set_smooth_shading(true) interpolates normals, so shadowing is easy to read.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to toggle shadowing on/off and compare. Use the standard Viewer navigation
  * (mouse drag to rotate, wheel to zoom) to inspect the shadow from different angles.
  *
+ * \include{lineno} Tutorial_502_HardShadow/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_502_HardShadow/viewer.h
  * The source file of the viewer class:

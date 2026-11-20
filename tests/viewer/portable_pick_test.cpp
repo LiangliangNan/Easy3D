@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
 #include <tutorials/Tutorial_404_ObjectManipulation/viewer.h>
@@ -299,7 +300,7 @@ int main(int argc,char**) {return test::run("portable picking depth, provenance,
     OpenGLOptions options;
 #endif
     for(int samples:{1,4}) {
-        Viewer v("Portable pick",241,181,samples,false,false,true,options);impostor_widths(v);sphere_snapshots(v);exercise(v);
+        Viewer v("Portable pick",window_options(241,181,samples,false,false,true),options);impostor_widths(v);sphere_snapshots(v);exercise(v);
         require(v.validation_errors()==0,"picking validation errors");
     }
     tutorials();

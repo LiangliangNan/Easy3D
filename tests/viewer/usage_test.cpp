@@ -41,7 +41,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         TestWindow options; options.visible=false;options.width=480;options.height=300;
         options.device.validation=options.device.sync_validation=argc>1;
-        Inspect<Viewer> v("Usage HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        Inspect<Viewer> v("Usage HUD", options.window(), options.device);
         require(!v.manual().empty() && v.hint().empty(),"default viewer usage missing");
         require(v.background_color()==setting::background_color,"native viewer ignored shared background setting");
         require(v.logo(),"Easy3D logo is not enabled by default");

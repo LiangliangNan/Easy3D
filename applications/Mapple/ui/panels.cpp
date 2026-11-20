@@ -308,7 +308,7 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
         save();
     ImGui::EndDisabled();
     ImGui::SameLine();
-    if (toolbar_button("fit", "Fit"))
+    if (toolbar_button("fit", "Fit screen"))
         fit_screen();
     ImGui::SameLine();
     if (toolbar_button("snapshot", "Snapshot"))
@@ -347,6 +347,7 @@ void MappleViewer::draw_toolbar(float x, float y, float w, float h) {
             ImGui::PopStyleColor();
         ImGui::SameLine();
     };
+    mode_button("rotate", "Scene manipulation", SelectMode::OFF);
     mode_button("pick", "Click", SelectMode::CLICK);
     mode_button("rect", "Rect", SelectMode::RECT);
     mode_button("lasso", "Lasso", SelectMode::LASSO);

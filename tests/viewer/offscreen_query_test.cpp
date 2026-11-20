@@ -41,7 +41,7 @@ int main(int argc,char**) {return test::run("shared OffScreen queries, selection
 #else
     OpenGLOptions options;
 #endif
-    Viewer window("Interleaved query host",151,113,4,false,false,true,options);window.set_usage("");
+    Viewer window("Interleaved query host",window_options(151,113,4,false,false,true),options);window.set_usage("");
     OffScreen a(161,127,options),b(103,79,options);
     auto mesh=triangle(0),other=triangle(.4f);setup(a,mesh);setup(b,other);
     const auto matrix=a.camera()->model_view_projection_matrix();const auto pivot=a.camera()->pivot_point();

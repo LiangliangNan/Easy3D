@@ -56,22 +56,12 @@ public:
     /**
      * @brief Constructor
      * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
-     * @param width The initial window width.
-     * @param height The initial window height.
-     * @param samples The number of samples for multisample antialiasing.
-     * @param full_screen Whether to use a fullscreen window.
-     * @param visible Whether the window is initially visible.
-     * @param resizable Whether the viewer can be resized by the user.
+     * @param window Initial size, multisample count and window flags, see \ref easy3d::ViewerOptions.
      * @param options Backend device/context settings.
      */
     explicit ViewerImGui(
         const std::string &title = "Easy3D ViewerImGui",
-        int width = 800,
-        int height = 600,
-        int samples = 1,
-        bool full_screen = false,
-        bool visible = true,
-        bool resizable = true,
+        const easy3d::ViewerOptions &window = {},
 #ifdef EASY3D_HAS_VULKAN
         const easy3d::VulkanOptions &options = {}
 #else

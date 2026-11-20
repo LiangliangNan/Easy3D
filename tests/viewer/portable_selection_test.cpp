@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tests/test.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -29,7 +30,7 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
 #endif
     std::shared_ptr<const graphics::PointData> surviving;
     {
-    Viewer v("GPU selection",161,121,4,false,false,true,options);v.set_usage("");
+    Viewer v("GPU selection",window_options(161,121,4,false,false,true),options);v.set_usage("");
     auto points=std::make_shared<PointsDrawable>("shared positions");
     std::vector<vec3> positions(70);
     for(size_t i=0;i<positions.size();++i) positions[i]=vec3(i%2? .5f:-.5f,0,0);

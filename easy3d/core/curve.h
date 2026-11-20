@@ -351,19 +351,36 @@ namespace easy3d {
     };
 
     /**
-     * \brief Class for CatmullRom curve interpolation.
+     * \brief Class for uniform Catmull-Rom curve interpolation (N-dimensional).
      *
-     * \tparam Point A templated point class that supports basic arithmetic operations (addition and scalar
-     *      multiplication). It must be parameterized as `Point<N, T>`, where `N` is the number of dimensions, and
-     *      `T` is the data type.
-     * \tparam N The number of dimensions (e.g., 2 for 2D, 3 for 3D).
-     * \tparam T The scalar type (e.g., `float` or `double`).
+     * Implements the **default (uniform)** Catmull-Rom spline with tension 0.5, i.e. the
+     * classic cubic basis
+     * \f[
+     *   P(u) = \tfrac{1}{2}\bigl[\,
+     *     2P_1 + (-P_0 + P_2)\,u + (2P_0 - 5P_1 + 4P_2 - P_3)\,u^2
+     *            + (-P_0 + 3P_1 - 3P_2 + P_3)\,u^3 \,\bigr].
+     * \f]
+     *
+     * The curve passes exactly through every keyframe, including the first and last.
+     * Endpoints are handled by the standard Catmull-Rom **endpoint-duplication** trick
+     * (`P_{-1} = P_0`, `P_n = P_{n-1}`); this is valid for the uniform variant because
+     * its basis does not depend on inter-keyframe distances.
+     *
+     * \note The uniform variant does not adapt its parametrization to keyframe spacing.
+     *       For strongly unevenly spaced keyframes it can exhibit cusps/overshoot; use
+     *       the centripetal variant in that case.
+     *
+     * \tparam Point Point class parameterized as `Point<N, T>`, supporting `+`, `-`, and
+     *      right-scalar `*`.
+     * \tparam N Number of dimensions (2, 3, 4, ...).
+     * \tparam T Scalar type (`float` or `double`).
      *
      * Example:
      *  \code
      *      CatmullRom<Vec, 3, float> curve;
-     *      const auto points = curve.generate(control_points, 100);
+     *      const auto points = curve.generate(control_points, 200);
      *  \endcode
+     *
      * \class CatmullRom easy3d/core/curve.h
      * \see Curve, Bezier, BSpline
      */
@@ -377,33 +394,92 @@ namespace easy3d {
         CatmullRom() = default;
 
         /**
-         * \brief Generates a curve based on the given control points.
-         * \param control_points A vector of control points that define the curve.
-         * \param num_samples The number of samples to generate along the curve.
-         * \return A vector of points representing the generated curve.
+         * \brief Generates a uniform Catmull-Rom curve through the given keyframes.
+         *
+         * The returned polyline passes exactly through every element of \p control_points,
+         * in order, starting at `control_points.front()` and ending at
+         * `control_points.back()`. Sampling is per segment with a guaranteed minimum
+         * resolution, so no segment collapses to a single straight step.
+         *
+         * \param control_points Keyframes to interpolate; requires at least 2.
+         * \param num_samples Target total sample count; a floor of 16 samples per segment
+         *        is enforced regardless.
+         * \return Points along the curve, or an empty vector if fewer than 2 keyframes.
          */
-        std::vector<Point_t> generate(const std::vector<Point_t> &control_points, size_t num_samples) const override {
+        std::vector<Point_t> generate(const std::vector<Point_t> &control_points,
+                                      size_t num_samples) const override {
             std::vector<Point_t> curve;
-            curve.reserve(num_samples + 1); // Reserve space to avoid reallocations
+            if (control_points.size() < 2)
+                return curve;
 
-            for (size_t i = 0; i <= num_samples; ++i) {
-                T t = static_cast<T>(i) / num_samples;
-                curve.push_back(interpolate(control_points, t));
+            // Two keyframes: straight segment, uniformly sampled (correct limit).
+            if (control_points.size() == 2) {
+                const size_t samples = std::max<size_t>(1, num_samples);
+                curve.reserve(samples + 1);
+                const Point_t &A = control_points.front();
+                const Point_t &B = control_points.back();
+                for (size_t s = 0; s <= samples; ++s) {
+                    const T u = static_cast<T>(s) / static_cast<T>(samples);
+                    curve.push_back(A * (T(1) - u) + B * u);
+                }
+                return curve;
             }
+
+            const size_t m = control_points.size();
+
+            // Standard uniform-CR endpoint handling: duplicate the first and last points.
+            // (Valid only for the uniform variant; centripetal CR needs distinct points.)
+            std::vector<Point_t> P;
+            P.reserve(m + 2);
+            P.push_back(control_points.front());                                 // P_{-1}
+            P.insert(P.end(), control_points.begin(), control_points.end());     // P_0..P_{m-1}
+            P.push_back(control_points.back());                                  // P_m
+
+            const size_t segments = P.size() - 3;   // == m - 1
+            const size_t per_seg  = std::max<size_t>(
+                16, (num_samples + segments - 1) / segments);
+
+            curve.reserve(segments * per_seg + 1);
+
+            for (size_t i = 0; i < segments; ++i) {
+                for (size_t s = 0; s < per_seg; ++s) {
+                    const T u = static_cast<T>(s) / static_cast<T>(per_seg);
+                    curve.push_back(interpolate_uniform(P, i, u));
+                }
+            }
+            // Append the final real keyframe exactly.
+            curve.push_back(control_points.back());
+
             return curve;
         }
 
     private:
-        Point_t interpolate(const std::vector<Point_t> &control_points, T t) const {
-            size_t n = control_points.size() - 3;
-            size_t i = std::min(static_cast<size_t>(t * n), n - 1);
-            T u = t * n - i;
-            Point_t P0 = control_points[i], P1 = control_points[i + 1], P2 = control_points[i + 2], P3 = control_points[
-                i + 3];
-            return ((P0 * (-1) + P1 * 3 - P2 * 3 + P3) * (u * u * u) / 2 +
-                    (P0 * 2 - P1 * 5 + P2 * 4 - P3) * (u * u) / 2 +
-                    (P0 * (-1) + P2) * u / 2 +
-                    P1);
+        /**
+         * \brief Uniform Catmull-Rom evaluation of one segment.
+         *
+         * Evaluates the segment whose middle two control points are `P[i+1]` and `P[i+2]`.
+         * `u == 0` returns `P[i+1]`; `u == 1` returns `P[i+2]`.
+         *
+         * The basis has constant denominators (the implicit knot spacing is uniform), so
+         * no distance-dependent machinery is required. All arithmetic is per-component and
+         * uses only `+`, `-`, and right-scalar `*`, so it is valid for any dimension N.
+         */
+        static Point_t interpolate_uniform(const std::vector<Point_t> &P,
+                                           size_t i, T u) {
+            const Point_t &P0 = P[i];
+            const Point_t &P1 = P[i + 1];
+            const Point_t &P2 = P[i + 2];
+            const Point_t &P3 = P[i + 3];
+
+            const T u2 = u * u;
+            const T u3 = u2 * u;
+            const T half = static_cast<T>(0.5);
+
+            // P(u) = 0.5 * [ 2P1 + (-P0+P2)u + (2P0-5P1+4P2-P3)u^2 + (-P0+3P1-3P2+P3)u^3 ]
+            return ( P1 * T(2)
+                   + (P2 - P0) * u
+                   + (P0 * T(2) - P1 * T(5) + P2 * T(4) - P3) * u2
+                   + (P1 * T(3) - P0 - P2 * T(3) + P3) * u3 ) * half;
         }
     };
 

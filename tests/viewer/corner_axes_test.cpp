@@ -22,7 +22,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=360;options.height=280;
         options.device.validation=options.device.sync_validation=argc>1;
-        AxesViewer viewer("Corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
+        AxesViewer viewer("Corner axes", options.window(), options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
         auto toggle=[&]{key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,0);};
         require(viewer.visible(),"axes not visible by default");
@@ -79,7 +79,7 @@ int main(int argc,char**) {
         }
         require(changed>100,"resized axes did not render");toggle();
         viewer.clear_scene();require(viewer.visible(),"scene clear lost axes visibility");
-        AxesViewer independent("Independent corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        AxesViewer independent("Independent corner axes", options.window(), options.device);
         toggle();require(!viewer.visible() && independent.visible(),"axes visibility leaked across viewers");
         bool bound=false;
         viewer.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);

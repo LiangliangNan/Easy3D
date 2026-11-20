@@ -29,7 +29,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=800;options.height=600;
         options.device.validation=options.device.sync_validation=argc>1;
-        GeometryViewer v("Native geometry tutorials", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);v.hide_axes();v.set_background_color(vec4(1));
+        GeometryViewer v("Native geometry tutorials", options.window(), options.device);v.hide_axes();v.set_background_color(vec4(1));
         if (v.device().supported_sample_counts()&4) v.set_samples(4);
         create_curves_drawables(v);require(v.drawables().size()==6,"curves tutorial lost a curve family");frame(v);
         for (const auto& d:v.drawables()) require(dynamic_cast<LinesDrawable2D*>(d.get()) && d->has_cpu_buffers(),"curve drawable did not select native CPU mode");

@@ -150,7 +150,7 @@ namespace easy3d {
     }
 
 
-    void Drawable::update_highlight_mask(const std::vector<float> &strengths, bool dynamic) {
+    void Drawable::update_highlight_mask(const std::vector<float> &strengths) {
         const std::size_t stride = type() == DT_TRIANGLES ? 3 : type() == DT_LINES ? 2 : 1;
         const std::size_t base = num_indices_ ? num_indices_ : num_vertices_;
         const std::size_t primitives = base / stride;
@@ -167,7 +167,7 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         ++cpu_buffers_->revision;
 #else
-        opengl_update_highlight_mask(strengths, dynamic);
+        opengl_update_highlight_mask(strengths);
 #endif
     }
 

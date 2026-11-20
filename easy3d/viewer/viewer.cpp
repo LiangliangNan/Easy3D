@@ -1766,18 +1766,10 @@ namespace easy3d {
         release_device();
     }
     Viewer::Viewer(const std::string &title,
-                   int width,
-                   int height,
-                   int samples,
-                   bool full_screen,
-                   bool visible,
-                   bool resizable,
+                   const ViewerOptions &window,
                    const VulkanOptions &vk_options)
-        : Viewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {
-        if (width <= 16 && height <= 16)
-            LOG(WARNING) << "Viewer dimensions " << width << "x" << height
-                         << " are unusually small and may be legacy OpenGL context-version arguments; "
-                            "use Viewer(title, width, height, samples, full_screen, visible, resizable, options)";
+        : Viewer(std::make_shared<Window>(title, window.width, window.height, window.samples, window.full_screen,
+                                          window.visible, window.resizable), vk_options) {
     }
     Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions &options)
         : window_(host->handle), width_(host->width), height_(host->height), title_(host->title), camera_(new Camera),
@@ -1958,20 +1950,16 @@ namespace easy3d {
         return dpi_scaling_;
     }
     Viewer::Viewer(const std::string &title /* = "Easy3D Viewer" */,
-                   int width /* = 800 */,
-                   int height /* = 600 */,
-                   int samples /* = 1 */,
-                   bool full_screen /* = false */,
-                   bool visible /* = true */,
-                   bool resizable /* = true */,
+                   const ViewerOptions &window /* = {} */,
                    const OpenGLOptions &gl_options /* = {} */
                    )
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0), // Liangliang: actual samples received known only after window creation
-          visible_(visible), background_color_(setting::background_color),
+          visible_(window.visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
           model_idx_(-1) {
-        if (width <= 0 || height <= 0)
+        if (window.width <= 0 || window.height <= 0)
             throw std::invalid_argument("window dimensions must be positive");
+        const int samples = window.samples;
         if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1)))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
             throw std::invalid_argument("invalid viewer sample count");
         // Avoid locale-related number parsing issues.
@@ -1983,14 +1971,10 @@ namespace easy3d {
         if (!logging::is_initialized())
             logging::initialize(false, true, true, false, "default", 9);
 
-        if (width <= 16 && height <= 16)
-            LOG(WARNING) << "Viewer dimensions " << width << "x" << height
-                         << " are unusually small and may be legacy OpenGL context-version arguments; "
-                            "use Viewer(title, width, height, samples, full_screen, visible, resizable, options)";
-
         // create and setup window
-        window_ = create_window(title, int(samples), gl_options.major, gl_options.minor, full_screen, resizable,
-                                gl_options.depth_bits, gl_options.stencil_bits, int(width), int(height));
+        window_ = create_window(title, samples, gl_options.major, gl_options.minor, window.full_screen,
+                                window.resizable,
+                                gl_options.depth_bits, gl_options.stencil_bits, window.width, window.height);
         try {
             setup_callbacks(window_);
 

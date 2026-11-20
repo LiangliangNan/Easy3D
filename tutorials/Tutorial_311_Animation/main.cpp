@@ -31,11 +31,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_311_Animation/main.cpp
+ * \example Tutorial_311_Animation
  *
- * \brief Animating a mesh with per-frame dynamic vertex-buffer updates, portable across Vulkan and OpenGL.
+ * Animating a mesh with per-frame dynamic vertex-buffer updates, portable across Vulkan and OpenGL.
  *
  * <b>Overview</b>
+ *
  * This tutorial makes the Stanford bunny breathe: every frame its vertices are recomputed on
  * the CPU (stretched along Z by a slowly growing factor) and republished to the GPU through a
  * dynamic vertex buffer. No Viewer subclass is needed — the default Viewer's animation hook
@@ -43,6 +44,7 @@
  * state; main() wires it into the viewer.
  *
  * <b>The technique</b>
+ *
  * An interactive viewer is an event loop: when animation is enabled it keeps requesting frames,
  * and before each frame it invokes a user callback on the UI thread. That callback is the
  * animation step — here it deforms the geometry and returns true to signal that the scene
@@ -57,6 +59,7 @@
  * the render rate.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer::set_animation(true): enables the continuous frame loop (F2 pauses/resumes it).
  * - Viewer::animation_func_: std::function<bool(Viewer*)> called on the UI thread before each
  *   renderable frame; returning true requests a redraw.
@@ -65,10 +68,12 @@
  * - resource::bunny_vertices / bunny_indices: built-in bunny geometry, so no file is needed.
  *
  * <b>Running it</b>
+ *
  * The bunny slowly stretches along the Z axis until the scale reaches 1.5, then snaps back to
  * its original shape and the cycle repeats. Press F2 to pause/resume the animation; the usual
  * navigation controls work while it runs.
  *
+ * \include{lineno} Tutorial_311_Animation/main.cpp
  * The animation helper class:
  * \include{lineno} Tutorial_311_Animation/animation.h
  *

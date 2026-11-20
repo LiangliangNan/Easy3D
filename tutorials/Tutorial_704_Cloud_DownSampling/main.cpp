@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_704_Cloud_DownSampling/main.cpp
+ * \example Tutorial_704_Cloud_DownSampling
  *
- * \brief Reducing a point cloud's size (downsampling) with two complementary strategies.
+ * Reducing a point cloud's size (downsampling) with two complementary strategies.
  *
  * <b>Overview</b>
+ *
  * This interactive tutorial loads the fountain point cloud and offers two keyboard-triggered
  * simplification steps: uniform downsampling to a target point count (Ctrl+U) and grid-based
  * downsampling (Ctrl+G). Both shrink the cloud in place and refresh the rendering so the effect is
@@ -46,6 +47,7 @@
  * produced by LiDAR and photogrammetry.
  *
  * <b>The technique</b>
+ *
  * The goal is to keep far fewer points while preserving the overall shape. Uniform simplification
  * targets an explicit point count and removes points so the survivors stay roughly evenly spaced
  * (it can also serve to drop near-duplicate points). Grid simplification instead overlays a regular
@@ -57,6 +59,7 @@
  * are re-extracted from the reduced cloud.
  *
  * <b>Easy3D API</b>
+ *
  * - PointCloudSimplification::uniform_simplification(cloud, num): returns vertices to delete to
  *   reach the target count num. ::grid_simplification(cloud, cell_size): one survivor per grid cell.
  *   ::average_space(cloud): estimates the mean point spacing used to size the grid.
@@ -65,9 +68,12 @@
  * - Viewer::bind_shortcut(...): registers the two callbacks on Ctrl+U and Ctrl+G.
  *
  * <b>Running it</b>
+ *
  * Press Ctrl+U to uniformly downsample to half the current points (never fewer than 100), or
  * Ctrl+G for grid downsampling with cell size = 2 x average spacing. The console reports how many
  * points were removed and how many remain after each step.
+ *
+ * \include{lineno} Tutorial_704_Cloud_DownSampling/main.cpp
  *
  * \see PointCloudSimplification, PointCloud, Renderer
  */

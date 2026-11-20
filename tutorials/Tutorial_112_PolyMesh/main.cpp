@@ -28,17 +28,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_112_PolyMesh/main.cpp
+ * \example Tutorial_112_PolyMesh
  *
- * \brief Constructing a PolyMesh (a single tetrahedron) — a volumetric mesh made of 3D cells.
+ * Constructing a PolyMesh (a single tetrahedron) — a volumetric mesh made of 3D cells.
  *
  * <b>Overview</b>
+ *
  * This console tutorial builds the simplest polyhedral mesh: one tetrahedral cell from four
  * vertices. It then prints the element counts, the position of every vertex, and the corner
  * indices of the cell. It is the entry point to the PolyMesh series (113 connectivity, 114
  * properties, 115 I/O) and the 3D analogue of Tutorial_104_SurfaceMesh.
  *
  * <b>The technique</b>
+ *
  * PolyMesh is a half-face data structure for polyhedral (volumetric) meshes. It lifts the
  * halfedge idea of a SurfaceMesh one dimension up: the elements are vertices, edges, halffaces,
  * faces and cells. A cell is a solid volume (a tetrahedron, hexahedron, or general polyhedron)
@@ -51,15 +53,19 @@
  * add_tetra(v0,v1,v2,v3) creates that cell together with its faces and halffaces in one call.
  *
  * <b>Easy3D API</b>
+ *
  * - PolyMesh: the volumetric mesh; add_vertex(pos) returns a Vertex, add_tetra(...) returns a Cell.
  * - n_vertices()/n_edges()/n_faces()/n_cells(): the four element counts.
  * - vertices()/cells(): ranges over all vertices / cells; vertices(c): the corners of a cell.
  * - position(v): the vec3 coordinates of vertex v.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints "#cell: 1", "#face: 4", "#vertex: 4", "#edge: 6", then a line with each
  * vertex's coordinates and a line listing the cell's vertex indices. The mesh is a local object
  * and is freed when main returns.
+ *
+ * \include{lineno} Tutorial_112_PolyMesh/main.cpp
  *
  * \see PolyMesh, Tutorial_113_PolyMesh_Connectivity, Tutorial_114_PolyMesh_Property, Tutorial_104_SurfaceMesh
  */

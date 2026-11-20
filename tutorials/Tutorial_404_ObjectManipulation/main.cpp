@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_404_ObjectManipulation/main.cpp
+ * \example Tutorial_404_ObjectManipulation
  *
- * \brief Moving and rotating an individual model in 3D with the mouse, using the Manipulator class.
+ * Moving and rotating an individual model in 3D with the mouse, using the Manipulator class.
  *
  * <b>Overview</b>
+ *
  * This tutorial combines picking (Tutorial_401_ModelPicker) with interactive object
  * manipulation: click a letter of the "easy3d" logo to select it, then drag with Alt held to
  * rotate or translate that model while the camera stays put. It is the standard "select and
@@ -41,6 +42,7 @@
  * interactive collision demo in Tutorial_406_CollisionDetection.
  *
  * <b>The technique</b>
+ *
  * The core idea is a manipulated frame: a local coordinate frame attached to the object
  * (origin at the object center) whose rotation and translation accumulate the user's drag
  * gestures. The frame's matrix becomes the model's transform, so the geometry itself is
@@ -56,6 +58,7 @@
  * axes) is drawn as a screen overlay so the user sees what is being manipulated.
  *
  * <b>Easy3D API</b>
+ *
  * - Manipulator / ManipulatedFrame: attach with Model::set_manipulator(); frame() exposes
  *   action_start(), action_rotate(), action_translate(), action_end(), and the ScreenAxis
  *   constraints (NONE / HORIZONTAL / VERTICAL / ORTHOGONAL).
@@ -64,11 +67,13 @@
  * - Renderer::set_selected(): tracks which model is currently selected.
  *
  * <b>Running it</b>
+ *
  * Left-click a model to select it (click again to deselect). With a model selected:
  * Alt + left-drag rotates it, Alt + right-drag translates it; hold 'X'/'Y'/'O' during the
  * drag to constrain the motion to a screen axis. Without Alt, the mouse controls the camera
  * as usual.
  *
+ * \include{lineno} Tutorial_404_ObjectManipulation/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_404_ObjectManipulation/viewer.h
  * The source file of the viewer class:

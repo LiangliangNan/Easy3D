@@ -10,6 +10,7 @@
 // and specular terms even where the diffuse term is zero), and that the shared
 // scene-glyph drawable renders and unregisters cleanly.
 #include <easy3d/viewer/viewer.h>
+#include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/frame.h>
@@ -72,7 +73,7 @@ namespace {
 int main() {
     try {
         initialize(false, true, false);
-        GuideViewer viewer("Camera path guides", 480, 360, 4);
+        GuideViewer viewer("Camera path guides", window_options(480, 360, 4));
         viewer.hide();
         viewer.hide_corner_axes();
         viewer.set_usage("");

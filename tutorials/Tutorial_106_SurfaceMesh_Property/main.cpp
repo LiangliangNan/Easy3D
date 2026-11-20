@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_106_SurfaceMesh_Property/main.cpp
+ * \example Tutorial_106_SurfaceMesh_Property
  *
- * \brief Storing a per-face attribute (the face normal) on a SurfaceMesh through a named property.
+ * Storing a per-face attribute (the face normal) on a SurfaceMesh through a named property.
  *
  * <b>Overview</b>
+ *
  * This console tutorial applies the property system from Tutorial_102_PointCloud_Property to a
  * surface mesh, using faces instead of points. On the tetrahedron from Tutorial_104 we create a
  * per-face property "f:normal", fill it with each face's normal, and print the results. The same
@@ -40,6 +41,7 @@
  * handle type changes.
  *
  * <b>The technique</b>
+ *
  * A property is a parallel array with one slot per element, indexed by the element handle, so a
  * FaceProperty<vec3> stores one normal per face. The normal of a planar face is the unit vector
  * perpendicular to its plane. For a triangle with corners p0, p1, p2 it is
@@ -50,14 +52,18 @@
  * many geometry-processing operations, which is why meshes routinely cache them as a property.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMesh::add_face_property<T>(name): creates the property and returns a FaceProperty<T>.
  * - SurfaceMesh::faces(): the range of face handles to iterate.
  * - SurfaceMesh::compute_face_normal(f): the built-in unit normal of face f.
  * - vec3: the 3D vector type used to store each normal.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints one line per face, e.g. "normal of face f0: ...", for the four faces of
  * the tetrahedron. The mesh is heap-allocated and deleted at the end to release its memory.
+ *
+ * \include{lineno} Tutorial_106_SurfaceMesh_Property/main.cpp
  *
  * \see SurfaceMesh, Tutorial_102_PointCloud_Property, Tutorial_104_SurfaceMesh, Tutorial_114_PolyMesh_Property
  */

@@ -42,14 +42,14 @@ std::shared_ptr<QueryViewer> make_host(unsigned samples, bool validation) {
         o.samples = samples;
         o.device.validation = validation;
         o.device.sync_validation = validation;
-        auto v = std::make_shared<QueryViewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
+        auto v = std::make_shared<QueryViewer>("Portable camera queries", o.window(), o.device);
         v->set_usage("");
         v->camera()->set_view_direction(vec3(0, 0, -1));
         v->camera()->set_up_vector(vec3(0, 1, 0));
         return v;
     }
 #else
-    auto v = std::make_shared<QueryViewer>("Portable camera queries", 181, 151, int(samples));
+    auto v = std::make_shared<QueryViewer>("Portable camera queries", window_options(181, 151, int(samples)));
     v->hide();
     v->set_usage("");
     v->camera()->set_view_direction(vec3(0, 0, -1));
@@ -228,7 +228,7 @@ void check(unsigned samples, bool validation) {
     require(resized && std::abs(resized_hit.z - .2f) < 2e-4f, "query failed after logical/framebuffer resize");
 #ifndef EASY3D_HAS_VULKAN
     {
-        auto other = std::make_shared<Viewer>("Portable camera queries other", 181, 151, 4);
+        auto other = std::make_shared<Viewer>("Portable camera queries other", window_options(181, 151, 4));
         other->hide();
         glfwMakeContextCurrent(other->window());
         // Mark this context with context-local state: the binding below can only still be

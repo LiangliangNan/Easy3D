@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_109_Graph_Connectivity/main.cpp
+ * \example Tutorial_109_Graph_Connectivity
  *
- * \brief Querying the adjacency of a Graph: neighbors, incident edges, and edge endpoints.
+ * Querying the adjacency of a Graph: neighbors, incident edges, and edge endpoints.
  *
  * <b>Overview</b>
+ *
  * Using the four-vertex / five-edge graph from Tutorial_108_Graph, this console tutorial prints
  * the three basic graph adjacency relationships:
  *      - the incident vertices (neighbors) of each vertex
@@ -42,6 +43,7 @@
  * loop and as an explicit circulator, chosen with the USE_FOR_LOOP macro.
  *
  * <b>The technique</b>
+ *
  * A Graph has no faces or halfedges, so its connectivity is simpler than a surface mesh's: it is
  * essentially an adjacency list. Each vertex remembers the edges touching it; following an edge
  * to its other endpoint gives a neighbor. vertices(v) walks those neighbors, edges(v) walks the
@@ -52,6 +54,7 @@
  * traversal, shortest paths, and connected components.
  *
  * <b>Easy3D API</b>
+ *
  * - Graph::vertices(v): the neighboring vertices of v.
  * - Graph::edges(v): the edges incident to v.
  * - Graph::vertex(e, i): the i-th endpoint (0 or 1) of edge e.
@@ -59,8 +62,11 @@
  * - VertexAroundVertexCirculator / EdgeAroundVertexCirculator: the explicit traversal forms.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints a titled section for each query, listing element handles (e.g. "v0",
  * "e1") for every vertex and edge. The graph is heap-allocated and deleted at the end.
+ *
+ * \include{lineno} Tutorial_109_Graph_Connectivity/main.cpp
  *
  * \see Graph, Tutorial_108_Graph, Tutorial_105_SurfaceMesh_Connectivity, Tutorial_113_PolyMesh_Connectivity
  */

@@ -35,11 +35,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_603_CSG/main.cpp
+ * \example Tutorial_603_CSG
  *
- * \brief Computing 2D constructive solid geometry (union, intersection, difference) on polygons with the csg operators.
+ * Computing 2D constructive solid geometry (union, intersection, difference) on polygons with the csg operators.
  *
  * <b>Overview</b>
+ *
  * This tutorial computes the three classic 2D boolean operations on two overlapping squares using the
  * csg operators provided in easy3d/algo/tessellator.h. The result is shown in a 2 x 2 MultiViewer so the
  * inputs and the three operations can be compared side by side:
@@ -49,6 +50,7 @@
  *      - bottom-right: difference (A - B).
  *
  * <b>The technique</b>
+ *
  * Constructive solid geometry builds complex shapes by combining simpler ones with set operations.
  * In 2D these are exactly the boolean operations on regions: union (A | B) is the area covered by either,
  * intersection (A & B) the area covered by both, and difference (A - B) the part of A not covered by B.
@@ -62,6 +64,7 @@
  * See the OpenGL Programming Guide (the "Red Book"), chapter 11, for the winding-rule formulation of CSG.
  *
  * <b>Easy3D API</b>
+ *
  * - csg::union_of(), csg::intersection_of(), csg::difference_of(): the boolean operators. They take/return
  *   Polygon2 contours (a GenericPolygon of vec2). union_of() merges a whole vector in place.
  * - Tessellator: fills the resulting simple contours (CCW outer, CW holes) into triangles.
@@ -69,9 +72,12 @@
  * - MultiViewer: a grid of synchronized views; assign(row, col, model) places a model in one cell.
  *
  * <b>Running it</b>
+ *
  * A 2 x 2 window opens comparing the inputs (top-left) with union (top-right), intersection (bottom-left),
  * and difference (bottom-right). All views share navigation. See Tutorial_602_ConvexPartition for
  * partitioning the resulting simple polygons into convex pieces.
+ *
+ * \include{lineno} Tutorial_603_CSG/main.cpp
  *
  * \see Tessellator, MultiViewer, SurfaceMesh, Tutorial_601_Tessellator, Tutorial_602_ConvexPartition
  */

@@ -28,17 +28,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_110_Graph_Property/main.cpp
+ * \example Tutorial_110_Graph_Property
  *
- * \brief Adding per-vertex and per-edge properties (colors, lengths) to a Graph and reading them back.
+ * Adding per-vertex and per-edge properties (colors, lengths) to a Graph and reading them back.
  *
  * <b>Overview</b>
+ *
  * This console tutorial extends the property lessons of Tutorial_102 and Tutorial_106 to graphs.
  * On the graph from Tutorial_108 it creates a per-vertex color property "v:color" and a per-edge
  * length property "e:length", fills them, and prints each vertex's position/color and each edge's
  * length. It demonstrates that graphs support both vertex and edge properties.
  *
  * <b>The technique</b>
+ *
  * Properties are parallel arrays indexed by element handle, named with a "v:" (vertex) or "e:"
  * (edge) prefix. The vertex positions are the built-in "v:point" property; here we fetch it with
  * vertex_property<T>(), a get-or-create convenience that returns the existing property (or adds
@@ -48,14 +50,18 @@
  * "e:length" so later algorithms (e.g. shortest paths) can reuse it without recomputing.
  *
  * <b>Easy3D API</b>
+ *
  * - Graph::vertex_property<T>(name): get-or-add a vertex property (used for "v:point").
  * - Graph::add_vertex_property<T>(name) / add_edge_property<T>(name): create new properties,
  *   returning VertexProperty<T> / EdgeProperty<T> accessors indexed by handle.
  * - Graph::vertices()/edges(): ranges to iterate; Graph::edge_length(e): endpoint distance.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints one line per vertex ("vertex: ..., position: ..., color: ...") then one
  * line per edge ("edge: ..., length: ..."). The graph is heap-allocated and deleted at the end.
+ *
+ * \include{lineno} Tutorial_110_Graph_Property/main.cpp
  *
  * \see Graph, Tutorial_102_PointCloud_Property, Tutorial_106_SurfaceMesh_Property, Tutorial_108_Graph
  */

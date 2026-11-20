@@ -89,14 +89,13 @@ void configure_cell(Camera& cell,const Camera& source,int width,int height) {
 
 }
 MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
-                         int width,int height,int samples,
-                         bool full_screen,bool visible,bool resizable,
+                         const ViewerOptions& window,
 #ifdef EASY3D_HAS_VULKAN
                          const VulkanOptions& options)
 #else
                          const OpenGLOptions& options)
 #endif
-    : Viewer(title,width,height,samples,full_screen,visible,resizable,options) {
+    : Viewer(title,window,options) {
     snapshot_hud_=false;
     set_layout(rows,cols);
 }

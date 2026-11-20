@@ -59,19 +59,13 @@ namespace easy3d {
          * \param rows Number of view rows; must be positive.
          * \param cols Number of view columns; must be positive.
          * \param title Window title.
-         * \param width Initial logical window width.
-         * \param height Initial logical window height.
-         * \param samples Multisample count to request; 1 (the default) and 0 both
-         *        disable MSAA, see \ref multisample_counts.
-         * \param full_screen Whether to use fullscreen mode.
-         * \param visible Whether the window is initially visible.
-         * \param resizable Whether the user can resize the window.
+         * \param window Initial size, multisample count and window flags, shared
+         *        with Viewer - see \ref ViewerOptions.
          * \param options Backend-specific Vulkan or OpenGL creation options.
          * \throws std::invalid_argument if rows or cols is not positive.
          */
-        MultiViewer(int rows, int cols, const std::string &title = "untitled",
-                          int width = 800, int height = 600, int samples = 1,
-                          bool full_screen = false, bool visible = true, bool resizable = true,
+        MultiViewer(int rows, int cols, const std::string &title = "Easy3D MultiViewer",
+                          const ViewerOptions& window = {},
 #ifdef EASY3D_HAS_VULKAN
                           const VulkanOptions& options = {});
 #else

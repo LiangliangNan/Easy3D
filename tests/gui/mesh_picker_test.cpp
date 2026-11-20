@@ -71,7 +71,7 @@ void math_tests() {
     require(picker.pick_faces_CPU(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored the model transform");
 }
 void rendered_tests() {
-    Viewer viewer("Mesh picker",161,121,1,false,false);
+    Viewer viewer("Mesh picker",window_options(161,121,1,false,false));
     viewer.set_usage("");
     auto mesh=std::make_shared<SurfaceMesh>();
     const auto dead=face(*mesh,{vec3(-1,-1,.5f),vec3(1,-1,.5f),vec3(0,1,.5f)});
@@ -229,7 +229,7 @@ void rendered_tests() {
     glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);glActiveTexture(GL_TEXTURE0);
 
     {
-        Viewer other("Mesh picker B",171,131,1,false,false);
+        Viewer other("Mesh picker B",window_options(171,131,1,false,false));
         other.set_usage("");
         auto second=std::make_shared<SurfaceMesh>();
         const auto second_face=face(*second,{vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0)});

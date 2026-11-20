@@ -111,13 +111,13 @@ std::shared_ptr<EventViewer> host(bool validation) {
         o.width=181; o.height=151; o.visible=false;
         o.device.validation = validation;
         o.device.sync_validation = validation;
-        auto v = std::make_shared<EventViewer>("Portable events", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
+        auto v = std::make_shared<EventViewer>("Portable events", o.window(), o.device);
         v->set_usage("");
         v->camera()->set_view_direction(vec3(0,0,-1)); v->camera()->set_up_vector(vec3(0,1,0));
         return v;
     }
 #else
-    auto v = std::make_shared<EventViewer>("Portable events", 181, 151, 4);
+    auto v = std::make_shared<EventViewer>("Portable events", window_options(181, 151, 4));
     v->hide();
     v->set_usage("");
     v->camera()->set_view_direction(vec3(0,0,-1)); v->camera()->set_up_vector(vec3(0,1,0));

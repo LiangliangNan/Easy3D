@@ -37,7 +37,6 @@ namespace easy3d {
      * \brief The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.
      * \class PointsDrawable easy3d/renderer/drawable_points.h
      * \sa Drawable, LinesDrawable, TrianglesDrawable
-     * \sa LinesDrawable, TrianglesDrawable
      */
 
 	class PointsDrawable : public Drawable {
@@ -71,9 +70,9 @@ namespace easy3d {
         ImposterType impostor_type() const { return impostor_type_; }
 		/**
 		 * \brief Sets the type of the point imposter.
-		 * \param t The new type of the point imposter.
+		 * \param type The new type of the point imposter.
 		 */
-        void set_impostor_type(ImposterType t) { impostor_type_ = t; }
+        void set_impostor_type(ImposterType type) { impostor_type_ = type; }
 
 		/**
 		 * \brief Returns the point size in logical pixels (DPI-independent).

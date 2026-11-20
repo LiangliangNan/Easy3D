@@ -34,17 +34,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_203_MultiView/main.cpp
+ * \example Tutorial_203_MultiView
  *
- * \brief Showing several models (or several drawables of one model) side by side in a grid of views.
+ * Showing several models (or several drawables of one model) side by side in a grid of views.
  *
  * <b>Overview</b>
+ *
  * MultiViewer splits a single window into a rows-by-columns grid of independent viewports, each
  * with its own camera and its own list of models/drawables. This tutorial builds a 2 x 2 layout
  * that displays a graph, a shaded sphere surface, the sphere's wireframe, and the sphere's
  * vertices — a convenient way to compare representations of the same data at once.
  *
  * <b>The technique</b>
+ *
  * A multi-view layout is just a set of scissored viewports rendered one after another into the
  * same framebuffer. Each cell owns a camera, so the user can navigate the views independently;
  * mouse events are remapped to the cell under the cursor. The key idea in Easy3D is the
@@ -57,6 +59,7 @@
  * point views look like solid tubes and balls.
  *
  * <b>Easy3D API</b>
+ *
  * - MultiViewer: the grid viewer; construct it with (rows, cols) and use assign() per cell.
  * - Renderer: each model's renderer exposes named drawables via get_triangles_drawable(),
  *   get_lines_drawable(), and get_points_drawable().
@@ -65,9 +68,12 @@
  *   set_uniform_coloring() control their appearance.
  *
  * <b>Running it</b>
+ *
  * A window opens divided into four cells. Click a cell to make it active, then drag to rotate
  * its camera independently of the others. The top-left shows the graph, top-right the shaded
  * sphere, bottom-left its wireframe, and bottom-right its vertices.
+ *
+ * \include{lineno} Tutorial_203_MultiView/main.cpp
  *
  * \see MultiViewer, Renderer, LinesDrawable, PointsDrawable, Tutorial_201_Viewer_default
  */

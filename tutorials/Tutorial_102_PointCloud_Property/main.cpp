@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_102_PointCloud_Property/main.cpp
+ * \example Tutorial_102_PointCloud_Property
  *
- * \brief Attaching per-point attributes (here, colors) to a PointCloud using named properties.
+ * Attaching per-point attributes (here, colors) to a PointCloud using named properties.
  *
  * <b>Overview</b>
+ *
  * Building on Tutorial_101_PointCloud, this console tutorial shows how to store extra data
  * alongside each point. We synthesize the same 10 x 10 grid of points, give every point a random
  * color, then read back both the coordinates and the colors and print them. No viewer is opened;
@@ -41,6 +42,7 @@
  * processing in the library.
  *
  * <b>The technique</b>
+ *
  * A property (a.k.a. a property map) is a parallel array: one value per mesh element, addressed
  * by the element's handle. Rather than a struct-of-fields per point, Easy3D keeps each attribute
  * in its own contiguous array, so adding or removing an attribute never disturbs the others and
@@ -52,6 +54,7 @@
  * why every property must be given a distinct name.
  *
  * <b>Easy3D API</b>
+ *
  * - PointCloud::add_vertex_property<T>(name): creates a new per-vertex property of type T and
  *   returns a VertexProperty<T> accessor; values are read/written with colors[v].
  * - PointCloud::get_vertex_property<T>(name): looks up an existing property (here "v:point").
@@ -59,9 +62,12 @@
  * - random_color() (easy3d/core/random.h): a random vec3 in [0,1]^3, used here as an RGB color.
  *
  * <b>Running it</b>
+ *
  * Console-only. It first prints "point cloud has 100 points", then one line per point giving its
  * index, xyz coordinates, and random color, e.g. "index: 0, xyz: ..., color: ...". The cloud is
  * heap-allocated here and explicitly deleted at the end to release its memory.
+ *
+ * \include{lineno} Tutorial_102_PointCloud_Property/main.cpp
  *
  * \see PointCloud, vec3, Tutorial_101_PointCloud, Tutorial_106_SurfaceMesh_Property
  */

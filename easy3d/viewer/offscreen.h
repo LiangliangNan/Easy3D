@@ -29,31 +29,33 @@
 #define EASY3D_VIEWER_OFFSCREEN_H
 
 #include <easy3d/viewer/viewer.h>
+
 namespace easy3d {
     /**
- * \brief Render an Easy3D scene into an image without showing a window.
- *
- * \details OffScreen exposes the scene, camera, picking, overlay, and capture
- * operations needed for programmatic rendering while keeping Viewer window
- * controls protected. OpenGL builds use an offscreen context; Vulkan builds
- * create a device without a GLFW window or presentation surface. Backend
- * selection is determined by the Easy3D build.
- *
- * The canvas has a fixed pixel size and DPI scale 1. Resize it explicitly with
- * resize(). File rendering is performed by render(); this class does not
- * provide an interactive run loop.
- * \see Viewer, ViewerBase, MultiViewer
- */
+     * \brief Render an Easy3D scene into an image without showing a window.
+     *
+     * \details OffScreen exposes the scene, camera, picking, overlay, and capture
+     *      operations needed for programmatic rendering while keeping Viewer window
+     *      controls protected. OpenGL builds use an offscreen context; Vulkan builds
+     *      create a device without a GLFW window or presentation surface. Backend
+     *      selection is determined by the Easy3D build.
+     *
+     *      The canvas has a fixed pixel size and DPI scale 1. Resize it explicitly with
+     *      resize(). File rendering is performed by render(); this class does not
+     *      provide an interactive run loop.
+     *
+     * \see Viewer, ViewerBase, MultiViewer
+     */
     class OffScreen : protected Viewer {
     public:
         /**
-     * \brief Create an offscreen rendering canvas.
-     * \param width Positive canvas width in pixels.
-     * \param height Positive canvas height in pixels.
-     * \param options Backend-specific Vulkan device or OpenGL context options.
-     * \details OpenGL construction creates a hidden context. Vulkan
-     * construction creates no window or surface.
-     */
+         * \brief Create an offscreen rendering canvas.
+         * \param width Positive canvas width in pixels.
+         * \param height Positive canvas height in pixels.
+         * \param options Backend-specific Vulkan device or OpenGL context options.
+         * \details OpenGL construction creates a hidden context. Vulkan
+         *      construction creates no window or surface.
+         */
         explicit OffScreen(int width = 800,
                            int height = 600,
 #ifdef EASY3D_HAS_VULKAN
@@ -61,23 +63,24 @@ namespace easy3d {
 #else
                            const OpenGLOptions &options = {});
 #endif
+
         /// Release the offscreen canvas and its graphics resources.
         ~OffScreen() override;
 
         /**
-     * \brief Render the current scene to an image file.
-     * \param filename Destination image path.
-     * \param scaling Output-size multiplier relative to the canvas size.
-     * \param samples Sample count of the offscreen target; 1 renders without
-     *        multisampling and 0 is rejected, see \ref multisample_counts.
-     * \param background Background mode: 0 uses the configured background,
-     *        1 uses white, and 2 uses transparency.
-     * \param expand If true, expand the frustum as needed for the output aspect ratio.
-     * \return True on success, false if the request or image write fails.
-     * \details Rendering does not display a window or change the live camera,
-     * visibility, or animation state. Output dimensions are constrained by
-     * available memory and backend limits.
-     */
+         * \brief Render the current scene to an image file.
+         * \param filename Destination image path.
+         * \param scaling Output-size multiplier relative to the canvas size.
+         * \param samples Sample count of the offscreen target; 1 renders without
+         *        multisampling and 0 is rejected, see \ref multisample_counts.
+         * \param background Background mode: 0 uses the configured background,
+         *        1 uses white, and 2 uses transparency.
+         * \param expand If true, expand the frustum as needed for the output aspect ratio.
+         * \return True on success, false if the request or image write fails.
+         * \details Rendering does not display a window or change the live camera,
+         * visibility, or animation state. Output dimensions are constrained by
+         * available memory and backend limits.
+         */
         bool render(const std::string &filename,
                     float scaling = 1,
                     int samples = 4,
@@ -85,25 +88,25 @@ namespace easy3d {
                     bool expand = true) const;
 
         /**
-     * \brief Resize the offscreen canvas.
-     * \param width New positive canvas width in pixels.
-     * \param height New positive canvas height in pixels.
-     * \throws std::invalid_argument if either dimension is not positive.
-     */
+         * \brief Resize the offscreen canvas.
+         * \param width New positive canvas width in pixels.
+         * \param height New positive canvas height in pixels.
+         * \throws std::invalid_argument if either dimension is not positive.
+         */
         void resize(int width, int height) override;
 
         /**
-     * \brief Query the logical canvas size; for OffScreen it equals the pixel size.
-     * \param width Receives the canvas width.
-     * \param height Receives the canvas height.
-     */
+         * \brief Query the logical canvas size; for OffScreen it equals the pixel size.
+         * \param width Receives the canvas width.
+         * \param height Receives the canvas height.
+         */
         void viewer_size(int &width, int &height) const override;
 
         /**
-     * \brief Query the framebuffer size; for OffScreen it equals the canvas size.
-     * \param width Receives the canvas width in pixels.
-     * \param height Receives the canvas height in pixels.
-     */
+         * \brief Query the framebuffer size; for OffScreen it equals the canvas size.
+         * \param width Receives the canvas width in pixels.
+         * \param height Receives the canvas height in pixels.
+         */
         void framebuffer_size(int &width, int &height) const override;
 
         // Convenience single-value forms of framebuffer_size() above; the canvas
@@ -118,53 +121,53 @@ namespace easy3d {
         } // fixed-size pixel canvas
 
         /**
-     * \brief Load and add a model file.
-     * \param file Path to the model file.
-     * \param create Whether to create standard rendering drawables.
-     * \param fit_scene If true, fit the camera to the scene after addition; false
-     *        keeps the current view.
-     * \return The added model, or nullptr if loading or addition fails. The returned
-     *         pointer is a non-owning observer; do not delete it.
-     * \details The OffScreen host owns the loaded model (held internally by a
-     *      shared_ptr). A model with the same file name already present is returned
-     *      unchanged.
-     */
+         * \brief Load and add a model file.
+         * \param file Path to the model file.
+         * \param create Whether to create standard rendering drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition; false
+         *        keeps the current view.
+         * \return The added model, or nullptr if loading or addition fails. The returned
+         *         pointer is a non-owning observer; do not delete it.
+         * \details The OffScreen host owns the loaded model (held internally by a
+         *      shared_ptr). A model with the same file name already present is returned
+         *      unchanged.
+         */
         Model *add_model(const std::string &file, bool create = true, bool fit_scene = true) override;
 
         /**
-     * \brief Add a shared model.
-     * \param model Model to add.
-     * \param create Whether to create standard rendering drawables.
-     * \param fit_scene If true, fit the camera to the scene after addition; false
-     *        keeps the current view.
-     * \return The added model, or nullptr if the model is null or empty, or if
-     *         addition fails. The returned pointer is a non-owning observer; do not
-     *         delete it.
-     * \details The OffScreen host retains shared ownership: it stores a copy of the
-     *      shared_ptr, so the model survives until both you and the host release it.
-     *      Do not delete it manually. Use this form when your code keeps using the
-     *      model after adding it. As in Viewer, adding installs a *new* Renderer
-     *      (replacing any existing renderer and drawables, so add custom drawables
-     *      afterwards) and returns the existing entry unchanged if the same model is
-     *      added again. The legacy raw-pointer form (exposed via Viewer::add_model)
-     *      instead transfers ownership to the host; after passing a raw Model* you must
-     *      not delete it or wrap it in another shared_ptr.
-     */
+         * \brief Add a shared model.
+         * \param model Model to add.
+         * \param create Whether to create standard rendering drawables.
+         * \param fit_scene If true, fit the camera to the scene after addition; false
+         *        keeps the current view.
+         * \return The added model, or nullptr if the model is null or empty, or if
+         *         addition fails. The returned pointer is a non-owning observer; do not
+         *         delete it.
+         * \details The OffScreen host retains shared ownership: it stores a copy of the
+         *      shared_ptr, so the model survives until both you and the host release it.
+         *      Do not delete it manually. Use this form when your code keeps using the
+         *      model after adding it. As in Viewer, adding installs a *new* Renderer
+         *      (replacing any existing renderer and drawables, so add custom drawables
+         *      afterwards) and returns the existing entry unchanged if the same model is
+         *      added again. The legacy raw-pointer form (exposed via Viewer::add_model)
+         *      instead transfers ownership to the host; after passing a raw Model* you must
+         *      not delete it or wrap it in another shared_ptr.
+         */
         Model *add_model(std::shared_ptr<Model> model, bool create = true, bool fit_scene = true) override;
 
         /**
-     * \brief Add a shared standalone drawable.
-     * \param drawable Drawable to add.
-     * \return The added drawable, or nullptr if the pointer is null. The returned
-     *         pointer is a non-owning observer; do not delete it.
-     * \details The OffScreen host retains shared ownership: it stores a copy of the
-     *      shared_ptr, so the drawable stays alive until both you and the host release
-     *      it. Use this form to keep the drawable alive independently in your own
-     *      code. Unlike add_model, this creates no renderer and does not fit the
-     *      camera; an already-managed drawable is returned unchanged. The legacy
-     *      raw-pointer form (exposed via Viewer::add_drawable) transfers ownership to
-     *      the host, so the caller must not delete it afterwards.
-     */
+         * \brief Add a shared standalone drawable.
+         * \param drawable Drawable to add.
+         * \return The added drawable, or nullptr if the pointer is null. The returned
+         *         pointer is a non-owning observer; do not delete it.
+         * \details The OffScreen host retains shared ownership: it stores a copy of the
+         *      shared_ptr, so the drawable stays alive until both you and the host release
+         *      it. Use this form to keep the drawable alive independently in your own
+         *      code. Unlike add_model, this creates no renderer and does not fit the
+         *      camera; an already-managed drawable is returned unchanged. The legacy
+         *      raw-pointer form (exposed via Viewer::add_drawable) transfers ownership to
+         *      the host, so the caller must not delete it afterwards.
+         */
         Drawable *add_drawable(std::shared_ptr<Drawable> drawable) override;
 
         /// \name Exposed scene and rendering operations
@@ -204,7 +207,6 @@ namespace easy3d {
 #endif
         //@}
     private:
-        // Keep this part of code minimum
 #ifndef EASY3D_HAS_VULKAN
         /**
          * \brief Make the hidden OpenGL context current for the calling thread.

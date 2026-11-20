@@ -48,18 +48,13 @@ using namespace easy3d;
 // Forward all window/backend settings to the base Viewer; the GUI itself is set up later
 // in init(), once the window and rendering context exist.
 ViewerImGui::ViewerImGui(const std::string &title,
-                         int width,
-                         int height,
-                         int samples,
-                         bool full_screen,
-                         bool visible,
-                         bool resizable,
+                         const ViewerOptions &window,
 #ifdef EASY3D_HAS_VULKAN
                          const VulkanOptions &options
 #else
                          const OpenGLOptions &options
 #endif
-    ) : Viewer(title, width, height, samples, full_screen, visible, resizable, options)
+    ) : Viewer(title, window, options)
 {
     // Liangliang: the internal glfw won't be shared across dll boundaries (Linux and macOS resolve GLFW to one instance).
     //      See https://github.com/LiangliangNan/Easy3D/issues/178

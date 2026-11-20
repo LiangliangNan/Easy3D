@@ -34,17 +34,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_305_Texture/main.cpp
+ * \example Tutorial_305_Texture
  *
- * \brief Loading an image as a texture and displaying it on a textured quad with UV coordinates.
+ * Loading an image as a texture and displaying it on a textured quad with UV coordinates.
  *
  * <b>Overview</b>
+ *
  * This tutorial shows the basic texture-mapping pipeline in Easy3D: load an image file into a
  * Texture, build a small mesh consisting of a single quad, assign per-vertex texture
  * coordinates (UVs), and tell the mesh's drawable to sample the texture. The result is the
  * Easy3D logo displayed on a flat rectangle — the "hello world" of texturing.
  *
  * <b>The technique</b>
+ *
  * Texture mapping wraps a 2D image around geometry. Each vertex carries a texture coordinate
  * (u, v) in the normalized range [0, 1] x [0, 1], addressing a position in the image
  * independent of its pixel resolution. During rasterization the GPU interpolates the UVs
@@ -58,6 +60,7 @@
  * and for the colormap trick in Tutorial_303_ScalarField.
  *
  * <b>Easy3D API</b>
+ *
  * - TextureManager::request(): loads an image file into a cached Texture (same file requested
  *   twice returns the same object).
  * - SurfaceMesh: add_vertex_property<vec2>("v:texcoord") stores the per-vertex UVs;
@@ -67,8 +70,11 @@
  * - Camera: set_up_vector()/set_view_direction() orient the view to face the quad.
  *
  * <b>Running it</b>
+ *
  * The window shows the Easy3D logo on a quad, viewed face-on. Standard Viewer navigation
  * applies ('h' for help); rotating reveals that the image lives on a flat piece of geometry.
+ *
+ * \include{lineno} Tutorial_305_Texture/main.cpp
  *
  * \see Texture, TextureManager, DrawableTriangles, SurfaceMesh, Tutorial_303_ScalarField, Tutorial_308_TexturedMesh
  */

@@ -34,17 +34,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_602_ConvexPartition/main.cpp
+ * \example Tutorial_602_ConvexPartition
  *
- * \brief Partitioning a simple polygon with holes into convex pieces using PolygonPartition.
+ * Partitioning a simple polygon with holes into convex pieces using PolygonPartition.
  *
  * <b>Overview</b>
+ *
  * This tutorial takes a rectangle with two rectangular holes and splits it into a set of convex
  * polygons with PolygonPartition::apply(). Convex pieces are the "safe" currency of computational
  * geometry: they are trivial to triangulate, rasterize, and test for point containment or collision,
  * so many pipelines first decompose a complicated region into convex parts.
  *
  * <b>The technique</b>
+ *
  * A polygon is convex when every interior angle is at most 180 degrees, i.e. the segment between any
  * two interior points stays inside. A concave (or multiply-connected) polygon can always be cut along
  * diagonals into convex pieces. Easy3D's PolygonPartition::apply() uses the Hertel-Mehlhorn algorithm:
@@ -62,6 +64,7 @@
  * M. Keil and J. Snoeyink, "On the time bound for convex decomposition of simple polygons", 1998.
  *
  * <b>Easy3D API</b>
+ *
  * - PolygonPartition::apply(points, polys, holes, parts): the all-in-one entry point. points is the shared
  *   vertex pool; polys are the outer contours (counter-clockwise); holes are interior contours
  *   (clockwise); parts receives the resulting convex polygons as index lists. PolygonPartition::Polygon
@@ -70,9 +73,12 @@
  * - Viewer, PointsDrawable, LinesDrawable: show the vertices, the partition edges, and the borders.
  *
  * <b>Running it</b>
+ *
  * A window opens showing the rectangle-with-two-holes cut into convex faces; the added diagonals are
  * visible as edges and the hole boundaries as borders. Note the orientation convention in the code:
  * outer contours must be counter-clockwise and holes clockwise, or apply() will fail.
+ *
+ * \include{lineno} Tutorial_602_ConvexPartition/main.cpp
  *
  * \see PolygonPartition, SurfaceMesh, Viewer, Tutorial_601_Tessellator, Tutorial_603_CSG
  */

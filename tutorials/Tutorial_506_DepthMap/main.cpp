@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_506_DepthMap/main.cpp
+ * \example Tutorial_506_DepthMap
  *
- * \brief Visualizing the scene's depth buffer as an inset depth image.
+ * Visualizing the scene's depth buffer as an inset depth image.
  *
  * <b>Overview</b>
+ *
  * This tutorial shows how to access and display the depth information that the renderer
  * produces for every frame. The custom viewer draws a small depth-map inset in the corner of
  * the window, next to the normal color rendering of a point cloud. Unlike the other 5xx
@@ -45,6 +46,7 @@
  * GPU (all logic lives in the TutorialDepthMap class, shown after this file).
  *
  * <b>The technique</b>
+ *
  * Every rasterized frame implicitly computes a depth (z-)buffer: for each pixel it stores the
  * distance of the nearest rendered fragment to the camera, which is how hidden-surface
  * removal works. That buffer is itself an image — a "depth map" or range image — where each
@@ -59,6 +61,7 @@
  * gradient is steeper for close geometry.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override pre_draw(), a hook that runs
  *   before the main scene render each frame.
  * - Viewer::set_overlays(): registers backend-independent graphics::DrawCommand overlays that
@@ -69,9 +72,11 @@
  *   the splats so the depth image has fewer holes.
  *
  * <b>Running it</b>
+ *
  * No special keys: navigate with the standard Viewer controls (mouse drag to rotate, wheel to
  * zoom) and watch the red-framed depth inset in the lower-left corner update with the view.
  *
+ * \include{lineno} Tutorial_506_DepthMap/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_506_DepthMap/viewer.h
  * The source file of the viewer class:

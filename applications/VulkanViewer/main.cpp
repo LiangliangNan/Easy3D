@@ -32,7 +32,10 @@ int main(int argc, char** argv) {
             } else if (arg.compare(0, 2, "--") == 0) throw std::invalid_argument("unknown option: " + arg);
             else model = arg;
         }
-        auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", 800, 600, samples, false, true, true, vk_options);
+        // Only the sample count comes from the command line; the rest is default.
+        easy3d::ViewerOptions window;
+        window.samples = samples;
+        auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", window, vk_options);
         if (model.empty()) {
             // The installed demo works without any source-tree data files.
             auto bunny = std::make_shared<easy3d::SurfaceMesh>();

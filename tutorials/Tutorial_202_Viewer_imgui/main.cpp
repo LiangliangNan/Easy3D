@@ -31,11 +31,12 @@
 #include "viewer.h"
 
 /**
- * \example{lineno} Tutorial_202_Viewer_imgui/main.cpp
+ * \example Tutorial_202_Viewer_imgui
  *
- * \brief Adding a custom menu bar and widgets to the Easy3D Viewer with Dear ImGui.
+ * Adding a custom menu bar and widgets to the Easy3D Viewer with Dear ImGui.
  *
  * <b>Overview</b>
+ *
  * The default Viewer already offers a rich interaction model, but applications often need
  * their own menus, buttons, and dialogs. This tutorial shows how to layer a Dear ImGui GUI on
  * top of the Viewer by subclassing it (ViewerImGui, shown after this file). The entry point is
@@ -43,6 +44,7 @@
  * the GUI logic lives in the subclass.
  *
  * <b>The technique</b>
+ *
  * Dear ImGui is an immediate-mode GUI: rather than building a persistent widget tree, you
  * describe the UI every frame by calling functions like BeginMainMenuBar(), MenuItem(), and
  * Text(). Each call both renders the widget and reports whether the user interacted with it,
@@ -55,16 +57,19 @@
  * the scene. See the ViewerImGui class for the full integration.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the base interactive viewer; subclass it and override init(), pre_draw(), and
  *   post_resize() to inject the GUI.
  * - ViewerImGui: this tutorial's subclass that owns an ImGuiContext and draws File/View/Help menus.
  * - Camera: oriented here exactly as in Tutorial_201 (view along -Z, +Y up).
  *
  * <b>Running it</b>
+ *
  * A window opens with a menu bar at the top. Use File to open/save models or quit, View to take
  * a snapshot, and Help to show an About dialog. The 3D scene underneath remains fully navigable;
  * clicks on the menus are handled by ImGui rather than the camera.
  *
+ * \include{lineno} Tutorial_202_Viewer_imgui/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_202_Viewer_imgui/viewer.h
  * The source file of viewer class:

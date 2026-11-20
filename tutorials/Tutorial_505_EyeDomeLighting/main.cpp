@@ -32,11 +32,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_505_EyeDomeLighting/main.cpp
+ * \example Tutorial_505_EyeDomeLighting
  *
- * \brief Rendering a point cloud without normals using Eye Dome Lighting (EDL) for depth perception.
+ * Rendering a point cloud without normals using Eye Dome Lighting (EDL) for depth perception.
  *
  * <b>Overview</b>
+ *
  * This tutorial renders a raw point cloud that has no normal information, yet still conveys
  * shape and depth clearly, by adding Eye Dome Lighting to the standard Easy3D Viewer. It uses
  * the familiar effect pattern (see Tutorial_501_AmbientOcclusion): subclass Viewer, own an
@@ -46,6 +47,7 @@
  * (shown after this file).
  *
  * <b>The technique</b>
+ *
  * A point cloud has no connectivity and often no normals, so classical lighting (Lambert,
  * Phong) cannot be evaluated — a flat-colored cloud looks like a confusing blob of dots.
  * Eye Dome Lighting (Boucheny, 2009; popularized by CloudCompare and Potree) is an image-space
@@ -60,6 +62,7 @@
  * for meshes (Tutorial_501). See the EyeDomeLighting class for the implementation.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: the interactive viewer; subclass it and override draw() (to insert the effect)
  *   and key_press_event() (to control it).
  * - EyeDomeLighting: the effect. begin()/end() bracket the scene render; the pass reads the
@@ -69,10 +72,12 @@
  *   makes the splats large enough to cover the surface.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to toggle Eye Dome Lighting on/off (the state is printed to the console) and
  * compare how much easier the shape is to read with the contours darkened. Standard Viewer
  * navigation (mouse drag to rotate, wheel to zoom) applies.
  *
+ * \include{lineno} Tutorial_505_EyeDomeLighting/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_505_EyeDomeLighting/viewer.h
  * The source file of the viewer class:

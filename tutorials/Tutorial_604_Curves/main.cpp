@@ -34,17 +34,19 @@
 #include <algorithm>
 
 /**
- * \example{lineno} Tutorial_604_Curves/main.cpp
+ * \example Tutorial_604_Curves
  *
- * \brief Creating and evaluating Bezier, B-spline, and Catmull-Rom curves, plus spline fitting and interpolation.
+ * Creating and evaluating Bezier, B-spline, and Catmull-Rom curves, plus spline fitting and interpolation.
  *
  * <b>Overview</b>
+ *
  * This tutorial draws the same six control points through five different curve constructions so their
  * behavior can be compared visually: a Bezier curve, a B-spline, a Catmull-Rom spline, an approximating
  * spline fit, and a cubic spline interpolant. Everything is rendered as 2D polylines in pixel coordinates
  * with LinesDrawable2D, making it a compact reference for "which curve do I want?".
  *
  * <b>The technique</b>
+ *
  * A parametric curve maps a parameter t in [0,1] to a point C(t). The constructions differ in how the
  * control points influence C(t):
  * - Bezier: C(t) is a weighted average of all control points using the Bernstein basis polynomials.
@@ -64,6 +66,7 @@
  * interpolating splines", 1974; G. Farin, "Curves and Surfaces for CAGD".
  *
  * <b>Easy3D API</b>
+ *
  * - Bezier, BSpline, CatmullRom (in easy3d/core/curve.h): templated on the point type; generate() samples
  *   the curve into a polyline.
  * - SplineCurveFitting, SplineCurveInterpolation: set the control/data points, then eval_f(t) evaluates the
@@ -73,9 +76,12 @@
  * - Viewer::bind_shortcut(): attaches lambdas to keys to adjust the line width interactively.
  *
  * <b>Running it</b>
+ *
  * A window opens with the black control polygon and the five colored curves overlaid: red Bezier, green
  * B-spline, blue Catmull-Rom, cyan spline fit, magenta spline interpolation. Press '[' / ']' to
  * decrease/increase the line width and '0' to reset it to 3 pixels.
+ *
+ * \include{lineno} Tutorial_604_Curves/main.cpp
  *
  * \see Bezier, BSpline, CatmullRom, SplineCurveFitting, SplineCurveInterpolation, LinesDrawable2D, Viewer
  */

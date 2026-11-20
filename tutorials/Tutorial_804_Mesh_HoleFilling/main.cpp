@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_804_Mesh_HoleFilling/main.cpp
+ * \example Tutorial_804_Mesh_HoleFilling
  *
- * \brief Closing the boundary loops (holes) of an open triangle mesh with a smooth filled patch.
+ * Closing the boundary loops (holes) of an open triangle mesh with a smooth filled patch.
  *
  * <b>Overview</b>
+ *
  * This tutorial demonstrates hole filling with SurfaceMeshHoleFilling. The bunny mesh is not watertight
  * — it has open boundary loops (for example around its base). Those loops are highlighted in red with
  * the "borders" drawable so you can see exactly what will be closed. Pressing the shortcut triangulates
@@ -46,6 +47,7 @@
  * surface. Hole filling is a common repair step for scanned meshes that have missing data.
  *
  * <b>The technique</b>
+ *
  * A hole is a boundary loop of manifold vertices. Filling it well is more than just triangulating the
  * loop: a naive fan triangulation creates poor-quality, visible patches. Easy3D follows Peter Liepa,
  * "Filling holes in meshes" (SGP 2003), a three-stage pipeline. (1) Triangulate the hole with a dynamic-
@@ -57,6 +59,7 @@
  * limits filling to holes whose boundary loop has at most that many edges.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshHoleFilling::fill_holes(size): fills every hole whose boundary loop has <= size edges and
  *   returns the number of holes filled (fill_hole() fills a single hole given a boundary halfedge).
  * - DrawableLines ("borders"): the renderer's boundary-loop drawable; set_visible(), set_uniform_coloring(),
@@ -65,8 +68,11 @@
  * - Viewer::bind_shortcut() / set_usage(): register the Ctrl shortcut and the help text.
  *
  * <b>Running it</b>
+ *
  * The boundary loops are drawn in red. Press Ctrl+f to fill the holes; the console reports how many
  * holes were filled and the red borders disappear as the mesh becomes closed.
+ *
+ * \include{lineno} Tutorial_804_Mesh_HoleFilling/main.cpp
  *
  * \see SurfaceMeshHoleFilling, SurfaceMesh, DrawableLines, Tutorial_803_Mesh_Fairing, Tutorial_805_Mesh_Remeshing
  */

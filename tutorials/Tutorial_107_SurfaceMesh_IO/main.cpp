@@ -30,17 +30,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_107_SurfaceMesh_IO/main.cpp
+ * \example Tutorial_107_SurfaceMesh_IO
  *
- * \brief Loading a SurfaceMesh from a file and saving it to another with SurfaceMeshIO.
+ * Loading a SurfaceMesh from a file and saving it to another with SurfaceMeshIO.
  *
  * <b>Overview</b>
+ *
  * The mesh counterpart of Tutorial_103_PointCloud_IO. This console program loads the bundled
  * "sphere.obj", reports its vertex/edge/face counts, leaves a placeholder where you would process
  * the mesh, and writes it back out as "sphere-copy.obj". It shows the standard load -> use -> save
  * -> free lifecycle for a surface mesh.
  *
  * <b>The technique</b>
+ *
  * SurfaceMeshIO dispatches on the file extension and supports several mesh formats (ply, obj,
  * off, stl, poly), in ASCII or binary as the format allows. The Wavefront OBJ used here lists
  * vertex positions and face indices (and optionally normals/texture coordinates). On load, Easy3D
@@ -51,14 +53,18 @@
  * write succeeded. The output extension determines the format written.
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMeshIO::load(file) / SurfaceMeshIO::save(file, mesh): extension-driven mesh I/O.
  * - resource::directory(): finds the bundled data folder containing sphere.obj.
  * - SurfaceMesh::n_vertices()/n_edges()/n_faces(): element counts printed after loading.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints "mesh loaded." followed by the vertex, edge and face counts, then
  * "mesh saved to './sphere-copy.obj'". The copy is written to the current working directory and
  * can be re-loaded by any OBJ-capable tool.
+ *
+ * \include{lineno} Tutorial_107_SurfaceMesh_IO/main.cpp
  *
  * \see SurfaceMesh, SurfaceMeshIO, Tutorial_103_PointCloud_IO, Tutorial_111_Graph_IO, Tutorial_115_PolyMesh_IO
  */

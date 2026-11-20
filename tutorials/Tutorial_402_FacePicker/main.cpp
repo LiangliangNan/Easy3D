@@ -29,17 +29,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_402_FacePicker/main.cpp
+ * \example Tutorial_402_FacePicker
  *
- * \brief Selecting an individual face of a surface mesh by clicking on it with the mouse.
+ * Selecting an individual face of a surface mesh by clicking on it with the mouse.
  *
  * <b>Overview</b>
+ *
  * This tutorial refines the model-level picking of Tutorial_401_ModelPicker down to a single
  * face: clicking a face highlights it and prints its index. The loaded model (P.off) is a
  * quad mesh, which makes the tutorial more interesting — the GPU can only rasterize
  * triangles, so picking must map the hit triangle back to the original polygonal face.
  *
  * <b>The technique</b>
+ *
  * Easy3D picks with a GPU primitive-ID pass (see Tutorial_401_ModelPicker): the scene is
  * re-rendered off screen with each triangle writing an encoded index instead of a color,
  * and the pixel under the cursor is read back. Viewer::pick() returns that triangle index
@@ -52,6 +54,7 @@
  * the one triangle that happened to be under the cursor.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer::pick() / Viewer::PickResult: the GPU picking query; face_index identifies the
  *   original SurfaceMesh face under the cursor (-1 when nothing was hit).
  * - SurfaceMesh: the polygonal mesh data structure; get_face_property() retrieves the
@@ -63,10 +66,12 @@
  * - LinesDrawable: the "edges" drawable is made visible so face boundaries can be seen.
  *
  * <b>Running it</b>
+ *
  * Left-click a face to highlight it (the console prints "picked face f<index>"). Clicking
  * another face moves the highlight; clicking the background clears it. Dragging still
  * rotates the camera because unhandled events are forwarded to the base Viewer.
  *
+ * \include{lineno} Tutorial_402_FacePicker/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_402_FacePicker/viewer.h
  * The source file of the viewer class:

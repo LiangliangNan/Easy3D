@@ -28,17 +28,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_101_PointCloud/main.cpp
+ * \example Tutorial_101_PointCloud
  *
- * \brief Creating a point cloud from raw 3D points — the simplest possible Easy3D program.
+ * Creating a point cloud from raw 3D points — the simplest possible Easy3D program.
  *
  * <b>Overview</b>
+ *
  * This tutorial builds a PointCloud directly in memory from a set of coordinates, without
  * loading a file and without opening a viewer. It is the "hello world" of Easy3D and shows
  * the skeleton that almost every Easy3D program follows: initialize the library, create or
  * load some data, do something with it, then release it.
  *
  * <b>The technique</b>
+ *
  * A point cloud is an unordered collection of samples in 3D space. Each sample is just a
  * position (x, y, z); there are no edges or faces connecting the points. Point clouds are the
  * raw output of most 3D acquisition pipelines (LiDAR, depth cameras, photogrammetry), so they
@@ -48,6 +50,7 @@
  * connectivity between them.
  *
  * <b>Easy3D API</b>
+ *
  * - initialize(): bootstraps the library (logging, resource paths, ...). Call it once before
  *   using any other Easy3D facility.
  * - PointCloud: the core data structure for point sets. add_vertex() appends a point and
@@ -55,12 +58,15 @@
  * - vec3: Easy3D's single-precision 3-component vector, used here for the point positions.
  *
  * <b>Running it</b>
+ *
  * This example is console-only: it prints "point cloud has 100 points" and exits. No window
  * appears because no Viewer is created. The cloud is a local object here, so it is destroyed
  * automatically when main returns. (When a model is added to a Viewer instead, the Viewer
  * takes ownership of it — see Tutorial_201_Viewer_default.)
  *
- * \see PointCloud, vec3, Tutorial_102_PointCloud_Property, Tutorial_201_Viewer_default
+ * \include{lineno} Tutorial_101_PointCloud/main.cpp
+ *
+ * \see PointCloud, vec3, Tutorial_102_PointCloud_Property
  */
 
 using namespace easy3d;

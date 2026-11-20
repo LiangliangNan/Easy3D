@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_308_TexturedMesh/main.cpp
+ * \example Tutorial_308_TexturedMesh
  *
- * \brief Visualizing textured meshes by overriding the viewer's model-loading function.
+ * Visualizing textured meshes by overriding the viewer's model-loading function.
  *
  * <b>Overview</b>
+ *
  * The default Easy3D Viewer loads geometry but does not display OBJ texture maps. This
  * tutorial shows the extension point for that: subclass Viewer and override add_model() so
  * that OBJ files are parsed together with their materials (MTL) and one textured drawable is
@@ -41,6 +42,7 @@
  * loads a textured model and runs the viewer.
  *
  * <b>The technique</b>
+ *
  * Texture mapping "paints" an image onto a surface: each mesh vertex carries a 2D texture
  * coordinate (u, v) in [0, 1], and the rasterizer interpolates these coordinates across each
  * triangle so every fragment can look up its color in the image (the diffuse map). OBJ files
@@ -53,6 +55,7 @@
  * and PBR are out of scope.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer::add_model(): virtual, so a subclass can replace the loading pipeline.
  * - load_obj_materials(): parses an OBJ/MTL pair into an ObjMaterialMesh — a SurfaceMesh plus
  *   one Part per material (diffuse color, texture file, positions/normals/UVs/indices).
@@ -61,10 +64,12 @@
  * - SurfaceMesh, Renderer, Camera: the usual model/rendering/camera trio.
  *
  * <b>Running it</b>
+ *
  * The textured "domik" house model is loaded and displayed; navigate with the standard viewer
  * controls (left-drag rotate, right-drag pan, wheel zoom). Models without textures still load
  * through the default path, so the viewer remains a drop-in replacement.
  *
+ * \include{lineno} Tutorial_308_TexturedMesh/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_308_TexturedMesh/viewer.h
  * The source file of the viewer class:

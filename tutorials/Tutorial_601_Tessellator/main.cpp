@@ -34,17 +34,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_601_Tessellator/main.cpp
+ * \example Tutorial_601_Tessellator
  *
- * \brief Triangulating general polygonal faces (concave, self-intersecting, and with holes) using the Tessellator.
+ * Triangulating general polygonal faces (concave, self-intersecting, and with holes) using the Tessellator.
  *
  * <b>Overview</b>
+ *
  * This tutorial builds a tiny SurfaceMesh whose three faces are deliberately "hard" to triangulate —
  * a concave quad, a self-intersecting star, and a quad with a rectangular hole — and then converts the
  * whole mesh into triangles with the Tessellator. It shows the general recipe for turning arbitrary
  * planar contours into a triangle soup that a GPU can actually rasterize.
  *
  * <b>The technique</b>
+ *
  * Graphics hardware renders triangles, so any polygon that is not already a triangle must be
  * decomposed. Simple convex polygons are easy (a fan from one vertex), but concave polygons, polygons
  * with holes, and self-intersecting contours break naive fans and ear-clipping. The robust solution,
@@ -59,6 +61,7 @@
  * chapter 11, for the classic description of winding rules and the GLU tessellator.
  *
  * <b>Easy3D API</b>
+ *
  * - Tessellator: the workhorse. begin_polygon() sets the plane normal; begin_contour()/add_vertex()/
  *   end_contour() feed one closed loop; set_winding_rule() chooses the fill rule; end_polygon() runs the
  *   sweep. vertices() and elements() return the unique output vertices and triangle indices.
@@ -68,10 +71,13 @@
  *   edges, and borders.
  *
  * <b>Running it</b>
+ *
  * A window opens showing the three tessellated shapes side by side, with spheres at the vertices and the
  * triangle edges and borders drawn. The star is filled solid (non-zero rule) and the third quad has a
  * rectangular hole (odd rule). For general rendering you can also let the tessellator build a
  * DrawableTriangles directly, without explicitly rewriting the mesh.
+ *
+ * \include{lineno} Tutorial_601_Tessellator/main.cpp
  *
  * \see Tessellator, SurfaceMesh, Viewer, Tutorial_602_ConvexPartition, Tutorial_603_CSG
  */

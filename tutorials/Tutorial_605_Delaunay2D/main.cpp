@@ -36,17 +36,19 @@
 #include <random>
 
 /**
- * \example{lineno} Tutorial_605_Delaunay2D/main.cpp
+ * \example Tutorial_605_Delaunay2D
  *
- * \brief Computing and visualizing the 2D Delaunay triangulation of a point set with Delaunay2.
+ * Computing and visualizing the 2D Delaunay triangulation of a point set with Delaunay2.
  *
  * <b>Overview</b>
+ *
  * This tutorial scatters 80 random 2D points, computes their Delaunay triangulation with Delaunay2,
  * and reads the result back into a SurfaceMesh for display. It is the canonical example of turning an
  * unstructured point set into a well-shaped triangle mesh — a building block for terrain modeling,
  * mesh generation, and spatial interpolation.
  *
  * <b>The technique</b>
+ *
  * A Delaunay triangulation of a point set is a triangulation such that no input point lies inside the
  * circumcircle of any triangle (the "empty circumcircle" property). Among all possible triangulations
  * of the same points, the Delaunay triangulation maximizes the minimum angle, so it avoids skinny
@@ -59,6 +61,7 @@
  * Quality Mesh Generator and Delaunay Triangulator", 1996.
  *
  * <b>Easy3D API</b>
+ *
  * - Delaunay2: set_vertices() computes the triangulation; nb_vertices()/vertex(i) read back the points;
  *   nb_triangles()/tri_vertex(t, lv) read back each triangle's three vertex indices.
  * - SurfaceMesh: stores the vertices (lifted to z = 0) and triangles for rendering.
@@ -66,9 +69,12 @@
  *   border.
  *
  * <b>Running it</b>
+ *
  * A window opens showing the 80 points (as spheres) connected by the Delaunay edges, with the convex hull
  * highlighted as the border. The camera looks almost straight down (with a slight tilt) so the flat
  * triangulation is easy to read. The random sample is seeded, so the result is reproducible.
+ *
+ * \include{lineno} Tutorial_605_Delaunay2D/main.cpp
  *
  * \see Delaunay2, SurfaceMesh, Viewer, Tutorial_601_Tessellator
  */

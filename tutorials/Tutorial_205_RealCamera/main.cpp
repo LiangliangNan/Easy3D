@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_205_RealCamera/main.cpp
+ * \example Tutorial_205_RealCamera
  *
- * \brief Rendering a scene through a real calibrated camera and converting between pixels and 3D rays.
+ * Rendering a scene through a real calibrated camera and converting between pixels and 3D rays.
  *
  * <b>Overview</b>
+ *
  * This tutorial reconstructs the viewpoint of a real photograph. Given camera parameters
  * recovered by calibration or structure-from-motion (here read from a Bundler file), it places
  * the Easy3D camera so the 3D point cloud is seen exactly as in the original image, shows that
@@ -41,6 +42,7 @@
  * rays/points. The viewer subclass (TutorialRealCamera, shown after this file) does all the work.
  *
  * <b>The technique</b>
+ *
  * A pinhole camera is described by intrinsics K (focal length fx/fy, principal point cx/cy,
  * skew) and extrinsics [R|t] (rotation and translation from world to camera coordinates). A 3D
  * world point p projects to the image as x = K [R|t] p, with the result divided by its depth
@@ -53,6 +55,7 @@
  * helper functions in TutorialRealCamera for the exact math.
  *
  * <b>Easy3D API</b>
+ *
  * - Viewer: subclassed to load the cloud, draw the camera frusta, and overlay the source image.
  * - Camera: set_from_calibration() builds the pose and projection from K, R, t; set_position(),
  *   set_orientation(), and set_field_of_view() are used for the equivalent "ground truth" pose.
@@ -60,11 +63,13 @@
  * - PointCloud: the reconstructed 3D points loaded from the .ply file.
  *
  * <b>Running it</b>
+ *
  * Press 'space' to cycle through the recovered views (the window resizes to each image's aspect
  * ratio); '1'/'2' toggle calibration vs. ground-truth pose; 'h' shows/hides the camera frusta.
  * Move the cursor over the overlaid photo to see the corresponding 3D ray; move it over the 3D
  * scene to see where that point lands in the image.
  *
+ * \include{lineno} Tutorial_205_RealCamera/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_205_RealCamera/viewer.h
  * The source file of the viewer class:

@@ -33,17 +33,19 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_304_VectorField/main.cpp
+ * \example Tutorial_304_VectorField
  *
- * \brief Visualizing a vector field on a surface mesh as line-segment glyphs (face normals).
+ * Visualizing a vector field on a surface mesh as line-segment glyphs (face normals).
  *
  * <b>Overview</b>
+ *
  * This tutorial renders a vector field defined on a surface mesh: the normal direction of
  * every face of a sphere model. Each vector is drawn as a short green line segment starting
  * at the face center and pointing along the normal — the classic "glyph" visualization of
  * direction fields. The mesh edges are shown as well, so the faceting is easy to read.
  *
  * <b>The technique</b>
+ *
  * A vector field assigns a direction (and possibly a magnitude) to each element of a domain;
  * here the domain is the mesh surface and the vectors are the per-face normals. The standard
  * way to display such a field is with glyphs: small geometric marks placed at the sample
@@ -58,6 +60,7 @@
  * can be rendered as cone imposters instead (see Tutorial_302_Imposters).
  *
  * <b>Easy3D API</b>
+ *
  * - SurfaceMesh: update_face_normals() computes the "f:normal" property; vertices(f) iterates
  *   the corners of a face; bounding_box() gives the model extents.
  * - Renderer: add_lines_drawable() creates an extra LinesDrawable attached to the model;
@@ -68,8 +71,11 @@
  *   glyph visibly matches its flat facet.
  *
  * <b>Running it</b>
+ *
  * The window shows the faceted sphere with a green normal segment sticking out of every face
  * and the mesh edges overlaid. Navigate with the standard Viewer controls ('h' for help).
+ *
+ * \include{lineno} Tutorial_304_VectorField/main.cpp
  *
  * \see LinesDrawable, SurfaceMesh, Renderer, Tutorial_302_Imposters, Tutorial_303_ScalarField
  */

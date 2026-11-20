@@ -28,11 +28,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_114_PolyMesh_Property/main.cpp
+ * \example Tutorial_114_PolyMesh_Property
  *
- * \brief Storing per-element attributes on a PolyMesh (a polyhedral / volumetric mesh).
+ * Storing per-element attributes on a PolyMesh (a polyhedral / volumetric mesh).
  *
  * <b>Overview</b>
+ *
  * This console tutorial attaches a custom attribute to every face of a polyhedral mesh and reads
  * it back. It reuses the single-tetrahedron mesh built in Tutorial_112_PolyMesh and computes the
  * centroid (geometric center) of each of its four triangular faces. The same pattern works for
@@ -40,6 +41,7 @@
  * "f:" / "c:" name prefix change.
  *
  * <b>The technique</b>
+ *
  * A PolyMesh is Easy3D's volumetric data structure: unlike a SurfaceMesh (which only has a boundary
  * surface), it also represents the interior as 3D cells — here a single tetrahedron. It exposes
  * four element types: vertices, edges, faces, and cells. As with all Easy3D models, attributes are
@@ -49,6 +51,7 @@
  * for rendering, integration, or locating a face).
  *
  * <b>Easy3D API</b>
+ *
  * - PolyMesh: the polyhedral mesh class. add_vertex() adds a corner; add_tetra(v0,v1,v2,v3) adds a
  *   tetrahedral cell from four vertices.
  * - PolyMesh::add_face_property<T>(name): creates a per-face property of type T and returns a
@@ -57,8 +60,11 @@
  *   face f. PolyMesh::position(v): the 3D coordinates of vertex v.
  *
  * <b>Running it</b>
+ *
  * Console-only. It prints one line per face giving the face handle and its computed centroid,
  * e.g. "center of f0: ...". The mesh is heap-allocated and explicitly deleted at the end.
+ *
+ * \include{lineno} Tutorial_114_PolyMesh_Property/main.cpp
  *
  * \see PolyMesh, Tutorial_112_PolyMesh, Tutorial_113_PolyMesh_Connectivity, Tutorial_106_SurfaceMesh_Property
  */

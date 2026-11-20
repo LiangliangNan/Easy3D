@@ -29,11 +29,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_309_TextRendering/main.cpp
+ * \example Tutorial_309_TextRendering
  *
- * \brief Rendering 2D strings (labels, HUDs, annotations) with Easy3D's text layout engine.
+ * Rendering 2D strings (labels, HUDs, annotations) with Easy3D's text layout engine.
  *
  * <b>Overview</b>
+ *
  * This tutorial draws text on top of a 3D scene: a multi-line instruction block plus a gallery
  * line for every installed font, each in a different color. All layout and rasterization happen
  * on the CPU in a TextLayoutEngine; the resulting textured quads are handed to the viewer as
@@ -41,6 +42,7 @@
  * layout parameter changes (font size, spacing, alignment, origin, kerning, window size, DPI).
  *
  * <b>The technique</b>
+ *
  * Real-time text rendering is usually done with a glyph (font) atlas: each needed character is
  * rasterized once from the TrueType outlines into a small region of a texture, and drawing a
  * string then becomes drawing one textured quad per character, sampling its glyph from the
@@ -54,6 +56,7 @@
  * cleared and new glyphs are rasterized.
  *
  * <b>Easy3D API</b>
+ *
  * - graphics::TextLayoutEngine: CPU TrueType rasterization and layout; add_font() loads .ttf
  *   files, layout() turns a UTF-8 string + TextOptions into TextLayout (draw commands, bounds,
  *   advance, line height), clear_cache() frees cached glyph sizes.
@@ -63,10 +66,12 @@
  *   scene; pre_draw()/post_resize() are the hooks used to rebuild them lazily.
  *
  * <b>Running it</b>
+ *
  * '+'/'-' change the font size, '<'/'>' the character spacing, 'up'/'down' the line spacing,
  * 'l'/'c'/'r' the alignment of the multi-line block, 'o' switches the origin between upper-left
  * and bottom-left, and 'space' toggles kerning. The usual viewer navigation still works.
  *
+ * \include{lineno} Tutorial_309_TextRendering/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_309_TextRendering/viewer.h
  * The source file of the viewer class:

@@ -34,11 +34,12 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_302_Imposters/main.cpp
+ * \example Tutorial_302_Imposters
  *
- * \brief Rendering points as spheres/surfels and lines as cylinders/cones using imposters.
+ * Rendering points as spheres/surfels and lines as cylinders/cones using imposters.
  *
  * <b>Overview</b>
+ *
  * This tutorial shows how to give simple primitives a richer appearance with imposters:
  * mesh vertices are drawn as shaded spheres, mesh edges as solid cylinders, and vertex
  * normals as cones. A second copy of the mesh, shifted sideways, shows the same vertices
@@ -46,6 +47,7 @@
  * PointsDrawable / LinesDrawable — no extra geometry is generated.
  *
  * <b>The technique</b>
+ *
  * An imposter (or "sprite") is a cheap primitive — a point or a line — that the fragment
  * shader makes look like a more complex 3D object. For sphere imposters, each point is
  * rasterized as a small screen-facing quad; the shader then computes, per pixel, the surface
@@ -60,6 +62,7 @@
  * "GPU Gems" chapters on sprite/sphere rendering for the underlying ray-intersection math.
  *
  * <b>Easy3D API</b>
+ *
  * - PointsDrawable: set_impostor_type() chooses PLAIN, SPHERE, or SURFEL; set_point_size()
  *   sets the diameter in logical pixels (DPI-independent); set_uniform_coloring() sets one RGBA color.
  * - LinesDrawable: set_impostor_type() chooses PLAIN, CYLINDER, or CONE; set_line_width()
@@ -70,10 +73,13 @@
  *   "v:normal" properties give positions and normals used to build the normal segments.
  *
  * <b>Running it</b>
+ *
  * The window shows two spheres side by side: on the left, red sphere vertices, orange
  * cylinder edges, and green cone normals; on the right, the same mesh with red surfel
  * vertices. Navigate with the standard Viewer controls (left-drag rotate, scroll zoom,
  * 'h' for help).
+ *
+ * \include{lineno} Tutorial_302_Imposters/main.cpp
  *
  * \see PointsDrawable, LinesDrawable, Renderer, SurfaceMesh, Tutorial_301_Drawables, Tutorial_304_VectorField
  */

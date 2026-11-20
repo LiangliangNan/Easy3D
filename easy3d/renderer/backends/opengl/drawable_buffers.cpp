@@ -105,7 +105,7 @@ namespace easy3d {
     }
 
 
-    void Drawable::opengl_update_highlight_mask(const std::vector<float> &strengths, bool /*dynamic*/) {
+    void Drawable::opengl_update_highlight_mask(const std::vector<float> &strengths) {
         if (strengths.empty()) {
             highlight_primitives_ = 0;
             return;

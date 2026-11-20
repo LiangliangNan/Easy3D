@@ -294,10 +294,22 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 {
 	{ // easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
 		pybind11::class_<easy3d::MultiViewer, std::shared_ptr<easy3d::MultiViewer>, PyCallBack_easy3d_MultiViewer, easy3d::Viewer> cl(m, "MultiViewer", "A viewer that supports multiple views (arranged in a grid layout).\n \n\n\n     ");
-        cl.def(pybind11::init<int, int, const std::string&, int, int, int, bool, bool, bool>(),
+        // Same as Viewer: the keyword arguments build the C++ ViewerOptions struct.
+        cl.def(pybind11::init([](int rows, int cols, const std::string& title, int width, int height, int samples,
+                                bool full_screen, bool visible, bool resizable) {
+            easy3d::ViewerOptions window;
+            window.width = width;
+            window.height = height;
+            window.samples = samples;
+            window.full_screen = full_screen;
+            window.visible = visible;
+            window.resizable = resizable;
+            return new PyCallBack_easy3d_MultiViewer(rows, cols, title, window);
+        }),
                pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") = "untitled",
                pybind11::arg("width") = 800, pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
-               pybind11::arg("full_screen") = false, pybind11::arg("visible") = true, pybind11::arg("resizable") = true);
+               pybind11::arg("full_screen") = false, pybind11::arg("visible") = true,
+               pybind11::arg("resizable") = true);
 
         // Assign a model to specific view
         cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Model *model) {

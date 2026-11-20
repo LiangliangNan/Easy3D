@@ -117,10 +117,10 @@ all tutorials, the Python bindings and Mapple build unchanged against either one
 the OpenGL backend (`Easy3D_ENABLE_VULKAN=OFF`).
 
 **Migrating from the OpenGL-only Easy3D:** class names, headers, and the `virtual void draw() const` frame hook are 
-unchanged. The one deliberate API change is the viewer constructor: 
-`Viewer(title, window, options)`, where `window` is a struct of window options (`width`, `height`, `samples`, `full_screen`, 
-`visible`, `resizable`), and `options` is `VulkanOptions` or `OpenGLOptions` for the configured backend. Old positional 
-calls such as `Viewer(title, 4, 3, 2, false, false)` will not compile and must be updated explicitly. 
+unchanged. The one deliberate API change is the viewer constructor:
+`Viewer(title, window, options)`, where `window` is a `ViewerOptions` struct (`width`, `height`, `samples`, 
+`full_screen`, `visible`, and `resizable`), and `options` is `VulkanOptions` or `OpenGLOptions` for the configured backend. 
+Old positional calls such as `Viewer(title, 4, 3, 2, false, false)` no longer compile and must be updated explicitly.
 See [the Vulkan migration guide](https://github.com/LiangliangNan/Easy3D/blob/main/docs/vulkan.md) for the full backend 
 and migration details.
 

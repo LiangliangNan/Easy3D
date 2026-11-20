@@ -65,12 +65,14 @@ namespace easy3d {
          */
         virtual void draw(const std::vector<TrianglesDrawable*>& surfaces) = 0;
 
-        // The OpenGL effects know only the camera and draw into the current
-        // context. Vulkan presentation belongs to the viewer, so the viewer
-        // registers a frame renderer for its camera. Method 1 is average color
-        // blending, method 2 is depth peeling, and method 3 is per-pixel linked
-        // lists; the last argument bounds the peel layers (zero means no explicit
-        // bound) or, for linked lists, sets the per-pixel fragment capacity.
+        /**
+         * The OpenGL effects know only the camera and draw into the current
+         * context. Vulkan presentation belongs to the viewer, so the viewer
+         * registers a frame renderer for its camera. Method 1 is average color
+         * blending, method 2 is depth peeling, and method 3 is per-pixel linked
+         * lists; the last argument bounds the peel layers (zero means no explicit
+         * bound) or, for linked lists, sets the per-pixel fragment capacity.
+         */
         using FrameRenderer = std::function<void(const std::vector<TrianglesDrawable*>&, int, int)>;
         /**
          * \brief Registers (or removes) the frame renderer used by a camera's viewer.
