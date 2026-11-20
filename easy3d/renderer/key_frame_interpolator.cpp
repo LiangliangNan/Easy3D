@@ -102,7 +102,7 @@ namespace easy3d {
                 }
             }
 
-            keyframes_.emplace_back(Keyframe(frame, time));
+            keyframes_.emplace_back(frame, time);
             pathIsValid_ = false;
             last_stopped_index_ = 0; // may not be valid anymore
             stop_interpolation();
@@ -153,7 +153,7 @@ namespace easy3d {
 
     Frame KeyFrameInterpolator::keyframe(std::size_t index) const {
         const Keyframe& kf = keyframes_.at(index);
-        return Frame(kf.position(), kf.orientation());
+        return {kf.position(), kf.orientation()};
     }
 
 
@@ -475,7 +475,7 @@ namespace easy3d {
         interpolated_path_.clear();
         if (keyframes_.size() == 1) {   // only one keyframe
             LOG(INFO) << "only 1 keyframe: interpolation not possible";
-            interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
+            interpolated_path_.emplace_back(keyframes_[0].position(), keyframes_[0].orientation());
             pathIsValid_=true;last_stopped_index_=0;
             return interpolated_path_;
         }
@@ -493,7 +493,7 @@ namespace easy3d {
                 const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
                 const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();
                 const auto orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w);
-                interpolated_path_.emplace_back(Frame(pos, orient.normalized()));
+                interpolated_path_.emplace_back(pos, orient.normalized());
             }
             pathIsValid_ = true;
             last_stopped_index_ = 0; // not valid anymore
@@ -511,48 +511,65 @@ namespace easy3d {
             // we choose the accumulated path length as parameter, so to have equal intervals.
             std::vector<float> parameters(keyframes_.size());
             std::vector<vec3> positions(keyframes_.size());
-            std::vector<vec4> orientations(keyframes_.size());
             float dist(0.0f);
             for (int i=0; i<keyframes_.size(); ++i) {
                 positions[i] = keyframes_[i].position();
-                const quat& orient = keyframes_[i].orientation();
-                for (unsigned char j=0; j<4; ++j)
-                    orientations[i][j] = orient[j];
                 if (i > 0)
                     dist += distance(positions[i-1], positions[i]);
                 parameters[i] = dist;
             }
 
-            // spine interpolation
+            // spine interpolation for positions
             typedef SplineCurveInterpolation<Vec, 3, float> PosFitter;
             PosFitter pos_fitter;
             pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0);
             pos_fitter.set_points(parameters, positions);
 
-            typedef SplineCurveInterpolation<Vec, 4, float> OrientFitter;
-            OrientFitter orient_fitter;
-            orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0);
-            orient_fitter.set_points(parameters, orientations);
+            // Orientation: squad (spherical cubic interpolation) for smooth rotation.
+            // Component-wise spline interpolation of quaternion vectors followed by
+            // normalization is not a proper rotation on the unit sphere and can cause
+            // non-constant angular velocity. squad() stays on the unit sphere throughout.
+            const float largest_t = parameters.back();
+            std::vector<quat> tangents(keyframes_.size());
+            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+                if (i == 0)
+                    tangents[i] = keyframes_[0].orientation();
+                else if (i == keyframes_.size() - 1)
+                    tangents[i] = keyframes_.back().orientation();
+                else
+                    tangents[i] = quat::squad_tangent(
+                        keyframes_[i - 1].orientation(),
+                        keyframes_[i].orientation(),
+                        keyframes_[i + 1].orientation());
+            }
 
             for (int i = 0; i < num_frames; ++i) {
                 const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+                const float t_global = u * largest_t;
                 const vec3 pos = pos_fitter.eval_f(u);
-                const vec4 q = orient_fitter.eval_f(u);
-                quat orient;
-                for (unsigned char j=0; j<4; ++j)
-                    orient[j] = q[j];
-                orient.normalize();
-                interpolated_path_.emplace_back(Frame(pos, orient));
+
+                // Find which keyframe segment t_global falls into.
+                int seg = 0;
+                while (seg < static_cast<int>(keyframes_.size()) - 2 && t_global > parameters[seg + 1])
+                    ++seg;
+                const float seg_u = (t_global - parameters[seg]) / (parameters[seg + 1] - parameters[seg]);
+
+                const quat orient = quat::squad(
+                    keyframes_[seg].orientation(),
+                    tangents[seg],
+                    tangents[seg + 1],
+                    keyframes_[seg + 1].orientation(),
+                    seg_u);
+
+                interpolated_path_.emplace_back(pos, orient);
             }
         }
         else {
             std::vector<vec3> positions(keyframes_.size());
-            std::vector<vec4> orientations(keyframes_.size());
+            std::vector<quat> orientations(keyframes_.size());
             for (std::size_t i=0; i<keyframes_.size(); ++i) {
                 positions[i] = keyframes_[i].position();
-                const quat& orient = keyframes_[i].orientation();
-                for (unsigned char j=0; j<4; ++j)
-                    orientations[i][j] = orient[j];
+                orientations[i] = keyframes_[i].orientation();
             }
 
             // spine fitting
@@ -561,20 +578,44 @@ namespace easy3d {
             PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
             pos_fitter.set_ctrl_points(positions);
             const std::vector<float> parameters = pos_fitter.get_equally_spaced_parameters(num_frames);
+            const std::vector<float>& knots = pos_fitter.get_nodal_vector();
 
-            typedef SplineCurveFitting <Vec, 4, float> OrientFitter;
-            OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
-            orient_fitter.set_ctrl_points(orientations);
+            // Orientation: compute squad tangents at each control point.
+            std::vector<quat> tangents(keyframes_.size());
+            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+                if (i == 0)
+                    tangents[i] = orientations[0];
+                else if (i == keyframes_.size() - 1)
+                    tangents[i] = orientations.back();
+                else
+                    tangents[i] = quat::squad_tangent(
+                        orientations[i - 1], orientations[i], orientations[i + 1]);
+            }
+
+            const int n = static_cast<int>(keyframes_.size());
+            const int num_spans = n - order + 1;
 
             for (int i = 0; i < num_frames; ++i) {
                 const float u = parameters[i];
                 const vec3 pos = pos_fitter.eval_f(u);
-                const vec4 q = orient_fitter.eval_f(u);
-                quat orient;
-                for (unsigned char j=0; j<4; ++j)
-                    orient[j] = q[j];
-                orient.normalize();
-                interpolated_path_.emplace_back(Frame(pos, orient));
+
+                // Find which B-spline span u falls into. Span j covers
+                // [knots[j+order-1], knots[j+order]].
+                int seg = 0;
+                while (seg < num_spans - 1 && u > knots[seg + order])
+                    ++seg;
+                const float knot_start = knots[seg + order - 1];
+                const float knot_end = knots[seg + order];
+                const float seg_u = (u - knot_start) / (knot_end - knot_start);
+
+                const quat orient = quat::squad(
+                    orientations[seg],
+                    tangents[seg],
+                    tangents[seg + 1],
+                    orientations[seg + 1],
+                    seg_u);
+
+                interpolated_path_.emplace_back(pos, orient);
             }
         }
 

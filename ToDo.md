@@ -264,26 +264,17 @@
     - [x] Distance measuring tool (2026-11-17): the toolbar's Measure button arms a one-shot two-click tool - the first click places a marker, the second completes the segment and shows "Distance: <d>" in the status bar, then disarms. The segment and square endpoint markers are a screen-space overlay (the chord between two surface points runs through the model, so a depth-tested scene line was invisible); Esc clears the measurement, and arming a selection mode or path tool cancels an armed measure. Both check trees build and launch; a temporary probe (removed) clicked two points on bunny.ply and both backends' captures show the result; real clicks on graph.ply then verified arm and disarm on both backends after fixing a push/pop imbalance that aborted the first arm click. See the 2026-11-17 entry in docs/mapple.md.
     - [x] Walkthrough: allow to modify the cameras interactively, e.g., attach a Manipulator to each camera (similar to object manipulation in Tutorial_404_ObjectManipulation)? Want to hear more ideas. Done as a per-keyframe handle gizmo instead of a `Manipulator` (the path is not a model): move along a pose axis, turn around it, or drag the glyph in the screen plane, with undo and Esc; batch 127.
     - [x] Lasso selection of only visible mesh faces (batch 119): mesh rectangle and lasso regions now rasterize the face drawable with primitive IDs, so occluded and clipped-away faces stay out; see the batch-119 entry in docs/vulkan.md.
-    - [ ] Change ViewerOptions to WindowOptions
-    - [ ] KeyFrameInterpolator: spline fitting/interpolation are not smooth enough. It samples uniformly in the spline parameter, not in time (key_frame_interpolator.cpp:488), and there is already a \todo about per-keyframe durations (key_frame_interpolator.h:101). For demonstration videos this matters: you want to cruise the street, then slow near the facade. Decide whether timing belongs in KFI (use keyframe times as the sampling parameter) or in an authoring layer that pre-profiles the keyframes.
-      - (1) camera position: use a Catmull–Rom spline through the keyframe positions;
-      - (2) camera orientation: Represent orientation using unit quaternions and interpolate with spherical linear interpolation (SLERP); For more demanding cinematic paths, you can later introduce SQUAD interpolation for smoother angular velocity.
-      - (3) timing and velocity: distinguish between spatial interpolation and temporal interpolation. A camera should not necessarily travel at a constant speed from one keyframe to another. Users may want to:
-          - Accelerate when leaving a viewpoint.
-          - Slow down when approaching an interesting object.
-          - Pause briefly at important viewpoints.
-          - Maintain approximately constant speed along a long trajectory.
-         A practical implementation is to use arc-length parameterization for the spatial path, combined with an easing or timing curve.
+    - [ ] KeyFrameInterpolator
+      - [x] camera orientation uses spherical cubic interpolation (quat::squad()).
+      - [ ] variable-speed animation (cruise then slow near POIs), requiring a speed profile/easing layer. Users may want to:
+            - Accelerate when leaving a viewpoint.
+            - Slow down when approaching an interesting object.
+            - Pause briefly at important viewpoints.
+            - Maintain approximately constant speed along a long trajectory.
     - [ ] Camera path editor: what is the easiest and user-friendly approach to obtain the camera path and keyframes?
-    - [ ] The Camera Path window should have 
-      - two comboboxes: (1) Position interpolation (Catmull–Rom is default); (2) Orientation interpolation (SLERP is default).
-      - selecting a camera marker will jump to that keyframe view.
+    - [ ] The Camera Path window should have
       - clicking on the model to define the aim of the selected camera is overshoot (too annoying if picked a wrong position)
-      - Timeline editor.
-      - Speed profile: constant cruise, ease-in/out at the ends, slow-down near named POIs. This is what makes a demo feel professional far more than extra keyframes.
-      - Banked turns: roll = k · curvature · speed², with a horizon-lock option at zero. Optional, but it instantly reads as "drone".
-      - MSAA samples control (like in snapshot window).
-      - Closed loops for flights (first pose = last pose, matching tangents), mirroring the orbit's loop count.
+      - Timeline editor and speed profile: constant cruise, ease-in/out at the ends, slow-down near named POIs. This is what makes a demo feel professional far more than extra keyframes.
 
     
 - Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).

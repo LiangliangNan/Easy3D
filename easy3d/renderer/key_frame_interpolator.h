@@ -97,8 +97,6 @@ namespace easy3d {
      *          // starts animation
      *          kfi->start_interpolation();
      *      \endcode
-     *
-     * \todo Allow edit the duration for each keyframe?  (not sure due to many keyframes and can be annoying).
      */
     class KeyFrameInterpolator
     {

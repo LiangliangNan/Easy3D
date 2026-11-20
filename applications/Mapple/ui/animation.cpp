@@ -226,16 +226,6 @@ void MappleViewer::draw_animation_window() {
         ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
     }
 
-    // Spline strategy
-    ImGui::Separator();
-    // The spline strategy shapes the path every mode makes, so it sits with the
-    // mode rather than with the playback.
-    const char *methods[] = {"interpolation", "fitting"};
-    int method = kfi->interpolation_method() == KeyFrameInterpolator::INTERPOLATION ? 0 : 1;
-    if (ImGui::Combo("Spline strategy", &method, methods, 2))
-        kfi->set_interpolation_method(
-                method == 0 ? KeyFrameInterpolator::INTERPOLATION : KeyFrameInterpolator::FITTING);
-
     // Keyframes: made by the gesture in a path mode, by hand in Free (Alt+K or the
     // menu).
     ImGui::Separator();

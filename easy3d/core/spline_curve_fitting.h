@@ -136,6 +136,15 @@ namespace easy3d {
         int get_order() const { return _k; }
 
         /**
+         * \brief Gets the nodal (knot) vector of the spline.
+         * \details The nodal vector size is (order + number of control points). It defines
+         *      the parameter ranges of the individual spline spans. Span j covers
+         *      [node[j+order-1], node[j+order]].
+         * \return Const reference to the nodal vector.
+         */
+        const std::vector<T>& get_nodal_vector() const { return _node; }
+
+        /**
          * \brief Gets parameters such that evaluation of the curve positions using these parameters results in
          *     equally spaced points along the curve.
          * \param steps The number of steps.
