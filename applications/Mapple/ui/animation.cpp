@@ -328,6 +328,7 @@ void MappleViewer::draw_animation_window() {
     ImGui::TextDisabled("MP4, scene only");
     if (count < 2)
         ImGui::TextDisabled("Recording needs at least two keyframes.");
+
     // The recording's own multisample count, on the ladder the Snapshot dialog uses:
     // supported_sample_mask() holds the counts this viewer can render, so an
     // unrenderable one is never offered and the choice needs no step-down warning.
@@ -350,8 +351,10 @@ void MappleViewer::draw_animation_window() {
     video_samples_ = values[current];
     if (ImGui::Combo("Samples", &current, shown, shown_count))
         video_samples_ = values[current];
-    ImGui::TextDisabled("1 means no multisampling; only the counts this device supports are listed.");
+    ImGui::TextDisabled("1 means no multisampling; only the supported counts are listed.");
+
     ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
+    ImGui::TextDisabled("Higher bitrate results in better video quality but a larger video file.");
 #else
     ImGui::BeginDisabled();
     ImGui::Button("Record Video...", ImVec2(140, 0));

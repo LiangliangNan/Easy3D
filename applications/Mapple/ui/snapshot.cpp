@@ -99,7 +99,7 @@ void MappleViewer::draw_snapshot_dialog() {
     p.samples = values[current]; // 1 is always offered, so the list is never empty
     if (ImGui::Combo("Samples", &current, shown, shown_count))
         p.samples = values[current];
-    ImGui::TextDisabled("1 means no multisampling; only the counts this device supports are listed.");
+    ImGui::TextDisabled("1 means no multisampling; only the supported counts are listed.");
 
     const char *backgrounds[] = {"current color", "white", "transparent"};
     ImGui::Combo("Background", &p.background, backgrounds, 3);
