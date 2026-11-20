@@ -549,6 +549,13 @@ namespace easy3d {
         }
     }
 
+    void Viewer::position(int &pos_x, int &pos_y) const {
+        if (window_)
+            glfwGetWindowPos(window_, &pos_x, &pos_y);
+        else
+            throw std::runtime_error("viewer window doesn't exit");
+    }
+
     void Viewer::notify_resize() {
         int w, h, fw, fh;
         viewer_size(w, h);

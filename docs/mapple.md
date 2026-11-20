@@ -81,6 +81,8 @@ applications/Mapple/
   mapple_viewer.{h,cpp}  Viewer + logging::Logger; frame hooks, input routing,
                          layout, app state (panels, actions, log buffer)
   imgui_layer.{h,cpp}    ImGui context, font atlas, DPI, ImDrawData -> DrawCommand
+  camera_path_timeline.{h,cpp}
+                          Mapple-only Camera Path timeline strip and selection UI
   ui/menu.cpp            menu bar and shortcuts
   ui/panels.cpp          toolbar, Models, Rendering, Log, status bar, About
   ui/process.cpp         Process/Property commands: parameter windows and the

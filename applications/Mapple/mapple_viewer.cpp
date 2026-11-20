@@ -25,6 +25,7 @@
  \endcond */
 
 #include "mapple_viewer.h"
+#include "camera_path_timeline.h"
 #include "imgui_layer.h"
 
 #include <algorithm>
@@ -205,6 +206,8 @@ MappleViewer::MappleViewer(const std::string &title,
 
     // Restore the layout, view toggles and file history of the previous run.
     settings_.load();
+    Viewer::set_position(settings_.viewer_pos_x, settings_.viewer_pos_y);
+    Viewer::resize(settings_.viewer_width, settings_.viewer_height);
     show_rendering_panel_ = settings_.show_rendering_panel;
     show_models_panel_ = settings_.show_models_panel;
     show_log_panel_ = settings_.show_log_panel;
@@ -256,6 +259,8 @@ MappleViewer::~MappleViewer() {
     imgui_.reset();
 
     // Persist the layout, view toggles and file history for the next run.
+    Viewer::viewer_size(settings_.viewer_width, settings_.viewer_height);
+    Viewer::position(settings_.viewer_pos_x, settings_.viewer_pos_y);
     settings_.show_rendering_panel = show_rendering_panel_;
     settings_.show_models_panel = show_models_panel_;
     settings_.show_log_panel = show_log_panel_;
@@ -327,6 +332,9 @@ void MappleViewer::init() {
     // editor; its undo point is the same one-level path snapshot as the path tools'.
     keyframe_editor_.reset(new KeyFrameEditor(camera(), kfi_.get()));
     keyframe_editor_->begin_edit = [this]() { snapshot_camera_path(); };
+    // The Camera Path window's timeline strip (drawn by ui/animation.cpp); it keeps its
+    // cached segment layout across frames and is invalidated by edit_camera_path_timing().
+    camera_path_timeline_.reset(new CameraPathTimeline(kfi_.get()));
 
     // Recreate the effect that was enabled in the previous session. The effect objects
     // are cheap until used, but they must exist before the first frame draws.

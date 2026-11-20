@@ -52,6 +52,7 @@
 
 #include "settings.h"
 
+class CameraPathTimeline;
 class ImGuiLayer;
 namespace easy3d {
     class AmbientOcclusion;
@@ -511,12 +512,23 @@ private:
     struct CameraPathSnapshot {
         std::vector<easy3d::Frame> frames;
         std::vector<float> times;
+        std::vector<float> dwells;
         int keyframe_index = -1;
         bool valid = false;
     };
     void snapshot_camera_path();
     // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
+
+    // The Camera Path window's timeline strip. It lives as long as the window so its
+    // cached segment layout survives between frames; the path it shows is invalidated
+    // when a keyframe edit changes the timing (edit_camera_path_timing()).
+    std::unique_ptr<CameraPathTimeline> camera_path_timeline_;
+    // Applies a new dwell time to keyframe \p index: the library path, the strip's
+    // layout and the path drawn in the scene all depend on it.
+    void edit_camera_path_timing(std::size_t index, float dwell_seconds);
+    // The path's duration (travel + dwell), read from the keyframes as the strip draws it.
+    float camera_path_duration() const;
 
     // Keyframe editing lives in KeyFrameEditor (easy3d/renderer/keyframe_editor.h):
     // the selected keyframe, its gizmo (sized to the camera glyph, see

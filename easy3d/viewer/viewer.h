@@ -262,6 +262,13 @@ namespace easy3d {
         /// \param h Receives the logical height.
         void viewer_size(int &w, int &h) const override;
 
+        /**
+         * \brief Query the logical window position.
+         * \param pos_x Receives the x in logical units.
+         * \param pos_y Receives the y in logical units.
+         */
+        void position(int &pos_x, int &pos_y) const override;
+
         /// Query the framebuffer size in physical pixels.
         /// \param w Receives the framebuffer width.
         /// \param h Receives the framebuffer height.

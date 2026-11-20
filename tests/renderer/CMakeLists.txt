@@ -10,6 +10,17 @@ else()
     set_tests_properties(opengl.camerapathbuilder PROPERTIES TIMEOUT 120)
 endif()
 
+# The interpolator's timing (per-keyframe dwell, speed profiles) is CPU arithmetic too.
+add_executable(easy3d_keyframe_interpolator_test keyframe_interpolator_test.cpp)
+target_link_libraries(easy3d_keyframe_interpolator_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.keyframeinterpolator COMMAND easy3d_keyframe_interpolator_test)
+    set_tests_properties(vulkan.keyframeinterpolator PROPERTIES TIMEOUT 120)
+else()
+    add_test(NAME opengl.keyframeinterpolator COMMAND easy3d_keyframe_interpolator_test)
+    set_tests_properties(opengl.keyframeinterpolator PROPERTIES TIMEOUT 120)
+endif()
+
 if(Easy3D_ENABLE_VULKAN)
     add_executable(easy3d_vulkan_test render_test.cpp)
     target_link_libraries(easy3d_vulkan_test PRIVATE easy3d::renderer)

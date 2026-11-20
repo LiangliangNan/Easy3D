@@ -25,6 +25,7 @@
  \endcond */
 
 #include "../mapple_viewer.h"
+#include "../camera_path_timeline.h"
 #include <easy3d/renderer/camera_path_builder.h>
 
 #include <algorithm>
@@ -271,6 +272,17 @@ void MappleViewer::draw_animation_window() {
     else
         ImGui::TextDisabled("no keyframe selected");
 
+    // Timeline strip: proportional bars for travel segments, gray for dwell pauses.
+    // Clicking selects the corresponding keyframe. It takes a row of its own (the
+    // navigation row above is full), and the recording's expected length below reads
+    // the same duration.
+    if (camera_path_timeline_ && count > 0) {
+        int timeline_selected = selected_index;
+        if (camera_path_timeline_->draw(ImGui::GetContentRegionAvail().x, &timeline_selected) &&
+            timeline_selected >= 0)
+            goto_camera_keyframe(timeline_selected);
+    }
+
     bool visible = show_camera_path_;
     if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
         set_camera_path_visible(visible);
@@ -307,15 +319,39 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
-    // Speed profile: constant, ease-in/out, or cinematic (extra slowing near dwell keyframes).
+    // Speed profile: how the distance covered along the whole path is shaped. It does not
+    // stop the camera at keyframes: it eases in at the path's start and out at its end, and
+    // (cinematic) arrives slowly at and leaves slowly from keyframes that hold a dwell.
     int profile = static_cast<int>(kfi->speed_profile());
     if (ImGui::Combo("Speed profile", &profile,
                      "Constant\0Ease in-out\0Cinematic\0")) {
         kfi->set_speed_profile(static_cast<KeyFrameInterpolator::SpeedProfile>(profile));
     }
     ImGui::SetItemTooltip("Constant: uniform speed within each segment.\n"
-                          "Ease in-out: smooth acceleration/deceleration at segment ends.\n"
-                          "Cinematic: ease in-out plus extra slowing near keyframes with dwell time.");
+                          "Ease in-out: the camera accelerates once at the start of the path and "
+                          "decelerates once at its end; it keeps its speed as it passes a keyframe.\n"
+                          "Cinematic: ease in-out, plus a slow approach to and departure from "
+                          "keyframes that have a dwell time.");
+
+    // Per-keyframe dwell: how long the camera pauses at the selected keyframe before
+    // moving on. It is part of the keyframe, so it sits with the path's rhythm rather
+    // than with the recording. A path whose keyframes all dwell 0 is unchanged.
+    {
+        const std::size_t dwell_index = selected_index >= 0 ? static_cast<std::size_t>(selected_index) : 0;
+        float dwell = kfi->number_of_keyframes() > 0 ? kfi->keyframe_dwell(dwell_index) : 0.0f;
+        ImGui::BeginDisabled(!selected || playing);
+        if (ImGui::DragFloat("Dwell (s)", &dwell, 0.05f, 0.0f, 10.0f, "%.2f s"))
+            edit_camera_path_timing(dwell_index, dwell);
+        ImGui::EndDisabled();
+        if (!selected)
+            ImGui::SetItemTooltip("Select a keyframe (click its marker on the timeline) to set "
+                                  "how long the camera pauses there.");
+        else if (playing)
+            ImGui::SetItemTooltip("Stop playback to change the timing.");
+        else
+            ImGui::SetItemTooltip("Seconds the camera holds this keyframe before moving on. "
+                                  "Ctrl+Z restores the path's timing.");
+    }
 
     // Recording and its parameters.
     ImGui::Separator();
@@ -328,6 +364,15 @@ void MappleViewer::draw_animation_window() {
     ImGui::TextDisabled("MP4, scene only");
     if (count < 2)
         ImGui::TextDisabled("Recording needs at least two keyframes.");
+    else
+        // The frames the recording will render: the path's own duration (travel plus
+        // dwell, as the timeline strip lays it out) at the interpolation speed.
+        ImGui::TextDisabled("%.2f s at speed %.2f: %d frames at %d fps",
+                            camera_path_duration() / kfi->interpolation_speed(),
+                            kfi->interpolation_speed(),
+                            static_cast<int>(camera_path_duration() / kfi->interpolation_speed() *
+                                             static_cast<float>(kfi->frame_rate())) + 1,
+                            kfi->frame_rate());
 
     // The recording's own multisample count, on the ladder the Snapshot dialog uses:
     // supported_sample_mask() holds the counts this viewer can render, so an
@@ -408,6 +453,8 @@ void MappleViewer::insert_camera_keyframe() {
         return;
     }
     clear_aim_range(); // the inserted keyframe shifts the path's indices
+    if (camera_path_timeline_)
+        camera_path_timeline_->invalidate(); // one more keyframe: one more segment
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << "keyframe no. " << index + 1 << " inserted (" << kfi_->number_of_keyframes()
@@ -420,6 +467,8 @@ void MappleViewer::delete_camera_keyframe() {
     if (index < 0)
         return;
     clear_aim_range(); // the deleted keyframe shifts the path's indices
+    if (camera_path_timeline_)
+        camera_path_timeline_->invalidate(); // the segment it opened is gone
     if (kfi_->number_of_keyframes() == 0 && show_camera_path_) {
         release_camera_path_guides();
         restore_scene_bounds();
@@ -427,6 +476,31 @@ void MappleViewer::delete_camera_keyframe() {
     LOG(INFO) << "keyframe no. " << index + 1 << " deleted (" << kfi_->number_of_keyframes()
               << " remaining)";
     update();
+}
+
+void MappleViewer::edit_camera_path_timing(std::size_t index, float dwell_seconds) {
+    if (!kfi_ || index >= kfi_->number_of_keyframes())
+        return;
+    const float dwell = clamp(dwell_seconds, 0.0f, 10.0f);
+    if (dwell == kfi_->keyframe_dwell(index))
+        return;
+
+    snapshot_camera_path(); // one undo level, as for a pose edit
+    kfi_->set_keyframe_dwell(index, dwell);
+    // The dwell is part of the path's timing, which the drawn path and the timeline
+    // strip are both derived from.
+    if (camera_path_timeline_)
+        camera_path_timeline_->invalidate();
+    if (show_camera_path_)
+        update_camera_path_guides();
+    LOG(INFO) << "keyframe no. " << index + 1 << " dwells " << dwell << " s";
+    update();
+}
+
+float MappleViewer::camera_path_duration() const {
+    // The library's own timeline (travel + dwell): one definition, so the readout and the
+    // recorded frames can never disagree.
+    return kfi_ ? kfi_->total_duration() : 0.0f;
 }
 
 void MappleViewer::toggle_camera_path_playback() {
@@ -839,9 +913,11 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
 void MappleViewer::snapshot_camera_path() {
     camera_path_snapshot_.frames.clear();
     camera_path_snapshot_.times.clear();
+    camera_path_snapshot_.dwells.clear();
     for (std::size_t i = 0; kfi_ && i < kfi_->number_of_keyframes(); ++i) {
         camera_path_snapshot_.frames.push_back(kfi_->keyframe(i));
         camera_path_snapshot_.times.push_back(kfi_->keyframe_time(i));
+        camera_path_snapshot_.dwells.push_back(kfi_->keyframe_dwell(i));
     }
     camera_path_snapshot_.keyframe_index = keyframe_editor_->selected();
     camera_path_snapshot_.valid = true;
@@ -854,8 +930,15 @@ bool MappleViewer::undo_camera_path() {
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
     kfi_->delete_path();
-    for (std::size_t i = 0; i < camera_path_snapshot_.frames.size(); ++i)
+    for (std::size_t i = 0; i < camera_path_snapshot_.frames.size(); ++i) {
         kfi_->add_keyframe(camera_path_snapshot_.frames[i], camera_path_snapshot_.times[i]);
+        // The dwell belongs to the keyframe: a pose edit restores it, and so does a
+        // dwell edit.
+        if (i < camera_path_snapshot_.dwells.size())
+            kfi_->set_keyframe_dwell(i, camera_path_snapshot_.dwells[i]);
+    }
+    if (camera_path_timeline_)
+        camera_path_timeline_->invalidate();
     const int count = static_cast<int>(kfi_->number_of_keyframes());
     keyframe_editor_->set_selected(camera_path_snapshot_.keyframe_index);
     camera_path_snapshot_.valid = false;

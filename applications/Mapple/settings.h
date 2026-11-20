@@ -33,7 +33,7 @@
 
 
 /**
- * \brief State Mapple carries across runs: panel layout, view toggles,
+ * \brief State Mapple carries across runs: viewer size and position, panel layout, view toggles,
  *      recording defaults, and the file history (last directory, recent files).
  * \details load() runs at start-up and save() at exit. The file is a plain
  *      key=value text file under the per-user configuration directory, so a
@@ -42,6 +42,12 @@
  *      JSON through setting::load()/save() (see AppSettings::rendering_file_path()).
  */
 struct AppSettings {
+    // Viewer size and position.
+    int viewer_width = 800;
+    int viewer_height = 600;
+    int viewer_pos_x = 0;
+    int viewer_pos_y = 0;
+    // Show or hide side and log panels.
     bool show_rendering_panel = true;
     bool show_models_panel = true;
     bool show_log_panel = false;

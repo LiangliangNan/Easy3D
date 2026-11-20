@@ -41,6 +41,7 @@
 #include <limits>
 #include <stdexcept>
 #include <cmath>
+#include <sstream>
 
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -149,13 +150,6 @@ namespace easy3d {
 
     float KeyFrameInterpolator::keyframe_dwell(std::size_t index) const {
         return keyframes_.at(index).dwell_time();
-    }
-
-
-    void KeyFrameInterpolator::set_speed_profile(SpeedProfile profile) {
-        stop_interpolation();
-        speed_profile_ = profile;
-        pathIsValid_ = false;
     }
 
 
@@ -401,23 +395,6 @@ namespace easy3d {
         inline float ease_smoothstep(float w) {
             return 3.0f * w * w - 2.0f * w * w * w;
         }
-
-        // Remap the within-segment parameter w (0 = at start keyframe, 1 = at end keyframe)
-        // according to the speed profile. slow_start/slow_end request extra flattening at
-        // the corresponding end (used by CINEMATIC next to keyframes with dwell).
-        inline float ease_parameter(float w, KeyFrameInterpolator::SpeedProfile profile,
-                                    bool slow_start, bool slow_end) {
-            if (profile == KeyFrameInterpolator::SpeedProfile::CONSTANT)
-                return w;
-            float w_eased = ease_smoothstep(w);  // EASE_IN_OUT base
-            if (profile == KeyFrameInterpolator::SpeedProfile::CINEMATIC) {
-                if (slow_start)
-                    w_eased = 1.0f - ease_smoothstep(1.0f - w_eased);  // extra flat at start
-                if (slow_end)
-                    w_eased = ease_smoothstep(w_eased);                // extra flat at end
-            }
-            return w_eased;
-        }
     } // namespace
 
 
@@ -476,6 +453,10 @@ namespace easy3d {
             const Keyframe& kf = keyframes_[id];
             output << "\t\tposition: " << kf.position() << std::endl;
             output << "\t\torientation: " << kf.orientation() << std::endl;
+            // The dwell is written only when there is one, so a file without dwells (and every
+            // file written by an older version) reads back as before.
+            if (kf.dwell_time() > 0.0f)
+                output << "\t\tdwell: " << kf.dwell_time() << std::endl;
         }
 
         return !keyframes_.empty();
@@ -492,17 +473,36 @@ namespace easy3d {
         // clean
         delete_path();
 
-        // load path from file
-        std::string dummy;
-        int num_key_frames;
-        input >> dummy >> num_key_frames;
-        for (int j = 0; j < num_key_frames; ++j) {
-            int frame_id;
-            input >> dummy >> frame_id;
-            vec3 pos;
-            quat orient;
-            input >> dummy >> pos >> dummy >> orient;
-            add_keyframe(Frame(pos, orient));
+        // Load the path from the file, line by line: "position" and "orientation" follow every
+        // "frame:", and an optional "dwell: <seconds>" may follow the orientation.
+        std::string line;
+        std::getline(input, line);  // rest of the "num_key_frames" line
+        float dwell = 0.0f;         // dwell of the keyframe being read
+        while (std::getline(input, line)) {
+            if (line.find("frame:") != std::string::npos) {
+                dwell = 0.0f;
+                continue;
+            }
+            std::istringstream stream(line);
+            std::string key;
+            stream >> key;
+            if (key == "position:") {
+                vec3 pos;
+                stream >> pos;
+                add_keyframe(Frame(pos, quat()));
+            } else if (key == "orientation:") {
+                quat orient;
+                stream >> orient;
+                if (!keyframes_.empty()) {
+                    Keyframe& kf = keyframes_.back();
+                    kf = Keyframe(Frame(kf.position(), orient), kf.time());
+                    kf.set_dwell_time(dwell);
+                }
+            } else if (key == "dwell:") {
+                stream >> dwell;
+                if (!keyframes_.empty())
+                    keyframes_.back().set_dwell_time(dwell);
+            }
         }
 
         return !keyframes_.empty();
@@ -526,42 +526,40 @@ namespace easy3d {
             throw std::invalid_argument("interpolation requires frame rate 1..1000 and positive finite speed");
         const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
 
-        // Total effective duration = travel time between keyframes + dwell time at each keyframe.
-        float total_dwell = 0.0f, total_travel = 0.0f;
-        for (std::size_t i = 0; i < n; ++i) {
-            total_dwell += keyframes_[i].dwell_time();
-            if (i + 1 < n)
-                total_travel += keyframes_[i + 1].time() - keyframes_[i].time();
-        }
-        const float total = total_dwell + total_travel;
+        // The timeline being sampled: travel time between keyframes + dwell at each one.
+        const float total = total_duration();
         const double count = double(total) / interval + 1;
         if (!std::isfinite(count) || count>std::numeric_limits<int>::max())
             throw std::invalid_argument("interpolation path has too many samples");
         const int num_frames = std::max(2,static_cast<int>(count));
 
-        if (n == 2) {   // only two keyframes: linear interpolation with optional end dwells
+        // Only two keyframes: one straight travel between them, with a dwell at each end.
+        //
+        // There is no spline to read, but the timeline is the same as for a longer path, so the
+        // speed profile applies the same way: the step is eased when it touches a dwell (a path
+        // with two keyframes nearly always does, at its ends), and left linear when it does not.
+        // The last sample lands exactly on the second keyframe.
+        if (n == 2) {
             LOG(INFO) << "only two keyframes: linear interpolation";
-            // Timeline: dwell at keyframe 0, travel 0->1, dwell at keyframe 1.
             const float dwell0 = keyframes_[0].dwell_time();
             const float travel = keyframes_[1].time() - keyframes_[0].time();
             const float dwell1 = keyframes_[1].dwell_time();
             const float seg0_end = dwell0;
             const float seg1_end = seg0_end + travel;
+            const bool eased_step = dwell0 > 0.0f || dwell1 > 0.0f;
             for (int i = 0; i < num_frames; ++i) {
-                const float t_k = std::min(static_cast<float>(i) * interval, total);
+                const float t_k = (i + 1 == num_frames) ? total
+                                                        : std::min(static_cast<float>(i) * interval, total);
                 vec3 pos;
                 quat orient;
-                if (t_k <= seg0_end) {
+                if (t_k <= seg0_end + 1e-4f) {
                     pos = keyframes_[0].position();
                     orient = keyframes_[0].orientation();
                 } else if (t_k <= seg1_end) {
-                    const float w = (t_k - seg0_end) / travel;
-                    // Apply speed profile within the travel segment.
-                    const bool slow_start = dwell0 > 0.0f;
-                    const bool slow_end = dwell1 > 0.0f;
-                    const float w_eased = ease_parameter(w, speed_profile_, slow_start, slow_end);
-                    pos = (1.0f - w_eased) * keyframes_[0].position() + w_eased * keyframes_[1].position();
-                    orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w_eased);
+                    const float w = std::min(1.0f, (t_k - seg0_end) / travel);
+                    const float eased = eased_step ? segment_ease(w, 1.0f) : w;
+                    pos = (1.0f - eased) * keyframes_[0].position() + eased * keyframes_[1].position();
+                    orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), eased);
                 } else {
                     pos = keyframes_[1].position();
                     orient = keyframes_[1].orientation();
@@ -600,22 +598,16 @@ namespace easy3d {
         typedef SplineCurveFitting <Vec, 3, float> PosFitFitter;
         PosInterpFitter pos_interp_fitter;
         PosFitFitter pos_fit_fitter(3, PosFitFitter::eOPEN_UNIFORM);
-        std::vector<float> arc_params;      // INTERPOLATION: accumulated arc length per keyframe
-        std::vector<vec3> arc_positions;    // INTERPOLATION: keyframe positions
-        float largest_t = 0.0f;             // INTERPOLATION: total arc length
+        // Where each keyframe sits along the path, as a fraction of its length: the position
+        // spline's own parameter. The spline is arc-length parameterised, so this is what its
+        // eval_f() takes, for both interpolation methods.
+        const std::vector<float> length_at = length_fraction();
         if (interpolation_method_ == INTERPOLATION) {
-            arc_params.resize(n);
-            arc_positions.resize(n);
-            float dist(0.0f);
-            for (std::size_t i = 0; i < n; ++i) {
-                arc_positions[i] = keyframes_[i].position();
-                if (i > 0)
-                    dist += distance(arc_positions[i-1], arc_positions[i]);
-                arc_params[i] = dist;
-            }
+            std::vector<vec3> positions(n);
+            for (std::size_t i = 0; i < n; ++i)
+                positions[i] = keyframes_[i].position();
             pos_interp_fitter.set_boundary(PosInterpFitter::second_deriv, 0, PosInterpFitter::second_deriv, 0);
-            pos_interp_fitter.set_points(arc_params, arc_positions);
-            largest_t = arc_params.back();
+            pos_interp_fitter.set_points(length_at, positions);
         } else {
             std::vector<vec3> positions(n);
             for (std::size_t i = 0; i < n; ++i)
@@ -623,16 +615,21 @@ namespace easy3d {
             pos_fit_fitter.set_ctrl_points(positions);
         }
 
+        // The fraction of the path's travel time at which each keyframe is reached: a segment's
+        // travel covers exactly the span between its two keyframes, whatever the sampling.
+        const std::vector<float> time_at = time_fraction();
+
         // Walk the timeline: dwell at keyframe i, then travel to keyframe i+1.
-        // t_cursor tracks the global time (dwell + travel) at the start of each segment.
+        // seg_start is the global time (dwell + travel) at the start of the current segment.
         interpolated_path_.reserve(num_frames);
-        float t_cursor = 0.0f;
+        std::size_t seg = 0;
+        float seg_start = 0.0f;
         for (int k = 0; k < num_frames; ++k) {
-            const float t_k = std::min(static_cast<float>(k) * interval, total);
+            // The last sample lands exactly on the path's end, so the video always ends on the
+            // last keyframe even when the duration is not a whole number of intervals.
+            const float t_k = (k + 1 == num_frames) ? total : std::min(static_cast<float>(k) * interval, total);
 
             // Advance the segment cursor while t_k is past this segment's end.
-            std::size_t seg = 0;
-            float seg_start = 0.0f;
             while (seg < n) {
                 const float seg_dwell = keyframes_[seg].dwell_time();
                 const float seg_travel = (seg + 1 < n) ? (keyframes_[seg + 1].time() - keyframes_[seg].time()) : 0.0f;
@@ -644,54 +641,64 @@ namespace easy3d {
 
             if (seg >= n) {
                 // t_k == total: end on the last keyframe.
-                interpolated_path_.emplace_back(keyframes_[n-1].position(), keyframes_[n-1].orientation());
+                interpolated_path_.emplace_back(keyframes_[n - 1].position(), keyframes_[n - 1].orientation());
                 continue;
             }
 
             const float dwell_dur = keyframes_[seg].dwell_time();
             const float dwell_end = seg_start + dwell_dur;
 
-            if (t_k <= dwell_end) {
-                // Pause at keyframe seg.
+            if (t_k <= dwell_end + 1e-4f) {
+                // Pause at keyframe seg. (The tolerance keeps a sample that lands on the dwell's
+                // end, up to the rounding of t_k = k * interval, on the held pose instead of
+                // reading it from the travel that follows.)
                 interpolated_path_.emplace_back(keyframes_[seg].position(), keyframes_[seg].orientation());
             } else if (seg + 1 < n) {
-                // Travel from keyframe seg to seg+1.
-                const float travel_start = dwell_end;
+                // Travel from keyframe seg to keyframe seg+1.
+                //
+                // The pose is read at a fraction of the path's LENGTH (the parameter the
+                // position spline is built on), never of its time: the two differ when the
+                // keyframes are not evenly spaced, and a parameter in time alone can sit past
+                // the next keyframe, which the spline then carries the camera back from (one
+                // frame that jumps a whole segment backwards).
+                //
+                // Within the step the camera goes from the keyframe it leaves to the one it
+                // reaches. A step that touches a dwell (the approach to a keyframe that holds
+                // one, the departure from it) is eased in and out, so the camera comes to rest
+                // in the dwell instead of covering the last stretch to it in one frame; every
+                // other step runs at an even pace, so a keyframe the camera only passes is
+                // passed at constant speed. (Easing every step made the camera stop dead at
+                // every keyframe: "stop -> move -> stop -> move".)
                 const float travel_dur = keyframes_[seg + 1].time() - keyframes_[seg].time();
-                const float w = (t_k - travel_start) / travel_dur;
-
-                // Apply the speed profile: ease-in/out within each travel segment, with
-                // extra slowing near keyframes that have a non-zero dwell time (CINEMATIC).
-                const bool slow_start = keyframes_[seg].dwell_time() > 0.0f;
-                const bool slow_end = keyframes_[seg + 1].dwell_time() > 0.0f;
-                const float w_eased = ease_parameter(w, speed_profile_, slow_start, slow_end);
-
-                // Global travel fraction (0 at keyframe 0, 1 at keyframe n-1).
-                // Cumulative travel time up to this segment plus the eased travel within it.
-                float cum_travel = 0.0f;
-                for (std::size_t i = 0; i < seg; ++i)
-                    cum_travel += keyframes_[i + 1].time() - keyframes_[i].time();
-                const float u_global = (cum_travel + w_eased * travel_dur) / total_travel;
+                const float w = std::min(1.0f, (t_k - dwell_end) / travel_dur);
+                const bool arrives = keyframes_[seg + 1].dwell_time() > 0.0f;
+                const bool leaves = keyframes_[seg].dwell_time() > 0.0f;
+                const float eased = (arrives || leaves) ? segment_ease(w, 1.0f) : w;
+                float u = length_at[seg] + eased * (length_at[seg + 1] - length_at[seg]);
+                // The last sample is the last keyframe's pose, whatever the profile: the video
+                // ends on the pose the user set.
+                if (k + 1 == num_frames)
+                    u = 1.0f;
 
                 vec3 pos;
                 if (interpolation_method_ == INTERPOLATION) {
-                    // Arc-length spline parameter in [0,1].
-                    pos = pos_interp_fitter.eval_f(u_global);
+                    // Arc-length spline parameter in [0, 1] over the whole path.
+                    pos = pos_interp_fitter.eval_f(u);
                 } else {
-                    // FITTING: map w_eased linearly within the B-spline parameter range for this
-                    // keyframe-to-keyframe transition. eOPEN_UNIFORM passes through the
-                    // endpoints, so u = seg/(n-1) is approximately keyframe seg's position.
-                    const float u = static_cast<float>(seg) / static_cast<float>(n - 1)
-                                  + w_eased * (1.0f / static_cast<float>(n - 1));
-                    pos = pos_fit_fitter.eval_f(u);
+                    // FITTING: the B-spline parameter over the whole path. eOPEN_UNIFORM passes
+                    // through the keyframes, so parameter i is keyframe i.
+                    pos = pos_fit_fitter.eval_f(u * static_cast<float>(n - 1));
                 }
 
+                // The orientation follows the same eased fraction as the position: with the raw
+                // linear fraction the camera would sweep its rotation at one pace while the
+                // position eased in and out, which reads as a shake along the path.
                 const quat orient = quat::squad(
                     keyframes_[seg].orientation(),
                     tangents[seg],
                     tangents[seg + 1],
                     keyframes_[seg + 1].orientation(),
-                    w_eased);
+                    eased);
 
                 interpolated_path_.emplace_back(pos, orient);
             } else {
@@ -711,6 +718,65 @@ namespace easy3d {
         return interpolated_path_;
     }
 
+
+    std::vector<float> KeyFrameInterpolator::time_fraction() const {
+        // The fraction of the path's travel time at which each keyframe is reached: 0 at the
+        // first, 1 at the last.
+        const std::size_t n = keyframes_.size();
+        std::vector<float> fraction(n, 0.0f);
+        if (n < 2)
+            return fraction;
+        float elapsed = 0.0f;
+        for (std::size_t i = 1; i < n; ++i) {
+            elapsed += keyframes_[i].time() - keyframes_[i - 1].time();
+            fraction[i] = elapsed;
+        }
+        if (fraction.back() > 0.0f)
+            for (auto& v : fraction)
+                v /= fraction.back();
+        return fraction;
+    }
+
+
+    std::vector<float> KeyFrameInterpolator::length_fraction() const {
+        // The fraction of the path's LENGTH at which each keyframe sits: 0 at the first, 1 at
+        // the last. This is the position spline's own parameter space.
+        const std::size_t n = keyframes_.size();
+        std::vector<float> fraction(n, 0.0f);
+        if (n < 2)
+            return fraction;
+        float covered = 0.0f;
+        for (std::size_t i = 1; i < n; ++i) {
+            covered += length(keyframes_[i].position() - keyframes_[i - 1].position());
+            fraction[i] = covered;
+        }
+        if (covered > 0.0f)
+            for (auto& v : fraction)
+                v /= covered;
+        return fraction;
+    }
+
+
+    float KeyFrameInterpolator::total_duration() const {
+        // Travel time between consecutive keyframes plus the dwell time of every keyframe:
+        // the timeline interpolate() samples.
+        float travel = 0.0f, dwell = 0.0f;
+        for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+            dwell += keyframes_[i].dwell_time();
+            if (i + 1 < keyframes_.size())
+                travel += keyframes_[i + 1].time() - keyframes_[i].time();
+        }
+        return travel + dwell;
+    }
+
+
+    float KeyFrameInterpolator::segment_ease(float w, float strength) {
+        // Smoothstep towards the middle of the step: slope 1 + 1.5*strength at w = 0.5, 1 at
+        // both ends. It is applied to a step that touches a dwell, so the camera comes to rest
+        // at the dwelled keyframe while a step that merely passes a keyframe stays linear.
+        const float s = ease_smoothstep(w);
+        return w + strength * (s - w);
+    }
 
 
     // \cond

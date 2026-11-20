@@ -8,6 +8,8 @@ add_executable(${name}
         settings.cpp
         imgui_layer.h
         imgui_layer.cpp
+        camera_path_timeline.h
+        camera_path_timeline.cpp
         ui/menu.cpp
         ui/panels.cpp
         ui/process.cpp

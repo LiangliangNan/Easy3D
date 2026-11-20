@@ -184,6 +184,13 @@ namespace easy3d {
         }
 
         /**
+         * \brief Query the logical window position.
+         * \param pos_x Receives the x coordinate of viewer position in logical units.
+         * \param pos_y Receives the y coordinate of viewer position in logical units.
+         */
+        virtual void position(int &pos_x, int &pos_y) const = 0;
+
+        /**
          * \brief Query the physical framebuffer size in pixels.
          * \param width Receives the framebuffer width.
          * \param height Receives the framebuffer height.

@@ -76,24 +76,6 @@ namespace {
     std::string config_directory() {
         return config_root() + "/Mapple";
     }
-
-    // The app was called Mapple-imgui until the Qt app was renamed Mapple-Qt. Carry the
-    // previous session's layout and recent files over once, on the first run as Mapple.
-    void migrate_legacy_config() {
-        const std::string legacy = config_root() + "/Mapple-imgui";
-        if (!file_system::is_directory(legacy))
-            return;
-        const std::string directory = config_directory();
-        if (!file_system::is_directory(directory) && !file_system::create_directory(directory))
-            return;
-        for (const char *name : {"settings.ini", "rendering.json"}) {
-            const std::string from = legacy + "/" + name;
-            const std::string to = directory + "/" + name;
-            if (file_system::is_file(from) && !file_system::is_file(to) && file_system::copy_file(from, to))
-                LOG(INFO) << "settings migrated from " << from;
-        }
-    }
-
 } // namespace
 
 std::string AppSettings::file_path() {
@@ -105,8 +87,6 @@ std::string AppSettings::rendering_file_path() {
 }
 
 bool AppSettings::load() {
-    migrate_legacy_config();
-
     // Rendering parameters live in easy3d::setting and are independent of the INI
     // file, so they are loaded even when the INI file does not exist yet.
     const std::string rendering_path = rendering_file_path();
@@ -140,7 +120,19 @@ bool AppSettings::load() {
         const std::string key = line.substr(0, separator);
         const std::string value = line.substr(separator + 1);
 
-        if (key == "show_rendering_panel") {
+        if (key == "viewer_width") {
+            int v;
+            if (parse_number(value, v)) viewer_width = v;
+        } else if (key == "viewer_height") {
+            int v;
+            if (parse_number(value, v)) viewer_height = v;
+        } else if (key == "viewer_pos_x") {
+            int v;
+            if (parse_number(value, v)) viewer_pos_x = v;
+        } else if (key == "viewer_pos_y") {
+            int v;
+            if (parse_number(value, v)) viewer_pos_y = v;
+        } if (key == "show_rendering_panel") {
             bool v;
             if (parse_bool(value, v)) show_rendering_panel = v;
         } else if (key == "show_models_panel") {
@@ -209,6 +201,10 @@ bool AppSettings::save() const {
     }
 
     output << "# Mapple settings; rewritten when the app exits\n";
+    output << "viewer_width=" << viewer_width << "\n";
+    output << "viewer_height=" << viewer_height << "\n";
+    output << "viewer_pos_x=" << viewer_pos_x << "\n";
+    output << "viewer_pos_y=" << viewer_pos_y << "\n";
     output << "show_rendering_panel=" << (show_rendering_panel ? 1 : 0) << "\n";
     output << "show_models_panel=" << (show_models_panel ? 1 : 0) << "\n";
     output << "show_log_panel=" << (show_log_panel ? 1 : 0) << "\n";
