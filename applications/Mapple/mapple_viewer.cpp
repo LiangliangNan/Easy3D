@@ -219,6 +219,7 @@ MappleViewer::MappleViewer(const std::string &title,
     models_selected_only_ = settings_.models_selected_only;
 #ifdef HAS_FFMPEG
     video_bitrate_mbps_ = settings_.video_bitrate_mbps;
+    video_samples_ = settings_.video_samples;
 #endif
 
     // The camera path belongs to the app: the base Viewer does not own an interpolator.
@@ -267,6 +268,7 @@ MappleViewer::~MappleViewer() {
     settings_.models_selected_only = models_selected_only_;
 #ifdef HAS_FFMPEG
     settings_.video_bitrate_mbps = video_bitrate_mbps_;
+    settings_.video_samples = video_samples_;
 #endif
     settings_.save();
 }

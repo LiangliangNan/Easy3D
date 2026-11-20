@@ -56,7 +56,11 @@ struct AppSettings {
     // show only the active model.
     bool models_auto_focus = false;
     bool models_selected_only = false;
+    // Camera Path recording defaults, both kept across runs. The window offers only
+    // counts this viewer can render, and a stored count it cannot render is resolved
+    // when the recording starts.
     int video_bitrate_mbps = 8;
+    int video_samples = 4;
 
     // Directory the File dialogs start in; empty until a file is opened or saved.
     std::string data_directory;

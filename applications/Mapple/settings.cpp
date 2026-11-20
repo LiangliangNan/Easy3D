@@ -169,6 +169,8 @@ bool AppSettings::load() {
             if (parse_bool(value, v)) models_selected_only = v;
         } else if (key == "video_bitrate_mbps")
             parse_number(value, video_bitrate_mbps);
+        else if (key == "video_samples")
+            parse_number(value, video_samples);
         else if (key == "data_directory")
             data_directory = value;
         else if (key.rfind("recent.", 0) == 0)
@@ -218,6 +220,7 @@ bool AppSettings::save() const {
     output << "models_auto_focus=" << (models_auto_focus ? 1 : 0) << "\n";
     output << "models_selected_only=" << (models_selected_only ? 1 : 0) << "\n";
     output << "video_bitrate_mbps=" << video_bitrate_mbps << "\n";
+    output << "video_samples=" << video_samples << "\n";
     output << "data_directory=" << data_directory << "\n";
     for (std::size_t i = 0; i < recent_files.size() && i < max_recent_files; ++i)
         output << "recent." << i << "=" << recent_files[i] << "\n";

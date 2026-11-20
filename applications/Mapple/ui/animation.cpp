@@ -328,6 +328,29 @@ void MappleViewer::draw_animation_window() {
     ImGui::TextDisabled("MP4, scene only");
     if (count < 2)
         ImGui::TextDisabled("Recording needs at least two keyframes.");
+    // The recording's own multisample count, on the ladder the Snapshot dialog uses:
+    // supported_sample_mask() holds the counts this viewer can render, so an
+    // unrenderable one is never offered and the choice needs no step-down warning.
+    // Recorded frames go through capture(), so the count is independent of the
+    // window's own MSAA.
+    static const int ladder[] = {1, 2, 4, 8, 16, 32, 64};
+    static const char *const names[] = {"1", "2", "4", "8", "16", "32", "64"};
+    const unsigned available = supported_sample_mask();
+    const char *shown[IM_ARRAYSIZE(ladder)];
+    int values[IM_ARRAYSIZE(ladder)], shown_count = 0, current = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(ladder); ++i)
+        if (available & unsigned(ladder[i])) {
+            shown[shown_count] = names[i];
+            values[shown_count] = ladder[i];
+            if (video_samples_ >= ladder[i]) current = shown_count;
+            ++shown_count;
+        }
+    // A count the settings file carried from another device lands on the largest
+    // offered value at most it, and is saved back as that value; 1 is always offered.
+    video_samples_ = values[current];
+    if (ImGui::Combo("Samples", &current, shown, shown_count))
+        video_samples_ = values[current];
+    ImGui::TextDisabled("1 means no multisampling; only the counts this device supports are listed.");
     ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
 #else
     ImGui::BeginDisabled();
@@ -914,7 +937,9 @@ void MappleViewer::record_camera_path() {
     recording->height = height;
     recording->capture_width = framebuffer_width();
     recording->capture_height = framebuffer_height();
-    recording->samples = static_cast<unsigned>(std::max(1, samples()));
+    // The count the window shows, resolved once more here: capture() applies the same
+    // step-down, and its answer is what the encoder receives.
+    recording->samples = static_cast<unsigned>(supported_sample_count(video_samples_));
     recording->file_name = file_name;
     recording->start = std::chrono::steady_clock::now();
     recording->camera = *camera()->frame();
@@ -925,7 +950,8 @@ void MappleViewer::record_camera_path() {
     video_recording_.reset(recording);
 
     LOG(INFO) << "recording " << recording->frames.size() << " frames at " << kfi_->frame_rate()
-              << " fps and " << video_bitrate_mbps_ << " Mbit/s into " << file_name;
+              << " fps with " << recording->samples << " samples and " << video_bitrate_mbps_
+              << " Mbit/s into " << file_name;
     update();
 }
 

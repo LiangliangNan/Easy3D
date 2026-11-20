@@ -579,6 +579,8 @@ private:
         std::size_t next_frame = 0;          // index of the frame rendered next
         int width = 0, height = 0;           // encoded size (multiples of 8)
         int capture_width = 0, capture_height = 0; // view size when recording started
+        // Multisample count of the recorded frames: the choice in the Camera Path
+        // window, not the window's own MSAA.
         unsigned samples = 1;
         std::vector<unsigned char> pixels;   // cropped frame handed to the encoder
         std::string file_name;
@@ -999,6 +1001,10 @@ private:
 #ifdef HAS_FFMPEG
     std::unique_ptr<VideoRecording> video_recording_;
     int video_bitrate_mbps_ = 8;
+    // Multisample count of the recorded frames, chosen in the Camera Path window and
+    // kept across runs like the bitrate. Recorded frames go through capture(), not
+    // through the window, so the view's own count says nothing about the video.
+    int video_samples_ = 4;
 #endif
 
     static const char *process_title(ProcessOp op);

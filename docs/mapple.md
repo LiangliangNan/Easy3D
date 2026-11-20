@@ -16,6 +16,12 @@ Qt): the ImGui app now carries the Mapple name; batch 127 completed the final
 capability pass over the Qt dialogs and the interactive keyframe editing item, so
 `Mapple-Qt` can be retired.
 
+Status: 2026-11-20 — unchanged except for the two consequences of library work (batch 142's
+Snapshot `Samples` combo, batch 143's `ViewerOptions` constructor) and batch 145, which lets the
+Camera Path window choose the video's sample count. `Mapple-Qt` is still in the tree and still
+builds with `Easy3D_ENABLE_QT=ON` on the OpenGL backend; retiring it is still an open decision,
+not something these batches changed.
+
 ## Decision
 
 Rebuild Mapple on ImGui instead of adding a Qt Vulkan widget.
@@ -304,7 +310,9 @@ Phase 2 design notes:
       frame is rendered and encoded per drawn frame behind a modal progress window
       (Cancel/Esc keeps the frames written so far); the camera and HUD state are
       restored at the end, and a view resize aborts the recording with the error
-      logged. The bitrate is adjustable in the Camera Path window.
+      logged. The bitrate and the recorded frames' multisample count are adjustable in the Camera
+      Path window; the count is the recording's own choice, since the frames come from `capture()`
+      rather than from the window.
 - [x] View state files: Camera > Save View State... / Restore View State... write and
       read a `.view` JSON file with the window size and position, the background color,
       the projection type, the clipping/near coefficients, the scene radius and center,
@@ -2452,3 +2460,74 @@ migrated; retirement can proceed whenever it is wanted.
   the trees rebuilt); both backends launch with "Mapple UI ready" and error-free
   log tails; the settings files are byte-wise unchanged. No clicks were scripted
   and `easy3d/util/version.h` is unchanged.
+
+### 2026-11-20 — progress refresh: what reached Mapple since batch 138
+
+- The changelog stopped at batch 138 (2026-11-18) while six more batches landed. `git log` over
+  `applications/Mapple` since then names exactly three commits, all of them part of batches
+  142 and 143:
+  - batch 142 (`an unaffordable sample count steps down instead of failing`, and its follow-up
+    `Offer only the counts the viewer can render`; see the batch-142 entry in docs/vulkan.md):
+    the Snapshot dialog's `Samples` field stopped being a free text box and became a combo built
+    from `supported_sample_mask()` on every frame, so only counts this viewer can render are
+    offered and the stored count is normalized to the largest offered value at most it. Measured
+    there, not assumed: a probe forced the restored count to 3 and both backends logged
+    `mask=7 listed=1,2,4 normalized_from_3_to=2`.
+  - batch 143 (`the window settings become a ViewerOptions struct`): `MappleViewer`'s constructor
+    takes `ViewerOptions` like every other caller instead of repeating the six positional
+    parameters.
+- Batches 139, 140, 141 and 144 changed library and test code only; nothing under
+  `applications/Mapple` is theirs, so there is no Mapple behavior to record.
+- Validation: read from `git log --name-only` over `applications/Mapple` and cross-checked against
+  the batch entries in docs/vulkan.md. No code changed in this entry.
+
+### 2026-11-20 — The Camera Path window chooses the video's sample count (batch 145)
+
+- A recorded video inherited the window's multisampling: `record_camera_path()` set
+  `VideoRecording::samples` from `samples()`, and on this machine that is 1 even though the
+  device renders offscreen targets at 4 - so the user could not raise the quality of the file
+  they were producing, because the frames never go through the window at all (they are rendered
+  by `Viewer::capture()` into an offscreen target).
+- The Camera Path window now has a `Samples` combo, between the `Record Video...` row and the
+  `Bitrate (Mbit/s)` slider, built exactly like the Snapshot dialog's (batch 142): the ladder
+  `{1,2,4,8,16,32,64}` filtered by `supported_sample_mask()`, the stored count normalized to the
+  largest offered value at most it, and the same "1 means no multisampling" hint. The choice is
+  the app's, not the figure's, so it persists with the bitrate: `video_samples` in
+  `settings.ini` (`AppSettings::video_samples`, default 4), loaded and saved under `HAS_FFMPEG`
+  next to `video_bitrate_mbps`.
+- `record_camera_path()` now uses `supported_sample_count(video_samples_)`, so the number in the
+  list is the number the encoder receives, and the start-of-recording log line names it
+  ("recording N frames at F fps with S samples and B Mbit/s into ...").
+  `VideoRecording::samples` is now documented as the panel's choice rather than the view's.
+- Validation (2026-11-20, macOS, DPI-2 host): all three trees build (Vulkan Debug with FFmpeg,
+  OpenGL RelWithDebInfo with FFmpeg, the FFmpeg-off OpenGL check tree, where the whole recording
+  block compiles out). A temporary probe (removed afterwards) drove the window from the
+  environment, since the native save dialog cannot be answered from here:
+  - both backends report `mask=7`, i.e. the combo lists 1, 2 and 4, and normalize a stored count
+    onto the list: `0->1, 3->2, 5->4, 7->4, 16->4, 32->4, 128->4, 6->4, 9->4, 1->1, 2->2, 4->4`.
+  - the window with the new row measures 474 x 468 with content 458 x 434 and
+    `scrollbarY=0, scrollbarX=0`, and the capture shows the combo between the two-keyframes note
+    and the bitrate slider with nothing clipped.
+  - recording the same three-keyframe path through the real recorder at 1 and at 4 samples logs
+    `asked 1, recording->samples=1` and `asked 4, recording->samples=4`, both with
+    `windowSamples=1` - the video count is independent of the view's. Asking for 128 logs
+    `sample count 128 is not supported, using 4` and records at 4.
+  - the two 840 x 640 files differ where they should: in the extracted frame, pixels part-way
+    between background and face (the MSAA coverage blend) number 0 in the 20-60 and 60-150 bands
+    at 1 sample and 206 + 504 at 4 samples on Vulkan, 0 + 0 against 231 + 552 on OpenGL.
+  - `settings.ini` now carries `video_samples=4` alongside `video_bitrate_mbps`; the other keys
+    are unchanged.
+- Not exercised: the combo click itself (the values were driven through `video_samples_`), and the
+  native dialog (the probe named the output file). `easy3d/util/version.h` is unchanged.
+- Suites were not required (the change is confined to `applications/Mapple`) and were run anyway,
+  one tree at a time and each serially: Vulkan Debug 151/151 (214.50 s), OpenGL RelWithDebInfo
+  119/119 (37.74 s), the FFmpeg-off OpenGL check tree 118/118 (36.69 s).
+- The pass before that had launched the three trees simultaneously and each OpenGL suite lost one
+  desktop test there (`opengl.input`, `opengl.portablepick`). Reproduced deliberately by running
+  the two OpenGL trees as two concurrent `ctest -j1` processes: trial 1 reported
+  `opengl.input (Subprocess aborted)`, trial 2 `opengl.viewerloop (Timeout)` - a different test in
+  each trial - and `opengl.input`, `opengl.portablepick` and `opengl.viewerloop` all pass on their
+  own (1.82 s, 0.74 s, 0.38 s) and in the serial runs above. What exactly about two windowed
+  suites sharing the display is responsible was not isolated; the shape matches the parallel `-j4`
+  Vulkan result in docs/vulkan.md, so a failure seen only in concurrent local runs describes this
+  host rather than the code. OpenGL suites are therefore run one tree at a time here.
