@@ -9,6 +9,10 @@
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl.h>
+#endif
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -87,6 +91,40 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.device().validation_errors()==0,"common renderer validation errors");
 #endif
 }
+#ifndef EASY3D_HAS_VULKAN
+// What issue #215 asked the OpenGL backend to be able to answer: "this framebuffer
+// cannot give you pixels" as a false return, before a caller reads untouched memory or
+// the resolve path of an incomplete framebuffer is entered at all. These cases need a
+// current context (the OffScreen host activates its own on construction and resize) but
+// no damaged driver, so they run on every OpenGL backend.
+void exercise_framebuffer_object() {
+    FramebufferObject empty(24,18,0);
+    unsigned char rgba[4]={7,8,9,10};
+    require(!empty.read_color(rgba,1,1),"a framebuffer without attachments read a pixel");
+    require(rgba[0]==7 && rgba[1]==8 && rgba[2]==9 && rgba[3]==10,"a refused pixel read rewrote the caller's bytes");
+    float depth=-1;
+    require(!empty.read_depth(depth,1,1),"a framebuffer without attachments read a depth");
+    require(depth==-1,"a refused depth read rewrote the caller's value");
+    std::vector<unsigned char> pixels;
+    require(!empty.read_color(0,pixels,GL_RGBA),"a framebuffer without attachments read the color buffer");
+    require(!empty.snapshot_color(0,"attachment-less-framebuffer.png"),"a framebuffer without attachments saved an image");
+    std::vector<float> depths;
+    require(!empty.read_depth(depths),"a framebuffer without attachments read the depth buffer");
+
+    // The resolve target is cached and mirrors the attachment set, so it has to be
+    // rebuilt when that set grows - the one mismatch the rebuild loop exists for. A
+    // bound that is too tight fails here instead of in the field.
+    FramebufferObject msaa(32,32,4);
+    if(msaa.samples()>0) {
+        require(msaa.add_color_buffer() && msaa.add_depth_buffer(),"multisample attachments were refused");
+        require(msaa.is_valid() && msaa.read_color(rgba,1,1),"the first multisample resolve read failed");
+        require(msaa.add_color_buffer(),"a second color attachment was refused");
+        std::vector<unsigned char> second;
+        require(msaa.read_color(1,second,GL_RGBA),"resolving after the attachment set grew failed");
+        require(second.size()==32*32*4,"the rebuilt resolve target returned another size");
+    }
+}
+#endif
 int main() {
     static_assert(std::is_base_of<Viewer,OffScreen>::value, "OffScreen must reuse Viewer");
     static_assert(!std::is_convertible<OffScreen*,Viewer*>::value, "OffScreen inheritance must be protected");
@@ -110,6 +148,9 @@ int main() {
         { OffScreen other(79,63); require(other.capture().width==79, "second OffScreen failed"); }
 #endif
         exercise(renderer,"configured-offscreen");
+#ifndef EASY3D_HAS_VULKAN
+        exercise_framebuffer_object();
+#endif
         std::cout << "PASS: configured OffScreen rendering, ownership, resize and MSAA\n";
     } catch(const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

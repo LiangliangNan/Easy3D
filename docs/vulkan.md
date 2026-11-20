@@ -11869,10 +11869,14 @@ keep-going build of both trees (`cmake --build … -- -k`), whose first pass rep
   private `create_window()` took the same two structs, with the same result: OpenGL 118/118 (65 s)
   and Vulkan 151/151, both trees rebuilt keep-going with 0 errors.
 - `python.rendering` passed, and it is the only test that could have caught the binding mistake:
-  it is the only Python consumer that passes the window keywords, the only one that subclasses a
-  binding, and it exists only in the Vulkan tree (`ctest -N -R python` in the OpenGL tree reports 0
-  tests, so the green OpenGL suite said nothing about `ViewerOptions` reaching Python). Run by hand
-  it prints `Packaged Python Viewer, MultiViewer and OffScreen passed`.
+  it is the only Python consumer that passes the window keywords and the only one that subclasses a
+  binding. It is registered wherever `Easy3D_BUILD_PYTHON_BINDINGS` is ON rather than on one
+  backend (corrected 2026-11-20, when the option was compared across the local trees): the OpenGL
+  tree used for these runs, `build-opengl-check`, has it OFF, so `ctest -N -R python` there reports
+  0 tests and the green OpenGL suite said nothing about `ViewerOptions` reaching Python, while the
+  other OpenGL tree, `cmake-build-relwithdebinfo`, has it ON and runs `python.rendering` as its
+  119th test - where it also passes. Run by hand it prints
+  `Packaged Python Viewer, MultiViewer and OffScreen passed`.
 - `tests/viewer/installed/` is compiled only in CI (`cmake -S tests/viewer/installed` against the
   installed package), so the three consumers were checked locally by syntax-only compiles using each
   tree's own `flags.make`: `viewer.cpp` and `main.cpp` against the Vulkan tree, and `unified.cpp` in
@@ -11886,3 +11890,122 @@ keep-going build of both trees (`cmake --build … -- -k`), whose first pass rep
 - `doxygen Doxyfile` in the Vulkan tree now reports **0 warnings**; the 62 `error:` lines in the same
   output are the tutorial-directory copy step (`file '.../tutorials/Tutorial_101_PointCloud' not
   found`), which predates this batch and is unrelated to it.
+
+### 2026-11-20 — batch 144: MultiViewer reads its own cell rects, and an unbuildable resolve framebuffer fails instead of recursing
+
+**Problem.** Two `main`-branch issues were assessed against the branch and both were worth a test
+rather than a guess.
+
+- Issue #179 (HiDPI `MultiViewer`: "the windows are overlapping") reported on a 3840x2160 display
+  with scaling 2, where `window()` reported the *scaled* 1920x1080 and `framebuffer_size()` the
+  3840x2160, so the code that multiplied a `window()`-derived cell rect by `dpi_scaling()` placed
+  the 2x2 grid's cells over a quarter of the screen four times. The branch already derives every
+  cell rect from the framebuffer extent (`easy3d/viewer/multi_viewer.cpp:138-147`, the OpenGL
+  convention flip at `:145`) and calibrates the shared camera with the *logical* cell extent
+  (`:136-137`), so the defect is gone by construction - but the test proved none of it. HEAD's
+  `Grid::bounds()` recomputed the ideal partition from the framebuffer extent and then *used* it to
+  drive picks and captures; it never read what the library had stored, so a `* dpi_scaling()`
+  reintroduced into `update_division()` showed up only as a symptom after rendering - and it does
+  show up there, which is worth stating plainly: with `check_cells()` deleted the same mutation
+  still fails, but downstream at `FAIL: portable query included an unassigned cell or missed
+  assigned geometry`. What the new check adds is that the stored rects and the camera calibration
+  are compared with the arithmetic before any frame is drawn, in the backend's own convention.
+- Issue #215 (`*** stack smashing detected ***` on Ubuntu 24.04 with a Radeon 760M falling back to
+  llvmpipe) has two different signatures in one thread. The offscreen one ends with
+  `Framebuffer incomplete, missing attachment.` immediately before the stack message, and the only
+  unbounded self-recursion in the OpenGL backend is
+  `FramebufferObject::_prepare_resolve_fbo()`: on a color-attachment count mismatch it deleted its
+  resolve target, nulled it and called *itself*, with no bound - and because the log comes from
+  `check_status()` inside the rebuild it was printing once per level. (The file's other calls into
+  itself are not recursion in this sense: `read_color`/`read_depth` delegate to `resolved_fbo_`,
+  which is built with zero samples and therefore takes the non-multisample branch and returns.)
+  `Viewer::snapshot()` then
+  created its offscreen target and ignored the returns of both `add_color_buffer()` and
+  `add_depth_buffer()`, so a refused attachment went straight into that path. The same file's
+  readers answered `true` after a read the driver had simply not performed: `glReadPixels` on an
+  incomplete framebuffer raises `GL_INVALID_FRAMEBUFFER_OPERATION` and leaves the destination
+  alone, which hands untouched memory back as the pixel, the image, or a pick.
+
+**Change.**
+
+- `easy3d/renderer/framebuffer_object.{h,cpp}` - `_prepare_resolve_fbo()` returns `bool` and the
+  recursion becomes a two-attempt loop. Rebuilding at all stays correct, because the resolve target
+  mirrors the attachment set and that set legitimately grows after the first resolve; what is
+  bounded is the *second* failure, since a driver that refuses an attachment will refuse it again
+  and a rebuild cannot change that. When the counts still mismatch after the last attempt it logs
+  `cannot build a resolve framebuffer for the N-sample framebuffer` and returns false. All eight
+  callers propagate it - `color_texture()` and `depth_texture()` return 0, both `read_color` and
+  both `read_depth` overloads return false, and the two `copy_*_to_texture` resolve paths fail
+  instead of resolving into an absent target.
+- The four pixel- and buffer-level readers gained an explicit `is_valid()` refusal with the reason
+  in the comment: checking before `glReadPixels` is the difference between a caller being told the
+  framebuffer cannot answer and being handed whatever bytes its buffer already held. The same four
+  multisample legs also *return* their resolve read instead of running it and falling through to
+  `return true`, because a failed resolve is the same lie one level down - and on a healthy driver
+  the resolve target is complete and its attachment set mirrors this one's, so the value they now
+  return is the `true` they returned before.
+- `easy3d/viewer/snapshot.cpp` - the offscreen target is now built *before* anything renders into
+  it, and both attachment calls are checked: on refusal the target is deleted, the size is logged
+  and the snapshot returns false. The place matters as much as the check - it sits ahead of
+  `disconnect_all(&camera_->frame_modified)`, of the viewport save and of the projection rewrite,
+  so the early return cannot strand a viewer with its update signal disconnected or its projection
+  matrix half-changed.
+- `tests/viewer/multi_viewer_test.cpp` - `Grid` exposes what the library actually stored
+  (`views_[r][c].viewport`, plus `active_row_`/`active_col_`) and the two oracles it must satisfy:
+  `partition()` states the exact integer partition of the *framebuffer* extent, and
+  `active_camera_extent()` the same partition of the *logical* extent the shared camera is supposed
+  to be calibrated with. `check_cells()` asserts per cell that the size matches the partition, that
+  the origin matches it in the backend's own storage convention (Vulkan top-left, OpenGL
+  bottom-left), that the cell lies inside the framebuffer, then that the cells' areas sum to the
+  framebuffer's exactly (no overlap and no gap), and finally that `camera()->screen_width()` and
+  `screen_height()` equal the active cell's logical extent. It runs after the initial layout and
+  after `set_layout(3, 2)`, both points where the tiling is synchronous rather than awaiting a
+  framebuffer callback.
+- `tests/viewer/offscreen_backend_test.cpp` - `exercise_framebuffer_object()` (OpenGL builds, since
+  `framebuffer_object.cpp` is compiled only when `Easy3D_ENABLE_VULKAN` is OFF) asserts the refusal
+  contract on an attachment-less framebuffer: `read_color()` of a pixel and of a buffer,
+  `read_depth()` of a pixel and of a buffer, and `snapshot_color()` all return false and leave the
+  caller's bytes and `float` untouched. Then the multisample case asserts the bounded rebuild from
+  the other side, because a bound that is *too* tight would break this: a 4-sample framebuffer
+  resolves once, gains a second color attachment, and must resolve again into a target that has
+  been rebuilt to the grown attachment set at full size.
+
+**Validation.** Sensitivity was measured by mutation, on both backends, and reverted and verified
+byte-identical to HEAD afterwards.
+
+- Re-multiplying the cell rect by `dpi_scaling()` in `update_division()` - the exact `main` bug -
+  fails the new assertion on this DPI-2 host with `FAIL: cell size is not the framebuffer
+  partition`, in the OpenGL tree and in the Vulkan one alike. The same mutation with the two
+  `check_cells()` calls deleted fails too, but only later and elsewhere:
+  `FAIL: portable query included an unassigned cell or missed assigned geometry`. The new check's
+  contribution is therefore the diagnosis and the ordering, not the existence of a failure - it
+  names the tiling arithmetic before any rendering is involved, on both storage conventions, which
+  a scene-query symptom does not.
+- Cutting the resolve bound from two attempts to one fails `viewer.offscreen` with
+  `FAIL: resolving after the attachment set grew failed`, preceded by
+  `E ... framebuffer_object.cpp:1040] cannot build a resolve framebuffer for the 4-sample
+  framebuffer`. The bound is exactly wide enough for the legitimate rebuild and no wider.
+- Both trees fully rebuilt (0 errors) and their serial suites run: OpenGL 119/119 in
+  `cmake-build-relwithdebinfo` (60.2 s) and 118/118 in `build-opengl-check` (58.5 s; the difference
+  is that the second tree configures `Easy3D_BUILD_PYTHON_BINDINGS=OFF`), Vulkan Debug 151/151
+  (239.7 s) in `cmake-build-debug`, where `vulkan.multiview` and `viewer.offscreen` cover the new
+  assertions on the Vulkan leg. The later resolve-leg propagation edits only `framebuffer_object.cpp`
+  and that file is compiled only when `Easy3D_ENABLE_VULKAN` is OFF
+  (`easy3d/renderer/CMakeLists.txt:118`), so the Vulkan tree's binaries and its 151/151 are
+  unchanged by them; both OpenGL trees were rebuilt and re-run after the edits. `vulkan.crosssection`,
+  the known intermittent, passed in this run.
+
+**Scope, honestly.** Issue #179's defect class cannot be *reproduced* locally as a failure, only
+proved detectable: this display is genuinely DPI-2 (a 400x300 logical window reports an 800x600
+framebuffer) so the arithmetic is exercised at scale 2 on every run, while the hosted Linux and
+Windows runners report scale 1 and cannot distinguish double-scaled viewport math at all. Issue
+#215's own driver state is not reproducible here either - the reporter's Radeon 760M falls back to
+llvmpipe on Ubuntu 24.04, the maintainer has no AMD hardware, and CI's Linux leg already renders
+through software Mesa under Xvfb and is green, so software rasterisation alone is not the trigger.
+What is fixed and tested here is the two contracts the thread exposed - an unbuildable resolve
+target must not recurse, and a framebuffer that cannot answer must not report success - both of
+which are defects independent of that driver. The four resolve-leg returns are the weakest evidence
+of the batch: turning them red would need a driver that fails a read from a *complete* resolve
+target, which nothing here does, so they are covered by the no-regression runs rather than by a
+failing test. The thread's *other* signature, a crash from
+`Viewer::run()` with no framebuffer log line at all, is untouched by this batch and remains open.

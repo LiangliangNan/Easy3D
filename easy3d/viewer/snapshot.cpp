@@ -211,6 +211,19 @@ namespace easy3d {
 			return false;
 		}
 
+		// Build the offscreen target before anything renders into it, and say so when
+		// the driver refuses it: binding, drawing and reading an incomplete framebuffer
+		// each keep reporting success, so continuing here hands out untouched memory as
+		// the image (and reaches the resolve path of issue #215).
+		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
+		const bool color_ok = fbo->add_color_buffer();
+		const bool depth_ok = fbo->add_depth_buffer();
+		if (!color_ok || !depth_ok) {
+			delete fbo;
+			LOG(ERROR) << "failed to create the " << sub_w << " x " << sub_h << " snapshot framebuffer";
+			return false;
+		}
+
 		double scaleX = sub_w / static_cast<double>(w);
 		double scaleY = sub_h / static_cast<double>(h);
 		double deltaX = 2.0 * xMin * scaleX;
@@ -233,10 +246,6 @@ namespace easy3d {
 		// the tile explicitly and restore the window viewport afterwards.
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
-
-		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
-		fbo->add_color_buffer();
-		fbo->add_depth_buffer();
 
 		for (int i = 0; i < nbX; i++) {
 			for (int j = 0; j < nbY; j++) {

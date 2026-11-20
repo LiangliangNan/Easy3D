@@ -1003,32 +1003,42 @@ namespace easy3d {
     }
 
 
-    void FramebufferObject::_prepare_resolve_fbo() {
-        if (!resolved_fbo_) {
-            resolved_fbo_ = new FramebufferObject(width(), height(), 0);	easy3d_debug_log_gl_error
-            for (const auto& attachment : color_attachments_) {
-                if (attachment.texture)
-                    resolved_fbo_->add_color_texture(attachment.internal_format, attachment.format, attachment.type);
-                else
-                    resolved_fbo_->add_color_buffer(attachment.internal_format, attachment.format, attachment.type);
-            }
+    // The resolve target mirrors this FBO's attachments with multisampling off, so it is
+    // built on first use and rebuilt whenever the attachment set has moved on. A driver
+    // that refuses one of those attachments (the sign of an unsupported or incomplete
+    // configuration) leaves the counts mismatched for good, and rebuilding cannot fix a
+    // refusal: the second attempt is the last one, and the readers report failure. The
+    // unbounded self-recursion this replaced consumed the stack instead, which is how an
+    // incomplete framebuffer ended in "*** stack smashing detected ***".
+    bool FramebufferObject::_prepare_resolve_fbo() {
+        for (int attempt = 0; attempt < 2; ++attempt) {
+            if (!resolved_fbo_) {
+                resolved_fbo_ = new FramebufferObject(width(), height(), 0);	easy3d_debug_log_gl_error
+                for (const auto& attachment : color_attachments_) {
+                    if (attachment.texture)
+                        resolved_fbo_->add_color_texture(attachment.internal_format, attachment.format, attachment.type);
+                    else
+                        resolved_fbo_->add_color_buffer(attachment.internal_format, attachment.format, attachment.type);
+                }
 
-            bool need_depth = (depth_buffer_ != 0) || (depth_texture_ != 0);
-            if (need_depth) {
-                if (depth_texture_)
-                    resolved_fbo_->add_depth_texture(depth_internal_format_, depth_texture_filter_, depth_texture_compare_mode_, depth_texture_compare_func_);
-                else
-                    resolved_fbo_->add_depth_buffer(depth_internal_format_);
+                bool need_depth = (depth_buffer_ != 0) || (depth_texture_ != 0);
+                if (need_depth) {
+                    if (depth_texture_)
+                        resolved_fbo_->add_depth_texture(depth_internal_format_, depth_texture_filter_, depth_texture_compare_mode_, depth_texture_compare_func_);
+                    else
+                        resolved_fbo_->add_depth_buffer(depth_internal_format_);
+                }
+                resolved_fbo_->check_status();
             }
-            resolved_fbo_->check_status();
-        }
-        if (resolved_fbo_->num_color_attachments() != num_color_attachments()) {
+            if (resolved_fbo_->num_color_attachments() == num_color_attachments()) {
+                resolved_fbo_->ensure_size(width(), height());	easy3d_debug_log_gl_error
+                return true;
+            }
             delete resolved_fbo_;
             resolved_fbo_ = nullptr;
-            _prepare_resolve_fbo();
         }
-
-        resolved_fbo_->ensure_size(width(), height());	easy3d_debug_log_gl_error
+        LOG(ERROR) << "cannot build a resolve framebuffer for the " << samples_ << "-sample framebuffer";
+        return false;
     }
 
 
@@ -1043,7 +1053,8 @@ namespace easy3d {
             if (samples() == 0 || !resolve)
                 return texture;
             else { // resolve
-                const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
+                if (!const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo())
+                    return 0;
                 blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, static_cast<int>(index), static_cast<int>(index), GL_COLOR_BUFFER_BIT);	easy3d_debug_log_gl_error
                 return resolved_fbo_->color_texture(index);
             }
@@ -1060,7 +1071,8 @@ namespace easy3d {
             if (samples() == 0 || !resolve)
                 return depth_texture_;
             else { // resolve
-                const_cast<FramebufferObject *>(this)->_prepare_resolve_fbo();
+                if (!const_cast<FramebufferObject *>(this)->_prepare_resolve_fbo())
+                    return 0;
                 blit_framebuffer(const_cast<FramebufferObject *>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);
                 easy3d_debug_log_gl_error
                 return resolved_fbo_->depth_texture();
@@ -1354,6 +1366,10 @@ namespace easy3d {
             LOG(ERROR) << "color attachment " << index << " does not exist";
             return false;
         }
+        if (!is_valid()) {
+            LOG(ERROR) << "framebuffer not valid";
+            return false;
+        }
 
         unsigned int bytes_per_pixel = 0;
         if (format == GL_RGB || format == GL_BGR)
@@ -1417,10 +1433,13 @@ namespace easy3d {
         }
 
         else {
-            const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
+            if (!const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo())
+                return false;
             blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, static_cast<int>(index), static_cast<int>(index), GL_COLOR_BUFFER_BIT);
             easy3d_debug_log_gl_error
-            resolved_fbo_->read_color(index, buffer, format, flip_vertically);
+            // The resolve read is the answer, not a step on the way to `return true`:
+            // its failure means the caller's buffer holds what it held before the call.
+            return resolved_fbo_->read_color(index, buffer, format, flip_vertically);
         }
 
         return true;
@@ -1490,6 +1509,10 @@ namespace easy3d {
             LOG(ERROR) << "depth attachment does not exist";
             return false;
         }
+        if (!is_valid()) {
+            LOG(ERROR) << "framebuffer not valid";
+            return false;
+        }
 
         glFinish();
         if (samples_ <= 0) {
@@ -1523,9 +1546,10 @@ namespace easy3d {
         }
 
         else {
-            const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
+            if (!const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo())
+                return false;
             blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error
-            resolved_fbo_->read_depth(buffer, flip_vertically);
+            return resolved_fbo_->read_depth(buffer, flip_vertically);
         }
 
         return true;
@@ -1564,6 +1588,13 @@ namespace easy3d {
             LOG(ERROR) << "color attachment " << index << " does not exist";
             return false;
         }
+        if (!is_valid()) {
+            // glReadPixels of an incomplete framebuffer only raises a GL error and
+            // leaves the caller's bytes alone, so answering true here hands out
+            // untouched memory as if it were the pixel (issue #215).
+            LOG(ERROR) << "framebuffer not valid";
+            return false;
+        }
 
         glFinish();
         if (samples_ <= 0) {
@@ -1587,9 +1618,10 @@ namespace easy3d {
         }
 
         else {
-            const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
+            if (!const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo())
+                return false;
             blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_log_gl_error
-            resolved_fbo_->read_color(rgba, x, y, index);
+            return resolved_fbo_->read_color(rgba, x, y, index);
         }
 
         return true;
@@ -1600,6 +1632,10 @@ namespace easy3d {
     bool FramebufferObject::read_depth(float& depth, int x, int y) const {
         if (!has_depth_attachment()) {
             LOG(ERROR) << "depth attachment does not exist";
+            return false;
+        }
+        if (!is_valid()) {
+            LOG(ERROR) << "framebuffer not valid";
             return false;
         }
 
@@ -1621,9 +1657,10 @@ namespace easy3d {
         }
 
         else {
-            const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
+            if (!const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo())
+                return false;
             blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error
-            resolved_fbo_->read_depth(depth, x, y);
+            return resolved_fbo_->read_depth(depth, x, y);
         }
 
         return true;
@@ -1852,7 +1889,8 @@ namespace easy3d {
             return true;
         }
         else {
-            _prepare_resolve_fbo();
+            if (!_prepare_resolve_fbo())
+                return false;
             return resolved_fbo_->copy_color_to_texture(texture_handle, index, internal_format, format, type, filter);
         }
     }
@@ -1917,7 +1955,8 @@ namespace easy3d {
             return true;
         }
         else {
-            _prepare_resolve_fbo();
+            if (!_prepare_resolve_fbo())
+                return false;
             return resolved_fbo_->copy_depth_to_texture(texture_handle, internal_format, filter);
         }
     }

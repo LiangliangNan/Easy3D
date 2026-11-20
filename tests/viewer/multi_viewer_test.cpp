@@ -27,10 +27,37 @@ struct Grid : MultiViewer {
     using MultiViewer::mouse_press_event;
     using Viewer::mouse_drag_event;
     using Viewer::mouse_release_event;
+    // The cell rects MultiViewer built, not a re-derivation of them: a change to
+    // update_division() has to show up here. views_ stores Vulkan rects in top-left
+    // framebuffer pixels and OpenGL ones bottom-left, so cell() is raw and bounds()
+    // hands out the top-left convention the pixel math below expects.
+    using MultiViewer::views_;
+    const ivec4& cell(int row,int col) const { return views_[row][col].viewport; }
     ivec4 bounds(int row,int col) const {
+        const auto& stored=cell(row,col);
+#ifdef EASY3D_HAS_VULKAN
+        return stored;
+#else
+        return ivec4(stored.x,framebuffer_height()-stored.y-stored.w,stored.z,stored.w);
+#endif
+    }
+    // The exact integer partition of the framebuffer that the cells must form. Stated
+    // from the framebuffer extent only: scaling a logical-window rect by dpi_scaling()
+    // - the double scaling of issue #179 - is what this test must reject.
+    ivec4 partition(int row,int col) const {
         const int w=framebuffer_width(),h=framebuffer_height();
         const int x=col*w/columns(),y=row*h/rows();
         return ivec4(x,y,(col+1)*w/columns()-x,(row+1)*h/rows()-y);
+    }
+    using MultiViewer::active_row_;
+    using MultiViewer::active_col_;
+    // The same partition of the *logical* window, which is what update_division()
+    // calibrates the shared camera with (the other half of issue #179: a camera fed
+    // framebuffer pixels at a scale factor of two doubles every pointer delta).
+    void active_camera_extent(int& w,int& h) const {
+        const int x=active_col_*width()/columns(),y=active_row_*height()/rows();
+        w=(active_col_+1)*width()/columns()-x;
+        h=(active_row_+1)*height()/rows()-y;
     }
     // pick() takes logical window coordinates; bounds() is in framebuffer pixels.
     Viewer::PickResult pick_cell(const ivec4& vp) const {
@@ -54,6 +81,29 @@ void frame(Grid& grid) {
 void color_at(const std::vector<unsigned char>& rgba,int width,int x,int y,const vec4& expected) {
     const auto p=4*(size_t(y)*width+x);
     for(unsigned c=0;c<3;++c) require(std::abs(int(rgba.at(p+c))-int(std::lround(expected[c]*255)))<=3,"wrong cell image or lost material");
+}
+// Reconciles the stored cell rects with the framebuffer partition they are supposed to
+// be, at the current window size and grid layout.
+void check_cells(const Grid& grid) {
+    const int fw=grid.framebuffer_width(),fh=grid.framebuffer_height();
+    require(fw>=grid.width() && fh>=grid.height(),"framebuffer is smaller than the logical window");
+    long area=0;
+    for(int row=0;row<grid.rows();++row) for(int col=0;col<grid.columns();++col) {
+        const auto want=grid.partition(row,col),got=grid.cell(row,col);
+        require(got.z==want.z && got.w==want.w,"cell size is not the framebuffer partition");
+#ifdef EASY3D_HAS_VULKAN
+        require(got.x==want.x && got.y==want.y,"Vulkan cell is not stored in top-left framebuffer pixels");
+#else
+        require(got.x==want.x && got.y==fh-want.y-want.w,"OpenGL cell is not stored in bottom-left framebuffer pixels");
+#endif
+        require(got.x>=0 && got.y>=0 && got.x+got.z<=fw && got.y+got.w<=fh,"cell escapes the framebuffer");
+        area+=long(got.z)*got.w;
+    }
+    require(area==long(fw)*fh,"cells do not tile the framebuffer exactly");
+    int w,h;
+    grid.active_camera_extent(w,h);
+    require(grid.camera()->screen_width()==w && grid.camera()->screen_height()==h,
+            "the shared camera is not calibrated to the active cell's logical extent");
 }
 void snapshot(Grid& grid,const char* file,float scale) {
     const auto matrix=grid.camera()->model_view_projection_matrix();
@@ -81,7 +131,7 @@ int main(int argc,char**) {
         grid.assign(0,0,red.get());grid.assign(0,1,blue.get());grid.assign(1,0,red->renderer()->get_triangles_drawable("faces"));
         auto point=std::make_shared<PointsDrawable>("sphere");grid.add_drawable(point);point->update_vertex_buffer({vec3(0)});point->set_impostor_type(PointsDrawable::SPHERE);point->set_point_size(23);point->set_lighting(false);point->set_uniform_coloring(vec4(0,1,0,1));grid.assign(1,1,point.get());
         auto line=std::make_shared<LinesDrawable>("cylinder");grid.add_drawable(line);line->update_vertex_buffer({vec3(0,-.5f,0),vec3(0,.5f,0)});line->set_impostor_type(LinesDrawable::CYLINDER);line->set_line_width(13);line->set_lighting(false);line->set_uniform_coloring(vec4(1,0,1,1));grid.assign(1,2,line.get());
-        grid.fit_screen();frame(grid);snapshot(grid,"multiview.png",1);snapshot(grid,"multiview-scaled.png",1.25f);
+        grid.fit_screen();frame(grid);check_cells(grid);snapshot(grid,"multiview.png",1);snapshot(grid,"multiview-scaled.png",1.25f);
         require(grid.snapshot("multiview-transparent.png",1,4,2,false),"transparent/cropped grid snapshot failed");
         std::vector<unsigned char> transparent;int tw,th,tc;
         require(ImageIO::load("multiview-transparent.png",transparent,tw,th,tc,4,false) && transparent[3]==0,"grid snapshot lost transparent background");
@@ -180,7 +230,7 @@ int main(int argc,char**) {
         const auto crossed=pan(3*grid.width()/6,grid.height()/4,reach); // drag from cell (0,1) into cell (0,2)
         require((crossed-delta*float(reach)/10).norm()<1e-4f,"cross-cell drag lost the pressed cell's origin");
         require(grid.delete_model(red.get()),"model removal failed");frame(grid);grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(!found,"deleted model retained an assigned drawable");
-        require(grid.delete_drawable(point.get()),"drawable removal failed");grid.set_layout(3,2);frame(grid);require(grid.models().size()==1,"layout changes altered ownership");grid.clear_scene();frame(grid);
+        require(grid.delete_drawable(point.get()),"drawable removal failed");grid.set_layout(3,2);frame(grid);check_cells(grid);require(grid.models().size()==1,"layout changes altered ownership");grid.clear_scene();frame(grid);
         grid.point_under_pixel(grid.width()/4,grid.height()/6,found);require(!found && grid.models().empty() && grid.drawables().empty(),"cleared assignments rendered old geometry");
 #ifdef EASY3D_HAS_VULKAN
         require(grid.device().validation_errors()==0,"multi-view Vulkan validation error");

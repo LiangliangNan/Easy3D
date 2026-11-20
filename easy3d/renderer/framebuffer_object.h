@@ -619,7 +619,11 @@ namespace easy3d {
         // Display any buffer (convert value into string).
         void _print_buffer(int value) const;
 
-        void _prepare_resolve_fbo();
+        // Builds (or rebuilds after a layout change) the single-sample target that the
+        // multisampled attachments are resolved into, and reports whether there is one
+        // to resolve into. False means this FBO's attachments could not be mirrored, so
+        // the caller must fail instead of touching resolved_fbo_.
+        bool _prepare_resolve_fbo();
 
     private:
         GLuint fbo_id_;
