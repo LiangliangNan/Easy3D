@@ -140,6 +140,25 @@ namespace easy3d {
     }
 
 
+    void KeyFrameInterpolator::set_keyframe_dwell(std::size_t index, float seconds) {
+        stop_interpolation();
+        keyframes_.at(index).set_dwell_time(seconds);
+        pathIsValid_ = false;
+    }
+
+
+    float KeyFrameInterpolator::keyframe_dwell(std::size_t index) const {
+        return keyframes_.at(index).dwell_time();
+    }
+
+
+    void KeyFrameInterpolator::set_speed_profile(SpeedProfile profile) {
+        stop_interpolation();
+        speed_profile_ = profile;
+        pathIsValid_ = false;
+    }
+
+
     void KeyFrameInterpolator::delete_path() {
         stop_interpolation();
         keyframes_.clear();
@@ -377,6 +396,28 @@ namespace easy3d {
             }
             return points;
         }
+
+        // Smoothstep ease-in/out: 3w^2 - 2w^3. Flat derivative at both ends.
+        inline float ease_smoothstep(float w) {
+            return 3.0f * w * w - 2.0f * w * w * w;
+        }
+
+        // Remap the within-segment parameter w (0 = at start keyframe, 1 = at end keyframe)
+        // according to the speed profile. slow_start/slow_end request extra flattening at
+        // the corresponding end (used by CINEMATIC next to keyframes with dwell).
+        inline float ease_parameter(float w, KeyFrameInterpolator::SpeedProfile profile,
+                                    bool slow_start, bool slow_end) {
+            if (profile == KeyFrameInterpolator::SpeedProfile::CONSTANT)
+                return w;
+            float w_eased = ease_smoothstep(w);  // EASE_IN_OUT base
+            if (profile == KeyFrameInterpolator::SpeedProfile::CINEMATIC) {
+                if (slow_start)
+                    w_eased = 1.0f - ease_smoothstep(1.0f - w_eased);  // extra flat at start
+                if (slow_end)
+                    w_eased = ease_smoothstep(w_eased);                // extra flat at end
+            }
+            return w_eased;
+        }
     } // namespace
 
 
@@ -473,7 +514,8 @@ namespace easy3d {
             return interpolated_path_;
 
         interpolated_path_.clear();
-        if (keyframes_.size() == 1) {   // only one keyframe
+        const std::size_t n = keyframes_.size();
+        if (n == 1) {   // only one keyframe
             LOG(INFO) << "only 1 keyframe: interpolation not possible";
             interpolated_path_.emplace_back(keyframes_[0].position(), keyframes_[0].orientation());
             pathIsValid_=true;last_stopped_index_=0;
@@ -483,16 +525,47 @@ namespace easy3d {
         if (frame_rate()<=0 || frame_rate()>1000 || !std::isfinite(interpolation_speed()) || interpolation_speed()<=0)
             throw std::invalid_argument("interpolation requires frame rate 1..1000 and positive finite speed");
         const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
-        const double count = double(duration()) / interval + 1;
+
+        // Total effective duration = travel time between keyframes + dwell time at each keyframe.
+        float total_dwell = 0.0f, total_travel = 0.0f;
+        for (std::size_t i = 0; i < n; ++i) {
+            total_dwell += keyframes_[i].dwell_time();
+            if (i + 1 < n)
+                total_travel += keyframes_[i + 1].time() - keyframes_[i].time();
+        }
+        const float total = total_dwell + total_travel;
+        const double count = double(total) / interval + 1;
         if (!std::isfinite(count) || count>std::numeric_limits<int>::max())
             throw std::invalid_argument("interpolation path has too many samples");
         const int num_frames = std::max(2,static_cast<int>(count));
-        if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
-            LOG(INFO) << "only two keyframe: linear interpolation";
-            for (int i=0; i<num_frames; ++i) {
-                const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
-                const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();
-                const auto orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w);
+
+        if (n == 2) {   // only two keyframes: linear interpolation with optional end dwells
+            LOG(INFO) << "only two keyframes: linear interpolation";
+            // Timeline: dwell at keyframe 0, travel 0->1, dwell at keyframe 1.
+            const float dwell0 = keyframes_[0].dwell_time();
+            const float travel = keyframes_[1].time() - keyframes_[0].time();
+            const float dwell1 = keyframes_[1].dwell_time();
+            const float seg0_end = dwell0;
+            const float seg1_end = seg0_end + travel;
+            for (int i = 0; i < num_frames; ++i) {
+                const float t_k = std::min(static_cast<float>(i) * interval, total);
+                vec3 pos;
+                quat orient;
+                if (t_k <= seg0_end) {
+                    pos = keyframes_[0].position();
+                    orient = keyframes_[0].orientation();
+                } else if (t_k <= seg1_end) {
+                    const float w = (t_k - seg0_end) / travel;
+                    // Apply speed profile within the travel segment.
+                    const bool slow_start = dwell0 > 0.0f;
+                    const bool slow_end = dwell1 > 0.0f;
+                    const float w_eased = ease_parameter(w, speed_profile_, slow_start, slow_end);
+                    pos = (1.0f - w_eased) * keyframes_[0].position() + w_eased * keyframes_[1].position();
+                    orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w_eased);
+                } else {
+                    pos = keyframes_[1].position();
+                    orient = keyframes_[1].orientation();
+                }
                 interpolated_path_.emplace_back(pos, orient.normalized());
             }
             pathIsValid_ = true;
@@ -507,122 +580,130 @@ namespace easy3d {
         }
 
         LOG_IF(keyframes_.size() > 1, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
+
+        // Orientation: squad tangents at every keyframe (shared by both methods).
+        std::vector<quat> tangents(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            if (i == 0)
+                tangents[i] = keyframes_[0].orientation();
+            else if (i == n - 1)
+                tangents[i] = keyframes_[n - 1].orientation();
+            else
+                tangents[i] = quat::squad_tangent(
+                    keyframes_[i - 1].orientation(),
+                    keyframes_[i].orientation(),
+                    keyframes_[i + 1].orientation());
+        }
+
+        // Position fitter (method-specific).
+        typedef SplineCurveInterpolation<Vec, 3, float> PosInterpFitter;
+        typedef SplineCurveFitting <Vec, 3, float> PosFitFitter;
+        PosInterpFitter pos_interp_fitter;
+        PosFitFitter pos_fit_fitter(3, PosFitFitter::eOPEN_UNIFORM);
+        std::vector<float> arc_params;      // INTERPOLATION: accumulated arc length per keyframe
+        std::vector<vec3> arc_positions;    // INTERPOLATION: keyframe positions
+        float largest_t = 0.0f;             // INTERPOLATION: total arc length
         if (interpolation_method_ == INTERPOLATION) {
-            // we choose the accumulated path length as parameter, so to have equal intervals.
-            std::vector<float> parameters(keyframes_.size());
-            std::vector<vec3> positions(keyframes_.size());
+            arc_params.resize(n);
+            arc_positions.resize(n);
             float dist(0.0f);
-            for (int i=0; i<keyframes_.size(); ++i) {
-                positions[i] = keyframes_[i].position();
+            for (std::size_t i = 0; i < n; ++i) {
+                arc_positions[i] = keyframes_[i].position();
                 if (i > 0)
-                    dist += distance(positions[i-1], positions[i]);
-                parameters[i] = dist;
+                    dist += distance(arc_positions[i-1], arc_positions[i]);
+                arc_params[i] = dist;
+            }
+            pos_interp_fitter.set_boundary(PosInterpFitter::second_deriv, 0, PosInterpFitter::second_deriv, 0);
+            pos_interp_fitter.set_points(arc_params, arc_positions);
+            largest_t = arc_params.back();
+        } else {
+            std::vector<vec3> positions(n);
+            for (std::size_t i = 0; i < n; ++i)
+                positions[i] = keyframes_[i].position();
+            pos_fit_fitter.set_ctrl_points(positions);
+        }
+
+        // Walk the timeline: dwell at keyframe i, then travel to keyframe i+1.
+        // t_cursor tracks the global time (dwell + travel) at the start of each segment.
+        interpolated_path_.reserve(num_frames);
+        float t_cursor = 0.0f;
+        for (int k = 0; k < num_frames; ++k) {
+            const float t_k = std::min(static_cast<float>(k) * interval, total);
+
+            // Advance the segment cursor while t_k is past this segment's end.
+            std::size_t seg = 0;
+            float seg_start = 0.0f;
+            while (seg < n) {
+                const float seg_dwell = keyframes_[seg].dwell_time();
+                const float seg_travel = (seg + 1 < n) ? (keyframes_[seg + 1].time() - keyframes_[seg].time()) : 0.0f;
+                const float seg_end = seg_start + seg_dwell + seg_travel;
+                if (t_k <= seg_end) break;
+                seg_start = seg_end;
+                ++seg;
             }
 
-            // spine interpolation for positions
-            typedef SplineCurveInterpolation<Vec, 3, float> PosFitter;
-            PosFitter pos_fitter;
-            pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0);
-            pos_fitter.set_points(parameters, positions);
-
-            // Orientation: squad (spherical cubic interpolation) for smooth rotation.
-            // Component-wise spline interpolation of quaternion vectors followed by
-            // normalization is not a proper rotation on the unit sphere and can cause
-            // non-constant angular velocity. squad() stays on the unit sphere throughout.
-            const float largest_t = parameters.back();
-            std::vector<quat> tangents(keyframes_.size());
-            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
-                if (i == 0)
-                    tangents[i] = keyframes_[0].orientation();
-                else if (i == keyframes_.size() - 1)
-                    tangents[i] = keyframes_.back().orientation();
-                else
-                    tangents[i] = quat::squad_tangent(
-                        keyframes_[i - 1].orientation(),
-                        keyframes_[i].orientation(),
-                        keyframes_[i + 1].orientation());
+            if (seg >= n) {
+                // t_k == total: end on the last keyframe.
+                interpolated_path_.emplace_back(keyframes_[n-1].position(), keyframes_[n-1].orientation());
+                continue;
             }
 
-            for (int i = 0; i < num_frames; ++i) {
-                const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
-                const float t_global = u * largest_t;
-                const vec3 pos = pos_fitter.eval_f(u);
+            const float dwell_dur = keyframes_[seg].dwell_time();
+            const float dwell_end = seg_start + dwell_dur;
 
-                // Find which keyframe segment t_global falls into.
-                int seg = 0;
-                while (seg < static_cast<int>(keyframes_.size()) - 2 && t_global > parameters[seg + 1])
-                    ++seg;
-                const float seg_u = (t_global - parameters[seg]) / (parameters[seg + 1] - parameters[seg]);
+            if (t_k <= dwell_end) {
+                // Pause at keyframe seg.
+                interpolated_path_.emplace_back(keyframes_[seg].position(), keyframes_[seg].orientation());
+            } else if (seg + 1 < n) {
+                // Travel from keyframe seg to seg+1.
+                const float travel_start = dwell_end;
+                const float travel_dur = keyframes_[seg + 1].time() - keyframes_[seg].time();
+                const float w = (t_k - travel_start) / travel_dur;
+
+                // Apply the speed profile: ease-in/out within each travel segment, with
+                // extra slowing near keyframes that have a non-zero dwell time (CINEMATIC).
+                const bool slow_start = keyframes_[seg].dwell_time() > 0.0f;
+                const bool slow_end = keyframes_[seg + 1].dwell_time() > 0.0f;
+                const float w_eased = ease_parameter(w, speed_profile_, slow_start, slow_end);
+
+                // Global travel fraction (0 at keyframe 0, 1 at keyframe n-1).
+                // Cumulative travel time up to this segment plus the eased travel within it.
+                float cum_travel = 0.0f;
+                for (std::size_t i = 0; i < seg; ++i)
+                    cum_travel += keyframes_[i + 1].time() - keyframes_[i].time();
+                const float u_global = (cum_travel + w_eased * travel_dur) / total_travel;
+
+                vec3 pos;
+                if (interpolation_method_ == INTERPOLATION) {
+                    // Arc-length spline parameter in [0,1].
+                    pos = pos_interp_fitter.eval_f(u_global);
+                } else {
+                    // FITTING: map w_eased linearly within the B-spline parameter range for this
+                    // keyframe-to-keyframe transition. eOPEN_UNIFORM passes through the
+                    // endpoints, so u = seg/(n-1) is approximately keyframe seg's position.
+                    const float u = static_cast<float>(seg) / static_cast<float>(n - 1)
+                                  + w_eased * (1.0f / static_cast<float>(n - 1));
+                    pos = pos_fit_fitter.eval_f(u);
+                }
 
                 const quat orient = quat::squad(
                     keyframes_[seg].orientation(),
                     tangents[seg],
                     tangents[seg + 1],
                     keyframes_[seg + 1].orientation(),
-                    seg_u);
+                    w_eased);
 
                 interpolated_path_.emplace_back(pos, orient);
-            }
-        }
-        else {
-            std::vector<vec3> positions(keyframes_.size());
-            std::vector<quat> orientations(keyframes_.size());
-            for (std::size_t i=0; i<keyframes_.size(); ++i) {
-                positions[i] = keyframes_[i].position();
-                orientations[i] = keyframes_[i].orientation();
-            }
-
-            // spine fitting
-            const int order = 3;  // Smoothness of the spline (min 2)
-            typedef SplineCurveFitting <Vec, 3, float> PosFitter;
-            PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
-            pos_fitter.set_ctrl_points(positions);
-            const std::vector<float> parameters = pos_fitter.get_equally_spaced_parameters(num_frames);
-            const std::vector<float>& knots = pos_fitter.get_nodal_vector();
-
-            // Orientation: compute squad tangents at each control point.
-            std::vector<quat> tangents(keyframes_.size());
-            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
-                if (i == 0)
-                    tangents[i] = orientations[0];
-                else if (i == keyframes_.size() - 1)
-                    tangents[i] = orientations.back();
-                else
-                    tangents[i] = quat::squad_tangent(
-                        orientations[i - 1], orientations[i], orientations[i + 1]);
-            }
-
-            const int n = static_cast<int>(keyframes_.size());
-            const int num_spans = n - order + 1;
-
-            for (int i = 0; i < num_frames; ++i) {
-                const float u = parameters[i];
-                const vec3 pos = pos_fitter.eval_f(u);
-
-                // Find which B-spline span u falls into. Span j covers
-                // [knots[j+order-1], knots[j+order]].
-                int seg = 0;
-                while (seg < num_spans - 1 && u > knots[seg + order])
-                    ++seg;
-                const float knot_start = knots[seg + order - 1];
-                const float knot_end = knots[seg + order];
-                const float seg_u = (u - knot_start) / (knot_end - knot_start);
-
-                const quat orient = quat::squad(
-                    orientations[seg],
-                    tangents[seg],
-                    tangents[seg + 1],
-                    orientations[seg + 1],
-                    seg_u);
-
-                interpolated_path_.emplace_back(pos, orient);
+            } else {
+                // Last keyframe: only dwell remains (handled by the dwell branch above).
+                interpolated_path_.emplace_back(keyframes_[seg].position(), keyframes_[seg].orientation());
             }
         }
 
         LOG_IF(keyframes_.size() > 2, INFO)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
-                        << string::time(duration() / interpolation_speed() * 1000)
+                        << string::time(total / interpolation_speed() * 1000)
                         << " (at speed " << interpolation_speed() << "x)";
 
         pathIsValid_ = true;

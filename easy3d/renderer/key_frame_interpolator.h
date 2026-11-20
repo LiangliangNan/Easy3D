@@ -284,6 +284,30 @@ namespace easy3d {
          */
         Method interpolation_method() const { return interpolation_method_; }
 
+        /** Speed profile for the interpolation parameter along the path. */
+        enum class SpeedProfile {
+            CONSTANT,      ///< Constant speed within each segment (default).
+            EASE_IN_OUT,   ///< Smoothstep ease-in at segment start, ease-out at segment end.
+            CINEMATIC      ///< Ease-in/out plus extra slowing near keyframes with non-zero dwell.
+        };
+        /**
+         * \brief Returns the speed profile used to remap the interpolation parameter.
+         * \details The profile remaps the uniform parameter within each travel segment:
+         *      CONSTANT leaves it unchanged; EASE_IN_OUT applies a smoothstep ease-in/out;
+         *      CINEMATIC additionally slows down near keyframes that have a non-zero dwell time.
+         * \return The speed profile.
+         * \sa set_speed_profile()
+         */
+        SpeedProfile speed_profile() const { return speed_profile_; }
+
+        /**
+         * \brief Sets the speed profile used to remap the interpolation parameter.
+         * \details Changing the profile invalidates the interpolated path and stops playback.
+         * \param profile The speed profile.
+         * \sa speed_profile()
+         */
+        void set_speed_profile(SpeedProfile profile);
+
         /**
          * \brief Returns the current interpolation speed.
          * \details Default value is 1.0, which means keyframe_time() will be matched during the interpolation
@@ -511,12 +535,46 @@ namespace easy3d {
             void set_time(float t) { time_ = t; }
             void set_position(const vec3& p) { p_ = p; }
             void set_orientation(const quat& q) { q_ = q; }
+            /**
+             * \brief Returns the dwell time at this keyframe, in seconds.
+             * \details The camera pauses for dwell_time() seconds at this keyframe
+             *      before proceeding to the next one. Default is 0 (no pause).
+             * \return The dwell time in seconds.
+             * \sa set_dwell_time()
+             */
+            float dwell_time() const { return dwell_time_; }
+            /**
+             * \brief Sets the dwell time at this keyframe, in seconds.
+             * \param seconds Seconds to pause at this keyframe before moving on.
+             * \sa dwell_time()
+             */
+            void set_dwell_time(float seconds) { dwell_time_ = seconds; }
             void flip_if_needed(const quat& prev); // flip its orientation if needed
         private:
             vec3 p_;
             quat q_;
             float time_;
+            float dwell_time_ = 0.0f; //!< Seconds to pause at this keyframe (0 = no pause).
         };
+
+        /**
+         * \brief Sets the dwell time of the \p index-th keyframe.
+         * \details The camera pauses for \p seconds at this keyframe before proceeding
+         *      to the next one. The \p index has to be in the range
+         *      [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \param seconds Seconds to pause at the keyframe (0 = no pause).
+         * \sa keyframe_dwell()
+         */
+        void set_keyframe_dwell(std::size_t index, float seconds);
+
+        /**
+         * \brief Returns the dwell time of the \p index-th keyframe, in seconds.
+         * \param index The index of the keyframe.
+         * \return The dwell time in seconds.
+         * \sa set_keyframe_dwell()
+         */
+        float keyframe_dwell(std::size_t index) const;
 
         // Appends the keyframe cameras as glyph triangles to the given buffers: the glyph
         // mesh is created once (shape::create_camera) and instanced per keyframe with that
@@ -542,6 +600,7 @@ namespace easy3d {
         int fps_;
         Method interpolation_method_;
         float interpolation_speed_;
+        SpeedProfile speed_profile_ = SpeedProfile::CONSTANT;
         bool interpolation_started_;
         bool manual_playback_ = false;
         bool timer_mode_used_ = false;

@@ -307,6 +307,16 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
+    // Speed profile: constant, ease-in/out, or cinematic (extra slowing near dwell keyframes).
+    int profile = static_cast<int>(kfi->speed_profile());
+    if (ImGui::Combo("Speed profile", &profile,
+                     "Constant\0Ease in-out\0Cinematic\0")) {
+        kfi->set_speed_profile(static_cast<KeyFrameInterpolator::SpeedProfile>(profile));
+    }
+    ImGui::SetItemTooltip("Constant: uniform speed within each segment.\n"
+                          "Ease in-out: smooth acceleration/deceleration at segment ends.\n"
+                          "Cinematic: ease in-out plus extra slowing near keyframes with dwell time.");
+
     // Recording and its parameters.
     ImGui::Separator();
 #ifdef HAS_FFMPEG
