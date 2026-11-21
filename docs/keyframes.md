@@ -79,7 +79,9 @@ A Mapple-owned ImGui control (`applications/Mapple/camera_path_timeline.{h,cpp}`
 private to the application, not part of the renderer library API). It draws travel segments
 as colored bars proportional to their duration and dwell pauses as gray bars. Keyframe
 markers highlight the selected keyframe; clicking a bar or marker selects its keyframe.
-The strip invalidates its cache on keyframe insert/delete/dwell change and on undo.
+The strip rebuilds its layout whenever the path's keyframe count differs from the cached one,
+so insert and delete need no call; `invalidate()` covers what the count cannot show — a
+changed dwell or travel time — and is also called on undo.
 
 ### Editing the keyframes with Alt
 
@@ -119,7 +121,8 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 - `easy3d/renderer/key_frame_interpolator.cpp` — `interpolate()` rewritten with the
   cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell read/write
   in `save_keyframes()` / `read_keyframes()`
-- `applications/Mapple/camera_path_timeline.h/.cpp` — `CameraPathTimeline` ImGui control
+- `applications/Mapple/camera_path_timeline.h/.cpp` — `CameraPathTimeline` ImGui control,
+  `cache_is_current()`
 - `applications/Mapple/ui/animation.cpp` — "Dwell (s)" field, timeline strip in the Camera
   Path window, recording readout from `total_duration()`, and the Camera Path window's `Alt` hint
 - `applications/Mapple/mapple_viewer.h/.cpp` — `camera_path_timeline_` member,
@@ -234,6 +237,40 @@ above):
   both backends launch with "Mapple UI ready"; the suites were not rerun (the change is app-only).
   Not looked at by eye: the model's box staying hidden while `Alt` is held in this mode, and the
   glyph/ring drags. `easy3d/util/version.h` is unchanged.
+
+### 2026-11-21 — Removing a keyframe no longer takes Mapple down
+
+Loading a `.kf` and pressing `Remove Last` or `Delete Selected` ended the session:
+
+```
+I 21/11/2026 23:33:47.781 menu.cpp:181] 19 keyframes loaded from /Users/lnan/Downloads/domik.kf
+I 21/11/2026 23:33:52.078 animation.cpp:409] last keyframe removed (18 remaining)
+E 21/11/2026 23:33:52.080 viewer.cpp:738] Viewer failed: vector
+```
+
+- **Cause, measured.** `draw_animation_window()` reads the keyframe count and the selection once at
+  the top of its frame, and the `Dwell (s)` widget below the buttons used that captured selection
+  *after* the button above had shortened the path in the same frame. `keyframe_dwell()` is
+  `keyframes_.at()`, so index 18 of an 18-keyframe path threw `std::out_of_range`, whose `what()` is
+  the word `vector` in the log. A break on `__cxa_throw` put it at
+  `vector::at(this=size=18, __n=18)` ← `keyframe_dwell(index=18)` ← `draw_animation_window()`. A
+  `.kf` load is what shows it: `open_recent_file()` selects the last keyframe — the one both buttons
+  remove.
+- **Fix.** The dwell widget now reads the editor's selection at its own line, and is disabled when
+  nothing is selected; the index captured at the top of the frame is only used above it.
+- **A second defect of the same family.** The strip cached one layout per keyframe, but only
+  `Insert After`, `Delete Selected`, a dwell edit and undo called `invalidate()` — `Remove Last`,
+  `Clear` and `Alt+K` did not. Its hover tooltip then asked the interpolator for a keyframe the path
+  no longer had: the same throw, reached by moving the mouse instead of clicking. `cache_is_current()`
+  compares the cached marker count with the path and rebuilds on any difference. A temporary probe
+  that called the real handler measured the stale strip at 22 s for a path that then held 18
+  keyframes and 21 s; after the change it reads 21 s.
+- **Evidence.** A temporary pair of environment hooks loaded `domik.kf` and called the button's
+  handler inside the frame — no clicking — and reproduced the `Viewer failed: vector` line for both
+  buttons; after the fix the same two runs removed the keyframe, drew on, and logged no failure. The
+  hooks are removed again. All three build trees compile, and a normal launch of the Vulkan app with
+  `domik.obj` logs `Mapple UI ready` with no failure. The suites were not rerun: the change is
+  app-only.
 
 ## Still open
 

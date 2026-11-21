@@ -65,7 +65,8 @@ public:
     /**
      * \brief Marks the cached layout stale after a keyframe edit.
      * \details The strip rebuilds its segments when it next draws. Call this after
-     *      anything that changes a keyframe's time or dwell time.
+     *      anything that changes a keyframe's time or dwell time. Adding or removing
+     *      a keyframe needs no call: the strip notices the new count itself.
      */
     void invalidate() { segments_dirty_ = true; }
 
@@ -87,6 +88,7 @@ private:
     };
 
     void build_segments();
+    bool cache_is_current() const;
     int find_keyframe_at(float x, float width) const;
 
     easy3d::KeyFrameInterpolator* kfi_;

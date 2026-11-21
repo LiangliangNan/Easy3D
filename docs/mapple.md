@@ -22,10 +22,12 @@ Camera Path window choose the video's sample count. `Mapple-Qt` is still in the 
 builds with `Easy3D_ENABLE_QT=ON` on the OpenGL backend; retiring it is still an open decision,
 not something these batches changed.
 
-Status: 2026-11-21 — unchanged except for the Camera Path window's key handling: inside it `Alt`
-is the keyframes' modifier (it turns the handles on while it is held, announces nothing instead of
-the model's box, and `Alt`+click aims the selected pose), and `Dwell (s)` moved under the timeline
-strip. `Mapple-Qt` keeps its old keys and is untouched.
+Status: 2026-11-21 — unchanged except for the Camera Path window's key handling and its keyframe
+timing: inside it `Alt` is the keyframes' modifier (it turns the handles on while it is held,
+announces nothing instead of the model's box, and `Alt`+click aims the selected pose), `Dwell (s)`
+moved under the timeline strip, and removing a keyframe from a loaded path no longer ends the
+session — the dwell field and the timeline strip now read the path's live state instead of a copy
+taken at the top of the frame. `Mapple-Qt` keeps its old keys and is untouched.
 
 ## Decision
 
@@ -2588,5 +2590,55 @@ migrated; retirement can proceed whenever it is wanted.
   error-free `Mapple.log`; the suites were not rerun (the change is app-only). Not measured: the
   glyph/ring drags by eye with a hand on `Option`, and the box's absence by eye (the aim above is
   what the log shows).
+- `easy3d/util/version.h` is unchanged. The change is confined to `applications/Mapple` and the
+  docs.
+
+### 2026-11-21 — Removing a keyframe from a loaded path no longer ends the session
+
+- Reported: with a `.kf` loaded, `Remove Last` or `Delete Selected` in the Camera Path window
+  stopped Mapple. The user's log: `19 keyframes loaded from /Users/lnan/Downloads/domik.kf` at
+  23:33:47.781, `last keyframe removed (18 remaining)` at 23:33:52.078, and two milliseconds later
+  `E viewer.cpp:738] Viewer failed: vector`; four earlier repeats, two of them after
+  `keyframe no. 19 deleted (18 remaining)`. No `.ips` crash report, because the exception was
+  caught, the settings saved and the viewer terminated politely ("viewer terminated. Bye!").
+- `Viewer failed: vector` is a caught `std::out_of_range` whose `what()` is `vector`, i.e.
+  libc++'s `std::vector::at`. Every `.at()` over the keyframe vector sits in
+  `key_frame_interpolator.cpp` (the accessors at :122-:184), so the question was which caller
+  handed it an index the shortened path no longer had. The editor clamps its own selection, the
+  dwell widget guards on a non-empty path, and the timeline's click branch bounds its index — but
+  the frame had already captured the selection.
+- Reproduced without a hand on the mouse. Two temporary environment hooks: one called
+  `open_recent_file()` (the way File > Open Recent does, which is what selects the *last* keyframe
+  and makes both buttons bite) and opened the window; the other called the button's handler at the
+  same point in `draw_animation_window()` that a click does, leaving the frame to continue with the
+  indices captured above it. The unfixed binary logged, inside one millisecond,
+  `path has 18 keyframes, selected_index is still 18` and then the same `Viewer failed: vector` —
+  the reported failure, from a launch with no clicking.
+- The throwing frame, from lldb with a break on `__cxa_throw`:
+  `vector<Keyframe>::__throw_out_of_range` ← `vector<Keyframe>::at(this=size=18, __n=18)` ←
+  `easy3d::KeyFrameInterpolator::keyframe_dwell(index=18)` at key_frame_interpolator.cpp:152 ←
+  `MappleViewer::draw_animation_window()` at the `Dwell (s)` line ← `draw_gui()` ← `pre_draw()` ←
+  `Viewer::draw_frame()`. The window reads its count and selection once at the top
+  (animation.cpp:97-98); the dwell field below the buttons reused that selection after the button
+  above had shortened the path in the same frame. `keyframe_dwell()` is `keyframes_.at()`, so 18 of
+  18 threw.
+- Fixed at the use: the dwell field reads `keyframe_editor_->selected()` on its own line and
+  disables itself when nothing is selected. Both probe variants (`remove_last`, `delete_selected`)
+  then performed the removal, drew the rest of the frame, and were still running when the
+  measurement ended; no `Viewer failed` in either log.
+- A second defect of the same family, found while measuring the first: `CameraPathTimeline` caches
+  one marker per keyframe and rebuilt only on its `invalidate()` flag, which `Insert After`,
+  `Delete Selected`, a dwell edit and undo call — but not `Remove Last`, `Clear` or `Alt+K`. Its
+  hover tooltip read `kfi_->keyframe_dwell(kf)` with `kf` from the stale cache and only `kf >= 0`
+  checked, so the same throw was reachable by moving the mouse over the strip; the bars and the
+  total also stayed laid out for the removed keyframe. `cache_is_current()` now compares the cached
+  marker count with the path and rebuilds on any difference, so an index the strip hands out always
+  names a keyframe that is there. Measured with the probe calling the real handler: the strip read
+  22 s for a path that then held 18 keyframes and 21 s with the old predicate, and 21 s after the
+  change — both agreeing with `KeyFrameInterpolator::total_duration()`.
+- The probe and its hooks are removed again. The three build trees (Vulkan debug, OpenGL
+  relwithdebinfo, OpenGL check) compile Mapple cleanly, and a normal launch of the Vulkan app with
+  `domik.obj` logs `Mapple UI ready (Vulkan)` with no failure line. The suites were not rerun: the
+  change is app-only.
 - `easy3d/util/version.h` is unchanged. The change is confined to `applications/Mapple` and the
   docs.

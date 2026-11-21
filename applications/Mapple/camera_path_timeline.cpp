@@ -89,9 +89,18 @@ void CameraPathTimeline::build_segments() {
 
 
 float CameraPathTimeline::total_duration() const {
-    if (segments_dirty_)
+    if (!cache_is_current())
         const_cast<CameraPathTimeline*>(this)->build_segments();
     return total_duration_;
+}
+
+
+bool CameraPathTimeline::cache_is_current() const {
+    // keyframe_times_ holds exactly one entry per keyframe, so a path that grew or
+    // shrank without an invalidate() is caught here: every index the strip hands out
+    // then names a keyframe that is still there.
+    return kfi_ && !segments_dirty_ &&
+           keyframe_times_.size() == kfi_->number_of_keyframes();
 }
 
 
@@ -122,7 +131,7 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
     if (width <= 0.0f || !kfi_)
         return false;
 
-    if (segments_dirty_)
+    if (!cache_is_current())
         build_segments();
 
     const int count = static_cast<int>(kfi_->number_of_keyframes());

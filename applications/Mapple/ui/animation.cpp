@@ -288,13 +288,17 @@ void MappleViewer::draw_animation_window() {
     // moving on. It is part of the keyframe, so it sits with the path's rhythm rather
     // than with the recording. A path whose keyframes all dwell 0 is unchanged.
     {
-        const std::size_t dwell_index = selected_index >= 0 ? static_cast<std::size_t>(selected_index) : 0;
-        float dwell = kfi->number_of_keyframes() > 0 ? kfi->keyframe_dwell(dwell_index) : 0.0f;
-        ImGui::BeginDisabled(!selected || playing);
+        // The selection is read here rather than reused from the top of the frame: a
+        // button above can remove the selected keyframe in this very frame, and the
+        // index captured then points past the shortened path.
+        const int dwell_index = keyframe_editor_->selected();
+        ImGui::BeginDisabled(dwell_index < 0 || playing);
+        float dwell = dwell_index >= 0
+                      ? kfi->keyframe_dwell(static_cast<std::size_t>(dwell_index)) : 0.0f;
         if (ImGui::DragFloat("Dwell (s)", &dwell, 0.05f, 0.0f, 10.0f, "%.2f s"))
-            edit_camera_path_timing(dwell_index, dwell);
+            edit_camera_path_timing(static_cast<std::size_t>(dwell_index), dwell);
         ImGui::EndDisabled();
-        if (!selected)
+        if (dwell_index < 0)
             ImGui::SetItemTooltip("Select a keyframe (click its marker on the timeline) to set "
                                   "how long the camera pauses there.");
         else if (playing)
