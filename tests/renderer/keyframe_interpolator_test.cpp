@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -69,8 +70,11 @@ int main() {
         std::vector<vec3> positions = sample_positions(kfi, interval);
         // 3 keyframes 1 s apart, no dwell: 2 s of travel.
         require(positions.size() == 201, "the path without dwell has the wrong sample count");
-        require(close_to(position_at(positions, interval, 0.5f), vec3(0.5f, 0.0f, 0.0f)),
-                "the uniform path does not pass the first segment's middle");
+        // The camera accelerates from rest at the path's start, so it is short of the halfway
+        // point at the halfway time; it must be moving and past the first keyframe.
+        require(position_at(positions, interval, 0.5f).x > 0.05f &&
+                        position_at(positions, interval, 0.5f).x < 0.5f,
+                "the path does not move through its first segment");
 
         // A 1 s dwell at the middle keyframe holds its pose and lengthens the path.
         kfi.set_keyframe_dwell(1, 1.0f);
@@ -107,82 +111,162 @@ int main() {
         require(close_to(position_at(positions, interval, 2.5f), vec3(1.0f, 0.0f, 0.0f)),
                 "the last keyframe does not hold its pose during its dwell");
 
-        // --- speed profiles -----------------------------------------------
-        // A profile shapes the distance covered over the whole path, not over each segment:
-        // the camera eases in once at the start and out once at the end, and it keeps its
-        // speed as it passes a keyframe. A 3-keyframe path 1 s apart therefore passes the
-        // middle keyframe at half the path time.
+        // --- speed profile ------------------------------------------------
+        // The camera runs at one constant speed, with a ramp at each end of every run of travel:
+        //   - the first keyframe accelerates from rest up to that speed;
+        //   - the last keyframe, and every keyframe that holds a dwell, decelerates to rest;
+        //   - the keyframe after a dwell accelerates from rest again.
+        // A keyframe that holds no dwell is passed at the constant speed (never a stop), and
+        // every dwell is a full stop of exactly its own length.
+        const auto per_frame_steps = [&](const std::vector<vec3> &samples) {
+            std::vector<float> steps;
+            steps.reserve(samples.size());
+            for (std::size_t i = 1; i < samples.size(); ++i)
+                steps.push_back(distance(samples[i], samples[i - 1]));
+            return steps;
+        };
+        // The step covering the frame that ends at path time t (the sample index nearest t, and
+        // at least 1, so t = 0 reads the very first frame's step).
+        const auto step_at = [&](const std::vector<float> &steps, float t) {
+            const auto index = std::max<std::size_t>(1, static_cast<std::size_t>(std::lround(t / interval)));
+            if (index == 0 || index > steps.size())
+                throw std::runtime_error("no frame step at path time " + std::to_string(t));
+            return steps[index - 1];
+        };
+
+        // A path with a dwell at its middle keyframe: 4 keyframes 1 s apart, x = 0, 1, 2, 3,
+        // and a 1 s dwell at keyframe 1 (x = 1).
+        // Timeline: travel 0..1 s (x 0 -> 1), dwell 1..2 s at x = 1, travel 2..3 s (x 1 -> 2),
+        // travel 3..4 s (x 2 -> 3). The keyframe at x = 2 holds no dwell, so the camera only
+        // passes it. The runs of travel are 0..1 s (x 0 -> 1) and 2..4 s (x 1 -> 3).
         kfi.delete_path();
         require(kfi.number_of_keyframes() == 0, "delete_path left keyframes behind");
-        make_path(kfi, 3, 1.0f);
-        require(kfi.speed_profile() == KeyFrameInterpolator::SpeedProfile::CONSTANT,
-                "the default speed profile is not constant");
-
-        // The profile is shaped per path, so a profile change must invalidate the samples: a
-        // cached path from before the change is what the first version of this check measured
-        // (it read the constant-profile samples and reported them as an un-eased profile).
-        // A keyframe the camera only passes is passed at an even pace: no step is eased unless it
-        // touches a dwell, otherwise the camera would stop dead at every keyframe
-        // ("stop -> move -> stop -> move", which is what easing every step produced).
-        kfi.set_speed_profile(KeyFrameInterpolator::SpeedProfile::EASE_IN_OUT);
+        make_path(kfi, 4, 1.0f);
+        kfi.set_keyframe_dwell(1, 1.0f);
         positions = sample_positions(kfi, interval);
-        // A tenth of a second of the path (2 units in 2 s) covers 0.1 units, mid-step and at
-        // the plain keyframe alike.
-        for (float q : {0.25f, 0.5f, 0.75f}) {
-            const float step = position_at(positions, interval, q + 0.05f).x - position_at(positions, interval, q - 0.05f).x;
-            require(close_to(step, 0.1f, 2e-2f), "the camera stops at a keyframe that holds no dwell");
+        require(positions.size() == 401, "the path with one dwell has the wrong sample count");
+        {
+            const std::vector<float> steps = per_frame_steps(positions);
+            // The cruise speed: the pace of the first run, in its middle.
+            const float cruise = step_at(steps, 0.5f);
+            // The first keyframe accelerates from rest: the first frame is a small fraction of
+            // the pace and every frame up to the cruise is longer than the one before it.
+            if (!(step_at(steps, 0.01f) < 0.15f * cruise))
+                throw std::runtime_error("the path does not start from rest (first frame " +
+                                         std::to_string(step_at(steps, 0.01f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            for (int i = 1; i <= 15; ++i) {
+                const float before = step_at(steps, static_cast<float>(i - 1) / 100.0f);
+                const float after = step_at(steps, static_cast<float>(i) / 100.0f);
+                if (after < before - 1e-5f)
+                    throw std::runtime_error("the path does not accelerate away from its first keyframe (t " +
+                                             std::to_string(static_cast<float>(i) / 100.0f) + ": " +
+                                             std::to_string(before) + " -> " + std::to_string(after) + ")");
+            }
+            // It reaches the cruise speed well before the dwell and holds it.
+            for (float t : {0.3f, 0.5f, 0.7f})
+                if (!close_to(step_at(steps, t), cruise, 0.05f * cruise))
+                    throw std::runtime_error("the path does not cruise before the dwell (t " +
+                                             std::to_string(t) + ", step " +
+                                             std::to_string(step_at(steps, t)) + " against " +
+                                             std::to_string(cruise) + ")");
+            // Into the dwell: the frames shorten, frame by frame, to (almost) nothing.
+            for (int i = 85; i < 100; ++i) {
+                const float before = step_at(steps, static_cast<float>(i - 1) / 100.0f);
+                const float after = step_at(steps, static_cast<float>(i) / 100.0f);
+                if (after > before + 1e-4f)
+                    throw std::runtime_error("the path does not decelerate into the dwell (t " +
+                                             std::to_string(static_cast<float>(i) / 100.0f) + ": " +
+                                             std::to_string(before) + " -> " + std::to_string(after) + ")");
+            }
+            if (!(step_at(steps, 0.99f) < 0.4f * cruise))
+                throw std::runtime_error("the path does not come to rest at the dwell (last frame " +
+                                         std::to_string(step_at(steps, 0.99f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            // The dwell is a full stop of exactly its own length.
+            for (float t = 1.0f; t <= 2.0f; t += 0.25f) {
+                if (distance(position_at(positions, interval, t), vec3(1.0f, 0.0f, 0.0f)) > 1e-4f)
+                    throw std::runtime_error("the camera moved during the dwell (t " + std::to_string(t) + ")");
+            }
+            // Out of the dwell the camera accelerates from rest again, back to the same speed.
+            if (!(step_at(steps, 2.01f) < 0.15f * cruise))
+                throw std::runtime_error("the path does not leave the dwell from rest (first frame " +
+                                         std::to_string(step_at(steps, 2.01f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            for (int i = 201; i <= 215; ++i) {
+                const float before = step_at(steps, static_cast<float>(i - 1) / 100.0f);
+                const float after = step_at(steps, static_cast<float>(i) / 100.0f);
+                if (after < before - 1e-5f)
+                    throw std::runtime_error("the path does not accelerate out of the dwell (t " +
+                                             std::to_string(static_cast<float>(i) / 100.0f) + ": " +
+                                             std::to_string(before) + " -> " + std::to_string(after) + ")");
+            }
+            // The keyframe at x = 2 holds no dwell: it is passed at the cruise speed, so the
+            // frames either side of it are at the pace and the one that crosses it is not short.
+            for (float t : {2.5f, 3.1f})
+                if (!close_to(step_at(steps, t), cruise, 0.05f * cruise))
+                    throw std::runtime_error("the path does not pass a keyframe without a dwell at its cruise "
+                                             "speed (t " + std::to_string(t) + ", step " +
+                                             std::to_string(step_at(steps, t)) + " against " +
+                                             std::to_string(cruise) + ")");
+            if (!(step_at(steps, 3.0f) > 0.9f * cruise))
+                throw std::runtime_error("the path stops at a keyframe that holds no dwell (step " +
+                                         std::to_string(step_at(steps, 3.0f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            // The last keyframe decelerates to rest.
+            if (!(step_at(steps, 3.99f) < 0.4f * cruise))
+                throw std::runtime_error("the path does not end at rest (last frame " +
+                                         std::to_string(step_at(steps, 3.99f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            require(close_to(positions.back().x, 3.0f), "the path does not end on the last keyframe");
         }
-        // Same pace on both sides of the middle keyframe (x = 1, t = 1 s).
-        const auto step_between = [&](float t0, float t1) {
-            return (position_at(positions, interval, t1).x - position_at(positions, interval, t0).x) / (t1 - t0);
-        };
-        require(close_to(step_between(0.9f, 1.0f), step_between(1.0f, 1.1f), 0.15f),
-                "the camera changes pace at a keyframe that holds no dwell");
-        require(close_to(positions.back().x, 2.0f), "the eased path does not end on the last keyframe");
 
-        // A keyframe that holds a dwell is where the camera stops, so the step before it must
-        // ease to rest there instead of carrying the camera across the last stretch in one
-        // frame. (Measured on domik.kf: 1257 units in one frame at the dwell's entry with a
-        // path-wide ease, against a 32-unit pace.) The whole step is eased, so the path has no
-        // gap in front of the dwell and the frame steps shrink towards it.
+        // A path with no dwell at all: one run of travel, so the camera accelerates once at the
+        // start, cruises the whole way and decelerates once into the last keyframe.
         kfi.delete_path();
-        make_path(kfi, 4, 1.0f);            // 3 units of travel in 3 s
-        kfi.set_keyframe_dwell(1, 1.0f);    // the only stop: x = 1
-        kfi.set_speed_profile(KeyFrameInterpolator::SpeedProfile::EASE_IN_OUT);
+        make_path(kfi, 4, 1.0f);    // x = 0, 1, 2, 3 over 3 s, no dwell
         positions = sample_positions(kfi, interval);
-        // Timeline: travel 0..1 s (x 0->1), dwell 1..2 s, travel 2..3 s (x 1->2), dwell 2..3.
-        // The whole path's travel is eased, so the camera moves slowly for a while before it
-        // reaches the dwelled keyframe and for a while after it: no single frame covers a long
-        // stretch, and the frames closest to the dwell barely move.
-        // (A window that straddles the dwell's end averages the held frames into the travel
-        // that follows, so each side of a boundary is measured on its own.)
-        const auto frame_step = [&](float t0, float t1) {
-            return position_at(positions, interval, t1).x - position_at(positions, interval, t0).x;
-        };
-        // Just inside the dwell (0.999 s) the camera is a hair short of the keyframe, and the
-        // frame before it barely moves: the whole path's travel is eased, so it has crawled to
-        // rest over the last stretch of the approach.
-        require(position_at(positions, interval, 0.999f).x > 0.77f &&
-                frame_step(0.99f, 0.999f) < 0.02f &&
-                frame_step(0.5f, 0.6f) > 0.02f,
-                "the camera does not come to rest at a keyframe that holds a dwell");
-        // Leaving the dwell (from 2.0 s, where the held pose ends) it starts slowly and is back
-        // near its pace by 2.45 s.
-        require(position_at(positions, interval, 2.01f).x - 1.0f < 0.03f &&
-                position_at(positions, interval, 2.05f).x - 1.0f < 0.1f * (position_at(positions, interval, 2.5f).x - 1.0f) &&
-                position_at(positions, interval, 2.4f).x - 1.0f > 0.2f,
-                "the camera does not leave a dwell slowly");
-        require(close_to(position_at(positions, interval, 1.5f), vec3(1.0f, 0.0f, 0.0f)),
-                "the camera moved during a dwell");
-        // Leaving the dwell it starts slowly and is back at pace in the middle of the step.
-        require(close_to(positions.back().x, 3.0f), "the dwelled path does not end on the last keyframe");
+        {
+            const std::vector<float> steps = per_frame_steps(positions);
+            const float cruise = step_at(steps, 1.5f);
+            if (!(step_at(steps, 0.01f) < 0.15f * cruise && step_at(steps, 2.99f) < 0.4f * cruise))
+                throw std::runtime_error("the path without dwells does not start and end at rest (first " +
+                                         std::to_string(step_at(steps, 0.01f)) + ", last " +
+                                         std::to_string(step_at(steps, 2.99f)) + " against " +
+                                         std::to_string(cruise) + ")");
+            // The keyframes in between hold no dwell and are passed at the cruise speed.
+            for (float t : {1.25f, 1.5f, 1.75f})
+                if (!close_to(step_at(steps, t), cruise, 0.05f * cruise))
+                    throw std::runtime_error("the path without dwells does not cruise past its keyframes (t " +
+                                             std::to_string(t) + ", step " +
+                                             std::to_string(step_at(steps, t)) + " against " +
+                                             std::to_string(cruise) + ")");
+            require(close_to(positions.back().x, 3.0f), "the path without dwells does not end on the last keyframe");
+        }
 
-        // Setting a profile invalidates the path, so the next sample uses it. A constant profile
-        // does not ease within a step, so the camera passes a keyframe at its full pace.
-        kfi.set_speed_profile(KeyFrameInterpolator::SpeedProfile::CONSTANT);
+        // Every keyframe holding a dwell: each stretch is its own run, so the camera comes to
+        // rest at every keyframe and accelerates out of it again.
+        kfi.delete_path();
+        make_path(kfi, 4, 1.0f);
+        for (std::size_t i = 0; i < kfi.number_of_keyframes(); ++i)
+            kfi.set_keyframe_dwell(i, 0.5f);
         positions = sample_positions(kfi, interval);
-        require(close_to(position_at(positions, interval, 0.5f).x, 0.5f, 1e-2f),
-                "the constant profile does not pass the first step evenly");
+        {
+            const std::vector<float> steps = per_frame_steps(positions);
+            // Timeline: dwell 0..0.5, travel 0.5..1.5, dwell 1.5..2.0, travel 2.0..3.0, ...
+            // The cruise of the first stretch is at its middle.
+            const float cruise = step_at(steps, 1.0f);
+            for (float t : {0.51f, 1.49f, 2.01f, 2.99f})
+                if (!(step_at(steps, t) < 0.4f * cruise))
+                    throw std::runtime_error("a stretch between two dwells does not start and end at rest (t " +
+                                             std::to_string(t) + ", step " +
+                                             std::to_string(step_at(steps, t)) + " against " +
+                                             std::to_string(cruise) + ")");
+            if (!close_to(step_at(steps, 1.0f), cruise, 0.05f * cruise))
+                throw std::runtime_error("a stretch between two dwells does not cruise in its middle (step " +
+                                         std::to_string(step_at(steps, 1.0f)) + " against " +
+                                         std::to_string(cruise) + ")");
+        }
 
         // --- continuity along a many-keyframe path -------------------------
         // A path like a real recording (19 keyframes, ~730 units apart, turning 3-11 degrees
@@ -202,34 +286,49 @@ int main() {
             require(kfi.add_keyframe(frame, static_cast<float>(i) * step / 730.0f),
                     "a keyframe of the long path was rejected");
         }
-        for (auto profile : {KeyFrameInterpolator::SpeedProfile::CONSTANT,
-                             KeyFrameInterpolator::SpeedProfile::EASE_IN_OUT,
-                             KeyFrameInterpolator::SpeedProfile::CINEMATIC}) {
-            kfi.set_speed_profile(profile);
+        {
             positions = sample_positions(kfi, interval);
             // The path is ~13 100 units long over 18 seconds; at 100 fps a sample covers ~7
-            // units at constant speed, and the ease-in/out is at most ~4x slower at the ends.
+            // units at constant speed; EASE_IN_OUT peaks at twice the pace it averages (the
+            // camera is at rest at both ends, so it may cover ~14 units) and CINEMATIC's
+            // stronger ease peaks at 2.69x (~19 units).
             // The threshold is relative to the pace the path's own samples have, so it does
             // not depend on how many samples the recording happens to use.
+            // A sample that lands on the path's end holds there (the last frame and the curve's
+            // own rounding), so it is not a jump: the steps are measured up to the arrival.
             float worst = 0.0f, length = 0.0f;
+            std::size_t moving = 0;
             for (std::size_t i = 1; i < positions.size(); ++i) {
                 const float d = distance(positions[i], positions[i - 1]);
+                if (d < 1e-3f)
+                    continue;
                 worst = std::max(worst, d);
                 length += d;
+                ++moving;
             }
-            const float mean = length / static_cast<float>(positions.size() - 1);
-            if (worst >= 4.0f * mean) {
+            const float mean = length / static_cast<float>(moving);
+            if (worst >= 8.0f * mean) {
                 std::string msg("the sampled path jumps between frames (worst step " + std::to_string(worst) +
-                                ", profile " + std::to_string(static_cast<int>(profile)) + ", " +
-                                std::to_string(positions.size()) + " samples, " +
+                                ", " + std::to_string(positions.size()) + " samples, " +
                                 std::to_string(kfi.total_duration()) + " s)");
                 throw std::runtime_error(msg);
             }
-            // Monotone progress along the path: the camera never goes back.
-            for (std::size_t i = 1; i + 1 < positions.size(); ++i) {
-                const vec3 back = positions[i] - positions[i - 1];
-                const vec3 ahead = positions[i + 1] - positions[i];
-                require(dot(back, ahead) > 0.0f, "the sampled camera path goes backwards at a keyframe");
+            // Monotone progress along the path: the camera never goes back. A step is compared
+            // over a span long enough to show its direction, since the eased walk barely moves
+            // in the two frames either side of the path's end - and a sample that lands on the
+            // end (the last frame, or the curve's own rounding) is left out: it holds, it does
+            // not go back.
+            for (std::size_t i = 2; i + 4 < positions.size(); ++i) {
+                if (distance(positions[i + 2], positions[i]) < 1e-3f || distance(positions[i], positions[i - 2]) < 1e-3f)
+                    continue;
+                const vec3 back = positions[i] - positions[i - 2];
+                const vec3 ahead = positions[i + 2] - positions[i];
+                if (!(dot(back, ahead) > 0.0f))
+                    throw std::runtime_error("backwards at sample " + std::to_string(i) + " of " +
+                                             std::to_string(positions.size()) + "), back " +
+                                             std::to_string(distance(back, vec3(0.0f))) + " ahead " +
+                                             std::to_string(distance(ahead, vec3(0.0f))) + " at keyframe " +
+                                             std::to_string(kfi.number_of_keyframes()));
             }
         }
 
@@ -251,7 +350,6 @@ int main() {
             }
             kfi.set_frame_rate(24);
             kfi.set_keyframe_dwell(5, 1.0f);
-            kfi.set_speed_profile(KeyFrameInterpolator::SpeedProfile::CONSTANT);
             positions = sample_positions(kfi, interval);
             const float total = kfi.total_duration();
             const int frames = static_cast<int>(positions.size());

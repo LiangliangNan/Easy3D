@@ -285,52 +285,6 @@ namespace easy3d {
         Method interpolation_method() const { return interpolation_method_; }
 
         /**
-         * \brief Speed profile: how the camera's pace is shaped along the path.
-         * \details A keyframe's dwell_time() is a real stop: the camera holds that keyframe's
-         *      pose for that many seconds. Every other stretch of the path is travelled at an
-         *      even pace, so the camera passes a keyframe that does not dwell at constant speed
-         *      rather than stopping at it. The profile only decides how the camera enters and
-         *      leaves the stretches that lead to and from a dwell:
-         *      - \c CONSTANT travels every stretch at an even pace, meeting the dwell's stop
-         *        abruptly;
-         *      - \c EASE_IN_OUT eases every stretch in and out (a smoothstep), so the camera
-         *        settles into each dwell instead of stopping dead on the last frame;
-         *      - \c CINEMATIC does the same, more strongly, on the stretches that touch a
-         *        dwell (a slower approach and departure).
-         *
-         *      A stretch that merely passes a keyframe is never eased, whatever the profile:
-         *      easing it too would make the camera stop at every keyframe, which reads as
-         *      "stop -> move -> stop -> move".
-         */
-        enum class SpeedProfile {
-            CONSTANT,      ///< Constant speed along the path (default).
-            EASE_IN_OUT,   ///< Smoothstep: accelerates from rest at the start, decelerates to rest at the end.
-            CINEMATIC      ///< Ease-in/out, plus a slower approach to and departure from keyframes that dwell.
-        };
-        /**
-         * \brief Returns the speed profile used to remap the interpolation parameter.
-         * \details The profile remaps the distance covered along the path: CONSTANT leaves it
-         *      unchanged; EASE_IN_OUT applies a smoothstep over the whole path (one acceleration
-         *      at its start, one deceleration at its end); CINEMATIC adds a slow approach and
-         *      departure at keyframes that have a non-zero dwell time.
-         * \return The speed profile.
-         * \sa set_speed_profile()
-         */
-        SpeedProfile speed_profile() const { return speed_profile_; }
-
-        /**
-         * \brief Sets the speed profile used to remap the interpolation parameter.
-         * \details Changing the profile invalidates the interpolated path and stops playback.
-         * \param profile The speed profile.
-         * \sa speed_profile()
-         */
-        void set_speed_profile(SpeedProfile profile) {
-            stop_interpolation();
-            speed_profile_ = profile;
-            pathIsValid_ = false;
-        }
-
-        /**
          * \brief Returns the current interpolation speed.
          * \details Default value is 1.0, which means keyframe_time() will be matched during the interpolation
          *      (provided that your main loop is fast enough).
@@ -448,19 +402,14 @@ namespace easy3d {
         // Where each keyframe sits along the path, as a fraction of the path's total: 0 at the
         // first keyframe, 1 at the last.
         //
-        // Two fractions are needed, and they are not the same thing. time_fraction() is the
-        // fraction of the TRAVEL TIME at which a keyframe is reached: it says which segment a
-        // moment of the timeline falls in. length_fraction() is the fraction of the path's
-        // LENGTH at which a keyframe sits: it is the position spline's own parameter, and the
-        // pose must be read with it. Reading the spline at a time fraction puts the camera past
-        // the next keyframe whenever the keyframes are unevenly spaced, and the spline carries
-        // it back from there (one frame that jumps a whole segment backwards).
-        std::vector<float> time_fraction() const;
+        // length_fraction() is the fraction of the path's LENGTH at which a keyframe sits: it
+        // is the position spline's own parameter, and the pose must be read with it.
         std::vector<float> length_fraction() const;
-        // Eases the segment parameter w towards the segment's middle by \p strength: 0 leaves w
-        // alone, 1 is a full smoothstep. Its slope is 1 at both ends, so the speed does not jump
-        // where a segment meets the next one.
-        static float segment_ease(float w, float strength);
+
+        // Cinematic speed profile within one travel segment: fraction of the segment's length
+        // covered at time fraction w (in [0,1]). stop_start/stop_end say whether the camera is
+        // at rest at the segment's ends.
+        static float segment_fraction(float w, bool stop_start, bool stop_end);
 
     public:
         //@}
@@ -657,7 +606,6 @@ namespace easy3d {
         int fps_;
         Method interpolation_method_;
         float interpolation_speed_;
-        SpeedProfile speed_profile_ = SpeedProfile::CONSTANT;
         bool interpolation_started_;
         bool manual_playback_ = false;
         bool timer_mode_used_ = false;

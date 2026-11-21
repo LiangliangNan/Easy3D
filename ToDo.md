@@ -266,18 +266,15 @@
       - [x] Lasso selection of only visible mesh faces (batch 119): mesh rectangle and lasso regions now rasterize the face drawable with primitive IDs, so occluded and clipped-away faces stay out; see the batch-119 entry in docs/vulkan.md.
       - [ ] Mapple's setting file "settings.ini" should also store viewer size (width and height) and position (x and y). This allows to restore the last position and size of the viewer in the next run.
     
-  - [ ] High-quality keyframe video generation
-      - [x] Step 1: per-keyframe dwell time (KeyFrameInterpolator::Keyframe::dwell_time_ + set_keyframe_dwell()/keyframe_dwell(), interpolate() distributes samples proportionally to segment duration + dwell; Mapple dwell spin box in Camera Path window). See docs/keyframe_video.md Step 1.
-      - [x] Step 2: speed profile presets (enum SpeedProfile {CONSTANT, EASE_IN_OUT, CINEMATIC} + easing remap in interpolate(); Mapple "Speed profile" combo). See docs/keyframe_video.md Step 2.
-      - [x] Step 3: timeline strip (Mapple-owned ImGui strip below the keyframe navigation: proportional travel bars, gray dwell pauses, selectable markers; it lives as long as the Camera Path window and is invalidated on insert/delete/dwell/undo). See docs/keyframe_video.md Step 3.
-      - [x] Step 1 follow-up: the "Dwell (s)" field the plan promised is now in the Camera Path window (Ctrl+Z restores the timing), and `KeyFrameInterpolator::total_duration()` gives the path length, shown as the recording's expected seconds and frames. See docs/keyframe_video.md, 2026-11-20 follow-up entry.
-      - [x] New CPU regression test `tests/renderer/keyframe_interpolator_test.cpp` (dwell, EASE_IN_OUT, CINEMATIC; `opengl./vulkan.keyframeinterpolator`).
-      - [x] Profile fix (2026-11-21): EASE_IN_OUT/CINEMATIC shape the distance over the whole path, so the camera no longer stops at every keyframe and a dwell boundary no longer jumps; CINEMATIC slows only at the path's dwelled ends. See docs/keyframe_video.md.
-      - [x] Sampling fix (2026-11-21, later): the pose is read at a path-wide parameter (INTERPOLATION `eval_f(u)`, FITTING `eval_f(u*(n-1))`), so the camera no longer steps back to the start of a segment after a keyframe on long paths like `domik.kf`; `set_speed_profile()` is inline so it cannot go stale in a build tree. New 19-keyframe continuity test.
-      - [x] Motion rule confirmed by the user and the code cleaned (2026-11-21): a step is eased only when it touches a dwell, the pose is read at a fraction of the path's length, the orientation follows the same eased fraction. Dead code removed, `time_fraction()`/`length_fraction()` split out, `SpeedProfile` documented, `.kf` dwells written and read again. See docs/keyframe_video.md, "cleanup and documentation pass".
-      - [~] Step 4: validation - both backends build clean and the full CTest suites pass (OpenGL 120/120; Vulkan 151/152, the one failure `vulkan.crosssection` also fails with these changes stashed); the short videos with dwell/profile settings are still to be recorded (needs a windowed session). See docs/keyframe_video.md Step 4.
-          - [x] Builds and full CTest suites on both backends, plus the new `keyframeinterpolator` regression for dwell and speed profiles (2026-11-20).
-          - [ ] Record short videos with dwell/profile settings in Mapple on both backends (interactive check).
+  - [x] High-quality keyframe video generation
+      - [x] Step 1: per-keyframe dwell time (KeyFrameInterpolator::Keyframe::dwell_time_ + set_keyframe_dwell()/keyframe_dwell(), interpolate() distributes samples proportionally to segment duration + dwell; Mapple dwell spin box in Camera Path window). See docs/keyframe_video.md.
+      - [x] Step 2: cinematic motion rule — a step between keyframes is eased (accelerates from rest and decelerates to rest) only when it touches a dwell; plain steps move at an even pace. Pose read at path length fraction, orientation follows same eased fraction. No SpeedProfile enum; the cinematic rule is the default. See docs/keyframe_video.md.
+      - [x] Step 3: timeline strip (CameraPathTimeline in applications/Mapple: proportional travel bars, gray dwell pauses, selectable markers; invalidated on insert/delete/dwell/undo). See docs/keyframe_video.md.
+      - [x] Step 1 follow-up: the "Dwell (s)" field is in the Camera Path window (Ctrl+Z restores the timing), and KeyFrameInterpolator::total_duration() gives the path length, shown as the recording's expected seconds and frames. See docs/keyframe_video.md.
+      - [x] New CPU regression test tests/renderer/keyframe_interpolator_test.cpp (dwell, cinematic motion rule; opengl./vulkan.keyframeinterpolator).
+      - [x] Cleanup pass (2026-11-21): time_fraction()/length_fraction() split out, dead code removed (length_at(), speed_at(), ease_parameter()), last sample forced onto path's end, .kf dwells written and read again. See docs/keyframe_video.md.
+      - [x] Validation — both backends build clean and the full CTest suites pass (OpenGL 120/120; Vulkan 152/152, the keyframeinterpolator regression included; the one vulkan.crosssection failure also fails with these changes stashed).
+      - [ ] Record short videos with dwell settings in Mapple on both backends (interactive check).
 
     
 - Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).

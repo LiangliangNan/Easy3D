@@ -319,19 +319,15 @@ void MappleViewer::draw_animation_window() {
     if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
-    // Speed profile: how the distance covered along the whole path is shaped. It does not
-    // stop the camera at keyframes: it eases in at the path's start and out at its end, and
-    // (cinematic) arrives slowly at and leaves slowly from keyframes that hold a dwell.
-    int profile = static_cast<int>(kfi->speed_profile());
-    if (ImGui::Combo("Speed profile", &profile,
-                     "Constant\0Ease in-out\0Cinematic\0")) {
-        kfi->set_speed_profile(static_cast<KeyFrameInterpolator::SpeedProfile>(profile));
-    }
-    ImGui::SetItemTooltip("Constant: uniform speed within each segment.\n"
-                          "Ease in-out: the camera accelerates once at the start of the path and "
-                          "decelerates once at its end; it keeps its speed as it passes a keyframe.\n"
-                          "Cinematic: ease in-out, plus a slow approach to and departure from "
-                          "keyframes that have a dwell time.");
+    // Speed profile: the camera runs at one constant speed, accelerating from rest at the first
+    // keyframe and at every keyframe after a dwell, and decelerating to rest into every keyframe
+    // that holds a dwell and into the last one. A keyframe with no dwell is passed at speed.
+    ImGui::Text("Speed profile: cinematic");
+    ImGui::SetItemTooltip("One constant speed along the path. The camera accelerates from rest at "
+                          "the first keyframe and after every dwell, and decelerates to rest into "
+                          "every dwell and into the last keyframe. A keyframe that holds no dwell "
+                          "is passed at speed, and every dwell is a full stop of exactly its "
+                          "length.");
 
     // Per-keyframe dwell: how long the camera pauses at the selected keyframe before
     // moving on. It is part of the keyframe, so it sits with the path's rhythm rather
