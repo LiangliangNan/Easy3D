@@ -85,10 +85,9 @@ void MappleViewer::draw_animation_window() {
                 kfi_->stop_interpolation();
             keyframe_editor_->set_selected(-1);
             // The tool disarms with its window; a gesture in progress is abandoned,
-            // and the keyframe handles go away with the window that turns them on.
+            // and the keyframe handles go away with the editing mode the window opens.
             path_tool_ = PathTool::Off;
-            edit_keyframes_ = false;
-            sync_keyframe_editing();
+            sync_keyframe_editing();   // no handles once the window is gone
             cancel_path_gesture();
         }
         return;
@@ -283,51 +282,7 @@ void MappleViewer::draw_animation_window() {
             goto_camera_keyframe(timeline_selected);
     }
 
-    bool visible = show_camera_path_;
-    if (ImGui::Checkbox("Show path and keyframe cameras", &visible))
-        set_camera_path_visible(visible);
-
     const bool playing = kfi->is_interpolation_started();
-    if (ImGui::Checkbox("Edit keyframe handles", &edit_keyframes_)) {
-        if (edit_keyframes_) {
-            if (!show_camera_path_)
-                set_camera_path_visible(true);
-            if (selected_index < 0 && count > 0)
-                keyframe_editor_->set_selected(count - 1);
-        }
-        sync_keyframe_editing();
-        update();
-    }
-    ImGui::SetItemTooltip("Drag the glyph or a ring/arrow to move or turn the selected keyframe (Shift: "
-                          "its own plane); click the scene to aim it. Ctrl+Z restores; Esc cancels.");
-    if (keyframe_editor_->editable_keyframe() >= 0 && !playing)
-        ImGui::TextDisabled("Click the scene to aim the selected keyframe there.");
-    if (camera_path_snapshot_.valid)
-        ImGui::TextDisabled("Ctrl+Z restores the path from before the last tool or edit.");
-
-    // Playback and the interpolation it uses.
-    ImGui::Separator();
-    if (ImGui::Button(playing ? "Stop" : "Play", ImVec2(120, 0)))
-        toggle_camera_path_playback();
-    ImGui::SameLine();
-    ImGui::TextDisabled(playing ? "playing..." : "Ctrl+K");
-
-    float speed = kfi->interpolation_speed();
-    if (ImGui::SliderFloat("Speed", &speed, 0.1f, 10.0f, "%.2f") && speed != kfi->interpolation_speed())
-        kfi->set_interpolation_speed(speed);
-    int fps = kfi->frame_rate();
-    if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
-        kfi->set_frame_rate(fps);
-
-    // Speed profile: the camera runs at one constant speed, accelerating from rest at the first
-    // keyframe and at every keyframe after a dwell, and decelerating to rest into every keyframe
-    // that holds a dwell and into the last one. A keyframe with no dwell is passed at speed.
-    ImGui::Text("Speed profile: cinematic");
-    ImGui::SetItemTooltip("One constant speed along the path. The camera accelerates from rest at "
-                          "the first keyframe and after every dwell, and decelerates to rest into "
-                          "every dwell and into the last keyframe. A keyframe that holds no dwell "
-                          "is passed at speed, and every dwell is a full stop of exactly its "
-                          "length.");
 
     // Per-keyframe dwell: how long the camera pauses at the selected keyframe before
     // moving on. It is part of the keyframe, so it sits with the path's rhythm rather
@@ -348,6 +303,33 @@ void MappleViewer::draw_animation_window() {
             ImGui::SetItemTooltip("Seconds the camera holds this keyframe before moving on. "
                                   "Ctrl+Z restores the path's timing.");
     }
+
+    bool visible = show_camera_path_;
+    if (ImGui::Checkbox("Show path and keyframe cameras (Ctrl+T)", &visible))
+        set_camera_path_visible(visible);
+
+    // The handles have no switch of their own: in Camera Path editing mode Alt is what
+    // brings them out (see MappleViewer::set_alt_held()), so the hint says so.
+    ImGui::TextDisabled("Hold Alt to drag the selected keyframe's glyph, ring or arrow\n"
+                        "\t(Shift: its own plane), or Alt+click the scene to aim it.");
+    if (camera_path_snapshot_.valid)
+        ImGui::TextDisabled("Ctrl+Z restores the path from before the last edit; Esc cancels it.");
+
+    // Playback and the interpolation it uses.
+    ImGui::Separator();
+    if (ImGui::Button(playing ? "Stop" : "Play", ImVec2(120, 0)))
+        toggle_camera_path_playback();
+    ImGui::SameLine();
+    ImGui::TextDisabled(playing ? "playing..." : "Ctrl+K");
+
+    float speed = kfi->interpolation_speed();
+    if (ImGui::SliderFloat("Speed (cinematic)", &speed, 0.1f, 10.0f, "%.2f") && speed != kfi->interpolation_speed())
+        kfi->set_interpolation_speed(speed);
+    ImGui::SetItemTooltip("Slow at the stops, even in between: camera starts and ends at rest, comes"
+        "to rest at every keyframe that holds a dwell, and cruises past the others at one speed.");
+    int fps = kfi->frame_rate();
+    if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
+        kfi->set_frame_rate(fps);
 
     // Recording and its parameters.
     ImGui::Separator();

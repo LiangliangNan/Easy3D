@@ -520,8 +520,24 @@ int MappleViewer::keyframe_at(int x, int y) const {
 }
 
 void MappleViewer::sync_keyframe_editing() {
-    if (keyframe_editor_)
-        keyframe_editor_->set_editing(edit_keyframes_ && show_camera_path_);
+    if (!keyframe_editor_)
+        return;
+    // In Camera Path editing mode (the Camera Path window is open) Alt is what turns the
+    // keyframe handles on: held, the handles are there to drag, released, they are gone
+    // again. Editing the path does not require drawing it, so hiding the path while the
+    // window stays open keeps the handles.
+    const bool editing = camera_path_editing_mode() && alt_held_;
+    if (editing && keyframe_editor_->selected() < 0 && kfi_ && kfi_->number_of_keyframes() > 0)
+        keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    keyframe_editor_->set_editing(editing);
+}
+
+void MappleViewer::set_alt_held(bool held) {
+    if (alt_held_ == held)
+        return;
+    alt_held_ = held;
+    sync_keyframe_editing();
+    update();
 }
 
 void MappleViewer::advance_camera_path() {
@@ -684,6 +700,9 @@ void MappleViewer::apply_effect_parameters() {
 
 bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_captured_ = imgui_ && imgui_->wants_mouse();
+    // The press carries the live modifier state; it is the most reliable way to learn
+    // that Alt is down (see key_press_event()).
+    set_alt_held((modifiers & MODIF_ALT) != 0);
     aim_click_pending_ = false;
     if (mouse_captured_)
         return true;
@@ -692,9 +711,9 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
-    // The armed distance tool owns the next two plain left presses in the scene.
-    // Alt still belongs to model manipulation and the clipping plane. The pick and the
-    // guide buffers wait for draw_gui(), where the graphics context is current.
+    // The armed distance tool owns the next two plain left presses in the scene. An Alt
+    // press keeps its own meaning (below). The pick and the guide buffers wait for
+    // draw_gui(), where the graphics context is current.
     if (measure_armed_ && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
         pending_measure_pick_ = true;
         measure_pick_x_ = x;
@@ -705,8 +724,8 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 
     // The armed one-shot path tool owns the next plain left press in the scene: a
     // walk, flight or aim stroke starts there (an aim stroke replaces the path's
-    // aims), and an orbit drag starts its axis. Alt still belongs to model
-    // manipulation and the clipping plane.
+    // aims), and an orbit drag starts its axis. An Alt press keeps its own meaning
+    // (below).
     const PathTool tool = path_tool_;
     if (tool != PathTool::Off && button == BUTTON_LEFT &&
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
@@ -744,14 +763,24 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         return true;
     }
 
-    // Keyframe handles own the press when it lands on a visible glyph; a press
-    // anywhere else keeps its usual meaning. Shift moves in the pose's own plane
-    // (the terrain or orbit plane) instead of the screen plane.
-    if (keyframe_editor_ && button == BUTTON_LEFT && !(modifiers & MODIF_ALT) &&
-        point_in_scene(x, y) &&
-        keyframe_editor_->press(x, y, (modifiers & MODIF_SHIFT) != 0,
-                                [this](int px, int py) { return keyframe_at(px, py); }))
-        return true;
+    // In Camera Path editing mode Alt is the keyframes' modifier and never the model's
+    // (see sync_keyframe_editing()): the press either grabs the selected pose's glyph or a
+    // gizmo handle - Shift drags in the pose's own plane instead of the screen plane - or it
+    // starts the click that aims the selected pose at the surface under the cursor (see
+    // mouse_release_event). A press that grabs nothing falls through, so the clipping plane
+    // keeps its Alt gesture and Shift its pivot one.
+    if (camera_path_editing_mode() && (modifiers & MODIF_ALT) && button == BUTTON_LEFT &&
+        point_in_scene(x, y) && keyframe_editor_) {
+        if (keyframe_editor_->press(x, y, (modifiers & MODIF_SHIFT) != 0,
+                                    [this](int px, int py) { return keyframe_at(px, py); }))
+            return true;
+        if (!(modifiers & MODIF_SHIFT) && !ClippingPlane::instance()->is_enabled() &&
+            keyframe_editor_->editable_keyframe() >= 0) {
+            aim_click_pending_ = true;
+            aim_click_x_ = x;
+            aim_click_y_ = y;
+        }
+    }
 
     // Alt is the clipping-plane drag modifier; it takes precedence over a selection
     // gesture so the plane stays movable while a selection tool is active.
@@ -770,8 +799,11 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     }
 
     // Alt + left-drag rotates the current model, Alt + right-drag moves it. While the
-    // clipping plane is enabled Alt belongs to the plane (the Viewer handles it).
+    // clipping plane is enabled Alt belongs to the plane (the Viewer handles it), and in
+    // Camera Path editing mode (the Camera Path window is open) Alt belongs to the
+    // keyframe handles instead, whether or not the path is drawn.
     if ((modifiers & MODIF_ALT) && !ClippingPlane::instance()->is_enabled() &&
+        !camera_path_editing_mode() &&
         (button == BUTTON_LEFT || button == BUTTON_RIGHT) && point_in_scene(x, y)) {
         Model *model = current_model();
         if (model && model->manipulator()) {
@@ -780,16 +812,6 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             clear_hover();
             update();
         }
-    }
-
-    // A plain click that reaches this point aims the selected keyframe at the picked
-    // surface point (see mouse_release_event). Modifiers keep their own meanings:
-    // Shift sets the pivot, Ctrl drags a zoom region, Alt manipulates the model.
-    if (button == BUTTON_LEFT && modifiers == 0 && keyframe_editor_ &&
-        keyframe_editor_->editable_keyframe() >= 0 && point_in_scene(x, y)) {
-        aim_click_pending_ = true;
-        aim_click_x_ = x;
-        aim_click_y_ = y;
     }
 
     return Viewer::mouse_press_event(x, y, button, modifiers);
@@ -865,7 +887,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     }
 
-    // A click that did not become a drag aims the selected keyframe at the surface
+    // An Alt+click that did not become a drag aims the selected keyframe at the surface
     // point under the cursor. The pick itself waits for draw_gui(), like the other
     // deferred picks; a missed click simply does nothing.
     if (aim_click_pending_) {
@@ -882,6 +904,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
 }
 
 bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    set_alt_held((modifiers & MODIF_ALT) != 0);
     if (mouse_captured_ || process_op_ != ProcessOp::NONE || show_snapshot_dialog_ || recording_video())
         return true;
 
@@ -958,6 +981,7 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
 }
 
 bool MappleViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+    set_alt_held((modifiers & MODIF_ALT) != 0);
     if (imgui_ && imgui_->wants_mouse()) {
         clear_hover();
         if (keyframe_editor_ && keyframe_editor_->update_hover(-1, -1))
@@ -999,6 +1023,12 @@ bool MappleViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 }
 
 bool MappleViewer::key_press_event(int key, int modifiers) {
+    // In Camera Path editing mode Alt is the keyframe handles' modifier. It is read from
+    // the modifier state of every event rather than from the key's own press/release
+    // events: those reach us only while the scene window has the keyboard focus (the
+    // menus, and widgets that take the keyboard, consume them), while the modifiers ride
+    // along on the mouse events the scene does receive.
+    set_alt_held((modifiers & MODIF_ALT) != 0);
     if (imgui_ && imgui_->wants_keyboard())
         return true;
 
@@ -1097,6 +1127,8 @@ bool MappleViewer::key_press_event(int key, int modifiers) {
 }
 
 bool MappleViewer::key_release_event(int key, int modifiers) {
+    // See key_press_event(): the Alt state comes from the event's modifiers.
+    set_alt_held((modifiers & MODIF_ALT) != 0);
     return (imgui_ && imgui_->wants_keyboard()) || Viewer::key_release_event(key, modifiers);
 }
 
@@ -1106,6 +1138,7 @@ bool MappleViewer::char_input_event(unsigned int codepoint) {
 
 bool MappleViewer::focus_event(bool focused) {
     if (!focused) {
+        set_alt_held(false);   // no key releases reach us once the focus is gone
         cancel_path_gesture();
         if (manipulating_model_) {
             manipulating_model_ = false;
@@ -1861,8 +1894,12 @@ void MappleViewer::append_manipulator_frame(std::vector<graphics::DrawCommand> &
     if (!manipulator)
         return;
     // Alt announces the manipulation gesture; a transformed model also keeps its box
-    // visible so the pending transform (apply or give up) stays apparent.
-    if (!ImGui::GetIO().KeyAlt && manipulator->matrix() == mat4::identity())
+    // visible so the pending transform (apply or give up) stays apparent. In Camera Path
+    // editing mode Alt belongs to the keyframe handles, so it announces nothing here. The
+    // announcement follows the app's own Alt state rather than ImGui's: the key is read
+    // from the modifier bits of the events the scene receives (see set_alt_held()).
+    const bool announced = alt_held_ && !camera_path_editing_mode();
+    if (!announced && manipulator->matrix() == mat4::identity())
         return;
     const int fw = framebuffer_width();
     const int fh = framebuffer_height();

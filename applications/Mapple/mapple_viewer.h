@@ -431,6 +431,10 @@ private:
 
     void draw_animation_window();
 
+    // Whether the Camera Path window is in editing mode: opened, and not closed since.
+    // Inside it Alt is the keyframe handles' modifier and never touches the model.
+    bool camera_path_editing_mode() const { return show_animation_window_; }
+
     void add_camera_keyframe();
 
     void remove_last_camera_keyframe();
@@ -552,9 +556,12 @@ private:
     // Deletes the selected keyframe.
     void delete_camera_keyframe();
 
-    // Tells the editor whether its handles are on: the user's edit mode, only while
-    // the path is visible (the editor also refuses to edit during playback).
+    // Tells the editor whether its handles are on: in Camera Path editing mode (the
+    // Camera Path window is open), Alt held (the editor also refuses to edit during
+    // playback).
     void sync_keyframe_editing();
+    // Alt pressed or released: in editing mode the keyframe handles follow it.
+    void set_alt_held(bool held);
 
     // The visible surface under (x, y): the ground-contact point of a route sample
     // and the walker's up direction there (the picked face's normal, turned to the
@@ -870,9 +877,10 @@ private:
     std::vector<easy3d::Frame> camera_markers_frames_;
     float camera_markers_width_ = 0;
     std::size_t camera_markers_faces_per_glyph_ = 0; // maps a picked triangle to its keyframe
-    // The user's "Edit keyframe handles" choice; the editor also needs the path shown,
-    // so the handles come from sync_keyframe_editing(), which combines the two.
-    bool edit_keyframes_ = false;
+    // Whether Alt is currently held. In Camera Path editing mode (the Camera Path window is
+    // open), Alt is the keyframe handle modifier and never manipulates the model; see
+    // sync_keyframe_editing().
+    bool alt_held_ = false;
     // Selection, handle and glyph drags, aiming, insert/delete, and the selected
     // keyframe's overlay (created in init(), once the path exists).
     std::unique_ptr<easy3d::KeyFrameEditor> keyframe_editor_;
@@ -955,8 +963,8 @@ private:
     SelectCommand pending_command_ = SelectCommand::NONE;
     bool pending_hover_ = false;
     int hover_x_ = 0, hover_y_ = 0;
-    // The aim gesture is picked after the release like the other tools: the press only
-    // records where it landed, and a drag cancels it.
+    // The aim gesture (an Alt+click in editing mode) is picked after the release like the
+    // other tools: the press only records where it landed, and a drag cancels it.
     bool aim_click_pending_ = false;
     int aim_click_x_ = 0, aim_click_y_ = 0;
     bool pending_aim_pick_ = false;

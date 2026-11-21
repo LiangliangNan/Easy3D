@@ -22,6 +22,11 @@ Camera Path window choose the video's sample count. `Mapple-Qt` is still in the 
 builds with `Easy3D_ENABLE_QT=ON` on the OpenGL backend; retiring it is still an open decision,
 not something these batches changed.
 
+Status: 2026-11-21 — unchanged except for the Camera Path window's key handling: inside it `Alt`
+is the keyframes' modifier (it turns the handles on while it is held, announces nothing instead of
+the model's box, and `Alt`+click aims the selected pose), and `Dwell (s)` moved under the timeline
+strip. `Mapple-Qt` keeps its old keys and is untouched.
+
 ## Decision
 
 Rebuild Mapple on ImGui instead of adding a Qt Vulkan widget.
@@ -2178,8 +2183,8 @@ migrated; retirement can proceed whenever it is wanted.
   overlay commands. `begin_edit` fires once when a change is about to happen
   (first actual drag movement, insert, delete, aim) so the host snapshots for undo.
 - `MappleViewer` keeps `keyframe_at()` (its deferred pick resolves the glyph's
-  triangle to a keyframe), `sync_keyframe_editing()` (editing is on only while the
-  "Edit keyframe handles" checkbox is set and the path is visible), the undo hook
+  triangle to a keyframe), `sync_keyframe_editing()` (editing follows Camera Path
+  editing mode and `Alt`; see the 2026-11-21 entry), the undo hook
   (`begin_edit = snapshot_camera_path`) and its UI, logging and path-visibility
   handling; the `KeyframeHandle` enum, the five projection/geometry helpers, all
   drag members and the gizmo/station overlay code are removed from the app. The
@@ -2533,3 +2538,55 @@ migrated; retirement can proceed whenever it is wanted.
   suites sharing the display is responsible was not isolated; the shape matches the parallel `-j4`
   Vulkan result in docs/vulkan.md, so a failure seen only in concurrent local runs describes this
   host rather than the code. OpenGL suites are therefore run one tree at a time here.
+
+### 2026-11-21 — Alt belongs to the keyframes in Camera Path editing mode; dwell under the timeline
+
+- With the Camera Path window open, `Alt` no longer manipulates the model: `Alt` + left-drag in
+  the scene is the keyframe handles' modifier instead. `MappleViewer` tracks the key in
+  `set_alt_held()`, fed from the modifier bits of every scene event (`mouse_press_event()`,
+  `mouse_drag_event()`, `mouse_free_move_event()`, `key_press_event()`, `key_release_event()`)
+  rather than from Alt's own press/release events: those reach the app only while the scene owns
+  the keyboard, while the modifiers ride along on the mouse events the scene does receive. It is
+  cleared on `focus_event(false)`, so a lost key release cannot strand the handles.
+  `sync_keyframe_editing()` turns the editor on only while Camera Path editing mode is on (the
+  Camera Path window is open) **and** `Alt` is down - the handles appear with `Alt` and go away
+  when it is released. The `Edit keyframe handles` checkbox is gone (its job is now the key); a
+  disabled line in its place says "Hold Alt to drag the selected keyframe's glyph, ring or arrow
+  (Shift: its own plane), or Alt+click the scene to aim it."
+- Editing mode is the window, not the path's visibility: `camera_path_editing_mode()` is
+  `show_animation_window_`, so `Alt` is the handles' modifier (and never the model's) even while
+  `Show path and keyframe cameras` is off; the editor's on/off, the model-manipulation guard in
+  `mouse_press_event()` and the box announcement below all read that one predicate.
+- `Alt` in that mode no longer announces the model's box. `append_manipulator_frame()` drew it from
+  ImGui's `IO.KeyAlt`, which knows nothing about the editing mode and is not the state the
+  gestures are keyed off; the announcement now follows the app's own `alt_held_` and is suppressed
+  in editing mode, so there Alt draws nothing while outside it a pending transform (apply or give
+  up) stays apparent. `Alt`+`K`/`Alt`+`D` (insert/delete), the clipping plane's `Alt` drag and the
+  `Shift` pivot are untouched: a press that grabs neither a handle nor a glyph falls through to
+  them.
+- Aiming the selected pose is `Alt`+click, and the old plain-click branch is deleted: it demanded
+  `modifiers == 0` while `editable_keyframe()` is only non-negative with `Alt` down, so the two
+  could not hold at once and it never ran. Now such a press arms `aim_click_pending_`,
+  `mouse_drag_event()` drops the arm as soon as the cursor moves (that is a camera gesture, not a
+  click), and a release within two pixels queues the same deferred GPU pick the other scene picks
+  use; its answer turns the pose with `aim_at()` and says so ("keyframe N aimed at the clicked
+  point", Ctrl+Z restores it).
+- The `Dwell (s)` spin box moved up to sit immediately below the timeline strip, so the timing
+  control is next to the bars it edits; `Show path and keyframe cameras` and the rest of the
+  window follow it.
+- `docs/keyframe_video.md` is now `docs/keyframes.md` (title "Keyframes: Camera Path Timing and
+  Motion"); the references in `ToDo.md` follow it.
+- Measured rather than assumed. A temporary environment-gated probe drove the events without a
+  hand on the keyboard (window open with `Alt`: editor on, no box command; window closed with
+  `Alt`: editor off, box command; `Alt` press on the model in editing mode: aim armed, no drag, no
+  model manipulation; the release: the deferred pick ran and the pose was aimed; `Alt` press with
+  the window closed: model manipulation, no aim). The probe and the debug logging of the unfinished
+  pass are removed again. The behavior was then seen in a live session: Mapple (Vulkan) with the
+  19-keyframe `domik.kf` logged "keyframe 19 aimed at the clicked point (Ctrl+Z restores it)" twice
+  from an `Alt`+click, played the path (667 frames, 22.0 s) and exited with its settings saved. The
+  three build trees are clean and both backends launch the fixture with "Mapple UI ready" and an
+  error-free `Mapple.log`; the suites were not rerun (the change is app-only). Not measured: the
+  glyph/ring drags by eye with a hand on `Option`, and the box's absence by eye (the aim above is
+  what the log shows).
+- `easy3d/util/version.h` is unchanged. The change is confined to `applications/Mapple` and the
+  docs.
