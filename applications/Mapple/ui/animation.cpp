@@ -494,6 +494,10 @@ void MappleViewer::toggle_camera_path_playback() {
         LOG(WARNING) << "camera path playback needs at least two keyframes";
         return;
     } else {
+        // A fresh start: the playback clock begins at "now", so pressing Play always
+        // walks the path from its first keyframe instead of catching up from a stale
+        // deadline (a session-constructed or paused value) and fast-forwarding.
+        next_camera_path_frame_ = std::chrono::steady_clock::now();
         kfi_->start_manual_interpolation();
         LOG(INFO) << "camera path playback started (" << kfi_->number_of_keyframes() << " keyframes)";
     }

@@ -369,5 +369,15 @@ frame cost pushed the deadline later, causing playback to run longer than the re
 recording path (`advance_video_recording`) already renders `interpolate()`'s samples directly,
 so it was already correct.
 
+**Follow-up fix (2026-11-22, same day):** the deadline was still initialized once, at session
+construction (`next_camera_path_frame_ = steady_clock::now()`), and `toggle_camera_path_playback()`
+never reset it. Pressing Play therefore caught up from that stale reference: the first `pre_draw`
+after the press fast-forwarded through every sample whose deadline had passed, so playback
+started mid-path (the first keyframes were skipped) and only walked the tail of the path — at
+~half the path duration for a playback started mid-session, which read as "playback ≈ 2× the
+recording". The fix: `toggle_camera_path_playback()` now sets `next_camera_path_frame_ =
+steady_clock::now()` before starting manual interpolation, so every Play begins at the first
+sample with the catch-up loop stepping forward from there.
+
 **Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
 on both backends.
