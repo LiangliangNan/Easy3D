@@ -25,7 +25,7 @@
  \endcond */
 
 #include "mapple_viewer.h"
-#include "camera_path_timeline.h"
+#include "keyframe_timeline.h"
 #include "imgui_layer.h"
 
 #include <algorithm>
@@ -338,7 +338,7 @@ void MappleViewer::init() {
     keyframe_editor_->begin_edit = [this]() { snapshot_camera_path(); };
     // The Camera Path window's timeline strip (drawn by ui/animation.cpp); it keeps its
     // cached segment layout across frames and is invalidated by edit_camera_path_timing().
-    camera_path_timeline_.reset(new CameraPathTimeline(kfi_.get()));
+    keyframe_timeline_.reset(new KeyframeTimeline(kfi_.get()));
 
     // Recreate the effect that was enabled in the previous session. The effect objects
     // are cheap until used, but they must exist before the first frame draws.

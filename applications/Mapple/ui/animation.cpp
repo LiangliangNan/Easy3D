@@ -25,7 +25,7 @@
  \endcond */
 
 #include "../mapple_viewer.h"
-#include "../camera_path_timeline.h"
+#include "../keyframe_timeline.h"
 #include <easy3d/renderer/camera_path_builder.h>
 
 #include <algorithm>
@@ -275,9 +275,9 @@ void MappleViewer::draw_animation_window() {
     // Clicking selects the corresponding keyframe. It takes a row of its own (the
     // navigation row above is full), and the recording's expected length below reads
     // the same duration.
-    if (camera_path_timeline_ && count > 0) {
+    if (keyframe_timeline_ && count > 0) {
         int timeline_selected = selected_index;
-        if (camera_path_timeline_->draw(ImGui::GetContentRegionAvail().x, &timeline_selected) &&
+        if (keyframe_timeline_->draw(ImGui::GetContentRegionAvail().x, &timeline_selected) &&
             timeline_selected >= 0)
             goto_camera_keyframe(timeline_selected);
     }
@@ -441,8 +441,8 @@ void MappleViewer::insert_camera_keyframe() {
         return;
     }
     clear_aim_range(); // the inserted keyframe shifts the path's indices
-    if (camera_path_timeline_)
-        camera_path_timeline_->invalidate(); // one more keyframe: one more segment
+    if (keyframe_timeline_)
+        keyframe_timeline_->invalidate(); // one more keyframe: one more segment
     if (!show_camera_path_)
         set_camera_path_visible(true);
     LOG(INFO) << "keyframe no. " << index + 1 << " inserted (" << kfi_->number_of_keyframes()
@@ -455,8 +455,8 @@ void MappleViewer::delete_camera_keyframe() {
     if (index < 0)
         return;
     clear_aim_range(); // the deleted keyframe shifts the path's indices
-    if (camera_path_timeline_)
-        camera_path_timeline_->invalidate(); // the segment it opened is gone
+    if (keyframe_timeline_)
+        keyframe_timeline_->invalidate(); // the segment it opened is gone
     if (kfi_->number_of_keyframes() == 0 && show_camera_path_) {
         release_camera_path_guides();
         restore_scene_bounds();
@@ -477,8 +477,8 @@ void MappleViewer::edit_camera_path_timing(std::size_t index, float dwell_second
     kfi_->set_keyframe_dwell(index, dwell);
     // The dwell is part of the path's timing, which the drawn path and the timeline
     // strip are both derived from.
-    if (camera_path_timeline_)
-        camera_path_timeline_->invalidate();
+    if (keyframe_timeline_)
+        keyframe_timeline_->invalidate();
     if (show_camera_path_)
         update_camera_path_guides();
     LOG(INFO) << "keyframe no. " << index + 1 << " dwells " << dwell << " s";
@@ -931,8 +931,8 @@ bool MappleViewer::undo_camera_path() {
         if (i < camera_path_snapshot_.dwells.size())
             kfi_->set_keyframe_dwell(i, camera_path_snapshot_.dwells[i]);
     }
-    if (camera_path_timeline_)
-        camera_path_timeline_->invalidate();
+    if (keyframe_timeline_)
+        keyframe_timeline_->invalidate();
     const int count = static_cast<int>(kfi_->number_of_keyframes());
     keyframe_editor_->set_selected(camera_path_snapshot_.keyframe_index);
     camera_path_snapshot_.valid = false;

@@ -90,7 +90,7 @@ applications/Mapple/
   mapple_viewer.{h,cpp}  Viewer + logging::Logger; frame hooks, input routing,
                          layout, app state (panels, actions, log buffer)
   imgui_layer.{h,cpp}    ImGui context, font atlas, DPI, ImDrawData -> DrawCommand
-  camera_path_timeline.{h,cpp}
+  keyframe_timeline.{h,cpp}
                           Mapple-only Camera Path timeline strip and selection UI
   ui/menu.cpp            menu bar and shortcuts
   ui/panels.cpp          toolbar, Models, Rendering, Log, status bar, About
@@ -2633,7 +2633,7 @@ migrated; retirement can proceed whenever it is wanted.
   disables itself when nothing is selected. Both probe variants (`remove_last`, `delete_selected`)
   then performed the removal, drew the rest of the frame, and were still running when the
   measurement ended; no `Viewer failed` in either log.
-- A second defect of the same family, found while measuring the first: `CameraPathTimeline` caches
+- A second defect of the same family, found while measuring the first: `KeyframeTimeline` caches
   one marker per keyframe and rebuilt only on its `invalidate()` flag, which `Insert After`,
   `Delete Selected`, a dwell edit and undo call — but not `Remove Last`, `Clear` or `Alt+K`. Its
   hover tooltip read `kfi_->keyframe_dwell(kf)` with `kf` from the stale cache and only `kf >= 0`

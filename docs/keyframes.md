@@ -73,9 +73,9 @@ This gives:
   dwell boundaries.
 - `CINEMATIC`-like behavior: every stretch between two stops eased in and out.
 
-### Timeline strip (`CameraPathTimeline`)
+### Timeline strip (`KeyframeTimeline`)
 
-A Mapple-owned ImGui control (`applications/Mapple/camera_path_timeline.{h,cpp}`, deliberately
+A Mapple-owned ImGui control (`applications/Mapple/keyframe_timeline.{h,cpp}`, deliberately
 private to the application, not part of the renderer library API). It draws travel segments
 as colored bars proportional to their duration and dwell pauses as gray bars. Keyframe
 markers highlight the selected keyframe; clicking a bar or marker selects its keyframe.
@@ -121,11 +121,11 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 - `easy3d/renderer/key_frame_interpolator.cpp` — `interpolate()` rewritten with the
   cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell read/write
   in `save_keyframes()` / `read_keyframes()`
-- `applications/Mapple/camera_path_timeline.h/.cpp` — `CameraPathTimeline` ImGui control,
+- `applications/Mapple/keyframe_timeline.h/.cpp` — `KeyframeTimeline` ImGui control,
   `cache_is_current()`
 - `applications/Mapple/ui/animation.cpp` — "Dwell (s)" field, timeline strip in the Camera
   Path window, recording readout from `total_duration()`, and the Camera Path window's `Alt` hint
-- `applications/Mapple/mapple_viewer.h/.cpp` — `camera_path_timeline_` member,
+- `applications/Mapple/mapple_viewer.h/.cpp` — `keyframe_timeline_` member,
   `edit_camera_path_timing()`, `camera_path_duration()`, `camera_path_editing_mode()`,
   `alt_held_`/`set_alt_held()` and the `Alt` handling of `mouse_press_event()` and
   `append_manipulator_frame()`
@@ -153,13 +153,13 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 
 ### 2026-11-20 — Timeline strip (Step 3)
 
-- `CameraPathTimeline` lives in `applications/Mapple` (deliberately not part of the renderer
+- `KeyframeTimeline` lives in `applications/Mapple` (deliberately not part of the renderer
   library API). It presents travel time as proportional colored bars and dwell time as gray
   pause bars. Keyframe markers highlight the currently selected keyframe, including the final
   marker, and clicking a bar or marker selects its associated keyframe.
 - The strip uses an ImGui invisible button for reliable hover/click/tooltip behavior. A
   one-keyframe path remains visible and selectable, with a zero-duration label.
-- The strip is a persistent `MappleViewer` member (`camera_path_timeline_`); its segment cache
+- The strip is a persistent `MappleViewer` member (`keyframe_timeline_`); its segment cache
   survives between frames and is invalidated on keyframe insert/delete/dwell change and on
   undo. `invalidate()` and an out-of-line `total_duration()` were added.
 - The "Dwell (s)" field calls `MappleViewer::edit_camera_path_timing()`, which takes an undo

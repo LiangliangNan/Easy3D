@@ -2,6 +2,7 @@
 #include <tests/test.h>
 #include <easy3d/algo/graph_minimum_spanning_tree.h>
 #include <easy3d/core/graph.h>
+#include <easy3d/core/random.h>
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
@@ -134,7 +135,7 @@ int main() { return test::run("graph minimum spanning tree",[] {
         std::srand(unsigned(seed));
         const int n=6+seed%7;
         Graph random;
-        for(int v=0;v<n;++v) random.add_vertex(vec3(float(std::rand())/RAND_MAX,float(std::rand())/RAND_MAX,0));
+        for(int v=0;v<n;++v) random.add_vertex(vec3(random_float() ,random_float(),0));
         std::vector<std::vector<float>> matrix(static_cast<std::size_t>(n),std::vector<float>(static_cast<std::size_t>(n),none));
         weight.clear();
         const auto link=[&](int u,int v) {

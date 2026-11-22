@@ -24,19 +24,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#include "camera_path_timeline.h"
+#include "keyframe_timeline.h"
 
 #include <3rd_party/imgui/imgui.h>
 
 #include <algorithm>
 #include <cmath>
 
-CameraPathTimeline::CameraPathTimeline(easy3d::KeyFrameInterpolator* kfi)
+KeyframeTimeline::KeyframeTimeline(easy3d::KeyFrameInterpolator* kfi)
         : kfi_(kfi) {
 }
 
 
-void CameraPathTimeline::build_segments() {
+void KeyframeTimeline::build_segments() {
     segments_.clear();
     keyframe_times_.clear();
     total_duration_ = 0.0f;
@@ -88,14 +88,14 @@ void CameraPathTimeline::build_segments() {
 }
 
 
-float CameraPathTimeline::total_duration() const {
+float KeyframeTimeline::total_duration() const {
     if (!cache_is_current())
-        const_cast<CameraPathTimeline*>(this)->build_segments();
+        const_cast<KeyframeTimeline*>(this)->build_segments();
     return total_duration_;
 }
 
 
-bool CameraPathTimeline::cache_is_current() const {
+bool KeyframeTimeline::cache_is_current() const {
     // keyframe_times_ holds exactly one entry per keyframe, so a path that grew or
     // shrank without an invalidate() is caught here: every index the strip hands out
     // then names a keyframe that is still there.
@@ -104,7 +104,7 @@ bool CameraPathTimeline::cache_is_current() const {
 }
 
 
-int CameraPathTimeline::find_keyframe_at(float x, float width) const {
+int KeyframeTimeline::find_keyframe_at(float x, float width) const {
     if (keyframe_times_.empty() || width <= 0.0f)
         return -1;
 
@@ -127,7 +127,7 @@ int CameraPathTimeline::find_keyframe_at(float x, float width) const {
 }
 
 
-bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
+bool KeyframeTimeline::draw(float width, int* selected_keyframe) {
     if (width <= 0.0f || !kfi_)
         return false;
 
@@ -188,7 +188,7 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
         dl->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + height), IM_COL32(255, 60, 60, 255), 2.0f);
     }
 
-    ImGui::InvisibleButton("##camera-path-timeline", ImVec2(width, height));
+    ImGui::InvisibleButton("##keyframe-timeline", ImVec2(width, height));
     const bool hovered = ImGui::IsItemHovered();
     bool changed = false;
     if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {

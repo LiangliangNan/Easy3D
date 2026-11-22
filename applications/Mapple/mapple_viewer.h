@@ -52,7 +52,7 @@
 
 #include "settings.h"
 
-class CameraPathTimeline;
+class KeyframeTimeline;
 class ImGuiLayer;
 namespace easy3d {
     class AmbientOcclusion;
@@ -527,7 +527,7 @@ private:
     // The Camera Path window's timeline strip. It lives as long as the window so its
     // cached segment layout survives between frames; the path it shows is invalidated
     // when a keyframe edit changes the timing (edit_camera_path_timing()).
-    std::unique_ptr<CameraPathTimeline> camera_path_timeline_;
+    std::unique_ptr<KeyframeTimeline> keyframe_timeline_;
     // Applies a new dwell time to keyframe \p index: the library path, the strip's
     // layout and the path drawn in the scene all depend on it.
     void edit_camera_path_timing(std::size_t index, float dwell_seconds);

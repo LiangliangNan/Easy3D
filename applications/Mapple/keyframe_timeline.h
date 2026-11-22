@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_MAPPLE_CAMERA_PATH_TIMELINE_H
-#define EASY3D_MAPPLE_CAMERA_PATH_TIMELINE_H
+#ifndef EASY3D_MAPPLE_KEYFRAME_TIMELINE_H
+#define EASY3D_MAPPLE_KEYFRAME_TIMELINE_H
 
 #include <easy3d/renderer/key_frame_interpolator.h>
 
@@ -34,7 +34,7 @@
 
 /**
  * \brief Mapple's ImGui timeline strip for a KeyFrameInterpolator path.
- * \class CameraPathTimeline applications/Mapple/camera_path_timeline.h
+ * \class KeyframeTimeline applications/Mapple/keyframe_timeline.h
  *
  * \details Draws a horizontal timeline strip showing each keyframe as a marker
  *      and each travel/dwell segment as a bar proportional to its duration.
@@ -44,14 +44,14 @@
  *      This is Mapple UI code, rather than a renderer API. It deliberately
  *      remains private to the application and is linked only into Mapple.
  */
-class CameraPathTimeline
+class KeyframeTimeline
 {
 public:
     /**
      * \brief Creates a timeline bound to \p kfi.
      * \param kfi The keyframe interpolator to visualize. Must outlive this object.
      */
-    explicit CameraPathTimeline(easy3d::KeyFrameInterpolator* kfi);
+    explicit KeyframeTimeline(easy3d::KeyFrameInterpolator* kfi);
 
     /**
      * \brief Draws the timeline strip and returns true if the selection changed.
@@ -98,4 +98,4 @@ private:
     mutable bool segments_dirty_ = true;
 };
 
-#endif // EASY3D_MAPPLE_CAMERA_PATH_TIMELINE_H
+#endif // EASY3D_MAPPLE_KEYFRAME_TIMELINE_H
