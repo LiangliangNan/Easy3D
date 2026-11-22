@@ -136,7 +136,7 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
 
     const int count = static_cast<int>(kfi_->number_of_keyframes());
     const float height = 24.0f;     // strip height
-    const float marker_w = 3.0f;    // keyframe marker width
+    const float marker_w = 2.0f;    // keyframe marker width
     const float padding = 4.0f;     // left/right padding inside the strip
 
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -165,14 +165,8 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
             // Dwell pause: gray with rounded ends.
             dl->AddRectFilled(a, b, IM_COL32(100, 100, 100, 200), 2.0f);
         } else {
-            // Travel segment: colored by keyframe index for visual distinction.
-            const int idx = seg.keyframe_index >= 0 ? seg.keyframe_index : 0;
-            const unsigned hue = static_cast<unsigned>((idx * 137) % 360);
-            float red, green, blue;
-            ImGui::ColorConvertHSVtoRGB(hue / 360.0f, 0.6f, 0.9f, red, green, blue);
-            const ImU32 col = IM_COL32(static_cast<unsigned>(red * 255.0f),
-                                       static_cast<unsigned>(green * 255.0f),
-                                       static_cast<unsigned>(blue * 255.0f), 255);
+            // Travel segment: uniformly colored for all keyframes (as keyframes are separated by markers).
+            const ImU32 col = IM_COL32(150, 210, 20, 255);
             dl->AddRectFilled(a, b, col, 2.0f);
         }
     }
@@ -180,10 +174,9 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
     const int selected = selected_keyframe ? *selected_keyframe : -1;
     for (std::size_t i = 0; i < keyframe_times_.size(); ++i) {
         const float x = timeline_x(keyframe_times_[i]);
-        dl->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + height),
-                    static_cast<int>(i) == selected ? IM_COL32(255, 210, 70, 255)
-                                                     : IM_COL32(200, 200, 200, 180),
-                    marker_w);
+        dl->AddLine(ImVec2(x, p.y + 4.0f), ImVec2(x, p.y + height - 4.0f),
+                    static_cast<int>(i) == selected ? IM_COL32(255, 210, 70, 255) : IM_COL32(20, 120, 200, 255),
+                    static_cast<int>(i) == selected ? marker_w + 1 :  + marker_w);
     }
 
     // Playhead / current position: red vertical line at the playback's position along
