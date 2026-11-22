@@ -2545,6 +2545,11 @@ migrated; retirement can proceed whenever it is wanted.
 
 ### 2026-11-21 — Alt belongs to the keyframes in Camera Path editing mode; dwell under the timeline
 
+> **Partly superseded (2026-11-22):** the `Not measured:` at the end of this entry is closed — the
+> maintainer looked at the glyph and ring drags and at the box's absence in a live session, and the
+> gestures work as intended. Their confirmation is recorded in the last entry of this changelog and
+> in docs/keyframes.md; the probe and log measurements above stand.
+
 - With the Camera Path window open, `Alt` no longer manipulates the model: `Alt` + left-drag in
   the scene is the keyframe handles' modifier instead. `MappleViewer` tracks the key in
   `set_alt_held()`, fed from the modifier bits of every scene event (`mouse_press_event()`,
@@ -2665,6 +2670,30 @@ migrated; retirement can proceed whenever it is wanted.
   `easy3d/core/random.h`, `easy3d/renderer/renderer.h` and `easy3d/util/version.h` carry unrelated
   edits made in the same tree at the same time, so a suite result now would not describe this
   change; the keyframe tests — the CPU coverage of the edited code — pass in all three build trees.
+  Superseded the same day: the edits finished and the suites were run, green both ways — see the last
+  entry of this changelog.
 - The fix itself is in the library (`easy3d/renderer/keyframe_editor.{h,cpp}`) plus its new test; no
   file under `applications/Mapple` changed, and the strip needed no change: it was already drawing
   the dwells it was given.
+
+### 2026-11-22 — Mapple-Qt colors its slices and components by index
+
+- `easy3d::color_from_index()` — new in `easy3d/core/random.h`, together with `color_table()` and the
+  `hsv_to_rgb()` the two share — replaces `random_color()` in two places of
+  `applications/Mapple-Qt/main_window.cpp`. `surfaceMeshSlice()` gives each polyline the color of its
+  running vertex index and `surfaceMeshExtractConnectedComponents()` gives each component the color of
+  its position in the list (the loop is now over `std::size_t`, so the comparison is no longer signed
+  against unsigned). A slice or a component keeps its color across a rerun and for a second viewer,
+  where a draw gave it a new one every run. The API, the golden-angle step and the measured distances
+  between the colors of a table are recorded in `ToDo.md`.
+- Not run by hand: the two dialogs of Mapple-Qt. `core.random` covers the library function, and the
+  suites below cover the app's build.
+- The suites that the entry above left unrun are green: OpenGL `cmake-build-relwithdebinfo` 121/121 in
+  64 s — Qt ON with Vulkan OFF, which is the configuration that builds `Mapple-Qt.app` — and Vulkan
+  Debug `cmake-build-debug` 153/153 in 259 s, run serially, one tree at a time. The third tree
+  (`build-opengl-check`) passes its three CPU tests. `easy3d/util/version.h` is at `HEAD` and no file
+  under `applications/Mapple` changed.
+- The `Not measured: the glyph/ring drags by eye, and the box's absence by eye` line of the
+  2026-11-21 entry above is closed: the maintainer looked at the `Alt` gestures in a live session on
+  2026-11-22 and they work as expected. Their observation, not a measurement of mine; the details are
+  in the last entry of docs/keyframes.md.

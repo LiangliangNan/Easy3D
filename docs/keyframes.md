@@ -216,6 +216,10 @@ and no shake at any boundary. The interpolator's final rule, in one paragraph:
 
 ### 2026-11-21 — Alt is the keyframes' modifier in Camera Path editing mode
 
+> **Partly superseded (2026-11-22):** the `Not looked at by eye` below is closed — the maintainer
+> looked, and the gestures work as intended. See the last entry of this changelog. The log evidence
+> and the build results above stand.
+
 One change, stated as it now stands (the behavior itself is under "Editing the keyframes with Alt"
 above):
 
@@ -309,15 +313,27 @@ and the path's total dropped by every dwell it had.
 - `MappleViewer` needed no change: `delete_camera_keyframe()` and `insert_camera_keyframe()` already
   invalidated the strip, and the dwell values the strip draws are the ones that now survive.
 
+### 2026-11-22 — The `Alt` gestures seen by eye, and the suites run
+
+- `Alt` in Camera Path editing mode, by eye: the maintainer confirms the gestures now work as
+  expected — the handles come out with `Option` and go away on release, a glyph and a ring drag
+  follow the hand, and the model's box stays hidden while the mode has the key. That closes the
+  `Not looked at by eye` of the 2026-11-21 entry above and the matching line in docs/mapple.md. It is
+  their observation in a live session, not a measurement of mine; the synthesized-event probe and the
+  `Alt`+click log lines above are what was measured.
+- The full CTest suites are measured now, which closes the `Not measured: the full CTest suites`
+  bullet above: it described a tree whose color-API edits were still moving, and those edits are
+  finished. Run serially, one tree at a time: OpenGL `cmake-build-relwithdebinfo` 121/121 in 64 s and
+  Vulkan Debug `cmake-build-debug` 153/153 in 259 s, and the CPU tests of the touched code
+  (`core.random`, both keyframe tests) pass in the third tree as well.
+- `easy3d/util/version.h` is back at `HEAD`. What the dwell bullet above called unrelated in-flight
+  edits is now this change, in `easy3d/core/random.h` (`color_from_index()`, `color_table()`,
+  `hsv_to_rgb()`), its callers (`renderer/renderer.h`, `renderer/texture_manager.{h,cpp}`,
+  `fileio/point_cloud_io_vg.cpp`, `applications/Mapple-Qt/main_window.cpp`) and
+  `tests/core/random_test.cpp`; the API and its measurements are recorded in `ToDo.md`.
+
 ## Still open
 
 
 - Recording short videos in Mapple with dwell and speed-profile settings on both backends.
   This is an interactive check requiring a windowed session.
-- The `Alt`+click aim has log evidence; the rest of the `Alt` gestures have only been seen through
-  a (since removed) synthesized-event measurement. In a window: hold `Option` with the Camera Path
-  window open, check the handles come out without the model's box, drag a glyph and a ring, and
-  release to see the handles go away.
-- The 2026-11-22 dwell-preservation change is in the renderer library, and only the two CPU keyframe
-  tests were run against it: the full serial suites should be run once the unrelated edits in
-  `easy3d/core/random.h`, `easy3d/renderer/renderer.h` and `easy3d/util/version.h` settle.

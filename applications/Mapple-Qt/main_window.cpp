@@ -1573,24 +1573,26 @@ void MainWindow::surfaceMeshSlice() {
         return;
 
     auto graph = new Graph;
+    int total_polyline = 0;
     for (const auto& polylines : all_polylines) {
         for (const auto &polyline : polylines) {
+            ++total_polyline;
             for (const auto &p : polyline)
                 graph->add_vertex(p);
         }
     }
 
     auto color = graph->add_edge_property<vec3>("e:color");
-    int idx = 0;
+    int v_idx = 0, polyline_idx = 0;
     for (const auto& polylines : all_polylines) {
         for (const auto &polyline : polylines) {
-            const auto& c = random_color();
+            const auto c = color_from_index(polyline_idx++);
             for (unsigned int i = 0; i < polyline.size() - 1; ++i) {
-                auto e = graph->add_edge(Graph::Vertex(idx), Graph::Vertex(idx + 1));
+                auto e = graph->add_edge(Graph::Vertex(v_idx), Graph::Vertex(v_idx + 1));
                 color[e] = c;
-                ++idx;
+                ++v_idx;
             }
-            ++idx;
+            ++v_idx;
         }
     }
 
@@ -1896,9 +1898,10 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
 
     const std::string color_name = "f:color_components";
     auto face_color = mesh->face_property<vec3>(color_name, vec3(0.5f, 0.5f, 0.5f));
-    for (auto& comp : components) {
-        const vec3& color = random_color(false);
-        for (auto f : comp.faces())
+    for (std::size_t idx = 0; idx < components.size(); ++idx) {
+        const auto& comp = components[idx];
+        const auto& color = color_from_index(static_cast<int>(idx));
+        for (const auto& f : comp.faces())
             face_color[f] = color;
     }
 

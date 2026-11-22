@@ -115,9 +115,12 @@ namespace easy3d {
         if (pos != textures_.end()) // program already exists
             return pos->second;
         else {
+            const auto table = color_table(num_stripes);
+            // the stripes are the colors of the indices 0, 1, ...: stripe x keeps the
+            // color of x, whatever order the stripes are drawn in
             std::vector<unsigned char> data(num_stripes * stride * 3);
             for (int x = 0; x < num_stripes; ++x) {
-                const vec3 &c = random_color(false);
+                const vec3 &c = table[x];
                 for (int j = 0; j < stride; ++j) {
                     const int base = (x * stride + j) * 3;
                     data[base]     = static_cast<unsigned char>(c.r * 255.0f);
@@ -132,7 +135,8 @@ namespace easy3d {
                 return nullptr;
             }
 
-            // though random colored texture, just give a name
+            // the texture is built, not read from a file: it is named after its own
+            // identifier, which is what the lookup above is keyed by
             texture->name_ = texture_name;
             textures_[texture->name_] = texture;
 

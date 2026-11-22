@@ -92,13 +92,18 @@ namespace easy3d {
                                 Texture::FilterMode filter = Texture::LINEAR);
 
         /**
-         * \brief Request a random color texture for rendering scalar fields. The texture will have a set of uniformly
-         *        colored vertical stripes.
-         * \details It first generates a random-colored image, where each row has "num_colors" color and each color
-         *          repeat "stride" times. Then, a texture is created from this image data. The generated texture has a
-         *          unique identifier in the format: "random|num_stripes|stride", where num_stripes and stride are
-         *          integer numbers. If the requested number of stripes and the stride match a previously generated
-         *          texture, no new texture will be generated and the existing texture is returned.
+         * \brief Request a color texture for rendering scalar fields. The texture will
+         *        have a set of uniformly colored vertical stripes.
+         * \details It first generates an image in which each stripe gets one of the
+         *          distinct colors of color_table() and each color repeats "stride"
+         *          times, then creates a texture from this image data. The generated
+         *          texture has a unique identifier in the format:
+         *          "random|num_stripes|stride|wrap|filter", where the last three are
+         *          integer numbers and the prefix is the historical name of this
+         *          coloring (the colors themselves are no longer random). If the
+         *          requested number of stripes and the stride match a previously
+         *          generated texture, no new texture will be generated and the existing
+         *          texture is returned.
          * \param num_stripes The number of stripes in the texture.
          * \param stride The width of each vertical strip. So the total width of the texture is: num_stripes * stride.
          * \param wrap The wrap mode.

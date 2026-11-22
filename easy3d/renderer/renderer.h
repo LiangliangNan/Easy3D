@@ -334,17 +334,14 @@ namespace easy3d {
         for (auto f : mesh->faces())
             max_index = std::max(max_index, static_cast<int>(segments[f]));
 
-        // assign each segment a unique color
-        std::vector<vec3> color_table(max_index + 1);   // index starts from 0
-        for (auto &c : color_table)
-            c = random_color();
-
+        // assign each segment a distinct color
+        const auto table = color_table(max_index + 1);   // index starts from 0
         for (auto f : mesh->faces()) {
-            int idx = static_cast<int>(segments[f]);
+            const int idx = static_cast<int>(segments[f]);
             if (idx == -1)
                 colors[f] = vec3(0, 0, 0);
             else
-                colors[f] = color_table[idx];
+                colors[f] = table[idx];
         }
     }
 
@@ -370,17 +367,14 @@ namespace easy3d {
         for (auto v : mesh->vertices())
             max_index = std::max(max_index, static_cast<int>(segments[v]));
 
-        // assign each segment a unique color
-        std::vector<vec3> color_table(max_index + 1);   // index starts from 0
-        for (auto &c : color_table)
-            c = random_color();
-
+        // assign each segment a distinct color
+        const auto table = color_table(max_index + 1);   // index starts from 0
         for (auto v : mesh->vertices()) {
-            int idx = static_cast<int>(segments[v]);
+            const int idx = static_cast<int>(segments[v]);
             if (idx == -1)
                 colors[v] = vec3(0, 0, 0);
             else
-                colors[v] = color_table[idx];
+                colors[v] = table[idx];
         }
     }
 
@@ -407,17 +401,14 @@ namespace easy3d {
         for (auto v : cloud->vertices())
             max_index = std::max(max_index, static_cast<int>(segments[v]));
 
-        // assign each segment a unique color
-        std::vector<vec3> color_table(max_index + 1);   // index starts from 0
-        for (auto &c : color_table)
-            c = random_color();
-
+        // assign each segment a distinct color
+        const auto table = color_table(max_index + 1);   // index starts from 0
         for (auto v : cloud->vertices()) {
-            int idx = static_cast<int>(segments[v]);
+            const int idx = static_cast<int>(segments[v]);
             if (idx == -1)
                 colors[v] = vec3(0, 0, 0);
             else
-                colors[v] = color_table[idx];
+                colors[v] = table[idx];
         }
     }
 

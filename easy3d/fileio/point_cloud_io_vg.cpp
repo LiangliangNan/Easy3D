@@ -725,7 +725,7 @@ namespace easy3d {
 
             int index = 0;
             for (const auto& type_groups : temp_groups) {
-                int type = type_groups.first;
+                const int type = type_groups.first;
                 for (const auto& index_group : type_groups.second) {
                     groups.push_back(index_group.second);
                     VertexGroup& g = groups.back();
@@ -735,10 +735,10 @@ namespace easy3d {
                 }
             }
 
-            // assign each vertex group a unique color
+            // assign each vertex group a distinct color
             for (std::size_t i = 0; i<groups.size(); ++i) {
                 VertexGroup& g = groups[i];
-                g.color_ = random_color();
+                g.color_ = color_from_index(static_cast<int>(i));
                 g.label_ = "group_" + std::to_string(i);
              }
 
