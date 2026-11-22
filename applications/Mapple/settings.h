@@ -45,8 +45,8 @@ struct AppSettings {
     // Viewer size and position.
     int viewer_width = 800;
     int viewer_height = 600;
-    int viewer_pos_x = 0;
-    int viewer_pos_y = 0;
+    int viewer_pos_x = 100;
+    int viewer_pos_y = 100;
     // Show or hide side and log panels.
     bool show_rendering_panel = true;
     bool show_models_panel = true;

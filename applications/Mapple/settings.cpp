@@ -132,7 +132,7 @@ bool AppSettings::load() {
         } else if (key == "viewer_pos_y") {
             int v;
             if (parse_number(value, v)) viewer_pos_y = v;
-        } if (key == "show_rendering_panel") {
+        } else if (key == "show_rendering_panel") {
             bool v;
             if (parse_bool(value, v)) show_rendering_panel = v;
         } else if (key == "show_models_panel") {
