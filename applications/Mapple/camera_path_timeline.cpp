@@ -188,7 +188,8 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
 
     // Playhead / current position: red vertical line at the playback's position along
     // the timeline (travel + dwell), drawn while playback runs.
-    if (kfi_->is_interpolation_started()) {
+    // if (kfi_->is_interpolation_started()) // Commented out so the redline is always shown.
+    {   // Shown unconditionally
         const float elapsed = kfi_->playback_elapsed();
         const float x = origin + elapsed / duration * plot_w;
         dl->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + height), IM_COL32(255, 60, 60, 255), 2.0f);
