@@ -21,6 +21,18 @@ else()
     set_tests_properties(opengl.keyframeinterpolator PROPERTIES TIMEOUT 120)
 endif()
 
+# The editor's insert/delete rebuild the path, which is CPU bookkeeping as well: the
+# poses, times and dwell pauses either survive the rebuild or they do not.
+add_executable(easy3d_keyframe_editor_test keyframe_editor_test.cpp)
+target_link_libraries(easy3d_keyframe_editor_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.keyframeeditor COMMAND easy3d_keyframe_editor_test)
+    set_tests_properties(vulkan.keyframeeditor PROPERTIES TIMEOUT 120)
+else()
+    add_test(NAME opengl.keyframeeditor COMMAND easy3d_keyframe_editor_test)
+    set_tests_properties(opengl.keyframeeditor PROPERTIES TIMEOUT 120)
+endif()
+
 if(Easy3D_ENABLE_VULKAN)
     add_executable(easy3d_vulkan_test render_test.cpp)
     target_link_libraries(easy3d_vulkan_test PRIVATE easy3d::renderer)

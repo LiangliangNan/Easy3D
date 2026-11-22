@@ -54,7 +54,8 @@ namespace easy3d {
  *      - aim_at() turns the selected pose so its view direction points at a target,
  *        keeping its roll,
  *      - insert_after_selected() and delete_selected() edit the path itself (the
- *        interpolator only appends, so the editor rebuilds it), and
+ *        interpolator only appends, so the editor rebuilds it, carrying the times and
+ *        the dwell pauses of the keyframes that stay), and
  *      - append_overlay() draws the selected pose's station square, its aim ray and
  *        the handle gizmo as depth-tested overlays.
  *
@@ -217,7 +218,11 @@ public:
 
 private:
     bool editable() const;
-    bool rebuild(const std::vector<Frame> &frames, const std::vector<float> &times);
+    /// \brief Replaces the path by \p frames at \p times, each with its dwell from
+    ///     \p dwells (a list one shorter than the poses simply leaves the last pause at
+    ///     0, which is what an inserted keyframe gets).
+    bool rebuild(const std::vector<Frame> &frames, const std::vector<float> &times,
+                 const std::vector<float> &dwells);
     void reset_drag();
 
 private:

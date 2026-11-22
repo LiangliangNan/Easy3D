@@ -341,22 +341,27 @@ int KeyFrameEditor::insert_after_selected() {
 
     std::vector<Frame> frames;
     std::vector<float> times;
+    std::vector<float> dwells;
     frames.reserve(count + 1);
     times.reserve(count + 1);
+    dwells.reserve(count + 1);
     for (int i = 0; i < after + 1; ++i) {
         frames.push_back(kfi_->keyframe(static_cast<std::size_t>(i)));
         times.push_back(kfi_->keyframe_time(static_cast<std::size_t>(i)));
+        dwells.push_back(kfi_->keyframe_dwell(static_cast<std::size_t>(i)));
     }
     frames.push_back(frame);
     times.push_back(time);
+    dwells.push_back(0.0f);   // a new keyframe holds nothing until it is given a dwell
     for (int i = after + 1; i < count; ++i) {
         frames.push_back(kfi_->keyframe(static_cast<std::size_t>(i)));
         times.push_back(kfi_->keyframe_time(static_cast<std::size_t>(i)));
+        dwells.push_back(kfi_->keyframe_dwell(static_cast<std::size_t>(i)));
     }
 
     if (begin_edit)
         begin_edit();
-    if (!rebuild(frames, times))
+    if (!rebuild(frames, times, dwells))
         return -1;
     set_selected(after + 1);
     return after + 1;
@@ -372,24 +377,28 @@ int KeyFrameEditor::delete_selected() {
 
     std::vector<Frame> frames;
     std::vector<float> times;
+    std::vector<float> dwells;
     frames.reserve(count - 1);
     times.reserve(count - 1);
+    dwells.reserve(count - 1);
     for (int i = 0; i < count; ++i) {
         if (i == index)
             continue;
         frames.push_back(kfi_->keyframe(static_cast<std::size_t>(i)));
         times.push_back(kfi_->keyframe_time(static_cast<std::size_t>(i)));
+        dwells.push_back(kfi_->keyframe_dwell(static_cast<std::size_t>(i)));
     }
 
     if (begin_edit)
         begin_edit();
-    if (!rebuild(frames, times))
+    if (!rebuild(frames, times, dwells))
         return -1;
     set_selected(frames.empty() ? -1 : index);
     return index;
 }
 
-bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector<float> &times) {
+bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector<float> &times,
+                             const std::vector<float> &dwells) {
     if (!kfi_ || frames.size() != times.size())
         return false;
     if (kfi_->is_interpolation_started())
@@ -398,6 +407,10 @@ bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector
     for (std::size_t i = 0; i < frames.size(); ++i) {
         if (!kfi_->add_keyframe(frames[i], times[i]))
             return false;
+        // The dwell belongs to the keyframe, so a path rebuilt from kept keyframes
+        // keeps their pauses; a shorter dwells list simply leaves the rest at 0.
+        if (i < dwells.size())
+            kfi_->set_keyframe_dwell(i, dwells[i]);
     }
     return true;
 }

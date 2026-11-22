@@ -129,8 +129,12 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
   `edit_camera_path_timing()`, `camera_path_duration()`, `camera_path_editing_mode()`,
   `alt_held_`/`set_alt_held()` and the `Alt` handling of `mouse_press_event()` and
   `append_manipulator_frame()`
+- `easy3d/renderer/keyframe_editor.{h,cpp}` — `rebuild()` carries each kept keyframe's dwell, so
+  insert and delete no longer reset the path's pauses
 - `tests/renderer/keyframe_interpolator_test.cpp` — regression test for dwell and the
   cinematic motion rule
+- `tests/renderer/keyframe_editor_test.cpp` — regression test for the dwell surviving an
+  insert and a delete
 
 ## Changelog
 
@@ -272,7 +276,41 @@ E 21/11/2026 23:33:52.080 viewer.cpp:738] Viewer failed: vector
   `domik.obj` logs `Mapple UI ready` with no failure. The suites were not rerun: the change is
   app-only.
 
+### 2026-11-22 — Insert and delete keep the dwell of the keyframes that stay
+
+Reported from the window: deleting a keyframe emptied the gray pause bars of the timeline strip,
+and the path's total dropped by every dwell it had.
+
+- **Cause.** `KeyFrameEditor::delete_selected()` and `insert_after_selected()` cannot edit the path
+  in place — `KeyFrameInterpolator` only appends — so both collect the poses and the times they want
+  to keep and hand them to `rebuild()`, which clears the path and replays
+  `add_keyframe(frame, time)`. That sets each keyframe's dwell to its default of 0, so either edit
+  silently reset the whole path's pauses. `Remove Last` goes to the library's
+  `delete_last_keyframe()` (a `pop_back()`), which is why only two of the three buttons showed it —
+  and why `Insert After` lost the pauses too, unnoticed.
+- **Fix.** `rebuild()` now takes the dwells alongside the poses and times and re-applies them
+  (`set_keyframe_dwell()` after each append, the same idiom the undo restore uses). A keyframe the
+  insert creates gets 0: a new pose holds nothing until it is told to.
+- **Regression test.** `tests/renderer/keyframe_editor_test.cpp` (`opengl.`/`vulkan.keyframeeditor`,
+  CPU only, no context): a delete keeps the survivors' dwells and the duration they add; an insert
+  keeps the neighbours' dwells and leaves the new keyframe without one; popping the last keyframe
+  touches no other pause. Measured both ways — with the library change taken back to `HEAD` the test
+  fails on `deleting a keyframe changed the dwell of the ones that stayed`, and with it the test
+  passes in all three build trees (Debug+Vulkan+FFmpeg, RelWithDebInfo+OpenGL+FFmpeg, and the
+  Vulkan tree with FFmpeg off).
+- **In the app.** A temporary probe loaded `domik.kf` the way File > Open Recent does (19 keyframes,
+  2 s dwells at 8 and 16, 22 s total) and deleted keyframe 1: the dwells came back at 7 and 15, the
+  total read 21 s (the one second of travel that went with the deleted step) and the strip agreed at
+  21 s. The probe is removed again; its pre-fix counterpart was measured in the unit test rather
+  than in the window.
+- **Not measured:** the full CTest suites. `easy3d/core/random.h`, `easy3d/renderer/renderer.h` and
+  `easy3d/util/version.h` carry edits made in the tree at the same time, so a suite run now would
+  report on a moving source; the two keyframe tests are the CPU coverage of this code.
+- `MappleViewer` needed no change: `delete_camera_keyframe()` and `insert_camera_keyframe()` already
+  invalidated the strip, and the dwell values the strip draws are the ones that now survive.
+
 ## Still open
+
 
 - Recording short videos in Mapple with dwell and speed-profile settings on both backends.
   This is an interactive check requiring a windowed session.
@@ -280,3 +318,6 @@ E 21/11/2026 23:33:52.080 viewer.cpp:738] Viewer failed: vector
   a (since removed) synthesized-event measurement. In a window: hold `Option` with the Camera Path
   window open, check the handles come out without the model's box, drag a glyph and a ring, and
   release to see the handles go away.
+- The 2026-11-22 dwell-preservation change is in the renderer library, and only the two CPU keyframe
+  tests were run against it: the full serial suites should be run once the unrelated edits in
+  `easy3d/core/random.h`, `easy3d/renderer/renderer.h` and `easy3d/util/version.h` settle.

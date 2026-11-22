@@ -22,12 +22,14 @@ Camera Path window choose the video's sample count. `Mapple-Qt` is still in the 
 builds with `Easy3D_ENABLE_QT=ON` on the OpenGL backend; retiring it is still an open decision,
 not something these batches changed.
 
-Status: 2026-11-21 — unchanged except for the Camera Path window's key handling and its keyframe
+Status: 2026-11-22 — unchanged except for the Camera Path window's key handling and its keyframe
 timing: inside it `Alt` is the keyframes' modifier (it turns the handles on while it is held,
 announces nothing instead of the model's box, and `Alt`+click aims the selected pose), `Dwell (s)`
-moved under the timeline strip, and removing a keyframe from a loaded path no longer ends the
+moved under the timeline strip, removing a keyframe from a loaded path no longer ends the
 session — the dwell field and the timeline strip now read the path's live state instead of a copy
-taken at the top of the frame. `Mapple-Qt` keeps its old keys and is untouched.
+taken at the top of the frame — and `Insert After`/`Delete Selected` keep the dwell pauses of the
+keyframes that stay, so the strip's gray bars survive an edit. `Mapple-Qt` keeps its old keys and is
+untouched.
 
 ## Decision
 
@@ -2642,3 +2644,27 @@ migrated; retirement can proceed whenever it is wanted.
   change is app-only.
 - `easy3d/util/version.h` is unchanged. The change is confined to `applications/Mapple` and the
   docs.
+
+### 2026-11-22 — Insert and delete keep the timeline's pause bars
+
+- Seen in the window: deleting a keyframe left the timeline strip without a single gray pause bar,
+  and the strip's total dropped by every dwell the path had. The cause is not in `applications/Mapple`
+  but in the library behind it: `KeyFrameEditor::delete_selected()` (and `insert_after_selected()`)
+  rebuild the path from the poses and times they keep, and `add_keyframe()` gives every rebuilt
+  keyframe the default dwell of 0 — so the strip, which draws what `keyframe_dwell()` says, showed an
+  honest picture of a path that had really been flattened. `Remove Last` uses the library's
+  `delete_last_keyframe()` and was never affected.
+- `rebuild()` now carries the dwells with the poses; the detail and its regression test
+  (`tests/renderer/keyframe_editor_test.cpp`, `opengl.`/`vulkan.keyframeeditor`) are in
+  docs/keyframes.md.
+- Measured in the app with a temporary probe on the same fixture as yesterday: `domik.kf`, 19
+  keyframes, 2 s dwells at 8 and 16, 22 s total. Deleting keyframe 1 gave back 18 keyframes with the
+  dwells at 7 and 15, a total of 21 s (the one second of travel that went with the deleted step) and
+  the strip reading the same 21 s. The probe is removed again.
+- Not run: the full CTest suites. This change reaches `easy3d/renderer`, but
+  `easy3d/core/random.h`, `easy3d/renderer/renderer.h` and `easy3d/util/version.h` carry unrelated
+  edits made in the same tree at the same time, so a suite result now would not describe this
+  change; the keyframe tests — the CPU coverage of the edited code — pass in all three build trees.
+- The fix itself is in the library (`easy3d/renderer/keyframe_editor.{h,cpp}`) plus its new test; no
+  file under `applications/Mapple` changed, and the strip needed no change: it was already drawing
+  the dwells it was given.
