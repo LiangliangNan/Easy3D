@@ -378,6 +378,10 @@ on the Play line. `MappleViewer` owns it (`camera_path_elapsed_`, one sample int
 frame rate - per advance in `advance_camera_path()`, reset when the playback reaches its end) and
 the Play/Stop row renders `playing... <elapsed> s` while playing, `Ctrl+K` while stopped.
 
+**Also added (2026-11-22, same day):** the Camera Path timeline draws a red vertical line at
+the playback's current position while playing, from the new `KeyFrameInterpolator::playback_elapsed()`; 
+the placeholder stub that showed nothing is gone.
+
 **Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
 on both backends.
 

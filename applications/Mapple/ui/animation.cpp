@@ -295,7 +295,7 @@ void MappleViewer::draw_animation_window() {
         ImGui::BeginDisabled(dwell_index < 0 || playing);
         float dwell = dwell_index >= 0
                       ? kfi->keyframe_dwell(static_cast<std::size_t>(dwell_index)) : 0.0f;
-        if (ImGui::DragFloat("Dwell (s)", &dwell, 0.05f, 0.0f, 10.0f, "%.2f s"))
+        if (ImGui::DragFloat("Dwell (s)", &dwell, 0.1f, 0.0f, 10.0f, "%.1f s"))
             edit_camera_path_timing(static_cast<std::size_t>(dwell_index), dwell);
         ImGui::EndDisabled();
         if (dwell_index < 0)
@@ -332,8 +332,10 @@ void MappleViewer::draw_animation_window() {
         ImGui::TextDisabled(camera_path_elapsed_ > 0 ? "Paused at %.1f s" : "Ctrl+K", elapsed_time);
 
     float speed = kfi->interpolation_speed();
-    if (ImGui::SliderFloat("Speed (keyframes/s)", &speed, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed())
+    if (ImGui::SliderFloat("Speed (keyframes/s)", &speed, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed()) {
         kfi->set_interpolation_speed(speed);
+        camera_path_elapsed_ = 0; // this reset the playback
+    }
     ImGui::SetItemTooltip("Play to check the current speed; drag to adjust.");
     int fps = kfi->frame_rate();
     if (ImGui::SliderInt("Frame rate (frames/s)", &fps, 1, 120, "%d") && fps != kfi->frame_rate())
@@ -353,7 +355,7 @@ void MappleViewer::draw_animation_window() {
     else
         // The frames the recording will render: the path's own duration (travel plus
         // dwell, as the timeline strip lays it out) at the interpolation speed.
-        ImGui::TextDisabled("%.2f s at speed %.2f: %d frames at %d fps",
+        ImGui::TextDisabled("%.1f s at speed %.1f; %d frames at %d fps",
                             camera_path_duration() / kfi->interpolation_speed(),
                             kfi->interpolation_speed(),
                             static_cast<int>(camera_path_duration() / kfi->interpolation_speed() *

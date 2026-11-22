@@ -204,6 +204,19 @@ namespace easy3d {
     }
 
 
+    float KeyFrameInterpolator::playback_elapsed() const {
+        if (interpolated_path_.empty())
+            return 0.0f;
+        // Sample k of the timeline sits at k * interval (the last sample lands on the end).
+        const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+        float t = static_cast<float>(last_stopped_index_) * interval;
+        const float total = total_duration();
+        if (t > total)
+            t = total;
+        return t;
+    }
+
+
     void  KeyFrameInterpolator::set_interpolation_method(Method m) {
         interpolation_method_ = m;
         pathIsValid_ = false;

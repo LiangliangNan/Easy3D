@@ -266,6 +266,17 @@ namespace easy3d {
          * \sa first_time(), duration(), and keyframe_time().
          */
         float last_time() const;
+
+        /**
+         * \brief Returns the playback position in seconds, along the path's timeline (travel plus dwell).
+         * \details The position of the sample the associated frame currently holds: 0 at the first
+         *      sample, growing along the timeline and reaching the path's end. It is 0 while idle and
+         *      when there is no sample yet; while playback runs it is what the timeline strip's
+         *      playhead shows.
+         * \return The playback position in seconds (0 for an empty path or no sample yet).
+         * \sa total_duration(), keyframe_time().
+         */
+        float playback_elapsed() const;
         //@}
 
         /*! \name Interpolation parameters */

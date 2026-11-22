@@ -186,11 +186,12 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
                     marker_w);
     }
 
-    // Playhead / current position (when playing, show where we are).
+    // Playhead / current position: red vertical line at the playback's position along
+    // the timeline (travel + dwell), drawn while playback runs.
     if (kfi_->is_interpolation_started()) {
-        // Approximate current time from interpolation state.
-        // The interpolator doesn't expose current time directly, so we
-        // show a small indicator at the start for now.
+        const float elapsed = kfi_->playback_elapsed();
+        const float x = origin + elapsed / duration * plot_w;
+        dl->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + height), IM_COL32(255, 60, 60, 255), 2.0f);
     }
 
     ImGui::InvisibleButton("##camera-path-timeline", ImVec2(width, height));
@@ -222,6 +223,6 @@ bool CameraPathTimeline::draw(float width, int* selected_keyframe) {
         }
     }
 
-    ImGui::TextDisabled("%.2f s total%s", total_duration_, total_duration_ == 0.0f ? " (single keyframe)" : "");
+    ImGui::TextDisabled("%.1f s total%s", total_duration_ / kfi_->interpolation_speed(), total_duration_ == 0.0f ? " (single keyframe)" : "");
     return changed;
 }
