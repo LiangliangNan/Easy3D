@@ -1900,7 +1900,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
     auto face_color = mesh->face_property<vec3>(color_name, vec3(0.5f, 0.5f, 0.5f));
     for (std::size_t idx = 0; idx < components.size(); ++idx) {
         const auto& comp = components[idx];
-        const auto& color = color_from_index(static_cast<int>(idx));
+        const auto& color = color_from_index(idx);
         for (const auto& f : comp.faces())
             face_color[f] = color;
     }

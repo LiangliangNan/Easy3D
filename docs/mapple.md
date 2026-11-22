@@ -2688,11 +2688,17 @@ migrated; retirement can proceed whenever it is wanted.
   between the colors of a table are recorded in `ToDo.md`.
 - Not run by hand: the two dialogs of Mapple-Qt. `core.random` covers the library function, and the
   suites below cover the app's build.
-- The suites that the entry above left unrun are green: OpenGL `cmake-build-relwithdebinfo` 121/121 in
-  64 s — Qt ON with Vulkan OFF, which is the configuration that builds `Mapple-Qt.app` — and Vulkan
-  Debug `cmake-build-debug` 153/153 in 259 s, run serially, one tree at a time. The third tree
-  (`build-opengl-check`) passes its three CPU tests. `easy3d/util/version.h` is at `HEAD` and no file
-  under `applications/Mapple` changed.
+- The suites that the entry above left unrun are green: OpenGL `cmake-build-relwithdebinfo` 121/121 —
+  Qt ON with Vulkan OFF, which is the configuration that builds `Mapple-Qt.app` — and Vulkan Debug
+  `cmake-build-debug` 153/153, run serially, one tree at a time, after the two new functions settled on
+  `std::size_t`. The wall times of these runs vary (121/121 measured in 43, 67 and 64 s, 153/153 in
+  221, 257 and 259 s); the counts are the stable claim. The third tree
+  (`build-opengl-check`) passes its three CPU tests. `easy3d/util/version.h` is at `HEAD`. The last run
+  above covers one edit of the maintainer's own under `applications/Mapple` that this entry's earlier
+  "no file changed" sentence predates: `ui/process.cpp` now hides the `"vertices"` points drawable
+  after a slice (`add_model(graph)` followed by `set_visible(false)`), so a slicing result shows the
+  polylines without the raw points. It compiles and the suites pass with it; the visual effect is the
+  maintainer's to confirm, not something I looked at.
 - The `Not measured: the glyph/ring drags by eye, and the box's absence by eye` line of the
   2026-11-21 entry above is closed: the maintainer looked at the `Alt` gestures in a live session on
   2026-11-22 and they work as expected. Their observation, not a measurement of mine; the details are

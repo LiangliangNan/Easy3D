@@ -738,7 +738,7 @@ namespace easy3d {
             // assign each vertex group a distinct color
             for (std::size_t i = 0; i<groups.size(); ++i) {
                 VertexGroup& g = groups[i];
-                g.color_ = color_from_index(static_cast<int>(i));
+                g.color_ = color_from_index(i);
                 g.label_ = "group_" + std::to_string(i);
              }
 

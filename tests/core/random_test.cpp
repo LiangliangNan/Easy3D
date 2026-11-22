@@ -25,7 +25,7 @@ int main() {
 
         // The colors of indices: as bright and as saturated as the random ones, but
         // reproducible, and distinct from each other where it matters.
-        for (int index = -3; index < 64; ++index) {
+        for (std::size_t index = 0; index < 64; ++index) {
             const vec3 color = color_from_index(index);
             test::require(color.x >= 0.0f && color.x <= 1.0f &&
                           color.y >= 0.0f && color.y <= 1.0f &&
@@ -62,8 +62,8 @@ int main() {
                 }
             }
         }
-        // A count is a signed index range here, and nothing is asked for below one.
+        // The count is a size, so the smallest request is the one asking for nothing. A
+        // negative count is not a request the API makes room for: it is not a size.
         test::require(color_table(0).empty(), "the table of no colors is not empty");
-        test::require(color_table(-1).empty(), "a negative count is not an empty table");
     });
 }

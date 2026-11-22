@@ -1433,6 +1433,7 @@ void MappleViewer::run_process_algorithm(Model *model) {
                         }
                     }
                     add_model(graph);
+                    graph->renderer()->get_points_drawable("vertices")->set_visible(false);
                     LOG(INFO) << "sliced with the clipping plane: " << polylines.size()
                               << " polylines, " << num_edges << " edges";
                 }

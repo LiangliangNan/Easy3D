@@ -323,9 +323,18 @@ and the path's total dropped by every dwell it had.
   `Alt`+click log lines above are what was measured.
 - The full CTest suites are measured now, which closes the `Not measured: the full CTest suites`
   bullet above: it described a tree whose color-API edits were still moving, and those edits are
-  finished. Run serially, one tree at a time: OpenGL `cmake-build-relwithdebinfo` 121/121 in 64 s and
-  Vulkan Debug `cmake-build-debug` 153/153 in 259 s, and the CPU tests of the touched code
-  (`core.random`, both keyframe tests) pass in the third tree as well.
+  finished. Run serially, one tree at a time after the API settled on `std::size_t`: OpenGL
+  `cmake-build-relwithdebinfo` 121/121 and Vulkan Debug `cmake-build-debug` 153/153, and the CPU tests
+  of the touched code (`core.random`, both keyframe tests) pass in the third tree as well. The two
+  wall times vary across runs — 121/121 in 43, 67 and 64 s, 153/153 in 221, 257 and 259 s — so the
+  passing counts are the stable claim, not the durations.
+- `color_from_index()` and `color_table()` take a `std::size_t` (the maintainer's choice): the wheel
+  is only ever stepped forward, a negative count is not representable, and what was measured against
+  the alternative — `int idx < std::size_t num` warning `-Wsign-compare` in every TU, and an `int`
+  count turning `-1` into a request for 1.8e19 colors instead of an empty table — is recorded in
+  `ToDo.md`. The two functions are also bound for Python
+  (`python/bindings/easy3d/core/random.cpp`), probed against the built module, and `python.rendering`
+  passes in both suites.
 - `easy3d/util/version.h` is back at `HEAD`. What the dwell bullet above called unrelated in-flight
   edits is now this change, in `easy3d/core/random.h` (`color_from_index()`, `color_table()`,
   `hsv_to_rgb()`), its callers (`renderer/renderer.h`, `renderer/texture_manager.{h,cpp}`,

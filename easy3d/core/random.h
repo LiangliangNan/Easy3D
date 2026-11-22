@@ -138,11 +138,12 @@ namespace easy3d {
      *      colors of the indices 0, 1, ...: 0.26 for the first 8, 0.14 for 16, 0.06 for
      *      32 and 0.03 for 64. The step does come back near hues it already used, so the
      *      distinction is a claim about a handful to a few dozen colors, not hundreds.
-     * \param index Which color of the sequence. Negative indices wrap the wheel like any
-     *      other hue, and the zero value is the wheel's red.
+     * \param index Which color of the sequence. It is a size, so the wheel is stepped
+     *      forward from the zero value and never back: -1 is not a hue wrapped the other
+     *      way around but the very large index it converts to.
      * \return RGB components in [0, 1].
      */
-    inline vec3 color_from_index(int index) {
+    inline vec3 color_from_index(std::size_t index) {
         // The product is a double: at float precision a large index would lose the
         // fraction of the turn that carries the distinction.
         const double turn = std::fmod(static_cast<double>(index) * 0.38196601125010515, 1.0);
@@ -158,14 +159,15 @@ namespace easy3d {
      *      counter: the table is what makes the indices of the set the indices of the
      *      colors. See color_from_index() for how long the colors stay distinct from
      *      each other.
-     * \param num Number of colors, and the size of the table. It is signed because the
-     *      callers hold signed index ranges; zero gives an empty table, and so does a
-     *      negative count rather than a huge allocation.
+     * \param num Number of colors, and the size of the table: zero gives an empty table.
+     *      It is a size rather than an index because a size is what the table is built
+     *      from, and the callers derive a non-negative count from their index ranges; a
+     *      negative count is not a request for a table.
      * \return A vector of \p num RGB colors, each channel in [0, 1].
      */
     inline std::vector<vec3> color_table(std::size_t num) {
         std::vector<vec3> colors(num);
-        for (int idx = 0; idx < num; ++idx)
+        for (std::size_t idx = 0; idx < num; ++idx)
             colors[idx] = color_from_index(idx);
         return colors;
     }
