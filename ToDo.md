@@ -282,7 +282,17 @@
       - [ ] Record short videos with dwell settings in Mapple on both backends (interactive check).
       - [x] Look at the rest of the Alt gestures by eye (closed 2026-11-22): the maintainer confirms the gestures now work as expected — handles out with `Option` and away on release, glyph and ring drags, and the model's box staying hidden in Camera Path editing mode. This is their observation in a live session, not a measurement of mine; `Alt`+click aiming was the one with log evidence before it (domik.kf, 19 keyframes: "keyframe 19 aimed at the clicked point" twice). The "not looked at by eye" caveats in `docs/keyframes.md` and `docs/mapple.md` are superseded by it, and their text is kept as the state before the confirmation.
 
-    
+
+Retire Mapple-Qt and prepare the release of the current easy3d. 
+- for Mapple-Qt, only keep the Mapple-Qt dir and remove all Qt related stuff (e.g., in README, cmakelist files, github CI and workflow actions....). Add a README.md to Mapple-Qt dir to briefly explain its history and current status. In future, I will move Mapple-Qt into a separate repository.
+- proofread the README.md in the root dir. Make it concise and precise, highlight its support Vulkan (this differs many other visualization libraries). When mentioning the new Mapple, simply mention the Qt-based Mapple is retired and simply point to the Mapple-Qt dir.
+- summarize the major changes made since the Vulkan migration and Mapple migration, draft a change log.
+- summarize the breaking changes in API (e.g., viewer constructor, Camera and a few other classes now use snake_case API naming). Should be brief but meanwhile make it clear to users how to migrate their code to new easy3d.
+
+
+
+
+
 - Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).
 
 (1) TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
