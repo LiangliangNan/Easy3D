@@ -1668,7 +1668,12 @@ void MappleViewer::run_process_algorithm(Model *model) {
                 auto ao = SurfaceMeshAmbientOcclusion::bake(mesh, parameters);
                 SurfaceMeshAmbientOcclusion::colorize(mesh, ao);
                 LOG(INFO) << "ambient occlusion baked: v:ao and v:ao_color (radius " << parameters.radius_ratio
-                          << " x bounding-sphere radius, " << parameters.sample_count << " rays/vertex)";            }
+                          << " x bounding-sphere radius, " << parameters.sample_count << " rays/vertex)";
+                // The AO bake writes its colors into v:ao_color; show them instead of leaving the
+                // user to find the property in the Rendering panel.
+                if (mesh->get_vertex_property<vec3>("v:ao_color")) // just in case SurfaceMeshAmbientOcclusion::colorize failed
+                    apply_color_property(model, State::VERTEX, "v:ao_color");
+            }
             break;
 
         case ProcessOp::PROP_TOPOLOGY: {
@@ -1751,14 +1756,6 @@ void MappleViewer::finalize_process(Model *model, std::chrono::steady_clock::tim
     clear_hover();
     refresh_selection_after_model_change(model);
     finish_selection_change(model);
-
-    // The AO bake writes its colors into v:ao_color; show them instead of leaving the
-    // user to find the property in the Rendering panel.
-    if (process_op_ == ProcessOp::PROP_AMBIENT_OCCLUSION) {
-        auto *mesh = dynamic_cast<SurfaceMesh *>(model);
-        if (mesh && mesh->get_vertex_property<vec3>("v:ao_color"))
-            apply_color_property(model, State::VERTEX, "v:ao_color");
-    }
 
     process_op_ = ProcessOp::NONE;
     update();
