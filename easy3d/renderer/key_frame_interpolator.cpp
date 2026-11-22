@@ -526,7 +526,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     // The camera accelerates from rest at the segment's start (if stop_start) and
     // decelerates to rest at its end (if stop_end), cruising at constant speed between.
     // The ramp shape is 1.5*(1-u^2) with u in [-1,1], integrated over the ramp.
-    constexpr float kRamp = 0.2f;   // of travel time, at each end that stops
+    constexpr float kRamp = 0.18f;   // of travel time, at each end that stops
 
     w = std::min(1.0f, std::max(0.0f, w));
     if (w <= 0.0f)

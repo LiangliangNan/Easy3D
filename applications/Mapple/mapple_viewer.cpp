@@ -228,6 +228,10 @@ MappleViewer::MappleViewer(const std::string &title,
     // The camera path belongs to the app: the base Viewer does not own an interpolator.
     kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
 
+    // Initialize the camera-path playback clock to "now" so the first advance step
+    // lands on the current frame rather than consuming the whole path.
+    next_camera_path_frame_ = std::chrono::steady_clock::now();
+
     // File > Loading option is session-only; every launch starts with no translation.
     Translator::instance()->set_status(Translator::DISABLED);
 }
@@ -544,10 +548,11 @@ void MappleViewer::advance_camera_path() {
     if (!kfi_ || !kfi_->is_interpolation_started())
         return;
     const auto now = std::chrono::steady_clock::now();
-    if (now < next_camera_path_frame_)
-        return;
-    kfi_->advance_interpolation();
-    next_camera_path_frame_ = now + std::chrono::milliseconds(kfi_->interpolation_period());
+    const auto period = std::chrono::milliseconds(kfi_->interpolation_period());
+    while (now >= next_camera_path_frame_) {
+        kfi_->advance_interpolation();
+        next_camera_path_frame_ += period;
+    }
 }
 
 void MappleViewer::set_ao_enabled(bool enabled) {

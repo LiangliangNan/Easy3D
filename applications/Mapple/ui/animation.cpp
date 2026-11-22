@@ -304,8 +304,9 @@ void MappleViewer::draw_animation_window() {
         else if (playing)
             ImGui::SetItemTooltip("Stop playback to change the timing.");
         else
-            ImGui::SetItemTooltip("Seconds the camera holds this keyframe before moving on. "
-                                  "Ctrl+Z restores the path's timing.");
+            ImGui::SetItemTooltip("Seconds the camera pauses at this keyframe. The ease "
+                                  "in/out around the pause is added on top. Ctrl+Z restores "
+                                  "the path's timing.");
     }
 
     bool visible = show_camera_path_;
@@ -1124,7 +1125,15 @@ void MappleViewer::draw_record_progress() {
     const float progress = r.frames.empty() ? 0.0f
                                             : static_cast<float>(r.next_frame) / static_cast<float>(r.frames.size());
     ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), label);
-    ImGui::Text("Running for %.1f s", elapsed.count());
+    // Two different clocks, both worth showing: the video's own length is the frames
+    // written at the frame rate, while the wall clock says how long the capture has been
+    // running (it renders a frame at a time, so the two rarely match). Without the
+    // video's length a pause of a dwell is easy to blame on the capture.
+    const double video_seconds = kfi_->frame_rate() > 0
+                                 ? double(r.next_frame) / double(kfi_->frame_rate()) : 0.0;
+    ImGui::Text("Video so far: %.1f s of %.1f s", video_seconds,
+                double(r.frames.size()) / double(std::max(1, kfi_->frame_rate())));
+    ImGui::TextDisabled("Capturing for %.1f s", elapsed.count());
     ImGui::Spacing();
     if (ImGui::Button("Cancel", ImVec2(100, 0)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
         cancel_video_recording();

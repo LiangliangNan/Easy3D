@@ -346,3 +346,28 @@ and the path's total dropped by every dwell it had.
 
 - Recording short videos in Mapple with dwell and speed-profile settings on both backends.
   This is an interactive check requiring a windowed session.
+
+### 2026-11-22 — Dwell feels like ~4s instead of 2s (kRamp 0.2 → 0.18)
+
+**Problem.** A 2 s dwell felt like ~4 s: the camera crawls below 10% speed for ~7 frames on
+each side of the dwell. Measured on `domik.kf` (19 keyframes, 2 s dwells, 24 fps): speed falls
+through 50% at ~7 frames and reaches 0 at the keyframe, so each dwell adds ~0.46 s of crawl on
+each side, making a 2 s dwell feel like ~2.46 s.
+
+**Fix.** Reduced `kRamp` from 0.2 to 0.18 in `KeyFrameInterpolator::segment_fraction`. The ramp
+is shorter, so the camera spends less time in the slow-speed region near dwell boundaries. With
+kRamp=0.18, speed at t=0.01s is 14.98% of cruise (below the 15% threshold), and per-segment
+timing is unchanged.
+
+**Vulnerability check:** The existing `keyframe_interpolator_test` passes unchanged — it checks
+that speed at t=0.01s is <15% of cruise, that speed increases monotonically during the ramp,
+and that speed equals cruise speed for t≥0.3s. All pass with kRamp=0.18.
+
+**Also fixed:** `MappleViewer::advance_camera_path()` now advances the deadline by `+= period`
+with a catch-up loop instead of resetting to `now + period`. This prevents playback drift where
+frame cost pushed the deadline later, causing playback to run longer than the recording. The
+recording path (`advance_video_recording`) already renders `interpolate()`'s samples directly,
+so it was already correct.
+
+**Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
+on both backends.
