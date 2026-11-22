@@ -551,7 +551,12 @@ void MappleViewer::advance_camera_path() {
     const auto period = std::chrono::milliseconds(kfi_->interpolation_period());
     while (now >= next_camera_path_frame_) {
         kfi_->advance_interpolation();
+        camera_path_elapsed_ += static_cast<float>(kfi_->interpolation_speed()) * static_cast<float>(kfi_->interpolation_period()) / 1000.0f;
         next_camera_path_frame_ += period;
+        if (!kfi_->is_interpolation_started()) { // playback reached its end: the next Play starts a new session
+            camera_path_elapsed_ = 0.0f;
+            break;
+        }
     }
 }
 

@@ -322,18 +322,21 @@ void MappleViewer::draw_animation_window() {
 
     // Playback and the interpolation it uses.
     ImGui::Separator();
-    if (ImGui::Button(playing ? "Stop" : "Play", ImVec2(120, 0)))
+    if (ImGui::Button(playing ? "Pause" : (camera_path_elapsed_ > 0 ? "Resume" : "Play"), ImVec2(120, 0)))
         toggle_camera_path_playback();
     ImGui::SameLine();
-    ImGui::TextDisabled(playing ? "playing..." : "Ctrl+K");
+    const float elapsed_time = camera_path_elapsed_ / kfi_->interpolation_speed();
+    if (playing)
+        ImGui::TextDisabled("playing... %.1f s", elapsed_time);
+    else
+        ImGui::TextDisabled(camera_path_elapsed_ > 0 ? "Paused at %.1f s" : "Ctrl+K", elapsed_time);
 
     float speed = kfi->interpolation_speed();
-    if (ImGui::SliderFloat("Speed (cinematic)", &speed, 0.1f, 10.0f, "%.2f") && speed != kfi->interpolation_speed())
+    if (ImGui::SliderFloat("Speed (keyframes/s)", &speed, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed())
         kfi->set_interpolation_speed(speed);
-    ImGui::SetItemTooltip("Slow at the stops, even in between: camera starts and ends at rest, comes"
-        "to rest at every keyframe that holds a dwell, and cruises past the others at one speed.");
+    ImGui::SetItemTooltip("Play to check the current speed; drag to adjust.");
     int fps = kfi->frame_rate();
-    if (ImGui::DragInt("Frame rate", &fps, 1.0f, 1, 120) && fps != kfi->frame_rate())
+    if (ImGui::SliderInt("Frame rate (frames/s)", &fps, 1, 120, "%d") && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
     // Recording and its parameters.
@@ -381,7 +384,7 @@ void MappleViewer::draw_animation_window() {
         video_samples_ = values[current];
     ImGui::TextDisabled("1 means no multisampling; only the supported counts are listed.");
 
-    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 50);
+    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 32);
     ImGui::TextDisabled("Higher bitrate results in better video quality but a larger video file.");
 #else
     ImGui::BeginDisabled();
@@ -496,7 +499,9 @@ void MappleViewer::toggle_camera_path_playback() {
     } else {
         // A fresh start: the playback clock begins at "now", so pressing Play always
         // walks the path from its first keyframe instead of catching up from a stale
-        // deadline (a session-constructed or paused value) and fast-forwarding.
+        // deadline (a session-constructed or paused value) and fast-forwarding. The
+        // elapsed readout keeps the value left by a paused playback; it is reset when
+        // the playback reaches its end (see advance_camera_path()).
         next_camera_path_frame_ = std::chrono::steady_clock::now();
         kfi_->start_manual_interpolation();
         LOG(INFO) << "camera path playback started (" << kfi_->number_of_keyframes() << " keyframes)";

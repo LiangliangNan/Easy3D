@@ -117,7 +117,7 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 ## Files changed
 
 - `easy3d/renderer/key_frame_interpolator.h` — `dwell_time_`, `set_keyframe_dwell()` /
-  `keyframe_dwell()`, `segment_fraction()`, `length_fraction()`, `time_fraction()`
+  `keyframe_dwell()`, `segment_fraction()`, `length_fraction()`
 - `easy3d/renderer/key_frame_interpolator.cpp` — `interpolate()` rewritten with the
   cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell read/write
   in `save_keyframes()` / `read_keyframes()`
@@ -182,7 +182,7 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 
 ### 2026-11-21 — Cleanup and documentation pass
 
-- `interpolate()` rewritten around `time_fraction()` and `length_fraction()`, computed once
+- `interpolate()` rewritten around `length_fraction()`, computed once
   instead of rebuilt inline.
 - Dead code removed: the unused `length_at()`, the superseded `speed_at()`/`distance_fraction_`
   members, the unused `ease_parameter()`.
@@ -341,12 +341,6 @@ and the path's total dropped by every dwell it had.
   `fileio/point_cloud_io_vg.cpp`, `applications/Mapple-Qt/main_window.cpp`) and
   `tests/core/random_test.cpp`; the API and its measurements are recorded in `ToDo.md`.
 
-## Still open
-
-
-- Recording short videos in Mapple with dwell and speed-profile settings on both backends.
-  This is an interactive check requiring a windowed session.
-
 ### 2026-11-22 — Dwell feels like ~4s instead of 2s (kRamp 0.2 → 0.18)
 
 **Problem.** A 2 s dwell felt like ~4 s: the camera crawls below 10% speed for ~7 frames on
@@ -379,5 +373,16 @@ recording". The fix: `toggle_camera_path_playback()` now sets `next_camera_path_
 steady_clock::now()` before starting manual interpolation, so every Play begins at the first
 sample with the catch-up loop stepping forward from there.
 
+**Also added (2026-11-22, same day):** the Camera Path window shows the playback's elapsed time
+on the Play line. `MappleViewer` owns it (`camera_path_elapsed_`, one sample interval - speed x
+frame rate - per advance in `advance_camera_path()`, reset when the playback reaches its end) and
+the Play/Stop row renders `playing... <elapsed> s` while playing, `Ctrl+K` while stopped.
+
 **Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
 on both backends.
+
+## Still open
+
+
+- Recording short videos in Mapple with dwell and speed-profile settings on both backends.
+  This is an interactive check requiring a windowed session.
