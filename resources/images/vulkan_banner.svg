@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 900 220" role="img" aria-label="Easy3D 2.7 - Native Vulkan">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b0505"/>
+      <stop offset="0.55" stop-color="#7a0f14"/>
+      <stop offset="1" stop-color="#ac162c"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ffd9dc"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="900" height="220" rx="22" fill="url(#bg)"/>
+  <g opacity="0.16" stroke="#ffffff" stroke-width="1.2" fill="none">
+    <path d="M560 20 L640 90 L720 30 L800 110 L880 50"/>
+    <path d="M540 200 L640 120 L720 190 L800 130 L890 190"/>
+    <path d="M640 90 L640 120 M720 30 L720 190 M800 110 L800 130"/>
+    <path d="M560 20 L540 200"/>
+  </g>
+  <g filter="url(#glow)" transform="translate(64 46)">
+    <path d="M0 0 H128 L64 128 Z" fill="url(#chip)"/>
+    <path d="M28 18 H100 L64 90 Z" fill="#ac162c"/>
+    <path d="M46 36 H82 L64 72 Z" fill="#ffffff"/>
+  </g>
+  <text x="228" y="100" font-family="Helvetica, Arial, sans-serif" font-size="62" font-weight="800" fill="#ffffff">Easy3D 2.7</text>
+  <text x="230" y="146" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#ffd9dc">Now with native Vulkan</text>
+  <text x="230" y="182" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="#ffffff" opacity="0.88">Vulkan or OpenGL, one API, chosen at build time</text>
+</svg>

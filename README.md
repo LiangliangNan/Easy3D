@@ -1,3 +1,11 @@
+<p align="center">
+    <a href="#native-vulkan-or-opengl-your-choice">
+        <img src="resources/images/vulkan_banner.svg" alt="Easy3D 2.7.0: now with native Vulkan" width="900">
+    </a>
+</p>
+
+<h3 align="center">🔥 New in v2.7.0: native Vulkan rendering, with OpenGL still supported 🔥</h3>
+
 <p align="right">
     <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
     <b> <img src="https://img.shields.io/badge/rendering-Vulkan%20%7C%20OpenGL-red" title="Rendering backends"/> </b> <br>
