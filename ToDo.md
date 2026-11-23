@@ -285,11 +285,11 @@
       - [x] for Mapple-Qt, only keep the Mapple-Qt dir and remove all Qt related stuff (e.g., in README, cmakelist files, github CI and workflow actions....). Add a README.md to Mapple-Qt dir to briefly explain its history and current status. In future, I will move Mapple-Qt into a separate repository.
       - [x] the `Easy3D_ENABLE_QT` gate and its wiring are removed from the top-level and application CMake files, the Qt install steps are dropped from the GitHub CI workflow, the README no longer lists Qt as an optional backend, and the retired Qt app is kept in the tree for reference (source plus the Qt CMake helper at `applications/Mapple-Qt/cmake/UseQt.cmake`, moved from the top-level `cmake/`, plus the new `applications/Mapple-Qt/README.md`); it can only be built as a standalone project against Easy3D with the OpenGL backend (`Easy3D_ENABLE_VULKAN=OFF`).
   - [ ] Release v2.7.0
-      - [ ] Proofread all changes since v2.6.1. Check docs/mapple.md, docs/vulkan.md, docs/keyframes.md, and ToDo.md to understand all the major changes made since v2.6.1. Using v2.6.1 as reference, proofread all the changes in both code, comments, and documentation.
+      - [x] Proofread all changes since v2.6.1. Check docs/mapple.md, docs/vulkan.md, docs/keyframes.md, and ToDo.md to understand all the major changes made since v2.6.1. Using v2.6.1 as reference, proofread all the changes in both code, comments, and documentation.
+      - [x] Proofread the README.md in the root dir. Make it more concise and precise, highlight its Vulkan support (this differs from many other visualization libraries). 
       - [ ] Prepare release notes for v2.7.0 (Vulkan support). Using v2.6.1 as reference, rewrite the release notes (my draft is in docs/release.md) for v2.7.0. Highlight the biggest change is the support of Vulkan, and the release notes must:
-            - summarize the major changes made since the Vulkan migration and Mapple migration, draft a change log.
-            - summarize the breaking changes in API (e.g., viewer constructor, Camera and a few other classes now use snake_case API naming). Should be brief but meanwhile make it clear to users how to migrate their code to new easy3d.
-      - [ ] Proofread the README.md in the root dir. Make it more concise and precise, highlight its Vulkan support (this differs from many other visualization libraries). 
+        - summarize the major changes made since the Vulkan migration and Mapple migration, draft a change log.
+        - summarize the breaking changes in API (e.g., viewer constructor, Camera and a few other classes now use snake_case API naming). Should be brief but meanwhile make it clear to users how to migrate their code to new easy3d.
 
 
 - Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).

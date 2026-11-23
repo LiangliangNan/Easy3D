@@ -1,206 +1,127 @@
 <p align="right">
     <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
+    <b> <img src="https://img.shields.io/badge/rendering-Vulkan%20%7C%20OpenGL-red" title="Rendering backends"/> </b> <br>
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
-
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
-#### For 3D modeling, geometry processing, and rendering, designed for simplicity and efficiency. 
-Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and education, but it
-also serves as a good starting point for developing sophisticated 3D applications. Compared to existing geometry processing 
-libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the 
-algorithmic aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering. It supports 
-two rendering backends — native **Vulkan** (the default) and **OpenGL** — selected at build time with a single CMake option, 
-with the same client code building against either backend.
+#### A C++ library (with Python bindings) for 3D modeling, geometry processing, and rendering, with native Vulkan support.
 
-<p align="center"> 
-     <img src="./resources/images/overview.jpg" width="600"> 
+Easy3D is designed for simplicity and efficiency. It targets research and education, and also serves as a solid
+starting point for sophisticated 3D applications. Unlike geometry processing libraries that focus on algorithms
+(e.g., [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)), Easy3D also provides
+rendering, a viewer, and user interaction.
+
+<p align="center">
+     <img src="./resources/images/overview.jpg" width="600">
 </p>
 
+### Native Vulkan, or OpenGL: your choice
+Few visualization libraries ship a native Vulkan renderer. Easy3D does, and keeps OpenGL as an alternative:
+
+* **A real Vulkan backend**, not a wrapper: shaders are compiled to SPIR-V at build time, and it runs on Windows, Linux,
+  and macOS (via MoltenVK).
+* **One option picks the backend**: `Easy3D_ENABLE_VULKAN` (`ON` by default, `OFF` for OpenGL).
+* **One code base for both**: `Viewer`, `MultiViewer`, `OffScreen`, drawables, picking, effects, and snapshots
+  have the same API. The tutorials, the Python bindings, and Mapple build unchanged against either backend.
+* **Full rendering feature parity**: point/line impostors, ambient occlusion (GTAO), shadow maps, soft shadows (PCSS),
+  eye-dome lighting, and order-independent transparency (sorted alpha blending, average color blending, dual depth
+  peeling, per-pixel linked lists). Client code never touches the Vulkan or OpenGL API.
+* **Headless rendering and tests**: offscreen rendering and the test suite run without a display
+  (e.g., on Linux with a software Vulkan driver).
+
 ### Key features
-* Efficient data structures for representing and managing 3D models such as point clouds and polygonal surfaces 
-  (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
-  Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
-  loading models from files ...
-  
-* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
-  RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more (the implementation of
-  several surface mesh processing algorithms was taken from [PMP](http://www.pmp-library.org/)).
-  
-* High-level encapsulation of the graphics APIs for convenient and efficient rendering — client code does not need to 
-  touch the low-level APIs of Vulkan or OpenGL. A bunch of rendering techniques, e.g., point/line impostors, ambient 
-  occlusion (GTAO), hard shadows (shadow maps), soft shadows (PCSS), eye-dome lighting (for rendering point clouds 
-  without normal information), transparency (sorted alpha blending, average color blending, dual depth peeling, 
-  per-pixel linked lists), and more — all available on both rendering backends.
-  
-* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
-  Window and event handling are based on [GLFW](https://www.glfw.org/) (e.g., [the default viewer](https://github.com/LiangliangNan/Easy3D/blob/main/easy3d/viewer)), 
-  with an optional [ImGui](https://github.com/ocornut/imgui) interface (see [the ImGui viewer tutorial](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_imgui)).
-  There is also <b>Mapple</b>, a handy tool created out of the Easy3D library for rendering and processing 3D data
-  (an ImGui application that runs on either backend). Its predecessor, the Qt application
-  <b>Mapple-Qt</b>, is retired and kept in the tree for reference (buildable standalone with Easy3D on the OpenGL
-  backend only).
-  
-* Python bindings for Easy3D, which allow you to use Easy3D in Python scripts (with either rendering backend). 
-  
-* Very easy to use as a callable library (usually only a few lines of code), with 60+ step-by-step 
-  [C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html) demonstrating various uses of the API, to get 
-  acquainted with the data structures, rendering techniques, user interaction, and algorithms for 3D modeling and 
-  geometry processing (with detailed explanations in code), and a series of 
-  [Python tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/) covering data structures, rendering, 
-  and geometry processing in Python.
+* **Data structures** for point clouds, surface meshes, polyhedral meshes, and graphs, with arbitrary per-element
+  properties.
+* **Algorithms** such as normal estimation/re-orientation, Poisson reconstruction, RANSAC, simplification, subdivision,
+  smoothing, parameterization, remeshing, and hole filling (several taken from [PMP](http://www.pmp-library.org/)).
+* **Viewer** based on [GLFW](https://www.glfw.org/), easy to extend, with an optional
+  [ImGui](https://github.com/ocornut/imgui) interface
+  ([tutorial](tutorials/Tutorial_202_Viewer_imgui)).
+* **Mapple**, an ImGui application built on Easy3D for rendering and processing 3D data, running on either backend.
+  Its predecessor, the Qt-based Mapple-Qt, is retired and kept for reference (OpenGL only).
+* **Python bindings** for either backend.
+* **Easy to use as a library**: usually a few lines of code, with 60+ documented
+  [C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html) and
+  [Python tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/).
 
 |              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
 | ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
 
 ### A glance
-
-Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
-and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
-point cloud as a set of spheres
+Any drawable (points, lines, triangles, and thus point clouds, surfaces, scalar fields, and vector fields) takes a few
+lines of code. For example, to render a point cloud as spheres or as surfels (3D discs):
 ```c++
-// assume your point cloud has been loaded to the viewer
 PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
-drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-drawable->set_point_size(3.0f);    // set point size
+drawable->set_impostor_type(PointsDrawable::SPHERE);  // or PointsDrawable::SURFEL
+drawable->set_point_size(3.0f);
 ```
-or as a set of surfels (i.e., 3D discs)
 
-```c++
-drawable->set_impostor_type(PointsDrawable::SURFEL);
-``` 
+### Repository layout
+* [`3rd_party`](3rd_party) - third-party libraries.
+* [`applications`](applications) - applications built on Easy3D (e.g., Mapple).
+* [`cmake`](cmake) - CMake configuration files.
+* [`docs`](docs) - documentation sources (Doxygen).
+* [`easy3d`](easy3d) - the library:
+  [`util`](easy3d/util), [`core`](easy3d/core), [`fileio`](easy3d/fileio), [`kdtree`](easy3d/kdtree),
+  [`algo`](easy3d/algo), [`algo_ext`](easy3d/algo_ext) (CGAL-based), [`video`](easy3d/video),
+  [`renderer`](easy3d/renderer) (Vulkan and OpenGL backends), [`gui`](easy3d/gui) (picking and interaction), and
+  [`viewer`](easy3d/viewer).
+* [`python`](python) - Python bindings, documentation, and tutorials.
+* [`resources`](resources) - data, images, shaders, textures.
+* [`tests`](tests) - test cases.
+* [`tutorials`](tutorials) - examples with detailed explanations in code.
 
-By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
-scalar fields) can be done very conveniently.
+### Build
+Requirements: [CMake](https://cmake.org/download/) (`>= 3.12`) and a C++11 compiler. Easy3D is tested on macOS
+(Xcode >= 8), Windows (MSVC >= 2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Most third-party libraries are
+included in the source tree.
 
-### Easy3D repository layout
-The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for 
-configuring and building programs, as well as a set of subfolders:
-* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries.
-* [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D.
-* [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files.
-* [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation sources and configuration (Doxygen), and the Vulkan migration record.
-* [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D, implementing the Easy3D modules:
-  * [`util`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/util) - utilities, e.g., logging, file system, progress, timer.
-  * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., point cloud, surface mesh, graph, and polyhedron mesh.
-  * [`fileio`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/fileio) - functionalities for reading/writing data from/into files.
-  * [`kdtree`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/kdtree) - a collection of kd-trees.
-  * [`algo`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo) - algorithms for geometry processing.
-  * [`algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo_ext) - several extended surface mesh processing algorithms (based on CGAL).
-  * [`video`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/video) - a class that can encode an image sequence into a video.
-  * [`renderer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/renderer) - functionalities and algorithms for rendering and visualization, with Vulkan and OpenGL backends.
-  * [`gui`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/gui) - tools for user interactions, e.g., picking points, faces, or models.
-  * [`viewer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/viewer) - a simple viewer and a composite viewer.
-* [`python`](https://github.com/LiangliangNan/Easy3D/tree/main/python) - Python bindings for Easy3D, documentation, and tutorials.
-* [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
-* [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases.
-* [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code).
+| Backend | CMake option                    | Needs                                                                                  |
+|---------|---------------------------------|----------------------------------------------------------------------------------------|
+| Vulkan  | `Easy3D_ENABLE_VULKAN=ON` (default) | [Vulkan SDK](https://vulkan.lunarg.com/) to build (on Linux, `libvulkan-dev` and `glslang-tools` suffice); a Vulkan driver to run (MoltenVK on macOS, bundled with the SDK) |
+| OpenGL  | `Easy3D_ENABLE_VULKAN=OFF`      | an OpenGL driver                                                        |
 
-### Build Easy3D
-Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for users by including
-the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
-few optional (for a few additional features that are typically not needed by most users). 
+A build contains exactly one backend, so use a separate build directory for each.
 
-#### Rendering backends
-Easy3D provides two rendering backends, selected at configuration time with the CMake option `Easy3D_ENABLE_VULKAN`:
+```sh
+cd path-to-Easy3D
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release   # add -DEasy3D_ENABLE_VULKAN=OFF for OpenGL
+cmake --build build --parallel
+```
+On Windows, use the `x64 Native Tools Command Prompt` (not `x86`), or open the root `CMakeLists.txt` in an IDE set for
+`x64` (e.g., [CLion](https://www.jetbrains.com/clion/)). New to C++? See
+[How to build Easy3D step by step](HowToBuild.md).
 
-- **Vulkan** (`Easy3D_ENABLE_VULKAN=ON`, the default): a native Vulkan renderer whose shaders are compiled to SPIR-V 
-  at build time. Building it requires a [Vulkan SDK](https://vulkan.lunarg.com/) (on Linux, the `libvulkan-dev` and 
-  `glslang-tools` packages suffice); running it requires a Vulkan driver, provided on macOS by MoltenVK (bundled 
-  with the SDK).
-- **OpenGL** (`Easy3D_ENABLE_VULKAN=OFF`): the original OpenGL backend, which needs no Vulkan SDK.
+Useful options: `Easy3D_BUILD_TUTORIALS` (off by default), `Easy3D_BUILD_TESTS` (off by default),
+`Easy3D_BUILD_DOCUMENTATION` (off by default, needs Doxygen), and `Easy3D_ENABLE_CGAL` (off by default; enables advanced surface mesh
+algorithms such as self-intersection resolving and clipping/slicing; needs [CGAL](https://www.cgal.org/) 5.1 or later,
+and `CGAL_DIR` can point to a specific version).
 
-A build contains exactly one backend, so use separate build directories for the two. The public API — `Viewer`, 
-`MultiViewer`, `OffScreen`, drawables, picking, effects, and snapshots — is the same for both backends: client code, 
-all tutorials, the Python bindings and Mapple build unchanged against either one. The retired Qt application Mapple-Qt used
-the OpenGL backend and is kept in the tree for reference; the supported Mapple is the ImGui app, which runs on either
-backend.
+**Migrating from the OpenGL-only Easy3D (i.e., v2.6.1 or earlier).** Class names, headers, and the `virtual void draw() const` hook are unchanged.
+The one deliberate API change is the viewer constructor, `Viewer(title, window, options)`, where `window` is a
+`ViewerOptions` struct (`width`, `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is
+`VulkanOptions` or `OpenGLOptions`. Old positional calls such as `Viewer(title, 4, 3, 2, false, false)` must be updated.
 
-**Migrating from the OpenGL-only Easy3D:** class names, headers, and the `virtual void draw() const` frame hook are 
-unchanged. The one deliberate API change is the viewer constructor:
-`Viewer(title, window, options)`, where `window` is a `ViewerOptions` struct (`width`, `height`, `samples`, 
-`full_screen`, `visible`, and `resizable`), and `options` is `VulkanOptions` or `OpenGLOptions` for the configured backend. 
-Old positional calls such as `Viewer(title, 4, 3, 2, false, false)` no longer compile and must be updated explicitly.
-See [the Vulkan migration guide](https://github.com/LiangliangNan/Easy3D/blob/main/docs/vulkan.md) for the full backend 
-and migration details.
+**Python bindings:** see the [Python guide](python/README.md).
 
-The **optional** third-party libraries are:
-- **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
-  processing, such as surface reorientation, detecting/resolving duplicate vertices/faces and self-intersection, 
-  and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
-  need them). To enable these features, you can switch on the CMake option `Easy3D_ENABLE_CGAL` and make sure 
-  CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
-  multiple versions of CGAL on your platform, provide the path of a suitable one to the CMake variable `CGAL_DIR`.
-
-To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
-
-Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >= 2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
-nowadays typically provide higher [support](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
-to build Easy3D on almost all platforms.
-
-There are many options to build Easy3D. Choose one of the following (not an exhaustive list). All of them build the 
-default Vulkan backend; add `-DEasy3D_ENABLE_VULKAN=OFF` to the CMake command to build the OpenGL backend instead. 
-Tutorials are not built by default; enable them with `-DEasy3D_BUILD_TUTORIALS=ON`.
-
-- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake` (on Windows with Microsoft 
-  Visual Studio). 
-  - On Linux or macOS, you can simply
-    ```cmd
-        $ cd path-to-root-dir-of-Easy3D
-        $ mkdir Release
-        $ cd Release
-        $ cmake -DCMAKE_BUILD_TYPE=Release ..
-        $ make
-    ```
-  - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
-    ```cmd
-        $ cd path-to-root-dir-of-Easy3D
-        $ mkdir Release
-        $ cd Release
-        $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-        $ nmake
-    ```
-  
-- Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of 
-  Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
-[CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). For Windows users: your IDE must be set for `x64`.
-  
-- Option 3: Use CMake-GUI to generate project files for your IDE. Then load the project into your IDE and build it. For Windows users: your IDE must be set for `x64`.
-
-Do not have any experience with C/C++ programming? 
-Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
-step</a>.
-
-#### Build and use Python bindings
-- Please check [here](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).
-
-### Test Easy3D
-All tests and their CTest registration live in the
-[test guide](https://github.com/LiangliangNan/Easy3D/blob/main/tests/README.md).
-Configure with `-DEasy3D_BUILD_TESTS=ON`, build normally, then run
-`ctest --test-dir YOUR_BUILD_DIRECTORY --output-on-failure`. This enables all tests
-for the configured backend; Vulkan regression tests require validation layers.
-The option defaults to `OFF`. Desktop tests run for bounded frames and require no
-manual interaction. Python package tests are included when bindings are built.
+**Tests:** configure with `-DEasy3D_BUILD_TESTS=ON`, build, then run
+`ctest --test-dir build --output-on-failure`. Tests run for a bounded number of frames without interaction, and the
+Vulkan tests require the Vulkan validation layers. See the [test guide](tests/README.md).
 
 ### Use Easy3D in your project
-This is quite easy, like many other open-source libraries :-) 
-After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D 
-when running CMake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, 
-are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
-The `CMakeLists.txt` looks like:
-
+Point `Easy3D_DIR` to your Easy3D build (or installation) directory when running CMake. `CMakeLists.txt`:
 ```cmake
 cmake_minimum_required(VERSION 3.12)
 project(MyProject)
-set(CMAKE_CXX_STANDARD 11)                       # specify C++ standard
-find_package(Easy3D COMPONENTS viewer REQUIRED)  # request Easy3D (recommended to request only needed components)
-add_executable(Test main.cpp)                    # create an executable target
-target_link_libraries(Test easy3d::viewer)       # link to necessary Easy3D modules (add more if needed, e.g., algo)
+set(CMAKE_CXX_STANDARD 11)
+find_package(Easy3D COMPONENTS viewer REQUIRED)  # request only the components you need
+add_executable(Test main.cpp)
+target_link_libraries(Test easy3d::viewer)       # add more modules if needed, e.g., easy3d::algo
 ```
-and the `main.cpp` with minimal code:
+`main.cpp` (the same code runs on either backend):
 ```c++
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
@@ -211,51 +132,38 @@ int main(int argc, char** argv) {
     return viewer.run();
 }
 ```
-Using the Python bindings is also straightforward, for example:
+Or in Python:
 ```python
 import easy3d
 
 easy3d.initialize()
 viewer = easy3d.Viewer("Test")
-viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply") # <-- Use your actual file path
+viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply")  # use your own file path
 viewer.run()
 ```
 
 ### Documentation
- - [Easy3D documentation](https://liangliangnan.github.io/Easy3D/)
- - [Easy3D C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html)
- - [Easy3D Python bindings documentation](https://liangliangnan.github.io/Easy3D/python)
- - [Easy3D Python bindings tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/)
+* [Easy3D documentation](https://liangliangnan.github.io/Easy3D/) and [C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html)
+* [Python documentation](https://liangliangnan.github.io/Easy3D/python) and [tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/)
 
-The documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
-documentation from the source code.
-Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
-To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
-Then, switch on the CMake option `Easy3D_BUILD_DOCUMENTATION` and run CMake. Finally, build the `Documentation` 
-target to generate it. 
-
-For Python users, you may also be interested in the [tutorials](https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials).
-
-### Questions, new features, bugs, or contributing to Easy3D
-See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
+### Contributing
+Questions, feature requests, bug reports, and contributions are welcome; see the
+[Contribution Guide](CONTRIBUTING.md).
 
 ### License
-Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
-GNU General Public License as published by the Free Software Foundation; either version 3
-of the License or (at your option) any later version. The full text of the license can be
-found in the accompanying 'License' file.
+Easy3D is free software, distributed under the terms of the GNU General Public License, version 3 or (at your option)
+any later version. See the accompanying [`LICENSE`](LICENSE) file.
 
 ### Acknowledgments
-The implementation of Easy3D greatly benefited from and was inspired by existing great open-source libraries, such as
-[PMP](http://www.pmp-library.org/), [libQGLViewer](https://github.com/GillesDebunne/libQGLViewer), [Surface mesh](https://opensource.cit-ec.de/projects/surface_mesh),
-and [Graphite](http://graphite.gforge.inria.fr/). In particular, the implementation of several surface mesh 
-algorithms was taken (with modifications) from PMP, i.e., simplification, subdivision, smoothing, 
-parameterization, remeshing, hole filling, geodesic distances, fairing, curvatures, and triangulation. 
-We would like to thank the original authors of these projects for their permissive license terms. 
-We also thank the users and contributors for reporting/fixing bugs, testing, and providing valuable feedback and suggestions.
+Easy3D benefited from and was inspired by [PMP](http://www.pmp-library.org/),
+[libQGLViewer](https://github.com/GillesDebunne/libQGLViewer), and
+[Surface mesh](https://opensource.cit-ec.de/projects/surface_mesh). Several surface mesh algorithms (simplification, 
+subdivision, smoothing, parameterization, remeshing, hole filling, geodesic distances, fairing, curvatures, 
+and triangulation) were taken, with modifications, from PMP. We thank the original authors for their permissive 
+licenses, and all users and contributors for bug reports, fixes, testing, and feedback.
 
 ### Citation
-If you use Easy3D in scientific work, I kindly ask you to cite it:
+If you use Easy3D in scientific work, please cite it:
 
 ```bibtex
 @article{easy3d2021,
@@ -270,10 +178,7 @@ If you use Easy3D in scientific work, I kindly ask you to cite it:
   url = {https://doi.org/10.21105/joss.03255}
 }
 ```
+
 ---------
 
-Should you have any questions, comments, or suggestions, please contact me at <i>liangliang.nan@gmail.com</i>
-
-[<b><i>Liangliang Nan</i></b>](https://3d.bk.tudelft.nl/liangliang/)
-
-Dec. 8, 2018
+Questions, comments, or suggestions? Contact [Liangliang Nan](https://3d.bk.tudelft.nl/liangliang/) at <i>liangliang.nan@gmail.com</i>.
