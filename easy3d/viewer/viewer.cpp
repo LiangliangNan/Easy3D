@@ -1772,7 +1772,7 @@ namespace easy3d {
         release_device();
     }
     Viewer::Viewer(const std::string &title,
-                   const ViewerOptions &window,
+                   const WindowOptions &window,
                    const VulkanOptions &vk_options)
         : Viewer(std::make_shared<Window>(title, window.width, window.height, window.samples, window.full_screen,
                                           window.visible, window.resizable), vk_options) {
@@ -1956,7 +1956,7 @@ namespace easy3d {
         return dpi_scaling_;
     }
     Viewer::Viewer(const std::string &title /* = "Easy3D Viewer" */,
-                   const ViewerOptions &window /* = {} */,
+                   const WindowOptions &window /* = {} */,
                    const OpenGLOptions &gl_options /* = {} */
                    )
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0), // Liangliang: actual samples received known only after window creation
@@ -2047,7 +2047,7 @@ namespace easy3d {
         }
     }
     GLFWwindow *Viewer::create_window(const std::string &title,
-                                      const ViewerOptions &window,
+                                      const WindowOptions &window,
                                       const OpenGLOptions &gl_options) {
         const int samples = window.samples;
         const int gl_major = gl_options.major;

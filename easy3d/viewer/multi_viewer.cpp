@@ -89,7 +89,7 @@ void configure_cell(Camera& cell,const Camera& source,int width,int height) {
 
 }
 MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
-                         const ViewerOptions& window,
+                         const WindowOptions& window,
 #ifdef EASY3D_HAS_VULKAN
                          const VulkanOptions& options)
 #else

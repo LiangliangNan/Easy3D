@@ -70,7 +70,7 @@ namespace easy3d {
      *      are used: default member initializers make a struct with them non-aggregate
      *      in C++11, so field-by-field assignment is the only portable way to set them.
      */
-    struct ViewerOptions {
+    struct WindowOptions {
         /// Initial logical window width (positive).
         int width = 800;
         /// Initial logical window height (positive).
@@ -146,7 +146,7 @@ namespace easy3d {
          * \brief Create a windowed viewer.
          * \param title The window title, which can be changed by set_title().
          * \param window Initial size, multisample count and window flags, see
-         *      \ref ViewerOptions. Everything before the last parameter is
+         *      \ref WindowOptions. Everything before the last parameter is
          *      portable: it means the same thing on both backends.
          * \param options Backend-specific Vulkan device or OpenGL context options.
          * \details The final options parameter is backend-specific: Vulkan
@@ -154,7 +154,7 @@ namespace easy3d {
          */
         explicit Viewer(
             const std::string &title = "Easy3D Viewer",
-            const ViewerOptions &window = {},
+            const WindowOptions &window = {},
 #ifdef EASY3D_HAS_VULKAN
             const VulkanOptions &options = {}
 #else
@@ -1289,13 +1289,13 @@ namespace easy3d {
         // All four arguments are in framebuffer pixels (top-left origin).
         virtual void prepare_pick_view(int x, int y, int width, int height) const;
         // Creates the GLFW window and its context: sets the window hints from the two
-        // option structs (MSAA samples, full-screen or resizable from ViewerOptions;
+        // option structs (MSAA samples, full-screen or resizable from WindowOptions;
         // depth/stencil bits and a forward-compatible core profile at
         // gl_options.major.minor from OpenGLOptions), acquires the shared GLFW
         // runtime, makes the context current and stores the window pointer. Returns
-        // null when creation fails. ViewerOptions::visible is not a hint here: the
+        // null when creation fails. WindowOptions::visible is not a hint here: the
         // window is always created hidden, and run() reveals it through show().
-        GLFWwindow *create_window(const std::string &title, const ViewerOptions &window, const OpenGLOptions &gl_options);
+        GLFWwindow *create_window(const std::string &title, const WindowOptions &window, const OpenGLOptions &gl_options);
 
         // Installs the GLFW callback trampolines on the window; each one resolves the
         // user pointer back to this Viewer through dispatch_callback() and forwards to

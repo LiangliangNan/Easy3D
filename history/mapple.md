@@ -20,7 +20,7 @@ capability pass over the Qt dialogs and the interactive keyframe editing item, s
 `Mapple-Qt` can be retired.
 
 Status: 2026-11-20 — unchanged except for the two consequences of library work (batch 142's
-Snapshot `Samples` combo, batch 143's `ViewerOptions` constructor) and batch 145, which lets the
+Snapshot `Samples` combo, batch 143's `WindowOptions` constructor) and batch 145, which lets the
 Camera Path window choose the video's sample count. `Mapple-Qt` is still in the tree and still
 builds with `Easy3D_ENABLE_QT=ON` on the OpenGL backend; retiring it is still an open decision,
 not something these batches changed.
@@ -2497,8 +2497,8 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
     offered and the stored count is normalized to the largest offered value at most it. Measured
     there, not assumed: a probe forced the restored count to 3 and both backends logged
     `mask=7 listed=1,2,4 normalized_from_3_to=2`.
-  - batch 143 (`the window settings become a ViewerOptions struct`): `MappleViewer`'s constructor
-    takes `ViewerOptions` like every other caller instead of repeating the six positional
+  - batch 143 (`the window settings become a WindowOptions struct`): `MappleViewer`'s constructor
+    takes `WindowOptions` like every other caller instead of repeating the six positional
     parameters.
 - Batches 139, 140, 141 and 144 changed library and test code only; nothing under
   `applications/Mapple` is theirs, so there is no Mapple behavior to record.

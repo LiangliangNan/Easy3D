@@ -82,7 +82,7 @@ class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger, publ
 public:
     explicit MappleViewer(
             const std::string &title = "Mapple",
-            const easy3d::ViewerOptions &window = {},
+            const easy3d::WindowOptions &window = {},
 #ifdef EASY3D_HAS_VULKAN
             const easy3d::VulkanOptions &options = {}
 #else

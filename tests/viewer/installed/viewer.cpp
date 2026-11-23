@@ -42,7 +42,7 @@ int main() {
 #endif
         // Written the way a user sets the struct: default-construct, then assign
         // what differs. samples 1 and a resizable window are already the defaults.
-        ViewerOptions window;
+        WindowOptions window;
         window.width = 181;
         window.height = 151;
         window.visible = false;

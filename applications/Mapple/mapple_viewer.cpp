@@ -188,7 +188,7 @@ namespace {
 
 
 MappleViewer::MappleViewer(const std::string &title,
-                           const ViewerOptions &window,
+                           const WindowOptions &window,
 #ifdef EASY3D_HAS_VULKAN
                            const VulkanOptions &options
 #else

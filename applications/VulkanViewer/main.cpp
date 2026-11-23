@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
             else model = arg;
         }
         // Only the sample count comes from the command line; the rest is default.
-        easy3d::ViewerOptions window;
+        easy3d::WindowOptions window;
         window.samples = samples;
         auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", window, vk_options);
         if (model.empty()) {

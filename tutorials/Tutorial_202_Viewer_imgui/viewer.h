@@ -56,12 +56,12 @@ public:
     /**
      * @brief Constructor
      * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
-     * @param window Initial size, multisample count and window flags, see \ref easy3d::ViewerOptions.
+     * @param window Initial size, multisample count and window flags, see \ref easy3d::WindowOptions.
      * @param options Backend device/context settings.
      */
     explicit ViewerImGui(
         const std::string &title = "Easy3D ViewerImGui",
-        const easy3d::ViewerOptions &window = {},
+        const easy3d::WindowOptions &window = {},
 #ifdef EASY3D_HAS_VULKAN
         const easy3d::VulkanOptions &options = {}
 #else

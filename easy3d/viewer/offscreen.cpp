@@ -63,7 +63,7 @@ namespace easy3d {
             // A hidden, fixed-size window that is only ever captured, so these are
             // decided here rather than by the caller. 4 samples is what the canvas
             // has always asked for.
-            ViewerOptions window;
+            WindowOptions window;
             window.width = w > 0 ? w : throw std::invalid_argument("offscreen width must be positive");
             window.height = h > 0 ? h : throw std::invalid_argument("offscreen height must be positive");
             window.samples = 4;

@@ -28,13 +28,13 @@ inline void ensure_test_glfw() {
 }
 
 namespace easy3d {
-// ViewerOptions carries default member initializers, which makes it a
+// WindowOptions carries default member initializers, which makes it a
 // non-aggregate in C++11: a test cannot write {171, 129, 4} for it. This helper
 // builds one, keeping the old constructor's argument order so a converted call
 // site reads the same as before.
-inline ViewerOptions window_options(int width, int height, int samples = 1, bool full_screen = false,
+inline WindowOptions window_options(int width, int height, int samples = 1, bool full_screen = false,
                                    bool visible = true, bool resizable = true) {
-    ViewerOptions window;
+    WindowOptions window;
     window.width = width;
     window.height = height;
     window.samples = samples;
@@ -49,14 +49,14 @@ inline ViewerOptions window_options(int width, int height, int samples = 1, bool
 namespace easy3d {
 
 // Window and device settings of a test. The viewer constructors take them as a
-// ViewerOptions plus the backend's own options struct, so window() hands out the
+// WindowOptions plus the backend's own options struct, so window() hands out the
 // portable half and full_screen stays false everywhere a TestWindow is used.
 struct TestWindow {
     TestWindow() { ensure_test_glfw(); }
     int width = 800, height = 600, samples = 1;
     bool visible = true, resizable = true;
-    ViewerOptions window() const {
-        ViewerOptions result;
+    WindowOptions window() const {
+        WindowOptions result;
         result.width = width;
         result.height = height;
         result.samples = samples;

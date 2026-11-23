@@ -48,7 +48,7 @@ using namespace easy3d;
 // Forward all window/backend settings to the base Viewer; the GUI itself is set up later
 // in init(), once the window and rendering context exist.
 ViewerImGui::ViewerImGui(const std::string &title,
-                         const ViewerOptions &window,
+                         const WindowOptions &window,
 #ifdef EASY3D_HAS_VULKAN
                          const VulkanOptions &options
 #else

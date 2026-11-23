@@ -294,10 +294,10 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 {
 	{ // easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
 		pybind11::class_<easy3d::MultiViewer, std::shared_ptr<easy3d::MultiViewer>, PyCallBack_easy3d_MultiViewer, easy3d::Viewer> cl(m, "MultiViewer", "A viewer that supports multiple views (arranged in a grid layout).\n \n\n\n     ");
-        // Same as Viewer: the keyword arguments build the C++ ViewerOptions struct.
+        // Same as Viewer: the keyword arguments build the C++ WindowOptions struct.
         cl.def(pybind11::init([](int rows, int cols, const std::string& title, int width, int height, int samples,
                                 bool full_screen, bool visible, bool resizable) {
-            easy3d::ViewerOptions window;
+            easy3d::WindowOptions window;
             window.width = width;
             window.height = height;
             window.samples = samples;

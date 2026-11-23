@@ -1,16 +1,19 @@
-<p align="center">
-    <a href="#native-vulkan-or-opengl-your-choice">
-        <img src="resources/images/vulkan_banner.png" alt="Easy3D 2.7.0: now with native Vulkan" width="900">
-    </a>
-</p>
+<div align="center">
 
-<h3 align="center">🔥 New in v2.7.0: native Vulkan rendering, with OpenGL still supported 🔥</h3>
+![](resources/images/vulkan_banner.png)
 
-<p align="right">
-    <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
-    <b> <img src="https://img.shields.io/badge/rendering-Vulkan%20%7C%20OpenGL-red" title="Rendering backends"/> </b> <br>
-    <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
-</p>
+</div>
+
+<h3 align="center">🔥 <a href="https://github.com/LiangliangNan/Easy3D/blob/main/history/20261123_release_2.7.0.md">New since v2.7.0</a>: native Vulkan rendering, with OpenGL still supported 🔥</h3>
+
+<div align="right">
+    <b><img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green"
+            title="Supported Platforms"/></b><br>
+    <b><img src="https://img.shields.io/badge/rendering-Vulkan%20%7C%20OpenGL-red"
+            title="Rendering backends"/></b><br>
+    <b><img src="https://img.shields.io/badge/license-GPL-blue"
+            title="license-GPL"/></b><br>
+</div>
 
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
@@ -21,9 +24,11 @@ starting point for sophisticated 3D applications. Unlike geometry processing lib
 (e.g., [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)), Easy3D also provides
 rendering, a viewer, and user interaction.
 
-<p align="center">
-     <img src="./resources/images/overview.jpg" width="600">
-</p>
+<div align="center">
+
+![](resources/images/overview-600.jpg)
+
+</div>
 
 ### Native Vulkan, or OpenGL: your choice
 Few visualization libraries ship a native Vulkan renderer. Easy3D does, and keeps OpenGL as an alternative:
@@ -54,9 +59,13 @@ Few visualization libraries ship a native Vulkan renderer. Easy3D does, and keep
   [C++ tutorials](https://liangliangnan.github.io/Easy3D/examples.html) and
   [Python tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials/).
 
+<div align="center">
+
 |              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
 | ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
+
+</div>
 
 ### A glance
 Any drawable (points, lines, triangles, and thus point clouds, surfaces, scalar fields, and vector fields) takes a few
@@ -101,23 +110,30 @@ cmake --build build --parallel
 ```
 On Windows, use the `x64 Native Tools Command Prompt` (not `x86`), or open the root `CMakeLists.txt` in an IDE set for
 `x64` (e.g., [CLion](https://www.jetbrains.com/clion/)). New to C++? See
-[How to build Easy3D step by step](HowToBuild.md).
+[How to build Easy3D step by step](https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md).
 
 Useful options: `Easy3D_BUILD_TUTORIALS` (off by default), `Easy3D_BUILD_TESTS` (off by default),
 `Easy3D_BUILD_DOCUMENTATION` (off by default, needs Doxygen), and `Easy3D_ENABLE_CGAL` (off by default; enables advanced surface mesh
 algorithms such as self-intersection resolving and clipping/slicing; needs [CGAL](https://www.cgal.org/) 5.1 or later,
 and `CGAL_DIR` can point to a specific version).
 
-**Migrating from the OpenGL-only Easy3D (i.e., v2.6.1 or earlier).** Class names, headers, and the `virtual void draw() const` hook are unchanged.
-The one deliberate API change is the viewer constructor, `Viewer(title, window, options)`, where `window` is a
-`ViewerOptions` struct (`width`, `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is
-`VulkanOptions` or `OpenGLOptions`. Old positional calls such as `Viewer(title, 4, 3, 2, false, false)` must be updated.
+**Migrating from the OpenGL-only Easy3D (i.e., v2.6.1 or earlier).** Core class names, headers, and the
+`virtual void draw() const` hook are unchanged, but there are a few breaking API changes:
+- The viewer constructor is now `Viewer(title, window, options)`, where `window` is a `WindowOptions` struct (`width`,
+  `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is `VulkanOptions` or `OpenGLOptions`. Old
+  positional calls such as `Viewer(title, 4, 3, 2, false, false)` must be updated.
+- `Camera`, `Frame` and related classes now use snake_case method names (e.g., `viewDirection()` became
+  `view_direction()`, `showEntireScene()` became `show_entire_scene()`).
+- Qt and wxWidgets are no longer supported.
 
-**Python bindings:** see the [Python guide](python/README.md).
+See the [v2.7.0 release notes](https://github.com/LiangliangNan/Easy3D/blob/main/history/20261123_release_2.7.0.md)
+for the full migration table.
+
+**Python bindings:** see the [Python guide](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).
 
 **Tests:** configure with `-DEasy3D_BUILD_TESTS=ON`, build, then run
 `ctest --test-dir build --output-on-failure`. Tests run for a bounded number of frames without interaction, and the
-Vulkan tests require the Vulkan validation layers. See the [test guide](tests/README.md).
+Vulkan tests require the Vulkan validation layers. See the [test guide](https://github.com/LiangliangNan/Easy3D/blob/main/tests/README.md).
 
 ### Use Easy3D in your project
 Point `Easy3D_DIR` to your Easy3D build (or installation) directory when running CMake. `CMakeLists.txt`:
@@ -156,11 +172,11 @@ viewer.run()
 
 ### Contributing
 Questions, feature requests, bug reports, and contributions are welcome; see the
-[Contribution Guide](CONTRIBUTING.md).
+[Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md).
 
 ### License
 Easy3D is free software, distributed under the terms of the GNU General Public License, version 3 or (at your option)
-any later version. See the accompanying [`LICENSE`](LICENSE) file.
+any later version. See the accompanying [`LICENSE`](https://github.com/LiangliangNan/Easy3D/blob/main/LICENSE) file.
 
 ### Acknowledgments
 Easy3D benefited from and was inspired by [PMP](http://www.pmp-library.org/),

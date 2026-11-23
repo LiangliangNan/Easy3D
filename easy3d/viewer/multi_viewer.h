@@ -60,12 +60,12 @@ namespace easy3d {
          * \param cols Number of view columns; must be positive.
          * \param title Window title.
          * \param window Initial size, multisample count and window flags, shared
-         *        with Viewer - see \ref ViewerOptions.
+         *        with Viewer - see \ref WindowOptions.
          * \param options Backend-specific Vulkan or OpenGL creation options.
          * \throws std::invalid_argument if rows or cols is not positive.
          */
         MultiViewer(int rows, int cols, const std::string &title = "Easy3D MultiViewer",
-                          const ViewerOptions& window = {},
+                          const WindowOptions& window = {},
 #ifdef EASY3D_HAS_VULKAN
                           const VulkanOptions& options = {});
 #else
