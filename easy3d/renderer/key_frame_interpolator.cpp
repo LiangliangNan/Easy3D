@@ -529,11 +529,11 @@ namespace easy3d {
 // it ends at the path's last keyframe or at one that holds a dwell. Between those stops
 // it cruises at constant speed.
 //
-// The profile is a trapezoid: accelerate over the first ramp_share of travel time,
-// cruise in the middle, decelerate over the last ramp_share. The speed curve in each
-// ramp is 1.5 * (1 - u^2) with u in [-1, 1], whose mean is 3/4, so the whole segment is
-// covered in exactly its travel time. The returned fraction is the portion of the
-// segment's LENGTH covered at time fraction w (clamped to [0,1]).
+// The profile is a trapezoid: accelerate over the first kRamp of the segment's travel
+// time, cruise in the middle, decelerate over the last kRamp. The speed curve in each ramp
+// is 1.5 * (1 - u^2) with u in [-1, 1], integrated over the ramp, and the cruise carries the
+// middle, so the whole segment is covered in exactly its travel time. The returned fraction is
+// the portion of the segment's length covered at time fraction w (clamped to [0,1]).
 float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop_end) {
     // Fraction of the segment's length covered at time fraction w (clamped to [0,1]).
     // The camera accelerates from rest at the segment's start (if stop_start) and
@@ -549,8 +549,10 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     if (!stop_start && !stop_end)
         return w;   // passes at constant speed
 
-    // Mean speed of the ramps relative to the cruise: the ramps average 3/4 of cruise.
-    const float mean = 1.0f - 2.0f * kRamp * 0.25f; // = 0.9 for kRamp=0.2
+    // Ramp parameters. kRamp is the fraction of the segment's travel time at each end that
+    // stops; mean is the ramp's average speed relative to the cruise; ramp_area is the ramp's
+    // integral over its speed curve, in segment-length units.
+    const float mean = 1.0f - 2.0f * kRamp * 0.25f; // = 0.91 for kRamp=0.18
     const float ramp_area = kRamp * 0.75f;   // area under one ramp's speed curve
 
     // The segment's distance at fraction x of its time, x in [0,1].

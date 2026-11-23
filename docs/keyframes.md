@@ -346,7 +346,8 @@ and the path's total dropped by every dwell it had.
 **Problem.** A 2 s dwell felt like ~4 s: the camera crawls below 10% speed for ~7 frames on
 each side of the dwell. Measured on `domik.kf` (19 keyframes, 2 s dwells, 24 fps): speed falls
 through 50% at ~7 frames and reaches 0 at the keyframe, so each dwell adds ~0.46 s of crawl on
-each side, making a 2 s dwell feel like ~2.46 s.
+each side, making a 2 s dwell feel like ~2.9 s (2 s of dwell plus the ~0.92 s of crawl the ramp
+left on either side).
 
 **Fix.** Reduced `kRamp` from 0.2 to 0.18 in `KeyFrameInterpolator::segment_fraction`. The ramp
 is shorter, so the camera spends less time in the slow-speed region near dwell boundaries. With
