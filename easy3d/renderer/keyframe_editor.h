@@ -166,7 +166,7 @@ public:
     /// \return \c true when the press grabbed a handle or a glyph and the drag started.
     bool press(int x, int y, bool upright_plane, const std::function<int(int, int)> &keyframe_at);
 
-    /// \brief Applies an active drag to \p camera's cursor position (x, y).
+    /// \brief Applies an active drag to the cursor position (x, y).
     /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
     /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
     void drag(int x, int y);

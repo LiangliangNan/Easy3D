@@ -342,7 +342,7 @@ jobs:
 
       # Records what the runner actually exposes, so the exclusion below stays verifiable without
       # a signed-in reader. VULKAN_SDK is set on the image (C:\VulkanSDK\1.4.363.1), but its Bin
-      # holds the tool under the SDK name, vulkaninfoSDK.exe, not vulkaninfo.exe: run 15 execed
+      # holds the tool under the SDK name, vulkaninfoSDK.exe, not vulkaninfo.exe: run 15 executed
       # the plain path anyway, recorded only exit 127, and the question went unanswered again.
       # Paths are now checked before use, the directory that was searched is named inside the
       # annotation, and a missing tool is not reported as a missing device - the step after this

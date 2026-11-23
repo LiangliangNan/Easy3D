@@ -155,7 +155,7 @@ namespace easy3d {
      * \brief A band matrix representation that is capable of solving linear systems.
      * \details A band matrix is a sparse matrix whose non-zero entries are confined to a diagonal band, comprising
      *      the main diagonal and zero or more diagonals on either side.
-     * \class BandMatrix easy3d/core/matrix.h
+     * \class BandMatrix easy3d/core/spline_interpolation.h
      */
     template<typename FT>
     class BandMatrix {

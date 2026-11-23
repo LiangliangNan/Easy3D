@@ -214,12 +214,12 @@ namespace easy3d {
         void update_division();
 
 #ifndef EASY3D_HAS_VULKAN
-        // Draws every cell: binds the shared scene once per cell viewport using the
-        // division drawable for the grid lines.
+        // Draws every cell in its own viewport, then the grid division lines and
+        // the overlays.
         void draw() const override;
 
-        // Renders one cell's content into the currently bound framebuffer, then
-        // overlays the grid lines when requested.
+        // Renders the content of every cell into the currently bound framebuffer,
+        // then the grid lines when guides are requested.
         void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
 
         // Restricts the primitive-ID pick pass to the active cell's viewport, so a
@@ -243,13 +243,13 @@ namespace easy3d {
         // them; zero after a clear forces that rebuild on the next frame.
         mutable int division_width_ = 0, division_height_ = 0;
 #endif
-        // Cell that currently receives keyboard input and camera drags; clamped to the
-        // grid when the division changes and updated when the cursor enters another cell.
+        // Cell that currently receives camera drags; clamped to the grid when the
+        // layout changes and updated when a mouse button is pressed in another cell.
         int active_row_ = 0, active_col_ = 0;
         // True while a snapshot renders: the cells then share the viewer's global camera
         // (whose projection is temporarily overridden) instead of their own.
         mutable bool snapshot_active_ = false;
-        int num_rows_;    // grid size given to set_division()
+        int num_rows_;    // grid size given to set_layout()
         int num_cols_;
         // A sub-view of the multi-view viewer.
         struct View {

@@ -50,7 +50,7 @@ namespace easy3d {
 	 * Frame constructor for details).
 	 *
 	 * The different sensitivities are set to their default values (see
-	 * rotation_sensitivity(), translation_sensitivity(), spinningSensitivity() and
+	 * rotation_sensitivity(), translation_sensitivity(), zoom_sensitivity() and
 	 * wheel_sensitivity()). */
 	ManipulatedFrame::ManipulatedFrame()
 	{
@@ -137,10 +137,10 @@ namespace easy3d {
                 rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
             } else if (axis == VERTICAL) {
                 const int pre_x = mouse_x - mouse_dx;
-                const int pre_y = mouse_y;    // restricts the movement to be horizontal (so purl vertical rotation)
+                const int pre_y = mouse_y;    // restricts the movement to be horizontal (so pure vertical rotation)
                 rot = deformed_ball_quaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
             } else if (axis == HORIZONTAL) {
-                const int pre_x = mouse_x;    // restricts the movement to be vertical (so purl horizontal rotation)
+                const int pre_x = mouse_x;    // restricts the movement to be vertical (so pure horizontal rotation)
                 const int pre_y = mouse_y - mouse_dy;
                 rot = deformed_ball_quaternion(mouse_x, mouse_y, pre_x, pre_y, trans.x, trans.y, w, h);
             }

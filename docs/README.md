@@ -1,7 +1,7 @@
 # Publishing the documentation
 
 The [Documentation workflow](../.github/workflows/documentation.yml) builds the
-existing `Doxyfile.in` and the Sphinx site in `python/docs`, publishing:
+existing `docs/Doxyfile.in` and the Sphinx site in `python/docs`, publishing:
 
 - C++ documentation: <https://liangliangnan.github.io/Easy3D/>
 - Python documentation: <https://liangliangnan.github.io/Easy3D/python>

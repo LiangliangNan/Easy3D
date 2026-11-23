@@ -107,7 +107,7 @@ namespace easy3d {
          * \brief Returns whether the QGLViewer::ZOOM action zooms on the pivot point.
          * \details When set to \c false (default), a zoom action will move the camera along its
          *      Camera::view_direction(), i.e., back and forth along a direction perpendicular to the projection screen.
-         *      set_zooms_on_pivot_point() to \c true will move the camera along an axis defined by the Camera::pivot_point()
+         *      Setting it to \c true with set_zooms_on_pivot_point() will move the camera along an axis defined by the Camera::pivot_point()
          *      and its current position instead. As a result, the projected position of the pivot point on screen will
          *      stay the same during a zoom.
          * \return \c true if zooming on the pivot point is enabled, \c false otherwise.
@@ -145,10 +145,10 @@ namespace easy3d {
         void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis) override;
         /**
          * \brief Zooms the frame based on mouse wheel movement.
-         * \param dy_wheel The change in the mouse wheel position.
+         * \param wheel_dy The change in the mouse wheel position.
          * \param camera The camera associated with the frame.
          */
-        void action_zoom(int dy_wheel, Camera* camera) override;
+        void action_zoom(int wheel_dy, Camera* camera) override;
         /**
          * \brief Turns the frame around the camera's Y axis.
          * \param angle_radian The angle of rotation in radians.

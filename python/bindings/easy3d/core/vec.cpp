@@ -187,7 +187,7 @@ void bind_easy3d_core_vec(pybind11::module_& m)
         cl.def("xyz", (easy3d::vec3 (easy3d::vec4::*)() const) &easy3d::vec4::xyz, "C++: easy3d::vec4::xyz() const --> easy3d::vec3");
 
         // Liangliang: To make the easy3d::vec4 type printable in Python, provide a __repr__ or __str__ method in the Python bindings.
-        // This allows Python to represent the object as a readable strin g.
+        // This allows Python to represent the object as a readable string.
         cl.def("__repr__", [](const easy3d::vec4 &v) {
             // Define a Python-readable representation
             return "<vec4 x=" + std::to_string(v.x) +

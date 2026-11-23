@@ -23,7 +23,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
-// Copyright (C) 2026 Liangliang Nan
+
 #ifndef EASY3D_RENDERER_RENDER_DEVICE_H
 #define EASY3D_RENDERER_RENDER_DEVICE_H
 
@@ -362,7 +362,7 @@ namespace easy3d {
          * \brief CPU-readable color, depth, and picking data captured from a frame.
          */
         struct FrameImage {
-            /// Captured framebuffer dimensions in pixels.
+            /// Captured framebuffer width in pixels.
             std::uint32_t width = 0;
             /// Captured framebuffer height in pixels.
             std::uint32_t height = 0;

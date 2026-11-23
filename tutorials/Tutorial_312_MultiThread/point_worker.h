@@ -1,5 +1,5 @@
 /** \cond LICENSE
-* Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
  * This file is part of Easy3D. If it is useful in your research/work,

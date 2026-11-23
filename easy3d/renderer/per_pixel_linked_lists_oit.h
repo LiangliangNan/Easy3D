@@ -85,8 +85,8 @@ namespace easy3d {
      *
      *      Example: 1920×1080 viewport, 8 fragments/pixel average:
      *      - Head: 8.3 MB
-     *      - Nodes: 505 MB
-     *      - Total: ~513 MB
+     *      - Nodes: 531 MB
+     *      - Total: ~539 MB
      *
      *      The `max_fragments_per_pixel` parameter controls the node pool size. If the pool
      *      overflows (more fragments than allocated nodes), excess fragments are silently
@@ -237,8 +237,8 @@ namespace easy3d {
      *
      *      Example: 1920×1080 viewport, 8 fragments/pixel average:
      *      - Head: 8.3 MB
-     *      - Nodes: 505 MB
-     *      - Total: ~513 MB
+     *      - Nodes: 531 MB
+     *      - Total: ~539 MB
      *
      *      The `max_fragments_per_pixel` parameter controls the node pool size. If the pool
      *      overflows (more fragments than allocated nodes), excess fragments are silently

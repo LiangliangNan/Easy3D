@@ -7,7 +7,7 @@ https://github.com/LiangliangNan/Easy3D
 ### Obtain/Build Easy3D Python bindings
 
 Prebuilt Python bindings are available for download on the [Releases](https://github.com/LiangliangNan/Easy3D/releases) page. 
-Simply Download the appropriate wheel file for your platform and Python version, and install it using `pip`:
+Simply download the appropriate wheel file for your platform and Python version, and install it using `pip`:
 ```bash
 pip install easy3d-2.6.0-py3-none-any.whl  # <-- Use your actual wheel file name
 ```

@@ -35,8 +35,8 @@ namespace easy3d {
 
 	/**
 	 * \brief OpenGL-related functionalities for reading pixel/depth data from the framebuffer.
-	 * \details For multisample-version functions, a normal framebuffer is created for bliting color/depth from the
-	 *		multisample framebuffer object. For high-frequent queries, you'd better create a normal fbo for bliting
+	 * \details For multisample-version functions, a normal framebuffer is created for blitting color/depth from the
+	 *		multisample framebuffer object. For high-frequency queries, you'd better create a normal fbo for blitting
 	 *		operations. This way, you can avoid frequently allocating and deallocating GPU memories.
 	 * \namespace easy3d::opengl
 	 */

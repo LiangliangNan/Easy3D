@@ -161,7 +161,7 @@ namespace easy3d
          * \param message The message string.
          * \param choice The options for the user. Default is 'ok_cancel'. See 'Choice'.
          * \param type The message type. Default is 'info'. See 'Type'.
-         * \return The user's response. See "Response'.
+         * \return The user's response. See 'Response'.
          */
         Response message(
                 const std::string& title,

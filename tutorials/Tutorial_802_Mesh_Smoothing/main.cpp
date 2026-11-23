@@ -42,7 +42,7 @@
  *
  * This tutorial demonstrates mesh smoothing (denoising) with SurfaceMeshSmoothing. To make the
  * effect obvious, Gaussian noise is first added to the bunny mesh; the smoothing shortcuts then
- * progressively remove it. Two variants are shown side by side: explicit Laplacian smoothing (a few
+ * progressively remove it. Two variants are provided: explicit Laplacian smoothing (a few
  * local averaging iterations) and implicit Laplacian smoothing (a single global solve). Smoothing is
  * the workhorse for cleaning up scanned or reconstructed geometry before further processing.
  *

@@ -4,8 +4,9 @@ The `Easy3D-Vulkan` branch provides a native Vulkan renderer and viewer alongsid
 the OpenGL backend. A build contains **exactly one backend**, chosen at configure
 time with `Easy3D_ENABLE_VULKAN` (default `ON`; `OFF` builds OpenGL). The shared
 viewer, renderer, picking, effects, GUI, and supported tutorial workflows are
-implemented for both configured backends. Mapple is intentionally OpenGL-only;
-the Qt/wx viewer tutorials were retired; Python bindings deliberately cover the
+implemented for both configured backends. The Qt-based Mapple was OpenGL-only and has
+been retired (the ImGui `applications/Mapple` now runs on both backends); the Qt/wx
+viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
 **Current status (2026-11-12):** core feature implementation for the agreed shared
@@ -402,7 +403,7 @@ Current implementation and validation status is summarized separately in
 
 The agreed migration scope supports **all retained tutorials on Vulkan** and
 the applications intended to use the unified viewer, including FigureMaker.
-**Mapple is a deliberate exception (decided 2026-11-08): it stays OpenGL-only and
+**The Qt-based Mapple was a deliberate exception (decided 2026-11-08): it stayed OpenGL-only and
 untouched** — its standalone `QOpenGLWidget` canvas (its own render loop, pickers,
 effects, HUD and snapshot, built on `easy3d::renderer`/`gui` rather than the unified
 `Viewer`) is not worth the toolkit-surface port, the same reason the Qt/wx tutorials
@@ -583,7 +584,7 @@ only threw exceptions are removed, and the dependent manipulator frame-drawing
 API is explicitly OpenGL-only. Corner-axis visibility is shared Viewer state.
 The built-in HUD on both backends now uses `graphics::TextLayoutEngine`; OpenGL
 realizes its commands with `opengl::OverlayRenderer`. The immediate
-`easy3d::TextRenderer` remains for Mapple and is no longer used by Viewer.
+`easy3d::TextRenderer` remains for the retired Qt app (`applications/Mapple-Qt`) and is no longer used by Viewer.
 Focused input/HUD checks pass on OpenGL and Vulkan, with the Vulkan text-viewer
 regression passing as well.
 
@@ -725,7 +726,7 @@ Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 The 89 Easy3D additions include 52 test files and 27 backend files, which P4 permits;
 the 10 others were reviewed by the U6 responsibility audit (batch 39) and are retained:
 `obj_materials.h/.cpp`, `render_device.h/.cpp`, `text_layout.h/.cpp`, `viewer_base.h/.cpp`,
-`viewer_callbacks.h` and `viewer_input.h`. D3 retains the four viewer API files
+`viewer_callbacks.h` and `viewer_input.h`. D3 retains the three viewer API files
 (`viewer_base`, `viewer_callbacks`, `viewer_input`) as the shared viewer API consumed by both
 backends. The three renderer pairs are justified new shared abstractions, not code displaced
 from original classes: `render_device` is the backend-neutral `graphics::` annotation/type
@@ -760,7 +761,7 @@ of this document.
   until their implementations exist.
 - **W3** (done) Tutorial 208 uses `OffScreen` and only the API common to both backends.
 - **W4** (done) Runtime-selection and headless leftovers removed: the `Backend` enum
-  (`BackendUnavailable`, the initialization error type, stays), `ViewerOptions`,
+  (`BackendUnavailable`, the initialization error type, stays), `VulkanViewerOptions`,
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
@@ -770,7 +771,7 @@ of this document.
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
   (W5 batch 4). Tutorials 207/405/506 now use shared annotation geometry, guides
   and GPU depth previews (W5 batch 5). Tutorial 403 now shares GPU point selection
-  on both backends (batch 7). Tutorial 404 uses shared capture and reconstructs its scan locally (batch 10); see U5.
+  on both backends (batch 7). Tutorial 405 (the virtual scanner, numbered 404 before batch 42) uses shared capture and reconstructs its scan locally (batch 10); see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -850,7 +851,7 @@ of this document.
   W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
   selection/drag lifecycle. W5 batch 5 shares its guide rendering and removes the
   selectors from Tutorials 207/405/506.
-  Tutorial 404 now uses the existing shared capture API and reconstructs points locally;
+  Tutorial 405 (formerly 404) now uses the existing shared capture API and reconstructs points locally;
   the tutorial selector macro is removed (batch 10). Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
@@ -949,8 +950,8 @@ thin while the remaining steps are completed.
 > **Merged into U1 (2026-10-31).** Read the bullets below as requirements of the unified
 > `Viewer` class.
 
-- Constructors: `Viewer` follows D1; `MultiViewer` and `OffScreen` keep `main`'s parameter
-  lists for now (D5). The OpenGL options keep their meaning; the Vulkan options are
+- Constructors: `Viewer` follows D1; `MultiViewer` and `OffScreen` follow D5 (they originally kept `main`'s parameter
+  lists). The OpenGL options keep their meaning; the Vulkan options are
   `VulkanOptions`. `full_screen` and `visible` are honoured by both backends.
 - Align existing lifecycle, input and resize hooks and their signatures, including
   mouse press/release/drag and key press/release. Preserve meaningful `init`,
@@ -1122,7 +1123,9 @@ headless configuration, the `Easy3D_RENDERER_BACKEND`, `Easy3D_ENABLE_OPENGL` an
 `Easy3D_ENABLE_VULKAN_VIEWER` options, `ViewerBase::create` and the previous backend
 source layout are historical wherever they conflict with the plan above; they are
 not continuing architectural requirements. Sections known to be obsolete carry a
-*Superseded* note.
+*Superseded* note. In the sections below, `VulkanViewer` and `VulkanOffScreen` are the
+former names of the Vulkan paths of the unified `Viewer` and `OffScreen` (P1), and
+`unproject_pixel()` is now `pixel_to_world()`.
 
 ## Implemented
 
@@ -1280,17 +1283,15 @@ viewer.add_model("mesh.ply");
 viewer.run();
 ```
 
-Until U1, `Viewer` is still an alias of the configured backend's class (`VulkanViewer` or `OpenGLViewer`); the target is one `Viewer` class (P1). Tutorials built in the Vulkan tree
-use the same sources as the OpenGL tree; tutorials that still rely on legacy GL
-callbacks or on `MultiViewer` are listed in the work order above.
+`Viewer` is a single class for both backends (P1), not an alias of backend-specific classes. Tutorials built in the Vulkan tree
+use the same sources as the OpenGL tree; the supported tutorial set is listed in the work order above.
 
 The host reuses Camera/Model/Renderer/Drawable and snapshot APIs from
-`VulkanOffScreen`. `draw_frame()` plus `poll_events()` support an external loop;
+`OffScreen`. `draw_frame()` plus `poll_events()` support an external loop;
 input and pre/post-frame/resize hooks can be overridden. All native callbacks use
-framebuffer-pixel coordinates, including HiDPI conversion. `point_under_pixel()`
+logical window coordinates (Batch 46), as on OpenGL. `point_under_pixel()`
 uses the same top-left pixel convention and synchronously reads back depth on
-request. Legacy GL `draw()` callbacks, overlays and full viewer shortcut parity
-are not emulated yet (work item W7). GL-version constructor arguments have no
+request. Raw legacy GL drawing in `draw()` callbacks is not emulated. GL-version constructor arguments have no
 native counterpart. Pass `samples` to the constructor or call `set_samples()` for MSAA.
 
 Create/use/destroy GLFW windows on the UI/main thread. Vulkan windows retain
@@ -1317,7 +1318,7 @@ The Vulkan window demo runs on the actual desktop on macOS/Windows; Xvfb is Linu
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 
-// The same code builds with either backend (OffScreen aliases the configured class).
+// The same code builds with either backend.
 easy3d::OffScreen renderer(800, 600);
 auto* model = renderer.add_model("bunny.ply");
 if (model) {
@@ -1335,8 +1336,8 @@ default and subsequently added drawables; there is no explicit buffer-mode switc
 or constructor flag. Vulkan drawables retain CPU snapshots for device upload;
 OpenGL drawable construction/uploads require a current OpenGL context.
 
-`easy3d/viewer/viewer.h` exposes `easy3d::OffScreen`, an alias of `VulkanOffScreen`
-(Vulkan build) or `OpenGLOffScreen` (OpenGL build) until U2 unifies them. This preserves common offscreen
+`easy3d/viewer/viewer.h` and `offscreen.h` define a single `easy3d::OffScreen` class for both
+backends (U2). This preserves common offscreen
 source usage without a window or GL context on the Vulkan side. This is source
 compatibility for the documented subset, not binary compatibility or parity for
 GL-specific inheritance/callbacks and unsupported options.
@@ -1385,9 +1386,9 @@ cannot mean "renders in an OpenGL build and fails in a Vulkan build". What the d
 a different question and is answered the same way everywhere since batch 142: the count steps down
 to the largest supported one with one warning naming both numbers.
 
-`VulkanOffScreen::capture(samples)` and `render(filename, scaling, samples, ...)`
+`Viewer::capture(samples)` and `OffScreen::render(filename, scaling, samples, ...)`
 now support the device's RGBA8/D32 sample counts. `capture()` defaults to one
-sample; file-output `render()` defaults to four, matching `OffScreen::render()`.
+sample; file-output `render()` defaults to four.
 `RenderDevice::render()` and `present()` also accept a trailing sample-count
 argument. Offer only the counts the viewer can render: `Viewer::supported_sample_mask()`
 is the portable query (`GL_MAX_SAMPLES` on OpenGL, the device's color counts on Vulkan,
@@ -1534,7 +1535,7 @@ package.
 
 ## Portable points, spheres and surfels
 
-`PointsDrawable::PLAIN` accepts positive finite framebuffer-pixel sizes; sizes
+`PointsDrawable::PLAIN` accepts positive finite logical-pixel sizes; sizes
 other than one use instanced triangle quads and never request `largePoints`.
 `PointsDrawable::SPHERE` uses a view-space radius of
 `point_size() * camera.world_pixel_ratio(camera.pivot_point()) / 2`, matching the legacy
@@ -1906,7 +1907,7 @@ CPU using the bundled stb_truetype, without a graphics context. It returns a
 line's advance and line height. Viewer uses this engine for its built-in HUD on
 both backends: Vulkan submits the commands through `RenderDevice`, while OpenGL
 realizes them through `OverlayRenderer`. The immediate OpenGL
-`easy3d::TextRenderer` remains available to Mapple and other existing clients,
+`easy3d::TextRenderer` remains available to the retired Qt app (`Mapple-Qt`) and other existing clients,
 but is not the Viewer HUD implementation; legacy GL callbacks are not emulated.
 
 ```cpp
@@ -2024,8 +2025,8 @@ previous parsed-data leak. Tutorial 308 loads and realizes a replacement before
 removing the previous models; OBJ read failures preserve the existing scene.
 This is diffuse-material import, not full MTL rendering: normals are recomputed,
 independent ambient/specular material lighting and MTL opacity are not applied,
-and general 3D transparency,
-PBR remains outstanding. The following picking stage adds original-face provenance.
+and general 3D transparency and
+PBR remain outstanding. The following picking stage adds original-face provenance.
 
 `Tutorial_301_Drawables` now runs its shared standalone-drawable example on Vulkan,
 including sphere points and a five-pixel wire bounding box. Its native path uses
@@ -2059,16 +2060,16 @@ suite passed all 18 tests; the dual Vulkan/OpenGL suite passed all seven,
 including the real OpenGL material-viewer and texture checks. Pixel probes and
 snapshot inspection confirmed orientation, UV seams, concave coverage and color
 fallbacks. The existing MoltenVK integer-attachment warning remains; validation
-error counts stay zero. Native Qt/wx integration, remaining GUI picking/effects
-and the retired runtime backend-selection/fallback path are closed; only the GUI
-picking/effects work remains a migration gate.
+error counts stay zero. The Qt/wx integration was later retired, and the runtime
+backend-selection/fallback path is removed; GUI picking/effects were completed in later
+sections.
 
 
 ## Source picking, selection and Tutorials 401/402
 
-`VulkanOffScreen::pick(x,y)` synchronously resolves a visible framebuffer-pixel
+`VulkanOffScreen::pick(x,y)` synchronously resolves a visible logical-window-coordinate
 hit to its source. `VulkanViewer` inherits this API; its input callbacks already
-convert logical cursor positions to framebuffer pixels, including HiDPI.
+pass logical cursor positions, and pick() converts them to framebuffer pixels, including HiDPI.
 
 ```cpp
 const auto hit = viewer.pick(x, y); // logical window coordinates (Batch 46; was framebuffer pixels)
@@ -2169,10 +2170,10 @@ shortcut baseline mismatch; five bounded diagnostic repeats passed. Its harness
 now drains initial window/DPI callbacks, uses a smaller initial window, checks
 framebuffer dimensions before comparing pixels and saves expected/actual PNGs on
 a mismatch. The final complete native run passed; the original mismatch was not
-reproduced with diagnostics. Qt/wx/Python integration, original
-general vertex/edge and mesh-region pickers, advanced effects and the retired
-runtime backend selection/automatic OpenGL fallback gate are complete; no
-backend fallback work remains.
+reproduced with diagnostics. The Qt/wx/Python integration, the
+general vertex/edge and mesh-region pickers, advanced effects and the removal of the
+runtime backend selection/automatic OpenGL fallback were completed in later
+sections; no backend fallback work remains.
 
 
 ## Portable clipping and Tutorial 307
@@ -2643,7 +2644,8 @@ includes and implementations stay in that same source file. The five parallel,
 header-only `viewer_vulkan.h` files have been removed. Clients and tests include
 `viewer.h` for either backend.
 
-The shared `tutorials/viewer_backend.h` selects Viewer or VulkanViewer once
+The shared `tutorials/viewer_backend.h` (historical; since removed together with the
+`EASY3D_TUTORIAL_USES_VULKAN` and `EASY3D_TUTORIAL_VULKAN` macros, see U5/W5) selected Viewer or VulkanViewer once
 and exposes the `easy3d::Viewer` alias. Tutorial headers use this common
 base without repeating backend includes or per-class aliases. Remaining
 constructor, hook and state differences use `EASY3D_TUTORIAL_USES_VULKAN`. Native-only builds select Vulkan as before. A private
@@ -2689,13 +2691,13 @@ and owns immutable geometry/image caches. It handles flat shading, textures,
 selection/highlight colors, impostor styles and per-drawable clipping transforms.
 These responsibilities were previously embedded in `VulkanOffScreen::Impl`.
 
-`easy3d/viewer/vulkan_offscreen.cpp` retains host responsibilities: scene ownership,
+`easy3d/viewer/offscreen.cpp` retains host responsibilities: scene ownership,
 camera and viewport control, command ordering, picking provenance, capture,
 presentation and file output. It delegates drawable conversion and cache
 maintenance to the renderer implementation. The internal helper is not a new
 public drawable API; callers continue to use the existing `Drawable` subclasses.
 The low-level device, GPU uploads, synchronization and shader implementation stay
-in `easy3d/graphics`.
+in `easy3d/renderer` (`render_device.h` and `backends/vulkan`).
 
 The extraction preserves the existing conversion/cache implementation, passing
 clipping planes explicitly instead of obtaining them from viewer state. Cache
@@ -2832,7 +2834,7 @@ layers and interaction state. Releasing the control modifier hides the region
 preview; mouse release removes the preview and applies region zoom.
 
 Screen-space shape generation lives in
-`easy3d/renderer/backends/vulkan/shape.h` / `shape.cpp`, following the existing
+`easy3d/renderer/shape.h` / `shape.cpp`, following the existing
 renderer shape counterpart filenames and responsibilities. Quad fill, quad wire
 and 2D line helpers return immutable triangle commands using the existing overlay
 pass. They require neither geometry shaders nor native wide-line support.
@@ -2870,7 +2872,7 @@ not print startup manuals; `run()`, `run_frames()` and first frame presentation 
 
 All currently ported viewers that customize OpenGL usage text retain that text:
 Tutorials 306 (image), 307 (clipping), 309 (text), 401/402 (model/face picking),
-403 (point selection) and 404 (virtual scanning). The five separate constructor
+403 (point selection) and 405 (virtual scanning). The five separate constructor
 implementations use shared file-local text constants for both backends; the
 shared picker constructors now set their hints for either backend. Original
 OpenGL viewer/tutorial/application paths continue to use their existing usage
@@ -2923,7 +2925,7 @@ and resize end the gesture. Deleting a selected model or clearing the scene is
 safe even when another owner retains that model. No signal callback retains a
 pointer to a destroyed viewer.
 
-`easy3d/renderer/backends/vulkan/manipulator.h` / `manipulator.cpp` implement the
+`easy3d/renderer/manipulator.h` / `manipulator.cpp` implement the
 rendering counterpart of `Manipulator::draw_frame()`. The helper reuses the same
 RGB abstracted box-corner geometry from `shape::create_box()`, and caches its
 immutable guide command until the model/camera transform, viewport or width
@@ -3032,7 +3034,7 @@ This stage implements Tutorial 206's own path workflow. The shared viewer's
 global Alt/Ctrl camera-path shortcuts are implemented in the next stage below.
 
 The native drawing counterpart lives in
-`renderer/backends/vulkan/key_frame_interpolator.h` / `key_frame_interpolator.cpp`.
+`renderer/key_frame_interpolator.h` / `key_frame_interpolator.cpp`.
 It reuses `shape::create_camera()` for green keyframe markers and the shared
 interpolated positions for the pale-yellow path. Markers and homogeneously clipped
 triangle-ribbon paths are depth-tested annotations that never write scene depth
@@ -3365,7 +3367,7 @@ integer-attachment warning remains. Desktop suites were run sequentially.
 Tutorial 506 now uses the native Vulkan host in its original `main.cpp`,
 `viewer.h` and `viewer.cpp` pair. Its OpenGL framebuffer/shader implementation
 remains available. The native `draw_depth()` builds a cached quarter-viewport
-inset and red border through `renderer/backends/vulkan/shape::draw_depth_texture`,
+inset and red border through `renderer/shape::draw_depth_texture`,
 corresponding to the original OpenGL shape helper. The original 20/40 logical
 unit margins scale with each window's DPI. Camera controls, resizing, scene
 clearing and snapshots retain the preview. The native application uses the same
@@ -3634,8 +3636,8 @@ Viewer code depends on renderer through its normal module relationship.
 - `renderer/text_layout.{h,cpp}` contains the CPU font/glyph layout engine, now
   named `graphics::TextLayoutEngine` to distinguish this helper from the existing
   public `easy3d::TextRenderer` class. The latter's API is unchanged.
-- Device-only tests live under `renderer/tests`; host/scene tests and the installed
-  consumer live under `viewer/tests`. Their target/test names remain unchanged.
+- Device-only, host/scene tests and the installed consumer now live under the root `tests/`
+  directory (testing policy, 2026-11-04). Their target/test names remain unchanged.
 
 Shader compilation and embedding are configured in the renderer Vulkan backend,
 with outputs under `easy3d/renderer/backends/vulkan` in the build tree. CI paths,
@@ -3915,7 +3917,7 @@ remain as previously documented. Tutorial sources and shaders are unchanged.
 
 ## Runtime-created built-in viewers
 
-> **Superseded (2026-10-30):** `Viewer::create`, `ViewerOptions.backend` and `Backend::Automatic` were removed. Construct `Viewer` (or `VulkanViewer(title, VulkanViewerOptions)`) directly. `ViewerBase` itself is removed at the end of the migration.
+> **Superseded (2026-10-30):** `Viewer::create`, `ViewerOptions.backend` and `Backend::Automatic` were removed. Construct `Viewer(title, window, options)` directly (D1). `ViewerBase` is retained as the declaration of the unified API (P2).
 
 The built-in interactive viewer creation path now constructs the concrete host
 directly through the common ViewerBase interface. Backend choice is exclusive
@@ -5918,7 +5920,7 @@ smoke tests; their Vulkan gates are removed.
 the full screen: it checks darkening behind a caster, untouched lit regions and
 caster pixels, background ID preservation, unchanged IDs/depth, one and four
 samples, hard and soft filters, darkness 0 as a no-op, and rejection of invalid
-flags, map sizes, colors, finite matrices, non-triangle casters and foreground
+flags, map sizes, colors, non-finite matrices, non-triangle casters and foreground
 IDs. All 126 MoltenVK tests and all 91 OpenGL tests pass on this Mac
 (2026-11-05; `vulkan.imgui`/`opengl.imgui` each failed once under full-suite load
 and pass in isolation and on re-run). The U3 table entry listing `Shadow` and
@@ -6092,7 +6094,7 @@ pixel, so a fixed pattern's static banding becomes low-level noise that the taps
 average out. Both paths also clamp the search and filter radii to at least one
 shadow-map texel, which removes the sub-texel blockiness that appeared in narrow
 penumbrae. Vulkan raises the pass from 16/16 to 32 blocker-search and 64 filter
-taps (up from 16/16) and filters with `compare_filtered()`; the OpenGL
+taps and filters with `compare_filtered()`; the OpenGL
 `soft_shadow_rendering.frag` keeps its configurable 64/128 Poisson default and
 gains the rotation and radius clamp. Vulkan still uses half of the OpenGL tap
 count to keep one full-screen pass affordable, so very large penumbrae can
@@ -6844,10 +6846,10 @@ Files changed: `easy3d/viewer/viewer.h`, `easy3d/viewer/viewer.cpp`,
 `python/bindings/easy3d/viewer/multi_viewer.cpp`.
 
 Suites (2026-11-07): 128/128 MoltenVK, 94/94 OpenGL, all idle at `-j2`. No regressions;
-the signature change is ABI-compatible for client code that already treated `draw()` as
-a void method (the common case in tutorials) and source-compatible for code that checked
-the bool return (the return was always true in practice, so removing the check does not
-alter behavior). No changes were committed.
+the signature change is source-compatible for client code that already treated `draw()` as
+a void method (the common case in tutorials; rebuild required) and needs only removal of
+the check for code that tested the bool return (the return was always true in practice, so
+removing the check does not alter behavior). No changes were committed.
 
 ### 2026-11-07 — W10 batch 35: Picker coordinate system documentation
 
@@ -7390,7 +7392,7 @@ after a sorted frame, under validation layers. This mirrors the OpenGL
 The OpenGL Release tree (`build-opengl`) passes `opengl.input` and `viewer.pointbenchmark`.
 Linux/Mesa, Windows hardware, and the GitHub CI workflow remain separate, non-local gates.
 
-### 2026-11-09 — W10 batch 46: unified coordinate API and backend parity (resolves batch-45 divergences)
+### 2026-11-10 — W10 batch 46: unified coordinate API and backend parity (resolves batch-45 divergences)
 
 **Scope.** Resolves the two coordinate issues raised after batch 45, together with the
 point-imposter size divergence. The batch-45 "divergences recorded" note on legacy mouse hooks
@@ -7901,9 +7903,9 @@ can. The callback struct is removed; subclasses are again the only event extensi
   subclass that consumes a press must also consume its drags, and consuming the held-button release
   calls `end_gesture()` so the built-in action (for example a region zoom) is not applied. This
   replaces the old `capture_button` dispatch state.
-- Added model-free shortcut overloads: `Viewer::Action` (`std::function<bool(Viewer*)>`) and 
-  `bind(action, key, modifier)` on Viewer, stored with a null model and checked before the built-in 
-   shortcuts. The Python binding exposes the new overload.
+- Added model-free shortcut overloads: `Viewer::Action` (`std::function<bool(Viewer*)>`) and
+  `bind(action, key, modifier)` on Viewer, stored with a null model and checked before the built-in
+  shortcuts. The Python binding exposes the new overload.
 - `Viewer::notify_resize()` now owns resize notification: it queries the logical and framebuffer
   sizes, caches the tuple, and calls `post_resize(w, h)` once per change. The Vulkan framebuffer
   callback, the Vulkan in-frame resize path and the OpenGL `callback_event_resize()` (which keeps
@@ -9323,7 +9325,7 @@ see the next entry.
 used to run - Boost's graph over the kdtree - and not to the platform. Locally on 2026-11-14 the case measured 3.2 s in Release
 and 55.1 s in Debug against its 180 s timeout, so it is back in the macOS Vulkan and Windows Vulkan suites. The only remaining
 macOS exclusion was `vulkan.transparency`, on the inherited note that MoltenVK hangs on it; that half of the note had never been
-measured on a runner, and the last entry of this file re-measures it. Linux needed nothing: its two ctest invocations partition the
+measured on a runner, and the run 14 entry below re-measures it. Linux needed nothing: its two ctest invocations partition the
 suite by the `desktop` label, so nothing is skipped there.
 
 **The installed package is now exercised on all three systems.** `cmake --install` plus configuring and building
@@ -10091,7 +10093,7 @@ pair was a data race even though it only ever carries a one-way sticky signal. I
 a load, so no read-modify-write is involved). The rest of the singleton is unchanged and remains
 single-threaded in practice: `push()`/`pop()` and `level_` are only touched by the thread running
 the algorithm, and `client_` is set once by each `ProgressClient` constructor. The only in-tree
-consumer of the signal is `surface_mesh_remeshing.cpp` and `surface_mesh_sampler.cpp`, which poll
+consumers of the signal are `surface_mesh_remeshing.cpp` and `surface_mesh_sampler.cpp`, which poll
 it per iteration/per triangle; every other algorithm ignores cancellation and runs to completion,
 which is what the Mapple progress window tells the user.
 
@@ -10150,7 +10152,7 @@ libraries constructed one drawable of each type: points report distinct=1 with b
 drawables and that only the points default changed. `easy3d/util/version.h` is unchanged.
 Linux/Windows/CI remain separate gates.
 
-### 2026-11-16 - batch 86: analytic impostor proxies are clipped to the near plane
+### 2026-11-16 — batch 86: analytic impostor proxies are clipped to the near plane
 
 **Symptom.** Reported by the user: on Vulkan, zooming into a point/line impostor scene runs at a
 very low frame rate and collapses once some impostors fall behind the camera position, while the
@@ -10711,7 +10713,7 @@ alpha into a sample mask - one shading pass per pixel, no per-sample invocation.
 the mode per pipeline: `VK_TRUE` on the single-sample color and picking pipelines keeps
 the exact center-sample `discard` rule, so object IDs and depth never depend on
 screen-space derivatives; `VK_FALSE` on the two multisampled impostor pipelines (line
-impostors and sphere/surfel impostors - keys, wide lines and plain points do not need
+impostors and sphere/surfel impostors - triangles, wide lines and plain points do not need
 it) enables `clamp(0.5 + d/fwidth(d), 0, 1)` ramps on every boundary: the sphere and
 surfel discriminants, the surfel disc radius, the line barrel quadric, the two cap
 rims, and each clip plane. A coverage above 0.5 means the pixel-center sample is inside,
@@ -10881,6 +10883,7 @@ in `build-vulkan-check`, `build-opengl-check` and `cmake-build-debug`, and smoke
 with `torusknot.obj` start cleanly on both backends ("Mapple UI ready", mesh loaded, no
 warnings). The two probes were scratch builds in /tmp, not part of the tree.
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
+
 ### 2026-11-17 — batch 104: the Viewer no longer owns a KeyFrameInterpolator
 
 **Problem.** `Viewer` carried a `KeyFrameInterpolator` that the base class never needed:
@@ -11584,7 +11587,7 @@ the batch-139 refactor had altered:
 - `easy3d/viewer/snapshot.cpp` - the advanced `Viewer::snapshot()` coerces `samples == 1` to 0
   before building the offscreen `FramebufferObject` (at this batch the framebuffer layer still
   allocated multisample storage for a request of 1; batch 141 moved that rule into
-  `FramebufferObject` itself so the coercion is no longer needed);
+  `FramebufferObject` itself so the coercion is no longer needed).
 
 The shadow-receiver opacity fix of batch 139 is unchanged and still required; this batch
 only restores the sample-request semantics it had refactored.
@@ -11767,8 +11770,6 @@ by forcing the branch, which printed `after the first frame` on a healthy 95728-
 being reverted. Rate on this host since: 15 isolated runs of the binary and 3 paired `ctest` runs with
 `vulkan.snapshoteffects` - all green - against 2 failures in the runs above, so it stays intermittent
 and cause-open, now with a leg name to go with the numbers.
-
-
 
 ### 2026-11-19 — batch 143: the window settings become a ViewerOptions struct
 

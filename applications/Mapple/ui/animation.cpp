@@ -336,7 +336,7 @@ void MappleViewer::draw_animation_window() {
         kfi->set_interpolation_speed(speed);
         camera_path_elapsed_ = 0; // this reset the playback
     }
-    ImGui::SetItemTooltip("Play to check the current speed; drag to adjust.");
+    ImGui::SetItemTooltip("Press 'Play' to check the current speed; slide to adjust.");
     int fps = kfi->frame_rate();
     if (ImGui::SliderInt("Frame rate (frames/s)", &fps, 1, 120, "%d") && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);

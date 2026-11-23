@@ -97,7 +97,7 @@ namespace easy3d {
         /// \param dist Requested distance factor; values below 1.1 are clamped to 1.1. Default is 50.
         void set_light_distance(float dist);
 
-        /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
+        /// Query the darkness of the shadow region. The value is in [0, 1.0] (0: no shadow at all; 1: completely
         /// dark/black). \see set_darkness(float darkness).
         /// \return Shadow darkness in [0,1].
         float darkness() const { return darkness_; }
@@ -235,7 +235,7 @@ namespace easy3d {
         /// \param dist Requested distance factor; values below 1.1 are clamped to 1.1. Default is 50.
         void set_light_distance(float dist);
 
-        /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
+        /// Query the darkness of the shadow region. The value is in [0, 1.0] (0: no shadow at all; 1: completely
         /// dark/black). \see set_darkness(float darkness).
         /// \return Shadow darkness in [0,1].
         float darkness() const { return darkness_; }

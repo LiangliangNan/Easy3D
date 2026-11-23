@@ -420,7 +420,6 @@ namespace easy3d {
         drawable.update_vertex_buffer(points);
         drawable.set_uniform_coloring(color);
         drawable.set_line_width(thickness);
-        // drawable.set_impostor_type(LinesDrawable::CYLINDER);
         return true;
     }
 
@@ -539,7 +538,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     // The camera accelerates from rest at the segment's start (if stop_start) and
     // decelerates to rest at its end (if stop_end), cruising at constant speed between.
     // The ramp shape is 1.5*(1-u^2) with u in [-1,1], integrated over the ramp.
-    constexpr float kRamp = 0.18f;   // fraction of the segment's travel time at each end that stops
+    constexpr float kRamp = 0.18f;   // fraction of the segment's travel time spent ramping at each end that stops
 
     w = std::min(1.0f, std::max(0.0f, w));
     if (w <= 0.0f)
@@ -549,9 +548,9 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     if (!stop_start && !stop_end)
         return w;   // passes at constant speed
 
-    // Ramp parameters. kRamp is the fraction of the segment's travel time at each end that
-    // stops; mean is the ramp's average speed relative to the cruise; ramp_area is the ramp's
-    // integral over its speed curve, in segment-length units; with the cruise in the middle, the
+    // Ramp parameters. kRamp is the fraction of the segment's travel time spent ramping at each end that
+    // stops; mean is the ramp's average speed relative to the cruise; ramp_area is the integral of
+    // the ramp's speed curve, in segment-length units; with the cruise in the middle, the
     // ramp and the cruise cover the segment's travel time exactly.
     const float mean = 1.0f - 2.0f * kRamp * 0.25f; // = 0.91 for kRamp=0.18
     const float ramp_area = kRamp * 0.75f;   // area under one ramp's speed curve

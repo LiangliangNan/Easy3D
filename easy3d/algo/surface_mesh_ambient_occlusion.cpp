@@ -107,7 +107,7 @@ namespace {
             model_.reset(new Opcode::Model());
             if (!model_->Build(data)) {
                 model_.reset();
-                throw std::runtime_error("ambient occlusion: failed building the AABB tree");
+                throw std::runtime_error("ambient occlusion: failed to build the AABB tree");
             }
         }
 
@@ -205,9 +205,6 @@ namespace easy3d {
             throw std::invalid_argument("ambient occlusion: the radius ratio must be positive");
         if (parameters.sample_count < 1)
             throw std::invalid_argument("ambient occlusion: the sample count must be positive");
-        if (!mesh->is_triangle_mesh())
-            throw std::invalid_argument("ambient occlusion: input is not a triangle mesh");
-            // LOG(WARNING) << "input is not a triangle mesh";
 
         const float radius = std::max(mesh->bounding_box().radius() * parameters.radius_ratio, 1e-6f);
         const float bias = std::max(parameters.bias_ratio, 0.0f) * radius;

@@ -144,7 +144,7 @@ void create_curves_drawables(Viewer &viewer) {
         }
         return true;
     };
-    // Bind the helper to keys. The Model* argument is unused here (these are viewer-wide drawables).
+    // Bind the helper to keys (these are viewer-wide drawables, not tied to a model).
     viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, -1, false); }, Viewer::KEY_LEFT_BRACKET);
     viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, 1, false); }, Viewer::KEY_RIGHT_BRACKET);
     viewer.bind_shortcut([adjust_width](Viewer *host) { return adjust_width(host, 0, true); }, Viewer::KEY_0);

@@ -41,7 +41,7 @@ namespace easy3d {
      * \class TextRenderer easy3d/renderer/text_renderer.h
      *
      * \details It supports truetype (TTF) fonts and Unicode strings. All glyphs are cached in OpenGL textures and
-     *      font rasterization is done using 'stb_truetype.h.'
+     *      font rasterization is done using 'stb_truetype.h'.
      *      TextRenderer allows you to:
      *          - switch between fonts;
      *          - change character spacing;

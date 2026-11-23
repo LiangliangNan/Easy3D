@@ -192,7 +192,7 @@ namespace easy3d {
          * \brief Generates random colors for visualizing face-based segmentation of a SurfaceMesh.
          * \param mesh The surface mesh.
          * \param segments The face property storing the segmentation of the surface mesh.
-         * \param colors The face property to store the colors. Must be allocated before hand.
+         * \param colors The face property to store the colors. Must be allocated beforehand.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
          */
@@ -207,7 +207,7 @@ namespace easy3d {
          * \brief Generates random colors for visualizing vertex-based segmentation of a SurfaceMesh.
          * \param mesh The surface mesh.
          * \param segments The vertex property storing the segmentation of the surface mesh.
-         * \param colors The vertex property to store the colors. Must be allocated before hand.
+         * \param colors The vertex property to store the colors. Must be allocated beforehand.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
          */
@@ -224,7 +224,7 @@ namespace easy3d {
          * \param segments  The vertex property storing the segmentation of the point cloud.
          * \attention The face property \c segments must have a type of \c int, \c {unsigned int}, \c std::size_t,
          *      \c bool, or \c {unsigned char}. Besides, any negative values are treated as out of range.
-         * \param colors The vertex property to store the colors. Must be allocated before hand.
+         * \param colors The vertex property to store the colors. Must be allocated beforehand.
          */
         template<typename FT>
         static void color_from_segmentation(
@@ -236,10 +236,11 @@ namespace easy3d {
     private:
         /*
          * \brief Create default drawables for rendering.
-         * \details This method creates defaults drawables for rendering a model. The supported default drawables are
+         * \details This method creates default drawables for rendering a model. The supported default drawables are
          *              - PointCloud: "vertices".
          *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
          *              - Graph: "vertices", "edges".
+         *              - PolyMesh: "faces:border", "faces:interior".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
          *          override this function or set 'create_drawables' to false and create the

@@ -54,7 +54,7 @@
  *
  *      3. **Counter Buffer (Atomic Counter):** A single uint32 value used to allocate node
  *         indices atomically. Reset to 0 at the start of each frame.
- *         Layout: `layout(binding=2) uniform atomic_uint node_counter;`
+ *         Layout: `layout(binding=0) uniform atomic_uint node_counter;`
  *
  *      **Build Pass (per_pixel_linked_lists_oit_build.frag):**
  *
@@ -134,7 +134,7 @@
  *      ```
  *      For a 1920×1080 viewport with max_fragments_ = 8:
  *      - max_nodes = 16,588,800 nodes
- *      - Node buffer size = 16,588,800 × 32 bytes = 505 MB
+ *      - Node buffer size = 16,588,800 × 32 bytes = 531 MB
  *
  *      If the node pool overflows (more fragments than allocated nodes), excess fragments
  *      are silently discarded in the build pass. This can cause visual artifacts (missing

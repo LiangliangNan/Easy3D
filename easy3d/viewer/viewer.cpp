@@ -88,7 +88,6 @@
 #include <easy3d/renderer/backends/vulkan/clipping_plane.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #else
-// SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/opengl.h> // for gl functions
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
 #include <easy3d/renderer/backends/opengl/point_selection.h>
@@ -553,7 +552,7 @@ namespace easy3d {
         if (window_)
             glfwGetWindowPos(window_, &pos_x, &pos_y);
         else
-            throw std::runtime_error("viewer window doesn't exit");
+            throw std::runtime_error("viewer window doesn't exist");
     }
 
     void Viewer::notify_resize() {
@@ -1255,8 +1254,8 @@ namespace easy3d {
             const auto binding = command->second.find(Modifier(modifiers));
             if (binding != command->second.end()) {
                 // The callable may unbind itself or delete its model (which prunes the binding),
-                // so copies the bound callable to keep it alive for the duration of the call.
-                const Function func = binding->second.first; // copies the bound callable
+                // so keep a copy of the bound callable alive for the duration of the call.
+                const Function func = binding->second.first;
                 return func(this, binding->second.second);
             }
         }
@@ -1406,7 +1405,7 @@ namespace easy3d {
             input_.key = key;
         return false;
     }
-} // namespace easy3dd
+} // namespace easy3d
 
 
 #ifdef EASY3D_HAS_VULKAN
@@ -1863,7 +1862,7 @@ namespace easy3d {
             return;
         }
         if (!corner_axes_geometry_) {
-            // Same cylinders, cones, sphere and RGB colors as Viewer.
+            // Same cylinders, cones, sphere and RGB colors as the OpenGL corner axes.
             std::vector<vec3> points, normals, colors;
             for (const auto &axis : {vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)}) {
                 shape::create_cylinder(.03f, 10, vec3(0), .5f * axis, axis, points, normals, colors);
@@ -2035,7 +2034,7 @@ namespace easy3d {
                       "  Shift + Right click:     Undefine the target point (if any) on model\n"
                       "  Ctrl + Left drag:        Zoom to fit region                         \n"
                       "  '-'/'=':                 Decrease/Increase point size               \n"
-                      "  '{'/'}':                 Decrease/Increase line width               \n"
+                      "  '['/']':                 Decrease/Increase line width               \n"
                       "  'b':                     Toggle borders visibility                  \n"
                       "  'e':                     Toggle edges visibility                    \n"
                       "  'v':                     Toggle vertices visibility                 \n"
@@ -2493,7 +2492,8 @@ namespace easy3d {
             for (auto d : m->renderer()->lines_drawables()) {
                 if (d->is_visible()) {
                     d->draw(camera());
-                    easy3d_debug_log_gl_error++ count;
+                    easy3d_debug_log_gl_error
+                    ++count;
                 }
             }
 
@@ -2532,7 +2532,8 @@ namespace easy3d {
 
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
         ClippingPlane::instance()->draw(camera());
-        easy3d_debug_log_gl_error draw_overlays(false);
+        easy3d_debug_log_gl_error
+        draw_overlays(false);
     }
     namespace {
         struct QueryContext {

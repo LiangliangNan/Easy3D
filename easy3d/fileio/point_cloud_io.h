@@ -55,7 +55,7 @@ namespace easy3d {
 		static PointCloud* load(const std::string& file_name);
 
         /**
-         * \brief Saves a point_cloud to a file.
+         * \brief Saves a point cloud to a file.
          * \details The extension selects the format. If the path has no extension, \c .ply is appended and binary
          *          PLY is written.
          * \param file_name Output path.
@@ -116,13 +116,13 @@ namespace easy3d {
         /// \return True on success; false on an I/O or format error.
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary = true);
 
-        /// \brief Read a point cloud from an \c las or \c laz file.
+        /// \brief Read a point cloud from a \c las or \c laz file.
         /// \details Requires LASlib-backed support available in the build.
         /// \param file_name Input path.
         /// \param cloud Destination point cloud.
         /// \return True on success; false when unsupported or on I/O/parse failure.
         bool load_las(const std::string &file_name, PointCloud *cloud);
-        /// \brief Save a point cloud to an \c las or \c laz file.
+        /// \brief Save a point cloud to a \c las or \c laz file.
         /// \details Requires LASlib-backed support available in the build.
         /// \param file_name Output path.
         /// \param cloud Point cloud to write.

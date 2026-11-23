@@ -147,7 +147,7 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 - `interpolate()` treats each segment's effective duration as `travel_time + dwell_time` and
   distributes samples proportionally across dwell + travel periods; during dwell periods the
   camera holds the keyframe pose.
-- Mapple's Camera Path window shows a "Dwell (s)" spin box (0.0–10.0) when a keyframe is
+- Mapple's Camera Path window shows a "Dwell (s)" drag field (0.0–10.0 s) when a keyframe is
   selected.
 - Backward compatible: dwell defaults to 0, so existing `.kf` files and code are unchanged.
 
@@ -175,7 +175,7 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
     two-keyframe path), and the travel resuming at the dwell's end.
   - Cinematic motion rule: the speed next to a dwell keyframe is below half the plain speed
     on the way in and out, and the camera passes the middle earlier than an even pace.
-  - Switching back to CONSTANT (dwell = 0 everywhere) gives the un-eased samples again.
+  - Setting every dwell back to 0 gives the un-eased samples again.
 - OpenGL tree (`cmake-build-relwithdebinfo`): fully rebuilt, **120/120 tests passed**.
 - Vulkan tree (`cmake-build-debug`, MoltenVK): fully rebuilt, **152/152 tests passed**.
 - `easy3d/util/version.h` unchanged.

@@ -62,7 +62,7 @@ namespace easy3d {
         std::unique_ptr<unsigned char,decltype(&stbi_image_free)> pixels(
                 stbi_load(file_name.c_str(),&decoded_width,&decoded_height,&source_channels,requested_channels),stbi_image_free);
         if (!pixels) {
-            LOG(ERROR) << "failed load image file: " << file_name << ". " << stbi_failure_reason();
+            LOG(ERROR) << "failed to load image file: " << file_name << ". " << stbi_failure_reason();
             return false;
         }
         const int output_channels = requested_channels ? requested_channels : source_channels;

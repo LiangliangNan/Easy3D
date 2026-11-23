@@ -34,6 +34,8 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
+
 namespace easy3d {
     ViewerBase::~ViewerBase() = default;
 
@@ -103,10 +105,8 @@ namespace easy3d {
         return window_to_world(vec3(float(transform::scale_coordinate(x + .5, fw, w)),
                                     float(transform::scale_coordinate(y + .5, fh, h)), depth));
     }
-    // Fresh visible-surface query at a logical window pixel. Maps the logical
-    // coordinate to its containing framebuffer pixel (DPI-aware), reads the scene
-    // depth there, and unprojects that pixel's center back to world space. See the
-    // coordinate contract above; HUD/overlays are excluded by read_scene_depth().
+    // Maps a logical window coordinate to its containing framebuffer pixel (DPI-aware).
+    // Returns false if the coordinate lies outside the window.
     bool ViewerBase::window_pixel(int x, int y, int &px, int &py) const {
         int w, h, fw, fh;
         viewer_size(w, h);
@@ -118,6 +118,10 @@ namespace easy3d {
         return true;
     }
 
+    // Fresh visible-surface query at a logical window pixel. Reads the scene depth at
+    // the containing framebuffer pixel and unprojects that pixel's center back to world
+    // space. See the coordinate contract above; HUD/overlays are excluded by
+    // read_scene_depth().
     vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
         found = false;
         int px, py;

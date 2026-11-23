@@ -30,14 +30,15 @@ All test implementations, fixtures, harnesses and registrations are in this fold
 | `kdtree` | All four kd-tree implementations against known nearest/k/radius results |
 | `util` | Assertions for signals, bounded asynchronous timers, and joined logging workers |
 | `renderer` | Headless Vulkan rendering, text, depth annotations/textures and GPU selection |
+| `gui` | GUI-level mesh and scene picking |
 | `viewer` | Backend/shared viewer regressions, input, picking, captures, GUI and resource lifetime |
 | `viewer/installed` | SDK-free consumers of installed renderer/viewer/gui components |
 | `native_tutorials` | Bounded drivers generated from original tutorial scenes, with test-only entry-point renaming in test CMake |
 | `python` | Regression against the deployed Python package |
 
 The removed `visualization_*` copies map to the original tutorial scenes:
-202, 205–207, 301–311, 401–403, 501–506 and 601–602. Offscreen behavior is covered
-by the shared offscreen regression and Tutorial 208; the old timer-driven threading
+202, 205–206, 301–311, 401–403, 501–506 and 601–602. Offscreen behavior is covered
+by the shared offscreen regression and Tutorial 204; the old timer-driven threading
 demo is covered by Tutorial 312 and the joined-worker viewer regression. Dedicated
 viewer/renderer tests additionally assert pixels, depth, IDs and resource sharing.
 The five effect scenes (501–505) run on OpenGL; their Vulkan implementations remain

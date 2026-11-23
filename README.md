@@ -78,10 +78,10 @@ scalar fields) can be done very conveniently.
 ### Easy3D repository layout
 The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for 
 configuring and building programs, as well as a set of subfolders:
-* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries
-* [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D
-* [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files
-* [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
+* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries.
+* [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D.
+* [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files.
+* [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation sources and configuration (Doxygen), and the Vulkan migration record.
 * [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D, implementing the Easy3D modules:
   * [`util`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/util) - utilities, e.g., logging, file system, progress, timer.
   * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., point cloud, surface mesh, graph, and polyhedron mesh.
@@ -93,10 +93,10 @@ configuring and building programs, as well as a set of subfolders:
   * [`renderer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/renderer) - functionalities and algorithms for rendering and visualization, with Vulkan and OpenGL backends.
   * [`gui`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/gui) - tools for user interactions, e.g., picking points, faces, or models.
   * [`viewer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/viewer) - a simple viewer and a composite viewer.
-  * [`python`](https://github.com/LiangliangNan/Easy3D/tree/main/python) - Python bindings for Easy3D, and examples.
+* [`python`](https://github.com/LiangliangNan/Easy3D/tree/main/python) - Python bindings for Easy3D, documentation, and tutorials.
 * [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
-* [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
-* [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
+* [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases.
+* [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code).
 
 ### Build Easy3D
 Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for users by including
@@ -136,7 +136,7 @@ The **optional** third-party libraries are:
 
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
 
-Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
+Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >= 2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
 nowadays typically provide higher [support](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
 to build Easy3D on almost all platforms.
 
@@ -144,7 +144,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 default Vulkan backend; add `-DEasy3D_ENABLE_VULKAN=OFF` to the CMake command to build the OpenGL backend instead. 
 Tutorials are not built by default; enable them with `-DEasy3D_BUILD_TUTORIALS=ON`.
 
-- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
+- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake` (on Windows with Microsoft 
   Visual Studio). 
   - On Linux or macOS, you can simply
     ```cmd
@@ -261,7 +261,7 @@ If you use Easy3D in scientific work, I kindly ask you to cite it:
 @article{easy3d2021,
   title = {Easy3{D}: a lightweight, easy-to-use, and efficient {C}++ library for processing and rendering 3{D} data},
   author = {Liangliang Nan},
-  journal = {Journal of Open Source Software}，
+  journal = {Journal of Open Source Software},
   year = {2021},
   volume = {6},
   number = {64},

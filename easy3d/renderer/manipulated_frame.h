@@ -190,10 +190,10 @@ namespace easy3d {
 		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis);
 		/**
 		 * \brief Zooms the frame based on mouse wheel movement.
-		 * \param dy_wheel The change in the mouse wheel position.
+		 * \param wheel_dy The change in the mouse wheel position.
 		 * \param camera The camera associated with the frame.
 		 */
-		virtual void action_zoom(int dy_wheel, Camera* camera);
+		virtual void action_zoom(int wheel_dy, Camera* camera);
 		// @}
 
 	protected:

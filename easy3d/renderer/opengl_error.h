@@ -57,7 +57,7 @@ namespace easy3d {
 /// Checks if framebuffer error occurred. If so, the error will be logged (by the default logger).
 #define easy3d_log_frame_buffer_error {                                     \
     std::string msg;                                                        \
-    LOG_IF(!opengl::frame_buffer_error(msg), ERROR) << "GL error: \n"       \
+    LOG_IF(!opengl::frame_buffer_error(msg), ERROR) << "GL framebuffer error: \n"       \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
@@ -113,7 +113,7 @@ namespace easy3d {
          * \brief Checks if there was a framebuffer error. If there was an error, the error message will be stored in "msg".
          * \param msg The error message.
          * \return false if an error occurred.
-         * \see frame_buffer_error.
+         * \see gl_error.
          */
         bool frame_buffer_error(std::string& msg);
 

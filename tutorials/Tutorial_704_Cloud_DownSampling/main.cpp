@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
 
     // Register the two strategies on Ctrl+U and Ctrl+G. The lambdas adapt the (Viewer*, Model*)
-    // callback signature expected by bind() to our helper functions.
+    // callback signature expected by bind_shortcut() to our helper functions.
     viewer.bind_shortcut([](Viewer *v, Model *m) { return uniform_downsample(v, m); }, cloud, Viewer::KEY_U, Viewer::MODIF_CTRL);
     viewer.bind_shortcut([](Viewer *v, Model *m) { return grid_downsample(v, m); }, cloud, Viewer::KEY_G, Viewer::MODIF_CTRL);
     // Show the shortcuts in the on-screen help overlay.

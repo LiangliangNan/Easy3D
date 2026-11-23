@@ -39,7 +39,7 @@
 namespace easy3d {
 
     void Shadow::set_light_distance(float dist) {
-        // 1.0 corresponds to degenerated light frustum
+        // 1.0 corresponds to degenerate light frustum
         light_distance_ = std::max(1.1f, dist);
     }
 
@@ -125,7 +125,7 @@ namespace easy3d {
         light_frustum_->set_ortho(-1.0, 1.0, -1.0, 1.0, zNear, zFar);
         const mat4& shade_mvp = light_frustum_->projection_matrix() * light_view;
 
-        // find the extends of all shadow casters' bbox as projected in light's homogeneous coordinates
+        // find the extent of all shadow casters' bbox as projected in light's homogeneous coordinates
         p = shade_mvp * at;
         if (p.x + radius > xMax) xMax = p.x + radius;
         if (p.y + radius > yMax) yMax = p.y + radius;

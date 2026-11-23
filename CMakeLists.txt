@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 ################################################################################
 
 # Build shared libraries
-option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"         ON )
+option(Easy3D_BUILD_SHARED_LIBS "Build shared libraries"         ON )
 # Build tutorials
 option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          OFF)
 # Build documentation
@@ -261,7 +261,7 @@ function(add_module module headers sources private_dependencies public_dependenc
             )
 
     # RPATH settings for macOS and Linux. This ensures the library looks for dependencies relative to the location of the module.
-    # Attention: I am not sure if this may has some impact on the subsequent deployment process.
+    # Attention: I am not sure if this may have any impact on the subsequent deployment process.
     if (Easy3D_BUILD_SHARED_LIBS)
         if (APPLE)
             # For macOS, @loader_path ensures the library looks for dependencies relative to the location of the module.
@@ -348,7 +348,7 @@ if(NOT Easy3D_ENABLE_VULKAN)
 endif()
 
 install(FILES
-	"${Easy3D_ROOT}/README.md"
+        "${Easy3D_ROOT}/README.md"
         "${Easy3D_ROOT}/LICENSE"
         DESTINATION
         "${CMAKE_INSTALL_PREFIX}"

@@ -979,7 +979,7 @@ namespace easy3d {
         ///     vector as a data pointer to functions.
         /// \return A const pointer to the underlying data array.
         operator const T*() const { return _array; }
-        /// \brief Conversion operator returning the memory address of the data. Very convenient to pass thisvector as
+        /// \brief Conversion operator returning the memory address of the data. Very convenient to pass this vector as
         ///    a data pointer to functions.
         /// \return A pointer to the underlying data array.
         operator T*() { return _array; }

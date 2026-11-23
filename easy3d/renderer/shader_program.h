@@ -53,8 +53,8 @@ namespace easy3d {
 	 *		locations, and works with uniforms, including blocks. It also provides access to the info logs, and many
 	 *		more useful functionalities.
      *		To use the shader program class, you need to do the following:
-     *		- Call load_shader_from_code(ShaderProgram::VERTEX, vert_file) to create vertex shader and
-     *        load_shader_from_code(ShaderProgram::FRAGMENT, frag_file) to create fragment shader
+     *		- Call load_shader_from_file(ShaderProgram::VERTEX, vert_file) to create vertex shader and
+     *        load_shader_from_file(ShaderProgram::FRAGMENT, frag_file) to create fragment shader
      *        (you may also need to create other types of shaders depending on your needs).
      *		- Call set_attrib_name(ShaderProgram::POSITION, "position") for vertex attribute "position".
      *        You may also need to set other attributes like normal, color, etc. To know what vertex
@@ -182,7 +182,7 @@ namespace easy3d {
 
 		/**
 		 * \brief Bind a user-defined varying out variable to a fragment shader color number.
-		 * \note Linking is required for this operation to take effect (call method prepare_program afterward).
+		 * \note Linking is required for this operation to take effect (call method link_program afterward).
 		 * \param index The fragment color number.
 		 * \param name The name of the fragment's shader variable.
 		 */
@@ -190,7 +190,7 @@ namespace easy3d {
 
 		/**
 		 * \brief Get the fragment shader color number bound to a user-defined varying out variable.
-		 * \note Linking is required for this operation to take effect (call method prepare_program afterward).
+		 * \note Linking is required for this operation to take effect (call method link_program afterward).
 		 * \param name The name of the fragment's shader variable.
 		 * \return The fragment color number.
 		 */
@@ -346,14 +346,14 @@ namespace easy3d {
 		 * \brief Get the shader info log.
 		 * \param log The string to store the shader's info log.
 		 * \param shader The shader ID.
-		 * \return True if shader compilation was successfully, false otherwise.
+		 * \return True if shader compilation was successful, false otherwise.
 		 */
         bool shader_info_log(std::string& log, unsigned int shader) const;
 
 		/**
 		 * \brief Get the program info log.
 		 * \param log The string to store the program's info log.
-		 * \return True if program linkage was successfully, false otherwise.
+		 * \return True if program linkage was successful, false otherwise.
 		 */
 		bool program_info_log(std::string& log) const;
 

@@ -70,7 +70,7 @@ Rebuild Mapple on ImGui instead of adding a Qt Vulkan widget.
 4. **Reuse Easy3D.** `Viewer::open/save/snapshot/copy_view/paste_view`, `dialog::*`
    (native file/message dialogs via portable_file_dialogs), `RenderDevice` offscreen
    capture, `KeyFrameInterpolator`, `TextLayoutEngine`.
-5. **The Qt app stays shippable** until the new app passes the Phase 1 acceptance list.
+5. **The Qt app stayed shippable** until the new app passed the Phase 1 acceptance list.
 
 ## Layout
 
@@ -127,9 +127,9 @@ Reuse inventory (verified):
 
 ## Phases
 
-### Phase 0 — shell (this iteration)
+### Phase 0 — shell
 
-- [x] CMake target `Mapple-imgui`, linked `3rd_imgui`, `easy3d::core/renderer/util/viewer`
+- [x] CMake target `Mapple` (originally `Mapple-imgui`), linked `3rd_imgui`, `easy3d::core/renderer/util/viewer`
       (`easy3d::algo` joins when processing features land).
 - [x] `MappleViewer : Viewer, logging::Logger`, ImGui frame hooks and input routing.
 - [x] `ImGuiLayer`: context, Droid Sans atlas, DPI scaling, ImDrawData translation.
@@ -145,8 +145,8 @@ Reuse inventory (verified):
 - [x] Settings persistence, recent files: `AppSettings` (`settings.h/.cpp`) writes
       panel visibility and sizes, the pick-readout and log auto-scroll toggles, the
       video bitrate, the last-used directory and up to five recent files to a
-      per-user INI (`~/Library/Application Support/Mapple-imgui/settings.ini`,
-      `%APPDATA%/Mapple-imgui/settings.ini`, or `$XDG_CONFIG_HOME/Mapple-imgui/`).
+      per-user INI (`~/Library/Application Support/Mapple/settings.ini`,
+      `%APPDATA%/Mapple/settings.ini`, or `$XDG_CONFIG_HOME/Mapple/`).
       The app-owned Open/Save dialogs start in that directory and File > Open Recent
       lists the newest files (basename plus full-path tooltip, Clear Recent Files);
       missing files are pruned when the settings load.
@@ -154,7 +154,7 @@ Reuse inventory (verified):
 Acceptance: open OBJ/PLY, orbit/zoom, switch active model, toggle drawables, restyle,
 snapshot, copy/paste view, log feedback — on OpenGL and Vulkan.
 
-### Phase 1 — inspection and interaction (this iteration)
+### Phase 1 — inspection and interaction
 
 - [x] Model data inspection: the selected model's path, vertex/edge/face counts,
       bounding box, and a collapsible property listing (`Model::property_stats`),
@@ -892,7 +892,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 - Every drawable in the Rendering panel has a "Color scheme" combo listing what its
   shader can consume, taken from the drawable's own model: "Uniform color", the
   `:color` properties, texture coordinates (`:texcoord`), and numeric scalar fields
-  labelled "scalar - <name>". Triangles are offered the face properties, lines the
+  labeled "scalar - <name>". Triangles are offered the face properties, lines the
   edge properties, and all drawables the vertex properties; surface-mesh triangles
   also get the halfedge texture coordinates. `Graph` is tested before `PointCloud`,
   which it derives from. Vector properties (normals) and bool selection properties
@@ -2420,7 +2420,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 
 ### 2026-11-18 — Clear moves to the file row (batch 135)
 
-- `Clear` empties the whole path, unlike its neighbours in the keyframe row, which
+- `Clear` empties the whole path, unlike its neighbors in the keyframe row, which
   act on the selection or the last keyframe. The button now closes the file row at
   the far right - Import/Export, the `.kf` note, then `Clear` aligned to the right
   edge of the content area - so it is visibly a path-wide action and kept apart

@@ -526,7 +526,7 @@ namespace easy3d {
         /**
          * \brief Query the active model.
          * \details The viewer can manage/visualize/process multiple models. The default behavior
-         *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
+         *          of the Easy3D viewer is, when a command is triggered (e.g., the Save menu was
          *          clicked), only the active model is processed. This method is used to identify
          *          the active model.
          * \return The active model.
@@ -1134,8 +1134,10 @@ namespace easy3d {
         bool update_hud_text(std::vector<graphics::DrawCommand> &commands) const;
         //@}
 
-        bool snapshot_hud_ = true; // Capture HUD policy; OffScreen/MultiViewer are scene-only.
-        // File snapshots never carry the Viewer HUD, on either backend.
+        // Capture HUD policy; OffScreen/MultiViewer are scene-only. File snapshots never
+        // carry the Viewer HUD, on either backend.
+        bool snapshot_hud_ = true;
+        // Identifies the model and/or standalone drawable that produced a draw command.
         struct DrawSource {
             std::shared_ptr<Model> model;
             std::shared_ptr<Drawable> drawable;
@@ -1289,7 +1291,7 @@ namespace easy3d {
         // Creates the GLFW window and its context: sets the window hints from the two
         // option structs (MSAA samples, full-screen or resizable from ViewerOptions;
         // depth/stencil bits and a forward-compatible core profile at
-        // gl_options.major.gl_minor from OpenGLOptions), acquires the shared GLFW
+        // gl_options.major.minor from OpenGLOptions), acquires the shared GLFW
         // runtime, makes the context current and stores the window pointer. Returns
         // null when creation fails. ViewerOptions::visible is not a hint here: the
         // window is always created hidden, and run() reveals it through show().
@@ -1330,10 +1332,6 @@ namespace easy3d {
 
         // pivot cross
         std::unique_ptr<LinesDrawable2D> drawable_pivot_;
-
-        // camera path
-
-        // drawables independent of any model
 
         // Retains the overlay/annotation command sets registered through
         // set_viewer_overlays()/set_viewer_annotations() and replays them in draw_overlays().

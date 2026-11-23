@@ -103,7 +103,7 @@ namespace easy3d {
         typedef CGAL::Box_intersection_d::Box_with_handle_d<double, 3, TrianglesIterator>	Box;
 
     private:
-        Triangles mesh_to_cgal_triangle_list(SurfaceMesh* esh);
+        Triangles mesh_to_cgal_triangle_list(SurfaceMesh* mesh);
 
         // test if two triangles duplicate
         enum OverlapType {OT_NONE, OT_SAME, OT_FOLDING};

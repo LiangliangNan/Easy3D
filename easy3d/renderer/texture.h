@@ -85,7 +85,6 @@ namespace easy3d {
          * context when the texture is created.
          */
         struct PixelData {
-            /// Image width in pixels.
             int width; ///< Image width in pixels.
             int height; ///< Image height in pixels.
             int channels; ///< Number of components per pixel.

@@ -45,19 +45,19 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 
 ## Reporting a runtime bug
 
-If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please always include the log file (which 
+If Easy3D crashes, triggers asserts, or behaves unexpectedly at run-time, please always include the log file (which 
 is located next to the executable). This log file will often tell you the cause of an error or problem. If it doesn't, 
 that might be a separate bug. 
 Please report the bug by creating an issue and provide the following:
  - a brief description of the issue;
  - operating system name and version (e.g. `Windows 10 64-bit` or `Ubuntu 18.10`);
- - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D, Otherwise, the Easy3D commit ID (e.g.  
+ - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D. Otherwise, the Easy3D commit ID (e.g.  
  `06d1dfe55a5eec2d4b650041cb529f5efdeadd31`) from Git;
  - any error/warning message you have observed;
  - snapshot(s) of the unexpected result (if available);
  - are you running Easy3D from a remote desktop? If so, does the issue occur when running it natively?
  - does the issue occur for both Debug and Release modes or only one of them?
- - does the issue occur for other test data or particular data only? Provide a small data that can trigger the issue;
+ - does the issue occur for other test data or particular data only? Provide a small data set that can trigger the issue;
  - if you made changes to the source code of Easy3D, a short and self-contained code example that can produce the issue. 
  Just put it inline in the body text. If the bug is reproducible with one of the test programs or examples that come with Easy3D, simply mention that instead;
  - the full log file. By default, it is located next to the executable program (unless you have modified the default path);
@@ -117,7 +117,7 @@ If it doesn't help, please report it by creating an issue and provide the follow
  - a brief description of the issue;
  - operating system name and version (e.g. `Windows 10 64-bit` or `Ubuntu 18.10`);
  - GPU and driver version;
- - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D, Otherwise, the Easy3D commit ID (e.g.  
+ - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D. Otherwise, the Easy3D commit ID (e.g.  
  `06d1dfe55a5eec2d4b650041cb529f5efdeadd31`) from Git;
  - a short and self-contained code example that can produce the issue. Just put it inline in the body text. If the bug is
 reproducible with one of the test programs or examples that come with Easy3D, simply mention that instead;
@@ -137,7 +137,7 @@ just link to that web page or mention that source file. Then, simply quote the c
 
 ## Contributing a bug fix
 
-Bug fixes are highly appreciated. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand line one if that is the appropriate size for the fix.
+Bug fixes are highly appreciated. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand-line one if that is the appropriate size for the fix.
 
 It is recommended to create a pull request for a bug fix. A complete bug fix includes:
 

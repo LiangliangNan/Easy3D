@@ -40,7 +40,7 @@ namespace easy3d {
      * \attention Functions are not sufficiently tested.
      * \todo [Liangliang] Comprehensive tests.
      *
-     * \sa ghc::filesystem - A C++17-like filesystem implementation for C++11/C++147/C++17
+     * \sa ghc::filesystem - A C++17-like filesystem implementation for C++11/C++14/C++17
      *          https://github.com/gulrak/filesystem/blob/master/include/ghc/filesystem.hpp
      */
     namespace file_system {
@@ -232,7 +232,7 @@ namespace easy3d {
         *        have an extension, the expected new extension is appended.
         * \param path The file name.
         * \param ext The expected new extension.
-        * \return The string of the new file name/
+        * \return The string of the new file name.
         */
         std::string replace_extension(std::string const& path, const std::string& ext);
 

@@ -222,7 +222,7 @@ namespace easy3d {
          * \param center the center of the sphere.
          * \param radius the radius of the sphere.
          * \param slices the number of subdivisions around the z axis (similar to lines of longitude).
-         * \param stacks the number of subdivisions along the z axis(similar to lines of latitude).
+         * \param stacks the number of subdivisions along the z axis (similar to lines of latitude).
          * \param color the color of the sphere.
          * \param points the points to be returned.
          * \param normals the normals to be returned.
@@ -235,10 +235,10 @@ namespace easy3d {
 
         /**
          * \brief Generates data (points, normals, and colors) for a 3D checker sphere.
-         * \param center: the center of the sphere.
-         * \param radius: the radius of the sphere.
+         * \param center the center of the sphere.
+         * \param radius the radius of the sphere.
          * \param slices the number of subdivisions around the z axis (similar to lines of longitude).
-         * \param stacks the number of subdivisions along the z axis(similar to lines of latitude).
+         * \param stacks the number of subdivisions along the z axis (similar to lines of latitude).
          * \param checker_size how many tiles each checker will occupy.
          * \param color1 one of the two interchanging colors.
          * \param color2 the other one of the two interchanging colors.

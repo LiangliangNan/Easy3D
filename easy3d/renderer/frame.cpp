@@ -553,7 +553,7 @@ namespace easy3d {
 	/**
 	 * \brief Returns the Frame coordinates of a point \p src defined in the world
 	 * coordinate system (converts from world to Frame).
-	 * inverse_coordinates_of() performs the inverse convertion. transform_of() converts
+	 * inverse_coordinates_of() performs the inverse conversion. transform_of() converts
 	 * 3D vectors instead of 3D coordinates.
 	 */
 	vec3 Frame::coordinates_of(const vec3 &src) const {
@@ -566,7 +566,7 @@ namespace easy3d {
 	/**
 	 * \brief Returns the world coordinates of the point whose position in the Frame
 	 * coordinate system is \p src (converts from Frame to world).
-	 * coordinates_of() performs the inverse convertion. Use inverse_transform_of() to
+	 * coordinates_of() performs the inverse conversion. Use inverse_transform_of() to
 	 * transform 3D vectors instead of 3D coordinates.
 	 */
 	vec3 Frame::inverse_coordinates_of(const vec3 &src) const {
@@ -582,7 +582,7 @@ namespace easy3d {
 	/**
 	 * \brief Returns the Frame coordinates of a point \p src defined in the
 	 * reference_frame() coordinate system (converts points from reference_frame() to Frame).
-	 * local_inverse_coordinates_of() performs the inverse convertion.
+	 * local_inverse_coordinates_of() performs the inverse conversion.
 	 * \sa local_transform_of().
 	 */
 	vec3 Frame::local_coordinates_of(const vec3 &src) const {
@@ -592,7 +592,7 @@ namespace easy3d {
 	/**
 	 * \brief Returns the reference_frame() coordinates of a point \p src defined in the
 	 * Frame coordinate system (converts points from Frame to reference_frame()).
-	 * local_coordinates_of() performs the inverse convertion.
+	 * local_coordinates_of() performs the inverse conversion.
 	 * \sa local_inverse_transform_of().
 	 */
 	vec3 Frame::local_inverse_coordinates_of(const vec3 &src) const {

@@ -32,6 +32,8 @@
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <algorithm>
+#include <stdexcept>
+
 namespace easy3d {
     namespace detail {
         GlfwRuntime::GlfwRuntime(bool require_vulkan) {

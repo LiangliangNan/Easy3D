@@ -147,7 +147,7 @@ namespace easy3d {
         }
         projection_fbo_->ensure_size(w, h);
 
-        // Liangliang: using multsamples (i.e., 4) causes black screen in my macbook laptop.
+        // Liangliang: using multisamples (i.e., 4) causes black screen in my macbook laptop.
         //             the bad call is at glReadPixels() with GL_UNSIGNED_BYTE.
         if (ao_fbo_ == nullptr) {
             ao_fbo_ = new FramebufferObject(w, h, 0);

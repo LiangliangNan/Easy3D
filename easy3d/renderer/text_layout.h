@@ -42,7 +42,6 @@ namespace easy3d {
             std::size_t font = 0;
             /// Font size in framebuffer pixels, independent of platform DPI.
             float size = 24;
-            /// Horizontal framebuffer-pixel origin.
             float x = 0; ///< Horizontal framebuffer-pixel origin.
             float y = 0; ///< Vertical framebuffer-pixel origin.
             /// Text color in RGBA.

@@ -1381,7 +1381,7 @@ void MappleViewer::run_process_algorithm(Model *model) {
             if (mesh) {
                 if (!mesh->is_triangle_mesh()) {
                     LOG(WARNING) << process_title(process_op_) << " requires a triangle mesh "
-                                 << "(Process > Surface Mesh > Triangulate first)";
+                                 << "(Process > Surface Mesh > Triangulate)";
                     break;
                 }
                 auto *plane = ClippingPlane::instance();
@@ -1657,7 +1657,7 @@ void MappleViewer::run_process_algorithm(Model *model) {
         case ProcessOp::PROP_AMBIENT_OCCLUSION:
             if (mesh) {
                 if (!mesh->is_triangle_mesh()) {
-                    LOG(WARNING) << "ambient occlusion requires a triangle mesh "
+                    LOG(WARNING) << process_title(process_op_) << " requires a triangle mesh "
                                     "(Process > Surface Mesh > Triangulate)";
                     break;
                 }

@@ -49,7 +49,6 @@ namespace easy3d {
             vec3 diffuse = vec3(1);
             /// Diffuse texture path; empty if no usable map or face UVs are available.
             std::string texture_file;
-            /// Tessellated vertex positions and normals.
             std::vector<vec3> positions; ///< Tessellated vertex positions.
             std::vector<vec3> normals;   ///< Tessellated vertex normals.
             /// Tessellated vertex texture coordinates.
