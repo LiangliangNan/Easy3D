@@ -76,7 +76,7 @@ namespace easy3d {
  * \brief The Mapple shell: a Viewer with a menu bar, toolbar, docked-style panels and a log sink.
  * \details The class owns the ImGui context (through ImGuiLayer), routes window input through
  *      ImGui first, lays out the panels around the central 3D scene, and collects Easy3D log
- *      messages into the Log panel. See docs/mapple.md for the port plan.
+ *      messages into the Log panel.
  */
 class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger, public easy3d::ProgressClient {
 public:
