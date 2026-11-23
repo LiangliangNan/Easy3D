@@ -68,7 +68,7 @@ namespace easy3d {
      *      When the user start_interpolation(), a timer is started which will update the frame()'s position and
      *      orientation every interpolation_period() milliseconds. This update increases the time by
      *      interpolation_period() * interpolation_speed() milliseconds. This mechanism ensures that the number of
-     *      interpolation steps is constant and equal to the total path duration() divided by the
+     *      interpolation steps is constant and equal to the total path duration divided by the
      *      interpolation_period() * interpolation_speed(). This is especially useful for benchmarking or movie
      *      creation (constant number of snapshots).
      *

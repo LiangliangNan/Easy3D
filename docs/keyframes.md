@@ -385,8 +385,13 @@ the placeholder stub that showed nothing is gone.
 **Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
 on both backends.
 
-## Still open
+### 2026-11-23 — Recorded videos confirm the keyframe video generation
 
+- The still-open interactive check is closed: the maintainer recorded videos in Mapple with the
+  dwell and speed settings on both backends, and the keyframe-driven video generation behaved as
+  expected - the cinematic motion and the dwells applied as designed, and playback and the
+  recorded video agreed. No code change followed from the recordings.
 
-- Recording short videos in Mapple with dwell and speed-profile settings on both backends.
-  This is an interactive check requiring a windowed session.
+**Validation (final code, after the `KeyframeTimeline` rename):** OpenGL `build-opengl-check` full
+CTest **147/147** passed; Vulkan `build-vulkan-check` full CTest green apart from the pre-existing
+`vulkan.keyframeeditor` (Not Run). The keyframe and camera-path suites pass on both backends.
