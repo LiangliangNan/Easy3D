@@ -84,6 +84,7 @@ sphinx_gallery_conf = {
     "within_subsection_order": "FileNameSortKey", # Sort order for tutorials
     "download_all_examples": False,             # Option to provide a download link for all tutorials
     "filename_pattern": r".*\.py",              # Match all .py files
+    "ignore_pattern": r"run_all\.py",           # Ignore the test runner
     "write_computation_times": False,           # Don't write computation times
     # Tutorials open interactive viewers. Publish their text, code, downloads,
     # and checked-in thumbnails without importing bindings or opening windows.
