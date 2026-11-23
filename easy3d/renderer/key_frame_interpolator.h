@@ -456,8 +456,8 @@ namespace easy3d {
          * \details The polyline takes part in the normal scene pass, so scene surfaces
          *      occlude it and it is drawn like any other drawable on both backends. Add the
          *      drawable to the viewer's scene (e.g. with Viewer::add_drawable()) and refresh
-         *      it when the keyframes change. The line uses a cylinder impostor, so
-         *      \p thickness is the on-screen width in pixels.
+         *      it when the keyframes change. The line is a plain wide line (no cylinder
+         *      impostor), so \p thickness is its on-screen width in pixels.
          * \param drawable The drawable to fill; its buffers, color and line style are replaced.
          * \param thickness The thickness of the path, in pixels.
          * \param color The color of the path.

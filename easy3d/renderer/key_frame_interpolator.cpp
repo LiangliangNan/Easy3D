@@ -442,7 +442,6 @@ namespace easy3d {
                 path_drawable_->update_vertex_buffer(points);
                 path_drawable_->set_uniform_coloring(color);
                 path_drawable_->set_line_width(thickness);
-                path_drawable_->set_impostor_type(LinesDrawable::CYLINDER);
             }
         }
 

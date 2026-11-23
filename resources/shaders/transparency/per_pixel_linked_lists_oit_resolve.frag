@@ -99,12 +99,13 @@ void main(void)
         depths[j + 1] = key_depth;
     }
 
-    // Front-to-back compositing with premultiplied alpha.
-    // Each node stores (color.rgb * alpha, alpha). The composite over the
-    // background is:
+    // Back-to-front compositing with premultiplied alpha. The fragments are
+    // sorted nearest first, so walk them from the farthest to the nearest.
+    // Each node stores (color.rgb * alpha, alpha). The "over" operator, with
+    // the result so far as the background, is:
     //   result = frag + result * (1 - frag.a)
     vec4 result = background_color;
-    for (int i = 0; i < count; ++i) {
+    for (int i = count - 1; i >= 0; --i) {
         vec4 frag = colors[i];
         result.rgb = frag.rgb + result.rgb * (1.0 - frag.a);
         result.a = frag.a + result.a * (1.0 - frag.a);
