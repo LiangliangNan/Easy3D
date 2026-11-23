@@ -1,14 +1,19 @@
+cmake_minimum_required(VERSION 3.12)
+
+################################################################################
+
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-include(../../cmake/UseQt.cmake)
+include(cmake/UseQt.cmake)
 if (NOT Qt6_FOUND AND NOT Qt5_FOUND)
     message(WARNING "${PROJECT_NAME} requires Qt (Qt6 or Qt5), but Qt was not found. You can set 'Qt*_DIR' to the "
             "directory containing 'Qt*Config.cmake' or 'qt*-config.cmake' (* is 5 or 6) to specify the location of Qt.")
     return()
 endif ()
 
+find_package(Easy3D COMPONENTS viewer REQUIRED)
 
 set(${PROJECT_NAME}_HEADERS
         main_window.h

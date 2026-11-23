@@ -2,10 +2,13 @@
 
 This document tracks the migration of Mapple from Qt Widgets to a Dear ImGui
 application rendered through Easy3D's backend-neutral overlay path. The ImGui app is
-now `applications/Mapple` (target `Mapple`); the Qt app it replaces is
-`applications/Mapple-Qt` (target `Mapple-Qt`, OpenGL only, built with
-`Easy3D_ENABLE_QT`). The Qt app remains buildable until a final capability pass
-confirms nothing it offered is still needed.
+now `applications/Mapple` (target `Mapple`); the Qt app it replaces was
+`applications/Mapple-Qt` (target `Mapple-Qt`, OpenGL only). It was retired on
+2026-11-23 and is kept in the tree for reference — source plus the Qt CMake helper it
+carried (`applications/Mapple-Qt/cmake/UseQt.cmake`) — but it is no longer part of the
+Easy3D build (the `Easy3D_ENABLE_QT` gate and its wiring are gone) and can only be
+built as a standalone project against Easy3D with the OpenGL backend
+(`Easy3D_ENABLE_VULKAN=OFF`).
 
 Status: 2026-11-17 — Phases 0–3 complete: the app builds and runs on both OpenGL and
 Vulkan and covers panels, menus, log capture, drawable styling, picking readout,
@@ -30,6 +33,14 @@ session — the dwell field and the timeline strip now read the path's live stat
 taken at the top of the frame — and `Insert After`/`Delete Selected` keep the dwell pauses of the
 keyframes that stay, so the strip's gray bars survive an edit. `Mapple-Qt` keeps its old keys and is
 untouched.
+
+Status: 2026-11-23 — the Qt retirement is done: the `Easy3D_ENABLE_QT` gate and its wiring are
+removed from the top-level and application CMake files, the Qt install steps are dropped from the
+CI workflow, the README no longer lists Qt as an optional backend, and the retired
+`Mapple-Qt` is kept in the tree for reference (source plus the Qt CMake helper in
+`applications/Mapple-Qt/cmake/UseQt.cmake`), buildable standalone with Easy3D on the OpenGL
+backend only. The ImGui app `applications/Mapple` is the supported Mapple; no Easy3D tree is
+configured with Qt any more.
 
 ## Decision
 
@@ -361,8 +372,10 @@ Phase 2 design notes:
 
 Verify the acceptance list, migrate remaining workflows, then decide the fate of
 `applications/Mapple-Qt` and the `Easy3D_ENABLE_QT` gate (remove it, or keep it for
-other Qt tools). Retirement is deferred until a final capability pass over the Qt
-dialogs; `Mapple-Qt` stays in the tree meanwhile.
+other Qt tools). The final capability pass (batch 127) confirmed that every offered
+capability was migrated, so retirement was executed on 2026-11-23: the gate, the build
+wiring and the CI/README installs are gone, and `Mapple-Qt` is kept in the tree for
+reference only, buildable standalone with the OpenGL backend.
 
 The migration order agreed on 2026-11-15 is gaps first, retirement later: the Qt app
 stays untouched until the missing capabilities exist in the ImGui app. The inspection
@@ -382,7 +395,7 @@ load-translation options are migrated as File > Loading option (session-only, se
 2026-11-17 "File > Loading option" entry), and the status bar and info block now cover
 graph and polyhedral mesh models (see the 2026-11-17 "Status-bar and info-block
 graph/polyhedral readout" entry). Every capability from the Qt capability pass is
-migrated; retirement can proceed whenever it is wanted.
+migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 
 ## ImGui notes
 
@@ -2703,3 +2716,21 @@ migrated; retirement can proceed whenever it is wanted.
   2026-11-21 entry above is closed: the maintainer looked at the `Alt` gestures in a live session on
   2026-11-22 and they work as expected. Their observation, not a measurement of mine; the details are
   in the last entry of docs/keyframes.md.
+
+### 2026-11-23 — Mapple-Qt retired
+
+- Retirement executed: the `Easy3D_ENABLE_QT` gate and its wiring are removed from the top-level
+  and application CMake files, the Qt install steps are dropped from the CI workflow, the README no
+  longer lists Qt as an optional backend, and the retired `Mapple-Qt` is kept in the tree for
+  reference — source plus the Qt CMake helper moved to `applications/Mapple-Qt/cmake/UseQt.cmake` —
+  and can only be built as a standalone project against Easy3D with the OpenGL backend
+  (`Easy3D_ENABLE_VULKAN=OFF`). The Qt app itself (source, dialogs, widgets, tools, resources,
+  README) is untouched.
+- The ImGui app `applications/Mapple` is the supported Mapple; it runs on both the OpenGL and
+  Vulkan backends through the backend-neutral overlay path, and no Easy3D tree is configured with
+  Qt any more.
+- Not run: the CTest suites (the retirement touches no library code). Both check trees were
+  reconfigured after the retirement edits and the `Mapple` target rebuilt clean in each; the
+  ImGui app was unchanged, so the suites were not rerun. The uncommitted release bump in
+  `easy3d/util/version.h` and the top-level `CMakeLists.txt` (2.6.1 → 2.7.0, release date
+  2026-11-23) is untouched by this retirement.

@@ -406,8 +406,10 @@ the applications intended to use the unified viewer, including FigureMaker.
 untouched** — its standalone `QOpenGLWidget` canvas (its own render loop, pickers,
 effects, HUD and snapshot, built on `easy3d::renderer`/`gui` rather than the unified
 `Viewer`) is not worth the toolkit-surface port, the same reason the Qt/wx tutorials
-were removed in batch 42; the `Easy3D_ENABLE_QT` gate skips Mapple when Vulkan is ON.
-The Qt/wx viewer tutorials were retired by decision. Rendering, interaction,
+were removed in batch 42; the `Easy3D_ENABLE_QT` gate skipped Mapple when Vulkan was ON.
+The Qt/wx viewer tutorials were retired by decision, and the Qt app itself was retired
+on 2026-11-23 (the gate, its wiring and the CI/README installs are gone; the sources stay
+in the tree for reference, standalone-buildable with the OpenGL backend). Rendering, interaction,
 picking, effects, text, snapshots and custom subclasses in the supported surface
 must work in both configured backends; deliberate scope exceptions are not
 unfinished migration tasks.
@@ -520,8 +522,10 @@ flat/smooth shading, background and canvas behavior.
 implementation is broadly present: `Viewer`, `MultiViewer`, and `OffScreen`,
 supported tutorials, FigureMaker, shared GUI pickers, selection, effects,
 transparency, and effect-aware snapshots have Vulkan counterparts. U1–U6 and
-the W10 scope decision are complete according to `ToDo.md`. Mapple remains an
-intentional OpenGL-only exception; Qt/wx viewer tutorials were removed by
+the W10 scope decision are complete according to `ToDo.md`. Mapple is retired: the Qt
+app had been kept OpenGL-only by design and was retired on 2026-11-23 (the ImGui app
+`applications/Mapple` now carries the Mapple name and runs on both backends, and no
+Easy3D tree is configured with Qt any more); the Qt/wx viewer tutorials were removed by
 decision; Python remains scoped to the backend-neutral API. These are decisions,
 not outstanding migration ports.
 
@@ -1441,7 +1445,7 @@ cause.
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
 | Threading | Externally synchronize device calls and model edits. CPU snapshots do not make concurrent model/property mutation safe. |
-| Hosts/bindings | Native GLFW and ImGui viewers are implemented. The Qt and wxWidgets viewer tutorials were removed (batch 42); Mapple remains OpenGL-only by decision. Python bindings deliberately expose the supported backend-neutral Viewer/MultiViewer/OffScreen and drawable/renderer surface; backend internals are outside their scope. |
+| Hosts/bindings | Native GLFW and ImGui viewers are implemented. The Qt and wxWidgets viewer tutorials were removed (batch 42); the retired Qt app Mapple-Qt is kept in the tree for reference and no longer built (retired 2026-11-23, the `Easy3D_ENABLE_QT` gate is gone); the ImGui Mapple runs on both backends. Python bindings deliberately expose the supported backend-neutral Viewer/MultiViewer/OffScreen and drawable/renderer surface; backend internals are outside their scope. |
 | Presentation requirements | One queue family supporting both graphics and presentation, transfer-destination surface images, RGBA/BGRA blit support, identity surface transform. Unsupported configurations fail explicitly. FIFO presentation. UNORM formats are preferred; an sRGB-only surface introduces format conversion. |
 
 The OpenGL sources and shaders remain in the tree and are built when
@@ -1488,9 +1492,10 @@ GitHub reported an account billing lock. The first run that executed,
 not compile PyEasy3D without GLU headers, and the OpenGL job's Python test
 assumed a multisample window visual that llvmpipe under Xvfb does not provide.
 Both causes are fixed (batch 57); the workflow must complete successfully before
-Linux/Mesa, SPIR-V, or CI package-consumer checks count as validated. Mapple is intentionally OpenGL-only, Qt/wx
-viewer tutorials were retired, and backend-internal Python bindings are outside
-the agreed scope.
+Linux/Mesa, SPIR-V, or CI package-consumer checks count as validated. The retired Qt
+app `Mapple-Qt` is OpenGL-only and no longer built (retired 2026-11-23; the ImGui Mapple
+now runs on both backends), and the Qt/wx viewer tutorials were retired. Backend-internal
+Python bindings are outside the agreed scope.
 
 The OpenGL backend remains supported as the `Easy3D_ENABLE_VULKAN=OFF`
 configuration. There is no automatic fallback between backends. See

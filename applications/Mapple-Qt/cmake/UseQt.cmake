@@ -37,7 +37,7 @@
 # Qt libraries to link against, e.g.,
 #       ------------------------------------------------------------------------
 #           project(${PROJECT_NAME})
-#           include( ../cmake/UseQt.cmake )
+#           include( cmake/UseQt.cmake )
 #           add_executable(${PROJECT_NAME}, main.cpp)
 #           target_link_libraries(${PROJECT_NAME} ${QtLibs})
 #       ------------------------------------------------------------------------

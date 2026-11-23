@@ -14,8 +14,6 @@ option(Easy3D_BUILD_TESTS "Build all Easy3D tests and require Vulkan validation"
 option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     OFF)
 # Build advanced features that require CGAL (>= v5.1)
 option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
-# Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)
-option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"    OFF)
 # Build the video encoding module that requires ffmpeg
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
 # A build contains exactly one renderer: ON for Vulkan, OFF for OpenGL
@@ -24,8 +22,8 @@ option(Easy3D_ENABLE_VULKAN "Build the viewers/renderers with Vulkan"           
 ################################################################################
 
 set(Easy3D_VERSION_MAJOR 2)
-set(Easy3D_VERSION_MINOR 6)
-set(Easy3D_VERSION_PATCH 1)
+set(Easy3D_VERSION_MINOR 7)
+set(Easy3D_VERSION_PATCH 0)
 set(Easy3D_VERSION_STRING ${Easy3D_VERSION_MAJOR}.${Easy3D_VERSION_MINOR}.${Easy3D_VERSION_PATCH})
 set(Easy3D_VERSION_NUMBER 10${Easy3D_VERSION_MAJOR}0${Easy3D_VERSION_MINOR}0${Easy3D_VERSION_PATCH})
 
@@ -395,9 +393,8 @@ message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
 message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    Build Python bindings  :  ${Easy3D_BUILD_PYTHON_BINDINGS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
-message(STATUS "    With Qt (>= v5.8.0)    :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
-message(STATUS "    With Vulkan (ongoing)  :  ${Easy3D_ENABLE_VULKAN}")
+message(STATUS "    With Vulkan            :  ${Easy3D_ENABLE_VULKAN}")
 
 message(STATUS "----------------------------------------------------------------------------")
 

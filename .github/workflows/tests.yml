@@ -56,12 +56,12 @@ jobs:
           sudo apt-get install -y ninja-build libboost-dev libvulkan-dev \
             mesa-vulkan-drivers vulkan-validationlayers glslang-tools spirv-tools \
             python3-dev patchelf libgl1-mesa-dev libxrandr-dev libxinerama-dev \
-            libxcursor-dev libxi-dev xvfb xauth mesa-common-dev libcgal-dev qt6-base-dev \
+            libxcursor-dev libxi-dev xvfb xauth mesa-common-dev libcgal-dev \
             libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
 
       - name: Dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install cmake ninja cgal qt ffmpeg
+        run: brew install cmake ninja cgal ffmpeg
 
       # setup-miniconda@v4 runs on the node24 runtime and takes auto-activate; the v3
       # spellings warned on every Windows job. Both names feed the same condarc key.
@@ -80,7 +80,6 @@ jobs:
         run: |
           conda install -y \
             ninja \
-            conda-forge::qt6-main \
             conda-forge::cgal \
             conda-forge::ffmpeg
 
@@ -145,7 +144,7 @@ jobs:
             -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
-            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
@@ -156,7 +155,7 @@ jobs:
             -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
-            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
@@ -170,7 +169,7 @@ jobs:
             -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
-            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure OpenGL (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'OPENGL'
@@ -183,7 +182,7 @@ jobs:
             -DEasy3D_BUILD_SHARED_LIBS=ON \
             -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
-            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Build (Windows)
         if: runner.os == 'Windows' && matrix.backend == 'VULKAN'
@@ -206,7 +205,7 @@ jobs:
             -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_SHARED_LIBS=ON -DEasy3D_BUILD_TUTORIALS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
-            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_QT=ON -DEasy3D_ENABLE_FFMPEG=ON
+            -DEasy3D_ENABLE_CGAL=ON -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Build Vulkan image-diff peer (Ubuntu OpenGL)
         if: runner.os == 'Linux' && matrix.backend == 'OPENGL'

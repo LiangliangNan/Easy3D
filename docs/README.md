@@ -36,8 +36,8 @@ cmake -P docs/build.cmake
 python3 -m http.server 8000 --directory build/doc/html
 ```
 
-Open `http://localhost:8000/` to view the result. No C++ compilation, OpenGL, Qt,
-or other Easy3D development dependencies are required. The script reads the
+Open `http://localhost:8000/` to view the result. No C++ compilation, OpenGL, or
+other Easy3D development dependencies are required. The script reads the
 version from the root `CMakeLists.txt` and configures `Doxyfile.in` directly,
 without running the root CMake project or modifying its version header.
 
