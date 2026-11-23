@@ -294,7 +294,7 @@
 
 - Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).
 
-(1) TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer).
+(1) [x] TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer). Done: `text_renderer.{h,cpp}` and `resources/shaders/text` are removed; Viewer already used `TextLayoutEngine`, and Mapple-Qt now uses it through its own `text_overlay.{h,cpp}`.
 (2) RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations).
 (3) The Vulkan migration is mostly complete. Now many OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or could become redundant and be deleted after small modification/adaptation. Investigate which classes (and/or their members) have the potential to be removed.
 

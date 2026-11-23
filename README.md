@@ -102,6 +102,9 @@ included in the source tree.
 | OpenGL  | `Easy3D_ENABLE_VULKAN=OFF`      | an OpenGL driver                                                        |
 
 A build contains exactly one backend, so use a separate build directory for each.
+Consumers can read `Easy3D_BACKEND` (`OpenGL` or `Vulkan`) after `find_package(Easy3D)`, or set
+`Easy3D_REQUIRE_BACKEND` before it to fail on a mismatch. Easy3D targets also define
+`EASY3D_BACKEND_OPENGL` or `EASY3D_BACKEND_VULKAN` for compile-time checks.
 
 ```sh
 cd path-to-Easy3D

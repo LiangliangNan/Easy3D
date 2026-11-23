@@ -24,13 +24,41 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#version 150
+#ifndef MAPPLE_QT_TEXT_OVERLAY_H
+#define MAPPLE_QT_TEXT_OVERLAY_H
 
-in	vec4	coords;
-out	vec2	tcoordVC;
+#include <memory>
+#include <string>
 
-void main()
-{
-	tcoordVC = coords.zw;
-	gl_Position = vec4(coords.xy, 0.0, 1.0);
+#include <easy3d/core/types.h>
+
+
+namespace easy3d {
+    class ShaderProgram;
+    namespace graphics {
+        class TextLayoutEngine;
+    }
 }
+
+
+// Draws single-line UTF-8 text with the backend-independent TextLayoutEngine and a tiny OpenGL pass.
+// All coordinates are in framebuffer pixels. A current OpenGL context is required for draw().
+class TextOverlay {
+public:
+    TextOverlay();
+    ~TextOverlay();
+
+    // Returns false if the font cannot be loaded.
+    bool add_font(const std::string &file);
+    std::size_t num_fonts() const;
+
+    // (x, y) is the upper-left corner of the text box, measured from the upper-left corner of the viewport.
+    void draw(const std::string &text, float x, float y, float font_size, std::size_t font_id,
+              const easy3d::vec3 &color = easy3d::vec3(0, 0, 0)) const;
+
+private:
+    std::unique_ptr<easy3d::graphics::TextLayoutEngine> engine_;
+    mutable std::unique_ptr<easy3d::ShaderProgram> shader_;
+};
+
+#endif

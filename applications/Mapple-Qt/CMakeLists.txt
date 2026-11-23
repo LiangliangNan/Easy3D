@@ -13,11 +13,13 @@ if (NOT Qt6_FOUND AND NOT Qt5_FOUND)
     return()
 endif ()
 
+set(Easy3D_REQUIRE_BACKEND OpenGL)
 find_package(Easy3D COMPONENTS viewer REQUIRED)
 
 set(${PROJECT_NAME}_HEADERS
         main_window.h
         paint_canvas.h
+        text_overlay.h
         walk_through.h
 
         dialogs/dialog.h
@@ -59,6 +61,7 @@ set(${PROJECT_NAME}_SOURCES
         main.cpp
         main_window.cpp
         paint_canvas.cpp
+        text_overlay.cpp
         paint_canvas_snapshot.cpp
         walk_through.cpp
 

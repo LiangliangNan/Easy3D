@@ -116,7 +116,6 @@
 //#include <easy3d/renderer/shape.h>
 //#include <easy3d/renderer/soft_shadow.h>
 //#include <easy3d/renderer/state.h>
-//#include <easy3d/renderer/text_renderer.h>
 //#include <easy3d/renderer/texture.h>
 //#include <easy3d/renderer/texture_manager.h>
 //#include <easy3d/renderer/transform.h>

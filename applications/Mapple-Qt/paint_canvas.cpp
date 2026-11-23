@@ -58,7 +58,6 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/buffer.h>
 #include <easy3d/util/resource.h>
@@ -154,7 +153,6 @@ void PaintCanvas::cleanup() {
     delete shadow_;
     delete transparency_;
     delete edl_;
-    delete texter_;
     delete model_picker_;
     delete surface_mesh_picker_;
     delete point_cloud_picker_;
@@ -222,8 +220,8 @@ void PaintCanvas::initializeGL() {
     //int samples_received = 0;
     //glgetintegerv(gl_samples, &samples_received);
 
-    // create TextRenderer renderer and load default fonts
-    texter_ = new TextRenderer(dpiScaling());
+    // create the text overlay and load default fonts
+    texter_.reset(new TextOverlay);
     texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
     texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
@@ -1265,7 +1263,7 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
         texter_->draw("v" + std::to_string(v.idx()),
                       static_cast<int>(proj.x) * dpiScaling(),
                       static_cast<int>(proj.y) * dpiScaling(),
-                      font_size, font_id, vec3(0, 0, 1)
+                      font_size * dpiScaling(), font_id, vec3(0, 0, 1)
         );
         ++valence;
     }
@@ -1275,7 +1273,7 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     texter_->draw("f" + std::to_string(picked_face_index_),
                   static_cast<int>(proj.x) * dpiScaling(),
                   static_cast<int>(proj.y) * dpiScaling(),
-                  font_size, font_id, vec3(0, 1, 0)
+                  font_size * dpiScaling(), font_id, vec3(0, 1, 0)
     );
     easy3d_debug_log_gl_error
 }
@@ -1298,7 +1296,7 @@ void PaintCanvas::drawPickedVertexID() {
     texter_->draw("v" + std::to_string(picked_vertex_index_),
                   static_cast<int>(pos.x) * dpiScaling(),
                   static_cast<int>(pos.y) * dpiScaling(),
-                  font_size, font_id, vec3(0, 0, 1)
+                  font_size * dpiScaling(), font_id, vec3(0, 0, 1)
     );
     easy3d_debug_log_gl_error
 }
@@ -1319,7 +1317,7 @@ void PaintCanvas::postDraw() {
     if (show_easy3d_logo_ && texter_ && texter_->num_fonts() >=2) {
         const float font_size = 15.0f;
         const float offset = 20.0f * dpiScaling();
-        texter_->draw("Easy3D", offset, offset, font_size, 0);
+        texter_->draw("Easy3D", offset, offset, font_size * dpiScaling(), 0);
     }
 
     if (show_frame_rate_) {
@@ -1334,9 +1332,9 @@ void PaintCanvas::postDraw() {
             fps_count = 0;
         }
 
-        // draw frame rate text using Easy3D's built-in TextRenderer
+        // draw frame rate text using Easy3D's TextLayoutEngine
         if (texter_ && texter_->num_fonts() >=2)
-            texter_->draw(fps_string.toStdString(), 20.0f * dpiScaling(), 50.0f * dpiScaling(), 16, 1);
+            texter_->draw(fps_string.toStdString(), 20.0f * dpiScaling(), 50.0f * dpiScaling(), 16 * dpiScaling(), 1);
     }
 
     // shown only when it is not animating

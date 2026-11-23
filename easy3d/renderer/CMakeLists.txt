@@ -103,7 +103,6 @@ list(APPEND renderer_headers
         read_pixel.h
         shader_manager.h
         shader_program.h
-        text_renderer.h
         vertex_array_object.h
 )
 
@@ -124,7 +123,6 @@ list(APPEND renderer_sources
         shader_manager.cpp
         shader_program.cpp
         backends/opengl/texture.cpp
-        text_renderer.cpp
         vertex_array_object.cpp
 )
 
@@ -239,7 +237,7 @@ add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_de
 if(Easy3D_ENABLE_VULKAN)
     # Shared headers still include GLEW through opengl.h (e.g. VertexArrayObject), so suppress
     # its optional GLU include here too; Easy3D does not use GLU and Linux installs omit it.
-    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN GLEW_NO_GLU)
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN EASY3D_BACKEND_VULKAN GLEW_NO_GLU)
     target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan" ${Vulkan_INCLUDE_DIRS})
     if(UNIX)
         # Optional last-resort lookup hint, never a load-time dependency or rpath.
@@ -247,7 +245,7 @@ if(Easy3D_ENABLE_VULKAN)
     endif()
 else ()
     target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
-    target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
+    target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC EASY3D_BACKEND_OPENGL GLEW_NO_GLU)
 
     # prefer GLVND
     set(OpenGL_GL_PREFERENCE GLVND)

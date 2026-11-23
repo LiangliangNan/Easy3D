@@ -584,7 +584,8 @@ only threw exceptions are removed, and the dependent manipulator frame-drawing
 API is explicitly OpenGL-only. Corner-axis visibility is shared Viewer state.
 The built-in HUD on both backends now uses `graphics::TextLayoutEngine`; OpenGL
 realizes its commands with `opengl::OverlayRenderer`. The immediate
-`easy3d::TextRenderer` remains for the retired Qt app (`applications/Mapple-Qt`) and is no longer used by Viewer.
+The legacy `easy3d::TextRenderer` (fontstash-based `sth_*` code) has been removed; the retired Qt app
+(`applications/Mapple-Qt`) now draws text through `TextLayoutEngine` with its own small OpenGL helper.
 Focused input/HUD checks pass on OpenGL and Vulkan, with the Vulkan text-viewer
 regression passing as well.
 
@@ -1906,9 +1907,8 @@ CPU using the bundled stb_truetype, without a graphics context. It returns a
 `graphics::TextLayout` containing ordinary overlay commands, ink bounds, the last
 line's advance and line height. Viewer uses this engine for its built-in HUD on
 both backends: Vulkan submits the commands through `RenderDevice`, while OpenGL
-realizes them through `OverlayRenderer`. The immediate OpenGL
-`easy3d::TextRenderer` remains available to the retired Qt app (`Mapple-Qt`) and other existing clients,
-but is not the Viewer HUD implementation; legacy GL callbacks are not emulated.
+realizes them through `OverlayRenderer`. The legacy immediate
+OpenGL `easy3d::TextRenderer` has been removed; legacy GL callbacks are not emulated.
 
 ```cpp
 #include <easy3d/renderer/text_layout.h>
@@ -3634,8 +3634,8 @@ Viewer code depends on renderer through its normal module relationship.
 - `renderer/backends/clipping.{h,cpp}` contains the shared primitive-clipping
   implementation used by the backend.
 - `renderer/text_layout.{h,cpp}` contains the CPU font/glyph layout engine, now
-  named `graphics::TextLayoutEngine` to distinguish this helper from the existing
-  public `easy3d::TextRenderer` class. The latter's API is unchanged.
+  named `graphics::TextLayoutEngine` (it was introduced alongside the since-removed
+  `easy3d::TextRenderer`).
 - Device-only, host/scene tests and the installed consumer now live under the root `tests/`
   directory (testing policy, 2026-11-04). Their target/test names remain unchanged.
 
@@ -3650,8 +3650,7 @@ This step consolidates ownership and packaging without changing rendering
 algorithms. The temporary `graphics` namespace for low-level types and the
 separate VulkanViewer/VulkanOffScreen interfaces remain migration debt; they do
 not represent a new module. Unifying the public renderer/viewer/gui interfaces
-remains the next stage, including folding CPU text
-layout into the shared TextRenderer implementation.
+remains the next stage.
 
 
 Verified on this Mac: 63/63 native-window tests, 36/36 combined OpenGL/Vulkan

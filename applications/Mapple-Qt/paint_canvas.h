@@ -31,11 +31,14 @@
 
 #include <easy3d/core/types.h>
 
+#include <memory>
+
 #include <QOpenGLWidget>
 #include <QElapsedTimer>
 #include <QOpenGLFunctions>
 
 #include "tools/canvas.h"
+#include "text_overlay.h"
 
 
 namespace easy3d {
@@ -47,7 +50,6 @@ namespace easy3d {
     class Shadow;
     class Transparency;
     class EyeDomeLighting;
-    class TextRenderer;
     class ModelPicker;
     class SurfaceMeshPicker;
     class PointCloudPicker;
@@ -287,7 +289,7 @@ protected:
     WalkThrough* walk_through_;
 
     QElapsedTimer timer_;
-    easy3d::TextRenderer* texter_;
+    std::unique_ptr<TextOverlay> texter_;
 
     bool show_easy3d_logo_;
     bool show_frame_rate_;

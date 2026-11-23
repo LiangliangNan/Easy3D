@@ -37,6 +37,9 @@
 #       Easy3D_<component>_FOUND    - True if ``<component>`` was found (``<component>`` name is lower-case).
 #       Easy3D_VERSION_STRING       - Easy3D version number in ``X.Y.Z`` format.
 #       Easy3D_VERSION              - Easy3D version number in ``X.Y.Z`` format (same as ``Easy3D_VERSION_STRING``)
+#       Easy3D_BACKEND              - The rendering backend Easy3D was built with: ``OpenGL`` or ``Vulkan``.
+#       Easy3D_REQUIRE_BACKEND      - (optional, set by the consumer before find_package) ``OpenGL`` or ``Vulkan``.
+#                                     A mismatch with Easy3D_BACKEND is a fatal error.
 #       Easy3D_CGAL_SUPPORT         - True if Easy3D was built with CGAL support.
 #       Easy3D_FFMPEG_SUPPORT       - True if Easy3D was built with FFMPEG support.
 #
@@ -57,6 +60,15 @@ get_filename_component(Easy3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(Easy3D_INCLUDE_DIRS "@CONF_Easy3D_INCLUDE_DIRS@")
 set(Easy3D_LIBRARY_DIRS "@CONF_Easy3D_LIBRARY_DIRS@")
 set(Easy3D_ENABLE_VULKAN "@Easy3D_ENABLE_VULKAN@")
+if (Easy3D_ENABLE_VULKAN)
+    set(Easy3D_BACKEND "Vulkan")
+else ()
+    set(Easy3D_BACKEND "OpenGL")
+endif ()
+if (Easy3D_REQUIRE_BACKEND AND NOT "${Easy3D_REQUIRE_BACKEND}" STREQUAL "${Easy3D_BACKEND}")
+    message(FATAL_ERROR "Easy3D was built with the ${Easy3D_BACKEND} backend, but this project requires "
+                        "${Easy3D_REQUIRE_BACKEND}. Use an Easy3D build with the matching Easy3D_ENABLE_VULKAN setting.")
+endif ()
 set(Easy3D_AVAILABLE_COMPONENTS "@CONF_Easy3D_COMPONENTS@")
 set(Easy3D_VERSION_STRING "@CONF_Easy3D_VERSION@")
 set(Easy3D_VERSION @CONF_Easy3D_VERSION@)
@@ -94,6 +106,7 @@ if (Easy3D_FIND_COMPONENTS) # user tries to find components
     elseif (found_components)
         set(Easy3D_FOUND TRUE)
         message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Found components (${lib_type}): ${found_components}")
+        message(STATUS "Easy3D_BACKEND: ${Easy3D_BACKEND}")
         message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_INCLUDE_DIRS}")
         message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_LIBRARY_DIRS}")
     endif()
@@ -103,6 +116,7 @@ else ()
         set(Easy3D_${component}_FOUND TRUE)
     endforeach()
     message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Available components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}")
+    message(STATUS "Easy3D_BACKEND: ${Easy3D_BACKEND}")
     message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_INCLUDE_DIRS}")
     message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_LIBRARY_DIRS}")
 endif ()
