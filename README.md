@@ -1,6 +1,6 @@
 <div align="center">
 
-![](resources/images/vulkan_banner.png)
+![](resources/images/vulkan_banner.svg)
 
 </div>
 
