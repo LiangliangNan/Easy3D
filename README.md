@@ -1,6 +1,6 @@
 <p align="center">
     <a href="#native-vulkan-or-opengl-your-choice">
-        <img src="resources/images/vulkan_banner.svg" alt="Easy3D 2.7.0: now with native Vulkan" width="900">
+        <img src="resources/images/vulkan_banner.png" alt="Easy3D 2.7.0: now with native Vulkan" width="900">
     </a>
 </p>
 
