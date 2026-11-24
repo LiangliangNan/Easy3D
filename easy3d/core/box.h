@@ -127,7 +127,7 @@ namespace easy3d {
          * \return The coordinate value.
          */
         FT min_coord(unsigned int axis) const {
-            assert(axis >= 0 && axis < DIM);
+            assert(axis < DIM);
             if (is_valid())
                 return min_[axis];
             return FT(0.0);
@@ -139,7 +139,7 @@ namespace easy3d {
          * \return The coordinate value.
          */
         FT max_coord(unsigned int axis) const {
-            assert(axis >= 0 && axis < DIM);
+            assert(axis < DIM);
             if (is_valid())
                 return max_[axis];
             return FT(0.0);
@@ -151,7 +151,7 @@ namespace easy3d {
          * \return The range value.
          */
         FT range(unsigned int axis) const {
-            assert(axis >= 0 && axis < DIM);
+            assert(axis < DIM);
             if (is_valid())
                 return max_[axis] - min_[axis];
             return FT(0.0);
@@ -162,9 +162,9 @@ namespace easy3d {
          * \return The max range value.
          */
         FT max_range() const {
-            FT max_value = max_[0] - min_[0];
+            FT max_value = range(0);
             for (int i = 1; i < DIM; ++i)
-                max_value = std::max(max_value, max_[i] - min_[i]);
+                max_value = std::max(max_value, range(i));
             return max_value;
         }
 
@@ -173,9 +173,9 @@ namespace easy3d {
          * \return The min range value.
          */
         FT min_range() const {
-            FT min_value = max_[0] - min_[0];
+            FT min_value = range(0);
             for (int i = 1; i < DIM; ++i)
-                min_value = std::min(min_value, max_[i] - min_[i]);
+                min_value = std::min(min_value, range(i));
             return min_value;
         }
 
@@ -185,12 +185,12 @@ namespace easy3d {
          */
         unsigned int max_range_axis() const {
             unsigned int axis = 0;
-            FT max_value = max_[0] - min_[0];
+            FT max_value = range(0);
             for (int i = 1; i < DIM; ++i) {
-                FT range = max_[i] - min_[i];
-                if (range > max_value) {
+                FT extent = range(i);
+                if (extent > max_value) {
                     axis = i;
-                    max_value = range;
+                    max_value = extent;
                 }
             }
             return axis;
@@ -202,12 +202,12 @@ namespace easy3d {
          */
         unsigned int min_range_axis() const {
             unsigned int axis = 0;
-            FT min_value = max_[0] - min_[0];
+            FT min_value = range(0);
             for (int i = 1; i < DIM; ++i) {
-                FT range = max_[i] - min_[i];
-                if (range < min_value) {
+                FT extent = range(i);
+                if (extent < min_value) {
                     axis = i;
-                    min_value = range;
+                    min_value = extent;
                 }
             }
             return axis;
@@ -235,14 +235,14 @@ namespace easy3d {
          */
         FT diagonal_length() const {
             if (is_valid()) {
-                FT sqr_len(0.0);
+                FT sqr_len(0);
                 for (int i = 0; i < DIM; ++i) {
-                    FT d = max_[i] - min_[i];
+                    FT d = range(i);
                     sqr_len += d * d;
                 }
                 return std::sqrt(sqr_len);
             }
-            return FT(0.0);
+            return FT(0);
         }
 
         /**
@@ -376,8 +376,7 @@ namespace easy3d {
 
 
     namespace geom {
-
-#if 1
+        
         /**
          * \brief Compute the union of two boxes.
          * \tparam DIM The dimension.
@@ -404,18 +403,6 @@ namespace easy3d {
         {
             return GenericBox<DIM, FT>(comp_max(a.min_point(), b.min_point()), comp_min(a.max_point(), b.max_point()));
         }
-#else
-        template<int DIM, typename FT>
-        GenericBox<DIM, FT> box_union(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) { return a + b; }
-
-        template<int DIM, typename FT>
-        GenericBox<DIM, FT> box_intersection(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) {
-            if (a.intersects(b))
-                return GenericBox<DIM, FT>(comp_max(a.min_point(), b.min_point()), comp_min(a.max_point(), b.max_point()));
-            else
-                return GenericBox<DIM, FT>();
-        }
-#endif
 
     }
 
