@@ -114,7 +114,7 @@ public:
     ///      valid for the builder's lifetime if a generating function is called.
     /// \note The settings start at eye height 0.2 scene heights, keyframe spacing 0.5
     ///      scene heights, both ground tracks following the terrain's slopes, flight
-    ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.05
+    ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.1
     ///      object heights, pitch 0 degrees, 10 keyframes per loop and 2 loops.
     CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
     /// Destroys the builder. The camera and the interpolator are borrowed, so
@@ -286,7 +286,7 @@ public:
     float orbit_radius_offset_in_object_heights() const { return orbit_radius_offset_in_object_heights_; }
 
     /// \brief Vertical offset of the orbit center above the picked point, in object
-    ///      heights (default 0.05).
+    ///      heights (default 0.1).
     /// \details The offset is applied along the orbit's up (the reversed axis) before
     ///      the center is projected onto the axis, so it moves the center along the
     ///      axis: it raises the orbit for a level axis and shifts it diagonally for an

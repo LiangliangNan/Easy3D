@@ -4,7 +4,7 @@
 
 </div>
 
-<h3 align="center">🔥 <a href="https://github.com/LiangliangNan/Easy3D/blob/main/history/20261123_release_2.7.0.md">New since v2.7.0</a>: native Vulkan rendering, with OpenGL still supported 🔥</h3>
+<h3 align="center">🔥 <a href="https://github.com/LiangliangNan/Easy3D/blob/main/changes/20261123_release_2.7.0.md">New since v2.7.0</a>: native Vulkan rendering, with OpenGL still supported 🔥</h3>
 
 <div align="right">
     <b><img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green"
@@ -129,7 +129,7 @@ and `CGAL_DIR` can point to a specific version).
   `view_direction()`, `showEntireScene()` became `show_entire_scene()`).
 - Qt and wxWidgets are no longer supported.
 
-See the [v2.7.0 release notes](https://github.com/LiangliangNan/Easy3D/blob/main/history/20261123_release_2.7.0.md)
+See the [v2.7.0 release notes](https://github.com/LiangliangNan/Easy3D/blob/main/changes/20261123_release_2.7.0.md)
 for the full migration table.
 
 **Python bindings:** see the [Python guide](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).

@@ -593,8 +593,8 @@ is a turntable, not gravity.
    (no faces) each produce a path whose pose up is identical for every pose and equal to the chosen
    rule; a `+Y` scene with the rule at `+X` banks nothing; the flight's default aim points along
    the stroke rather than at each foot.
-8. `history/keyframes.md` (this entry) gains a changelog section when the work lands, and
-   `history/mapple.md` a batch entry; `ToDo.md` line for the walk/flight up rule is closed there.
+8. `changes/keyframes.md` (this entry) gains a changelog section when the work lands, and
+   `changes/mapple.md` a batch entry; `ToDo.md` line for the walk/flight up rule is closed there.
 
 #### The principles to follow
 
@@ -702,19 +702,29 @@ changed.
 answer had to be imagined: Mapple turns the Viewer's corner triad off, so nothing on screen said
 where +X, +Y and +Z lie. `MappleViewer::append_scene_axes_overlay()`
 (`applications/Mapple/mapple_viewer.cpp`) now draws the three axes through the scene's center
-whenever the Camera Path window is open -- the in-scene counterpart of that corner triad, at the
+whenever a camera path is on screen -- the in-scene counterpart of that corner triad, at the
 very box `ground_up_direction()` resolves `Auto` from. It goes through `Viewer::set_overlays()` as
 a `graphics::shape::draw_lines_3d()` command rather than through `draw_corner_axes()`, so the
 OpenGL and Vulkan backends need no separate code and the axes sit where the user is placing
 keyframes: each axis is a full line through the center with the far half dimmed and an arrowhead
 on the near one, in the keyframe handles' colours. It is deliberately thin (2.5 logical px) and
-translucent (alpha 0.7): an unoccluded overlay is drawn *after* the depth-tested keyframe gizmos
-by both backends, so anything opaque would lie over the handles the user is working with. The
-resolved-vector readout's tooltip now mentions the triad.
+translucent (alpha 0.7), and it carries `overlay_depth_test`: the triad lies *in* the scene, occluded
+by the model like any other geometry, rather than painted over the handles the user is working with.
+The resolved-vector readout's tooltip now mentions it.
 
 `easy3d_camera_path_builder_test` passes and both Mapple trees (OpenGL RelWithDebInfo, Vulkan
-Debug) build; the overlay itself has an entry of its own in `history/mapple.md`, where the Camera
+Debug) build; the overlay itself has an entry of its own in `changes/mapple.md`, where the Camera
 Path window's history lives. One finding is recorded in `ToDo.md` rather than changed here: a
 flight's last stations have nothing ahead of them, so the clamped aim points them straight down
 along the up, where the roll is undefined -- against the level-horizon rule the rest of the track
 follows.
+
+### 2026-11-24 — The orbit axis is the Up rule too
+
+Orbit was the one generated mode that ignored the shared `Up` combo: its axis came from a drag
+across the scene, or from the view's vertical when the gesture was a click. It now takes the same
+direction the window already resolves for walk and flight, and the click only says where the axis
+stands -- one combo, one click, no gesture to learn. The drag state and the screen-space axis
+preview went with it, and `Follow slopes`, which belongs to the two ground tracks alone, is now a
+separate widget that Orbit does not draw. The details, and what is still unverified by eye, are in
+the 2026-11-24 orbit entry of `changes/mapple.md`.

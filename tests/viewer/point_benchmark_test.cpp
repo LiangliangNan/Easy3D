@@ -29,7 +29,7 @@ void require(bool ok, const char *text) {
 // 5 px points, neutral overview camera, 1600x917 logical window, 4x MSAA, hidden window.
 // The tutorial's camera frusta and photo overlay are excluded; the cloud dominates the
 // frame and is identical on every path. No performance threshold is asserted because
-// throughput is machine-dependent; the numbers are recorded in history/vulkan.md.
+// throughput is machine-dependent; the numbers are recorded in changes/vulkan.md.
 // The test is time-budget-aware: every loop runs a minimum number of frames and then keeps
 // rendering until a per-path wall-clock budget is exhausted, so software rasterizers
 // (lavapipe) finish well inside the ctest TIMEOUT even when a frame costs a second or more.

@@ -2738,7 +2738,8 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 ### 2026-11-24 — The Camera Path window draws the scene's axes as the "up" reference
 
 - `MappleViewer::append_scene_axes_overlay()` (`applications/Mapple/mapple_viewer.cpp`) draws an
-  overlay while `camera_path_editing_mode()` is on: the three world axes through the center of
+  overlay while `show_camera_path_` is on -- whenever the path is on screen, which is when its
+  direction is being chosen or edited: the three world axes through the center of
   `CameraPathBuilder::scene_box()`, the same box `ground_up_direction()` resolves `Auto` from,
   each one a full line whose far half is dimmed and whose near end carries an arrowhead in the
   gizmo arrows' colors. While no model has been measured, the camera's own scene center and radius
@@ -2747,9 +2748,9 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   from `pre_draw()`, not `Viewer::draw_corner_axes()`: Mapple turns the corner triad off, and
   reviving it would mean touching both backend halves of `viewer.cpp` for a hint that belongs to
   the path window rather than to the viewer.
-- The command stays thin (2.5 logical px) and translucent (alpha 0.7) on purpose. An overlay with
-  `overlay_depth_test` off is drawn in the last phase by both backends, i.e. after the
-  depth-tested keyframe gizmos, so an opaque triad would lie over the handles being edited.
+- The command stays thin (2.5 logical px) and translucent (alpha 0.7) on purpose, and it carries
+  `overlay_depth_test`: it belongs to the scene, so the model hides the parts of it that lie behind
+  the model, and it draws with the keyframe gizmos rather than over them.
 - `draw_ground_up_rule()`'s resolved-vector tooltip now says the axes are on screen.
 - Proofreading the anti-gravity change around this fixed two more comments of this app: the
   declaration of `commit_flight_track()` still described stations rising along the surface normal
@@ -2760,3 +2761,27 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   how the triad reads over a real model -- the app was not launched, so the reach, the alpha and
   the arrowhead size are still unverified by eye.
 
+### 2026-11-24 — One click and the Up rule set the orbit axis
+
+- The Orbit gesture no longer needs a drag. `apply_orbit_gesture()` takes the one screen point of
+  the click, picks the surface under it, and builds the axis as the line through that point along
+  `-ground_up_direction()` (`orbit_frames()` takes the axis as the reversed camera up, so a rule
+  pointing up is an axis pointing down). The click is the press in `mouse_press_event()`: arming
+  the tool and clicking the surface is the whole interaction, and a drag afterwards is the camera
+  looking for a better angle rather than part of the gesture.
+- Removed with the drag: the `orbit_dragging_`, `orbit_drag_from_` and `orbit_drag_to_` members,
+  the release and move branches that consumed them, and the overlay that drew the dragged segment
+  across the view as the axis preview -- previewing a direction fixed by a combo would only repeat
+  the combo. `cancel_path_gesture()` now cancels just the stroke.
+- The `Up` combo is drawn for Orbit as well as for Walk and Flight, because all three generated
+  modes now resolve a direction from it, and its tooltip says what each mode does with the answer.
+  The `Follow slopes` checkbox belongs to the two ground tracks alone, so it moved into a
+  `draw_follow_slopes_rule()` of its own that Orbit does not call.
+- The mode's hint, its `Axis` parameter row and the arming message describe the click and the rule
+  now; the old wording ("drag across the scene; a click uses the vertical axis") described a
+  gesture that no longer exists.
+- `CameraPathBuilder`'s orbit vertical offset default moved to 0.1 object heights; the constructor
+  note and the accessor brief that said 0.05 follow it.
+- Measured: both trees (Vulkan Debug, OpenGL RelWithDebInfo) build the `Mapple` target clean. Not
+  measured: the click itself -- the app was not launched, so neither the new gesture nor the
+  occluded triad has been seen on screen.

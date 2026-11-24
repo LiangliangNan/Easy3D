@@ -749,23 +749,16 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 
     // The armed one-shot path tool owns the next plain left press in the scene: a
     // walk, flight or aim stroke starts there (an aim stroke replaces the path's
-    // aims), and an orbit drag starts its axis. An Alt press keeps its own meaning
-    // (below).
+    // aims), and an orbit click stands its axis on the surface. An Alt press keeps its
+    // own meaning (below).
     const PathTool tool = path_tool_;
     if (tool != PathTool::Off && button == BUTTON_LEFT &&
         !(modifiers & MODIF_ALT) && point_in_scene(x, y)) {
         if (tool == PathTool::Orbit) {
-            // The axis goes through the surface under the press, so a press in empty
-            // space neither previews an axis nor starts an orbit.
-            if (!pick(x, y))
-                LOG(WARNING) << "the orbit has to start on a visible model surface";
-            else {
-                orbit_dragging_ = true;
-                orbit_drag_from_ = vec2(static_cast<float>(x), static_cast<float>(y));
-                orbit_drag_to_ = orbit_drag_from_;
-                clear_hover();
-                update();
-            }
+            // One click is the whole gesture: the axis direction comes from the path's up
+            // rule, so the press only has to say where the axis stands. Dragging on is the
+            // camera looking for a better angle, not part of the orbit.
+            apply_orbit_gesture(vec2(static_cast<float>(x), static_cast<float>(y)));
         } else if (tool != PathTool::Aim && !camera_path_builder_->scene_box().is_valid())
             LOG(WARNING) << "the path tools need a visible model";
         else {
@@ -866,13 +859,6 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         return true;
     }
 
-    if (orbit_dragging_ && button == BUTTON_LEFT) {
-        orbit_dragging_ = false;
-        apply_orbit_gesture(orbit_drag_from_, vec2(static_cast<float>(x), static_cast<float>(y)));
-        update();
-        return true;
-    }
-
     if (button == BUTTON_LEFT && keyframe_editor_ && keyframe_editor_->dragging()) {
         const KeyFrameEditor::DragResult result = keyframe_editor_->release();
         if (result.moved)
@@ -959,12 +945,6 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
                 route_segment_.clear();
             }
         }
-        update();
-        return true;
-    }
-
-    if (orbit_dragging_) {
-        orbit_drag_to_ = vec2(static_cast<float>(x), static_cast<float>(y));
         update();
         return true;
     }
@@ -1878,10 +1858,10 @@ void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &co
 }
 
 void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> &commands) const {
-    // The Camera Path window asks which way a path's up points, so while it is open the view
-    // supplies the reference for that answer: the three world axes through the scene's
-    // center, the in-scene counterpart of the corner triad the Viewer draws elsewhere.
-    if (!camera_path_editing_mode())
+    // A path on screen is a path being planned or edited, and one of its choices is which
+    // way its up points: the reference for that answer is the three world axes through the
+    // scene's center, the in-scene counterpart of the corner triad the Viewer draws elsewhere.
+    if (!show_camera_path_)
         return;
     const auto fw = static_cast<unsigned>(framebuffer_width());
     const auto fh = static_cast<unsigned>(framebuffer_height());
@@ -1929,9 +1909,9 @@ void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> 
     graphics::DrawCommand command = graphics::shape::draw_lines_3d(
             segments, colors, camera()->model_view_projection_matrix(), fw, fh,
             2.5f * dpi_scaling());
-    // The unoccluded overlay layer, so the model never buries the reference it is there for.
-    // It still lands above the depth-tested keyframe handles, which is why it stays thin and
-    // translucent: a cue for the axes' directions, never something to place a keyframe by.
+    // Occluded like the geometry around it, so the triad lies in the scene rather than over
+    // it. It stays thin and translucent because it is a cue for the axes' directions, never
+    // something to place or move a keyframe by.
     command.overlay_depth_test = true;
     command.color = vec4(1.0f, 1.0f, 1.0f, 0.7f);
     commands.push_back(command);
@@ -1939,7 +1919,7 @@ void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> 
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {
     const bool stroke = tracing_route_ && route_stroke_screen_.size() >= 2;
-    if (!stroke && !orbit_dragging_)
+    if (!stroke)
         return;
     const unsigned fw = static_cast<unsigned>(framebuffer_width());
     const unsigned fh = static_cast<unsigned>(framebuffer_height());
@@ -1956,20 +1936,6 @@ void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand>
             segments.emplace_back(route_stroke_screen_[i - 1] * dpi);
             segments.emplace_back(route_stroke_screen_[i] * dpi);
         }
-        commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
-    }
-    if (orbit_dragging_) {
-        // The axis projects onto the line through the press point along the dragged
-        // segment, so drawing that line across the view previews the orbit axis; a
-        // click (no drag) previews the turntable default, the view's up axis.
-        vec2 dir = orbit_drag_to_ - orbit_drag_from_;
-        if (dir.length2() < 4.0f)
-            dir = vec2(0.0f, 1.0f);
-        dir.normalize();
-        const float reach = std::max(static_cast<float>(fw), static_cast<float>(fh));
-        std::vector<vec2> segments(2);
-        segments[0] = orbit_drag_from_ * dpi - dir * reach;
-        segments[1] = orbit_drag_from_ * dpi + dir * reach;
         commands.push_back(graphics::shape::draw_lines_2d(segments, setting::highlight_color, fw, fh, dpi));
     }
 }

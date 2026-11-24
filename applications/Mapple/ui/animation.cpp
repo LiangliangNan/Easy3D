@@ -163,12 +163,15 @@ void MappleViewer::draw_animation_window() {
         ImGui::TextDisabled("Drag over the surface to trace the camera track. Poses rise\n"
             "straight up and look at the ground ahead; Esc cancels.");
     else
-        ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis.\n"
-            "Esc cancels.");
+        ImGui::TextDisabled("Click the surface where the orbit should stand; the axis runs there\n"
+            "along the Up rule. Esc cancels.");
 
     // The mode's own parameters, under its hint.
-    if (camera_path_builder_ && (tool == PathTool::GroundWalk || tool == PathTool::Flight))
+    if (camera_path_builder_ &&
+        (tool == PathTool::GroundWalk || tool == PathTool::Flight || tool == PathTool::Orbit))
         draw_ground_up_rule();
+    if (camera_path_builder_ && (tool == PathTool::GroundWalk || tool == PathTool::Flight))
+        draw_follow_slopes_rule();
 
     if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         float height = camera_path_builder_->eye_height_in_scene_heights();
@@ -182,10 +185,10 @@ void MappleViewer::draw_animation_window() {
 
         draw_keyframe_spacing();
     } else if (camera_path_builder_ && tool == PathTool::Orbit) {
-        ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
-        ImGui::SetItemTooltip("The camera circles around the dragged segment through the surface under "
-                              "the press; a click uses the vertical axis. Poses look at the axis; "
-                              "Aim... re-aims them. The orbit replaces the path; Ctrl+Z restores it.");
+        ImGui::TextDisabled("Orbit axis has the Up direction through the clicked point");
+        ImGui::SetItemTooltip("The camera circles the axis that rises from the surface point clicked,\n"
+                              "along the direction the Up rule resolves to. Poses look at the axis;\n"
+                              "Aim... re-aims them. The orbit replaces the path; Ctrl+Z restores it.\n");
 
         float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
         if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height"))
@@ -615,8 +618,8 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
     LOG(INFO) << (tool == PathTool::GroundWalk
                   ? "walk route tool armed: drag over the ground surface to trace the route"
                   : tool == PathTool::Orbit
-                    ? "orbit tool armed: drag across the scene to set the orbit axis "
-                      "(a click uses the vertical axis)"
+                    ? "orbit tool armed: click the surface to stand the orbit axis on, "
+                      "along the Up rule"
                     : tool == PathTool::Flight
                       ? "flight tool armed: drag over the surface to trace the camera track"
                       : "aim tool armed: click a point or drag over the surface to re-aim the last path");
@@ -631,7 +634,6 @@ void MappleViewer::cancel_camera_path_tool() {
 
 void MappleViewer::cancel_path_gesture() {
     tracing_route_ = false;
-    orbit_dragging_ = false;
     route_stroke_screen_.clear();
     route_segment_.clear();
     route_segments_.clear();
@@ -667,10 +669,10 @@ void MappleViewer::draw_keyframe_spacing() {
 }
 
 void MappleViewer::draw_ground_up_rule() {
-    // One rule for the whole path, in both ground modes: the camera's up is an
+    // One rule for the whole path, in all three generated modes: the camera's up is an
     // anti-gravity direction, not a surface normal. The combo names the rule and the
     // readout beside it shows what the app resolved, so the user never has to infer it
-    // from the resulting tilt.
+    // from the resulting tilt - or, in Orbit, from the axis it turns around.
     const char *const kRules[] = {"Auto (box shortest)", "+X", "+Y", "+Z", "Up from the view"};
     constexpr int kRuleCount = 5;
     int rule = static_cast<int>(camera_path_builder_->ground_up_axis());
@@ -681,17 +683,19 @@ void MappleViewer::draw_ground_up_rule() {
     ImGui::SetItemTooltip("The direction the camera's up points, for the whole path. Auto uses the\n"
                           "scene's shortest extent (upright for a building or a terrain); the axes\n"
                           "pin it to the world; Up from the view follows the camera, for a model you\n"
-                          "have rotated upright. Poses rise straight up from the traced points and\n"
-                          "keep their height above the ground, so a slope no longer banks the camera.");
+                          "have rotated upright. Walk and flight rise along it from the traced\n"
+                          "points, so a slope does not bank the camera; Orbit runs its axis along it.");
     const vec3 up = camera_path_builder_->ground_up_direction();
     ImGui::SameLine();
     ImGui::TextDisabled("( %.2f, %.2f, %.2f )", up.x, up.y, up.z);
     ImGui::SetItemTooltip("The up direction the rule above resolves to right now. The scene's\n"
-                          "three axes are drawn through its center while this window is open.");
+                          "three axes are drawn through its center while the path is shown.");
+}
 
+void MappleViewer::draw_follow_slopes_rule() {
     // Immediately under the up rule: whether the track climbs with the ground. Both ground
     // modes use it, so it sits beside the rule they share rather than in either mode's
-    // own parameters.
+    // own parameters. Orbit builds no ground track and does not draw this one.
     bool follow = camera_path_builder_->follow_ground_slopes();
     if (ImGui::Checkbox("Follow slopes", &follow)) {
         camera_path_builder_->set_follow_ground_slopes(follow);
@@ -870,7 +874,7 @@ void MappleViewer::commit_aim_stroke() {
     update();
 }
 
-void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
+void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
     if (!camera_path_builder_)
         return;
     camera_path_builder_->set_scene(models());
@@ -879,26 +883,16 @@ void MappleViewer::apply_orbit_gesture(const vec2 &from, const vec2 &to) {
         return;
     }
 
-    // The axis passes through the surface under the press; a click (no drag) keeps
-    // the turntable default, the view's up axis through that point.
-    const PickResult hit = pick(static_cast<int>(from.x), static_cast<int>(from.y));
+    // The click says where the axis stands; the up rule says which way it runs.
+    const PickResult hit = pick(static_cast<int>(anchor.x), static_cast<int>(anchor.y));
     if (!hit) {
         LOG(WARNING) << "the orbit has to start on a visible model surface";
         return;
     }
-    const vec3 up = camera_path_builder_->ground_up_direction();
-    vec3 direction = -up;
-    const vec2 drag = to - from;
-    if (drag.length2() > 4.0f) { // 2 logical pixels: below that the gesture is a click
-        // The image-plane direction that projects onto the dragged segment.
-        direction = camera()->right_vector() * drag.x - camera()->up_vector() * drag.y;
-        direction.normalize();
-        // orbit_frames() keeps the axis as the camera's up; point a dragged axis so
-        // that up stays the view's up, and an upward drag does not orbit upside down.
-        if (dot(-direction, up) < 0.0f)
-            direction = -direction;
-    }
-    const Line3 axis = Line3::from_point_and_direction(hit.position, direction);
+    // orbit_frames() takes the axis as the reversed camera up, so the up rule through the
+    // anchor is an axis pointing the other way.
+    const Line3 axis = Line3::from_point_and_direction(hit.position,
+                                                       -camera_path_builder_->ground_up_direction());
 
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();

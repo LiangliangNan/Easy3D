@@ -431,9 +431,13 @@ private:
 
     void draw_animation_window();
 
-    // The Walk and Flight modes' shared parameter: the rule that decides the path's one
-    // up direction, and the direction it resolves to right now.
+    // The path modes' shared parameter: the rule that decides the path's one up direction,
+    // and the direction it resolves to right now. Walk and flight stand their poses on it;
+    // Orbit runs its rotation axis along it.
     void draw_ground_up_rule();
+    // The Walk and Flight modes' second shared parameter: whether a track climbs with the
+    // ground under it or keeps one altitude. Orbit has no ground track, so it skips this one.
+    void draw_follow_slopes_rule();
     // The Walk and Flight modes' shared parameter: the keyframe spacing along the track,
     // in scene heights (one value for both tracks).
     void draw_keyframe_spacing();
@@ -492,11 +496,10 @@ private:
     // look at the ground the track runs towards rather than straight down.
     void commit_flight_track();
 
-    // Applies the orbit gesture: the axis passes through the surface under \p from
-    // and runs along the dragged screen segment; a click (no drag) keeps the
-    // turntable default, the view's up axis through that point. The orbit replaces
-    // the path or is appended to it, as the Orbit tool is set.
-    void apply_orbit_gesture(const easy3d::vec2 &from, const easy3d::vec2 &to);
+    // Applies the orbit gesture: the axis rises from the surface under the clicked
+    // screen point \p anchor in the direction of the path's up rule. The orbit replaces
+    // the path (Ctrl+Z restores it).
+    void apply_orbit_gesture(const easy3d::vec2 &anchor);
 
     // The range of keyframes the Aim tool re-aims: what the last path gesture (or the
     // last aim) produced. Any edit that adds, removes or replaces keyframes clears it,
@@ -833,8 +836,8 @@ private:
     // runs through the model and scene geometry would be occluded.
     void append_measure_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
-    // Appends the three world axes through the scene's center while the Camera Path
-    // window is open: the reference for the up direction that window asks the user to pick.
+    // Appends the three world axes through the scene's center while the camera path is on
+    // screen: the reference for the up direction the path modes ask the user to choose.
     void append_scene_axes_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Appends the current model's manipulated-frame box while Alt is held (the
@@ -909,11 +912,6 @@ private:
     std::vector<easy3d::vec3> route_segment_;                 // points of the current segment
     std::vector<std::vector<easy3d::vec3>> route_segments_;   // segments completed by a missed pick
 
-    // The orbit gesture: a drag across the scene sets the axis (previewed as the
-    // dragged segment); the release applies it.
-    bool orbit_dragging_ = false;
-    easy3d::vec2 orbit_drag_from_;
-    easy3d::vec2 orbit_drag_to_;
     // The keyframes the Aim tool acts on; the aim prompt disappears when they change.
     AimRange aim_range_;
     CameraPathSnapshot camera_path_snapshot_;
