@@ -2734,3 +2734,29 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   ImGui app was unchanged, so the suites were not rerun. The uncommitted release bump in
   `easy3d/util/version.h` and the top-level `CMakeLists.txt` (2.6.1 → 2.7.0, release date
   2026-11-23) is untouched by this retirement.
+
+### 2026-11-24 — The Camera Path window draws the scene's axes as the "up" reference
+
+- `MappleViewer::append_scene_axes_overlay()` (`applications/Mapple/mapple_viewer.cpp`) draws an
+  overlay while `camera_path_editing_mode()` is on: the three world axes through the center of
+  `CameraPathBuilder::scene_box()`, the same box `ground_up_direction()` resolves `Auto` from,
+  each one a full line whose far half is dimmed and whose near end carries an arrowhead in the
+  gizmo arrows' colors. While no model has been measured, the camera's own scene center and radius
+  stand in.
+- It is a single `graphics::shape::draw_lines_3d()` command handed to `Viewer::set_overlays()`
+  from `pre_draw()`, not `Viewer::draw_corner_axes()`: Mapple turns the corner triad off, and
+  reviving it would mean touching both backend halves of `viewer.cpp` for a hint that belongs to
+  the path window rather than to the viewer.
+- The command stays thin (2.5 logical px) and translucent (alpha 0.7) on purpose. An overlay with
+  `overlay_depth_test` off is drawn in the last phase by both backends, i.e. after the
+  depth-tested keyframe gizmos, so an opaque triad would lie over the handles being edited.
+- `draw_ground_up_rule()`'s resolved-vector tooltip now says the axes are on screen.
+- Proofreading the anti-gravity change around this fixed two more comments of this app: the
+  declaration of `commit_flight_track()` still described stations rising along the surface normal
+  and aiming straight down, and `draw_keyframe_spacing()` claimed a `kFieldWidth` constant that
+  does not exist (the rows line up on the window's default item width).
+- Measured: both trees (Vulkan Debug, OpenGL RelWithDebInfo) build the `Mapple` target clean and
+  `easy3d_camera_path_builder_test` and `easy3d_keyframe_interpolator_test` pass. Not measured:
+  how the triad reads over a real model -- the app was not launched, so the reach, the alpha and
+  the arrowhead size are still unverified by eye.
+

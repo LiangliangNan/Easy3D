@@ -654,8 +654,8 @@ void MappleViewer::draw_keyframe_spacing() {
     // One value for both ground tracks, measured against the scene, so neither the eye
     // height nor the flight height moves the keyframe density.
     float spacing = camera_path_builder_->keyframe_spacing_in_scene_heights();
-    // Fill the row like the widgets around it: the same width as the up rule's combo, so
-    // the two fields line up under each other instead of the drag sitting short.
+    // Like the widgets around it, the drag keeps the window's default item width, so the
+    // rows of this mode's parameters line up with each other.
     if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.01f, 0.01f, 10.0f, "%.2f x scene")) {
         camera_path_builder_->set_keyframe_spacing_in_scene_heights(spacing);
         update();
@@ -686,7 +686,8 @@ void MappleViewer::draw_ground_up_rule() {
     const vec3 up = camera_path_builder_->ground_up_direction();
     ImGui::SameLine();
     ImGui::TextDisabled("( %.2f, %.2f, %.2f )", up.x, up.y, up.z);
-    ImGui::SetItemTooltip("The up direction the rule above resolves to right now.");
+    ImGui::SetItemTooltip("The up direction the rule above resolves to right now. The scene's\n"
+                          "three axes are drawn through its center while this window is open.");
 
     // Immediately under the up rule: whether the track climbs with the ground. Both ground
     // modes use it, so it sits beside the rule they share rather than in either mode's

@@ -114,9 +114,8 @@ public:
     ///      valid for the builder's lifetime if a generating function is called.
     /// \note The settings start at eye height 0.2 scene heights, keyframe spacing 0.5
     ///      scene heights, both ground tracks following the terrain's slopes, flight
-    ///      height 4.0 scene heights, orbit radius and
-    ///      vertical offsets 0 object heights, pitch 0 degrees, 10 keyframes per loop
-    ///      and 2 loops.
+    ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.05
+    ///      object heights, pitch 0 degrees, 10 keyframes per loop and 2 loops.
     CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
     /// Destroys the builder. The camera and the interpolator are borrowed, so
     /// neither is destroyed.
@@ -224,9 +223,9 @@ public:
     /// \brief Whether the ground tracks follow the terrain's slopes (default true).
     /// \details True, every pose keeps its own height above the point under it, so a
     ///      walk climbs a hill and a flight climbs with the ground it traces. False,
-    ///      the whole track keeps the altitude of the stroke's first point - the camera
-    ///      flies level, at foot.front() + up x height for every pose, whatever the
-    ///      ground does beneath it. The stroke still supplies the track's ground points
+    ///      the whole track keeps the altitude of the stroke's first point: every pose
+    ///      stands the same height above that first level, however far the ground
+    ///      climbs or falls beneath it. The stroke still supplies the track's ground points
     ///      (its foot), which is what a flight's default aim looks at.
     /// \param follow_slopes True to follow the terrain's heights, false for a constant
     ///      altitude across the track.
@@ -276,7 +275,7 @@ public:
     std::size_t generate_orbit(const Line3 &axis, const vec3 &center);
 
     /// \brief Extra orbit radius beyond the scene diagonal, in object heights
-    ///      (default 0).
+    ///      (default 0.2).
     /// \details Object height is the extent of scene_box() along the orbit's up
     ///      direction. The camera circles at
     ///      scene_box().diagonal_length() + offset x object height, so negative
@@ -287,7 +286,7 @@ public:
     float orbit_radius_offset_in_object_heights() const { return orbit_radius_offset_in_object_heights_; }
 
     /// \brief Vertical offset of the orbit center above the picked point, in object
-    ///      heights (default 0).
+    ///      heights (default 0.05).
     /// \details The offset is applied along the orbit's up (the reversed axis) before
     ///      the center is projected onto the axis, so it moves the center along the
     ///      axis: it raises the orbit for a level axis and shifts it diagonally for an
@@ -551,9 +550,9 @@ protected:
     float flight_height_in_scene_heights_;
 
     // Orbit
-    // Extra orbit radius beyond the scene diagonal, in object heights (default 0).
+    // Extra orbit radius beyond the scene diagonal, in object heights (default 0.2).
     float orbit_radius_offset_in_object_heights_;
-    // Orbit center offset above the picked point, in object heights (default 0).
+    // Orbit center offset above the picked point, in object heights (default 0.1).
     float orbit_vertical_offset_in_object_heights_;
     // Orbit camera pitch, in degrees (default 0).
     float pitch_degrees_;

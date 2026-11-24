@@ -3,6 +3,7 @@
 #include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/util/initializer.h>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;

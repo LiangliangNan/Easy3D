@@ -94,7 +94,7 @@ namespace easy3d {
             : camera_(camera), kfi_(interpolator), ground_up_axis_(GroundUpAxis::Auto),
               eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_scene_heights_(0.5f),
               follow_ground_slopes_(true), flight_height_in_scene_heights_(4.0f),
-              orbit_radius_offset_in_object_heights_(0.2f), orbit_vertical_offset_in_object_heights_(0.05f),
+              orbit_radius_offset_in_object_heights_(0.2f), orbit_vertical_offset_in_object_heights_(0.1f),
               pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
     }
 

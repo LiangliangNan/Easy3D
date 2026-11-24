@@ -488,8 +488,8 @@ private:
     void commit_ground_route();
 
     // Turns the traced stroke into flight keyframes appended to the path: the stations
-    // rise along the surface normal under each foot and look down at that foot by
-    // default (the reverse of their lift).
+    // rise along the path's up direction above each foot and, with nothing aimed at,
+    // look at the ground the track runs towards rather than straight down.
     void commit_flight_track();
 
     // Applies the orbit gesture: the axis passes through the surface under \p from
@@ -832,6 +832,10 @@ private:
     // them. It is a screen-space overlay because the chord between two surface points
     // runs through the model and scene geometry would be occluded.
     void append_measure_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
+
+    // Appends the three world axes through the scene's center while the Camera Path
+    // window is open: the reference for the up direction that window asks the user to pick.
+    void append_scene_axes_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Appends the current model's manipulated-frame box while Alt is held (the
     // manipulation gesture) or while its transform is not the identity.

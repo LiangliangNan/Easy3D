@@ -401,6 +401,7 @@ void MappleViewer::pre_draw() {
     append_selection_overlay(hints);
     append_hover_overlay(hints);
     append_measure_overlay(hints);
+    append_scene_axes_overlay(hints);
     append_path_stroke_overlay(hints);
     if (keyframe_editor_)
         keyframe_editor_->append_overlay(hints, static_cast<unsigned>(framebuffer_width()),
@@ -1874,6 +1875,66 @@ void MappleViewer::append_measure_overlay(std::vector<graphics::DrawCommand> &co
         marker(start);
     if (end_visible)
         marker(end);
+}
+
+void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> &commands) const {
+    // The Camera Path window asks which way a path's up points, so while it is open the view
+    // supplies the reference for that answer: the three world axes through the scene's
+    // center, the in-scene counterpart of the corner triad the Viewer draws elsewhere.
+    if (!camera_path_editing_mode())
+        return;
+    const auto fw = static_cast<unsigned>(framebuffer_width());
+    const auto fh = static_cast<unsigned>(framebuffer_height());
+    if (fw == 0 || fh == 0)
+        return;
+
+    // The very box the up rule resolves from, so the triad and the window's readout describe
+    // one scene; while no model was measured the camera's own scene parameters stand in.
+    const Box3 box = camera_path_builder_ ? camera_path_builder_->scene_box() : Box3();
+    const float reach = box.is_valid() ? 0.5f * std::max({box.range(0), box.range(1), box.range(2)})
+                                       : camera()->scene_radius();
+    if (!(reach > 0.0f) || !std::isfinite(reach))
+        return;
+    const vec3 center = box.is_valid() ? box.center() : camera()->scene_center();
+
+    const vec3 axes[3] = {vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f)};
+    // The gizmo arrows' colors, so the reference and the arrows that move a keyframe read
+    // as one set.
+    const vec3 axis_colors[3] = {vec3(0.92f, 0.28f, 0.25f), vec3(0.30f, 0.78f, 0.32f),
+                                 vec3(0.30f, 0.52f, 0.95f)};
+    const vec3 tail_color(0.5f);
+
+    // The three axes share one command: the line helper colors every segment on its own.
+    // Each is a full line through the center, the far half dimmed so the bright arm and its
+    // head still say which way the axis points.
+    const vec3 view = camera()->view_direction();
+    const float head = 0.1f * reach;
+    std::vector<vec3> segments, colors;
+    for (int i = 0; i < 3; ++i) {
+        const vec3 &axis = axes[i];
+        const vec3 tip = center + axis * reach;
+        segments.insert(segments.end(), {center - axis * reach, center, center, tip});
+        colors.insert(colors.end(), 2, tail_color);
+        colors.insert(colors.end(), 2, axis_colors[i]);
+        // An arrowhead seen end-on is a blob: its wings need the axis to have a screen side.
+        vec3 side = cross(axis, view);
+        if (side.length2() > 1e-8f) {
+            side = normalize(side) * (head * 0.5f);
+            const vec3 back = tip - axis * head;
+            segments.insert(segments.end(), {tip, back + side, tip, back - side});
+            colors.insert(colors.end(), 4, axis_colors[i]);
+        }
+    }
+
+    graphics::DrawCommand command = graphics::shape::draw_lines_3d(
+            segments, colors, camera()->model_view_projection_matrix(), fw, fh,
+            2.5f * dpi_scaling());
+    // The unoccluded overlay layer, so the model never buries the reference it is there for.
+    // It still lands above the depth-tested keyframe handles, which is why it stays thin and
+    // translucent: a cue for the axes' directions, never something to place a keyframe by.
+    command.overlay_depth_test = true;
+    command.color = vec4(1.0f, 1.0f, 1.0f, 0.7f);
+    commands.push_back(command);
 }
 
 void MappleViewer::append_path_stroke_overlay(std::vector<graphics::DrawCommand> &commands) const {

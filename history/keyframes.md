@@ -647,15 +647,74 @@ went past or away from the text.
    default is deliberately sparse; on a scene a few units tall the useful range sits lower, and the
    drag's lower bound is `0.01`.
 8. **UI** -- the `Up` combo, the resolved-vector readout and the `Follow slopes` checkbox are
-   drawn by `draw_ground_up_rule()`, shared by Walk and Flight; the value fields share one
-   `kFieldWidth` constant so their edges line up. The hints carry the clauses above
-   ("Poses rise straight up ...", "Poses rise straight up and look at the ground ahead ...").
+   drawn by `draw_ground_up_rule()`, shared by Walk and Flight; the rows of the mode's parameters
+   line up because every widget in them keeps the window's default item width, as elsewhere. The
+   hints carry the clauses above ("Poses rise straight up ...", "Poses rise straight up and look
+   at the ground ahead ...").
 9. **Persistence** -- `ground_up_axis` and `follow_ground_slopes` are both written to and read
    from `settings.ini` (`applications/Mapple/settings.{h,cpp}`), so neither rule reverts on the
    next launch.
 10. **Tests** -- `tests/renderer/camera_path_builder_test.cpp` covers the rule set (Auto, View,
-    `+Y`, tall and flat boxes, a point-cloud stroke with no faces), the slope (no bank, identical
-    up for every pose), the flight's default aim (ahead, not straight down, with `look_ahead`), the
-    tilted-lift roll, degenerate inputs, and both follow-slopes behaviours (level track and shared
-    flight altitude). `easy3d_camera_path_builder_test` and `easy3d_keyframe_interpolator_test`
+    `+Y`, tall and flat boxes, a point-cloud stroke with no faces), a route that crosses the up
+    (no bank, identical up for every pose) and one that climbs along it (each pose over its own
+    foot, then one shared altitude with the rule off, for the track and the flight alike), the
+    flight's default aim (ahead, not straight down, with `look_ahead`), the tilted-lift roll and
+    degenerate inputs. `easy3d_camera_path_builder_test` and `easy3d_keyframe_interpolator_test`
     pass; both Mapple trees build.
+
+### 2026-11-24 — Proofread pass on the anti-gravity change, and the scene axes as a cue
+
+Reading the ten files of the change back against the design above turned up seven places where
+the code, the comments or the docs disagreed. All are fixed; nothing about the behaviour
+changed.
+
+- **The library docs claimed defaults the code never had.** The constructor's `\note` and both
+  orbit accessor briefs said the orbit offsets start at 0; they start at 0.2 (radius) and 0.05
+  (vertical), which is what the constructor initialises and what `orbit_frames()` reads.
+- **`set_follow_ground_slopes()` described a lifted first foot.** "the camera flies level, at
+  `foot.front() + up x height` for every pose" is not what `lifted_feet()` does: every pose keeps
+  its own position across the up and gets the *first* foot's altitude along it. The doc now says
+  the track holds one altitude, the first foot's, however far the ground climbs beneath it.
+- **A Windows-hostile identifier.** `tests/renderer/camera_path_builder_test.cpp` named a local
+  `near`, which the legacy `windef.h` macros (`near`/`far`) expand away before the compiler sees
+  a declaration. Renamed to `one_ahead_target`; an audit of every `near`/`far` token in the repo
+  found no other use as an identifier, only the prose of comments and of the documentation in
+  `easy3d/renderer/camera.cpp`. Four tests that call `std::min`/`std::abs` while including only
+  `<iostream>` also gained the header they use (`<algorithm>`/`<cmath>`), which MSVC needs.
+- **Comments that pointed at the wrong up.** The flight blocks in that test still said "the view's
+  up" in three places where the roll reference is `ground_up_direction()` (and not the `0,0,-1`
+  one of the old normal-based rule), and the flat-route block claimed `Auto` stood the cube on
+  `+X` on the line before pinning the rule to `+Y`. The same miss reached the app: the declaration
+  of `commit_flight_track()` in `mapple_viewer.h` still promised stations that "rise along the
+  surface normal under each foot" aiming "straight down" at it.
+- **The test never tested the slope rule.** Its "slope" stroke climbs in Z while the path's up is
+  `+Y`, i.e. across the up, so following the ground and holding one altitude give the *same*
+  poses -- both the route and the flight assertions held under either setting, and one of them
+  (`foot.y == -5 || foot.y > -5`) could not fail. The stroke is now named for what it is
+  (`diagonal_stroke`), and a new `climb_stroke` climbs along `+Y`, where the rule shows: with it
+  on, the poses rise from `y = -3` to `y = 1` over their own feet; with it off, all five keep
+  `y = -3` while the flight feet under them still climb.
+- **The changelog entry for the UI item named a constant that does not exist** ("the value fields
+  share one `kFieldWidth`"). What actually lines the rows up is the default item width; the entry
+  now says that, and `draw_keyframe_spacing()`'s comment said so before this pass.
+
+**The scene axes as a cue.** The `Up` combo asks which way a path's up points, and until now the
+answer had to be imagined: Mapple turns the Viewer's corner triad off, so nothing on screen said
+where +X, +Y and +Z lie. `MappleViewer::append_scene_axes_overlay()`
+(`applications/Mapple/mapple_viewer.cpp`) now draws the three axes through the scene's center
+whenever the Camera Path window is open -- the in-scene counterpart of that corner triad, at the
+very box `ground_up_direction()` resolves `Auto` from. It goes through `Viewer::set_overlays()` as
+a `graphics::shape::draw_lines_3d()` command rather than through `draw_corner_axes()`, so the
+OpenGL and Vulkan backends need no separate code and the axes sit where the user is placing
+keyframes: each axis is a full line through the center with the far half dimmed and an arrowhead
+on the near one, in the keyframe handles' colours. It is deliberately thin (2.5 logical px) and
+translucent (alpha 0.7): an unoccluded overlay is drawn *after* the depth-tested keyframe gizmos
+by both backends, so anything opaque would lie over the handles the user is working with. The
+resolved-vector readout's tooltip now mentions the triad.
+
+`easy3d_camera_path_builder_test` passes and both Mapple trees (OpenGL RelWithDebInfo, Vulkan
+Debug) build; the overlay itself has an entry of its own in `history/mapple.md`, where the Camera
+Path window's history lives. One finding is recorded in `ToDo.md` rather than changed here: a
+flight's last stations have nothing ahead of them, so the clamped aim points them straight down
+along the up, where the roll is undefined -- against the level-horizon rule the rest of the track
+follows.

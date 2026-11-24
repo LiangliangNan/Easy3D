@@ -7,6 +7,7 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;
