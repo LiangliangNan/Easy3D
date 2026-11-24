@@ -395,3 +395,210 @@ on both backends.
 **Validation (final code, after the `KeyframeTimeline` rename):** OpenGL `build-opengl-check` full
 CTest **147/147** passed; Vulkan `build-vulkan-check` full CTest green apart from the pre-existing
 `vulkan.keyframeeditor` (Not Run). The keyframe and camera-path suites pass on both backends.
+
+### 2026-11-24 — `kRamp` 0.18 confirmed as the timing that reads right
+
+Closes the doubt the 2026-11-22 entry left open: that entry claimed `kRamp` 0.2 → 0.18 was the
+fix, while the numbers in it (about 7 frames of sub-10% crawl on each side of a dwell) are still
+what 0.18 produces, so a 2 s dwell still measures about 2.46 s on screen.
+
+- **The maintainer confirms the timing is good now** with `kRamp = 0.18f` in
+  `KeyFrameInterpolator::segment_fraction()`, in playback and in the recorded videos on both
+  backends at x1.0 and x2.0 speed. Their observation in a live session, not a measurement of mine;
+  no code change followed, and `kRamp` stays at 0.18.
+- What was measured on the same code, for the record: on `domik.kf` (19 keyframes, 2 s dwells at
+  keyframes 2, 5, 7 and 15) at 30 fps a dwell holds **60 frames = 2.00 s** at speed 1.0 and
+  **30 frames = 1.00 s** at speed 2.0 - exactly what the `Dwell (s)` field was set to, so
+  `interpolate()` is correct at both speeds. The rest of the perceived pause is the ease in and
+  out: the last five frames before a dwell step down 95 %, 76 %, 58 %, 39 % and 21 % of cruise and
+  the first frame after it leaves at 3 %, so the camera is slow but moving for about 0.23 s on
+  each side. That ramp is the cinematic rule working as designed (the camera leaves and arrives at
+  rest), not a timing error, which is why 0.18 is the value to keep.
+- Also confirmed by the same probes: a dwell scales with `Speed (cinematic)` by design
+  (`interpolation_period() * interpolation_speed()`), so 0.5x plays a 2 s dwell as 4 s and 2x as
+  1 s - intended behaviour, not a bug - and the recording shows the same lengths because it renders
+  `interpolate()`'s samples directly.
+- No files changed in this entry. `easy3d/util/version.h` unchanged.
+
+### 2026-11-24 — Proposal: one anti-gravity up for the Walk and Flight paths
+
+**Status: agreed; the decisions below are final and the implementation follows them.** Written
+before any code change so the up rule had one home to argue with, as the maintainer asked, and
+settled in the same session: the default rule, the flight's default aim and the way the eye height
+follows the terrain are decided here, not left to the code. The UI sketches are ASCII of what the
+Camera Path window shows.
+
+#### The problem
+
+The Walk and Flight tools take two things from the drag: a **contact point** and the **surface
+normal** there. `MappleViewer::route_point_at()` (`applications/Mapple/ui/animation.cpp`, the pick
+branch) reads the normal from the hit face, and `CameraPathBuilder::resample_stroke()`
+(`easy3d/renderer/camera_path_builder.cpp`) interpolates and smooths it along the stroke. The pose
+up then comes from that smoothed normal, so three things are wrong with it:
+
+1. **The normal is not always there.** Only a `SurfaceMesh` hit with `face_index >= 0` supplies
+   one; a point cloud, a standalone drawable, or a pick without provenance falls back to
+   `ground_up_direction()`. A point-cloud walk therefore follows a *different rule* from a mesh
+   walk, with no sign of it in the window.
+2. **Its sign is a guess.** `SurfaceMesh::compute_face_normal()` follows the winding, which is
+   arbitrary (the class documents this at `surface_mesh.h:2385`). The code flips it with
+   `dot(up, camera()->view_direction()) > 0` — "the side facing the camera". On a floor that is
+   right; on a wall or a cliff the camera is beside the surface, so the "up" comes out horizontal
+   and the walker leans onto the wall.
+3. **It varies along curved surfaces.** Two smoothing passes cannot stop the up following a
+   curved roof or terrain, so the camera **banks**: the horizon rolls with the surface. No person
+   walking and no aircraft does that — the camera up stays with gravity while the ground rises and
+   falls.
+
+The fallback is no better than a guess either: `ground_up_direction()` is the **current view's up
+vector**, so a rolled view tilts the whole path (batch 110 chose this deliberately, to keep a
+rotated model upright on screen, but it is a view fact, not a world fact).
+
+Flight is worse still: its default aim is the reverse of the lift, i.e. **at the foot it rose
+from**, so a tilted normal tilts the *aim* as well as the roll — the camera looks down the surface
+normal instead of at the ground ahead.
+
+#### The decision
+
+**The camera's up is one anti-gravity direction for the whole path, and the surface supplies only
+where the foot is.**
+
+- The up is **stored on the builder** (one vector for the path), resolved once from a rule the user
+  can name, and never derived per foot or from the view at gesture time. The default rule is
+  `Auto (box shortest)`: the scene box's shortest extent decides, so a building, a terrain or a
+  scan that stands on its own shortest axis needs no setting at all, and `Up from the view` stays
+  available for a model whose orientation is unknown and which the user has turned upright.
+- The contact point is all the gesture needs from the surface. A pose is `foot + up * eye_height`,
+  rising **straight up** from the contact point, so the eye can never land behind the surface and
+  the sign-flip heuristic is not needed at all. This also fixes the point-cloud case for free: no
+  face, no normal, same behaviour as a mesh.
+- **The eye height is terrain-relative**: the pose keeps its *vertical* height above its own
+  contact point, which is the same thing as measuring the height along the path's up. That is what
+  makes the rule work on a slope -- the feet climb with the surface, the camera stays upright, and
+  a pose is never closer to the ground it stands on than the eye height says.
+- The normal therefore keeps **no** job at all, not even the lift: "straight up from the contact
+  point" is both the anti-gravity rule and the terrain-relative height in one. Should a later step
+  want the camera to rise along a slope's normal instead, that is a new decision with its own
+  entry, not a leftover of this one.
+- **Flight's default aim becomes the ground ahead**, not straight down at each station's foot:
+  station *i* aims at the foot of the station about two stations further along the track (the last
+  stations aim as far ahead as the track has), and each target is lowered by that station's own
+  height above its foot, so a flight over a slope looks along the ground rather than into it. The
+  camera flies where it is going, which is what a flight looks like; `Aim...` still overrides it.
+- Walk, Flight and the Aim re-aim (`aimed_frames()`, which today passes
+  `ground_up_direction()` as the roll reference for flights only) all use that same up, so
+  re-aiming can never re-introduce a bank.
+
+**Consequence to accept, and to say in the hint:** a walk on a *vertical* surface stops meaning
+"standing on the wall" and becomes "a camera travelling along the wall, upright". That is the right
+behaviour for a video and the wrong one for a ceiling walk; it is a visible change of intent, so it
+belongs in the window's text, not only in this entry.
+
+#### Where the up comes from
+
+The app cannot know which way gravity points, so the user names the rule. The set is the one batch
+109 had, plus the view rule batch 110 replaced it with:
+
+| Rule | Resolves to | For |
+|---|---|---|
+| `Auto (box shortest)` | the world axis of the visible scene box's **shortest extent** | buildings, terrains, `domik` (+Y); **the default** |
+| `+X` / `+Y` / `+Z` | that world axis | a standing figure, or a scan whose orientation is known |
+| `Up from the view` | the camera's up, normalized | a model you have rotated and are looking at upright (batch 110's rule, kept as an option) |
+
+`Auto` keeps batch 109's reasoning (a building's or a terrain's height is its shortest extent) and
+batch 110's objection is answered by making the view rule a choice rather than the only rule. The
+**resolved vector is shown next to the combo**, so the user sees what the app actually chose
+instead of inferring it from the resulting tilt.
+
+Deliberately **not** in the UI: a free-form vector picker, or a "drag to set the up" gizmo. Nobody
+wants to author gravity with a gizmo, and it would fight the surface drag that already owns the
+left button in these modes.
+
+#### The UI
+
+The combo belongs to **both** Walk and Flight, because both need the same reference; the value is
+one member on `CameraPathBuilder`, so changing it in either mode re-frames what both make. It sits
+**first** among the mode's parameters, above the heights that are measured along it. Window width is
+`kCameraPathWindowWidth` (430 logical px); the sketches are the content area, not the frame.
+
+Walk armed:
+
+```
+Camera Path
+  Import...  Export...  .kf files                                     Clear
+  ------------------------------------------------------------------------
+  ( ) Free   (o) Orbit...   (*) Walk...   ( ) Flight...
+  Drag over the ground surface to trace the route. Esc cancels.
+
+  Up        [ Auto (box shortest)  v ]            ( 0.00, 1.00, 0.00)
+  Eye height             [=====|--------]  0.20 x scene
+  Keyframe spacing       [====|---------]  0.50 x height
+  ------------------------------------------------------------------------
+  ...
+```
+
+Flight armed:
+
+```
+  ( ) Free   ( ) Orbit...   ( ) Walk...   (*) Flight...
+  Drag over the surface to trace the camera track. Esc cancels.
+
+  Up        [ Auto (box shortest)  v ]            ( 0.00, 1.00, 0.00)
+  Flight height          [=========|----]  0.50 x scene
+  Keyframe spacing       [====|---------]  0.50 x height
+```
+
+The combo's tooltip, verbatim:
+
+> The direction the camera's up points, for the whole path. `Auto` uses the scene's shortest
+> extent (upright for a building or a terrain); the axes pin it to the world; `Up from the view`
+> follows the camera, for a model you have rotated upright. Poses rise straight up from the traced
+> points and keep their height above the ground, so a slope no longer banks the camera.
+
+The hint line under the radios gains one clause, so the behaviour change is visible where the
+gesture is described:
+
+- Walk: *"Drag over the ground surface to trace the route. Poses rise straight up; Esc cancels."*
+- Flight: *"Drag over the surface to trace the camera track. Poses rise straight up and look at
+  the ground ahead; Esc cancels."*
+
+`Free` and `Orbit...` are unchanged: an orbit's up is its own axis (the reversed picked line), which
+is a turntable, not gravity.
+
+#### What changes, when this is implemented
+
+1. `easy3d/renderer/camera_path_builder.{h,cpp}` — bring back
+   `enum class GroundUpAxis { Auto, X, Y, Z, View }` with `ground_up_axis()` /
+   `set_ground_up_axis()`; `ground_up_direction()` resolves from it (shortest box extent / axis /
+   view up) and stays the single place every caller already goes through. Add a way to read the
+   resolved vector for the window (it is `ground_up_direction()` itself).
+2. `resample_stroke()` — stop interpolating and smoothing the per-foot ups; return the feet only.
+   Its signature loses the `ups` output. `route_point_at()` stops computing a normal, so a pick
+   yields the contact point and nothing else.
+3. `ground_frames(feet, up, eye_height)` — the up argument becomes the single path up (one vector),
+   not one per foot; the per-foot heading stays (it is the aim along the route, which is correct).
+   The eye height is measured along that up, so it is the pose's vertical height above its own
+   contact point: terrain-relative by construction.
+4. `flight_stations()` / `flight_frames()` — stations rise along the path up; the default aim
+   becomes **the ground ahead**: station *i* aims at the foot of the station `look_ahead` (default
+   2) further along the track, lowered by its own height above its foot, and the last stations aim
+   as far ahead as the track has. The tilted-normal aim disappears with the normal.
+5. `applications/Mapple/ui/animation.cpp` — the `Up` combo and the resolved-vector readout in both
+   modes, the tooltips and hints above.
+6. `applications/Mapple/settings.{h,cpp}` — persist the chosen rule, so the next session does not
+   silently revert to `Auto` on a scene that needed `+Y`.
+7. `tests/renderer/camera_path_builder_test.cpp` — a flat floor, a 45° slope and a point cloud
+   (no faces) each produce a path whose pose up is identical for every pose and equal to the chosen
+   rule; a `+Y` scene with the rule at `+X` banks nothing; the flight's default aim points along
+   the stroke rather than at each foot.
+8. `history/keyframes.md` (this entry) gains a changelog section when the work lands, and
+   `history/mapple.md` a batch entry; `ToDo.md` line for the walk/flight up rule is closed there.
+
+#### The principles to follow
+
+Make it **as logical and as faithful to reality as possible** (one up per path, contact points
+only, heights vertical); keep the **UI as simple and intuitive as possible** (one combo, first
+among the mode's parameters, with the resolved direction beside it and no other new control); keep
+the **code as clear and clean as possible** (the rule lives in `ground_up_direction()` alone, the
+builders take one up instead of a per-foot list, and `resample_stroke()` returns feet only, so no
+normal plumbing survives in either the builder or the gesture).
