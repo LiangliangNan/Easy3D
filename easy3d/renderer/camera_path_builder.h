@@ -62,8 +62,8 @@ namespace easy3d {
  *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
  *        flight_frames() (stations with a separate aim track), and
  *      - aimed poses for any of them: every builder produces its mode's default aim
- *        (ground: along the route, orbit: at the axis, flight: down at each station's
- *        foot), and aimed_frames() re-aims existing poses at a target per pose,
+ *        (ground: along the route, orbit: at the axis, flight: at the ground ahead
+ *        along its track), and aimed_frames() re-aims existing poses at a target per pose,
  *        keeping their position and roll reference. This is how an app lets the user
  *        replace a mode's default aims by a clicked point or a traced aim stroke.
  *
@@ -91,20 +91,21 @@ namespace easy3d {
  *      point equals its first) loses one of the coincident first/last poses. Add poses
  *      through the interpolator yourself if you need explicit times.
  *
- * \attention The walking route stands the walker upright on the traced surface:
- *      each pose rises from its own ground-contact point along the surface normal
- *      under it, and the eye height is measured along that normal, so the route
- *      tilts with the terrain. The normals are oriented to the side facing the
- *      camera (the opposite of its view direction), so a face wound either way
- *      cannot put the eye centers behind the surface. Poses without a surface
- *      normal (e.g. a point-cloud pick) use the current view's up direction.
+ * \attention The walking route and the flight keep the camera upright: every pose
+ *      of a path stands along one up direction, ground_up_direction(), which is
+ *      resolved once from ground_up_axis() and is the same for the whole path. A
+ *      traced surface point is only where the foot is: the pose rises from it along
+ *      that up (an eye height, or a flight height), so a slope, a curved roof or a
+ *      face wound either way cannot bank the camera, and a point cloud needs no
+ *      normals at all. Heights are measured along the up as well, so a pose on a
+ *      slope keeps its vertical height above its own foot.
  */
 class CameraPathBuilder {
 public:
     /// \brief Borrows \p camera and \p interpolator; neither is owned.
-    /// \details The camera supplies the view's up and view directions (the fallback
-    ///      stand direction and the camera-facing normal rule), the scene center and
-    ///      the scene radius, which the generating functions may grow. The
+    /// \details The camera supplies the view's up direction (the rule behind
+    ///      GroundUpAxis::View), the scene center and the scene radius, which the
+    ///      generating functions may grow. The
     ///      interpolator receives the poses of the generating functions; the pure
     ///      builders never touch it.
     /// \param camera The viewer's camera; it must remain valid for the builder's
@@ -112,7 +113,8 @@ public:
     /// \param interpolator The interpolator that receives the poses; it must remain
     ///      valid for the builder's lifetime if a generating function is called.
     /// \note The settings start at eye height 0.2 scene heights, keyframe spacing 0.5
-    ///      character heights, flight height 0.5 scene heights, orbit radius and
+    ///      scene heights, both ground tracks following the terrain's slopes, flight
+    ///      height 4.0 scene heights, orbit radius and
     ///      vertical offsets 0 object heights, pitch 0 degrees, 10 keyframes per loop
     ///      and 2 loops.
     CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
@@ -140,12 +142,38 @@ public:
     ///      before the first call or when no model was visible.
     const Box3 &scene_box() const { return scene_box_; }
 
-    /// \brief The up direction used where a route has no surface normal.
-    /// \details This is the current view's up direction. Eye poses that carry no
-    ///      per-foot normal stand along it, and the scene height (hence the eye and
-    ///      flight heights in world units) is measured along it, so heights keep the
-    ///      same ratio in any view.
-    /// \return A unit vector; +Z if the camera's up vector is degenerate.
+    /// \brief Where the path's one up direction comes from.
+    /// \details The camera of a walking or flying path never banks: every pose stands
+    ///      along the same up, the anti-gravity direction of the scene. The app cannot
+    ///      know that direction, so the user names the rule and the builder resolves
+    ///      it once, from scene_box() and the camera.
+    enum class GroundUpAxis {
+        Auto,   ///< The world axis of the visible scene box's shortest extent: the height
+                ///< of a building- or terrain-like scene. The default.
+        X,      ///< World +X, for a scan or a figure whose orientation is known.
+        Y,      ///< World +Y.
+        Z,      ///< World +Z.
+        View    ///< The camera's up direction, for a model the user rotated and is looking
+                ///< at upright (a rolled view then tilts the path).
+    };
+
+    /// \brief Sets the rule ground_up_direction() resolves from (default Auto).
+    /// \details The setting applies to every pose the builders make afterwards; it
+    ///      does not touch poses already in the interpolator. Auto needs scene_box(),
+    ///      so call set_scene() first; while the box is invalid it falls back to the
+    ///      camera's up like View.
+    void set_ground_up_axis(GroundUpAxis axis);
+    /// \return The rule the up direction resolves from.
+    GroundUpAxis ground_up_axis() const { return ground_up_axis_; }
+
+    /// \brief The up direction of every pose this builder makes: one anti-gravity
+    ///      direction for the whole path.
+    /// \details Resolved from ground_up_axis(): the world axis of the scene box's
+    ///      shortest extent, a named world axis, or the camera's up. The scene height
+    ///      (hence the eye and flight heights in world units) is measured along it, so
+    ///      heights keep the same ratio whatever the view.
+    /// \return A unit vector; +Z if the camera's up vector is degenerate or the scene
+    ///      box has no extent (e.g. before set_scene()).
     vec3 ground_up_direction() const;
 
     /// \brief Sets the eye height above the ground, in scene heights (default 0.2).
@@ -168,50 +196,66 @@ public:
     /// \return The eye height in world units.
     float eye_height_in_world_units() const;
 
-    /// \brief Distance between consecutive route keyframes along the stroke, in
-    ///      character heights (default 0.5, i.e. half a character height per keyframe).
-    /// \details The walking route resamples its stroke at
-    ///      keyframe_spacing_in_character_heights() x eye_height_in_world_units(), and
-    ///      flight_stations() at keyframe_spacing_in_character_heights() x
-    ///      flight_height_in_world_units(): the same value gives different absolute
-    ///      spacing for the two tracks. The spacing chooses how many intervals the
-    ///      stroke is divided into (length / spacing, rounded); the intervals are then
-    ///      equal, with both stroke ends included.
-    /// \param spacing_in_character_heights A positive multiple of the track's height.
-    ///      The resulting world spacing is clamped to at least 1e-4, so a value at or
-    ///      below zero is accepted but produces a keyframe every 1e-4 world units - an
-    ///      enormous number of keyframes for a normal scene.
-    void set_keyframe_spacing_in_character_heights(float spacing_in_character_heights);
-    /// \return The keyframe spacing, in character heights.
-    float keyframe_spacing_in_character_heights() const { return keyframe_spacing_in_character_heights_; }
+    /// \brief Distance between consecutive keyframes along a ground track, in scene
+    ///      heights (default 0.5, i.e. half the scene's height per keyframe).
+    /// \details One value for both ground tracks, measured against the scene rather than
+    ///      against either track's own height: the walking route and the flight resample
+    ///      their strokes at the same world spacing, so the eye height and the flight
+    ///      height no longer move the keyframe density. A scene height is the extent of
+    ///      scene_box() along ground_up_direction(), or the camera's scene radius while
+    ///      the box is invalid. The spacing chooses how many intervals the stroke is
+    ///      divided into (length / spacing, rounded); the intervals are then equal, with
+    ///      both stroke ends included.
+    /// \param spacing_in_scene_heights A positive multiple of the scene height. The
+    ///      resulting world spacing is clamped to at least 1e-4, so a value at or below
+    ///      zero is accepted but produces a keyframe every 1e-4 world units - an enormous
+    ///      number of keyframes for a normal scene.
+    void set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights);
+    /// \return The keyframe spacing, in scene heights.
+    float keyframe_spacing_in_scene_heights() const { return keyframe_spacing_in_scene_heights_; }
+
+    /// \brief Distance between consecutive keyframes along a ground track, in world
+    ///      units.
+    /// \details scene_height_in_world_units() x keyframe_spacing_in_scene_heights(),
+    ///      clamped to at least 1e-4. Both ground tracks resample at this one value.
+    /// \return The keyframe spacing in world units.
+    float keyframe_spacing_in_world_units() const;
+
+    /// \brief Whether the ground tracks follow the terrain's slopes (default true).
+    /// \details True, every pose keeps its own height above the point under it, so a
+    ///      walk climbs a hill and a flight climbs with the ground it traces. False,
+    ///      the whole track keeps the altitude of the stroke's first point - the camera
+    ///      flies level, at foot.front() + up x height for every pose, whatever the
+    ///      ground does beneath it. The stroke still supplies the track's ground points
+    ///      (its foot), which is what a flight's default aim looks at.
+    /// \param follow_slopes True to follow the terrain's heights, false for a constant
+    ///      altitude across the track.
+    void set_follow_ground_slopes(bool follow_slopes);
+    /// \return Whether the ground tracks follow the terrain's slopes.
+    bool follow_ground_slopes() const { return follow_ground_slopes_; }
 
     /// \brief Generates a walking route through \p stroke on the ground and appends
     ///      it to the interpolator.
     /// \details The stroke points are ground-contact points, so passing the surface
     ///      points picked under the cursor makes the route follow the terrain: each
-    ///      pose sits one eye height above its own stroke point, along the walker's
-    ///      up direction there, and aims level along the route. The stroke is
-    ///      resampled by arc length at keyframe_spacing_in_character_heights() x
-    ///      eye_height_in_world_units(): the spacing rounds to a number of intervals
+    ///      pose sits one eye height above its own stroke point along
+    ///      ground_up_direction(), and aims level along the route. The stroke is
+    ///      resampled by arc length at keyframe_spacing_in_scene_heights() x the scene
+    ///      height: the spacing rounds to a number of intervals
     ///      and the stroke's first and last points and the equal steps between them
     ///      make up the poses, so consecutive poses are always the same distance apart
     ///      along the stroke (a stroke shorter than the spacing still yields two
     ///      poses). The poses are appended to the path (an existing path is kept, so
     ///      several strokes can build one walk).
     /// \param stroke Ground-contact points in path order; at least two are needed.
-    /// \param foot_up_directions The walker's up direction at each stroke point,
-    ///      typically the surface normal there, in the same order as \p stroke.
-    ///      Each direction is normalized and flipped to oppose the camera's view
-    ///      direction, i.e. to point at the rendered side of the surface; they are
-    ///      smoothed along the route before posing. An empty vector stands every
-    ///      pose along ground_up_direction(); a degenerate direction at a stroke point
-    ///      uses ground_up_direction() there.
+    ///      While follow_ground_slopes() is true their own heights are kept, so a route
+    ///      over terrain rises and falls with it; false keeps every pose at the first
+    ///      point's altitude. Either way the camera stays upright on
+    ///      ground_up_direction().
     /// \return The number of poses generated, or 0 if the stroke has fewer than two
-    ///      points, the directions do not pair with the stroke, or the eye height's
-    ///      world value is at most 1e-4.
+    ///      points or the eye height's world value is at most 1e-4.
     /// \note The interpolator may accept fewer keyframes; see the class description.
-    std::size_t generate_ground_route(const std::vector<vec3> &stroke,
-                                      const std::vector<vec3> &foot_up_directions);
+    std::size_t generate_ground_route(const std::vector<vec3> &stroke);
     //@}
 
     /// \name Orbit
@@ -282,12 +326,12 @@ public:
     /// \name Flight
     //@{
     /// \brief The camera stations' height above the traced ground, in scene heights
-    ///      (default 0.5).
+    ///      (default 4.0).
     /// \details A scene height is the extent of scene_box() along
     ///      ground_up_direction(), or the camera's scene radius while the box is
     ///      invalid. The flight resamples its track at
-    ///      keyframe_spacing_in_character_heights() x its world height, so a higher
-    ///      flight also has sparser stations.
+    ///      keyframe_spacing_in_scene_heights() x the scene height, the same spacing as
+    ///      the walking route, so raising the flight does not thin out its stations.
     /// \param height_in_scene_heights A positive fraction of the scene height; a
     ///      height whose world value is at most 1e-4 makes flight_stations() return
     ///      nothing.
@@ -302,32 +346,27 @@ public:
     float flight_height_in_world_units() const;
 
     /// \brief A flight camera station: the position its ground-stroke foot was lifted to.
-    /// \details The pair keeps the lift, so the default aim can point back down the
-    ///      direction the station rose along (the reverse of its surface up).
+    /// \details The pair keeps the lift, so the default aim can point back down at the
+    ///      ground the station flies over (see flight_frames()).
     struct FlightStation {
-        vec3 position;  ///< The camera position, lifted from \p foot along the surface up.
+        vec3 position;  ///< The camera position, lifted from \p foot along ground_up_direction().
         vec3 foot;      ///< The ground-stroke point the station was lifted from.
     };
 
     /// \brief Camera stations of a flight track through \p stroke.
-    /// \details Each station sits one flight height above its own ground point along
-    ///      the surface up there, so the track follows the terrain, and carries that
-    ///      ground point as its foot. The stroke is
-    ///      resampled by arc length at keyframe_spacing_in_character_heights() x
-    ///      flight_height_in_world_units() with the same equal-step, both-ends-included
-    ///      rule as the walking route, and the surface ups are oriented toward the
-    ///      camera and smoothed like the walking route's. It modifies neither the
-    ///      camera nor the interpolator.
+    /// \details While follow_ground_slopes() is true each station sits one flight
+    ///      height above its own ground point along ground_up_direction(), so the track
+    ///      follows the terrain's heights; false lifts every station off the first
+    ///      point's altitude instead, for a level flight over a slope. Either way the
+    ///      camera stays upright and the station carries its ground point as its foot. The
+    ///      stroke is resampled by arc length at keyframe_spacing_in_scene_heights() x
+    ///      the scene height, with the same equal-step, both-ends-included rule as the
+    ///      walking route. It
+    ///      modifies neither the camera nor the interpolator.
     /// \param stroke Ground-contact points in track order; at least two are needed.
-    /// \param surface_up_directions The up direction at each stroke point, in the
-    ///      same order; an empty vector stands every station along
-    ///      ground_up_direction(), and a degenerate direction at a stroke point uses
-    ///      ground_up_direction() there.
     /// \return One station per resampled foot, or an empty vector if the stroke has
-    ///      fewer than two points, the directions do not pair with it, or the flight
-    ///      height's world value is at most 1e-4.
-    std::vector<FlightStation> flight_stations(const std::vector<vec3> &stroke,
-                                               const std::vector<vec3> &surface_up_directions) const;
+    ///      fewer than two points or the flight height's world value is at most 1e-4.
+    std::vector<FlightStation> flight_stations(const std::vector<vec3> &stroke) const;
 
     /// \brief One aim point per station, sampled along \p stroke.
     /// \details The stroke is sampled at \p count equal arc-length fractions, so the
@@ -345,10 +384,10 @@ public:
     ///      callers clear the path first when a replacement is intended.
     /// \details Typically \p stations comes from flight_stations() and \p targets from
     ///      aim_targets(); the aim is exact at each station and the interpolator
-    ///      smooths it in between. The roll reference is the view's up at the time of
-    ///      the call, so the camera never banks. An empty \p targets keeps the flight's
-    ///      default aim: each station looks straight down at its own foot, i.e. along
-    ///      the reverse of the direction it was lifted from that foot.
+    ///      smooths it in between. The roll reference is ground_up_direction(), so the
+    ///      camera never banks. An empty \p targets keeps the flight's default aim: a
+    ///      station looks at the ground ahead of it along the track (see
+    ///      flight_frames()), not straight down at its own foot.
     /// \param stations Camera stations in path order; at least two are needed.
     /// \param targets One aim point per station, in the same order, or empty for the
     ///      default aim. A target equal to its station's position looks down the
@@ -379,28 +418,27 @@ public:
     ///      not positive.
     std::vector<Frame> orbit_frames(const Line3 &axis, const vec3 &center) const;
 
-    /// \brief Eye poses walking through \p feet, each pose standing along its own
-    ///      up direction.
-    /// \details Each pose sits \p eye_height above its foot along that foot's up and
-    ///      aims level along the path (central-difference tangent projected onto its
-    ///      foot's horizon plane), which keeps the heading continuous; the
-    ///      interpolator smooths the path between the poses. The feet may lie at
-    ///      different heights (terrain following); each pose uses its own foot and up
-    ///      direction, so the walker tilts with the terrain. Coincident neighbours
-    ///      borrow the heading of the nearest distinct foot, and a near-vertical step
-    ///      falls back to an arbitrary in-plane heading.
+    /// \brief Eye poses walking through \p feet, all standing along one up direction.
+    /// \details Each pose sits \p eye_height above its foot along \p up and aims level
+    ///      along the path (central-difference tangent projected onto that up's horizon
+    ///      plane), which keeps the heading continuous; the interpolator smooths the
+    ///      path between the poses. The feet may lie at different heights (terrain
+    ///      following) and the camera still never banks, because every pose stands on
+    ///      the same up. Coincident neighbours borrow the heading of the nearest
+    ///      distinct foot, and a near-vertical step falls back to an arbitrary
+    ///      in-plane heading.
     /// \param feet Ground-contact positions in path order; at least two are needed.
-    /// \param up_directions One unit up direction per foot, in the same order; each
-    ///      heading is kept perpendicular to its own direction. A degenerate
-    ///      (near-zero) direction makes the result empty.
-    /// \param eye_height Eye height above each foot, in world units, along the up
-    ///      direction of that foot. This function does not range-check it: a zero
-    ///      height puts the poses at the feet and a negative one below them, while
-    ///      generate_ground_route() refuses a non-positive height.
-    /// \return The poses, or an empty vector if fewer than two feet are given, the
-    ///      directions do not pair with them, or a direction is degenerate.
+    /// \param up The path's up direction, typically ground_up_direction(): one unit
+    ///      vector for every pose. A degenerate (near-zero) direction makes the result
+    ///      empty.
+    /// \param eye_height Eye height above each foot, in world units, along \p up. This
+    ///      function does not range-check it: a zero height puts the poses at the feet
+    ///      and a negative one below them, while generate_ground_route() refuses a
+    ///      non-positive height.
+    /// \return The poses, or an empty vector if fewer than two feet are given or
+    ///      \p up is degenerate.
     std::vector<Frame> ground_frames(const std::vector<vec3> &feet,
-                                     const std::vector<vec3> &up_directions,
+                                     const vec3 &up,
                                      float eye_height) const;
 
     /// \brief Flight poses at \p stations, each aiming at the matching target.
@@ -409,21 +447,27 @@ public:
     ///      interpolator smooths both; between stations the aim is the interpolated
     ///      orientation, not an exact target lock. Each station's orientation is an
     ///      exact look-at: a degenerate \p up falls back to +Z, and a target equal to
-    ///      its station's position looks down the reversed \p up. An empty \p targets
-    ///      is the flight's default aim: every station looks at its own foot, i.e.
-    ///      along the reverse of the direction it was lifted (a station lifted
-    ///      straight up looks straight down; on a slope it looks along that slope's
-    ///      normal). A view along the reversed \p up has no preferred roll, so the
-    ///      basis is deterministic but not tied to \p up.
+    ///      its station's position looks down the reversed \p up.
+    ///      An empty \p targets is the flight's default aim, the ground ahead: station
+    ///      i looks at the foot of the station about \p look_ahead stations further
+    ///      along the track (the last station looks as far ahead as the track has),
+    ///      so the camera flies where it is going instead of straight down. Each
+    ///      target is lowered by the station's own height above its foot, so a flight
+    ///      over a slope aims along the ground rather than into it. A view along the
+    ///      reversed \p up has no preferred roll, so the basis is deterministic but not
+    ///      tied to \p up.
     /// \param stations Camera stations in path order; at least two are needed.
     /// \param targets One aim point per station, in the same order, or empty for the
     ///      default aim.
     /// \param up Unit up reference that keeps the camera roll level.
+    /// \param look_ahead How many stations ahead the default aim looks, at least 1
+    ///      (default 2). Ignored when \p targets is given.
     /// \return The poses, or an empty vector if there are fewer than two stations or
     ///      \p targets does not pair up with them.
     std::vector<Frame> flight_frames(const std::vector<FlightStation> &stations,
                                      const std::vector<vec3> &targets,
-                                     const vec3 &up) const;
+                                     const vec3 &up,
+                                     std::size_t look_ahead = 2) const;
 
     /// \brief \p frames re-aimed so each pose looks at the matching target.
     /// \details The poses keep their positions and, by default, their own up as the
@@ -451,19 +495,12 @@ protected:
     // invalid. In world units.
     float scene_height_in_world_units() const;
 
-    // Resamples stroke and its surface ups by arc length at spacing (world units):
-    // feet receives the resampled ground points and ups the normalized,
-    // camera-oriented, smoothed up directions. The stroke is divided into
-    // round(length / spacing) equal intervals with both ends included, so no two
-    // consecutive samples are closer than the rest.
-    // Returns false if stroke has fewer than two points or surface_up_directions
-    // does not pair with it; an empty direction vector means "every foot uses
-    // ground_up_direction()", and a degenerate direction uses it for that foot.
-    bool resample_stroke(const std::vector<vec3> &stroke,
-                         const std::vector<vec3> &surface_up_directions,
-                         float spacing,
-                         std::vector<vec3> &feet,
-                         std::vector<vec3> &ups) const;
+    // Resamples stroke by arc length at spacing (world units) into feet. The stroke is
+    // divided into round(length / spacing) equal intervals with both ends included, so
+    // no two consecutive samples are closer than the rest.
+    // Returns false if stroke has fewer than two points.
+    bool resample_stroke(const std::vector<vec3> &stroke, float spacing,
+                         std::vector<vec3> &feet) const;
 
     // Appends frame to the interpolator, which times it one second after the previous
     // keyframe and may drop a pose coinciding with the previous one. When the pose was
@@ -481,6 +518,12 @@ protected:
     static quat look_at_orientation(const vec3 &position, const vec3 &target, const vec3 &up);
 
 protected:
+    // The camera positions of a ground track, from its ground points: each one its own
+    // height above its foot while follow_ground_slopes() is true, and the first foot's
+    // altitude plus the height for the whole track otherwise. The feet themselves are
+    // left alone, so a caller keeps the ground reference.
+    std::vector<vec3> lifted_feet(const std::vector<vec3> &feet, float height) const;
+
     // Borrowed viewer camera: the view's up and view directions, the scene center
     // and the scene radius.
     Camera *camera_;
@@ -492,14 +535,19 @@ protected:
     // Union of the visible models last passed to set_scene(); invalid when none was
     // visible.
     Box3 scene_box_;
+    // The rule ground_up_direction() resolves from (default Auto).
+    GroundUpAxis ground_up_axis_;
     // Eye height above the ground, in scene heights (default 0.2).
     float eye_height_in_scene_heights_;
-    // Keyframe spacing of the walking route and the flight, in units of the track's
-    // height (default 0.5).
-    float keyframe_spacing_in_character_heights_;
+    // Keyframe spacing of the walking route and the flight, in units of the scene's
+    // height (default 0.5). One value for both tracks, so neither track's height moves it.
+    float keyframe_spacing_in_scene_heights_;
+    // Whether the ground tracks follow the terrain's heights (default true). False keeps
+    // every pose at the stroke's first point's altitude.
+    bool follow_ground_slopes_;
 
     // Flight
-    // Camera stations' height above the traced ground, in scene heights (default 0.5).
+    // Camera stations' height above the traced ground, in scene heights (default 4.0).
     float flight_height_in_scene_heights_;
 
     // Orbit

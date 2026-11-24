@@ -422,11 +422,13 @@ what 0.18 produces, so a 2 s dwell still measures about 2.46 s on screen.
 
 ### 2026-11-24 — Proposal: one anti-gravity up for the Walk and Flight paths
 
-**Status: agreed; the decisions below are final and the implementation follows them.** Written
-before any code change so the up rule had one home to argue with, as the maintainer asked, and
-settled in the same session: the default rule, the flight's default aim and the way the eye height
-follows the terrain are decided here, not left to the code. The UI sketches are ASCII of what the
-Camera Path window shows.
+**Status: implemented (2026-11-24); see "What landed" at the end of this entry for the places
+where the code differs from the text below.** Written before any code change so the up rule had
+one home to argue with, as the maintainer asked, and settled in the same session: the default
+rule, the flight's default aim and the way the eye height follows the terrain are decided here,
+not left to the code. The UI sketches are ASCII of what the Camera Path window shows; they are the
+design as agreed, not a screenshot of the finished window (the field widths and the shared
+"Keyframe spacing" row are the two visible differences -- see "What landed").
 
 #### The problem
 
@@ -602,3 +604,58 @@ among the mode's parameters, with the resolved direction beside it and no other 
 the **code as clear and clean as possible** (the rule lives in `ground_up_direction()` alone, the
 builders take one up instead of a per-foot list, and `resample_stroke()` returns feet only, so no
 normal plumbing survives in either the builder or the gesture).
+
+#### What landed (2026-11-24)
+
+The entry above is the design; this is what the code does now, including the four places where it
+went past or away from the text.
+
+1. **Up rule** -- `enum class GroundUpAxis { Auto, X, Y, Z, View }` with
+   `ground_up_axis()` / `set_ground_up_axis()` on `CameraPathBuilder`;
+   `ground_up_direction()` resolves it (scene box's shortest extent along the rule, view up for
+   `View`, with the view up as the fallback while the box is invalid). Item 1 of "What changes"
+   is done as written, and the resolved vector is read straight from `ground_up_direction()`.
+2. **The normal is gone from both the builder and the gesture.** `route_point_at()`
+   (`applications/Mapple/ui/animation.cpp`) returns the contact point only, and the stroke is
+   `std::vector<vec3>` end to end: the `RouteSample` struct that carried a point plus an up was
+   deleted rather than left unused. `resample_stroke()` takes and returns feet only.
+3. **`ground_frames(feet, up, eye_height)`** takes the one path up and is called as
+   `ground_frames(lifted_feet(feet, eye), ground_up_direction(), 0.0f)`: the lift is applied to
+   the feet first, so the eye height is measured along the path's up and is terrain-relative by
+   construction.
+4. **Flight** -- `flight_stations()` lifts along the path up and `flight_frames(..., look_ahead = 2)`
+   aims each station at the foot of the station `look_ahead` further on, lowered by that station's
+   own height, clamping to the last foot. Item 4 is done as written.
+5. **Not in the design: "Follow slopes"** (added the same day, after the proposal was settled).
+   Both ground tracks share one checkbox, drawn immediately under the `Up` combo, default **on**:
+   on, every pose keeps its height above its own contact point (the terrain-relative rule above);
+   off, the whole track keeps the first foot's altitude plus its height, measured along the path's
+   up, so a walk up a hill flies level and passes through it. One switch for both modes because
+   both modes have the same two behaviours; the trade-off was stated when it was added and the
+   maintainer kept it shared.
+6. **Not in the design: the keyframe spacing became a scene-relative value, and the two parameters
+   became independent.** The design's sketches still show `0.50 x height`, i.e. spacing measured
+   against the track's own height, which made the eye height and the flight height double as
+   density knobs (halving either doubled the keyframe count and the duration). It is now
+   `set_keyframe_spacing_in_scene_heights()` / `keyframe_spacing_in_scene_heights()`, resolved by
+   `keyframe_spacing_in_world_units()` = scene height x the value, clamped to at least 1e-4, and
+   **both** `generate_ground_route()` and `flight_stations()` resample at that one world spacing.
+   The window shows one shared `Keyframe spacing` row (`draw_keyframe_spacing()`, drawn in Walk and
+   Flight alike) instead of one per mode.
+7. **Defaults at the end of the day:** eye height `0.2` scene heights, keyframe spacing `0.5`
+   scene heights, flight height `4.0` scene heights, follow slopes on, up rule `Auto`. The spacing
+   default is deliberately sparse; on a scene a few units tall the useful range sits lower, and the
+   drag's lower bound is `0.01`.
+8. **UI** -- the `Up` combo, the resolved-vector readout and the `Follow slopes` checkbox are
+   drawn by `draw_ground_up_rule()`, shared by Walk and Flight; the value fields share one
+   `kFieldWidth` constant so their edges line up. The hints carry the clauses above
+   ("Poses rise straight up ...", "Poses rise straight up and look at the ground ahead ...").
+9. **Persistence** -- `ground_up_axis` and `follow_ground_slopes` are both written to and read
+   from `settings.ini` (`applications/Mapple/settings.{h,cpp}`), so neither rule reverts on the
+   next launch.
+10. **Tests** -- `tests/renderer/camera_path_builder_test.cpp` covers the rule set (Auto, View,
+    `+Y`, tall and flat boxes, a point-cloud stroke with no faces), the slope (no bank, identical
+    up for every pose), the flight's default aim (ahead, not straight down, with `look_ahead`), the
+    tilted-lift roll, degenerate inputs, and both follow-slopes behaviours (level track and shared
+    flight altitude). `easy3d_camera_path_builder_test` and `easy3d_keyframe_interpolator_test`
+    pass; both Mapple trees build.

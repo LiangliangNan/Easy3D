@@ -275,6 +275,10 @@ MappleViewer::~MappleViewer() {
     settings_.log_auto_scroll = log_auto_scroll_;
     settings_.models_auto_focus = models_auto_focus_;
     settings_.models_selected_only = models_selected_only_;
+    if (camera_path_builder_) {
+        settings_.ground_up_axis = static_cast<int>(camera_path_builder_->ground_up_axis());
+        settings_.follow_ground_slopes = camera_path_builder_->follow_ground_slopes();
+    }
 #ifdef HAS_FFMPEG
     settings_.video_bitrate_mbps = video_bitrate_mbps_;
     settings_.video_samples = video_samples_;
@@ -332,6 +336,16 @@ void MappleViewer::init() {
 
     // The walking and orbit tools create keyframes on the app-owned camera path.
     camera_path_builder_.reset(new CameraPathBuilder(camera(), kfi_.get()));
+    // The up rule of the ground modes survives a restart: a scene that needed +Y (or the
+    // view's up) must not silently stand on Auto next time. An unknown stored value keeps
+    // the default.
+    if (settings_.ground_up_axis >= static_cast<int>(CameraPathBuilder::GroundUpAxis::Auto) &&
+        settings_.ground_up_axis <= static_cast<int>(CameraPathBuilder::GroundUpAxis::View))
+        camera_path_builder_->set_ground_up_axis(
+                static_cast<CameraPathBuilder::GroundUpAxis>(settings_.ground_up_axis));
+    // The follow-slopes switch is stored beside it, so a track that should fly level stays
+    // level next session.
+    camera_path_builder_->set_follow_ground_slopes(settings_.follow_ground_slopes);
     // Editing the poses (handles, aiming, insert/delete) is the library's keyframe
     // editor; its undo point is the same one-level path snapshot as the path tools'.
     keyframe_editor_.reset(new KeyFrameEditor(camera(), kfi_.get()));
@@ -755,14 +769,15 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             LOG(WARNING) << "the path tools need a visible model";
         else {
             // Every stroke follows the visible surface under the cursor, so the
-            // terrain supplies each sample's contact point and its up direction there;
-            // no ground plane is assumed. The aim stroke is the same kind of stroke:
-            // its points become the aim targets.
-            vec3 point, up;
-            if (route_point_at(x, y, point, up)) {
+            // terrain supplies each sample's contact point; no ground plane is assumed.
+            // The camera's up is one direction for the whole path, so a sample needs
+            // nothing else. The aim stroke is the same kind of stroke: its points
+            // become the aim targets.
+            vec3 point;
+            if (route_point_at(x, y, point)) {
                 tracing_route_ = true;
                 route_stroke_screen_.assign(1, vec2(static_cast<float>(x), static_cast<float>(y)));
-                route_segment_.assign(1, RouteSample{point, up});
+                route_segment_.assign(1, point);
                 clear_hover();
                 update();
             } else
@@ -931,9 +946,9 @@ bool MappleViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
         // without re-rendering the scene for every drag event.
         if (delta.length2() >= 16.0f) {
             route_stroke_screen_.push_back(sample);
-            vec3 point, up;
-            if (route_point_at(x, y, point, up)) {
-                route_segment_.push_back(RouteSample{point, up});
+            vec3 point;
+            if (route_point_at(x, y, point)) {
+                route_segment_.push_back(point);
             } else {
                 // Leaving the visible surface ends the current segment; the stroke
                 // continues as a new route when the drag comes back on it, instead
@@ -1903,13 +1918,16 @@ void MappleViewer::append_manipulator_frame(std::vector<graphics::DrawCommand> &
     auto *manipulator = model ? model->manipulator() : nullptr;
     if (!manipulator)
         return;
+    // In Camera Path editing mode Alt is the keyframe handles' modifier, so it never
+    // touches the model: no gesture, and no box either, whether or not a transform is
+    // still pending (the Camera Path window carries that state).
+    if (camera_path_editing_mode())
+        return;
     // Alt announces the manipulation gesture; a transformed model also keeps its box
-    // visible so the pending transform (apply or give up) stays apparent. In Camera Path
-    // editing mode Alt belongs to the keyframe handles, so it announces nothing here. The
-    // announcement follows the app's own Alt state rather than ImGui's: the key is read
-    // from the modifier bits of the events the scene receives (see set_alt_held()).
-    const bool announced = alt_held_ && !camera_path_editing_mode();
-    if (!announced && manipulator->matrix() == mat4::identity())
+    // visible so the pending transform (apply or give up) stays apparent. The announcement
+    // follows the app's own Alt state rather than ImGui's: the key is read from the
+    // modifier bits of the events the scene receives (see set_alt_held()).
+    if (!alt_held_ && manipulator->matrix() == mat4::identity())
         return;
     const int fw = framebuffer_width();
     const int fh = framebuffer_height();

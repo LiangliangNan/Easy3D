@@ -91,9 +91,9 @@ namespace easy3d {
     }
 
     CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
-            : camera_(camera), kfi_(interpolator),
-              eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_character_heights_(0.5f),
-              flight_height_in_scene_heights_(0.5f),
+            : camera_(camera), kfi_(interpolator), ground_up_axis_(GroundUpAxis::Auto),
+              eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_scene_heights_(0.5f),
+              follow_ground_slopes_(true), flight_height_in_scene_heights_(4.0f),
               orbit_radius_offset_in_object_heights_(0.2f), orbit_vertical_offset_in_object_heights_(0.05f),
               pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
     }
@@ -111,13 +111,57 @@ namespace easy3d {
         eye_height_in_scene_heights_ = height_in_scene_heights;
     }
 
-    void CameraPathBuilder::set_keyframe_spacing_in_character_heights(float spacing_in_character_heights) {
-        keyframe_spacing_in_character_heights_ = spacing_in_character_heights;
+    void CameraPathBuilder::set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights) {
+        keyframe_spacing_in_scene_heights_ = spacing_in_scene_heights;
+    }
+
+    void CameraPathBuilder::set_follow_ground_slopes(bool follow_slopes) {
+        follow_ground_slopes_ = follow_slopes;
+    }
+
+    void CameraPathBuilder::set_ground_up_axis(GroundUpAxis axis) {
+        ground_up_axis_ = axis;
     }
 
     vec3 CameraPathBuilder::ground_up_direction() const {
-        // The fallback for poses whose surface supplies no normal: the view's up
-        // direction, which is also what the eye height is measured against.
+        // One anti-gravity direction for the whole path. Auto takes the world axis of the
+        // scene box's shortest extent: a building or a terrain stands along the direction
+        // it is least deep in, so that is the way up. The view's up is the last resort, for
+        // a scene whose orientation is unknown and which the user has turned upright.
+        switch (ground_up_axis_) {
+            case GroundUpAxis::X:
+                return vec3(1.0f, 0.0f, 0.0f);
+            case GroundUpAxis::Y:
+                return vec3(0.0f, 1.0f, 0.0f);
+            case GroundUpAxis::Z:
+                return vec3(0.0f, 0.0f, 1.0f);
+            case GroundUpAxis::Auto:
+                if (scene_box_.is_valid()) {
+                    // The extents are read one axis at a time, the way Box3::min_range_axis()
+                    // intends: a Vec reached through an integer index resolves to its
+                    // conversion operator to const FT*, not to a component, so the extents
+                    // must be taken by name.
+                    const vec3 lo = scene_box_.min_point();
+                    const vec3 hi = scene_box_.max_point();
+                    const float extents[3] = {hi.x - lo.x, hi.y - lo.y, hi.z - lo.z};
+                    unsigned int shortest = 0;
+                    for (unsigned int i = 1; i < 3; ++i) {
+                        if (extents[i] < extents[shortest])
+                            shortest = i;
+                    }
+                    switch (shortest) {
+                        case 0:
+                            return vec3(1.0f, 0.0f, 0.0f);
+                        case 1:
+                            return vec3(0.0f, 1.0f, 0.0f);
+                        default:
+                            return vec3(0.0f, 0.0f, 1.0f);
+                    }
+                }
+                break; // nothing to measure: stand on the view's up instead
+            case GroundUpAxis::View:
+                break;
+        }
         vec3 up = camera_->up_vector();
         if (up.length2() < epsilon_sqr<float>())
             return vec3(0.0f, 0.0f, 1.0f);
@@ -128,8 +172,8 @@ namespace easy3d {
         if (!scene_box_.is_valid())
             return camera_->scene_radius();
 
-        // The scene "height" is its extent along the route's fallback up direction
-        // (the view's up), so heights keep the same ratio in any view.
+        // The scene "height" is its extent along the path's up direction, so the eye and
+        // flight heights keep the same ratio whatever the view.
         const vec3 up = ground_up_direction();
         return std::abs(up.x) * scene_box_.range(0) +
                std::abs(up.y) * scene_box_.range(1) +
@@ -144,96 +188,93 @@ namespace easy3d {
         return scene_height_in_world_units() * flight_height_in_scene_heights_;
     }
 
+    float CameraPathBuilder::keyframe_spacing_in_world_units() const {
+        // Clamped to at least 1e-4, so a value at or below zero is accepted without
+        // producing an unbounded number of keyframes.
+        return std::max(1e-4f, scene_height_in_world_units() * keyframe_spacing_in_scene_heights_);
+    }
+
     void CameraPathBuilder::set_flight_height_in_scene_heights(float height_in_scene_heights) {
         flight_height_in_scene_heights_ = height_in_scene_heights;
     }
 
-    bool CameraPathBuilder::resample_stroke(const std::vector<vec3> &stroke,
-                                            const std::vector<vec3> &surface_up_directions,
-                                            float spacing, std::vector<vec3> &feet, std::vector<vec3> &ups) const {
+    std::vector<vec3> CameraPathBuilder::lifted_feet(const std::vector<vec3> &feet, float height) const {
+        const vec3 up = ground_up_direction();
+        if (follow_ground_slopes_) {
+            // Each pose stands its own height above the point under it, so the track climbs
+            // and falls with the terrain.
+            std::vector<vec3> lifted;
+            lifted.reserve(feet.size());
+            for (const vec3 &foot : feet)
+                lifted.push_back(foot + up * height);
+            return lifted;
+        }
+        // One altitude for the whole track: the first point's, so the camera flies level
+        // whatever the ground does beneath it.
+        const float altitude = feet.empty() ? 0.0f : dot(feet.front(), up);
+        std::vector<vec3> lifted;
+        lifted.reserve(feet.size());
+        for (const vec3 &foot : feet)
+            lifted.push_back(foot - up * dot(foot, up) + up * (altitude + height));
+        return lifted;
+    }
+
+    bool CameraPathBuilder::resample_stroke(const std::vector<vec3> &stroke, float spacing,
+                                            std::vector<vec3> &feet) const {
         feet.clear();
-        ups.clear();
         if (stroke.size() < 2)
             return false;
-        if (!surface_up_directions.empty() && surface_up_directions.size() != stroke.size())
-            return false;
 
+        // Only the feet are resampled: the camera's up is the path's one up direction, so
+        // nothing along the stroke can tilt it, and a stroke over a point cloud needs no
+        // normals at all.
         const std::vector<ArcSample> samples = arc_length_samples(stroke, spacing);
-        const vec3 fallback_up = ground_up_direction();
-        const vec3 view_dir = camera_->view_direction();
-
-        // The face winding decides a normal's sign, but not the side of the surface the
-        // walker stands on: that is the side facing the camera, so every up must oppose
-        // the view direction. Sounding the eye offset off the far side would put the
-        // camera centers behind the surface. The input is oriented before resampling so
-        // arbitrary winding cannot cancel out in the interpolation.
-        std::vector<vec3> directions = surface_up_directions;
-        for (auto &up : directions) {
-            if (up.length2() < epsilon_sqr<float>())
-                up = fallback_up;
-            up.normalize();
-            if (dot(up, view_dir) > 0.0f)
-                up = -up;
-        }
-
         feet.reserve(samples.size());
-        ups.reserve(samples.size());
-        for (const auto &sample : samples) {
+        for (const auto &sample : samples)
             feet.push_back(sample_value(stroke, sample));
-            vec3 up = directions.empty() ? fallback_up : sample_value(directions, sample);
-            if (up.length2() < epsilon_sqr<float>())
-                up = fallback_up;
-            up.normalize();
-            ups.push_back(up);
-        }
-
-        // Picked facet normals step at facet edges; smoothing along the route keeps the
-        // walker from tipping on a single keyframe.
-        for (int pass = 0; pass < 2; ++pass) {
-            std::vector<vec3> smoothed = ups;
-            for (std::size_t i = 1; i + 1 < ups.size(); ++i) {
-                vec3 n = ups[i - 1] + ups[i] * 2.0f + ups[i + 1];
-                if (n.length2() > epsilon_sqr<float>())
-                    smoothed[i] = n.normalize();
-            }
-            ups.swap(smoothed);
-        }
         return true;
     }
 
-    std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke,
-                                                         const std::vector<vec3> &foot_up_directions) {
+    std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
         const float eye = eye_height_in_world_units();
         if (eye <= 1e-4f)
             return 0;
-        const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * eye);
+        // One spacing for both ground tracks, measured against the scene rather than the
+        // track's own height, so the eye height does not move it.
+        const float spacing = keyframe_spacing_in_world_units();
 
-        std::vector<vec3> feet, ups;
-        if (!resample_stroke(stroke, foot_up_directions, spacing, feet, ups))
+        std::vector<vec3> feet;
+        if (!resample_stroke(stroke, spacing, feet))
             return 0;
 
-        const std::vector<Frame> frames = ground_frames(feet, ups, eye);
+        const std::vector<Frame> frames = ground_frames(lifted_feet(feet, eye), ground_up_direction(), 0.0f);
         for (const auto &frame : frames)
             add_keyframe(frame);
         return frames.size();
     }
 
     std::vector<CameraPathBuilder::FlightStation>
-    CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke,
-                                       const std::vector<vec3> &surface_up_directions) const {
+    CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke) const {
         std::vector<FlightStation> stations;
         const float height = flight_height_in_world_units();
         if (height <= 1e-4f)
             return stations;
-        const float spacing = std::max(1e-4f, keyframe_spacing_in_character_heights_ * height);
+        // The same spacing as the walking route: the flight height lifts the track, it
+        // does not thin out its stations.
+        const float spacing = keyframe_spacing_in_world_units();
 
-        std::vector<vec3> feet, ups;
-        if (!resample_stroke(stroke, surface_up_directions, spacing, feet, ups))
+        std::vector<vec3> feet;
+        if (!resample_stroke(stroke, spacing, feet))
             return stations;
 
+        // The camera positions come from the stroke lifted by one flight height: off each
+        // foot's own ground while the track follows the slopes, off the first foot's
+        // altitude otherwise. The feet stay the ground points, so a default aim keeps
+        // looking at the ground under the camera.
+        const std::vector<vec3> lifted = lifted_feet(feet, height);
         stations.reserve(feet.size());
         for (std::size_t i = 0; i < feet.size(); ++i)
-            stations.push_back(FlightStation{feet[i] + ups[i] * height, feet[i]});
+            stations.push_back(FlightStation{lifted[i], feet[i]});
         return stations;
     }
 
@@ -324,15 +365,15 @@ namespace easy3d {
     }
 
     std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &feet,
-                                                        const std::vector<vec3> &up_directions,
+                                                        const vec3 &up_direction,
                                                         float eye_height) const {
         std::vector<Frame> frames;
-        if (feet.size() < 2 || up_directions.size() != feet.size())
+        if (feet.size() < 2 || up_direction.length2() < epsilon_sqr<float>())
             return frames;
-        for (const auto &up : up_directions) {
-            if (up.length2() < epsilon_sqr<float>())
-                return frames;
-        }
+        // One up for every pose: the feet keep their own heights (terrain following), the
+        // camera never banks.
+        vec3 path_up = up_direction;
+        path_up.normalize();
 
         // In-plane heading that stays continuous: the central difference of the
         // neighbours, with repeated waypoints skipped and an arbitrary in-plane
@@ -358,29 +399,37 @@ namespace easy3d {
 
         frames.reserve(feet.size());
         for (size_t i = 0; i < feet.size(); ++i) {
-            vec3 up = up_directions[i];
-            up.normalize();
-            vec3 dir = heading(i, up);
-            dir -= up * dot(dir, up);
-            // A near-vertical step (steep terrain) leaves no in-plane heading.
+            vec3 dir = heading(i, path_up);
+            dir -= path_up * dot(dir, path_up);
+            // A near-vertical step (a cliff) leaves no in-plane heading.
             if (dir.length2() < epsilon_sqr<float>())
-                dir = geom::orthogonal(up);
+                dir = geom::orthogonal(path_up);
             dir.normalize();
-            frames.emplace_back(feet[i] + up * eye_height, to_orientation(dir, up));
+            frames.emplace_back(feet[i] + path_up * eye_height, to_orientation(dir, path_up));
         }
         return frames;
     }
 
     std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<FlightStation> &stations,
-                                                        const std::vector<vec3> &targets, const vec3 &up) const {
+                                                        const std::vector<vec3> &targets, const vec3 &up,
+                                                        std::size_t look_ahead) const {
         std::vector<Frame> frames;
         if (stations.size() < 2 || (!targets.empty() && stations.size() != targets.size()))
             return frames;
 
+        // No targets: the default aim is the ground ahead, the foot of a station further
+        // along the track lowered by this station's own height above its foot, so a flight
+        // over a slope looks along the ground instead of into it. The last stations look as
+        // far ahead as the track has, so they never turn back on themselves.
+        const std::size_t step = std::max<std::size_t>(1, look_ahead);
         frames.reserve(stations.size());
         for (size_t i = 0; i < stations.size(); ++i) {
-            // No targets: the default aim, back down at the foot the station rose from.
-            const vec3 target = targets.empty() ? stations[i].foot : targets[i];
+            vec3 target = targets.empty() ? vec3(0.0f) : targets[i];
+            if (targets.empty()) {
+                const FlightStation &ahead = stations[std::min(i + step, stations.size() - 1)];
+                const float height = dot(stations[i].position - stations[i].foot, up);
+                target = ahead.foot - up * height;
+            }
             frames.emplace_back(stations[i].position, look_at_orientation(stations[i].position, target, up));
         }
         return frames;

@@ -62,6 +62,14 @@ struct AppSettings {
     // show only the active model.
     bool models_auto_focus = false;
     bool models_selected_only = false;
+    // Camera Path: the rule that decides the up direction of generated Walk and Flight
+    // paths (an easy3d::CameraPathBuilder::GroundUpAxis value, 0 = Auto), so a scene that
+    // needed another rule does not silently revert to Auto next session.
+    int ground_up_axis = 0;
+    // Camera Path: whether generated Walk and Flight tracks keep their height above the
+    // ground under them (true) or keep the whole track at the first point's altitude
+    // (false). Kept with the up rule, for the same reason.
+    bool follow_ground_slopes = true;
     // Camera Path recording defaults, both kept across runs. The window offers only
     // counts this viewer can render, and a stored count it cannot render is resolved
     // when the recording starts.

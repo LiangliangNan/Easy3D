@@ -141,13 +141,22 @@ bool AppSettings::load() {
         } else if (key == "show_log_panel") {
             bool v;
             if (parse_bool(value, v)) show_log_panel = v;
-        } else if (key == "left_width")
-            parse_number(value, left_width);
-        else if (key == "right_width")
-            parse_number(value, right_width);
-        else if (key == "log_height")
-            parse_number(value, log_height);
-        else if (key == "pick_readout") {
+        } else if (key == "ground_up_axis") {
+            int v;
+            if (parse_number(value, v)) ground_up_axis = v;
+        } else if (key == "follow_ground_slopes") {
+            bool v;
+            if (parse_bool(value, v)) follow_ground_slopes = v;
+        } else if (key == "left_width") {
+            float v;
+            if (parse_number(value, v)) left_width = v;
+        } else if (key == "right_width") {
+            float v;
+            if (parse_number(value, v)) right_width = v;
+        } else if (key == "log_height") {
+            float v;
+            if (parse_number(value, v)) log_height = v;
+        } else if (key == "pick_readout") {
             bool v;
             if (parse_bool(value, v)) pick_readout = v;
         } else if (key == "log_auto_scroll") {
@@ -159,11 +168,13 @@ bool AppSettings::load() {
         } else if (key == "models_selected_only") {
             bool v;
             if (parse_bool(value, v)) models_selected_only = v;
-        } else if (key == "video_bitrate_mbps")
-            parse_number(value, video_bitrate_mbps);
-        else if (key == "video_samples")
-            parse_number(value, video_samples);
-        else if (key == "data_directory")
+        } else if (key == "video_bitrate_mbps") {
+            int v;
+            if (parse_number(value, v)) video_bitrate_mbps = v;
+        } else if (key == "video_samples") {
+            int v;
+            if (parse_number(value, v)) video_samples = v;
+        } else if (key == "data_directory")
             data_directory = value;
         else if (key.rfind("recent.", 0) == 0)
             recent_files.push_back(value);
@@ -208,6 +219,8 @@ bool AppSettings::save() const {
     output << "show_rendering_panel=" << (show_rendering_panel ? 1 : 0) << "\n";
     output << "show_models_panel=" << (show_models_panel ? 1 : 0) << "\n";
     output << "show_log_panel=" << (show_log_panel ? 1 : 0) << "\n";
+    output << "ground_up_axis=" << ground_up_axis << "\n";
+    output << "follow_ground_slopes=" << (follow_ground_slopes ? 1 : 0) << "\n";
     output << "left_width=" << left_width << "\n";
     output << "right_width=" << right_width << "\n";
     output << "log_height=" << log_height << "\n";

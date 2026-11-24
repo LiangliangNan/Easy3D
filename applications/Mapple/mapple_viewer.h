@@ -431,6 +431,13 @@ private:
 
     void draw_animation_window();
 
+    // The Walk and Flight modes' shared parameter: the rule that decides the path's one
+    // up direction, and the direction it resolves to right now.
+    void draw_ground_up_rule();
+    // The Walk and Flight modes' shared parameter: the keyframe spacing along the track,
+    // in scene heights (one value for both tracks).
+    void draw_keyframe_spacing();
+
     // Whether the Camera Path window is in editing mode: opened, and not closed since.
     // Inside it Alt is the keyframe handles' modifier and never touches the model.
     bool camera_path_editing_mode() const { return show_animation_window_; }
@@ -563,11 +570,9 @@ private:
     // Alt pressed or released: in editing mode the keyframe handles follow it.
     void set_alt_held(bool held);
 
-    // The visible surface under (x, y): the ground-contact point of a route sample
-    // and the walker's up direction there (the picked face's normal, turned to the
-    // side facing the camera; the view's up itself when the hit has no face). False
-    // when the ray misses every visible primitive.
-    bool route_point_at(int x, int y, easy3d::vec3 &point, easy3d::vec3 &up) const;
+    // The visible surface under (x, y): the ground-contact point of a route sample.
+    // False when the ray misses every visible primitive.
+    bool route_point_at(int x, int y, easy3d::vec3 &point) const;
 
     // Width, in world units, of the keyframe camera glyphs; the drawn glyphs and their
     // rebuilt geometry use the same width.
@@ -894,14 +899,11 @@ private:
     // keeps the accepted screen trail for the live preview and the picked surface
     // samples, split into segments where the drag left the visible surface.
     bool tracing_route_ = false;
-    // A route sample: the surface point under the cursor and the walker's up there.
-    struct RouteSample {
-        easy3d::vec3 point;
-        easy3d::vec3 up;
-    };
-    std::vector<easy3d::vec2> route_stroke_screen_;          // accepted drag trail, logical window coordinates
-    std::vector<RouteSample> route_segment_;                 // picked samples of the current segment
-    std::vector<std::vector<RouteSample>> route_segments_;   // segments completed by a missed pick
+    std::vector<easy3d::vec2> route_stroke_screen_;           // accepted drag trail, logical window coordinates
+    // The picked surface points the camera stands on: the path's up direction is one for
+    // the whole path, so a sample is only a point.
+    std::vector<easy3d::vec3> route_segment_;                 // points of the current segment
+    std::vector<std::vector<easy3d::vec3>> route_segments_;   // segments completed by a missed pick
 
     // The orbit gesture: a drag across the scene sets the axis (previewed as the
     // dragged segment); the release applies it.

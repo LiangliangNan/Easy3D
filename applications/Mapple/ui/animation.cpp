@@ -144,7 +144,7 @@ void MappleViewer::draw_animation_window() {
         if (aim_range_.valid && count > 0) {
             ImGui::TextDisabled("Aims of the new path: %s.",
                                 aim_range_.mode == PathTool::GroundWalk ? "along the route"
-                                : aim_range_.mode == PathTool::Flight ? "down at the ground"
+                                : aim_range_.mode == PathTool::Flight ? "at the ground ahead"
                                                                       : "at the orbit axis");
             if (ImGui::Button("Aim...", ImVec2(80, 0)))
                 arm_camera_path_tool(PathTool::Aim);
@@ -154,35 +154,33 @@ void MappleViewer::draw_animation_window() {
             ImGui::TextDisabled("Not satisfied with the aims?");
         }
     } else if (tool == PathTool::Aim)
-        ImGui::TextDisabled("Click to aim every keyframe there, or drag to trace the aims along the "
-                            "path. Esc cancels.");
+        ImGui::TextDisabled("Click to aim every keyframe there, or drag to trace the aims\n"
+            "along the path. Esc cancels.");
     else if (tool == PathTool::GroundWalk)
-        ImGui::TextDisabled("Drag over the ground surface to trace the route. Esc cancels.");
+        ImGui::TextDisabled("Drag over the ground surface to trace the route. Poses rise\n"
+            "straight up; Esc cancels.");
     else if (tool == PathTool::Flight)
-        ImGui::TextDisabled("Drag over the surface to trace the camera track. Esc cancels.");
+        ImGui::TextDisabled("Drag over the surface to trace the camera track. Poses rise\n"
+            "straight up and look at the ground ahead; Esc cancels.");
     else
-        ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis. Esc cancels.");
+        ImGui::TextDisabled("Drag to set the orbit axis; a click uses the vertical axis.\n"
+            "Esc cancels.");
 
     // The mode's own parameters, under its hint.
-    if (camera_path_builder_ && tool == PathTool::GroundWalk) {
-        ImGui::TextDisabled("Up  surface normal under each foot");
-        ImGui::SetItemTooltip("Poses stand on the normal under each foot (the view's up where there is "
-                              "none) and look along the route; Aim... re-aims them.");
+    if (camera_path_builder_ && (tool == PathTool::GroundWalk || tool == PathTool::Flight))
+        draw_ground_up_rule();
 
+    if (camera_path_builder_ && tool == PathTool::GroundWalk) {
         float height = camera_path_builder_->eye_height_in_scene_heights();
         if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_eye_height_in_scene_heights(height);
             update();
         }
-        ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene's extent along "
-                              "the view's up.");
+        ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene\n"
+            "extent along the up direction. With Follow slopes on, poses keep\n"
+            "this height above their own contact point.");
 
-        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
-        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
-            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
-            update();
-        }
-        ImGui::SetItemTooltip("Spacing along the route, in character heights.");
+        draw_keyframe_spacing();
     } else if (camera_path_builder_ && tool == PathTool::Orbit) {
         ImGui::TextDisabled("Axis  drag across the scene; a click uses the vertical axis");
         ImGui::SetItemTooltip("The camera circles around the dragged segment through the surface under "
@@ -205,25 +203,16 @@ void MappleViewer::draw_animation_window() {
         if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99))
             camera_path_builder_->set_num_loops(loops);
     } else if (camera_path_builder_ && tool == PathTool::Flight) {
-        ImGui::TextDisabled("Track  drag over the surface; poses rise along its normal");
-        ImGui::SetItemTooltip("Poses rise along the surface normal under each traced point (the view's "
-                              "up where there is none) and look straight down at the ground; Aim... "
-                              "re-aims them.");
-
         float height = camera_path_builder_->flight_height_in_scene_heights();
         if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
             camera_path_builder_->set_flight_height_in_scene_heights(height);
             update();
         }
-        ImGui::SetItemTooltip("Height above the traced surface, as a fraction of the scene's extent "
-                              "along the view's up.");
+        ImGui::SetItemTooltip("Height above the traced ground, as a fraction of the scene extent\n"
+                              "along the up direction. With Follow slopes on, poses keep this\n"
+                              "height above their own contact point.");
 
-        float spacing = camera_path_builder_->keyframe_spacing_in_character_heights();
-        if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.02f, 0.1f, 10.0f, "%.2f x height")) {
-            camera_path_builder_->set_keyframe_spacing_in_character_heights(spacing);
-            update();
-        }
-        ImGui::SetItemTooltip("Spacing along the track, in flight heights.");
+        draw_keyframe_spacing();
     }
 
     // Keyframes: made by the gesture in a path mode, by hand in Free (Alt+K or the
@@ -649,33 +638,68 @@ void MappleViewer::cancel_path_gesture() {
     keyframe_editor_->cancel();
 }
 
-bool MappleViewer::route_point_at(int x, int y, vec3 &point, vec3 &up) const {
+bool MappleViewer::route_point_at(int x, int y, vec3 &point) const {
     if (!point_in_scene(x, y))
         return false;
     const PickResult result = pick(x, y);
     if (!result)
         return false;
+    // Only where the surface is: the camera's up is the path's one up direction, so no
+    // face normal is read and a point cloud works as well as a mesh.
     point = result.position;
-
-    // The walker stands on the visible side of the surface, so its up is the picked
-    // face's normal pointing back at the camera; a point cloud or a standalone
-    // drawable has no faces and falls back to the view's up. The face winding is
-    // arbitrary and the view's up does not resolve it (a slope can face any way
-    // relative to it), so the camera's view direction decides the sign.
-    up = camera_path_builder_->ground_up_direction();
-    const auto mesh = std::dynamic_pointer_cast<SurfaceMesh>(result.model);
-    if (mesh && result.face_index >= 0 && result.face_index < static_cast<int>(mesh->n_faces())) {
-        vec3 normal = mesh->compute_face_normal(SurfaceMesh::Face(result.face_index));
-        if (normal.length2() > epsilon_sqr<float>()) {
-            normal.normalize();
-            up = normal;
-        }
-    }
-    // The view direction points from the camera into the scene, so the walker's up
-    // must oppose it; otherwise the eye centers would land behind the surface.
-    if (dot(up, camera()->view_direction()) > 0.0f)
-        up = -up;
     return true;
+}
+
+void MappleViewer::draw_keyframe_spacing() {
+    // One value for both ground tracks, measured against the scene, so neither the eye
+    // height nor the flight height moves the keyframe density.
+    float spacing = camera_path_builder_->keyframe_spacing_in_scene_heights();
+    // Fill the row like the widgets around it: the same width as the up rule's combo, so
+    // the two fields line up under each other instead of the drag sitting short.
+    if (ImGui::DragFloat("Keyframe spacing", &spacing, 0.01f, 0.01f, 10.0f, "%.2f x scene")) {
+        camera_path_builder_->set_keyframe_spacing_in_scene_heights(spacing);
+        update();
+    }
+    ImGui::SetItemTooltip("Distance between consecutive keyframes along the track, as a fraction\n"
+                          "of the scene extent along the up direction. The walk and the flight\n"
+                          "share it, so the eye and flight heights do not change it. The stroke\n"
+                          "is divided into equal steps of this length, both ends included.");
+}
+
+void MappleViewer::draw_ground_up_rule() {
+    // One rule for the whole path, in both ground modes: the camera's up is an
+    // anti-gravity direction, not a surface normal. The combo names the rule and the
+    // readout beside it shows what the app resolved, so the user never has to infer it
+    // from the resulting tilt.
+    const char *const kRules[] = {"Auto (box shortest)", "+X", "+Y", "+Z", "Up from the view"};
+    constexpr int kRuleCount = 5;
+    int rule = static_cast<int>(camera_path_builder_->ground_up_axis());
+    if (ImGui::Combo("Up", &rule, kRules, kRuleCount)) {
+        camera_path_builder_->set_ground_up_axis(static_cast<CameraPathBuilder::GroundUpAxis>(rule));
+        update();
+    }
+    ImGui::SetItemTooltip("The direction the camera's up points, for the whole path. Auto uses the\n"
+                          "scene's shortest extent (upright for a building or a terrain); the axes\n"
+                          "pin it to the world; Up from the view follows the camera, for a model you\n"
+                          "have rotated upright. Poses rise straight up from the traced points and\n"
+                          "keep their height above the ground, so a slope no longer banks the camera.");
+    const vec3 up = camera_path_builder_->ground_up_direction();
+    ImGui::SameLine();
+    ImGui::TextDisabled("( %.2f, %.2f, %.2f )", up.x, up.y, up.z);
+    ImGui::SetItemTooltip("The up direction the rule above resolves to right now.");
+
+    // Immediately under the up rule: whether the track climbs with the ground. Both ground
+    // modes use it, so it sits beside the rule they share rather than in either mode's
+    // own parameters.
+    bool follow = camera_path_builder_->follow_ground_slopes();
+    if (ImGui::Checkbox("Follow slopes", &follow)) {
+        camera_path_builder_->set_follow_ground_slopes(follow);
+        update();
+    }
+    ImGui::SetItemTooltip("On, every pose keeps its height above the ground under it, so the\n"
+                          "track climbs and falls with a slope. Off, the whole track keeps the\n"
+                          "altitude of the stroke's first point: the camera flies level, or\n"
+                          "walks level, whatever the ground does beneath it.");
 }
 
 float MappleViewer::camera_marker_width() const {
@@ -698,20 +722,12 @@ void MappleViewer::commit_ground_route() {
         route_segments_.push_back(route_segment_);
     route_segment_.clear();
 
-    // The stroke carries a surface sample per point: the contact point and the
-    // walker's up there, so the poses tilt with the terrain.
+    // The stroke carries a contact point per sample: the feet follow the surface while
+    // the camera stays upright on the path's one up direction.
     const int before = static_cast<int>(kfi_->number_of_keyframes());
     std::size_t added = 0;
-    for (const auto &segment : route_segments_) {
-        std::vector<vec3> points, ups;
-        points.reserve(segment.size());
-        ups.reserve(segment.size());
-        for (const auto &sample : segment) {
-            points.push_back(sample.point);
-            ups.push_back(sample.up);
-        }
-        added += camera_path_builder_->generate_ground_route(points, ups);
-    }
+    for (const auto &segment : route_segments_)
+        added += camera_path_builder_->generate_ground_route(segment);
     route_segments_.clear();
 
     if (added == 0) {
@@ -737,17 +753,13 @@ void MappleViewer::commit_flight_track() {
     // A flight bridges the gaps where the drag left the surface, so all segments are
     // concatenated into one camera track (unlike the walking route, whose segments
     // become separate walks).
-    std::vector<vec3> points, ups;
-    for (const auto &segment : route_segments_) {
-        for (const auto &sample : segment) {
-            points.push_back(sample.point);
-            ups.push_back(sample.up);
-        }
-    }
+    std::vector<vec3> points;
+    for (const auto &segment : route_segments_)
+        points.insert(points.end(), segment.begin(), segment.end());
     route_segments_.clear();
 
     const std::vector<CameraPathBuilder::FlightStation> stations =
-        camera_path_builder_->flight_stations(points, ups);
+        camera_path_builder_->flight_stations(points);
     if (stations.size() < 2) {
         LOG(WARNING) << "the stroke is too short to trace a flight track";
         return; // the tool stays armed for another try
@@ -756,7 +768,7 @@ void MappleViewer::commit_flight_track() {
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
     const int before = static_cast<int>(kfi_->number_of_keyframes());
-    // No aims: the flight's default, straight down at each station's own foot.
+    // No aims: the flight's default, looking at the ground ahead along the track.
     const std::size_t added = camera_path_builder_->generate_flight(stations, {});
     if (added == 0) {
         LOG(WARNING) << "the flight track could not be turned into keyframes";
@@ -767,7 +779,7 @@ void MappleViewer::commit_flight_track() {
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
     if (!show_camera_path_)
         set_camera_path_visible(true);
-    LOG(INFO) << added << " flight keyframes added to the camera path (aiming down at the track)";
+    LOG(INFO) << added << " flight keyframes added to the camera path (aiming at the ground ahead)";
     update();
 }
 
@@ -796,7 +808,7 @@ void MappleViewer::aim_path_range(const std::vector<vec3> &targets) {
 
     // A walking pose keeps the up it stands on and an orbit pose keeps the orbit's
     // up, so each pose's own up is the roll reference; a flight keeps the horizon
-    // level with the view's up instead (its straight-down default has no usable roll).
+    // level with the path's up instead.
     std::vector<vec3> roll_ups;
     if (aim_range_.mode == PathTool::Flight)
         roll_ups.assign(static_cast<std::size_t>(count), camera_path_builder_->ground_up_direction());
@@ -826,10 +838,8 @@ void MappleViewer::commit_aim_stroke() {
     // point aims every keyframe there, more are sampled along the aim stroke.
     std::vector<vec3> points;
     for (const auto &segment : route_segments_)
-        for (const auto &sample : segment)
-            points.push_back(sample.point);
-    for (const auto &sample : route_segment_)
-        points.push_back(sample.point);
+        points.insert(points.end(), segment.begin(), segment.end());
+    points.insert(points.end(), route_segment_.begin(), route_segment_.end());
     route_segment_.clear();
     route_segments_.clear();
     if (points.empty()) {
