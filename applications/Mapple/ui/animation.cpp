@@ -324,13 +324,13 @@ void MappleViewer::draw_animation_window() {
         ImGui::TextDisabled(camera_path_elapsed_ > 0 ? "Paused at %.1f s" : "Ctrl+K", elapsed_time);
 
     float speed = kfi->interpolation_speed();
-    if (ImGui::SliderFloat("Speed (keyframes/s)", &speed, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed()) {
+    if (ImGui::DragFloat("Speed (keyframes/s)", &speed, 0.1f, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed()) {
         kfi->set_interpolation_speed(speed);
         camera_path_elapsed_ = 0; // this reset the playback
     }
     ImGui::SetItemTooltip("Press 'Play' to check the current speed; slide to adjust.");
     int fps = kfi->frame_rate();
-    if (ImGui::SliderInt("Frame rate (frames/s)", &fps, 1, 120, "%d") && fps != kfi->frame_rate())
+    if (ImGui::DragInt("Frame rate (frames/s)", &fps, 1, 1, 120, "%d") && fps != kfi->frame_rate())
         kfi->set_frame_rate(fps);
 
     // Recording and its parameters.
@@ -378,7 +378,7 @@ void MappleViewer::draw_animation_window() {
         video_samples_ = values[current];
     ImGui::TextDisabled("1 means no multisampling; only the supported counts are listed.");
 
-    ImGui::SliderInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 32);
+    ImGui::DragInt("Bitrate (Mbit/s)", &video_bitrate_mbps_, 1, 1, 32);
     ImGui::TextDisabled("Higher bitrate results in better video quality but a larger video file.");
 #else
     ImGui::BeginDisabled();

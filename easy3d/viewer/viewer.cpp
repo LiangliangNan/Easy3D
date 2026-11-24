@@ -1877,8 +1877,9 @@ namespace easy3d {
             }
             corner_axes_geometry_ = std::make_shared<graphics::Geometry>(std::move(vertices));
         }
-        const float dpi = dpi_scaling();
-        const float sx = 100 * dpi / framebuffer_width(), sy = 100 * dpi / framebuffer_height();
+        int w, h;
+        viewer_size(w, h);
+        const float sx = 100.0f / static_cast<float>(w), sy = 100.0f / static_cast<float>(h);
         const mat4 view = camera()->orientation().inverse().matrix();
         const mat4 viewport = mat4::translation(vec3(-1 + sx, -1 + sy, 0)) * mat4::scale(sx, sy, 1, 1);
         graphics::DrawCommand axes;
@@ -1888,6 +1889,7 @@ namespace easy3d {
         axes.lighting = true;
         set_viewer_3d_overlays({axes});
     }
+
     void Viewer::update_interaction_overlays(bool force) const {
         draw_corner_axes();
         const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now() < pivot_expires_;
