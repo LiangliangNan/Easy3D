@@ -824,3 +824,22 @@ provide a roll reference.
 - Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
   67/67, OpenGL RelWithDebInfo 48/48). Interactive playback and recorded-video equivalence were
   not visually checked.
+
+### 2026-11-25 — seek playback to a selected keyframe
+
+- `KeyFrameInterpolator` now owns its playback position. `playback_elapsed()` reports the
+  timeline position of the applied sample, including dwell pauses, and preserves that position
+  while paused. Editing the path resets it; completing playback resets it for the next session.
+- `seek_to_keyframe()` stops playback, applies the exact stored pose, and reports the exact
+  keyframe timeline position: the travel times and dwell pauses of all preceding keyframes.
+  Manual playback resumes at the first interpolation sample at or after that position. This
+  keeps an unaligned keyframe's indicator exact without resuming before it.
+- Timer and manual playback now update the same position, so hosts no longer need a second
+  elapsed-time clock. `start_interpolation()`, `start_manual_interpolation()`, and
+  `stop_interpolation()` retain the next sample or paused position as before.
+- `tests/renderer/keyframe_interpolator_test.cpp` covers dwell-aware seeking, exact poses and
+  elapsed times, resume and pause continuity, seeking during playback, and a keyframe between
+  interpolation samples.
+- Validation: Vulkan Debug and OpenGL RelWithDebInfo rebuild; the complete non-desktop suites
+  pass (Vulkan 67/67, OpenGL 48/48), and `vulkan.camerapath` passes. Interactive Mapple timeline
+  selection and playback were not visually checked.

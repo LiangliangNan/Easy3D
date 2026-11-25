@@ -469,6 +469,53 @@ int main() {
             if (!close_to(requested_periodic[i], open[i]))
                 throw std::runtime_error("an unclosed path used periodic endpoint handling");
         }
+        // --- seeking from a selected keyframe -------------------------------
+        kfi.delete_path();
+        kfi.set_frame_rate(100);
+        make_path(kfi, 4, 1.0f);
+        kfi.set_keyframe_dwell(1, 1.0f);
+        // Timeline positions: keyframe 0 at 0 s, 1 at 1 s, 2 at 3 s, 3 at 4 s.
+        kfi.seek_to_keyframe(2);
+        require(!kfi.is_interpolation_started() && close_to(camera.position(), vec3(2.0f, 0.0f, 0.0f)) &&
+                        close_to(kfi.playback_elapsed(), 3.0f),
+                "seeking did not pause exactly at the selected keyframe and timeline position");
+        kfi.start_manual_interpolation();
+        require(kfi.advance_interpolation() && close_to(camera.position(), vec3(2.0f, 0.0f, 0.0f)) &&
+                        close_to(kfi.playback_elapsed(), 3.0f),
+                "resuming did not start at the selected keyframe");
+        require(kfi.advance_interpolation() && camera.position().x > 2.0f,
+                "resuming did not continue beyond the selected keyframe");
+        kfi.stop_interpolation();
+        const float paused_elapsed = kfi.playback_elapsed();
+        const vec3 paused_position = camera.position();
+        require(!kfi.advance_interpolation() && close_to(kfi.playback_elapsed(), paused_elapsed) &&
+                        close_to(camera.position(), paused_position),
+                "pausing moved the playback position");
+        kfi.start_manual_interpolation();
+        kfi.seek_to_keyframe(1);
+        require(!kfi.is_interpolation_started() && close_to(camera.position(), vec3(1.0f, 0.0f, 0.0f)) &&
+                        close_to(kfi.playback_elapsed(), 1.0f),
+                "seeking during playback did not stop at the requested keyframe");
+
+        // A keyframe need not coincide with a sample. Seeking reports its exact timeline
+        // position, and playback continues at the first sample at or after it.
+        kfi.delete_path();
+        kfi.set_frame_rate(30);
+        for (int i = 0; i < 4; ++i) {
+            const float times[] = {0.0f, 0.35f, 1.11f, 1.46f};
+            Frame frame;
+            frame.set_position_and_orientation(vec3(static_cast<float>(i), 0.0f, 0.0f), quat());
+            require(kfi.add_keyframe(frame, times[i]), "an unaligned keyframe was rejected");
+        }
+        kfi.seek_to_keyframe(2);
+        require(close_to(camera.position(), vec3(2.0f, 0.0f, 0.0f)) &&
+                        close_to(kfi.playback_elapsed(), 1.11f),
+                "an unaligned keyframe seek lost its exact position");
+        kfi.start_manual_interpolation();
+        require(kfi.advance_interpolation() && kfi.playback_elapsed() >= 1.11f &&
+                        camera.position().x >= 2.0f,
+                "an unaligned seek resumed before the selected keyframe");
+
         kfi.delete_path();
         require(!kfi.is_path_periodic(), "delete_path kept stale periodic state");
     });

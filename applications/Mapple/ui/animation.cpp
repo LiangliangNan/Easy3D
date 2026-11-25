@@ -293,6 +293,7 @@ void MappleViewer::draw_animation_window() {
     }
 
     const bool playing = kfi->is_interpolation_started();
+    const float playback_elapsed = kfi->playback_elapsed();
 
     // Per-keyframe dwell: how long the camera pauses at the selected keyframe before
     // moving on. It is part of the keyframe, so it sits with the path's rhythm rather
@@ -332,19 +333,18 @@ void MappleViewer::draw_animation_window() {
 
     // Playback and the interpolation it uses.
     ImGui::Separator();
-    if (ImGui::Button(playing ? "Pause" : (camera_path_elapsed_ > 0 ? "Resume" : "Play"), ImVec2(120, 0)))
+    if (ImGui::Button(playing ? "Pause" : (playback_elapsed > 0.0f ? "Resume" : "Play"), ImVec2(120, 0)))
         toggle_camera_path_playback();
     ImGui::SameLine();
-    const float elapsed_time = camera_path_elapsed_ / kfi_->interpolation_speed();
+    const float elapsed_time = playback_elapsed / kfi_->interpolation_speed();
     if (playing)
         ImGui::TextDisabled("playing... %.1f s", elapsed_time);
     else
-        ImGui::TextDisabled(camera_path_elapsed_ > 0 ? "Paused at %.1f s" : "Ctrl+K", elapsed_time);
+        ImGui::TextDisabled(playback_elapsed > 0.0f ? "Paused at %.1f s" : "Ctrl+K", elapsed_time);
 
     float speed = kfi->interpolation_speed();
     if (ImGui::DragFloat("Speed (keyframes/s)", &speed, 0.1f, 0.1f, 10.0f, "%.1f") && speed != kfi->interpolation_speed()) {
         kfi->set_interpolation_speed(speed);
-        camera_path_elapsed_ = 0; // this reset the playback
     }
     ImGui::SetItemTooltip("Press 'Play' to check the current speed; slide to adjust.");
     int fps = kfi->frame_rate();
@@ -513,11 +513,8 @@ void MappleViewer::toggle_camera_path_playback() {
         LOG(WARNING) << "camera path playback needs at least two keyframes";
         return;
     } else {
-        // A fresh start: the playback clock begins at "now", so pressing Play always
-        // walks the path from its first keyframe instead of catching up from a stale
-        // deadline (a session-constructed or paused value) and fast-forwarding. The
-        // elapsed readout keeps the value left by a paused playback; it is reset when
-        // the playback reaches its end (see advance_camera_path()).
+        // Start the app clock at "now" so a resumed playback does not fast-forward through
+        // samples that elapsed while it was paused or positioned on a selected keyframe.
         next_camera_path_frame_ = std::chrono::steady_clock::now();
         kfi_->start_manual_interpolation();
         LOG(INFO) << "camera path playback started (" << kfi_->number_of_keyframes() << " keyframes)";
@@ -530,10 +527,7 @@ void MappleViewer::goto_camera_keyframe(int index) {
     if (count == 0)
         return;
     index = clamp(index, 0, count - 1);
-    if (kfi_->is_interpolation_started())
-        kfi_->stop_interpolation();
-    const Frame frame = kfi_->keyframe(static_cast<std::size_t>(index));
-    camera()->frame()->set_position_and_orientation(frame.position(), frame.orientation());
+    kfi_->seek_to_keyframe(static_cast<std::size_t>(index));
     keyframe_editor_->set_selected(index);
     update();
 }

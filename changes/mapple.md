@@ -3009,3 +3009,17 @@ history was found and filled during the ToDo review.
   `camerapathbuilder` and `generatedpath` on both backends. The builds emit only the existing
   Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive import/export,
   playback and recorded-video equivalence were not verified visually.
+
+### 2026-11-25 — selecting a keyframe positions playback
+
+- Timeline clicks and Prev/Next now call `KeyFrameInterpolator::seek_to_keyframe()` through
+  `goto_camera_keyframe()`. Selection pauses playback, applies the exact stored camera pose,
+  and moves the red playhead to that keyframe's timeline position, including preceding dwells.
+  Resume/Play starts at the first sample at or after the selected keyframe.
+- Mapple's duplicate `camera_path_elapsed_` clock is removed. The timeline, paused-time readout,
+  Resume/Play label and playback loop all use the interpolator's authoritative position, so a
+  speed change, pause or seek cannot desynchronize the controls from rendering. The app clock
+  still restarts when playback resumes, avoiding catch-up through time spent paused.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  67/67, OpenGL RelWithDebInfo 48/48), and the Vulkan camera-path desktop regression passes.
+  Interactive timeline clicks, Prev/Next and Resume/Play were not visually checked.

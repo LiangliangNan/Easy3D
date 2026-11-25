@@ -196,7 +196,8 @@ namespace easy3d {
 
             keyframes_.emplace_back(frame, time);
             pathIsValid_ = false;
-            last_stopped_index_ = 0; // may not be valid anymore
+            last_stopped_index_ = 0;
+            playback_elapsed_ = 0.0f;
             stop_interpolation();
             return true;
         }
@@ -207,7 +208,8 @@ namespace easy3d {
         stop_interpolation();
         keyframes_.pop_back();
         pathIsValid_ = false;
-        last_stopped_index_ = 0; // may not be valid anymore
+        last_stopped_index_ = 0;
+        playback_elapsed_ = 0.0f;
     }
 
 
@@ -297,15 +299,9 @@ namespace easy3d {
 
 
     float KeyFrameInterpolator::playback_elapsed() const {
-        if (interpolated_path_.empty())
+        if (!pathIsValid_ || interpolated_path_.empty())
             return 0.0f;
-        // Sample k of the timeline sits at k * interval (the last sample lands on the end).
-        const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
-        float t = static_cast<float>(last_stopped_index_) * interval;
-        const float total = total_duration();
-        if (t > total)
-            t = total;
-        return t;
+        return std::max(0.0f, std::min(playback_elapsed_, total_duration()));
     }
 
 
@@ -345,7 +341,9 @@ namespace easy3d {
         manual_playback_ = false;
         auto animation = [this]() {
             // interval in ms (0.9 to approximately compensate the overhead the timer thread and viewer update)
-            const int interval = static_cast<int>(1000.0f / static_cast<float>(frame_rate()) * 0.9f);
+            const int delay = static_cast<int>(1000.0f / static_cast<float>(frame_rate()) * 0.9f);
+            const float time_step = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+            const float total = total_duration();
             for (int id = last_stopped_index_; id < interpolated_path_.size(); ++id) {
                 if (timer_.is_stopped()) {
                     last_stopped_index_ = id;
@@ -353,9 +351,13 @@ namespace easy3d {
                 }
                 const auto &f = interpolated_path_[id];
                 frame()->set_position_and_orientation(f.position(), f.orientation());
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (id == interpolated_path_.size() - 1)  // reaches the end frame
+                playback_elapsed_ = id + 1 == static_cast<int>(interpolated_path_.size())
+                                    ? total : std::min(static_cast<float>(id) * time_step, total);
+                std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+                if (id == interpolated_path_.size() - 1) { // reaches the end frame
                     last_stopped_index_ = 0;
+                    playback_elapsed_ = 0.0f;
+                }
                 frame_interpolated.send();
             }
             interpolation_stopped.send();
@@ -389,13 +391,42 @@ namespace easy3d {
     bool KeyFrameInterpolator::advance_interpolation() {
         if (!manual_playback_ || !interpolation_started_) return false;
         if (!frame_) {stop_interpolation();return false;}
-        const auto& sample=interpolated_path_.at(size_t(last_stopped_index_));
+        const int index = last_stopped_index_;
+        const auto& sample=interpolated_path_.at(size_t(index));
         frame_->set_position_and_orientation(sample.position(),sample.orientation());
+        const float time_step = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+        const float total = total_duration();
+        playback_elapsed_ = index + 1 == static_cast<int>(interpolated_path_.size())
+                            ? total : std::min(static_cast<float>(index) * time_step, total);
         const bool finished=++last_stopped_index_>=int(interpolated_path_.size());
-        if (finished) {last_stopped_index_=0;interpolation_started_=false;manual_playback_=false;}
+        if (finished) {
+            last_stopped_index_=0;
+            playback_elapsed_=0.0f;
+            interpolation_started_=false;
+            manual_playback_=false;
+        }
         frame_interpolated.send();
         if (finished) interpolation_stopped.send();
         return true;
+    }
+
+    void KeyFrameInterpolator::seek_to_keyframe(std::size_t index) {
+        const Frame pose = keyframe(index);
+        stop_interpolation();
+        if (!frame_) return;
+        if (!pathIsValid_) interpolate();
+        if (interpolated_path_.empty()) return;
+
+        float elapsed = 0.0f;
+        for (std::size_t i = 0; i < index; ++i) {
+            elapsed += keyframes_[i].dwell_time();
+            elapsed += keyframes_[i + 1].time() - keyframes_[i].time();
+        }
+        const float time_step = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+        const int next = static_cast<int>(std::ceil(elapsed / time_step - 1e-5f));
+        last_stopped_index_ = std::max(0, std::min(next, static_cast<int>(interpolated_path_.size()) - 1));
+        playback_elapsed_ = elapsed;
+        frame_->set_position_and_orientation(pose.position(), pose.orientation());
     }
 
     void KeyFrameInterpolator::stop_interpolation() {
@@ -718,6 +749,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
             interpolated_path_.emplace_back(keyframes_[0].position(), keyframes_[0].orientation());
             pathIsValid_ = true;
             last_stopped_index_ = 0;
+            playback_elapsed_ = 0.0f;
             return interpolated_path_;
         }
 
@@ -762,7 +794,8 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
                 interpolated_path_.emplace_back(pos, orient.normalized());
             }
             pathIsValid_ = true;
-            last_stopped_index_ = 0; // not valid anymore
+            last_stopped_index_ = 0;
+            playback_elapsed_ = 0.0f;
             return interpolated_path_;
         }
 
@@ -929,7 +962,8 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
                         << " (at speed " << interpolation_speed() << "x)";
 
         pathIsValid_ = true;
-        last_stopped_index_ = 0; // not valid anymore
+        last_stopped_index_ = 0;
+        playback_elapsed_ = 0.0f;
         return interpolated_path_;
     }
 

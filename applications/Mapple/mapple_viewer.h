@@ -905,7 +905,6 @@ private:
     std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
     bool show_camera_path_ = false;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
-    float camera_path_elapsed_ = 0.0f; //!< Playback position in seconds along the path timeline (travel plus dwell).
     // The keyframe camera glyphs and the interpolated path: standalone drawables in the
     // scene. The stored poses and width are the ones the glyph buffers were built with.
     std::shared_ptr<easy3d::TrianglesDrawable> camera_markers_;

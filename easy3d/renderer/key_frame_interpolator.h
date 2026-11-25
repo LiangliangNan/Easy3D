@@ -271,9 +271,8 @@ namespace easy3d {
         /**
          * \brief Returns the playback position in seconds, along the path's timeline (travel plus dwell).
          * \details The position of the sample the associated frame currently holds: 0 at the first
-         *      sample, growing along the timeline and reaching the path's end. It is 0 while idle and
-         *      when there is no sample yet; while playback runs it is what the timeline strip's
-         *      playhead shows.
+         *      sample, growing along the timeline and reaching the path's end. It is preserved
+         *      while playback is paused and is 0 for an empty or newly edited path.
          * \return The playback position in seconds (0 for an empty path or no sample yet).
          * \sa total_duration(), keyframe_time().
          */
@@ -388,6 +387,15 @@ namespace easy3d {
          * \return True when a sample was applied; false when manual playback is inactive.
          */
         bool advance_interpolation();
+
+        /**
+         * \brief Stops playback and positions the frame and playhead at the given keyframe.
+         * \details The index must be in [0, number_of_keyframes() - 1]. The elapsed time
+         *      includes all preceding travel and dwell; manual playback resumes at the first
+         *      interpolation sample at or after that position.
+         * \param index The keyframe to seek to.
+         */
+        void seek_to_keyframe(std::size_t index);
 
         /**
          * \brief Stops an interpolation started with start_interpolation().
@@ -635,6 +643,7 @@ namespace easy3d {
         bool manual_playback_ = false;
         bool timer_mode_used_ = false;
         int last_stopped_index_;
+        float playback_elapsed_ = 0.0f;
 
         // is path valid? Adding new keyframes or editing a keyframe invalidates the path
         bool pathIsValid_;

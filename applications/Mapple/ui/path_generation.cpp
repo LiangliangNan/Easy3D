@@ -127,7 +127,6 @@ bool MappleViewer::write_camera_path(const std::vector<Frame> &frames,
 
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
-    camera_path_elapsed_ = 0.0f;
     kfi_->delete_path();
     for (std::size_t i = 0; i < frames.size(); ++i) {
         if (!kfi_->add_keyframe(frames[i], times[i]))
