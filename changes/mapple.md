@@ -2849,3 +2849,34 @@ A correctness and structure pass over the generated-path work made these targete
 - Validation: both `Mapple` targets build; the three camera-path tests pass on each backend;
   the complete non-desktop CTest suites pass (OpenGL RelWithDebInfo 47/47, Vulkan Debug 66/66).
   Interactive Mapple controls and gestures remain unmeasured.
+
+### 2026-11-25 — Walk and Flight keep one anti-gravity up
+
+This is the Camera Path window's record of the anti-gravity change implemented on 2026-11-24;
+the design, renderer details and proofreading notes live in `changes/keyframes.md` under
+"Proposal: one anti-gravity up for the Walk and Flight paths". The omission from this Mapple
+history was found and filled during the ToDo review.
+
+- A ground pick now supplies only its contact point. `MappleViewer::route_point_at()` no longer
+  reads or flips a face normal, and the traced stroke is `std::vector<vec3>` end to end. Meshes,
+  point clouds and picks without face provenance therefore follow the same rule; the surface no
+  longer decides which way the camera leans.
+- Walk and Flight share the `Up` rule: `Auto (box shortest)`, `+X`, `+Y`, `+Z`, or `Up from the
+  view`. `draw_ground_up_rule()` shows the rule and its resolved vector together. The choice is
+  stored in `settings.ini`, so a scene that needs an explicit axis does not silently return to
+  `Auto` next session. Orbit adopted the same rule later; its gesture change has its own entry.
+- Poses rise straight along that one path up from their contact points. Eye height and flight
+  height are measured along it, against the scene extent in the same direction. The shared
+  `Follow slopes` switch keeps each pose its own height above its foot when on; when off, the
+  whole track keeps the first stroke point's altitude plus its height.
+- Flight's default aim looks at the ground ahead rather than straight down at each station: the
+  two-station look-ahead clamps at the track's end and is lowered by the current station's own
+  height. The later tail-roll fix keeps that downward aim while inheriting the previous camera's
+  known roll when the view aligns with Up; see `changes/keyframes.md`.
+- Walk and Flight also share one scene-relative `Keyframe spacing` control. It resamples both
+  tracks without letting eye height or flight height change pose density. The mode hints and
+  tooltips describe the straight-up lift, ground-following behavior and ground-ahead flight aim
+  where the user chooses them.
+- Measured for the implementation: both Mapple trees build, the camera-path tests pass, and the
+  complete non-desktop suites pass (OpenGL RelWithDebInfo 47/47, Vulkan Debug 66/66). Interactive
+  Mapple controls and the resulting camera motion remain unmeasured by eye.
