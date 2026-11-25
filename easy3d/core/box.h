@@ -62,7 +62,8 @@ namespace easy3d {
          * \param pmin The minimum corner point.
          * \param pmax The maximum corner point.
          */
-        GenericBox(const Point &pmin, const Point &pmax) {
+        GenericBox(const Point &pmin, const Point &pmax)
+                : GenericBox() {
             grow(pmin);
             grow(pmax);
         }

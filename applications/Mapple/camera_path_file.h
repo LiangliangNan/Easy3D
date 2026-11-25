@@ -1,0 +1,28 @@
+#ifndef EASY3D_MAPPLE_CAMERA_PATH_FILE_H
+#define EASY3D_MAPPLE_CAMERA_PATH_FILE_H
+
+#include "generated_path.h"
+
+#include <easy3d/renderer/key_frame_interpolator.h>
+
+#include <string>
+#include <vector>
+
+namespace mapple {
+
+    struct LoadedCameraPath {
+        std::vector<GeneratedPath> generated_paths;
+        easy3d::CameraPathBuilder::Settings settings;
+    };
+
+    bool save_camera_path(const std::string &file_name,
+                          const easy3d::KeyFrameInterpolator &interpolator,
+                          const std::vector<GeneratedPath> &generated_paths);
+
+    bool read_camera_path(const std::string &file_name,
+                          easy3d::KeyFrameInterpolator *interpolator,
+                          LoadedCameraPath &loaded);
+
+} // namespace mapple
+
+#endif

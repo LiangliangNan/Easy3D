@@ -29,6 +29,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #include <QMutex>
 #include <QFileDialog>
@@ -565,7 +566,8 @@ Model* MainWindow::open(const std::string& file_name) {
 
         const auto keyframe_file = file_system::replace_extension(model->name(), "kf");
         if (file_system::is_file(keyframe_file)) {
-            if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file)) {
+            std::ifstream input(keyframe_file.c_str());
+            if (input && viewer_->walkThrough()->interpolator()->load_keyframes(input)) {
                 LOG(INFO) << "model has an accompanying animation file \'"
                           << file_system::simple_name(keyframe_file) << "\' (loaded)";
                 viewer_->walkThrough()->set_scene(viewer_->models());
@@ -2242,7 +2244,8 @@ void MainWindow::importCameraPath() {
     if (fileName.isEmpty())
         return;
 
-    if (viewer_->walkThrough()->interpolator()->read_keyframes(fileName.toStdString())) {
+    std::ifstream input(fileName.toStdString().c_str());
+    if (input && viewer_->walkThrough()->interpolator()->load_keyframes(input)) {
         LOG(INFO) << viewer_->walkThrough()->interpolator()->number_of_keyframes() << " keyframes loaded";
         viewer_->adjustSceneRadius();
     }
@@ -2273,7 +2276,10 @@ void MainWindow::exportCameraPath() {
     if (fileName.isEmpty())
         return;
 
-    if (viewer_->walkThrough()->interpolator()->save_keyframes(fileName.toStdString()))
+    std::ofstream output(fileName.toStdString().c_str());
+    const bool saved = output && viewer_->walkThrough()->interpolator()->save_keyframes(output);
+    output.close();
+    if (saved && !output.fail())
         LOG(INFO) << "keyframes saved to file";
 }
 

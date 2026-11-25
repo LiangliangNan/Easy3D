@@ -790,3 +790,37 @@ provide a roll reference.
   aligned aims, and coincident-target and degenerate-up fallbacks.
 - Validation: OpenGL RelWithDebInfo and Vulkan Debug both build Mapple. The complete non-desktop
   suites pass: OpenGL 47/47 and Vulkan 66/66. Interactive Mapple playback was not visually checked.
+
+### 2026-11-25 — Stream keyframe I/O and reproducible camera-path files
+
+- `KeyFrameInterpolator::save_keyframes()` now writes to `std::ostream&` instead of opening a
+  filename, and `read_keyframes()` is replaced by `load_keyframes(std::istream&)`. File ownership
+  stays with callers; Mapple can therefore write ordinary keyframes and append provenance in one
+  file without making the renderer aware of application-level generation records.
+- The ordinary stream format keeps its existing position/orientation records and optional dwell,
+  and adds explicit `time:` plus `periodic: 0|1` metadata. Floating-point output uses maximum
+  round-trip precision. Readers still accept the original format, assigning one-second intervals,
+  zero dwells and open interpolation when those fields are absent. Loading parses into temporary
+  keyframes before replacing the path, preserving coincident positions and nonmonotone times that
+  can be produced by the editing setters without dropping poses or shifting their orientations.
+- Interpolated SQUAD orientations are now normalized before storage, matching the existing
+  two-keyframe path. Previously the composed quaternion could drift slightly away from unit
+  length; that changed the rotation matrix's scale and made a round-trip quaternion-dot check
+  report a false orientation change. The interpolator regression now checks unit length.
+- Mapple's app-level format appends versioned JSON provenance after the ordinary keyframes. It
+  restores generated-path sources/settings/build context and playback parameters only after
+  regenerating and validating the owned positions. The exact ordinary poses remain authoritative for
+  rendering, including manually edited orientations; provenance supplies parameter-driven
+  regeneration and interpolation policy. Orbit's periodic flag survives reload, while Walk and
+  Flight stay open.
+- Positive-corner `GenericBox` construction now starts from an invalid box before growing to its two
+  corners, rather than expanding positive minima to the origin. Early version-1 provenance may omit
+  playback metadata; absent playback keeps interpolator defaults, while malformed present playback
+  still falls back.
+- `tests/renderer/camera_path_file_test.cpp` (`opengl.camerapathfile` /
+  `vulkan.camerapathfile`) covers stream I/O, edited coincident/nonmonotone keyframes, all generation
+  modes, multiple blocks, manual gaps, timing/dwells, periodic interpolation, non-default playback
+  settings, orientation-only pose edits, legacy files and invalid or stale provenance fallback.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  67/67, OpenGL RelWithDebInfo 48/48). Interactive playback and recorded-video equivalence were
+  not visually checked.

@@ -42,6 +42,7 @@
 #include <easy3d/util/timer.h>
 #include <easy3d/renderer/frame.h>
 
+#include <iosfwd>
 #include <vector>
 
 
@@ -550,21 +551,21 @@ namespace easy3d {
         float keyframe_dwell(std::size_t index) const;
         //@}
 
-        /*! \name File io */
+        /*! \name Stream io */
         //@{
     public:
         /**
-         * \brief Saves the camera path to a file.
-         * \param file_name The name of the file.
-         * \return \c true if the keyframes were successfully saved.
+         * \brief Writes the camera path's keyframes to a stream.
+         * \param output The stream that receives the keyframes.
+         * \return \c true if the keyframes were successfully written.
          */
-        bool save_keyframes(const std::string& file_name) const;
+        bool save_keyframes(std::ostream& output) const;
         /**
-         * \brief Reads the camera path from a file.
-         * \param file_name The name of the file.
+         * \brief Reads the camera path's keyframes from a stream.
+         * \param input The stream that supplies the keyframes.
          * \return \c true if the keyframes were successfully read.
          */
-        bool read_keyframes(const std::string& file_name);
+        bool load_keyframes(std::istream& input);
         //@}
 
     private:

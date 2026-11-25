@@ -40,6 +40,15 @@
 
 using namespace easy3d;
 
+namespace {
+    void capture_build_context(mapple::GeneratedPath &path, const CameraPathBuilder &builder, const Camera &camera) {
+        path.scene_box = builder.scene_box();
+        path.scene_radius = camera.scene_radius();
+        path.view_up = camera.up_vector();
+        path.has_build_context = true;
+    }
+}
+
 const MappleViewer::GeneratedPath *MappleViewer::latest_generated_path() const {
     return generated_paths_.empty() ? nullptr : &generated_paths_.back();
 }
@@ -245,6 +254,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
             path.first = new_first;
             path.last = new_first + path.span() - 1;
             path.built_settings = settings;
+            path.build_failed = true;
             cursor = old_last + 1;
             continue;
         }
@@ -317,6 +327,8 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
         path.last = new_first + block_size - 1;
         path.pending = false;
         path.built_settings = settings;
+        path.build_failed = false;
+        capture_build_context(path, *camera_path_builder_, *camera());
         cursor = old_last + 1;
     }
 
@@ -364,6 +376,10 @@ void MappleViewer::commit_ground_route() {
 
     CameraPathBuilder::Source source = CameraPathBuilder::Source::walk(std::move(route_segments_));
     route_segments_.clear();
+    if (camera_path_builder_->eye_height_in_world_units() <= 1e-4f) {
+        LOG(WARNING) << "set a positive Eye height to generate walking keyframes";
+        return;
+    }
     if (camera_path_builder_->frames_of(source).empty()) {
         LOG(WARNING) << "the stroke is too short to generate walking keyframes";
         return;
@@ -373,6 +389,7 @@ void MappleViewer::commit_ground_route() {
     GeneratedPath path;
     path.source = std::move(source);
     path.built_settings = camera_path_builder_->settings();
+    capture_build_context(path, *camera_path_builder_, *camera());
     path.first = before;
     path.last = before - 1;
     generated_paths_.push_back(std::move(path));
@@ -404,6 +421,10 @@ void MappleViewer::commit_flight_track() {
     route_segments_.clear();
 
     CameraPathBuilder::Source source = CameraPathBuilder::Source::flight(std::move(points));
+    if (camera_path_builder_->flight_height_in_world_units() <= 1e-4f) {
+        LOG(WARNING) << "set a positive Flight height to trace a flight track";
+        return;
+    }
     if (camera_path_builder_->frames_of(source).size() < 2) {
         LOG(WARNING) << "the stroke is too short to trace a flight track";
         return;
@@ -413,6 +434,7 @@ void MappleViewer::commit_flight_track() {
     GeneratedPath path;
     path.source = std::move(source);
     path.built_settings = camera_path_builder_->settings();
+    capture_build_context(path, *camera_path_builder_, *camera());
     path.first = before;
     path.last = before - 1;
     generated_paths_.push_back(std::move(path));
@@ -455,6 +477,7 @@ void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
     GeneratedPath path;
     path.source = std::move(source);
     path.built_settings = camera_path_builder_->settings();
+    capture_build_context(path, *camera_path_builder_, *camera());
     path.first = 0;
     path.last = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     generated_paths_.push_back(std::move(path));

@@ -92,6 +92,27 @@ int main() {
         KeyFrameInterpolator interpolator;
         interpolator.set_frame(&frame);
         CameraPathBuilder builder(&camera, &interpolator);
+        builder.set_scene_box(Box3(vec3(-2.0f, -1.0f, -2.0f), vec3(2.0f, 1.0f, 2.0f)));
+        CameraPathBuilder::Settings settings = builder.settings();
+        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        settings.eye_height_in_scene_heights = 0.0f;
+        settings.flight_height_in_scene_heights = 0.0f;
+        builder.set_settings(settings);
+        const auto walk = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f},
+                                                           {4.0f, 0.0f, 0.0f}}});
+        require(builder.frames_of(walk).empty(), "the mode-switch fixture accepted a zero Walk height");
+        mapple::prepare_new_path_settings(builder, CameraPathBuilder::Source::Kind::Walk);
+        require(builder.eye_height_in_scene_heights() == CameraPathBuilder::Settings().eye_height_in_scene_heights &&
+                        !builder.frames_of(walk).empty() && builder.flight_height_in_scene_heights() == 0.0f,
+                "arming Walk did not default only its degenerate height");
+
+        const auto flight = CameraPathBuilder::Source::flight({vec3(0.0f), vec3(4.0f, 0.0f, 0.0f)});
+        require(builder.frames_of(flight).empty(), "the mode-switch fixture accepted a zero Flight height");
+        mapple::prepare_new_path_settings(builder, CameraPathBuilder::Source::Kind::Flight);
+        require(builder.flight_height_in_scene_heights() == CameraPathBuilder::Settings().flight_height_in_scene_heights &&
+                        builder.frames_of(flight).size() >= 2,
+                "arming Flight did not default its degenerate height");
+
         const auto source = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f},
                                                              {4.0f, 0.0f, 0.0f}}});
         mapple::GeneratedPath first;

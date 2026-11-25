@@ -21,6 +21,20 @@ else()
     set_tests_properties(opengl.keyframeinterpolator PROPERTIES TIMEOUT 120)
 endif()
 
+# Mapple's .kf composition adds generated-source provenance to the library stream.
+add_executable(easy3d_camera_path_file_test
+        camera_path_file_test.cpp
+        ../../applications/Mapple/camera_path_file.cpp)
+target_include_directories(easy3d_camera_path_file_test PRIVATE ../../applications/Mapple)
+target_link_libraries(easy3d_camera_path_file_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.camerapathfile COMMAND easy3d_camera_path_file_test)
+    set_tests_properties(vulkan.camerapathfile PROPERTIES TIMEOUT 120)
+else()
+    add_test(NAME opengl.camerapathfile COMMAND easy3d_camera_path_file_test)
+    set_tests_properties(opengl.camerapathfile PROPERTIES TIMEOUT 120)
+endif()
+
 # The editor's insert/delete rebuild the path, which is CPU bookkeeping as well: the
 # poses, times and dwell pauses either survive the rebuild or they do not.
 add_executable(easy3d_keyframe_editor_test keyframe_editor_test.cpp)

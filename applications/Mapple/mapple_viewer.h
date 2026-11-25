@@ -502,8 +502,8 @@ private:
     // the path (Ctrl+Z restores it).
     void apply_orbit_gesture(const easy3d::vec2 &anchor);
 
-    // Generated-source provenance and its keyframe span. Manually inserted poses inside
-    // the span stay unowned when the source is regenerated.
+    // Generated-source provenance, its build context, and its keyframe span. Manually
+    // inserted poses inside the span stay unowned when the source is regenerated.
     using GeneratedPath = mapple::GeneratedPath;
 
     const GeneratedPath *latest_generated_path() const;
@@ -514,6 +514,9 @@ private:
     void clear_generated_paths();
     void generated_path_keyframe_inserted(int index);
     void generated_path_keyframe_removed(int index);
+
+    bool load_camera_path(const std::string &file_name);
+    bool save_camera_path(const std::string &file_name) const;
 
     // Replaces every generated block with frames_of(source) under the current settings,
     // keeping keyframes outside those blocks and manually inserted poses inside them,

@@ -42,6 +42,7 @@
 #include <limits>
 #include <stdexcept>
 #include <cmath>
+#include <iomanip>
 #include <sstream>
 
 #include <easy3d/renderer/frame.h>
@@ -550,18 +551,18 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::save_keyframes(const std::string& file_name) const {
-        std::ofstream output(file_name.c_str());
-        if (output.fail()) {
-            LOG(ERROR) << "could not open file: " << file_name;
+    bool KeyFrameInterpolator::save_keyframes(std::ostream& output) const {
+        if (output.fail())
             return false;
-        }
 
-        output << "\tnum_key_frames: " << keyframes_.size() << std::endl;
+        output << std::setprecision(std::numeric_limits<float>::max_digits10);
+        output << "num_key_frames: " << keyframes_.size() << std::endl;
+        output << "periodic: " << (path_is_periodic_ ? 1 : 0) << std::endl;
 
         for (std::size_t id = 0; id < keyframes_.size(); ++id) {
             output << "\tframe: " << id << std::endl;
             const Keyframe& kf = keyframes_[id];
+            output << "\t\ttime: " << kf.time() << std::endl;
             output << "\t\tposition: " << kf.position() << std::endl;
             output << "\t\torientation: " << kf.orientation() << std::endl;
             // The dwell is written only when there is one, so a file without dwells (and every
@@ -570,53 +571,63 @@ namespace easy3d {
                 output << "\t\tdwell: " << kf.dwell_time() << std::endl;
         }
 
-        return !keyframes_.empty();
+        return !keyframes_.empty() && !output.fail();
     }
 
 
-    bool KeyFrameInterpolator::read_keyframes(const std::string& file_name) {
-        std::ifstream input(file_name.c_str());
-        if (input.fail()) {
-            LOG(ERROR) << "could not open file: " << file_name;
+    bool KeyFrameInterpolator::load_keyframes(std::istream& input) {
+        if (input.fail())
             return false;
-        }
 
-        // clean
-        delete_path();
-
-        // Load the path from the file, line by line: "position" and "orientation" follow every
-        // "frame:", and an optional "dwell: <seconds>" may follow the orientation.
+        // Edited paths can contain coincident poses or nonmonotone times. Parse without
+        // add_keyframe() so loading preserves those states instead of shifting orientations.
+        std::vector<Keyframe> loaded;
         std::string line;
         std::getline(input, line);  // rest of the "num_key_frames" line
+        bool periodic = false;
+        bool has_time = false;
+        float time = 0.0f;
         float dwell = 0.0f;         // dwell of the keyframe being read
         while (std::getline(input, line)) {
             if (line.find("frame:") != std::string::npos) {
+                has_time = false;
                 dwell = 0.0f;
                 continue;
             }
             std::istringstream stream(line);
             std::string key;
             stream >> key;
-            if (key == "position:") {
+            if (key == "periodic:") {
+                int value;
+                if (stream >> value)
+                    periodic = value != 0;
+            } else if (key == "time:") {
+                if (stream >> time)
+                    has_time = true;
+            } else if (key == "position:") {
                 vec3 pos;
-                stream >> pos;
-                add_keyframe(Frame(pos, quat()));
+                if (!(stream >> pos))
+                    continue;
+                if (!has_time)
+                    time = loaded.empty() ? 0.0f : loaded.back().time() + 1.0f;
+                loaded.emplace_back(Frame(pos, quat()), time);
             } else if (key == "orientation:") {
                 quat orient;
-                stream >> orient;
-                if (!keyframes_.empty()) {
-                    Keyframe& kf = keyframes_.back();
-                    kf = Keyframe(Frame(kf.position(), orient), kf.time());
-                    kf.set_dwell_time(dwell);
-                }
+                if (!(stream >> orient) || loaded.empty())
+                    continue;
+                loaded.back().set_orientation(orient);
             } else if (key == "dwell:") {
-                stream >> dwell;
-                if (!keyframes_.empty())
-                    keyframes_.back().set_dwell_time(dwell);
+                if (stream >> dwell && !loaded.empty())
+                    loaded.back().set_dwell_time(dwell);
             }
         }
 
-        return !keyframes_.empty();
+        if (loaded.empty())
+            return false;
+        delete_path();
+        keyframes_ = std::move(loaded);
+        set_path_periodic(periodic);
+        return true;
     }
 
 
@@ -904,7 +915,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
                     keyframes_[seg + 1].orientation(),
                     eased);
 
-                interpolated_path_.emplace_back(pos, orient);
+                interpolated_path_.emplace_back(pos, orient.normalized());
             } else {
                 // Last keyframe: only dwell remains (handled by the dwell branch above).
                 interpolated_path_.emplace_back(keyframes_[seg].position(), keyframes_[seg].orientation());

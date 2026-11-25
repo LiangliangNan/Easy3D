@@ -148,6 +148,9 @@ public:
     ///      before the first call or when no model was visible.
     const Box3 &scene_box() const { return scene_box_; }
 
+    /// \brief Restores build-time bounds without requiring the original scene models.
+    void set_scene_box(const Box3 &box) { scene_box_ = box; }
+
     /// \brief Where the path's one up direction comes from.
     /// \details The camera of a walking or flying path never banks: every pose stands
     ///      along the same up, the anti-gravity direction of the scene. The app cannot
@@ -432,6 +435,9 @@ public:
 
     /// \return A copy of the settings the builders currently read.
     Settings settings() const { return settings_; }
+
+    /// \brief Restores a settings snapshot, for example when rebuilding a saved path.
+    void set_settings(const Settings &settings) { settings_ = settings; }
 
     /// \brief The raw input a generated path is derived from.
     /// \details Only what the user supplied: strokes of picked surface points, the picked

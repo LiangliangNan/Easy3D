@@ -25,6 +25,7 @@
  \endcond */
 
 #include "../mapple_viewer.h"
+#include "../camera_path_file.h"
 #include "../keyframe_timeline.h"
 #include <easy3d/renderer/camera_path_builder.h>
 
@@ -178,7 +179,7 @@ void MappleViewer::draw_animation_window() {
 
         if (parameters_tool == PathTool::GroundWalk) {
             float height = camera_path_builder_->eye_height_in_scene_heights();
-            if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.01f, 100.0f, "%.2f x scene")) {
                 camera_path_builder_->set_eye_height_in_scene_heights(height);
                 parameters_changed = true;
             }
@@ -217,7 +218,7 @@ void MappleViewer::draw_animation_window() {
                                   "repeats the first, so the camera returns to its starting pose.");
         } else if (parameters_tool == PathTool::Flight) {
             float height = camera_path_builder_->flight_height_in_scene_heights();
-            if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {
+            if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.01f, 100.0f, "%.2f x scene")) {
                 camera_path_builder_->set_flight_height_in_scene_heights(height);
                 parameters_changed = true;
             }
@@ -569,15 +570,35 @@ void MappleViewer::set_camera_path_visible(bool visible) {
     update();
 }
 
+bool MappleViewer::load_camera_path(const std::string &file_name) {
+    mapple::LoadedCameraPath loaded;
+    if (!mapple::read_camera_path(file_name, kfi_.get(), loaded))
+        return false;
+    clear_generated_paths();
+    generated_paths_ = std::move(loaded.generated_paths);
+    if (!generated_paths_.empty()) {
+        camera_path_builder_->set_settings(loaded.settings);
+        camera_path_builder_->set_scene(models());
+    }
+    camera_path_snapshot_.valid = false;
+    camera_path_snapshot_.from_rebuild = false;
+    if (keyframe_timeline_)
+        keyframe_timeline_->invalidate();
+    keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    return true;
+}
+
+bool MappleViewer::save_camera_path(const std::string &file_name) const {
+    return mapple::save_camera_path(file_name, *kfi_, generated_paths_);
+}
+
 void MappleViewer::import_camera_path() {
     const Model *model = current_model();
     const std::string directory = model ? file_system::parent_directory(model->name()) : "./";
     const std::string file_name = dialog::open("Import keyframes from file", directory, keyframe_filters());
     if (file_name.empty())
         return;
-    if (kfi_->read_keyframes(file_name)) {
-        keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
-        clear_generated_paths(); // the imported path has no mode default
+    if (load_camera_path(file_name)) {
         if (show_camera_path_)
             set_camera_path_visible(true);
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << file_name;
@@ -598,7 +619,7 @@ void MappleViewer::export_camera_path() {
     const std::string file_name = dialog::save("Export keyframes to file", default_name, keyframe_filters());
     if (file_name.empty())
         return;
-    if (kfi_->save_keyframes(file_name))
+    if (save_camera_path(file_name))
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes saved to " << file_name;
     else
         LOG(ERROR) << "failed to save keyframes to " << file_name;
@@ -625,6 +646,13 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
             update();
             return;
         }
+        // A loaded path carries settings for every mode, including heights it never used.
+        // A new gesture needs a usable height; zero remains meaningful only while editing
+        // an existing block, where it refuses regeneration and keeps its last poses.
+        if (tool == PathTool::GroundWalk)
+            mapple::prepare_new_path_settings(*camera_path_builder_, CameraPathBuilder::Source::Kind::Walk);
+        else if (tool == PathTool::Flight)
+            mapple::prepare_new_path_settings(*camera_path_builder_, CameraPathBuilder::Source::Kind::Flight);
     }
     if (tool == PathTool::Aim && (!latest_generated_path() || latest_generated_path()->size() == 0)) {
         LOG(WARNING) << "there is no generated path to re-aim";

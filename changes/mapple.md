@@ -2933,7 +2933,7 @@ history was found and filled during the ToDo review.
 
 - An exact copied closing pose made Orbit's stored keyframes a loop, but the interpolator still
   treated them as an open natural spline: curvature vanished at both copies of the seam pose and
-  the first/last SQUAT tangents did not see the opposite side of the orbit.
+  the first/last SQUAD tangents did not see the opposite side of the orbit.
 - `KeyFrameInterpolator` now has an explicit periodic path mode. For cubic interpolation it solves
   a cyclic natural spline over the unique poses plus the closing interval, and computes SQUAT
   tangents with wrapped neighbours. Before computing each wrapped tangent, both neighbours are
@@ -2959,3 +2959,53 @@ history was found and filled during the ToDo review.
   66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
   only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
   Mapple controls and the resulting camera motion were not verified visually.
+
+### 2026-11-25 — Camera paths persist their generation provenance
+
+- Mapple's `.kf` writer still puts the ordinary keyframes first, then appends a versioned
+  `provenance:` JSON section. The library serializer owns only the keyframes; the new
+  `applications/Mapple/camera_path_file.cpp` composes the file because generation sources and
+  their build context belong to Mapple, not `KeyFrameInterpolator`.
+- Each generated block records its Walk/Flight/Orbit source, complete builder settings, build-time
+  scene box, camera scene radius and View-up direction, owned keyframe span, and manual-gap
+  anchors. The section also records frame rate, interpolation speed and interpolation method.
+  Thus multiple generated paths can retain different settings, while inserted manual poses and
+  unowned leading/trailing poses remain ordinary keyframes. Every successful parameter rebuild
+  refreshes the block's build context to the scene and camera values that actually produced it.
+- Loading reads the ordinary poses first and then validates provenance against them. Validation
+  checks the version, keyframe count, ordered spans and anchors, and regenerates every owned position
+  from its stored source and context. Position validation uses an absolute tolerance so a large
+  world coordinate cannot hide a manual edit. Serialized orientations remain authoritative and may
+  contain manual aim edits without discarding otherwise reproducible route provenance. A successful
+  load retains the exact serialized poses and restores the generation records and playback settings;
+  a whole-path Orbit again enables periodic interpolation, including when it contains manual interior
+  poses. Missing, malformed, incompatible or non-reproducing provenance leaves the ordinary
+  keyframes usable and logs a warning instead of replacing them. A refused parameter rebuild is
+  marked non-reproducible, so saving falls back to ordinary keyframes rather than writing provenance
+  that cannot regenerate.
+- A restored shared settings snapshot can contain a zero Walk or Flight height that the loaded
+  path's mode never used. Arming Walk or Flight now replaces only that mode's degenerate height with
+  its default, so a new stroke is not rejected with a misleading "stroke is too short" warning. The
+  height controls for new parameter edits start at 0.01; zero remains meaningful for an existing
+  generated block, where regeneration is refused and its last accepted poses are retained. The
+  gesture checks now distinguish an invalid height from genuinely short geometry.
+- `GenericBox(pmin, pmax)` starts invalid before growing to its corners. Previously, zero-initialized
+  vector components expanded positive minima to the origin, changing Walk/Flight positions far from
+  the world origin and making valid provenance fail replay. Early version-1 provenance without a
+  `playback` object is accepted with interpolator defaults; malformed present playback is rejected.
+- Import, export and automatic sibling `.kf` loading use the same app-level reader/writer.
+  `KeyFrameInterpolator` now exposes stream-based `save_keyframes(std::ostream&)` and
+  `load_keyframes(std::istream&)`; the retired Qt app uses those streams and safely ignores the
+  trailing provenance while reading ordinary keyframes.
+- Regressions cover Walk with a manual gap, View-up fallback without scene bounds, Flight with
+  explicit aims, multiple generated blocks, Orbit periodicity with and without a manual gap,
+  non-default playback settings, original-format files, missing/malformed/incompatible provenance,
+  positive scene bounds without playback metadata, orientation-only edits that retain provenance,
+  mode-switch height recovery, manually edited generated positions at ordinary and large world
+  coordinates, and refused rebuilds. They compare stored poses, timing, dwells, periodic state and
+  interpolated positions/orientations.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  67/67, OpenGL RelWithDebInfo 48/48), including `camerapathfile`, `keyframeinterpolator`,
+  `camerapathbuilder` and `generatedpath` on both backends. The builds emit only the existing
+  Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive import/export,
+  playback and recorded-video equivalence were not verified visually.

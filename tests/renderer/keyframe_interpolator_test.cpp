@@ -427,6 +427,9 @@ int main() {
             throw std::runtime_error("the periodic path still slows to a stop at its closing pose");
 
         const std::vector<Frame> &frames = kfi.interpolate();
+        for (const Frame &frame : frames)
+            require(close_to(frame.orientation().length(), 1.0f, 1e-6f),
+                    "interpolation returned a non-unit orientation");
         std::vector<float> angular_steps;
         angular_steps.reserve(frames.size() - 1);
         for (std::size_t i = 1; i < frames.size(); ++i)
