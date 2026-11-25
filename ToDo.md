@@ -300,17 +300,16 @@
   - [x] The last flight stations have no station ahead, so a clamped aim points them straight down along the path's up, where the roll is undefined — the opposite of the horizon-level rule. **Fixed 2026-11-25:** the downward aim is retained; when a station's view is parallel to Up, its roll reference is the previous station's camera up (or camera right if that up is also parallel to the new view). Consecutive such views keep carrying the last known roll, while the first retains the deterministic fallback. See `changes/keyframes.md`.
   - [x] The anti-gravity change is recorded in `changes/keyframes.md` and `ToDo.md` but has no entry of its own in `changes/mapple.md`, where the Camera Path window's history lives (the scene-axes overlay that came with the proofread pass does have one). **Recorded 2026-11-25:** see "Walk and Flight keep one anti-gravity up" in `changes/mapple.md`.
   - [ ] For the orbit mode, instead of offering the "Loops" (the number of loops) option, close the loop by making the last keyframe identical to the first keyframe.
-  - [ ] It seems the keyframes do not have equal spacing. Noticed from the camera paths of flight mode, but I think the walking mode have the same issue. Investigate how the intervals are determined (sampling the sketched stroke on the ground?), I think the better idea is to interpolate a spline first and then sample along the spline curve with equal curve distances. Or are there better ideas or better practice?
+  - [x] It seemed the keyframes did not have equal spacing. Noticed from the camera paths of flight mode, but I think the walking mode have the same issue. Investigate how the intervals are determined (sampling the sketched stroke on the ground?), I think the better idea is to interpolate a spline first and then sample along the spline curve with equal curve distances. Or are there better ideas or better practice? **Fixed 2026-11-25:** Walk and Flight now measure the lifted camera track and recover feet with the same segment parameters; see "Walk and Flight spacing measures the lifted camera track" in `changes/mapple.md`.
   - [ ] Use "keyframe" instead of "key frame": so "KeyFrame" -> "Keyfame", key_frame -> keyframe.
   -
 
 
+- [ ] A unified Overlay class for rendering different types of overlays (2D and 3D, world space and screen space)? Need discussion first.
 
 - [x] TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer). Done: `text_renderer.{h,cpp}` and `resources/shaders/text` are removed; Viewer already used `TextLayoutEngine`, and Mapple-Qt now uses it through its own `text_overlay.{h,cpp}`.
 - [ ] RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations).
 - [ ] The Vulkan migration is mostly complete. Which OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or could become redundant and be deleted after small modification/adaptation.
-
-- [ ] A unified Overlay class for different types of overlays (2D and 3D, world space and screen space)? Need discussion first.
 
 - [ ] Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and add_drawable. Should they also return a shared_ptr (instead of raw pointer)? Relevant classes (not a complete list): SurfaceMeshIO, PolyMeshIO, GraphIO, PointCloudIO, ImageIO. and many other places.
 - [ ] Use another coding agent to *proofread* the code changes, documentation, and comments.

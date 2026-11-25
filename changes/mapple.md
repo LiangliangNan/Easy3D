@@ -2880,3 +2880,29 @@ history was found and filled during the ToDo review.
 - Measured for the implementation: both Mapple trees build, the camera-path tests pass, and the
   complete non-desktop suites pass (OpenGL RelWithDebInfo 47/47, Vulkan Debug 66/66). Interactive
   Mapple controls and the resulting camera motion remain unmeasured by eye.
+
+### 2026-11-25 — Walk and Flight spacing measures the lifted camera track
+
+- Equal arc-length samples of the raw ground stroke did not imply equal camera motion when
+  `Follow slopes` was off. A steep stroke could spend most of its length moving along `Up`, even
+  though lifting it to one altitude removed that motion from the camera track. This made level
+  Walk and Flight paths denser than their visible spacing required.
+- `CameraPathBuilder::resample_track()` now lifts the complete source stroke first, measures arc
+  length on those camera positions, and uses each resulting segment parameter to interpolate both
+  the lifted position and its original ground foot. Flight therefore keeps exact terrain-contact
+  provenance; feet are never reconstructed from the level camera path. Walk consumes the lifted
+  positions directly, and Flight still joins its strokes before resampling while Walk keeps each
+  stroke independent.
+- With `Follow slopes` on, spacing includes the full 3D lifted track and therefore terrain
+  elevation. With it off, every camera position shares the first stroke point's altitude plus the
+  mode's height, so only motion perpendicular to the selected `Up` contributes. The existing
+  rounded equal-interval rule and both endpoints are unchanged, and the calculation is independent
+  of whether `Up` is +X, +Y, +Z or a resolved view direction. No spline smoothing was introduced.
+- Regressions cover steep rising-and-falling terrain for Walk and Flight in both slope modes,
+  with +Y and +Z Up. They check keyframe/station counts, equal lifted-track intervals, endpoints,
+  and Flight's original feet. Existing multi-stroke and generated-path provenance tests still
+  cover independent Walk strokes, joined Flight strokes and deterministic regeneration.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
+  only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
+  Mapple behavior and the resulting camera motion were not verified visually.

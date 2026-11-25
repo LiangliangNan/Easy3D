@@ -230,6 +230,75 @@ int main() {
                             close_to(level_stations[i].foot.y, -5.0f + static_cast<float>(i)),
                     "a level flight station lost its ground foot");
         }
+
+        // Steep elevation changes must not space a level camera track by ground-stroke
+        // length. Test the same geometry along two different up directions.
+        auto check_lifted_track_spacing = [&](CameraPathBuilder::GroundUpAxis axis, const vec3 &up) {
+            builder.set_ground_up_axis(axis);
+            const std::vector<vec3> stroke = axis == CameraPathBuilder::GroundUpAxis::Y
+                    ? std::vector<vec3>{vec3(0.0f, -5.0f, 0.0f), vec3(2.0f, -1.0f, 0.0f),
+                                        vec3(4.0f, -5.0f, 0.0f)}
+                    : std::vector<vec3>{vec3(0.0f, 0.0f, -5.0f), vec3(2.0f, 0.0f, -1.0f),
+                                        vec3(4.0f, 0.0f, -5.0f)};
+            const float eye = builder.eye_height_in_world_units();
+            const float flight = builder.flight_height_in_world_units();
+
+            builder.set_follow_ground_slopes(false);
+            const std::size_t level_walk_first = kfi.number_of_keyframes();
+            require(builder.generate_ground_route(stroke) == 3,
+                    "terrain elevation changed the level walk's keyframe count");
+            for (std::size_t i = 0; i < 3; ++i) {
+                const Frame pose = kfi.keyframe(level_walk_first + i);
+                const vec3 foot = stroke[i];
+                const vec3 position = foot - up * dot(foot, up) + up * (dot(stroke.front(), up) + eye);
+                require(close_to(pose.position(), position),
+                        "a level walk did not use the lifted camera position");
+            }
+            const auto level_flight = builder.flight_stations(stroke);
+            require(level_flight.size() == 3, "terrain elevation changed the level flight's station count");
+            for (std::size_t i = 0; i < level_flight.size(); ++i) {
+                const vec3 position = stroke[i] - up * dot(stroke[i], up) +
+                                      up * (dot(stroke.front(), up) + flight);
+                require(close_to(level_flight[i].position, position) &&
+                                close_to(level_flight[i].foot, stroke[i]),
+                        "a level flight did not pair its station with its original foot");
+            }
+
+            builder.set_follow_ground_slopes(true);
+            const std::vector<vec3> samples = {
+                    stroke[0], (stroke[0] + stroke[1]) * 0.5f, stroke[1],
+                    (stroke[1] + stroke[2]) * 0.5f, stroke[2]};
+            const std::size_t slope_walk_first = kfi.number_of_keyframes();
+            require(builder.generate_ground_route(stroke) == samples.size(),
+                    "the slope-following walk did not use the lifted track's length");
+            for (std::size_t i = 0; i < samples.size(); ++i) {
+                const Frame pose = kfi.keyframe(slope_walk_first + i);
+                require(close_to(pose.position(), samples[i] + up * eye) &&
+                                close_to(pose.position() - pose.orientation().rotate(local_up) * eye, samples[i]),
+                        "a slope-following walk lost its camera position or terrain foot");
+                if (i > 0) {
+                    require(close_to(distance(pose.position(), kfi.keyframe(slope_walk_first + i - 1).position()),
+                                     distance(stroke[0], stroke[1]) * 0.5f),
+                            "slope-following walk poses are not equally spaced on the camera track");
+                }
+            }
+            const auto slope_flight = builder.flight_stations(stroke);
+            require(slope_flight.size() == samples.size(),
+                    "the slope-following flight did not use the lifted track's length");
+            for (std::size_t i = 0; i < samples.size(); ++i) {
+                require(close_to(slope_flight[i].position, samples[i] + up * flight) &&
+                                close_to(slope_flight[i].foot, samples[i]),
+                        "a slope-following flight lost its camera position or terrain foot");
+                if (i > 0) {
+                    require(close_to(distance(slope_flight[i].position, slope_flight[i - 1].position),
+                                     distance(stroke[0], stroke[1]) * 0.5f),
+                            "slope-following flight stations are not equally spaced on the camera track");
+                }
+            }
+        };
+        check_lifted_track_spacing(CameraPathBuilder::GroundUpAxis::Y, vec3(0.0f, 1.0f, 0.0f));
+        check_lifted_track_spacing(CameraPathBuilder::GroundUpAxis::Z, vec3(0.0f, 0.0f, 1.0f));
+        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
         builder.set_follow_ground_slopes(true);
 
         // --- a point cloud: no faces, no normals, the same path -----------
@@ -245,11 +314,12 @@ int main() {
                 "Auto failed on a point cloud");
         builder.set_scene({box});
         builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        const std::size_t cloud_first = kfi.number_of_keyframes();
         const std::size_t cloud_count = builder.generate_ground_route(flat_stroke);
         require(cloud_count == flat_count, "the point-cloud route changed the keyframe count");
         for (std::size_t i = 0; i < flat_count; ++i) {
             const Frame a = kfi.keyframe(i);
-            const Frame b = kfi.keyframe(level_first + level_count + i);
+            const Frame b = kfi.keyframe(cloud_first + i);
             require(close_to(a.position(), b.position()) &&
                     close_to(a.orientation().rotate(local_up), b.orientation().rotate(local_up)),
                     "the route through a point cloud differs from the mesh route");
@@ -263,11 +333,12 @@ int main() {
         for (int i = 0; i <= 7; ++i)
             odd_stroke.emplace_back(static_cast<float>(i), -5.0f, 0.0f);
         builder.set_keyframe_spacing_in_scene_heights(0.15f);
+        const std::size_t odd_first = kfi.number_of_keyframes();
         const std::size_t odd_count = builder.generate_ground_route(odd_stroke);
         builder.set_keyframe_spacing_in_scene_heights(0.2f);
         require(odd_count == 6, "the odd-length route was not divided into equal intervals");
         for (std::size_t i = 0; i < odd_count; ++i) {
-            const Frame f = kfi.keyframe(level_first + level_count + cloud_count + i);
+            const Frame f = kfi.keyframe(odd_first + i);
             require(close_to(f.position().x, 1.4f * static_cast<float>(i)) && close_to(f.position().y, -3.0f) &&
                     close_to(f.position().z, 0.0f),
                     "an odd-length route pose is not at an equal arc-length step");

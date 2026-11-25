@@ -216,19 +216,21 @@ namespace easy3d {
         return lifted;
     }
 
-    bool CameraPathBuilder::resample_stroke(const std::vector<vec3> &stroke, float spacing,
-                                            std::vector<vec3> &feet) const {
+    bool CameraPathBuilder::resample_track(const std::vector<vec3> &stroke, float height, float spacing,
+                                           std::vector<vec3> &feet, std::vector<vec3> &positions) const {
         feet.clear();
+        positions.clear();
         if (stroke.size() < 2)
             return false;
 
-        // Only the feet are resampled: the camera's up is the path's one up direction, so
-        // nothing along the stroke can tilt it, and a stroke over a point cloud needs no
-        // normals at all.
-        const std::vector<ArcSample> samples = arc_length_samples(stroke, spacing);
+        const std::vector<vec3> lifted = lifted_feet(stroke, height);
+        const std::vector<ArcSample> samples = arc_length_samples(lifted, spacing);
         feet.reserve(samples.size());
-        for (const auto &sample : samples)
+        positions.reserve(samples.size());
+        for (const auto &sample : samples) {
             feet.push_back(sample_value(stroke, sample));
+            positions.push_back(sample_value(lifted, sample));
+        }
         return true;
     }
 
@@ -252,17 +254,13 @@ namespace easy3d {
         const float spacing = keyframe_spacing_in_world_units();
 
         std::vector<vec3> feet;
-        if (!resample_stroke(stroke, spacing, feet))
+        std::vector<vec3> positions;
+        if (!resample_track(stroke, height, spacing, feet, positions))
             return stations;
 
-        // The camera positions come from the stroke lifted by one flight height: off each
-        // foot's own ground while the track follows the slopes, off the first foot's
-        // altitude otherwise. The feet stay the ground points, so a default aim keeps
-        // looking at the ground under the camera.
-        const std::vector<vec3> lifted = lifted_feet(feet, height);
         stations.reserve(feet.size());
         for (std::size_t i = 0; i < feet.size(); ++i)
-            stations.push_back(FlightStation{lifted[i], feet[i]});
+            stations.push_back(FlightStation{positions[i], feet[i]});
         return stations;
     }
 
@@ -346,10 +344,11 @@ namespace easy3d {
                 if (eye > 1e-4f) {
                     for (const auto &stroke : source.strokes) {
                         std::vector<vec3> feet;
-                        if (!resample_stroke(stroke, spacing, feet))
+                        std::vector<vec3> positions;
+                        if (!resample_track(stroke, eye, spacing, feet, positions))
                             continue;
                         const std::vector<Frame> route =
-                                ground_frames(lifted_feet(feet, eye), ground_up_direction(), 0.0f);
+                                ground_frames(positions, ground_up_direction(), 0.0f);
                         frames.insert(frames.end(), route.begin(), route.end());
                     }
                 }

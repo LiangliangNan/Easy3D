@@ -206,12 +206,14 @@ public:
     ///      heights (default 0.5, i.e. half the scene's height per keyframe).
     /// \details One value for both ground tracks, measured against the scene rather than
     ///      against either track's own height: the walking route and the flight resample
-    ///      their strokes at the same world spacing, so the eye height and the flight
-    ///      height no longer move the keyframe density. A scene height is the extent of
-    ///      scene_box() along ground_up_direction(), or the camera's scene radius while
-    ///      the box is invalid. The spacing chooses how many intervals the stroke is
-    ///      divided into (length / spacing, rounded); the intervals are then equal, with
-    ///      both stroke ends included.
+    ///      their lifted camera tracks at the same world spacing, so the eye height and
+    ///      the flight height do not move the keyframe density. A scene height is the
+    ///      extent of scene_box() along ground_up_direction(), or the camera's scene
+    ///      radius while the box is invalid. The spacing chooses how many intervals the
+    ///      lifted track is divided into (length / spacing, rounded); the intervals are
+    ///      then equal, with both ends included. While follow_ground_slopes() is true the
+    ///      length includes terrain elevation changes; false, all positions share one
+    ///      altitude and only motion perpendicular to ground_up_direction() contributes.
     /// \param spacing_in_scene_heights A positive multiple of the scene height. The
     ///      resulting world spacing is clamped to at least 1e-4, so a value at or below
     ///      zero is accepted but produces a keyframe every 1e-4 world units - an enormous
@@ -245,14 +247,14 @@ public:
     /// \details The stroke points are ground-contact points, so passing the surface
     ///      points picked under the cursor makes the route follow the terrain: each
     ///      pose sits one eye height above its own stroke point along
-    ///      ground_up_direction(), and aims level along the route. The stroke is
-    ///      resampled by arc length at keyframe_spacing_in_scene_heights() x the scene
-    ///      height: the spacing rounds to a number of intervals
-    ///      and the stroke's first and last points and the equal steps between them
-    ///      make up the poses, so consecutive poses are always the same distance apart
-    ///      along the stroke (a stroke shorter than the spacing still yields two
-    ///      poses). The poses are appended to the path (an existing path is kept, so
-    ///      several strokes can build one walk).
+    ///      ground_up_direction(), and aims level along the route. The lifted camera
+    ///      track is resampled by arc length at keyframe_spacing_in_scene_heights() x
+    ///      the scene height: the spacing rounds to a number of intervals, and the two
+    ///      ends plus the equal steps between them make up the poses. Each ground foot
+    ///      uses the same stroke-segment parameter as its camera position, so terrain
+    ///      contact is preserved without deriving feet from the camera path. A stroke
+    ///      shorter than the spacing still yields two poses. The poses are appended to
+    ///      the path (an existing path is kept, so several strokes can build one walk).
     /// \param stroke Ground-contact points in path order; at least two are needed.
     ///      While follow_ground_slopes() is true their own heights are kept, so a route
     ///      over terrain rises and falls with it; false keeps every pose at the first
@@ -365,10 +367,12 @@ public:
     ///      follows the terrain's heights; false lifts every station off the first
     ///      point's altitude instead, for a level flight over a slope. Either way the
     ///      camera stays upright and the station carries its ground point as its foot. The
-    ///      stroke is resampled by arc length at keyframe_spacing_in_scene_heights() x
-    ///      the scene height, with the same equal-step, both-ends-included rule as the
-    ///      walking route. It
-    ///      modifies neither the camera nor the interpolator.
+    ///      lifted camera track is resampled by arc length at
+    ///      keyframe_spacing_in_scene_heights() x the scene height, with the same
+    ///      equal-step, both-ends-included rule as the walking route. Each foot uses the
+    ///      same stroke-segment parameter as its station, so the stations stay equally
+    ///      spaced without losing the original terrain contact. This modifies neither
+    ///      the camera nor the interpolator.
     /// \param stroke Ground-contact points in track order; at least two are needed.
     /// \return One station per resampled foot, or an empty vector if the stroke has
     ///      fewer than two points or the flight height's world value is at most 1e-4.
@@ -612,12 +616,13 @@ protected:
     // invalid. In world units.
     float scene_height_in_world_units() const;
 
-    // Resamples stroke by arc length at spacing (world units) into feet. The stroke is
-    // divided into round(length / spacing) equal intervals with both ends included, so
-    // no two consecutive samples are closer than the rest.
+    // Resamples the lifted camera track at spacing (world units), returning both its
+    // camera positions and the original ground feet. The lifted track is divided into
+    // round(length / spacing) equal intervals with both ends included. Feet use the
+    // same segment parameters as positions, so they stay on the authored stroke.
     // Returns false if stroke has fewer than two points.
-    bool resample_stroke(const std::vector<vec3> &stroke, float spacing,
-                         std::vector<vec3> &feet) const;
+    bool resample_track(const std::vector<vec3> &stroke, float height, float spacing,
+                        std::vector<vec3> &feet, std::vector<vec3> &positions) const;
 
     // Appends frame to the interpolator, which times it one second after the previous
     // keyframe and may drop a pose coinciding with the previous one. When the pose was
