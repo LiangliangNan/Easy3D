@@ -117,14 +117,14 @@ bool MappleViewer::open() {
         }
     }
     if (opened) {
-#if 1   // load the keyframes file (if exist)
+        fit_screen();
+#if 0   // load the keyframes file (if exist)
         const std::string keyframe_file = file_system::replace_extension(files.back(), "kf");
         if (file_system::is_file(keyframe_file) && load_camera_path(keyframe_file)) {
             set_camera_path_visible(true);
             LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << keyframe_file;
         }
 #endif
-        fit_screen();
     }
     return opened;
 }
@@ -170,15 +170,15 @@ void MappleViewer::open_recent_file(const std::string &file) {
         settings_.forget_file(file);
         return;
     }
-#if 1   // load the keyframes file (if exist)
+    fit_screen();
+    settings_.remember_file(file);
+#if 0   // load the keyframes file (if exist)
     const std::string keyframe_file = file_system::replace_extension(file, "kf");
     if (file_system::is_file(keyframe_file) && load_camera_path(keyframe_file)) {
         set_camera_path_visible(true);
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << keyframe_file;
     }
 #endif
-    fit_screen();
-    settings_.remember_file(file);
 }
 
 namespace {
@@ -651,9 +651,9 @@ void MappleViewer::draw_menu_bar() {
             set_camera_path_visible(path_visible);
 
         ImGui::Separator();
-        if (ImGui::MenuItem("Import Keyframes..."))
+        if (ImGui::MenuItem("Import Camera Path..."))
             import_camera_path();
-        if (ImGui::MenuItem("Export Keyframes...", nullptr, false, keyframes > 0))
+        if (ImGui::MenuItem("Export Camera Path...", nullptr, false, keyframes > 0))
             export_camera_path();
         ImGui::EndMenu();
     }

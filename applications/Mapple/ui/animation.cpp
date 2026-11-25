@@ -42,6 +42,7 @@
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -579,6 +580,17 @@ bool MappleViewer::load_camera_path(const std::string &file_name) {
     if (keyframe_timeline_)
         keyframe_timeline_->invalidate();
     keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
+    set_camera_path_visible(true);
+
+    // ensure the camera path is within the rendering frustum
+    Box3 box;
+    for (const auto &model : models_)
+        box.grow(model->bounding_box());
+    for (const auto &drawable : drawables_)
+        if (!dynamic_cast<LinesDrawable2D *>(drawable.get()))
+            box.grow(drawable->bounding_box());
+    if (box.is_valid())
+        camera()->set_scene_bounding_box(box.min_point(), box.max_point());
     return true;
 }
 
@@ -589,15 +601,15 @@ bool MappleViewer::save_camera_path(const std::string &file_name) const {
 void MappleViewer::import_camera_path() {
     const Model *model = current_model();
     const std::string directory = model ? file_system::parent_directory(model->name()) : "./";
-    const std::string file_name = dialog::open("Import keyframes from file", directory, keyframe_filters());
+    const std::string file_name = dialog::open("Import camera path from file", directory, keyframe_filters());
     if (file_name.empty())
         return;
     if (load_camera_path(file_name)) {
         if (show_camera_path_)
             set_camera_path_visible(true);
-        LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << file_name;
+        LOG(INFO) << kfi_->number_of_keyframes() << " camera path loaded from " << file_name;
     } else
-        LOG(ERROR) << "failed to read keyframes from " << file_name;
+        LOG(ERROR) << "failed to read camera path from " << file_name;
     update();
 }
 
@@ -610,13 +622,13 @@ void MappleViewer::export_camera_path() {
     std::string default_name("./keyframes.kf");
     if (model)
         default_name = file_system::replace_extension(model->name(), "kf");
-    const std::string file_name = dialog::save("Export keyframes to file", default_name, keyframe_filters());
+    const std::string file_name = dialog::save("Export camera path to file", default_name, keyframe_filters());
     if (file_name.empty())
         return;
     if (save_camera_path(file_name))
-        LOG(INFO) << kfi_->number_of_keyframes() << " keyframes saved to " << file_name;
+        LOG(INFO) << kfi_->number_of_keyframes() << " camera path saved to " << file_name;
     else
-        LOG(ERROR) << "failed to save keyframes to " << file_name;
+        LOG(ERROR) << "failed to save camera path to " << file_name;
 }
 
 void MappleViewer::arm_camera_path_tool(PathTool tool) {
