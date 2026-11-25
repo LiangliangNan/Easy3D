@@ -103,8 +103,7 @@ namespace easy3d {
         /**
          * \brief Select or deselect the model.
          * \param b True to select the model; false to deselect it.
-         * \details The selected state is propagated to all of the model's
-         * drawables.
+         * \details The selected state is propagated to all the model's drawables.
          */
         void set_selected(bool b);
 
