@@ -38,12 +38,12 @@ namespace easy3d {
     class Frame;
     class Camera;
     class Model;
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
 }
 
 /// \brief WalkThrough enables to interactively creat a camera path for visualizing large scenes or demonstrating
 ///     3D objects.
-/// \details WalkThrough uses KeyFrameInterpolator for generating camera paths based on a set of keyframes.
+/// \details WalkThrough uses KeyframeInterpolator for generating camera paths based on a set of keyframes.
 ///     The keyframes can be obtained in two different modes:
 ///     - Free mode: record a set of viewpoints and view directions as keyframes.
 ///     - Walking mode: simulate a character walking through a scene and record a walking path as keyframes.
@@ -64,7 +64,7 @@ public:
 
     /// \name Keyframe creation for the free mode
     //@{
-    /// adds a key frame to the camera path (for free mode only)
+    /// adds a keyframe to the camera path (for free mode only)
     void add_keyframe(const easy3d::Frame &frame, bool quiet = false);
     //@}
 
@@ -137,7 +137,7 @@ public:
     /// Returns the pitch angle.
     float pitch_angle() const { return rotate_pitch_angle_; }
 
-    /// Sets the keyframe samples (i.e., the number of key frames per loop). Default value is 10.
+    /// Sets the keyframe samples (i.e., the number of keyframes per loop). Default value is 10.
     void set_keyframe_samples(int v, bool re_generate = false);
     /// Returns the keyframe samples.
     int keyframe_samples() const { return rotate_keyframe_samples_; }
@@ -190,7 +190,7 @@ public:
     //@}
 
     /// Returns the keyframe interpolator.
-    easy3d::KeyFrameInterpolator *interpolator() const { return kfi_; }
+    easy3d::KeyframeInterpolator *interpolator() const { return kfi_; }
 
 protected:
     void add_keyframe(const easy3d::vec3 &cam_pos, const easy3d::vec3 &view_dir);
@@ -209,7 +209,7 @@ protected:
 
 protected:
     easy3d::Camera *camera_;
-    easy3d::KeyFrameInterpolator *kfi_;
+    easy3d::KeyframeInterpolator *kfi_;
 
     Status status_;
 

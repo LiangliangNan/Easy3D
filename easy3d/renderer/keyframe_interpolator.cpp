@@ -34,7 +34,7 @@
  *
  *----------------------------------------------------------*/
 
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 
 #include <algorithm>
 #include <chrono>
@@ -147,7 +147,7 @@ namespace easy3d {
     }
 
 
-    KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
+    KeyframeInterpolator::KeyframeInterpolator(Frame *frame)
             : frame_(frame)
             , fps_(30)
             , interpolation_method_(INTERPOLATION)
@@ -161,12 +161,12 @@ namespace easy3d {
     }
 
 
-    KeyFrameInterpolator::~KeyFrameInterpolator() {
+    KeyframeInterpolator::~KeyframeInterpolator() {
         delete_path();
     }
 
 
-    bool KeyFrameInterpolator::add_keyframe(const Frame &frame) {
+    bool KeyframeInterpolator::add_keyframe(const Frame &frame) {
         // interval of each consecutive keyframes is 1.0 sec.
         float time = 0.0f;
         if (keyframes_.empty())
@@ -178,7 +178,7 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::add_keyframe(const Frame &frame, float time) {
+    bool KeyframeInterpolator::add_keyframe(const Frame &frame, float time) {
         if ((!keyframes_.empty()) && (keyframes_.back().time() >= time)) {
             LOG(ERROR) << "time is not monotone";
             return false;
@@ -204,7 +204,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::delete_last_keyframe() {
+    void KeyframeInterpolator::delete_last_keyframe() {
         stop_interpolation();
         keyframes_.pop_back();
         pathIsValid_ = false;
@@ -213,40 +213,40 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::set_keyframe_time(std::size_t index, float t) {
+    void KeyframeInterpolator::set_keyframe_time(std::size_t index, float t) {
         stop_interpolation();
         keyframes_.at(index).set_time(t);
         pathIsValid_ = false;
     }
 
 
-    void KeyFrameInterpolator::set_keyframe_position(std::size_t index, const vec3& pos) {
+    void KeyframeInterpolator::set_keyframe_position(std::size_t index, const vec3& pos) {
         stop_interpolation();
         keyframes_.at(index).set_position(pos);
         pathIsValid_ = false;
     }
 
 
-    void KeyFrameInterpolator::set_keyframe_orientation(std::size_t index, const quat& q) {
+    void KeyframeInterpolator::set_keyframe_orientation(std::size_t index, const quat& q) {
         stop_interpolation();
         keyframes_.at(index).set_orientation(q);
         pathIsValid_ = false;
     }
 
 
-    void KeyFrameInterpolator::set_keyframe_dwell(std::size_t index, float seconds) {
+    void KeyframeInterpolator::set_keyframe_dwell(std::size_t index, float seconds) {
         stop_interpolation();
         keyframes_.at(index).set_dwell_time(seconds);
         pathIsValid_ = false;
     }
 
 
-    float KeyFrameInterpolator::keyframe_dwell(std::size_t index) const {
+    float KeyframeInterpolator::keyframe_dwell(std::size_t index) const {
         return keyframes_.at(index).dwell_time();
     }
 
 
-    void KeyFrameInterpolator::delete_path() {
+    void KeyframeInterpolator::delete_path() {
         stop_interpolation();
         keyframes_.clear();
         interpolated_path_.clear();
@@ -258,60 +258,60 @@ namespace easy3d {
     }
 
 
-    Frame KeyFrameInterpolator::keyframe(std::size_t index) const {
+    Frame KeyframeInterpolator::keyframe(std::size_t index) const {
         const Keyframe& kf = keyframes_.at(index);
         return {kf.position(), kf.orientation()};
     }
 
 
-    float KeyFrameInterpolator::keyframe_time(std::size_t index) const {
+    float KeyframeInterpolator::keyframe_time(std::size_t index) const {
         return keyframes_.at(index).time();
     }
 
 
-    const vec3& KeyFrameInterpolator::keyframe_position(std::size_t index) const {
+    const vec3& KeyframeInterpolator::keyframe_position(std::size_t index) const {
         return keyframes_.at(index).position();
     }
 
 
-    const quat& KeyFrameInterpolator::keyframe_orientation(std::size_t index) const {
+    const quat& KeyframeInterpolator::keyframe_orientation(std::size_t index) const {
         return keyframes_.at(index).orientation();
     }
 
 
-    float KeyFrameInterpolator::duration() const {
+    float KeyframeInterpolator::duration() const {
         return last_time() - first_time();
     }
 
 
-    float KeyFrameInterpolator::first_time() const {
+    float KeyframeInterpolator::first_time() const {
         if (keyframes_.empty())
             return 0.0f;
         return keyframes_.front().time();
     }
 
 
-    float KeyFrameInterpolator::last_time() const {
+    float KeyframeInterpolator::last_time() const {
         if (keyframes_.empty())
             return 0.0f;
         return keyframes_.back().time();
     }
 
 
-    float KeyFrameInterpolator::playback_elapsed() const {
+    float KeyframeInterpolator::playback_elapsed() const {
         if (!pathIsValid_ || interpolated_path_.empty())
             return 0.0f;
         return std::max(0.0f, std::min(playback_elapsed_, total_duration()));
     }
 
 
-    void  KeyFrameInterpolator::set_interpolation_method(Method m) {
+    void  KeyframeInterpolator::set_interpolation_method(Method m) {
         interpolation_method_ = m;
         pathIsValid_ = false;
     }
 
 
-    void KeyFrameInterpolator::set_interpolation_speed(float speed) {
+    void KeyframeInterpolator::set_interpolation_speed(float speed) {
         if (!std::isfinite(speed) || speed<=0) throw std::invalid_argument("interpolation speed must be positive and finite");
         stop_interpolation();
         interpolation_speed_ = speed;
@@ -319,7 +319,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::set_frame_rate(int fps) {
+    void KeyframeInterpolator::set_frame_rate(int fps) {
         if (fps<=0 || fps>1000) throw std::invalid_argument("interpolation frame rate must be in 1..1000");
         stop_interpolation();
         fps_ = fps;
@@ -327,7 +327,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::set_path_periodic(bool periodic) {
+    void KeyframeInterpolator::set_path_periodic(bool periodic) {
         if (path_is_periodic_ == periodic)
             return;
         stop_interpolation();
@@ -336,7 +336,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::start_interpolation() {
+    void KeyframeInterpolator::start_interpolation() {
         if (manual_playback_) stop_interpolation();
         manual_playback_ = false;
         auto animation = [this]() {
@@ -377,7 +377,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::start_manual_interpolation() {
+    void KeyframeInterpolator::start_manual_interpolation() {
         if (timer_mode_used_) throw std::logic_error("manual interpolation requires a fresh, timer-free interpolator");
         stop_interpolation();
         if (!frame_ || keyframes_.empty()) return;
@@ -388,7 +388,7 @@ namespace easy3d {
         interpolation_started_=true;
     }
 
-    bool KeyFrameInterpolator::advance_interpolation() {
+    bool KeyframeInterpolator::advance_interpolation() {
         if (!manual_playback_ || !interpolation_started_) return false;
         if (!frame_) {stop_interpolation();return false;}
         const int index = last_stopped_index_;
@@ -410,7 +410,7 @@ namespace easy3d {
         return true;
     }
 
-    void KeyFrameInterpolator::seek_to_keyframe(std::size_t index) {
+    void KeyframeInterpolator::seek_to_keyframe(std::size_t index) {
         const Frame pose = keyframe(index);
         stop_interpolation();
         if (!frame_) return;
@@ -429,14 +429,14 @@ namespace easy3d {
         frame_->set_position_and_orientation(pose.position(), pose.orientation());
     }
 
-    void KeyFrameInterpolator::stop_interpolation() {
+    void KeyframeInterpolator::stop_interpolation() {
         timer_.stop();
         interpolation_started_ = false;
         manual_playback_ = false;
     }
 
 
-    void KeyFrameInterpolator::draw_cameras(const Camera *camera, float camera_width, const vec4 &color) {
+    void KeyframeInterpolator::draw_cameras(const Camera *camera, float camera_width, const vec4 &color) {
         if (keyframes_.empty())
             return;
         if (!pathIsValid_) {
@@ -468,7 +468,7 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::update_cameras_drawable(TrianglesDrawable &drawable, const Camera *camera,
+    bool KeyframeInterpolator::update_cameras_drawable(TrianglesDrawable &drawable, const Camera *camera,
                                                        float camera_width, const vec4 &color) const {
         if (keyframes_.empty() || !camera || !(camera_width > 0.0f) || !std::isfinite(camera_width))
             return false;
@@ -484,7 +484,7 @@ namespace easy3d {
     }
 
 
-    std::size_t KeyFrameInterpolator::camera_glyph_triangles() {
+    std::size_t KeyframeInterpolator::camera_glyph_triangles() {
         // The angle only moves the glyph vertices; the triangle count is the same.
         std::vector<vec3> points;
         std::vector<unsigned int> indices;
@@ -493,7 +493,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::drop_immediate_drawables() {
+    void KeyframeInterpolator::drop_immediate_drawables() {
         delete path_drawable_;
         path_drawable_ = nullptr;
         delete cameras_drawable_;
@@ -501,7 +501,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::append_camera_glyphs(float camera_width, float fov, float aspect,
+    void KeyframeInterpolator::append_camera_glyphs(float camera_width, float fov, float aspect,
                                                     std::vector<vec3> &points,
                                                     std::vector<unsigned int> &indices) const {
         if (keyframes_.empty())
@@ -543,7 +543,7 @@ namespace easy3d {
     } // namespace
 
 
-    bool KeyFrameInterpolator::update_path_drawable(LinesDrawable &drawable, float thickness, const vec4 &color) {
+    bool KeyframeInterpolator::update_path_drawable(LinesDrawable &drawable, float thickness, const vec4 &color) {
         if (!pathIsValid_)
             drop_immediate_drawables();
         const std::vector<vec3> points = path_segments(interpolate());
@@ -556,7 +556,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::draw_path(const Camera *camera, float thickness, const vec4 &color) {
+    void KeyframeInterpolator::draw_path(const Camera *camera, float thickness, const vec4 &color) {
         if (keyframes_.empty())
             return;
         if (!pathIsValid_) {
@@ -582,12 +582,12 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::save_keyframes(std::ostream& output) const {
+    bool KeyframeInterpolator::save_keyframes(std::ostream& output) const {
         if (output.fail())
             return false;
 
         output << std::setprecision(std::numeric_limits<float>::max_digits10);
-        output << "num_key_frames: " << keyframes_.size() << std::endl;
+        output << "num_keyframes: " << keyframes_.size() << std::endl;
         output << "periodic: " << (path_is_periodic_ ? 1 : 0) << std::endl;
 
         for (std::size_t id = 0; id < keyframes_.size(); ++id) {
@@ -606,7 +606,7 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::load_keyframes(std::istream& input) {
+    bool KeyframeInterpolator::load_keyframes(std::istream& input) {
         if (input.fail())
             return false;
 
@@ -614,7 +614,7 @@ namespace easy3d {
         // add_keyframe() so loading preserves those states instead of shifting orientations.
         std::vector<Keyframe> loaded;
         std::string line;
-        std::getline(input, line);  // rest of the "num_key_frames" line
+        std::getline(input, line);  // Count header; legacy spellings remain readable.
         bool periodic = false;
         bool has_time = false;
         float time = 0.0f;
@@ -674,7 +674,7 @@ namespace easy3d {
 // is 1.5 * (1 - u^2) with u in [-1, 1], integrated over the ramp, and the cruise carries the
 // middle, so the whole segment is covered in exactly its travel time. The returned fraction is
 // the portion of the segment's length covered at time fraction w (clamped to [0,1]).
-float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop_end) {
+float KeyframeInterpolator::segment_fraction(float w, bool stop_start, bool stop_end) {
     // Fraction of the segment's length covered at time fraction w (clamped to [0,1]).
     // The camera accelerates from rest at the segment's start (if stop_start) and
     // decelerates to rest at its end (if stop_end), cruising at constant speed between.
@@ -738,7 +738,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
 }
 
 
-    const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
+    const std::vector<Frame>& KeyframeInterpolator::interpolate() {
         if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
             return interpolated_path_;
 
@@ -968,7 +968,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     }
 
 
-    std::vector<float> KeyFrameInterpolator::length_fraction() const {
+    std::vector<float> KeyframeInterpolator::length_fraction() const {
         // The fraction of the path's LENGTH at which each keyframe sits: 0 at the first, 1 at
         // the last. This is the position spline's own parameter space.
         const std::size_t n = keyframes_.size();
@@ -987,7 +987,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     }
 
 
-    float KeyFrameInterpolator::total_duration() const {
+    float KeyframeInterpolator::total_duration() const {
         // Travel time between consecutive keyframes plus the dwell time of every keyframe:
         // the timeline interpolate() samples.
         float travel = 0.0f, dwell = 0.0f;
@@ -1006,14 +1006,14 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
     // \cond
 
     //////////// Keyframe private class implementation /////////
-    KeyFrameInterpolator::Keyframe::Keyframe(const Frame &fr, float t)
+    KeyframeInterpolator::Keyframe::Keyframe(const Frame &fr, float t)
             : time_(t) {
         p_ = fr.position();
         q_ = fr.orientation();
     }
 
 
-    void KeyFrameInterpolator::Keyframe::flip_if_needed(const quat &prev) {
+    void KeyframeInterpolator::Keyframe::flip_if_needed(const quat &prev) {
         if (quat::dot(prev, q_) < 0.0f)
             q_.negate();
     }

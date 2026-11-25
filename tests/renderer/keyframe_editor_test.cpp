@@ -8,7 +8,7 @@
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/keyframe_editor.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
@@ -25,7 +25,7 @@ bool close_to(float a, float b, float tolerance = kTolerance) { return std::abs(
 
 // A path along +x, one keyframe per second, so an index says a keyframe's place and
 // its time at once.
-void make_path(KeyFrameInterpolator &kfi, int count) {
+void make_path(KeyframeInterpolator &kfi, int count) {
     for (int i = 0; i < count; ++i) {
         Frame frame;
         frame.set_position_and_orientation(vec3(static_cast<float>(i), 0.0f, 0.0f), quat());
@@ -34,14 +34,14 @@ void make_path(KeyFrameInterpolator &kfi, int count) {
 }
 
 // The dwell of every keyframe, as one list to compare against.
-std::vector<float> dwells_of(const KeyFrameInterpolator &kfi) {
+std::vector<float> dwells_of(const KeyframeInterpolator &kfi) {
     std::vector<float> values;
     for (std::size_t i = 0; i < kfi.number_of_keyframes(); ++i)
         values.push_back(kfi.keyframe_dwell(i));
     return values;
 }
 
-bool same_dwells(const KeyFrameInterpolator &kfi, const std::vector<float> &expected) {
+bool same_dwells(const KeyframeInterpolator &kfi, const std::vector<float> &expected) {
     const std::vector<float> values = dwells_of(kfi);
     if (values.size() != expected.size())
         return false;
@@ -54,8 +54,8 @@ bool same_dwells(const KeyFrameInterpolator &kfi, const std::vector<float> &expe
 int main() {
     return easy3d::test::run("keyframe editor", [] {
         Camera camera;
-        KeyFrameInterpolator kfi(camera.frame());
-        KeyFrameEditor editor(&camera, &kfi);
+        KeyframeInterpolator kfi(camera.frame());
+        KeyframeEditor editor(&camera, &kfi);
 
         // --- delete keeps the pauses of the keyframes that stay -----------------
         // A delete rebuilds the path from the kept poses, and a dwell belongs to its

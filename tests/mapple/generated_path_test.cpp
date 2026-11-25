@@ -3,7 +3,7 @@
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/camera_path_builder.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 
 #include "../../applications/Mapple/generated_path.h"
 #include "../test.h"
@@ -89,7 +89,7 @@ int main() {
 
         Camera camera;
         Frame frame;
-        KeyFrameInterpolator interpolator;
+        KeyframeInterpolator interpolator;
         interpolator.set_frame(&frame);
         CameraPathBuilder builder(&camera, &interpolator);
         builder.set_scene_box(Box3(vec3(-2.0f, -1.0f, -2.0f), vec3(2.0f, 1.0f, 2.0f)));

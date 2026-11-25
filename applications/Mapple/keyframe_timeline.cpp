@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <cmath>
 
-KeyframeTimeline::KeyframeTimeline(easy3d::KeyFrameInterpolator* kfi)
+KeyframeTimeline::KeyframeTimeline(easy3d::KeyframeInterpolator* kfi)
         : kfi_(kfi) {
 }
 

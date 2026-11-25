@@ -43,7 +43,7 @@ list(APPEND renderer_headers
         drawable_triangles.h
         frame.h
         frustum.h
-        key_frame_interpolator.h
+        keyframe_interpolator.h
         keyframe_editor.h
         keyframe_gizmo.h
         manipulator.h
@@ -73,7 +73,7 @@ list(APPEND renderer_sources
         drawable_triangles.cpp
         frame.cpp
         frustum.cpp
-        key_frame_interpolator.cpp
+        keyframe_interpolator.cpp
         keyframe_editor.cpp
         keyframe_gizmo.cpp
         manipulator.cpp

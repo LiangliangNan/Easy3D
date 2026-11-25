@@ -45,7 +45,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/translator.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>

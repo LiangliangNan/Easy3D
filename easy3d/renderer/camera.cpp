@@ -42,7 +42,7 @@
 #include <algorithm>
 
 #include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 
 
 // \cond
@@ -63,7 +63,7 @@ namespace easy3d {
 		, model_view_matrix_is_up_to_date_(false)
 		, projection_matrix_is_up_to_date_(false)
 	{
-        interpolation_kfi_ = new KeyFrameInterpolator;
+        interpolation_kfi_ = new KeyframeInterpolator;
         set_frame(new ManipulatedCameraFrame());
 
 		// Requires field_of_view(): the scene bounds below derive z_near()/z_far()
@@ -112,7 +112,7 @@ namespace easy3d {
 	Camera::Camera(const Camera &camera)
 		: frame_(nullptr)
 	{
-        interpolation_kfi_ = new KeyFrameInterpolator;
+        interpolation_kfi_ = new KeyframeInterpolator;
 
         // Requires the interpolation_kfi_
 		set_frame(new ManipulatedCameraFrame(*camera.frame()));
@@ -692,7 +692,7 @@ namespace easy3d {
         interpolate_to(&temp_frame, 0.5);
     }
 
-    /*! Interpolates the Camera along a half second KeyFrameInterpolator path so that
+    /*! Interpolates the Camera along a half second KeyframeInterpolator path so that
      the entire scene fits the screen at the end.
 
      The scene is defined by its scene_center() and its scene_radius(). See
@@ -714,7 +714,7 @@ namespace easy3d {
         interpolate_to(&temp_frame, 0.5);
     }
 
-    /*! Smoothly interpolates the Camera on a KeyFrameInterpolator path so that it
+    /*! Smoothly interpolates the Camera on a KeyframeInterpolator path so that it
       goes to \p fr.
 
       \p fr is expressed in world coordinates. \p duration is the time (in seconds)

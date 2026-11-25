@@ -27,13 +27,13 @@
 #ifndef EASY3D_MAPPLE_KEYFRAME_TIMELINE_H
 #define EASY3D_MAPPLE_KEYFRAME_TIMELINE_H
 
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 
 #include <vector>
 
 
 /**
- * \brief Mapple's ImGui timeline strip for a KeyFrameInterpolator path.
+ * \brief Mapple's ImGui timeline strip for a KeyframeInterpolator path.
  * \class KeyframeTimeline applications/Mapple/keyframe_timeline.h
  *
  * \details Draws a horizontal timeline strip showing each keyframe as a marker
@@ -51,7 +51,7 @@ public:
      * \brief Creates a timeline bound to \p kfi.
      * \param kfi The keyframe interpolator to visualize. Must outlive this object.
      */
-    explicit KeyframeTimeline(easy3d::KeyFrameInterpolator* kfi);
+    explicit KeyframeTimeline(easy3d::KeyframeInterpolator* kfi);
 
     /**
      * \brief Draws the timeline strip and returns true if the selection changed.
@@ -91,7 +91,7 @@ private:
     bool cache_is_current() const;
     int find_keyframe_at(float x, float width) const;
 
-    easy3d::KeyFrameInterpolator* kfi_;
+    easy3d::KeyframeInterpolator* kfi_;
     std::vector<Segment> segments_;
     std::vector<float> keyframe_times_;
     float total_duration_ = 0.0f;

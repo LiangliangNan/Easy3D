@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// OpenGL rendering of the shared KeyFrameInterpolator guides.
+// OpenGL rendering of the shared KeyframeInterpolator guides.
 //
 // The Vulkan backend covers the same guides through viewer annotations
 // (vulkan.camerapath); here they are ordinary TrianglesDrawable/LinesDrawable
@@ -15,7 +15,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/initializer.h>
 #include <iostream>
 #include <memory>
@@ -31,7 +31,7 @@ namespace {
 
     struct GuideViewer : Viewer {
         using Viewer::Viewer;
-        KeyFrameInterpolator *path = nullptr;
+        KeyframeInterpolator *path = nullptr;
         float camera_width = 20;
         bool show_cameras = true, show_path = true;
         // The lit corner axes are also red and would satisfy the marker/lit pixel tests.
@@ -82,7 +82,7 @@ int main() {
         viewer.camera()->look_at(vec3(20, 20, 0));
         viewer.camera()->set_scene_radius(200);
 
-        KeyFrameInterpolator path(viewer.camera()->frame());
+        KeyframeInterpolator path(viewer.camera()->frame());
         require(path.add_keyframe(Frame(vec3(0, 0, 0), quat())), "first key failed");
         require(path.add_keyframe(Frame(vec3(40, 0, 0), quat())), "second key failed");
         require(path.add_keyframe(Frame(vec3(40, 40, 0), quat())), "third key failed");
@@ -110,7 +110,7 @@ int main() {
                 "a non-positive glyph width must be refused");
         require(path.update_cameras_drawable(*glyphs, viewer.camera(), viewer.camera_width, vec4(1, 0, 0, 1)),
                 "filling the scene glyphs failed");
-        require(KeyFrameInterpolator::camera_glyph_triangles() > 0, "camera glyphs have no triangles");
+        require(KeyframeInterpolator::camera_glyph_triangles() > 0, "camera glyphs have no triangles");
         viewer.add_drawable(glyphs);
         const auto scene = count(viewer.capture(4));
         require(scene.markers > 200, "scene camera glyphs did not render");

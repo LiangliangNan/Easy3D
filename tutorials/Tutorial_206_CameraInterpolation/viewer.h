@@ -32,7 +32,7 @@
 #include <memory>
 
 namespace easy3d {
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
     class LinesDrawable;
     class TrianglesDrawable;
 }
@@ -43,7 +43,7 @@ namespace easy3d {
 /**
  * \brief A Viewer that records camera keyframes and plays them back as a smooth fly-through.
  * \details The base Viewer knows nothing about keyframe interpolation. This subclass owns a
- * KeyFrameInterpolator bound to the viewer's camera frame, records a keyframe on 'k', starts and
+ * KeyframeInterpolator bound to the viewer's camera frame, records a keyframe on 'k', starts and
  * stops playback on 'space', deletes the path on 'd', and shows the path and keyframe cameras.
  * Both guides are scene drawables: the scene pass hides the back side of each glyph behind its
  * front side and the models occlude the guides, on both backends. See the tutorial's main.cpp
@@ -59,7 +59,7 @@ protected:
     void pre_draw() override;
 
 private:
-    easy3d::KeyFrameInterpolator *interpolator_;
+    easy3d::KeyframeInterpolator *interpolator_;
 
     // The keyframe cameras and the path as scene drawables, plus what they were built from:
     // they are rebuilt only when the keyframes, the projection or the guide sizes change.

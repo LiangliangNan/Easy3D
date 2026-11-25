@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
-#define EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
+#ifndef EASY3D_RENDERER_KEYFRAME_INTERPOLATOR_H
+#define EASY3D_RENDERER_KEYFRAME_INTERPOLATOR_H
 
 #include <easy3d/core/types.h>
 #include "easy3d/util/signal.h"
@@ -55,10 +55,10 @@ namespace easy3d {
 
     /**
      * \brief A keyframe interpolator for animation generation.
-     * \class KeyFrameInterpolator easy3d/renderer/key_frame_interpolator.h
+     * \class KeyframeInterpolator easy3d/renderer/keyframe_interpolator.h
      *
-     * \details A KeyFrameInterpolator holds keyframes (that define a path) and a pointer to a frame (which will be
-     *      interpolated) of your application. When the user start_interpolation(), the KeyFrameInterpolator regularly
+     * \details A KeyframeInterpolator holds keyframes (that define a path) and a pointer to a frame (which will be
+     *      interpolated) of your application. When the user start_interpolation(), the KeyframeInterpolator regularly
      *      updates the frame() position and orientation along the path.
      *
      *      A keyframe is defined by a Frame and a time, expressed in seconds. The time has to be monotonously
@@ -73,7 +73,7 @@ namespace easy3d {
      *      interpolation_period() * interpolation_speed(). This is especially useful for benchmarking or movie
      *      creation (constant number of snapshots).
      *
-     *      During the interpolation, the KeyFrameInterpolator emits a \c frame_interpolated Signal which will usually
+     *      During the interpolation, the KeyframeInterpolator emits a \c frame_interpolated Signal which will usually
      *      be connected to the viewer's update() method. The interpolation is stopped when duration has reached.
      *      Another Signal interpolation_stopped will be emitted when the interpolation reaches its end or when the
      *      stop_interpolation() method was triggered.
@@ -90,8 +90,8 @@ namespace easy3d {
      *
      * Animation example:
      *      \code
-     *          // the KeyFrameInterpolator kfi is given the camera's frame that it will be driven over time.
-     *          kfi = new KeyFrameInterpolator( camera()->frame() );
+     *          // the KeyframeInterpolator kfi is given the camera's frame that it will be driven over time.
+     *          kfi = new KeyframeInterpolator( camera()->frame() );
      *          kfi->add_keyframe(...);
      *          kfi->add_keyframe(...);
      *          // ...and so on for all the keyframes.
@@ -99,19 +99,19 @@ namespace easy3d {
      *          kfi->start_interpolation();
      *      \endcode
      */
-    class KeyFrameInterpolator
+    class KeyframeInterpolator
     {
     public:
         /**
-         * \brief Creates a KeyFrameInterpolator, with \p frame as associated frame().
+         * \brief Creates a KeyframeInterpolator, with \p frame as associated frame().
          * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and
          *      interpolation_period() are set to their default values.
-         * \param frame The frame to be associated with the KeyFrameInterpolator.
+         * \param frame The frame to be associated with the KeyframeInterpolator.
          */
-        explicit KeyFrameInterpolator(Frame *frame = nullptr);
+        explicit KeyframeInterpolator(Frame *frame = nullptr);
 
         /** Virtual destructor. Clears the keyframe path. */
-        virtual ~KeyFrameInterpolator();
+        virtual ~KeyframeInterpolator();
 
         /*! \name Path creation and modification*/
         //@{
@@ -180,10 +180,10 @@ namespace easy3d {
         //@{
     public:
         /**
-         * \brief Returns the associated Frame and that is interpolated by the KeyFrameInterpolator.
-         * \details The returned Frame was set using set_frame() or with the KeyFrameInterpolator constructor.
+         * \brief Returns the associated Frame and that is interpolated by the KeyframeInterpolator.
+         * \details The returned Frame was set using set_frame() or with the KeyframeInterpolator constructor.
          *      When is_interpolation_started(), this Frame's position and orientation will regularly be updated
-         *      by a timer, so that they follow the KeyFrameInterpolator path.
+         *      by a timer, so that they follow the KeyframeInterpolator path.
          * \return The associated Frame.
          * \sa set_frame()
          */
@@ -191,8 +191,8 @@ namespace easy3d {
 
     public:
         /**
-         * \brief Sets the frame() associated to the KeyFrameInterpolator.
-         * \param frame The frame to be associated with the KeyFrameInterpolator.
+         * \brief Sets the frame() associated to the KeyframeInterpolator.
+         * \param frame The frame to be associated with the KeyframeInterpolator.
          */
         void set_frame(Frame* const frame) { frame_ = frame; }
         //@}
@@ -244,7 +244,7 @@ namespace easy3d {
         const quat& keyframe_orientation(std::size_t index) const;
 
         /**
-         * \brief Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
+         * \brief Returns the duration of the KeyframeInterpolator path, expressed in seconds.
          * \details The duration simply corresponds to last_time() - first_time(). It returns 0.0 if the path has less
          *      than 2 keyframes.
          * \return The duration of the path.
@@ -579,8 +579,8 @@ namespace easy3d {
     private:
         // Copy constructor and operator= are declared private and undefined
         // Prevents everyone from trying to use them
-        KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
-        KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
+        KeyframeInterpolator(const KeyframeInterpolator& kfi);
+        KeyframeInterpolator& operator=(const KeyframeInterpolator& kfi);
 
         // Internal private Keyframe representation
         class Keyframe
@@ -630,7 +630,7 @@ namespace easy3d {
         // Associated frame
         Frame* frame_;
 
-        // Key Frames
+        // Keyframes
         std::vector<Keyframe> keyframes_;
         std::vector<Frame> interpolated_path_;
 
@@ -660,4 +660,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
+#endif // EASY3D_RENDERER_KEYFRAME_INTERPOLATOR_H

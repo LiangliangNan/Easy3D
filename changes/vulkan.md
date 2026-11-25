@@ -3013,7 +3013,7 @@ Tutorial 206 now uses the native host in its original `main.cpp`, `viewer.h` and
 recording keyframes, starting/stopping playback and deleting the path. The legacy
 OpenGL constructor/drawing implementation remains in the same files.
 
-The shared `renderer/KeyFrameInterpolator` adds `start_manual_interpolation()`
+The shared `renderer/KeyframeInterpolator` adds `start_manual_interpolation()`
 and `advance_interpolation()`. Manual mode starts no worker: the host applies
 one existing interpolated sample per call on the UI thread. Pause/resume retains
 the next sample; completion resets the cursor for replay and emits the normal
@@ -3034,7 +3034,7 @@ This stage implements Tutorial 206's own path workflow. The shared viewer's
 global Alt/Ctrl camera-path shortcuts are implemented in the next stage below.
 
 The native drawing counterpart lives in
-`renderer/key_frame_interpolator.h` / `key_frame_interpolator.cpp`.
+`renderer/keyframe_interpolator.h` / `keyframe_interpolator.cpp`.
 It reuses `shape::create_camera()` for green keyframe markers and the shared
 interpolated positions for the pale-yellow path. Markers and homogeneously clipped
 triangle-ribbon paths are depth-tested annotations that never write scene depth
@@ -3065,7 +3065,7 @@ markers/path and unchanged usage hint were visually inspected.
 
 ## Shared viewer camera-path controls
 
-> Superseded by batch 104: the base `Viewer` no longer owns a `KeyFrameInterpolator`,
+> Superseded by batch 104: the base `Viewer` no longer owns a `KeyframeInterpolator`,
 > a camera path or these shortcuts. The state described in this section lives in the
 > consuming subclass now (Tutorial 206, `MappleViewer`).
 
@@ -4812,7 +4812,7 @@ Viewer implementations. OpenGL's Ctrl-K now starts manual interpolation, stepped
 at the same frame boundary as Vulkan, rather than starting a detached timer that
 changes the camera concurrently with rendering. Pause/resume retains sample position;
 playback applies the first sample on the next frame and stops at its endpoint.
-The generic renderer KeyFrameInterpolator's explicit timer API is unchanged.
+The generic renderer KeyframeInterpolator's explicit timer API is unchanged.
 
 OpenGL file snapshots include visible, paused camera-path guides explicitly, without
 calling HUD/frame callbacks. Window guide drawing stays in its existing post-draw
@@ -8291,7 +8291,7 @@ deprecated aliases.
   `projection_matrix_is_up_to_date_` and `interpolation_kfi_`; `frame_` and `type_` were already
   snake_case.
 - *Deliberately unchanged*: the `Frame` family (`Frame`, `ManipulatedFrame`,
-  `ManipulatedCameraFrame`, `KeyFrameInterpolator`) keeps its inherited camelCase surface
+  `ManipulatedCameraFrame`, `KeyframeInterpolator`) keeps its inherited camelCase surface
   (`frame()->setPosition()`, `frame()->setOrientation()`, `setPivotPoint()`, `pivotPoint()`,
   `referenceFrame()`, `coordinatesOf()`, `transformOf()`) — renaming those classes is a separate
   task, and this batch only touches call sites where the receiver is a `Camera`. Qt's
@@ -8300,7 +8300,7 @@ deprecated aliases.
   framebuffer accessor.
 - *Propagation*: 139 files — `easy3d/` (renderer, viewer, gui, effects, both backends, notably
   `backends/vulkan/drawable.cpp`, `backends/vulkan/clipping_plane.cpp` and
-  `backends/vulkan/key_frame_interpolator.cpp`), `applications/Mapple/`, `tutorials/`,
+  `backends/vulkan/keyframe_interpolator.cpp`), `applications/Mapple/`, `tutorials/`,
   `python/tutorials/`, `tests/`,
   the pybind11 surface (`python/bindings/easy3d/renderer/camera.cpp`, bound names and docstrings)
   and comment-only references elsewhere. `tests/viewer/plain_line_parity_test.cpp` (added by
@@ -10883,9 +10883,9 @@ with `torusknot.obj` start cleanly on both backends ("Mapple UI ready", mesh loa
 warnings). The two probes were scratch builds in /tmp, not part of the tree.
 `easy3d/util/version.h` is unchanged. Linux/Windows/CI remain separate gates.
 
-### 2026-11-17 — batch 104: the Viewer no longer owns a KeyFrameInterpolator
+### 2026-11-17 — batch 104: the Viewer no longer owns a KeyframeInterpolator
 
-**Problem.** `Viewer` carried a `KeyFrameInterpolator` that the base class never needed:
+**Problem.** `Viewer` carried a `KeyframeInterpolator` that the base class never needed:
 `kfi_`, `show_camera_path_`, host-stepped playback (`advance_camera_path()` and its
 deadline), the Vulkan `camera_path_renderer_` plus `update_camera_path_overlays()`, four
 Alt/Ctrl shortcuts and their manual lines. That made camera interpolation a Viewer
@@ -10896,7 +10896,7 @@ tutorial playback through timer-thread/server-manual gymnastics inside the frame
 state, overlay update, renderer, shortcut handlers and hints, and their includes. The
 frame loop no longer has a camera-path step: `run_frames()` waits while
 `!is_animating() && !show_frame_rate_` and nothing else. Interpolation is now a
-subclass feature: whoever wants it owns a `KeyFrameInterpolator` and decides how it is
+subclass feature: whoever wants it owns a `KeyframeInterpolator` and decides how it is
 driven.
 
 **Tutorial 206 returns to its main-branch form.** `TutorialCameraInterpolation` owns
@@ -10907,7 +10907,7 @@ keyframe cameras only while interpolation is stopped. Because the timer thread d
 the camera, the constructor connects `frame_interpolated` and `interpolation_stopped`
 to `Viewer::update()`, which re-posts a frame; without that the backend would sit in
 its event wait with nothing animating. On Vulkan the draw override renders the guides
-with `vulkan::KeyFrameInterpolatorRenderer` and registers them through the protected
+with `vulkan::KeyframeInterpolatorRenderer` and registers them through the protected
 annotation slot before `Viewer::draw()`; OpenGL draws them after `Viewer::draw()`.
 
 **Mapple keeps its UX on the subclass side.** `MappleViewer` owns `kfi_`,
@@ -10939,7 +10939,7 @@ the camera-path keys and the guide overlay were not exercised through scripted i
 ### 2026-11-17 — batch 105: lit keyframe camera markers on the camera path
 
 **Problem.** The keyframe camera glyphs were red but flat. On OpenGL
-`KeyFrameInterpolator::draw_cameras()` builds a `TrianglesDrawable` whose default
+`KeyframeInterpolator::draw_cameras()` builds a `TrianglesDrawable` whose default
 state is `lighting = true`, and `surface.frag` derives flat facet normals from
 `dFdx/dFdy` of the position, so the glyphs pick up the ambient and specular terms.
 The Vulkan renderer emitted the same glyphs as scene-depth annotations, whose
@@ -10958,7 +10958,7 @@ Depth-tested annotations that set `lighting` bind it; all others keep the flat
 annotations are unlit unless `lighting` is set, lighting uses the material state
 below, and normals come from the geometry.
 
-**Renderer.** `vulkan::KeyFrameInterpolatorRenderer::draw_cameras()` emits one vertex
+**Renderer.** `vulkan::KeyframeInterpolatorRenderer::draw_cameras()` emits one vertex
 per facet corner carrying the facet normal (unit length, `(0,0,1)` fallback for
 degenerate facets) so the markers shade like flat-shaded triangles, and fills the
 command's material state the way the OpenGL drawable defaults do: `lighting` and
@@ -10966,7 +10966,7 @@ command's material state the way the OpenGL drawable defaults do: `lighting` and
 distinct red back color, and ambient/specular/shininess from the material settings,
 with the eye and the camera-space light transformed into world space.
 
-**OpenGL.** `KeyFrameInterpolator::draw_cameras()` no longer hard-codes the glyph
+**OpenGL.** `KeyframeInterpolator::draw_cameras()` no longer hard-codes the glyph
 color: it reapplies the `color` argument before every draw (`set_uniform_coloring`),
 so callers that pass a color get it. The drawable itself was already lit.
 
@@ -11095,12 +11095,12 @@ date bump. Linux/Windows/CI remain separate gates.
 front side. On Vulkan the glyphs were `overlay_depth_test` annotations: they test the
 scene depth but never write it, so a glyph's far-side triangles could paint over its
 near-side ones depending on submission order, and the models could not occlude the
-markers. On OpenGL `KeyFrameInterpolator::draw_cameras()` drew its cached
+markers. On OpenGL `KeyframeInterpolator::draw_cameras()` drew its cached
 `TrianglesDrawable` after the scene, which hides the glyph backs but keeps the same
 after-the-scene placement: the markers stayed outside the pick pass and the two
 backends implemented the same glyph separately (Mapple had a third copy).
 
-**Change (library).** `KeyFrameInterpolator::update_cameras_drawable(drawable, camera,
+**Change (library).** `KeyframeInterpolator::update_cameras_drawable(drawable, camera,
 camera_width, color)` fills a caller-owned `TrianglesDrawable` with every keyframe's
 camera glyph as solid, lit triangles, built by a shared `append_camera_glyphs()` that
 `draw_cameras()` now uses as well, so the two cannot drift.
@@ -11123,10 +11123,10 @@ glyph geometry.
 **Change (Mapple).** `update_camera_markers()` drops its private glyph builder and
 calls `update_cameras_drawable()`, keeping its change detection, visibility, width
 (3% of the model box diagonal) and picking map (now
-`KeyFrameInterpolator::camera_glyph_triangles()`); the marker color is the library
+`KeyframeInterpolator::camera_glyph_triangles()`); the marker color is the library
 default (0.2, 0.7, 0.3). The after-scene `draw_cameras()` stays for OpenGL callers
 (Mapple-Qt's walk-through and the camera-path tests); the Vulkan
-`KeyFrameInterpolatorRenderer` and the path annotation were retired in batch 118.
+`KeyframeInterpolatorRenderer` and the path annotation were retired in batch 118.
 
 **Test.** `tests/viewer/camera_guides_test.cpp` additionally fills a shared
 `TrianglesDrawable` through `update_cameras_drawable()`, requires a zero width to be
@@ -11145,8 +11145,8 @@ separate gates.
 ### 2026-11-17 — batch 118: the camera path as a scene drawable; Vulkan renderer retired
 
 **Problem.** After batch 117 the keyframe glyphs were scene geometry, but the path
-was still drawn after the scene: OpenGL through `KeyFrameInterpolator::draw_path()`'s
-lazily cached `LinesDrawable`, Vulkan through `vulkan::KeyFrameInterpolatorRenderer`,
+was still drawn after the scene: OpenGL through `KeyframeInterpolator::draw_path()`'s
+lazily cached `LinesDrawable`, Vulkan through `vulkan::KeyframeInterpolatorRenderer`,
 which turned the polyline into an `overlay_depth_test` annotation. Every caller
 carried both routes: Tutorial 206 registered annotations on Vulkan and called
 `draw_path()` on OpenGL, and Mapple kept `update_camera_path_annotations()` for the
@@ -11154,7 +11154,7 @@ annotation slot plus `draw_camera_path()` for the immediate draw. The path there
 stayed outside the scene's pick/ID pass, never occluded models or was occluded by
 them, and the backend split outlived the renderer's only remaining use.
 
-**Change (library).** `KeyFrameInterpolator::update_path_drawable(drawable, thickness,
+**Change (library).** `KeyframeInterpolator::update_path_drawable(drawable, thickness,
 color)` fills a caller-owned `LinesDrawable` with consecutive pairs of the interpolated
 samples, using a cylinder impostor so `thickness` is the on-screen width in pixels, and
 sets the uniform color. It returns `false` (leaving the drawable untouched) when the
@@ -11179,8 +11179,8 @@ the scene bounds use it unchanged). The annotation slot, the `draw()` override h
 the Vulkan include and the `camera_path_renderer_` member are removed; a video capture
 now includes the guides like any other scene drawable.
 
-**Change (backend).** `backends/vulkan/key_frame_interpolator.{h,cpp}`
-(`vulkan::KeyFrameInterpolatorRenderer`) and their `CMakeLists.txt` entry are deleted.
+**Change (backend).** `backends/vulkan/keyframe_interpolator.{h,cpp}`
+(`vulkan::KeyframeInterpolatorRenderer`) and their `CMakeLists.txt` entry are deleted.
 `draw_cameras()`/`draw_path()` remain as the immediate OpenGL route for Mapple-Qt's
 walk-through and `tests/viewer/camera_guides_test.cpp`; their docs now point scene
 users at the `update_*_drawable()` helpers.

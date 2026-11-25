@@ -22,14 +22,14 @@ keyframes, which is tedious and still does not give smooth speed changes.
 
 ### What exists
 
-- `KeyFrameInterpolator` in `easy3d/renderer/key_frame_interpolator.{h,cpp}` owns keyframes
+- `KeyframeInterpolator` in `easy3d/renderer/keyframe_interpolator.{h,cpp}` owns keyframes
   (position + orientation + time) and interpolates them into a dense path of `Frame`s.
-- `KeyFrameInterpolator::add_keyframe(frame, time)` sets each keyframe's time; consecutive
+- `KeyframeInterpolator::add_keyframe(frame, time)` sets each keyframe's time; consecutive
   keyframes default to 1 second apart.
-- `KeyFrameInterpolator::interpolate()` samples `num_frames` frames uniformly in the spline
+- `KeyframeInterpolator::interpolate()` samples `num_frames` frames uniformly in the spline
   parameter `u = i / (num_frames - 1)`. Positions use cubic spline interpolation; orientations
   now use `quat::squad()` (batch 142) for smooth rotation on the unit sphere.
-- `KeyFrameInterpolator::set_interpolation_speed()` only scales playback globally; it cannot
+- `KeyframeInterpolator::set_interpolation_speed()` only scales playback globally; it cannot
   vary speed along the path.
 - Mapple's Camera Path window exposes playback speed, frame rate, interpolation method, and
   video recording (bitrate, samples, FFmpeg). There is no per-keyframe timing control.
@@ -47,8 +47,8 @@ remapping of the interpolation parameter through an easing curve.
 
 ### Per-keyframe dwell time
 
-`KeyFrameInterpolator::Keyframe` gains a `dwell_time_` member (seconds, default 0) with
-`dwell_time()` / `set_dwell_time()` accessors. `KeyFrameInterpolator` gains
+`KeyframeInterpolator::Keyframe` gains a `dwell_time_` member (seconds, default 0) with
+`dwell_time()` / `set_dwell_time()` accessors. `KeyframeInterpolator` gains
 `set_keyframe_dwell(index, seconds)` and `keyframe_dwell(index)` public methods.
 
 In `interpolate()`, each segment's effective duration is `travel_time + dwell_time`, and
@@ -88,7 +88,7 @@ changed dwell or travel time — and is also called on undo.
 The Camera Path window *is* the editing mode: `MappleViewer::camera_path_editing_mode()` is true
 while the window is open, and inside it `Alt` belongs to the keyframes and never to the model.
 
-- **`Alt` held = the handles are live.** `sync_keyframe_editing()` turns `KeyFrameEditor` editing
+- **`Alt` held = the handles are live.** `sync_keyframe_editing()` turns `KeyframeEditor` editing
   on only while the window is open **and** `Alt` is down, so the glyphs, rings and arrows come out
   with the key and go away when it is released; there is no switch for them in the window. Editing
   the path does not require drawing it, so `Show path and keyframe cameras` off keeps the handles.
@@ -116,9 +116,9 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 
 ## Files changed
 
-- `easy3d/renderer/key_frame_interpolator.h` — `dwell_time_`, `set_keyframe_dwell()` /
+- `easy3d/renderer/keyframe_interpolator.h` — `dwell_time_`, `set_keyframe_dwell()` /
   `keyframe_dwell()`, `segment_fraction()`, `length_fraction()`
-- `easy3d/renderer/key_frame_interpolator.cpp` — `interpolate()` rewritten with the
+- `easy3d/renderer/keyframe_interpolator.cpp` — `interpolate()` rewritten with the
   cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell read/write
   in `save_keyframes()` / `read_keyframes()`
 - `applications/Mapple/keyframe_timeline.h/.cpp` — `KeyframeTimeline` ImGui control,
@@ -140,9 +140,9 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 
 ### 2026-11-20 — Per-keyframe dwell time (Step 1)
 
-- `KeyFrameInterpolator::Keyframe` gains a `dwell_time_` member (seconds, default 0) with
+- `KeyframeInterpolator::Keyframe` gains a `dwell_time_` member (seconds, default 0) with
   `dwell_time()` / `set_dwell_time()` accessors.
-- `KeyFrameInterpolator` gains `set_keyframe_dwell(index, seconds)` and `keyframe_dwell(index)`
+- `KeyframeInterpolator` gains `set_keyframe_dwell(index, seconds)` and `keyframe_dwell(index)`
   public methods.
 - `interpolate()` treats each segment's effective duration as `travel_time + dwell_time` and
   distributes samples proportionally across dwell + travel periods; during dwell periods the
@@ -285,8 +285,8 @@ E 21/11/2026 23:33:52.080 viewer.cpp:738] Viewer failed: vector
 Reported from the window: deleting a keyframe emptied the gray pause bars of the timeline strip,
 and the path's total dropped by every dwell it had.
 
-- **Cause.** `KeyFrameEditor::delete_selected()` and `insert_after_selected()` cannot edit the path
-  in place — `KeyFrameInterpolator` only appends — so both collect the poses and the times they want
+- **Cause.** `KeyframeEditor::delete_selected()` and `insert_after_selected()` cannot edit the path
+  in place — `KeyframeInterpolator` only appends — so both collect the poses and the times they want
   to keep and hand them to `rebuild()`, which clears the path and replays
   `add_keyframe(frame, time)`. That sets each keyframe's dwell to its default of 0, so either edit
   silently reset the whole path's pauses. `Remove Last` goes to the library's
@@ -348,7 +348,7 @@ dwell. Measured on `domik.kf` (19 keyframes, 2 s dwells, 24 fps): speed falls th
 frames and reaches 0 at the keyframe, so each dwell adds ~0.46 s of crawl on each side, making a
 2 s dwell feel like ~2.9 s (2 s of dwell plus the ~0.92 s of crawl the ramp left on either side).
 
-**Fix.** Reduced `kRamp` from 0.2 to 0.18 in `KeyFrameInterpolator::segment_fraction`. The ramp
+**Fix.** Reduced `kRamp` from 0.2 to 0.18 in `KeyframeInterpolator::segment_fraction`. The ramp
 is shorter, so the camera spends less time in the slow-speed region near dwell boundaries. With
 kRamp=0.18, speed at t=0.01s is 14.98% of cruise (below the 15% threshold), and per-segment
 timing is unchanged.
@@ -379,7 +379,7 @@ frame rate - per advance in `advance_camera_path()`, reset when the playback rea
 the Play/Stop row renders `playing... <elapsed> s` while playing, `Ctrl+K` while stopped.
 
 **Also added (2026-11-22, same day):** the Camera Path timeline draws a red vertical line at
-the playback's current position while playing, from the new `KeyFrameInterpolator::playback_elapsed()`; 
+the playback's current position while playing, from the new `KeyframeInterpolator::playback_elapsed()`;
 the placeholder stub that showed nothing is gone.
 
 **Validation:** OpenGL 121/121, Vulkan 153/153 serial CTest. `keyframe_interpolator_test` passes
@@ -403,7 +403,7 @@ fix, while the numbers in it (about 7 frames of sub-10% crawl on each side of a 
 what 0.18 produces, so a 2 s dwell still measures about 2.46 s on screen.
 
 - **The maintainer confirms the timing is good now** with `kRamp = 0.18f` in
-  `KeyFrameInterpolator::segment_fraction()`, in playback and in the recorded videos on both
+  `KeyframeInterpolator::segment_fraction()`, in playback and in the recorded videos on both
   backends at x1.0 and x2.0 speed. Their observation in a live session, not a measurement of mine;
   no code change followed, and `kRamp` stays at 0.18.
 - What was measured on the same code, for the record: on `domik.kf` (19 keyframes, 2 s dwells at
@@ -793,7 +793,7 @@ provide a roll reference.
 
 ### 2026-11-25 — Stream keyframe I/O and reproducible camera-path files
 
-- `KeyFrameInterpolator::save_keyframes()` now writes to `std::ostream&` instead of opening a
+- `KeyframeInterpolator::save_keyframes()` now writes to `std::ostream&` instead of opening a
   filename, and `read_keyframes()` is replaced by `load_keyframes(std::istream&)`. File ownership
   stays with callers; Mapple can therefore write ordinary keyframes and append provenance in one
   file without making the renderer aware of application-level generation records.
@@ -827,7 +827,7 @@ provide a roll reference.
 
 ### 2026-11-25 — seek playback to a selected keyframe
 
-- `KeyFrameInterpolator` now owns its playback position. `playback_elapsed()` reports the
+- `KeyframeInterpolator` now owns its playback position. `playback_elapsed()` reports the
   timeline position of the applied sample, including dwell pauses, and preserves that position
   while paused. Editing the path resets it; completing playback resets it for the next session.
 - `seek_to_keyframe()` stops playback, applies the exact stored pose, and reports the exact
@@ -843,3 +843,17 @@ provide a roll reference.
 - Validation: Vulkan Debug and OpenGL RelWithDebInfo rebuild; the complete non-desktop suites
   pass (Vulkan 67/67, OpenGL 48/48), and `vulkan.camerapath` passes. Interactive Mapple timeline
   selection and playback were not visually checked.
+
+### 2026-11-25 — keyframe naming is consistent
+
+- The interpolator is renamed `KeyframeInterpolator`, and
+  `easy3d/renderer/keyframe_interpolator.{h,cpp}` replaces the former split-word filenames.
+  Camera accessors, forward declarations, include guards, bindings, tests, tutorials and build
+  metadata use the same spelling. `KeyframeEditor` and `KeyframeGizmo` follow the same convention.
+- Newly written `.kf` files use `num_keyframes:`; the bundled `bunny.kf` and `domik.kf` are
+  updated too. Loading still skips the informational count header, so files with the legacy
+  header remain readable. The camera-path file regression now covers that legacy header as well
+  as the original format without explicit times, dwells or periodicity.
+- Validation: Vulkan Debug and OpenGL RelWithDebInfo rebuild; the complete non-desktop suites
+  pass (Vulkan 67/67, OpenGL 48/48), and `vulkan.camerapath` passes. Interactive Mapple UI
+  behavior was not visually checked.

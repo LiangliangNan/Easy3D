@@ -46,7 +46,7 @@
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
 
 #ifdef SHOW_PROGRESS
@@ -395,7 +395,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     auto kfi = walkThrough()->interpolator();
     if (kfi->number_of_keyframes() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
-                        " creat it by adding key frames";
+                        " creat it by adding keyframes";
         return;
     }
 

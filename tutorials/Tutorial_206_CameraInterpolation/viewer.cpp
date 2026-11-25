@@ -30,7 +30,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <iostream>
 
 using namespace easy3d;
@@ -38,7 +38,7 @@ using namespace easy3d;
 // \cond
 
 TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string &title) : Viewer(title) {
-    interpolator_ = new KeyFrameInterpolator(camera_->frame());
+    interpolator_ = new KeyframeInterpolator(camera_->frame());
     // The interpolator runs on a timer thread; wake the viewer for every sample so the
     // animation is drawn at the keyframe rate (the device backend has no other wake-up).
     easy3d::connect(&interpolator_->frame_interpolated, (Viewer *) this, &Viewer::update);
@@ -46,7 +46,7 @@ TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string &titl
     easy3d::connect(&interpolator_->interpolation_stopped, (Viewer *) this, &Viewer::update);
 
     // hint_ is shown in the viewer HUD; it lists the keys this tutorial adds.
-    hint_ = "Press 'k' to add key frames\n"
+    hint_ = "Press 'k' to add keyframes\n"
             "Press 'space' to start/stop the animation\n"
             "Press 'd' to delete the camera path";
 }
@@ -67,7 +67,7 @@ bool TutorialCameraInterpolation::key_press_event(int key, int modifiers) {
             float dist = distance(camera_->scene_center(), frame->position());
             if (dist > camera_->scene_radius())
                 camera_->set_scene_radius(dist);
-            std::cout << "Key frame added" << std::endl;
+            std::cout << "Keyframe added" << std::endl;
             return true;
         } else
             return false;

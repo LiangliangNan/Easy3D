@@ -11,7 +11,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
 #include <3rd_party/nlohmann/json.hpp>
@@ -37,7 +37,7 @@ namespace {
         path.has_build_context = true;
     }
 
-    void add_frames(KeyFrameInterpolator &kfi, const std::vector<Frame> &frames) {
+    void add_frames(KeyframeInterpolator &kfi, const std::vector<Frame> &frames) {
         for (std::size_t i = 0; i < frames.size(); ++i) {
             require(kfi.add_keyframe(frames[i], 1.0f + static_cast<float>(i) * 1.75f),
                     "a generated keyframe was rejected");
@@ -46,7 +46,7 @@ namespace {
         }
     }
 
-    void require_same_path(KeyFrameInterpolator &a, KeyFrameInterpolator &b) {
+    void require_same_path(KeyframeInterpolator &a, KeyframeInterpolator &b) {
         require(a.number_of_keyframes() == b.number_of_keyframes(), "the keyframe count changed on load");
         for (std::size_t i = 0; i < a.number_of_keyframes(); ++i) {
             const vec3 &a_position = a.keyframe_position(i);
@@ -74,7 +74,7 @@ namespace {
 
     void test_stream_io() {
         Camera camera;
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         for (int i = 0; i < 4; ++i)
             require(source.add_keyframe(Frame(vec3(static_cast<float>(i)), quat()), 0.25f + static_cast<float>(i)),
                     "stream fixture keyframe was rejected");
@@ -83,7 +83,7 @@ namespace {
 
         std::ostringstream output;
         require(source.save_keyframes(output), "saving keyframes to a stream failed");
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         std::istringstream input(output.str());
         require(loaded.load_keyframes(input), "loading keyframes from a stream failed");
         require_same_path(source, loaded);
@@ -94,7 +94,7 @@ namespace {
         TestFile file("mapple-positive-box-provenance.kf");
         Camera camera;
         camera.set_scene_radius(100.0f);
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         const vec3 lo(1000.0f, 20.0f, 2000.0f);
         const vec3 hi(3000.0f, 60.0f, 4000.0f);
@@ -135,7 +135,7 @@ namespace {
             output << text.substr(0, marker) << "provenance:\n" << provenance.dump(2) << '\n';
         }
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading the positive-box fixture failed");
         require(result.generated_paths.size() == 1 &&
@@ -149,7 +149,7 @@ namespace {
         TestFile file("mapple-orientation-edit-provenance.kf");
         Camera camera;
         camera.set_scene_radius(20.0f);
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
         CameraPathBuilder::Settings settings;
@@ -172,7 +172,7 @@ namespace {
         capture_context(path, builder, camera);
         require(mapple::save_camera_path(file.name, source, {path}), "saving edited orientation provenance failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading edited orientation provenance failed");
         require(result.generated_paths.size() == 1, "an orientation edit discarded reproducible path provenance");
@@ -181,7 +181,7 @@ namespace {
 
     void test_edited_keyframe_round_trip() {
         Camera camera;
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         require(source.add_keyframe(Frame(vec3(0.0f), quat()), 0.0f), "the first edited fixture pose was rejected");
         require(source.add_keyframe(Frame(vec3(1.0f), quat(vec3(0.0f, 0.0f, 1.0f), 0.5f)), 1.0f),
                 "the second edited fixture pose was rejected");
@@ -193,7 +193,7 @@ namespace {
 
         std::ostringstream output;
         require(source.save_keyframes(output), "saving edited keyframes failed");
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         std::istringstream input(output.str());
         require(loaded.load_keyframes(input), "loading edited keyframes failed");
         require(loaded.number_of_keyframes() == 3, "loading edited keyframes changed their count");
@@ -215,7 +215,7 @@ namespace {
         Camera camera;
         camera.set_scene_radius(12.0f);
         camera.set_up_vector(normalize(vec3(0.2f, 1.0f, 0.1f)));
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
         CameraPathBuilder::Settings settings;
@@ -265,7 +265,7 @@ namespace {
         source.set_keyframe_dwell(2, 0.5f);
         require(mapple::save_camera_path(file.name, source, {path}), "saving walk provenance failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading walk provenance failed");
         require(result.generated_paths.size() == 1, "the walk provenance was not restored");
@@ -291,7 +291,7 @@ namespace {
         Camera camera;
         camera.set_scene_radius(2.0f);
         camera.set_up_vector(normalize(vec3(0.2f, 1.0f, 0.1f)));
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         CameraPathBuilder::Settings settings;
         settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::View;
@@ -314,7 +314,7 @@ namespace {
         require(!path.scene_box.is_valid(), "the invalid-box fixture unexpectedly has scene bounds");
         require(mapple::save_camera_path(file.name, source, {path}), "saving invalid-box provenance failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading invalid-box provenance failed");
         require(result.generated_paths.size() == 1 && !result.generated_paths.front().scene_box.is_valid(),
@@ -326,7 +326,7 @@ namespace {
         TestFile file("mapple-flight-provenance.kf");
         Camera camera;
         camera.set_scene_radius(10.0f);
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
         CameraPathBuilder::Settings settings;
@@ -351,7 +351,7 @@ namespace {
         capture_context(path, builder, camera);
         require(mapple::save_camera_path(file.name, source, {path}), "saving flight provenance failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading flight provenance failed");
         require(result.generated_paths.size() == 1 &&
@@ -367,7 +367,7 @@ namespace {
         Camera camera;
         camera.set_scene_radius(12.0f);
         camera.set_up_vector(vec3(0.0f, 0.0f, 1.0f));
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-8.0f, -1.0f, -5.0f), vec3(8.0f, 1.0f, 5.0f)));
         CameraPathBuilder::Settings settings;
@@ -415,7 +415,7 @@ namespace {
             append(frame);
         flight_path.last = count - 1;
         append(Frame(vec3(7.0f, 0.0f, 0.0f), quat()));
-        source.set_interpolation_method(KeyFrameInterpolator::FITTING);
+        source.set_interpolation_method(KeyframeInterpolator::FITTING);
         source.set_interpolation_speed(1.25f);
         source.set_frame_rate(50);
 
@@ -426,10 +426,10 @@ namespace {
         contents << input.rdbuf();
         const std::string text = contents.str();
         require(text.find("provenance:") != std::string::npos &&
-                        text.find("provenance:") > text.find("num_key_frames:"),
+                        text.find("provenance:") > text.find("num_keyframes:"),
                 "provenance was not appended after the ordinary keyframes");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading multiple provenance blocks failed");
         require(result.generated_paths.size() == 2, "not all provenance blocks were restored");
@@ -439,7 +439,7 @@ namespace {
         require(result.generated_paths.front().first == 1 &&
                         result.generated_paths.back().last == count - 2,
                 "unowned leading or trailing keyframes were not preserved");
-        require(loaded.interpolation_method() == KeyFrameInterpolator::FITTING &&
+        require(loaded.interpolation_method() == KeyframeInterpolator::FITTING &&
                         std::abs(loaded.interpolation_speed() - 1.25f) < 1e-6f && loaded.frame_rate() == 50,
                 "playback parameters were not restored");
         require_same_path(source, loaded);
@@ -449,7 +449,7 @@ namespace {
         TestFile file("mapple-orbit-provenance.kf");
         Camera camera;
         camera.set_scene_radius(10.0f);
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         CameraPathBuilder builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
         CameraPathBuilder::Settings settings;
@@ -472,7 +472,7 @@ namespace {
         capture_context(path, builder, camera);
         require(mapple::save_camera_path(file.name, source, {path}), "saving orbit provenance failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading orbit provenance failed");
         require(result.generated_paths.size() == 1 &&
@@ -482,7 +482,7 @@ namespace {
         require(loaded.is_path_periodic(), "the loaded orbit did not restore periodic interpolation");
 
         path.keyframe_inserted(6);
-        KeyFrameInterpolator manual_source(camera.frame());
+        KeyframeInterpolator manual_source(camera.frame());
         for (int i = 0; i < static_cast<int>(generated.size()); ++i) {
             if (i == 6) {
                 const Frame manual((generated[5].position() + generated[6].position()) * 0.5f,
@@ -496,7 +496,7 @@ namespace {
         }
         manual_source.set_path_periodic(true);
         require(mapple::save_camera_path(file.name, manual_source, {path}), "saving an orbit manual gap failed");
-        KeyFrameInterpolator manual_loaded(camera.frame());
+        KeyframeInterpolator manual_loaded(camera.frame());
         require(mapple::read_camera_path(file.name, &manual_loaded, result), "loading an orbit manual gap failed");
         require(result.generated_paths.size() == 1 &&
                         result.generated_paths.front().manual_before == std::vector<int>{6},
@@ -508,25 +508,25 @@ namespace {
     void test_fallbacks() {
         TestFile legacy("mapple-legacy.kf");
         Camera camera;
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         add_frames(source, {Frame(vec3(0.0f), quat()), Frame(vec3(1.0f), quat()), Frame(vec3(2.0f), quat())});
         {
             std::ofstream output(legacy.name.c_str());
             require(output && source.save_keyframes(output), "saving the legacy fixture failed");
         }
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(legacy.name, &loaded, result), "loading a legacy file failed");
         require(result.generated_paths.empty(), "a legacy file invented provenance");
         require_same_path(source, loaded);
 
         TestFile old_format("mapple-old-format.kf");
-        KeyFrameInterpolator legacy_source(camera.frame());
+        KeyframeInterpolator legacy_source(camera.frame());
         require(legacy_source.add_keyframe(Frame(vec3(0.0f), quat())), "a legacy keyframe was rejected");
         require(legacy_source.add_keyframe(Frame(vec3(1.0f), quat())), "a legacy keyframe was rejected");
         {
             std::ofstream output(old_format.name.c_str());
-            output << "num_key_frames: 2\n"
+            output << "num_keyframes: 2\n"
                    << "\tframe: 0\n"
                    << "\t\tposition: 0 0 0\n"
                    << "\t\torientation: 0 0 0 1\n"
@@ -534,7 +534,7 @@ namespace {
                    << "\t\tposition: 1 1 1\n"
                    << "\t\torientation: 0 0 0 1\n";
         }
-        KeyFrameInterpolator old_loaded(camera.frame());
+        KeyframeInterpolator old_loaded(camera.frame());
         require(mapple::read_camera_path(old_format.name, &old_loaded, result),
                 "loading the original keyframe format failed");
         require(result.generated_paths.empty(), "the original keyframe format invented provenance");
@@ -542,13 +542,30 @@ namespace {
         require(!old_loaded.is_path_periodic() && old_loaded.keyframe_dwell(0) == 0.0f,
                 "the original keyframe format acquired new defaults");
 
+        TestFile legacy_header("mapple-legacy-header.kf");
+        std::ostringstream serialized;
+        require(source.save_keyframes(serialized), "saving the legacy-header fixture failed");
+        const std::string serialized_text = serialized.str();
+        const std::size_t first_newline = serialized_text.find('\n');
+        require(first_newline != std::string::npos, "the saved keyframe header has no line ending");
+        {
+            std::ofstream output(legacy_header.name.c_str());
+            output << "num_key_frames: " << source.number_of_keyframes()
+                   << serialized_text.substr(first_newline);
+        }
+        KeyframeInterpolator legacy_header_loaded(camera.frame());
+        require(mapple::read_camera_path(legacy_header.name, &legacy_header_loaded, result),
+                "loading a keyframe file with the legacy count header failed");
+        require(result.generated_paths.empty(), "the legacy count header invented provenance");
+        require_same_path(source, legacy_header_loaded);
+
         TestFile malformed("mapple-malformed-provenance.kf");
         {
             std::ofstream output(malformed.name.c_str());
             require(output && source.save_keyframes(output), "saving the malformed fixture failed");
             output << "\tprovenance:\n{not json}\n";
         }
-        KeyFrameInterpolator fallback(camera.frame());
+        KeyframeInterpolator fallback(camera.frame());
         require(mapple::read_camera_path(malformed.name, &fallback, result), "malformed provenance blocked keyframe loading");
         require(result.generated_paths.empty(), "malformed provenance was adopted");
         require_same_path(source, fallback);
@@ -561,7 +578,7 @@ namespace {
                    << "{\"version\": 999, \"keyframes\": " << source.number_of_keyframes()
                    << ", \"playback\": {}, \"paths\": []}\n";
         }
-        KeyFrameInterpolator incompatible_loaded(camera.frame());
+        KeyframeInterpolator incompatible_loaded(camera.frame());
         require(mapple::read_camera_path(incompatible.name, &incompatible_loaded, result),
                 "incompatible provenance blocked keyframe loading");
         require(result.generated_paths.empty(), "incompatible provenance was adopted");
@@ -588,7 +605,7 @@ namespace {
         path.last = static_cast<int>(generated.size()) - 1;
         capture_context(path, builder, camera);
         require(mapple::save_camera_path(edited.name, source, {path}), "saving edited provenance failed");
-        KeyFrameInterpolator edited_loaded(camera.frame());
+        KeyframeInterpolator edited_loaded(camera.frame());
         require(mapple::read_camera_path(edited.name, &edited_loaded, result), "edited provenance blocked keyframe loading");
         require(result.generated_paths.empty(), "provenance overwrote a manually edited generated pose");
         require_same_path(source, edited_loaded);
@@ -614,7 +631,7 @@ namespace {
         path.last = static_cast<int>(distant_generated.size()) - 1;
         require(mapple::save_camera_path(distant_edit.name, source, {path}),
                 "saving the distant-edit fixture failed");
-        KeyFrameInterpolator distant_loaded(camera.frame());
+        KeyframeInterpolator distant_loaded(camera.frame());
         require(mapple::read_camera_path(distant_edit.name, &distant_loaded, result),
                 "the distant-edit fixture blocked keyframe loading");
         require(result.generated_paths.empty(), "a large world coordinate hid a manually edited generated pose");
@@ -624,7 +641,7 @@ namespace {
     void test_refused_build_fallback() {
         TestFile file("mapple-refused-build.kf");
         Camera camera;
-        KeyFrameInterpolator source(camera.frame());
+        KeyframeInterpolator source(camera.frame());
         add_frames(source, {Frame(vec3(0.0f), quat()), Frame(vec3(1.0f), quat()), Frame(vec3(2.0f), quat())});
 
         mapple::GeneratedPath path;
@@ -637,7 +654,7 @@ namespace {
         path.build_failed = true;
         require(mapple::save_camera_path(file.name, source, {path}), "saving the refused-build fixture failed");
 
-        KeyFrameInterpolator loaded(camera.frame());
+        KeyframeInterpolator loaded(camera.frame());
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "the refused-build fixture blocked keyframe loading");
         require(result.generated_paths.empty(), "a refused rebuild produced non-restorable provenance");

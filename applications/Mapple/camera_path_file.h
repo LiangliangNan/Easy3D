@@ -3,7 +3,7 @@
 
 #include "generated_path.h"
 
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 
 #include <string>
 #include <vector>
@@ -16,11 +16,11 @@ namespace mapple {
     };
 
     bool save_camera_path(const std::string &file_name,
-                          const easy3d::KeyFrameInterpolator &interpolator,
+                          const easy3d::KeyframeInterpolator &interpolator,
                           const std::vector<GeneratedPath> &generated_paths);
 
     bool read_camera_path(const std::string &file_name,
-                          easy3d::KeyFrameInterpolator *interpolator,
+                          easy3d::KeyframeInterpolator *interpolator,
                           LoadedCameraPath &loaded);
 
 } // namespace mapple

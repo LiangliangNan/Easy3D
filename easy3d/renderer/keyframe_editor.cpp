@@ -31,35 +31,35 @@
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/util/setting.h>
 
 namespace easy3d {
 
-KeyFrameEditor::KeyFrameEditor(Camera *camera, KeyFrameInterpolator *interpolator)
+KeyframeEditor::KeyframeEditor(Camera *camera, KeyframeInterpolator *interpolator)
         : camera_(camera), kfi_(interpolator) {
 }
 
-void KeyFrameEditor::set_glyph_width(float width) {
+void KeyframeEditor::set_glyph_width(float width) {
     glyph_width_ = width;
 }
 
-void KeyFrameEditor::set_editing(bool editing) {
+void KeyframeEditor::set_editing(bool editing) {
     editing_ = editing;
     if (!editing_)
         reset_drag();
 }
 
-int KeyFrameEditor::selected() const {
+int KeyframeEditor::selected() const {
     if (!kfi_ || selected_ < 0)
         return -1;
     const int count = static_cast<int>(kfi_->number_of_keyframes());
     return std::min(selected_, count - 1);
 }
 
-void KeyFrameEditor::set_selected(int index) {
+void KeyframeEditor::set_selected(int index) {
     if (!kfi_ || index < 0) {
         selected_ = -1;
         return;
@@ -68,23 +68,23 @@ void KeyFrameEditor::set_selected(int index) {
     selected_ = count > 0 ? std::min(index, count - 1) : -1;
 }
 
-bool KeyFrameEditor::editable() const {
+bool KeyframeEditor::editable() const {
     return editing_ && kfi_ && !kfi_->is_interpolation_started() && selected() >= 0;
 }
 
-int KeyFrameEditor::editable_keyframe() const {
+int KeyframeEditor::editable_keyframe() const {
     return editable() ? selected() : -1;
 }
 
-KeyFrameEditor::Handle KeyFrameEditor::handle_at(int x, int y) const {
+KeyframeEditor::Handle KeyframeEditor::handle_at(int x, int y) const {
     const int index = editable_keyframe();
     if (index < 0 || !(glyph_width_ > 0.0f))
         return Handle::none;
-    return KeyFrameGizmo::handle_at(camera_, kfi_->keyframe(static_cast<std::size_t>(index)), glyph_width_,
+    return KeyframeGizmo::handle_at(camera_, kfi_->keyframe(static_cast<std::size_t>(index)), glyph_width_,
                                     static_cast<float>(x), static_cast<float>(y));
 }
 
-bool KeyFrameEditor::update_hover(int x, int y) {
+bool KeyframeEditor::update_hover(int x, int y) {
     Handle hovered = Handle::none;
     if (x >= 0 && y >= 0 && editable() && dragged_keyframe_ < 0)
         hovered = handle_at(x, y);
@@ -94,7 +94,7 @@ bool KeyFrameEditor::update_hover(int x, int y) {
     return true;
 }
 
-bool KeyFrameEditor::press(int x, int y, bool upright_plane, const std::function<int(int, int)> &keyframe_at) {
+bool KeyframeEditor::press(int x, int y, bool upright_plane, const std::function<int(int, int)> &keyframe_at) {
     if (!editable())
         return false;
 
@@ -111,17 +111,17 @@ bool KeyFrameEditor::press(int x, int y, bool upright_plane, const std::function
         drag_start_position_ = start.position();
         drag_start_orientation_ = start.orientation();
         drag_plane_point_ = start.position();
-        const bool turn = KeyFrameGizmo::is_turn(handle);
-        const int axis_index = KeyFrameGizmo::axis_of(handle);
+        const bool turn = KeyframeGizmo::is_turn(handle);
+        const int axis_index = KeyframeGizmo::axis_of(handle);
         drag_axis_ = normalize(start.orientation().rotate(
                 axis_index == 0 ? vec3(1, 0, 0) : axis_index == 1 ? vec3(0, 1, 0) : vec3(0, 0, 1)));
         if (turn) {
             drag_angle_ = 0.0f;
-            if (!KeyFrameGizmo::ring_angle_at(camera_, static_cast<float>(x), static_cast<float>(y),
+            if (!KeyframeGizmo::ring_angle_at(camera_, static_cast<float>(x), static_cast<float>(y),
                                               drag_plane_point_, drag_axis_, drag_last_angle_))
                 return false;
         } else {
-            if (!KeyFrameGizmo::axis_parameter_at(camera_, static_cast<float>(x), static_cast<float>(y),
+            if (!KeyframeGizmo::axis_parameter_at(camera_, static_cast<float>(x), static_cast<float>(y),
                                                   drag_plane_point_, drag_axis_, drag_start_scalar_))
                 return false;
         }
@@ -169,7 +169,7 @@ bool KeyFrameEditor::press(int x, int y, bool upright_plane, const std::function
     return true;
 }
 
-void KeyFrameEditor::drag(int x, int y) {
+void KeyframeEditor::drag(int x, int y) {
     if (dragged_keyframe_ < 0 || dragged_keyframe_ >= static_cast<int>(kfi_->number_of_keyframes()))
         return;
     const auto index = static_cast<std::size_t>(dragged_keyframe_);
@@ -181,7 +181,7 @@ void KeyFrameEditor::drag(int x, int y) {
     // the axis line, so the pose follows the cursor without drifting off the axis.
     if (handle_ >= Handle::move_x && handle_ <= Handle::move_z) {
         float parameter;
-        if (!KeyFrameGizmo::axis_parameter_at(camera_, static_cast<float>(x), static_cast<float>(y),
+        if (!KeyframeGizmo::axis_parameter_at(camera_, static_cast<float>(x), static_cast<float>(y),
                                               drag_plane_point_, drag_axis_, parameter))
             return;
         const vec3 position = drag_start_position_ + drag_axis_ * (parameter - drag_start_scalar_);
@@ -203,9 +203,9 @@ void KeyFrameEditor::drag(int x, int y) {
     // A ring turns the pose around its axis: the accumulated cursor angle around the
     // ring's center is applied to the orientation captured at the press, so the pose
     // does not drift when the cursor crosses the ring's seam.
-    if (KeyFrameGizmo::is_turn(handle_)) {
+    if (KeyframeGizmo::is_turn(handle_)) {
         float angle;
-        if (!KeyFrameGizmo::ring_angle_at(camera_, static_cast<float>(x), static_cast<float>(y),
+        if (!KeyframeGizmo::ring_angle_at(camera_, static_cast<float>(x), static_cast<float>(y),
                                           drag_plane_point_, drag_axis_, angle))
             return;
         const float delta = std::remainder(angle - drag_last_angle_, 2.0f * static_cast<float>(M_PI));
@@ -253,16 +253,16 @@ void KeyFrameEditor::drag(int x, int y) {
         camera_->set_scene_radius(dist);
 }
 
-KeyFrameEditor::DragResult KeyFrameEditor::release() {
+KeyframeEditor::DragResult KeyframeEditor::release() {
     DragResult result;
     result.keyframe = dragged_keyframe_;
     result.moved = drag_moved_;
-    result.turned = KeyFrameGizmo::is_turn(handle_);
+    result.turned = KeyframeGizmo::is_turn(handle_);
     reset_drag();
     return result;
 }
 
-void KeyFrameEditor::cancel() {
+void KeyframeEditor::cancel() {
     if (dragged_keyframe_ >= 0 && drag_moved_ && kfi_ &&
         dragged_keyframe_ < static_cast<int>(kfi_->number_of_keyframes())) {
         const auto index = static_cast<std::size_t>(dragged_keyframe_);
@@ -272,14 +272,14 @@ void KeyFrameEditor::cancel() {
     reset_drag();
 }
 
-void KeyFrameEditor::reset_drag() {
+void KeyframeEditor::reset_drag() {
     dragged_keyframe_ = -1;
     handle_ = Handle::none;
     hovered_handle_ = Handle::none;
     drag_moved_ = false;
 }
 
-bool KeyFrameEditor::aim_at(const vec3 &target) {
+bool KeyframeEditor::aim_at(const vec3 &target) {
     const int index = editable_keyframe();
     if (index < 0)
         return false;
@@ -306,7 +306,7 @@ bool KeyFrameEditor::aim_at(const vec3 &target) {
     return true;
 }
 
-int KeyFrameEditor::insert_after_selected() {
+int KeyframeEditor::insert_after_selected() {
     if (!kfi_)
         return -1;
     const int count = static_cast<int>(kfi_->number_of_keyframes());
@@ -367,7 +367,7 @@ int KeyFrameEditor::insert_after_selected() {
     return after + 1;
 }
 
-int KeyFrameEditor::delete_selected() {
+int KeyframeEditor::delete_selected() {
     if (!kfi_)
         return -1;
     const int count = static_cast<int>(kfi_->number_of_keyframes());
@@ -397,7 +397,7 @@ int KeyFrameEditor::delete_selected() {
     return index;
 }
 
-bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector<float> &times,
+bool KeyframeEditor::rebuild(const std::vector<Frame> &frames, const std::vector<float> &times,
                              const std::vector<float> &dwells) {
     if (!kfi_ || frames.size() != times.size())
         return false;
@@ -417,7 +417,7 @@ bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector
     return true;
 }
 
-void KeyFrameEditor::append_overlay(std::vector<graphics::DrawCommand> &commands,
+void KeyframeEditor::append_overlay(std::vector<graphics::DrawCommand> &commands,
                                     unsigned fb_width, unsigned fb_height, float dpi) const {
     const int index = editable_keyframe();
     if (index < 0 || fb_width == 0 || fb_height == 0)
@@ -430,10 +430,10 @@ void KeyFrameEditor::append_overlay(std::vector<graphics::DrawCommand> &commands
     // pose, the station is at the eye and has no screen position, so it is skipped.
     const vec3 station = kfi_->keyframe_position(static_cast<std::size_t>(index));
     vec2 projected;
-    if (!KeyFrameGizmo::project_to_screen(camera_, station, projected))
+    if (!KeyframeGizmo::project_to_screen(camera_, station, projected))
         return;
     const mat4 mvp = camera_->model_view_projection_matrix();
-    const float pixel = KeyFrameGizmo::pixel_size_at(camera_, station);
+    const float pixel = KeyframeGizmo::pixel_size_at(camera_, station);
     if (pixel > 0.0f) {
         const float r = 7.0f * pixel;
         const vec3 right = camera_->right_vector() * r;
@@ -465,7 +465,7 @@ void KeyFrameEditor::append_overlay(std::vector<graphics::DrawCommand> &commands
     ray.color = aim;
     commands.push_back(ray);
 
-    KeyFrameGizmo::append_overlay(commands, camera_, frame, glyph_width_,
+    KeyframeGizmo::append_overlay(commands, camera_, frame, glyph_width_,
                                   dragged_keyframe_ >= 0 ? handle_ : hovered_handle_,
                                   fb_width, fb_height, dpi);
 }

@@ -54,7 +54,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/manipulator.h>
@@ -226,7 +226,7 @@ MappleViewer::MappleViewer(const std::string &title,
 #endif
 
     // The camera path belongs to the app: the base Viewer does not own an interpolator.
-    kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
+    kfi_.reset(new KeyframeInterpolator(camera()->frame()));
 
     // Initialize the camera-path playback clock to "now" so the first advance step
     // lands on the current frame rather than consuming the whole path.
@@ -348,7 +348,7 @@ void MappleViewer::init() {
     camera_path_builder_->set_follow_ground_slopes(settings_.follow_ground_slopes);
     // Editing the poses (handles, aiming, insert/delete) is the library's keyframe
     // editor; its undo point is the same one-level path snapshot as the path tools'.
-    keyframe_editor_.reset(new KeyFrameEditor(camera(), kfi_.get()));
+    keyframe_editor_.reset(new KeyframeEditor(camera(), kfi_.get()));
     keyframe_editor_->begin_edit = [this]() { snapshot_camera_path(); };
     // The Camera Path window's timeline strip (drawn by ui/animation.cpp); it keeps its
     // cached segment layout across frames and is invalidated by edit_camera_path_timing().
@@ -500,7 +500,7 @@ void MappleViewer::update_camera_path_guides() {
         camera_path_line_ = std::make_shared<LinesDrawable>("camera path line");
         add_drawable(camera_path_line_);
     }
-    camera_markers_faces_per_glyph_ = KeyFrameInterpolator::camera_glyph_triangles();
+    camera_markers_faces_per_glyph_ = KeyframeInterpolator::camera_glyph_triangles();
     kfi_->update_cameras_drawable(*camera_markers_, camera(), width);
     // The curve follows the same poses, so it is rebuilt in this pass as well; with a
     // single keyframe there is no curve to show.
@@ -857,7 +857,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     }
 
     if (button == BUTTON_LEFT && keyframe_editor_ && keyframe_editor_->dragging()) {
-        const KeyFrameEditor::DragResult result = keyframe_editor_->release();
+        const KeyframeEditor::DragResult result = keyframe_editor_->release();
         if (result.moved)
             LOG(INFO) << "keyframe " << result.keyframe + 1
                       << (result.turned ? " turned" : " moved") << " (Ctrl+Z restores it)";

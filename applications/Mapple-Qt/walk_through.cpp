@@ -29,7 +29,7 @@
 #include <easy3d/core//model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 
@@ -43,7 +43,7 @@ WalkThrough::WalkThrough(Camera *camera)
           rotate_vertical_offset_factor_(0.0f), rotate_pitch_angle_(0.0f), rotate_keyframe_samples_(10),
           rotate_num_loops_(2), cameras_visible_(false), path_visible_(false), current_frame_idx_(-1)
 {
-    kfi_ = new KeyFrameInterpolator(camera_->frame());
+    kfi_ = new KeyframeInterpolator(camera_->frame());
 }
 
 
@@ -60,7 +60,7 @@ void WalkThrough::add_keyframe(const Frame &frame, bool quiet) {
         if (dist > camera_->scene_radius())
             camera_->set_scene_radius(dist);
 
-        LOG_IF(!quiet, INFO) << "a key frame added to camera path";
+        LOG_IF(!quiet, INFO) << "a keyframe added to camera path";
         path_modified.send();
     }
 }
@@ -164,7 +164,7 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
         add_keyframe(*cam.frame(), true);
     }
 
-    LOG(INFO) << interpolator()->number_of_keyframes() << " key frames added to camera path";
+    LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes added to camera path";
 }
 
 

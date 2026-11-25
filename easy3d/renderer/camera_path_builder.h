@@ -36,7 +36,7 @@
 
 namespace easy3d {
     class Camera;
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
     class Model;
 }
 
@@ -45,7 +45,7 @@ namespace easy3d {
 /**
  * \brief Camera-path authoring for demonstrating a 3D scene or object in a video.
  * \details A path is a sequence of keyframe poses that an app hands to a
- *      KeyFrameInterpolator for preview, playback and recording. This class covers
+ *      KeyframeInterpolator for preview, playback and recording. This class covers
  *      the sources that free recording cannot express:
  *
  *      - walking a traced ground route: generate_ground_route() turns a stroke of
@@ -91,7 +91,7 @@ namespace easy3d {
  *      height, fewer than two orbit keyframes) and return nothing. Each function
  *      documents the refusal and any clamping.
  *
- * \note The generating functions append with KeyFrameInterpolator::add_keyframe
+ * \note The generating functions append with KeyframeInterpolator::add_keyframe
  *      (const Frame&), which times each new pose one second after the previous one and
  *      drops a pose whose position coincides with the previous one. The number of
  *      keyframes therefore sets the path duration, and a closed stroke (whose last
@@ -123,7 +123,7 @@ public:
     ///      scene heights, both ground tracks following the terrain's slopes, flight
     ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.1
     ///      object heights, pitch 0 degrees and 10 keyframes per closed orbit.
-    CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
+    CameraPathBuilder(Camera *camera, KeyframeInterpolator *interpolator);
     /// Destroys the builder. The camera and the interpolator are borrowed, so
     /// neither is destroyed.
     ~CameraPathBuilder() = default;
@@ -652,7 +652,7 @@ protected:
     Camera *camera_;
     // Borrowed path receiver for the generate_*() functions; the pure builders do
     // not use it.
-    KeyFrameInterpolator *kfi_;
+    KeyframeInterpolator *kfi_;
 
     // Union of the visible models last passed to set_scene(); invalid when none was
     // visible.

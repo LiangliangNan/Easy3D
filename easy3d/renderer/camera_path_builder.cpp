@@ -32,7 +32,7 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
 
@@ -91,7 +91,7 @@ namespace easy3d {
         }
     }
 
-    CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
+    CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyframeInterpolator *interpolator)
             : camera_(camera), kfi_(interpolator) {
     }
 

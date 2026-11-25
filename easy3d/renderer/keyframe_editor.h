@@ -36,20 +36,20 @@
 namespace easy3d {
     class Camera;
     class Frame;
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
     namespace graphics { struct DrawCommand; }
 }
 
 namespace easy3d {
 
 /**
- * \class KeyFrameEditor easy3d/renderer/keyframe_editor.h
- * \brief Interactive editing of the keyframe poses stored in a KeyFrameInterpolator.
+ * \class KeyframeEditor easy3d/renderer/keyframe_editor.h
+ * \brief Interactive editing of the keyframe poses stored in a KeyframeInterpolator.
  * \details The editor owns the selection of a keyframe and the gestures that edit it:
  *
  *      - dragging the selected pose's camera glyph moves it in the screen plane
  *        through its position (or in the plane of its own up, with the upright flag),
- *        an axis arrow of the KeyFrameGizmo moves it along that axis, and a ring
+ *        an axis arrow of the KeyframeGizmo moves it along that axis, and a ring
  *        turns its pose around that axis; Esc restores the pose captured at the press,
  *      - aim_at() turns the selected pose so its view direction points at a target,
  *        keeping its roll,
@@ -74,11 +74,11 @@ namespace easy3d {
  *      interpolator is not playing; the host decides when editing is on (e.g. only
  *      while the path is visible).
  */
-class KeyFrameEditor {
+class KeyframeEditor {
 public:
-    /// \brief The handle grabbed by a press: the KeyFrameGizmo handles plus the free
+    /// \brief The handle grabbed by a press: the KeyframeGizmo handles plus the free
     ///      grab of the camera glyph itself.
-    using Handle = KeyFrameGizmo::Handle;
+    using Handle = KeyframeGizmo::Handle;
 
     /// \brief What release() ended: the keyframe the drag acted on, and whether it
     ///      moved, turned, or did neither (a click that grabbed without moving).
@@ -93,8 +93,8 @@ public:
     ///      lifetime. It views the poses and supplies the projection of the handles.
     /// \param interpolator The path that is edited; it must remain valid for the
     ///      editor's lifetime.
-    KeyFrameEditor(Camera *camera, KeyFrameInterpolator *interpolator);
-    ~KeyFrameEditor() = default;
+    KeyframeEditor(Camera *camera, KeyframeInterpolator *interpolator);
+    ~KeyframeEditor() = default;
 
     /// \brief Called once when an edit starts, before the first change is applied: the
     ///      first movement of a drag, an insert, a delete or an aim. Hook the host's
@@ -137,7 +137,7 @@ public:
     /// \return The index of the editable keyframe, or -1 when there is none.
     int editable_keyframe() const;
 
-    /// \brief The handle under the cursor, or none; see KeyFrameGizmo::handle_at().
+    /// \brief The handle under the cursor, or none; see KeyframeGizmo::handle_at().
     /// \param x The cursor's x coordinate, in logical window pixels (top-left origin).
     /// \param y The cursor's y coordinate, in logical window pixels (top-left origin).
     /// \return The handle under the cursor, or Handle::none.
@@ -227,7 +227,7 @@ private:
 
 private:
     Camera *camera_;
-    KeyFrameInterpolator *kfi_;
+    KeyframeInterpolator *kfi_;
     float glyph_width_ = 0.0f;
     bool editing_ = false;
     int selected_ = -1;

@@ -40,7 +40,7 @@
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
@@ -95,7 +95,7 @@ void MappleViewer::draw_animation_window() {
         return;
     }
 
-    KeyFrameInterpolator *kfi = kfi_.get();
+    KeyframeInterpolator *kfi = kfi_.get();
     const int count = static_cast<int>(kfi->number_of_keyframes());
     const int selected_index = keyframe_editor_->selected();
 

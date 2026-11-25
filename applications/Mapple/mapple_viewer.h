@@ -59,7 +59,7 @@ namespace easy3d {
     class AmbientOcclusion;
     class Drawable;
     class EyeDomeLighting;
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
     class LinesDrawable;
     class Model;
     class PointCloudPicker;
@@ -568,7 +568,7 @@ private:
     // The path's duration (travel + dwell), read from the keyframes as the strip draws it.
     float camera_path_duration() const;
 
-    // Keyframe editing lives in KeyFrameEditor (easy3d/renderer/keyframe_editor.h):
+    // Keyframe editing lives in KeyframeEditor (easy3d/renderer/keyframe_editor.h):
     // the selected keyframe, its gizmo (sized to the camera glyph, see
     // camera_marker_width()), the handle and glyph drags, aiming at a clicked point,
     // and the insert/delete edits on the path. With editing on, the selected keyframe
@@ -585,7 +585,7 @@ private:
     bool aim_selected_keyframe_at(int x, int y);
 
     // Inserts a keyframe after the selected one (the pose and time are interpolated,
-    // see KeyFrameEditor) and shows the path.
+    // see KeyframeEditor) and shows the path.
     void insert_camera_keyframe();
     // Deletes the selected keyframe.
     void delete_camera_keyframe();
@@ -901,8 +901,8 @@ private:
 
     bool show_animation_window_ = false;
     // The camera path (keyframes, playback state and drawing) belongs to the app: the
-    // base Viewer no longer owns a KeyFrameInterpolator.
-    std::unique_ptr<easy3d::KeyFrameInterpolator> kfi_;
+    // base Viewer no longer owns a KeyframeInterpolator.
+    std::unique_ptr<easy3d::KeyframeInterpolator> kfi_;
     bool show_camera_path_ = false;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
     // The keyframe camera glyphs and the interpolated path: standalone drawables in the
@@ -918,7 +918,7 @@ private:
     bool alt_held_ = false;
     // Selection, handle and glyph drags, aiming, insert/delete, and the selected
     // keyframe's overlay (created in init(), once the path exists).
-    std::unique_ptr<easy3d::KeyFrameEditor> keyframe_editor_;
+    std::unique_ptr<easy3d::KeyframeEditor> keyframe_editor_;
     // Walking, orbit and flight keyframe creation (created in init()).
     std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;
     // Which one-shot path tool owns the next gesture.

@@ -69,7 +69,7 @@ Rebuild Mapple on ImGui instead of adding a Qt Vulkan widget.
 3. **Panels for persistent state, modal windows only for short parameter forms.**
 4. **Reuse Easy3D.** `Viewer::open/save/snapshot/copy_view/paste_view`, `dialog::*`
    (native file/message dialogs via portable_file_dialogs), `RenderDevice` offscreen
-   capture, `KeyFrameInterpolator`, `TextLayoutEngine`.
+   capture, `KeyframeInterpolator`, `TextLayoutEngine`.
 5. **The Qt app stayed shippable** until the new app passed the Phase 1 acceptance list.
 
 ## Layout
@@ -317,12 +317,12 @@ Phase 2 design notes:
       plus Camera-menu commands to add (Alt+K), remove the last keyframe, clear the
       path, play/stop (Ctrl+K), show the path and keyframe cameras (Ctrl+T), and
       import/export `.kf` files. It drives `MappleViewer`'s own
-      `KeyFrameInterpolator`; the app's shortcuts and path overlay stay authoritative;
+      `KeyframeInterpolator`; the app's shortcuts and path overlay stay authoritative;
       the scene remains interactive while the window is open.
 - [x] Video recording: Camera Path > Record Video... renders the interpolated path
       through `easy3d::video::VideoEncoder` (FFmpeg builds only; the button is
       disabled and labeled otherwise). Frames come from
-      `KeyFrameInterpolator::interpolate()` at the path's frame rate, are rendered
+      `KeyframeInterpolator::interpolate()` at the path's frame rate, are rendered
       with `Viewer::capture(..., graphics::FrameReadback::color)` at the current
       view size (cropped to the encoder's multiple-of-8 requirement), and are
       scene-only: the capture skips the viewer HUD (`snapshot_hud_` is off while
@@ -700,7 +700,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   Export Keyframes (.kf). Copy/paste view and the projection choice stay above them.
 - The window shows the keyframe count, a Prev/Next navigator, playback, interpolation
   speed, frame rate, interpolation method (spline interpolation or fitting), and the
-  path visibility. It drives the viewer's own `KeyFrameInterpolator`; the existing
+  path visibility. It drives the viewer's own `KeyframeInterpolator`; the existing
   viewer shortcuts therefore stay the single source of truth, and the scene remains
   interactive while the window is open (unlike the modal process/snapshot dialogs).
   Closing the window stops playback so the camera does not keep moving unattended;
@@ -710,7 +710,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   hiding or clearing it restores the scene bounds. Import expands the radius when the
   path is already visible.
 - Validation: both backends build and launch with `general_open.obj`; the
-  `KeyFrameInterpolator` interpolation, manual playback and `.kf` round-trip it calls
+  `KeyframeInterpolator` interpolation, manual playback and `.kf` round-trip it calls
   are covered by the viewer camera-path tests (green in both check trees). The menu
   and window were not exercised through scripted clicks.
 
@@ -722,7 +722,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   window's current frame rate, so the clip plays at the configured interpolation
   speed.
 - Recording does not step the camera in real time. It copies
-  `KeyFrameInterpolator::interpolate()` and renders one frame per drawn frame
+  `KeyframeInterpolator::interpolate()` and renders one frame per drawn frame
   between the UI build and the overlay submission in `pre_draw()`, so the modal
   progress window updates, Esc/Cancel work, and no other command can run while
   frames are written.
@@ -1524,7 +1524,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   exists the click opens a `Replace Camera Path?` modal instead of silently
   discarding it.
 - `WalkThrough` (new `walk_through.h/.cpp`) is a redesign rather than a copy: it
-  borrows the viewer's camera and its `KeyFrameInterpolator` instead of owning
+  borrows the viewer's camera and its `KeyframeInterpolator` instead of owning
   them, and it adds to the scene radius rather than widening it up front, because
   `MappleViewer` already uses the same interpolator for playback, `.kf` import/export
   and video recording. `move_to()` places the camera immediately through the frame
@@ -1543,7 +1543,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 
 ### 2026-11-17 — the camera path is owned by the app, not the Viewer
 
-- The base `Viewer` no longer carries a `KeyFrameInterpolator` (batch 104): no path
+- The base `Viewer` no longer carries a `KeyframeInterpolator` (batch 104): no path
   state, playback step, Vulkan path renderer, Alt+K/Alt+D/Ctrl+K/Ctrl+T handlers or
   usage lines. `MappleViewer` owns the interpolator it already drove, so the Camera
   menu, the Camera Path window, `.kf` import/export, video recording and `WalkThrough`
@@ -1730,7 +1730,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   `Frame::matrix()` into a standalone `TrianglesDrawable`
   ("camera path markers", uniform green `(0.2, 0.7, 0.3)`) added with
   `add_drawable()` (the glyph builder moved into the core as
-  `KeyFrameInterpolator::update_cameras_drawable()`, batch 117, which Tutorial 206
+  `KeyframeInterpolator::update_cameras_drawable()`, batch 117, which Tutorial 206
   uses too). They are rebuilt in `pre_draw()` only when the poses or the
   glyph width change, hidden with `set_visible(false)` while playback runs (or when
   the width is 0), and removed by `release_camera_markers()` before
@@ -1749,7 +1749,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   the model surfaces itself, still omits every standalone drawable - a pre-existing
   limitation of that mode).
 - The Vulkan annotation slot now carries only the path polyline
-  (`KeyFrameInterpolatorRenderer::draw_path()`); Mapple no longer calls
+  (`KeyframeInterpolatorRenderer::draw_path()`); Mapple no longer calls
   `draw_cameras()`, and the OpenGL `draw_camera_path()` likewise draws only the
   line. The core renderer's `draw_cameras()` stays for the camera-path tests and
   Mapple-Qt (Tutorial 206 switched to the shared scene drawable in batch 117), and
@@ -1893,7 +1893,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   the new glyph does not sit on top of an existing one. `Delete Selected` removes the
   selected keyframe. Both buttons act on the selection shared with Prev/Next and the
   handle grab, and the overlay marks that handle with a highlight-colored square.
-- `KeyFrameInterpolator` only appends, so the edits rebuild the path:
+- `KeyframeInterpolator` only appends, so the edits rebuild the path:
   `rebuild_camera_path()` stops playback, clears the path and re-adds the frames with
   their times; `Ctrl+Z` uses the same rebuild from a snapshot, so an insert or a
   delete can be undone. Both actions snapshot the path first.
@@ -1914,7 +1914,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 - The path polyline joins the keyframe glyphs as ordinary scene geometry:
   `update_camera_markers()` became `update_camera_path_guides()`, which maintains
   "camera path markers" (`TrianglesDrawable`) and "camera path line"
-  (`LinesDrawable`, filled by the new `KeyFrameInterpolator::update_path_drawable()`)
+  (`LinesDrawable`, filled by the new `KeyframeInterpolator::update_path_drawable()`)
   side by side. Both are rebuilt on the same pose/width change and hidden while
   playback runs, while the path is hidden, when the width is 0, or (the line) when
   there is no curve to show; `release_camera_path_guides()` removes both before
@@ -1923,7 +1923,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   and IDs like the glyphs. A video capture includes both, since the capture renders
   the scene the guides were just rebuilt into.
 - The Vulkan annotation slot and the immediate `draw_camera_path()` are gone, along
-  with `vulkan::KeyFrameInterpolatorRenderer` and its `camera_path_renderer_` member
+  with `vulkan::KeyframeInterpolatorRenderer` and its `camera_path_renderer_` member
   (the class is deleted from the library, batch 118). `draw()` no longer refreshes or
   draws a path itself, and `pre_draw()` no longer has an annotation refresh before a
   video frame.
@@ -2623,7 +2623,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   caught, the settings saved and the viewer terminated politely ("viewer terminated. Bye!").
 - `Viewer failed: vector` is a caught `std::out_of_range` whose `what()` is `vector`, i.e.
   libc++'s `std::vector::at`. Every `.at()` over the keyframe vector sits in
-  `key_frame_interpolator.cpp` (the accessors at :122-:184), so the question was which caller
+  `keyframe_interpolator.cpp` (the accessors at :122-:184), so the question was which caller
   handed it an index the shortened path no longer had. The editor clamps its own selection, the
   dwell widget guards on a non-empty path, and the timeline's click branch bounds its index — but
   the frame had already captured the selection.
@@ -2636,7 +2636,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   the reported failure, from a launch with no clicking.
 - The throwing frame, from lldb with a break on `__cxa_throw`:
   `vector<Keyframe>::__throw_out_of_range` ← `vector<Keyframe>::at(this=size=18, __n=18)` ←
-  `easy3d::KeyFrameInterpolator::keyframe_dwell(index=18)` at key_frame_interpolator.cpp:152 ←
+  `easy3d::KeyframeInterpolator::keyframe_dwell(index=18)` at keyframe_interpolator.cpp:152 ←
   `MappleViewer::draw_animation_window()` at the `Dwell (s)` line ← `draw_gui()` ← `pre_draw()` ←
   `Viewer::draw_frame()`. The window reads its count and selection once at the top
   (animation.cpp:97-98); the dwell field below the buttons reused that selection after the button
@@ -2655,7 +2655,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
   marker count with the path and rebuilds on any difference, so an index the strip hands out always
   names a keyframe that is there. Measured with the probe calling the real handler: the strip read
   22 s for a path that then held 18 keyframes and 21 s with the old predicate, and 21 s after the
-  change — both agreeing with `KeyFrameInterpolator::total_duration()`.
+  change — both agreeing with `KeyframeInterpolator::total_duration()`.
 - The probe and its hooks are removed again. The three build trees (Vulkan debug, OpenGL
   relwithdebinfo, OpenGL check) compile Mapple cleanly, and a normal launch of the Vulkan app with
   `domik.obj` logs `Mapple UI ready (Vulkan)` with no failure line. The suites were not rerun: the
@@ -2667,7 +2667,7 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 
 - Seen in the window: deleting a keyframe left the timeline strip without a single gray pause bar,
   and the strip's total dropped by every dwell the path had. The cause is not in `applications/Mapple`
-  but in the library behind it: `KeyFrameEditor::delete_selected()` (and `insert_after_selected()`)
+  but in the library behind it: `KeyframeEditor::delete_selected()` (and `insert_after_selected()`)
   rebuild the path from the poses and times they keep, and `add_keyframe()` gives every rebuilt
   keyframe the default dwell of 0 — so the strip, which draws what `keyframe_dwell()` says, showed an
   honest picture of a path that had really been flattened. `Remove Last` uses the library's
@@ -2934,7 +2934,7 @@ history was found and filled during the ToDo review.
 - An exact copied closing pose made Orbit's stored keyframes a loop, but the interpolator still
   treated them as an open natural spline: curvature vanished at both copies of the seam pose and
   the first/last SQUAD tangents did not see the opposite side of the orbit.
-- `KeyFrameInterpolator` now has an explicit periodic path mode. For cubic interpolation it solves
+- `KeyframeInterpolator` now has an explicit periodic path mode. For cubic interpolation it solves
   a cyclic natural spline over the unique poses plus the closing interval, and computes SQUAT
   tangents with wrapped neighbours. Before computing each wrapped tangent, both neighbours are
   sign-aligned with the centre quaternion; otherwise an antipodal representation turns a short
@@ -2965,7 +2965,7 @@ history was found and filled during the ToDo review.
 - Mapple's `.kf` writer still puts the ordinary keyframes first, then appends a versioned
   `provenance:` JSON section. The library serializer owns only the keyframes; the new
   `applications/Mapple/camera_path_file.cpp` composes the file because generation sources and
-  their build context belong to Mapple, not `KeyFrameInterpolator`.
+  their build context belong to Mapple, not `KeyframeInterpolator`.
 - Each generated block records its Walk/Flight/Orbit source, complete builder settings, build-time
   scene box, camera scene radius and View-up direction, owned keyframe span, and manual-gap
   anchors. The section also records frame rate, interpolation speed and interpolation method.
@@ -2994,7 +2994,7 @@ history was found and filled during the ToDo review.
   the world origin and making valid provenance fail replay. Early version-1 provenance without a
   `playback` object is accepted with interpolator defaults; malformed present playback is rejected.
 - Import, export and automatic sibling `.kf` loading use the same app-level reader/writer.
-  `KeyFrameInterpolator` now exposes stream-based `save_keyframes(std::ostream&)` and
+  `KeyframeInterpolator` now exposes stream-based `save_keyframes(std::ostream&)` and
   `load_keyframes(std::istream&)`; the retired Qt app uses those streams and safely ignores the
   trailing provenance while reading ordinary keyframes.
 - Regressions cover Walk with a manual gap, View-up fallback without scene bounds, Flight with
@@ -3012,7 +3012,7 @@ history was found and filled during the ToDo review.
 
 ### 2026-11-25 — selecting a keyframe positions playback
 
-- Timeline clicks and Prev/Next now call `KeyFrameInterpolator::seek_to_keyframe()` through
+- Timeline clicks and Prev/Next now call `KeyframeInterpolator::seek_to_keyframe()` through
   `goto_camera_keyframe()`. Selection pauses playback, applies the exact stored camera pose,
   and moves the red playhead to that keyframe's timeline position, including preceding dwells.
   Resume/Play starts at the first sample at or after the selected keyframe.
@@ -3023,3 +3023,11 @@ history was found and filled during the ToDo review.
 - Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
   67/67, OpenGL RelWithDebInfo 48/48), and the Vulkan camera-path desktop regression passes.
   Interactive timeline clicks, Prev/Next and Resume/Play were not visually checked.
+
+### 2026-11-25 — Mapple uses keyframe naming
+
+- Camera Path labels, menu entries, comments, logs and the retired Qt Mapple sources now use
+  "keyframe" rather than split-word or hyphenated variants. Mapple's types and includes follow
+  the renamed `KeyframeInterpolator` API and `keyframe_interpolator.h` header.
+- `.kf` import/export remains compatible with existing files while newly saved files and the
+  bundled examples use `num_keyframes:`. The file regression checks the legacy count header.

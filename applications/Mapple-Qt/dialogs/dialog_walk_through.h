@@ -32,7 +32,7 @@
 
 
 namespace easy3d {
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
 }
 
 class WalkThrough;
@@ -45,7 +45,7 @@ public:
     explicit DialogWalkThrough(MainWindow *window);
 	~DialogWalkThrough() override = default;
 
-    easy3d::KeyFrameInterpolator* interpolator();
+    easy3d::KeyframeInterpolator* interpolator();
     WalkThrough* walkThrough();
 
 public Q_SLOTS :

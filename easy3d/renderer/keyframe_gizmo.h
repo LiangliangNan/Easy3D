@@ -40,11 +40,11 @@ namespace easy3d {
 namespace easy3d {
 
 /**
- * \class KeyFrameGizmo easy3d/renderer/keyframe_gizmo.h
+ * \class KeyframeGizmo easy3d/renderer/keyframe_gizmo.h
  * \brief The manipulation handles of one keyframe pose: three axis arrows and three
  *      turn rings.
  * \details The handles are real world-space geometry centred on the pose, sized
- *      relative to the camera glyph that KeyFrameInterpolator draws for the pose, so
+ *      relative to the camera glyph that KeyframeInterpolator draws for the pose, so
  *      the gizmo hugs the glyph it edits instead of dwarfing it. Their rendering is
  *      a depth-tested overlay: the parts behind the scene are hidden, as for a real
  *      object, and they keep a constant apparent size on HiDPI displays.
@@ -52,13 +52,13 @@ namespace easy3d {
  *      The class is stateless. Geometry(), handle_at(), axis_parameter_at() and
  *      ring_angle_at() map a pose and the cursor to handles and cursor parameters;
  *      append_overlay() draws the gizmo for a caller-owned keyframe. An interactive
- *      editor built on these is KeyFrameEditor.
+ *      editor built on these is KeyframeEditor.
  *
  *      The arrows move the pose along its own axes; the rings turn it around them.
  *      An element seen end-on carries no usable cursor parameter (an arrow along the
  *      view is a dot, a ring's plane is a line), so it is neither drawn nor grabbable.
  */
-class KeyFrameGizmo {
+class KeyframeGizmo {
 public:
     /// \brief The part of the gizmo under the cursor.
     enum class Handle {

@@ -100,7 +100,7 @@
 //#include <easy3d/renderer/frame.h>
 //#include <easy3d/renderer/framebuffer_object.h>
 //#include <easy3d/renderer/frustum.h>
-//#include <easy3d/renderer/key_frame_interpolator.h>
+//#include <easy3d/renderer/keyframe_interpolator.h>
 //#include <easy3d/renderer/manipulated_camera_frame.h>
 //#include <easy3d/renderer/manipulated_frame.h>
 //#include <easy3d/renderer/manipulator.h>

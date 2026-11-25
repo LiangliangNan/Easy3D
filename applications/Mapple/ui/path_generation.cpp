@@ -35,7 +35,7 @@
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/camera_path_builder.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
 
 using namespace easy3d;

@@ -1,7 +1,7 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_206_CameraInterpolation/viewer.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -32,7 +32,7 @@ struct PathViewer : TutorialCameraInterpolation {
     bool has_usage() const {return hint_.find("Press 'k'")!=std::string::npos;}
 };
 void core_playback() {
-    Frame target;KeyFrameInterpolator path(&target);
+    Frame target;KeyframeInterpolator path(&target);
     unsigned samples=0,stopped=0;const auto caller=std::this_thread::get_id();
     path.frame_interpolated.connect([&] {require(std::this_thread::get_id()==caller,"manual interpolation used worker thread");++samples;});
     path.interpolation_stopped.connect([&] {++stopped;});
@@ -121,7 +121,7 @@ void scene_guides(PathViewer& v) {
     const vec3 first = center - 0.25f * half_height * up;
     const vec3 second = center + 0.25f * half_height * up;
     const float glyph_width = 0.2f * half_height;
-    KeyFrameInterpolator path(v.camera()->frame());
+    KeyframeInterpolator path(v.camera()->frame());
     require(path.add_keyframe(Frame(first,quat()),0),"scene guide fixture failed");
     auto line=std::make_shared<LinesDrawable>("scene guide path");
     require(!path.update_path_drawable(*line),"one keyframe produced a path");

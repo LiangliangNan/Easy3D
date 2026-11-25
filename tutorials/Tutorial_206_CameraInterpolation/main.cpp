@@ -31,10 +31,10 @@
 /**
  * \example Tutorial_206_CameraInterpolation
  * This example shows how to
- *      - create an exploration path using the key frame interpolator,
+ *      - create an exploration path using the keyframe interpolator,
  *      - play the path as an animation.
  *
- * The base Viewer does not own a KeyFrameInterpolator: the subclass in viewer.cpp creates one bound
+ * The base Viewer does not own a KeyframeInterpolator: the subclass in viewer.cpp creates one bound
  * to the camera's frame, records the current view as a keyframe on 'k', starts/stops the timer-driven
  * playback on 'space', clears the path on 'd', and draws the path and keyframe cameras.
  *
@@ -44,7 +44,7 @@
  * The source file of the class:
  * \include{lineno} Tutorial_206_CameraInterpolation/viewer.cpp
  *
- * \see KeyFrameInterpolator, Camera, Frame, Viewer, Tutorial_205_RealCamera
+ * \see KeyframeInterpolator, Camera, Frame, Viewer, Tutorial_205_RealCamera
  */
 
 using namespace easy3d;

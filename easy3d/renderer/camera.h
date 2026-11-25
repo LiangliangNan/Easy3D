@@ -49,7 +49,7 @@ namespace easy3d {
 
     class Frame;
     class ManipulatedCameraFrame;
-    class KeyFrameInterpolator;
+    class KeyframeInterpolator;
 
    /**
      * \brief A perspective or orthographic camera.
@@ -76,7 +76,7 @@ namespace easy3d {
      * to be provided to the Camera to correctly display the scene. High level positioning methods also use this
      * information (show_entire_scene(), center_scene()...).
      *
-     * A Camera owns a KeyFrameInterpolator (keyframe_interpolator()) that can be used to save Camera
+     * A Camera owns a KeyframeInterpolator (keyframe_interpolator()) that can be used to save Camera
      * positions and paths: call add_keyframe() on it to record a path and start_interpolation() to make
      * the Camera follow it. The Camera's own interpolate_to*() helpers use the same interpolator.
      *
@@ -378,7 +378,7 @@ namespace easy3d {
          *      shared). set_frame() rebinds it to the new frame, so it always interpolates the Camera frame().
          * \return The keyframe interpolator.
          */
-        KeyFrameInterpolator *keyframe_interpolator() const { return interpolation_kfi_; }
+        KeyframeInterpolator *keyframe_interpolator() const { return interpolation_kfi_; }
 
         /**
          * \brief Perform keyframe interpolation to look at a point.
@@ -818,9 +818,9 @@ namespace easy3d {
         mat4 projection_matrix_;           // Buffered projection matrix.
         bool projection_matrix_is_up_to_date_;  // false after a parameter change until recomputed
 
-        // Key frame interpolation. Owned by the Camera (created by the constructors, released by the
+        // Keyframe interpolation. Owned by the Camera (created by the constructors, released by the
         // destructor); records and replays camera paths (see keyframe_interpolator()).
-        KeyFrameInterpolator *interpolation_kfi_;
+        KeyframeInterpolator *interpolation_kfi_;
 
     public:
         /// Emitted by modified(): the pose or a parameter changed, so dependents should re-draw.

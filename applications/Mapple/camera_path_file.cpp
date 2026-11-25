@@ -13,7 +13,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/nlohmann/json.hpp>
@@ -200,16 +200,16 @@ namespace {
                read_vec3(value.at("center"), source.center);
     }
 
-    json write_playback(const KeyFrameInterpolator &interpolator) {
+    json write_playback(const KeyframeInterpolator &interpolator) {
         return {
                 {"frame_rate", interpolator.frame_rate()},
                 {"interpolation_speed", interpolator.interpolation_speed()},
-                {"interpolation_method", interpolator.interpolation_method() == KeyFrameInterpolator::INTERPOLATION
+                {"interpolation_method", interpolator.interpolation_method() == KeyframeInterpolator::INTERPOLATION
                                          ? "interpolation" : "fitting"}
         };
     }
 
-    bool read_playback(const json &value, KeyFrameInterpolator &interpolator) {
+    bool read_playback(const json &value, KeyframeInterpolator &interpolator) {
         if (!value.is_object())
             return false;
         const int fps = value.at("frame_rate").get<int>();
@@ -219,8 +219,8 @@ namespace {
             (method != "interpolation" && method != "fitting"))
             return false;
         interpolator.set_interpolation_method(method == "interpolation"
-                                              ? KeyFrameInterpolator::INTERPOLATION
-                                              : KeyFrameInterpolator::FITTING);
+                                              ? KeyframeInterpolator::INTERPOLATION
+                                              : KeyframeInterpolator::FITTING);
         interpolator.set_interpolation_speed(speed);
         interpolator.set_frame_rate(fps);
         return true;
@@ -300,7 +300,7 @@ namespace {
         return builder.frames_of(path.source);
     }
 
-    bool matches_generated_path(const GeneratedPath &path, const KeyFrameInterpolator &interpolator,
+    bool matches_generated_path(const GeneratedPath &path, const KeyframeInterpolator &interpolator,
                                 const std::vector<Frame> &generated) {
         std::vector<int> manual_positions;
         for (std::size_t i = 0; i < path.manual_before.size(); ++i)
@@ -333,7 +333,7 @@ namespace {
         return accepted == old_generated.size();
     }
 
-    bool restore_generated_paths(const json &provenance, KeyFrameInterpolator *interpolator,
+    bool restore_generated_paths(const json &provenance, KeyframeInterpolator *interpolator,
                                  LoadedCameraPath &loaded) {
         if (!provenance.is_object() || !provenance.at("paths").is_array() ||
             provenance.at("version").get<int>() != kProvenanceVersion ||
@@ -370,7 +370,7 @@ namespace {
         return true;
     }
 
-    bool serializable(const KeyFrameInterpolator &interpolator, const std::vector<GeneratedPath> &paths) {
+    bool serializable(const KeyframeInterpolator &interpolator, const std::vector<GeneratedPath> &paths) {
         if (paths.empty())
             return false;
         const int count = static_cast<int>(interpolator.number_of_keyframes());
@@ -390,7 +390,7 @@ namespace {
 } // namespace
 
 bool save_camera_path(const std::string &file_name,
-                      const KeyFrameInterpolator &interpolator,
+                      const KeyframeInterpolator &interpolator,
                       const std::vector<GeneratedPath> &generated_paths) {
     std::ofstream output(file_name.c_str());
     if (output.fail() || !interpolator.save_keyframes(output)) {
@@ -418,7 +418,7 @@ bool save_camera_path(const std::string &file_name,
     return true;
 }
 
-bool read_camera_path(const std::string &file_name, KeyFrameInterpolator *interpolator, LoadedCameraPath &loaded) {
+bool read_camera_path(const std::string &file_name, KeyframeInterpolator *interpolator, LoadedCameraPath &loaded) {
     loaded.generated_paths.clear();
     loaded.settings = CameraPathBuilder::Settings();
     std::ifstream input(file_name.c_str());

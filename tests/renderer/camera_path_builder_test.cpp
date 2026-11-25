@@ -8,7 +8,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/camera_path_builder.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
 
@@ -69,7 +69,7 @@ int main() {
         aim_down(camera);
         camera.set_scene_center(vec3(0.0f));
         camera.set_scene_radius(1.0f);
-        KeyFrameInterpolator kfi(camera.frame());
+        KeyframeInterpolator kfi(camera.frame());
         CameraPathBuilder builder(&camera, &kfi);
         // A flight station is the lifted camera position and the ground foot it rose
         // from; the default aim looks at the ground ahead along the track.

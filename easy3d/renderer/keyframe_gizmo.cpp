@@ -57,7 +57,7 @@ namespace {
 
 } // namespace
 
-bool KeyFrameGizmo::project_to_screen(const Camera *camera, const vec3 &point, vec2 &screen) {
+bool KeyframeGizmo::project_to_screen(const Camera *camera, const vec3 &point, vec2 &screen) {
     if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z))
         return false;
     if (camera->type() == Camera::PERSPECTIVE) {
@@ -72,7 +72,7 @@ bool KeyFrameGizmo::project_to_screen(const Camera *camera, const vec3 &point, v
     return true;
 }
 
-float KeyFrameGizmo::pixel_size_at(const Camera *camera, const vec3 &point) {
+float KeyframeGizmo::pixel_size_at(const Camera *camera, const vec3 &point) {
     vec2 origin, offset;
     if (!project_to_screen(camera, point, origin) ||
         !project_to_screen(camera, point + camera->right_vector(), offset))
@@ -81,7 +81,7 @@ float KeyFrameGizmo::pixel_size_at(const Camera *camera, const vec3 &point) {
     return pixels_per_unit > 1e-6f ? 1.0f / pixels_per_unit : 0.0f;
 }
 
-KeyFrameGizmo::Geometry KeyFrameGizmo::geometry(const Frame &frame, float glyph_width) {
+KeyframeGizmo::Geometry KeyframeGizmo::geometry(const Frame &frame, float glyph_width) {
     Geometry geometry;
     const quat &orientation = frame.orientation();
     geometry.axes[0] = normalize(orientation.rotate(vec3(1, 0, 0)));
@@ -92,11 +92,11 @@ KeyFrameGizmo::Geometry KeyFrameGizmo::geometry(const Frame &frame, float glyph_
     return geometry;
 }
 
-bool KeyFrameGizmo::is_turn(Handle handle) {
+bool KeyframeGizmo::is_turn(Handle handle) {
     return handle >= Handle::turn_x && handle <= Handle::turn_z;
 }
 
-int KeyFrameGizmo::axis_of(Handle handle) {
+int KeyframeGizmo::axis_of(Handle handle) {
     if (handle >= Handle::move_x && handle <= Handle::move_z)
         return static_cast<int>(handle) - static_cast<int>(Handle::move_x);
     if (is_turn(handle))
@@ -104,7 +104,7 @@ int KeyFrameGizmo::axis_of(Handle handle) {
     return -1;
 }
 
-bool KeyFrameGizmo::axis_parameter_at(const Camera *camera, float x, float y, const vec3 &origin,
+bool KeyframeGizmo::axis_parameter_at(const Camera *camera, float x, float y, const vec3 &origin,
                                       const vec3 &axis, float &parameter) {
     vec3 ray_origin, ray_direction;
     camera->convert_click_to_line(static_cast<int>(x), static_cast<int>(y), ray_origin, ray_direction);
@@ -117,7 +117,7 @@ bool KeyFrameGizmo::axis_parameter_at(const Camera *camera, float x, float y, co
     return true;
 }
 
-bool KeyFrameGizmo::ring_angle_at(const Camera *camera, float x, float y, const vec3 &center, const vec3 &axis,
+bool KeyframeGizmo::ring_angle_at(const Camera *camera, float x, float y, const vec3 &center, const vec3 &axis,
                                   float &angle) {
     vec3 ray_origin, ray_direction;
     camera->convert_click_to_line(static_cast<int>(x), static_cast<int>(y), ray_origin, ray_direction);
@@ -134,7 +134,7 @@ bool KeyFrameGizmo::ring_angle_at(const Camera *camera, float x, float y, const 
     return true;
 }
 
-KeyFrameGizmo::Handle KeyFrameGizmo::handle_at(const Camera *camera, const Frame &frame, float glyph_width,
+KeyframeGizmo::Handle KeyframeGizmo::handle_at(const Camera *camera, const Frame &frame, float glyph_width,
                                                float x, float y) {
     const Geometry g = geometry(frame, glyph_width);
     if (!(g.arrow_length > 0.0f) || !(g.ring_radius > 0.0f))
@@ -200,7 +200,7 @@ KeyFrameGizmo::Handle KeyFrameGizmo::handle_at(const Camera *camera, const Frame
     return result;
 }
 
-void KeyFrameGizmo::append_overlay(std::vector<graphics::DrawCommand> &commands, const Camera *camera,
+void KeyframeGizmo::append_overlay(std::vector<graphics::DrawCommand> &commands, const Camera *camera,
                                    const Frame &frame, float glyph_width, Handle active,
                                    unsigned fb_width, unsigned fb_height, float dpi) {
     if (fb_width == 0 || fb_height == 0)

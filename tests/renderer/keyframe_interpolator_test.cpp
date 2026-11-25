@@ -8,7 +8,7 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
 #include "../test.h"
@@ -32,7 +32,7 @@ float angle_between(const quat &a, const quat &b) {
 
 // A path along +x with one keyframe per second, all poses keeping the identity
 // orientation, so a frame's position alone says where in time the camera is.
-void make_path(KeyFrameInterpolator &kfi, int count, float step) {
+void make_path(KeyframeInterpolator &kfi, int count, float step) {
     for (int i = 0; i < count; ++i) {
         Frame frame;
         frame.set_position_and_orientation(vec3(static_cast<float>(i), 0.0f, 0.0f), quat());
@@ -40,7 +40,7 @@ void make_path(KeyFrameInterpolator &kfi, int count, float step) {
     }
 }
 
-void make_circle_path(KeyFrameInterpolator &kfi, int segments, bool close) {
+void make_circle_path(KeyframeInterpolator &kfi, int segments, bool close) {
     const float pi = 3.14159265358979323846f;
     Frame first;
     for (int i = 0; i < segments; ++i) {
@@ -58,7 +58,7 @@ void make_circle_path(KeyFrameInterpolator &kfi, int segments, bool close) {
 }
 
 // The interpolated frames as positions, with the per-frame time step the samples use.
-std::vector<vec3> sample_positions(KeyFrameInterpolator &kfi, float &interval) {
+std::vector<vec3> sample_positions(KeyframeInterpolator &kfi, float &interval) {
     interval = kfi.interpolation_speed() * static_cast<float>(kfi.interpolation_period()) / 1000.0f;
     const std::vector<Frame> &frames = kfi.interpolate();
     std::vector<vec3> positions;
@@ -81,7 +81,7 @@ vec3 position_at(const std::vector<vec3> &positions, float interval, float time)
 int main() {
     return easy3d::test::run("keyframe interpolator", [] {
         Camera camera;
-        KeyFrameInterpolator kfi(camera.frame());
+        KeyframeInterpolator kfi(camera.frame());
         // 100 fps: the samples land on the tenths of a second these checks use.
         kfi.set_frame_rate(100);
 

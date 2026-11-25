@@ -30,7 +30,7 @@
 #include "walk_through.h"
 
 #include <easy3d/core/model.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/logging.h>
@@ -116,14 +116,14 @@ WalkThrough* DialogWalkThrough::walkThrough() {
 }
 
 
-easy3d::KeyFrameInterpolator* DialogWalkThrough::interpolator() {
+easy3d::KeyframeInterpolator* DialogWalkThrough::interpolator() {
     return walkThrough()->interpolator();
 }
 
 
 void DialogWalkThrough::showEvent(QShowEvent* e) {
     auto method = interpolator()->interpolation_method();
-    if (method == easy3d::KeyFrameInterpolator::INTERPOLATION)
+    if (method == easy3d::KeyframeInterpolator::INTERPOLATION)
         comboBoxInterpolationMethod->setCurrentIndex(0);
     else
         comboBoxInterpolationMethod->setCurrentIndex(1);
@@ -295,9 +295,9 @@ void DialogWalkThrough::goToKeyframe(int p) {
 
 void DialogWalkThrough::setInterpolationMethod(int idx) {
     if (idx == 0)
-        interpolator()->set_interpolation_method(easy3d::KeyFrameInterpolator::INTERPOLATION);
+        interpolator()->set_interpolation_method(easy3d::KeyframeInterpolator::INTERPOLATION);
     else
-        interpolator()->set_interpolation_method(easy3d::KeyFrameInterpolator::FITTING);
+        interpolator()->set_interpolation_method(easy3d::KeyframeInterpolator::FITTING);
     viewer_->update();
 }
 
