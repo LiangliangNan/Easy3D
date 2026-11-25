@@ -1877,8 +1877,9 @@ void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> 
     const vec3 axes[3] = {vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f)};
     // The gizmo arrows' colors, so the reference and the arrows that move a keyframe read
     // as one set.
-    const vec3 axis_colors[3] = {vec3(0.92f, 0.28f, 0.25f), vec3(0.30f, 0.78f, 0.32f),
-                                 vec3(0.30f, 0.52f, 0.95f)};
+    const vec3 axis_colors[3] = {vec3(1.0f, 0.0f, 0.0f),
+                                 vec3(0.0f, 1.0f, 0.0f),
+                                 vec3(0.0f, 0.0f, 1.0f)};
     const vec3 tail_color(0.5f);
 
     // The three axes share one command: the line helper colors every segment on its own.

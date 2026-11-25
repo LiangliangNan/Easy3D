@@ -219,9 +219,9 @@ void KeyframeGizmo::append_overlay(std::vector<graphics::DrawCommand> &commands,
         return;
     const mat4 mvp = camera->model_view_projection_matrix();
     // Axis colors, so an arrow and its ring read as the same axis.
-    const vec4 colors[3] = {vec4(0.92f, 0.28f, 0.25f, 1.0f),
-                            vec4(0.30f, 0.78f, 0.32f, 1.0f),
-                            vec4(0.30f, 0.52f, 0.95f, 1.0f)};
+    const vec4 colors[3] = {vec4(1.0f, 0.0f, 0.0f, 1.0f),
+                            vec4(0.0f, 1.0f, 0.0f, 1.0f),
+                            vec4(0.0f, 0.0f, 1.0f, 1.0f)};
 
     auto handle_for = [](bool turn, int axis) {
         return turn ? static_cast<Handle>(static_cast<int>(Handle::turn_x) + axis)
