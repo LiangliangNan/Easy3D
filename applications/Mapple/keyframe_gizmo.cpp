@@ -33,7 +33,9 @@
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
 
-namespace easy3d {
+using namespace easy3d;
+
+namespace mapple {
 
 namespace {
 
@@ -290,4 +292,4 @@ void KeyframeGizmo::append_overlay(std::vector<graphics::DrawCommand> &commands,
     }
 }
 
-} // namespace easy3d
+} // namespace mapple

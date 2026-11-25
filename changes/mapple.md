@@ -3031,3 +3031,21 @@ history was found and filled during the ToDo review.
   the renamed `KeyframeInterpolator` API and `keyframe_interpolator.h` header.
 - `.kf` import/export remains compatible with existing files while newly saved files and the
   bundled examples use `num_keyframes:`. The file regression checks the legacy count header.
+
+### 2026-11-25 — Camera-path helpers belong to Mapple
+
+- `camera_path_builder.{h,cpp}`, `keyframe_editor.{h,cpp}` and `keyframe_gizmo.{h,cpp}` move
+  from `easy3d/renderer` to `applications/Mapple` and from namespace `easy3d` to `mapple`.
+  They are compiled into the Mapple executable rather than the installed renderer library;
+  `KeyframeInterpolator` remains a renderer API.
+- Mapple's viewer, UI and provenance headers include the local helpers and qualify their
+  `mapple` types. Include guards and class documentation follow the new ownership. The
+  builder, editor, file and generated-path tests compile the application sources directly,
+  following the existing camera-path file test pattern.
+- This supersedes the library placement recorded by batches 115 and 128: these helpers are
+  application policy, not public renderer facilities. Historical entries keep their original
+  paths.
+- Validation: Mapple and all affected tests build with Vulkan and OpenGL; the complete
+  non-desktop suites pass (OpenGL RelWithDebInfo 48/48, Vulkan Debug 67/67). The rebuilt
+  renderer library exports none of the three moved classes. Interactive Mapple behavior was
+  not visually checked.

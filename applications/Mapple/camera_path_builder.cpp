@@ -36,7 +36,9 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
 
-namespace easy3d {
+using namespace easy3d;
+
+namespace mapple {
 
     namespace {
         // A point along a polyline: \p segment - 1 to \p segment, \p t of the way;
@@ -640,4 +642,4 @@ namespace easy3d {
         return orient;
     }
 
-} // namespace easy3d
+} // namespace mapple

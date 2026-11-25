@@ -33,7 +33,6 @@ set(renderer_sources
 list(APPEND renderer_headers
         obj_materials.h
         camera.h
-        camera_path_builder.h
         clipping_plane.h
         constraint.h
         drawable.h
@@ -44,8 +43,6 @@ list(APPEND renderer_headers
         frame.h
         frustum.h
         keyframe_interpolator.h
-        keyframe_editor.h
-        keyframe_gizmo.h
         manipulator.h
         manipulated_camera_frame.h
         manipulated_frame.h
@@ -63,7 +60,6 @@ list(APPEND renderer_headers
 list(APPEND renderer_sources
         obj_materials.cpp
         camera.cpp
-        camera_path_builder.cpp
         clipping_plane.cpp
         constraint.cpp
         drawable.cpp
@@ -74,8 +70,6 @@ list(APPEND renderer_sources
         frame.cpp
         frustum.cpp
         keyframe_interpolator.cpp
-        keyframe_editor.cpp
-        keyframe_gizmo.cpp
         manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp

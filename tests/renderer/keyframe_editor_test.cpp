@@ -9,12 +9,13 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
-#include <easy3d/renderer/keyframe_editor.h>
+#include "../../applications/Mapple/keyframe_editor.h"
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
 #include "../test.h"
 
 using namespace easy3d;
+using mapple::KeyframeEditor;
 using easy3d::test::require;
 
 namespace {

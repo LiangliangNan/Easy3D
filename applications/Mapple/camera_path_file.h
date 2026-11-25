@@ -12,7 +12,7 @@ namespace mapple {
 
     struct LoadedCameraPath {
         std::vector<GeneratedPath> generated_paths;
-        easy3d::CameraPathBuilder::Settings settings;
+        CameraPathBuilder::Settings settings;
     };
 
     bool save_camera_path(const std::string &file_name,

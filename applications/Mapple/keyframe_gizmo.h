@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_RENDERER_KEYFRAME_GIZMO_H
-#define EASY3D_RENDERER_KEYFRAME_GIZMO_H
+#ifndef EASY3D_MAPPLE_KEYFRAME_GIZMO_H
+#define EASY3D_MAPPLE_KEYFRAME_GIZMO_H
 
 #include <vector>
 
@@ -37,10 +37,15 @@ namespace easy3d {
     namespace graphics { struct DrawCommand; }
 }
 
-namespace easy3d {
+namespace mapple {
+
+    using easy3d::Camera;
+    using easy3d::Frame;
+    using easy3d::vec2;
+    using easy3d::vec3;
 
 /**
- * \class KeyframeGizmo easy3d/renderer/keyframe_gizmo.h
+ * \class KeyframeGizmo applications/Mapple/keyframe_gizmo.h
  * \brief The manipulation handles of one keyframe pose: three axis arrows and three
  *      turn rings.
  * \details The handles are real world-space geometry centred on the pose, sized
@@ -170,11 +175,11 @@ public:
     /// \param fb_width The framebuffer width in pixels.
     /// \param fb_height The framebuffer height in pixels.
     /// \param dpi The DPI scaling, so the handle widths keep their apparent size.
-    static void append_overlay(std::vector<graphics::DrawCommand> &commands, const Camera *camera,
+    static void append_overlay(std::vector<easy3d::graphics::DrawCommand> &commands, const Camera *camera,
                                const Frame &frame, float glyph_width, Handle active,
                                unsigned fb_width, unsigned fb_height, float dpi);
 };
 
-} // namespace easy3d
+} // namespace mapple
 
-#endif // EASY3D_RENDERER_KEYFRAME_GIZMO_H
+#endif // EASY3D_MAPPLE_KEYFRAME_GIZMO_H

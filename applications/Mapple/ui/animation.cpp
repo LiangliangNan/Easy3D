@@ -27,7 +27,7 @@
 #include "../mapple_viewer.h"
 #include "../camera_path_file.h"
 #include "../keyframe_timeline.h"
-#include <easy3d/renderer/camera_path_builder.h>
+#include "../camera_path_builder.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -644,9 +644,9 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
         // A new gesture needs a usable height; zero remains meaningful only while editing
         // an existing block, where it refuses regeneration and keeps its last poses.
         if (tool == PathTool::GroundWalk)
-            mapple::prepare_new_path_settings(*camera_path_builder_, CameraPathBuilder::Source::Kind::Walk);
+            mapple::prepare_new_path_settings(*camera_path_builder_, mapple::CameraPathBuilder::Source::Kind::Walk);
         else if (tool == PathTool::Flight)
-            mapple::prepare_new_path_settings(*camera_path_builder_, CameraPathBuilder::Source::Kind::Flight);
+            mapple::prepare_new_path_settings(*camera_path_builder_, mapple::CameraPathBuilder::Source::Kind::Flight);
     }
     if (tool == PathTool::Aim && (!latest_generated_path() || latest_generated_path()->size() == 0)) {
         LOG(WARNING) << "there is no generated path to re-aim";
@@ -718,7 +718,7 @@ bool MappleViewer::draw_ground_up_rule() {
     int rule = static_cast<int>(camera_path_builder_->ground_up_axis());
     const bool changed = ImGui::Combo("Up", &rule, kRules, kRuleCount);
     if (changed)
-        camera_path_builder_->set_ground_up_axis(static_cast<CameraPathBuilder::GroundUpAxis>(rule));
+        camera_path_builder_->set_ground_up_axis(static_cast<mapple::CameraPathBuilder::GroundUpAxis>(rule));
     ImGui::SetItemTooltip("The direction the camera's up points, for the whole path. Auto uses the\n"
                           "scene's shortest extent (upright for a building or a terrain); the axes\n"
                           "pin it to the world; Up from the view follows the camera, for a model you\n"

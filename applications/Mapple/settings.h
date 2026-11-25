@@ -63,7 +63,7 @@ struct AppSettings {
     bool models_auto_focus = false;
     bool models_selected_only = false;
     // Camera Path: the rule that decides the up direction of generated Walk and Flight
-    // paths (an easy3d::CameraPathBuilder::GroundUpAxis value, 0 = Auto), so a scene that
+    // paths (an mapple::CameraPathBuilder::GroundUpAxis value, 0 = Auto), so a scene that
     // needed another rule does not silently revert to Auto next session.
     int ground_up_axis = 0;
     // Camera Path: whether generated Walk and Flight tracks keep their height above the

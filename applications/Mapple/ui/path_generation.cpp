@@ -34,14 +34,14 @@
 #include <vector>
 
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/camera_path_builder.h>
+#include "../camera_path_builder.h"
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
 
 using namespace easy3d;
 
 namespace {
-    void capture_build_context(mapple::GeneratedPath &path, const CameraPathBuilder &builder, const Camera &camera) {
+    void capture_build_context(mapple::GeneratedPath &path, const mapple::CameraPathBuilder &builder, const Camera &camera) {
         path.scene_box = builder.scene_box();
         path.scene_radius = camera.scene_radius();
         path.view_up = camera.up_vector();
@@ -64,13 +64,13 @@ MappleViewer::PathTool MappleViewer::generated_path_tool() const {
     if (!path)
         return PathTool::Off;
     switch (path->source.kind) {
-        case CameraPathBuilder::Source::Kind::Walk:
+        case mapple::CameraPathBuilder::Source::Kind::Walk:
             return PathTool::GroundWalk;
-        case CameraPathBuilder::Source::Kind::Flight:
+        case mapple::CameraPathBuilder::Source::Kind::Flight:
             return PathTool::Flight;
-        case CameraPathBuilder::Source::Kind::Orbit:
+        case mapple::CameraPathBuilder::Source::Kind::Orbit:
             return PathTool::Orbit;
-        case CameraPathBuilder::Source::Kind::None:
+        case mapple::CameraPathBuilder::Source::Kind::None:
             break;
     }
     return PathTool::Off;
@@ -83,13 +83,13 @@ const char *MappleViewer::generated_path_aims() const {
     if (!path->source.aims.empty())
         return path->source.aims.size() == 1 ? "at the clicked point" : "along the traced aims";
     switch (path->source.kind) {
-        case CameraPathBuilder::Source::Kind::Walk:
+        case mapple::CameraPathBuilder::Source::Kind::Walk:
             return "along the route";
-        case CameraPathBuilder::Source::Kind::Flight:
+        case mapple::CameraPathBuilder::Source::Kind::Flight:
             return "at the ground ahead";
-        case CameraPathBuilder::Source::Kind::Orbit:
+        case mapple::CameraPathBuilder::Source::Kind::Orbit:
             return "at the orbit axis";
-        case CameraPathBuilder::Source::Kind::None:
+        case mapple::CameraPathBuilder::Source::Kind::None:
             break;
     }
     return "";
@@ -184,7 +184,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
         snapshot_camera_path();
 
     camera_path_builder_->set_scene(models());
-    const CameraPathBuilder::Settings settings = camera_path_builder_->settings();
+    const mapple::CameraPathBuilder::Settings settings = camera_path_builder_->settings();
 
     std::vector<Frame> frames;
     std::vector<float> times;
@@ -340,7 +340,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
     }
 
     const bool periodic = rebuilt.size() == 1 &&
-                          rebuilt.front().source.kind == CameraPathBuilder::Source::Kind::Orbit &&
+                          rebuilt.front().source.kind == mapple::CameraPathBuilder::Source::Kind::Orbit &&
                           rebuilt.front().first == 0 &&
                           rebuilt.front().last == static_cast<int>(frames.size()) - 1;
     if (!write_camera_path(frames, times, dwells, periodic)) {
@@ -373,7 +373,7 @@ void MappleViewer::commit_ground_route() {
         route_segments_.push_back(route_segment_);
     route_segment_.clear();
 
-    CameraPathBuilder::Source source = CameraPathBuilder::Source::walk(std::move(route_segments_));
+    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::walk(std::move(route_segments_));
     route_segments_.clear();
     if (camera_path_builder_->eye_height_in_world_units() <= 1e-4f) {
         LOG(WARNING) << "set a positive Eye height to generate walking keyframes";
@@ -419,7 +419,7 @@ void MappleViewer::commit_flight_track() {
         points.insert(points.end(), segment.begin(), segment.end());
     route_segments_.clear();
 
-    CameraPathBuilder::Source source = CameraPathBuilder::Source::flight(std::move(points));
+    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::flight(std::move(points));
     if (camera_path_builder_->flight_height_in_world_units() <= 1e-4f) {
         LOG(WARNING) << "set a positive Flight height to trace a flight track";
         return;
@@ -464,7 +464,7 @@ void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
         LOG(WARNING) << "the orbit has to start on a visible model surface";
         return;
     }
-    CameraPathBuilder::Source source = CameraPathBuilder::Source::orbit(hit.position, camera()->scene_center());
+    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::orbit(hit.position, camera()->scene_center());
     if (camera_path_builder_->frames_of(source).empty()) {
         LOG(WARNING) << "the orbit settings could not generate any keyframes";
         return;
@@ -518,7 +518,7 @@ void MappleViewer::commit_aim_stroke() {
 
     const std::vector<vec3> previous_aims = path->source.aims;
     camera_path_builder_->set_scene(models());
-    CameraPathBuilder::Source aimed = path->source;
+    mapple::CameraPathBuilder::Source aimed = path->source;
     aimed.aims = points;
     if (camera_path_builder_->frames_of(aimed).empty()) {
         LOG(WARNING) << "the current path settings cannot generate poses to re-aim";
@@ -557,7 +557,7 @@ bool MappleViewer::undo_camera_path() {
         return false;
     const std::vector<GeneratedPath> &paths = camera_path_snapshot_.generated_paths;
     const bool periodic = paths.size() == 1 &&
-                          paths.front().source.kind == CameraPathBuilder::Source::Kind::Orbit &&
+                          paths.front().source.kind == mapple::CameraPathBuilder::Source::Kind::Orbit &&
                           paths.front().first == 0 &&
                           paths.front().last == static_cast<int>(camera_path_snapshot_.frames.size()) - 1;
     if (!write_camera_path(camera_path_snapshot_.frames, camera_path_snapshot_.times,

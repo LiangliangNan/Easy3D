@@ -335,20 +335,20 @@ void MappleViewer::init() {
     imgui_->set_display_size(width(), height());
 
     // The walking and orbit tools create keyframes on the app-owned camera path.
-    camera_path_builder_.reset(new CameraPathBuilder(camera(), kfi_.get()));
+    camera_path_builder_.reset(new mapple::CameraPathBuilder(camera(), kfi_.get()));
     // The up rule of the ground modes survives a restart: a scene that needed +Y (or the
     // view's up) must not silently stand on Auto next time. An unknown stored value keeps
     // the default.
-    if (settings_.ground_up_axis >= static_cast<int>(CameraPathBuilder::GroundUpAxis::Auto) &&
-        settings_.ground_up_axis <= static_cast<int>(CameraPathBuilder::GroundUpAxis::View))
+    if (settings_.ground_up_axis >= static_cast<int>(mapple::CameraPathBuilder::GroundUpAxis::Auto) &&
+        settings_.ground_up_axis <= static_cast<int>(mapple::CameraPathBuilder::GroundUpAxis::View))
         camera_path_builder_->set_ground_up_axis(
-                static_cast<CameraPathBuilder::GroundUpAxis>(settings_.ground_up_axis));
+                static_cast<mapple::CameraPathBuilder::GroundUpAxis>(settings_.ground_up_axis));
     // The follow-slopes switch is stored beside it, so a track that should fly level stays
     // level next session.
     camera_path_builder_->set_follow_ground_slopes(settings_.follow_ground_slopes);
-    // Editing the poses (handles, aiming, insert/delete) is the library's keyframe
+    // Editing the poses (handles, aiming, insert/delete) is the app's keyframe
     // editor; its undo point is the same one-level path snapshot as the path tools'.
-    keyframe_editor_.reset(new KeyframeEditor(camera(), kfi_.get()));
+    keyframe_editor_.reset(new mapple::KeyframeEditor(camera(), kfi_.get()));
     keyframe_editor_->begin_edit = [this]() { snapshot_camera_path(); };
     // The Camera Path window's timeline strip (drawn by ui/animation.cpp); it keeps its
     // cached segment layout across frames and is invalidated by edit_camera_path_timing().
@@ -857,7 +857,7 @@ bool MappleViewer::mouse_release_event(int x, int y, int button, int modifiers) 
     }
 
     if (button == BUTTON_LEFT && keyframe_editor_ && keyframe_editor_->dragging()) {
-        const KeyframeEditor::DragResult result = keyframe_editor_->release();
+        const mapple::KeyframeEditor::DragResult result = keyframe_editor_->release();
         if (result.moved)
             LOG(INFO) << "keyframe " << result.keyframe + 1
                       << (result.turned ? " turned" : " moved") << " (Ctrl+Z restores it)";

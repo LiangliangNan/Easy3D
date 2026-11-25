@@ -24,14 +24,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_RENDERER_KEYFRAME_EDITOR_H
-#define EASY3D_RENDERER_KEYFRAME_EDITOR_H
+#ifndef EASY3D_MAPPLE_KEYFRAME_EDITOR_H
+#define EASY3D_MAPPLE_KEYFRAME_EDITOR_H
 
 #include <functional>
 #include <vector>
 
 #include <easy3d/core/types.h>
-#include <easy3d/renderer/keyframe_gizmo.h>
+#include "keyframe_gizmo.h"
 
 namespace easy3d {
     class Camera;
@@ -40,10 +40,17 @@ namespace easy3d {
     namespace graphics { struct DrawCommand; }
 }
 
-namespace easy3d {
+namespace mapple {
+
+    using easy3d::Camera;
+    using easy3d::Frame;
+    using easy3d::KeyframeInterpolator;
+    using easy3d::quat;
+    using easy3d::vec2;
+    using easy3d::vec3;
 
 /**
- * \class KeyframeEditor easy3d/renderer/keyframe_editor.h
+ * \class KeyframeEditor applications/Mapple/keyframe_editor.h
  * \brief Interactive editing of the keyframe poses stored in a KeyframeInterpolator.
  * \details The editor owns the selection of a keyframe and the gestures that edit it:
  *
@@ -213,7 +220,7 @@ public:
     /// \param fb_width The framebuffer width in pixels.
     /// \param fb_height The framebuffer height in pixels.
     /// \param dpi The DPI scaling, so the strokes keep their apparent size.
-    void append_overlay(std::vector<graphics::DrawCommand> &commands,
+    void append_overlay(std::vector<easy3d::graphics::DrawCommand> &commands,
                         unsigned fb_width, unsigned fb_height, float dpi) const;
 
 private:
@@ -253,6 +260,6 @@ private:
     bool drag_moved_ = false;
 };
 
-} // namespace easy3d
+} // namespace mapple
 
-#endif // EASY3D_RENDERER_KEYFRAME_EDITOR_H
+#endif // EASY3D_MAPPLE_KEYFRAME_EDITOR_H

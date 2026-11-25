@@ -42,9 +42,9 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/fileio/translator.h>
-#include <easy3d/renderer/camera_path_builder.h>
+#include "camera_path_builder.h"
 #include <easy3d/renderer/frame.h>
-#include <easy3d/renderer/keyframe_editor.h>
+#include "keyframe_editor.h"
 #include <easy3d/renderer/state.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
@@ -568,7 +568,7 @@ private:
     // The path's duration (travel + dwell), read from the keyframes as the strip draws it.
     float camera_path_duration() const;
 
-    // Keyframe editing lives in KeyframeEditor (easy3d/renderer/keyframe_editor.h):
+    // Keyframe editing lives in KeyframeEditor (applications/Mapple/keyframe_editor.h):
     // the selected keyframe, its gizmo (sized to the camera glyph, see
     // camera_marker_width()), the handle and glyph drags, aiming at a clicked point,
     // and the insert/delete edits on the path. With editing on, the selected keyframe
@@ -918,9 +918,9 @@ private:
     bool alt_held_ = false;
     // Selection, handle and glyph drags, aiming, insert/delete, and the selected
     // keyframe's overlay (created in init(), once the path exists).
-    std::unique_ptr<easy3d::KeyframeEditor> keyframe_editor_;
+    std::unique_ptr<mapple::KeyframeEditor> keyframe_editor_;
     // Walking, orbit and flight keyframe creation (created in init()).
-    std::unique_ptr<easy3d::CameraPathBuilder> camera_path_builder_;
+    std::unique_ptr<mapple::CameraPathBuilder> camera_path_builder_;
     // Which one-shot path tool owns the next gesture.
     PathTool path_tool_ = PathTool::Off;
 

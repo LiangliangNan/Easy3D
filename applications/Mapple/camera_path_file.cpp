@@ -11,7 +11,7 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/camera_path_builder.h>
+#include "camera_path_builder.h"
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>

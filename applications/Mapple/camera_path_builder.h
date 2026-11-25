@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_RENDERER_CAMERA_PATH_BUILDER_H
-#define EASY3D_RENDERER_CAMERA_PATH_BUILDER_H
+#ifndef EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
+#define EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
 
 #include <cstddef>
 #include <memory>
@@ -40,9 +40,20 @@ namespace easy3d {
     class Model;
 }
 
-namespace easy3d {
+namespace mapple {
+
+    using easy3d::Box3;
+    using easy3d::Camera;
+    using easy3d::Frame;
+    using easy3d::KeyframeInterpolator;
+    using easy3d::Line3;
+    using easy3d::Model;
+    using easy3d::quat;
+    using easy3d::vec2;
+    using easy3d::vec3;
 
 /**
+ * \class CameraPathBuilder applications/Mapple/camera_path_builder.h
  * \brief Camera-path authoring for demonstrating a 3D scene or object in a video.
  * \details A path is a sequence of keyframe poses that an app hands to a
  *      KeyframeInterpolator for preview, playback and recording. This class covers
@@ -663,6 +674,6 @@ protected:
     Settings settings_;
 };
 
-} // namespace easy3d
+} // namespace mapple
 
-#endif // EASY3D_RENDERER_CAMERA_PATH_BUILDER_H
+#endif // EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H

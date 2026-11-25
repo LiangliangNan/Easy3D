@@ -2,13 +2,13 @@
 #include <vector>
 
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/camera_path_builder.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
 
 #include "../../applications/Mapple/generated_path.h"
 #include "../test.h"
 
 using namespace easy3d;
+using mapple::CameraPathBuilder;
 using easy3d::test::require;
 
 int main() {

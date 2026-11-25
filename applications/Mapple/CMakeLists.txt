@@ -12,6 +12,12 @@ add_executable(${name}
         keyframe_timeline.cpp
         camera_path_file.h
         camera_path_file.cpp
+        camera_path_builder.h
+        camera_path_builder.cpp
+        keyframe_editor.h
+        keyframe_editor.cpp
+        keyframe_gizmo.h
+        keyframe_gizmo.cpp
         generated_path.h
         ui/menu.cpp
         ui/panels.cpp

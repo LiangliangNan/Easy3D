@@ -36,7 +36,9 @@
 #include <easy3d/renderer/shape.h>
 #include <easy3d/util/setting.h>
 
-namespace easy3d {
+using namespace easy3d;
+
+namespace mapple {
 
 KeyframeEditor::KeyframeEditor(Camera *camera, KeyframeInterpolator *interpolator)
         : camera_(camera), kfi_(interpolator) {
@@ -470,4 +472,4 @@ void KeyframeEditor::append_overlay(std::vector<graphics::DrawCommand> &commands
                                   fb_width, fb_height, dpi);
 }
 
-} // namespace easy3d
+} // namespace mapple

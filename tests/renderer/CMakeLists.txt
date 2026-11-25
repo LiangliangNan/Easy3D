@@ -1,6 +1,9 @@
 # The camera path builders are CPU geometry: no context or backend device, so this
 # test runs unchanged in both builds.
-add_executable(easy3d_camera_path_builder_test camera_path_builder_test.cpp)
+add_executable(easy3d_camera_path_builder_test
+        camera_path_builder_test.cpp
+        ../../applications/Mapple/camera_path_builder.cpp)
+target_include_directories(easy3d_camera_path_builder_test PRIVATE ../../applications/Mapple)
 target_link_libraries(easy3d_camera_path_builder_test PRIVATE easy3d::renderer)
 if(Easy3D_ENABLE_VULKAN)
     add_test(NAME vulkan.camerapathbuilder COMMAND easy3d_camera_path_builder_test)
@@ -24,7 +27,8 @@ endif()
 # Mapple's .kf composition adds generated-source provenance to the library stream.
 add_executable(easy3d_camera_path_file_test
         camera_path_file_test.cpp
-        ../../applications/Mapple/camera_path_file.cpp)
+        ../../applications/Mapple/camera_path_file.cpp
+        ../../applications/Mapple/camera_path_builder.cpp)
 target_include_directories(easy3d_camera_path_file_test PRIVATE ../../applications/Mapple)
 target_link_libraries(easy3d_camera_path_file_test PRIVATE easy3d::renderer)
 if(Easy3D_ENABLE_VULKAN)
@@ -37,7 +41,11 @@ endif()
 
 # The editor's insert/delete rebuild the path, which is CPU bookkeeping as well: the
 # poses, times and dwell pauses either survive the rebuild or they do not.
-add_executable(easy3d_keyframe_editor_test keyframe_editor_test.cpp)
+add_executable(easy3d_keyframe_editor_test
+        keyframe_editor_test.cpp
+        ../../applications/Mapple/keyframe_editor.cpp
+        ../../applications/Mapple/keyframe_gizmo.cpp)
+target_include_directories(easy3d_keyframe_editor_test PRIVATE ../../applications/Mapple)
 target_link_libraries(easy3d_keyframe_editor_test PRIVATE easy3d::renderer)
 if(Easy3D_ENABLE_VULKAN)
     add_test(NAME vulkan.keyframeeditor COMMAND easy3d_keyframe_editor_test)

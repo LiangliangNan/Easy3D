@@ -5,13 +5,13 @@
 #include <cstddef>
 #include <vector>
 
-#include <easy3d/renderer/camera_path_builder.h>
+#include "camera_path_builder.h"
 
 namespace mapple {
 
     struct GeneratedPath {
-        easy3d::CameraPathBuilder::Source source;
-        easy3d::CameraPathBuilder::Settings built_settings;
+        CameraPathBuilder::Source source;
+        CameraPathBuilder::Settings built_settings;
         easy3d::Box3 scene_box;
         float scene_radius = 0.0f;
         easy3d::vec3 view_up = easy3d::vec3(0.0f, 0.0f, 1.0f);
@@ -92,17 +92,17 @@ namespace mapple {
             --last;
         }
 
-        bool stale(const easy3d::CameraPathBuilder &builder) const {
+        bool stale(const CameraPathBuilder &builder) const {
             return pending || builder.settings_changed_for(source, built_settings);
         }
     };
 
-    inline void prepare_new_path_settings(easy3d::CameraPathBuilder &builder,
-                                          easy3d::CameraPathBuilder::Source::Kind kind) {
-        const easy3d::CameraPathBuilder::Settings defaults;
-        if (kind == easy3d::CameraPathBuilder::Source::Kind::Walk && builder.eye_height_in_world_units() <= 1e-4f)
+    inline void prepare_new_path_settings(CameraPathBuilder &builder,
+                                          CameraPathBuilder::Source::Kind kind) {
+        const CameraPathBuilder::Settings defaults;
+        if (kind == CameraPathBuilder::Source::Kind::Walk && builder.eye_height_in_world_units() <= 1e-4f)
             builder.set_eye_height_in_scene_heights(defaults.eye_height_in_scene_heights);
-        else if (kind == easy3d::CameraPathBuilder::Source::Kind::Flight && builder.flight_height_in_world_units() <= 1e-4f)
+        else if (kind == CameraPathBuilder::Source::Kind::Flight && builder.flight_height_in_world_units() <= 1e-4f)
             builder.set_flight_height_in_scene_heights(defaults.flight_height_in_scene_heights);
     }
 
