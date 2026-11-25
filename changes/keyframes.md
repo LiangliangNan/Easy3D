@@ -768,3 +768,25 @@ and undo-snapshot restoration of an earlier generated path without making the re
 depend on application code. Not measured: interactive parameter dragging and keyframe editing
 in Mapple; the app was not launched.
 `easy3d/util/version.h` unchanged.
+
+### 2026-11-25 — Flight tails inherit the previous roll
+
+The default flight aim clamps its look-ahead to the final station. With the default two-station
+look-ahead, the penultimate station aims down at the final foot and the final station aims
+straight down at its own foot. That last view is parallel to the path's up, so the path up cannot
+provide a roll reference.
+
+- The aim direction is unchanged: stations still look at the clamped ahead foot lowered by their
+  own height. An initial attempt to level the tail was rejected because it made a downward-looking
+  flight suddenly look ahead.
+- When a station's view is parallel to the path up, `flight_frames()` now uses the previous
+  station's camera up as the roll reference. Consecutive aligned views keep carrying the last known
+  roll; the first aligned station retains the deterministic fallback. If the previous camera up is
+  itself parallel to the new view, the previous camera right supplies the reference instead.
+- Explicit aims keep their targets. A target coincident with its station also keeps the documented
+  straight-down fallback rather than being treated as an aligned view.
+- `tests/renderer/camera_path_builder_test.cpp` checks the unchanged downward tail aim, inherited
+  camera up, custom one-station look-ahead, tilted lift, consecutive vertical views, explicit
+  aligned aims, and coincident-target and degenerate-up fallbacks.
+- Validation: OpenGL RelWithDebInfo and Vulkan Debug both build Mapple. The complete non-desktop
+  suites pass: OpenGL 47/47 and Vulkan 66/66. Interactive Mapple playback was not visually checked.

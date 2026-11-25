@@ -541,7 +541,21 @@ namespace easy3d {
                 const float height = dot(stations[i].position - stations[i].foot, up);
                 target = ahead.foot - up * height;
             }
-            frames.emplace_back(stations[i].position, look_at_orientation(stations[i].position, target, up));
+
+            vec3 roll_up = up;
+            const vec3 view_dir = target - stations[i].position;
+            // A view along up has no roll reference; carry the previous camera basis forward.
+            if (!frames.empty() && up.length2() > epsilon_sqr<float>() &&
+                view_dir.length2() > epsilon_sqr<float>() &&
+                cross(view_dir, up).length2() < epsilon_sqr<float>() * view_dir.length2()) {
+                const quat previous_orientation = frames.back().orientation();
+                roll_up = previous_orientation.rotate(vec3(0.0f, 1.0f, 0.0f));
+                if (cross(view_dir, roll_up).length2() <
+                    epsilon_sqr<float>() * view_dir.length2() * roll_up.length2())
+                    roll_up = previous_orientation.rotate(vec3(1.0f, 0.0f, 0.0f));
+            }
+            frames.emplace_back(stations[i].position,
+                                look_at_orientation(stations[i].position, target, roll_up));
         }
         return frames;
     }

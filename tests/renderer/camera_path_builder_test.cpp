@@ -45,7 +45,20 @@ void aim_down(Camera &camera) {
 }
 
 const vec3 local_up(0.0f, 1.0f, 0.0f);
+const vec3 local_right(1.0f, 0.0f, 0.0f);
 const vec3 local_forward(0.0f, 0.0f, -1.0f);
+
+vec3 flight_roll_reference(const std::vector<Frame> &frames, std::size_t i,
+                           const vec3 &view, const vec3 &up) {
+    if (i == 0 || up.length2() <= 1e-12f ||
+        cross(view, up).length2() >= 1e-12f * view.length2())
+        return up;
+    const Frame &previous = frames[i - 1];
+    const vec3 previous_up = previous.orientation().rotate(local_up);
+    if (cross(view, previous_up).length2() >= 1e-12f * view.length2() * previous_up.length2())
+        return previous_up;
+    return previous.orientation().rotate(local_right);
+}
 
 } // namespace
 
@@ -316,8 +329,8 @@ int main() {
 
         // --- flight poses ---------------------------------------------------
         // A track that never turns back: three stations one step apart in X, the third
-        // climbing. A track that doubles back (the second station behind the first) makes a
-        // default aim parallel to the roll reference, which has no horizon to keep.
+        // climbing. A track that doubles back (the second station behind the first) can make
+        // the first default aim parallel to the roll reference, which has no horizon to keep.
         const std::vector<vec3> positions = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f),
                                              vec3(20.0f, 10.0f, 10.0f)};
         const vec3 world_up(0.0f, 1.0f, 0.0f);
@@ -333,38 +346,110 @@ int main() {
                     "a flight pose does not aim at its target");
         }
 
-        // --- the flight's default aim: the ground ahead ---------------------
+        const std::vector<vec3> zero_up_targets = {positions[0] + vec3(1.0f, 0.0f, 0.0f),
+                                                   positions[1] + vec3(0.0f, 1.0f, 0.0f),
+                                                   positions[2] + vec3(1.0f, 0.0f, 0.0f)};
+        const std::vector<Frame> zero_up_flight =
+                builder.flight_frames(flight_stations, zero_up_targets, vec3(0.0f));
+        const vec3 fallback_up(0.0f, 0.0f, 1.0f);
+        for (std::size_t i = 0; i < zero_up_flight.size(); ++i) {
+            const vec3 view = normalize(zero_up_targets[i] - positions[i]);
+            const vec3 cam_up = normalize(cross(normalize(cross(view, fallback_up)), view));
+            require(close_to(zero_up_flight[i].orientation().rotate(local_up), cam_up, 1e-4f),
+                    "a degenerate flight up did not retain its deterministic fallback");
+        }
+
+        // --- the flight's default aim: ground ahead, with inherited tail roll ---
         // make_stations() lifts by a unit vector, so every station is one unit above its
         // foot. Station i aims at station i+2's foot lowered by that unit; the last two aim
-        // as far ahead as the track has, at the last foot.
+        // as far ahead as the track has. The final view is straight down, so it inherits the
+        // previous station's camera up instead of choosing an arbitrary roll.
         const std::vector<Frame> down = builder.flight_frames(flight_stations, {}, world_up);
         require(down.size() == positions.size(), "the default-aimed flight dropped stations");
         for (std::size_t i = 0; i < down.size(); ++i) {
             require(close_to(down[i].position(), positions[i]), "a default-aimed flight pose is not at its station");
-            // Station i aims at station i+2's foot lowered by station i's own height above
-            // its foot; the last stations aim at the last foot.
             const vec3 ahead_foot = flight_stations[std::min(i + 2, flight_stations.size() - 1)].foot;
             const float height = dot(positions[i] - flight_stations[i].foot, world_up);
             const vec3 target = ahead_foot - world_up * height;
-            require(close_to(down[i].orientation().rotate(local_forward), normalize(target - positions[i]), 1e-4f),
-                    "a default-aimed flight pose does not look at the ground ahead");
-            // The default aim looks down at the ground, so the world up is the roll
-            // reference and the camera up is that reference squared up to the view: the
-            // horizon stays level without the pose ever being rolled.
             const vec3 view = normalize(target - positions[i]);
-            if (cross(view, world_up).length2() < 1e-6f) // looking straight down: no horizon
-                continue;
-            const vec3 right = normalize(cross(view, world_up));
-            const vec3 cam_up = normalize(cross(right, view));
+            require(close_to(down[i].orientation().rotate(local_forward), view, 1e-4f),
+                    "a default-aimed flight pose does not look at the ground ahead");
+            const vec3 roll_up = flight_roll_reference(down, i, view, world_up);
+            const vec3 cam_up = normalize(cross(normalize(cross(view, roll_up)), view));
             require(close_to(down[i].orientation().rotate(local_up), cam_up, 1e-4f),
-                    "a default-aimed flight pose does not keep the horizon level");
+                    "a default-aimed flight pose does not keep a known roll");
         }
+        require(close_to(down.back().orientation().rotate(local_forward), -world_up, 1e-4f),
+                "the final flight station did not keep looking straight down");
+        const vec3 previous_up = down[down.size() - 2].orientation().rotate(local_up);
+        const vec3 projected_up = normalize(previous_up - world_up * dot(previous_up, world_up));
+        require(close_to(down.back().orientation().rotate(local_up), projected_up, 1e-4f),
+                "the final flight station did not inherit the previous station's roll");
+
         // The look-ahead is the caller's: one station ahead looks nearer.
         const std::vector<Frame> one_ahead = builder.flight_frames(flight_stations, {}, world_up, 1);
         const vec3 one_ahead_target = flight_stations[1].foot - world_up;
         require(close_to(one_ahead[0].orientation().rotate(local_forward),
                          normalize(one_ahead_target - positions[0]), 1e-4f),
                 "the flight look-ahead was ignored");
+        const vec3 one_ahead_previous_up = one_ahead[one_ahead.size() - 2].orientation().rotate(local_up);
+        const vec3 one_ahead_projected_up =
+                normalize(one_ahead_previous_up - world_up * dot(one_ahead_previous_up, world_up));
+        require(close_to(one_ahead.back().orientation().rotate(local_up), one_ahead_projected_up, 1e-4f),
+                "a one-station look-ahead did not inherit the previous roll");
+
+        // Consecutive views along up keep carrying the last known camera up forward.
+        const std::vector<vec3> vertical_tail_positions = {vec3(0.0f, 0.0f, 0.0f),
+                                                           vec3(10.0f, 0.0f, 0.0f),
+                                                           vec3(10.0f, 10.0f, 0.0f)};
+        const std::vector<Frame> vertical_tail = builder.flight_frames(
+                make_stations(vertical_tail_positions, world_up), {}, world_up);
+        require(close_to(vertical_tail[1].orientation().rotate(local_forward), world_up, 1e-4f) &&
+                 close_to(vertical_tail[2].orientation().rotate(local_forward), -world_up, 1e-4f),
+                "a vertical flight tail changed its aim direction");
+        const vec3 first_vertical_up = vertical_tail[0].orientation().rotate(local_up);
+        const vec3 projected_vertical_up = normalize(first_vertical_up - world_up * dot(first_vertical_up, world_up));
+        require(close_to(vertical_tail[1].orientation().rotate(local_up), projected_vertical_up, 1e-4f) &&
+                 close_to(vertical_tail[2].orientation().rotate(local_up),
+                          vertical_tail[1].orientation().rotate(local_up), 1e-4f),
+                "consecutive vertical flight views lost the last known roll");
+
+        // A coincident explicit target is the documented straight-down fallback, not an aligned
+        // view: a preceding known roll must not change its deterministic camera up.
+        const std::vector<vec3> explicit_positions = {vec3(0.0f), vec3(10.0f, 0.0f, 0.0f),
+                                                      vec3(20.0f, 0.0f, 0.0f)};
+        const std::vector<CameraPathBuilder::FlightStation> explicit_stations =
+                make_stations(explicit_positions, world_up);
+        const std::vector<Frame> coincident_first = builder.flight_frames(
+                {explicit_stations[1], explicit_stations[2]},
+                {explicit_positions[1], explicit_positions[2] + world_up}, world_up);
+        const std::vector<Frame> coincident_after_roll = builder.flight_frames(
+                explicit_stations,
+                {explicit_positions[0] + vec3(10.0f, 10.0f, 0.0f), explicit_positions[1],
+                 explicit_positions[2] + world_up}, world_up);
+        require(close_to(coincident_after_roll[1].orientation().rotate(local_forward), -world_up, 1e-4f),
+                "a coincident flight target did not retain its straight-down fallback");
+        require(close_to(coincident_after_roll[1].orientation().rotate(local_up),
+                         coincident_first.front().orientation().rotate(local_up), 1e-4f),
+                "a coincident flight target inherited an unrelated roll");
+        require(close_to(coincident_after_roll[2].orientation().rotate(local_up),
+                         coincident_after_roll[1].orientation().rotate(local_up), 1e-4f),
+                "an aligned explicit flight target did not inherit the previous roll");
+
+        const std::vector<vec3> aligned_targets = {explicit_positions[0] + world_up,
+                                                   explicit_positions[1] + world_up,
+                                                   explicit_positions[2] + world_up};
+        const std::vector<Frame> aligned = builder.flight_frames(explicit_stations, aligned_targets, world_up);
+        const vec3 aligned_first_up = aligned.front().orientation().rotate(local_up);
+        require(close_to(aligned.front().orientation().rotate(local_forward), world_up, 1e-4f) &&
+                 close_to(length(aligned_first_up), 1.0f, 1e-4f) &&
+                 close_to(dot(aligned_first_up, world_up), 0.0f, 1e-4f),
+                "the first aligned flight station lost its deterministic fallback");
+        const vec3 aligned_projected_up = normalize(aligned_first_up - world_up * dot(aligned_first_up, world_up));
+        require(close_to(aligned[1].orientation().rotate(local_up), aligned_projected_up, 1e-4f) &&
+                 close_to(aligned[2].orientation().rotate(local_up),
+                          aligned[1].orientation().rotate(local_up), 1e-4f),
+                "aligned explicit flight targets did not carry the last known roll");
 
         // A tilted lift changes only the stations' height above their feet: the aim stays the
         // ground ahead and the roll stays on the supplied up, so the lift cannot bank the
@@ -378,9 +463,8 @@ int main() {
             const vec3 ahead_foot = tilted_stations[std::min(i + 2, tilted_stations.size() - 1)].foot;
             const float height = dot(positions[i] - tilted_stations[i].foot, world_up);
             const vec3 view = normalize(ahead_foot - world_up * height - positions[i]);
-            if (cross(view, world_up).length2() < 1e-6f) // looking straight down: no horizon
-                continue;
-            const vec3 cam_up = normalize(cross(normalize(cross(view, world_up)), view));
+            const vec3 roll_up = flight_roll_reference(tilted_down, i, view, world_up);
+            const vec3 cam_up = normalize(cross(normalize(cross(view, roll_up)), view));
             require(close_to(tilted_down[i].orientation().rotate(local_up), cam_up, 1e-4f),
                     "a tilted lift banked the flight");
         }
@@ -406,8 +490,7 @@ int main() {
         require(builder.aimed_frames(default_orbit, orbit_targets, {vec3(0.0f, 1.0f, 0.0f)}).empty(),
                 "aimed_frames accepted unpaired roll references");
 
-        // A flight re-aimed level: the supplied roll reference keeps the horizon
-        // level even though its default (straight-down) poses have no usable roll.
+        // A flight re-aimed level: the supplied roll reference keeps the horizon level.
         std::vector<vec3> level_targets;
         for (const vec3 &p : positions)
             level_targets.emplace_back(100.0f, p.y, p.z);
@@ -471,8 +554,8 @@ int main() {
 
         kfi.delete_path();
         // A level flight: the outer stations look across the path's up (+Y), so the roll
-        // reference is the camera up exactly. The middle one looks along it and has no
-        // horizon to roll against, which is what the guard in the loop below skips.
+        // reference is the camera up exactly. The middle one looks along it and inherits the
+        // previous station's camera up because the path up cannot define its roll.
         const std::vector<vec3> flying = {vec3(-10.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f),
                                           vec3(10.0f, 10.0f, 0.0f)};
         const std::vector<vec3> aimed_at = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 10.0f, 0.0f),
@@ -481,31 +564,38 @@ int main() {
         const std::size_t flight_keys = builder.generate_flight(flying_stations, aimed_at);
         require(flight_keys == flying.size(), "generate_flight dropped stations");
         require(kfi.number_of_keyframes() == flight_keys, "the flight poses did not reach the interpolator");
+        std::vector<Frame> generated_flight;
+        generated_flight.reserve(flight_keys);
+        for (std::size_t i = 0; i < flight_keys; ++i)
+            generated_flight.push_back(kfi.keyframe(i));
         for (std::size_t i = 0; i < flight_keys; ++i) {
             const Frame f = kfi.keyframe(i);
             require(close_to(f.position(), flying[i]), "a flight keyframe is not at its station");
             require(close_to(f.orientation().rotate(local_forward), normalize(aimed_at[i] - flying[i]), 1e-4f),
                     "a flight keyframe does not aim at its target");
-            // The roll reference is the path's up; the camera up is that reference squared
-            // up to the view, so a pose that looks down is not rolled.
+            // The path up supplies the roll reference unless the view is aligned with it;
+            // then the previous camera basis carries the last known roll forward.
             const vec3 flight_view = normalize(aimed_at[i] - flying[i]);
             const vec3 flight_up = builder.ground_up_direction();
-            if (cross(flight_view, flight_up).length2() < 1e-6f)
-                continue;
-            const vec3 flight_cam_up = normalize(cross(normalize(cross(flight_view, flight_up)), flight_view));
+            const vec3 flight_roll_up = flight_roll_reference(generated_flight, i, flight_view, flight_up);
+            const vec3 flight_cam_up =
+                    normalize(cross(normalize(cross(flight_view, flight_roll_up)), flight_view));
             require(close_to(f.orientation().rotate(local_up), flight_cam_up, 1e-4f),
-                    "a flight keyframe does not use the path's up as its roll reference");
+                    "a flight keyframe does not keep a known roll reference");
         }
         kfi.delete_path();
         require(builder.generate_flight(flying_stations, {}) == flying.size(),
                 "the default-aimed flight did not reach the interpolator");
+        std::vector<Frame> generated_default_flight;
+        generated_default_flight.reserve(flying.size());
+        for (std::size_t i = 0; i < flying.size(); ++i)
+            generated_default_flight.push_back(kfi.keyframe(i));
         for (std::size_t i = 0; i < flying.size(); ++i) {
-            const Frame f = kfi.keyframe(i);
+            const Frame f = generated_default_flight[i];
             const vec3 view = f.orientation().rotate(local_forward);
             const vec3 up_ref = builder.ground_up_direction();
-            if (cross(view, up_ref).length2() < 1e-6f) // looking straight down: no horizon
-                continue;
-            const vec3 cam_up = normalize(cross(normalize(cross(view, up_ref)), view));
+            const vec3 roll_up = flight_roll_reference(generated_default_flight, i, view, up_ref);
+            const vec3 cam_up = normalize(cross(normalize(cross(view, roll_up)), view));
             require(close_to(f.orientation().rotate(local_up), cam_up, 1e-4f),
                     "a generated default-aimed flight pose does not keep the path's up as its roll");
         }

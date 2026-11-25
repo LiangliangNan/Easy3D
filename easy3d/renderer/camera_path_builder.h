@@ -352,8 +352,8 @@ public:
     float flight_height_in_world_units() const;
 
     /// \brief A flight camera station: the position its ground-stroke foot was lifted to.
-    /// \details The pair keeps the lift, so the default aim can point back down at the
-    ///      ground the station flies over (see flight_frames()).
+    /// \details The pair keeps the lift, so the default aim can look ahead at the ground
+    ///      along the track (see flight_frames()).
     struct FlightStation {
         vec3 position;  ///< The camera position, lifted from \p foot along ground_up_direction().
         vec3 foot;      ///< The ground-stroke point the station was lifted from.
@@ -391,7 +391,8 @@ public:
     /// \details Typically \p stations comes from flight_stations() and \p targets from
     ///      aim_targets(); the aim is exact at each station and the interpolator
     ///      smooths it in between. The roll reference is ground_up_direction(), so the
-    ///      camera never banks. An empty \p targets keeps the flight's default aim: a
+    ///      camera never banks; a view parallel to that up inherits the previous camera up
+    ///      (see flight_frames()). An empty \p targets keeps the flight's default aim: a
     ///      station looks at the ground ahead of it along the track (see
     ///      flight_frames()), not straight down at its own foot.
     /// \param stations Camera stations in path order; at least two are needed.
@@ -567,9 +568,11 @@ public:
     ///      along the track (the last station looks as far ahead as the track has),
     ///      so the camera flies where it is going instead of straight down. Each
     ///      target is lowered by the station's own height above its foot, so a flight
-    ///      over a slope aims along the ground rather than into it. A view along the
-    ///      reversed \p up has no preferred roll, so the basis is deterministic but not
-    ///      tied to \p up.
+    ///      over a slope aims along the ground rather than into it. When a view is
+    ///      parallel to \p up it has no roll reference; after the first station, the
+    ///      previous station's camera up is used instead of an arbitrary basis. If that
+    ///      up is parallel to the new view too, its camera right supplies the reference.
+    ///      The first such station retains the deterministic fallback.
     /// \param stations Camera stations in path order; at least two are needed.
     /// \param targets One aim point per station, in the same order, or empty for the
     ///      default aim.
