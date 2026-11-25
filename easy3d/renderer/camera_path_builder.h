@@ -122,7 +122,7 @@ public:
     /// \note The settings start at eye height 0.2 scene heights, keyframe spacing 0.5
     ///      scene heights, both ground tracks following the terrain's slopes, flight
     ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.1
-    ///      object heights, pitch 0 degrees, 10 keyframes per loop and 2 loops.
+    ///      object heights, pitch 0 degrees and 10 keyframes per closed orbit.
     CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator);
     /// Destroys the builder. The camera and the interpolator are borrowed, so
     /// neither is destroyed.
@@ -281,6 +281,8 @@ public:
     /// \return The number of poses generated, or 0 while scene_box() is invalid or
     ///      the keyframe count is less than two.
     /// \note The interpolator may accept fewer keyframes; see the class description.
+    ///      When this replaces an empty path, periodic interpolation is enabled; appending
+    ///      to a nonempty path returns the interpolator to open endpoint handling.
     std::size_t generate_orbit(const Line3 &axis, const vec3 &center);
 
     /// \brief Extra orbit radius beyond the scene diagonal, in object heights

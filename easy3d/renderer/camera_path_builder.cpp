@@ -301,9 +301,12 @@ namespace easy3d {
     }
 
     std::size_t CameraPathBuilder::generate_orbit(const Line3 &axis, const vec3 &center) {
+        const std::size_t before = kfi_->number_of_keyframes();
         const std::vector<Frame> frames = orbit_frames(axis, center);
         for (const auto &frame : frames)
             add_keyframe(frame);
+        if (!frames.empty() && kfi_->number_of_keyframes() == before + frames.size())
+            kfi_->set_path_periodic(before == 0);
         return frames.size();
     }
 

@@ -338,6 +338,19 @@ namespace easy3d {
          * \param fps Frame rate in 1..1000. Changing it stops playback.
          */
         void set_frame_rate(int fps);
+
+        /**
+         * \brief Sets whether the path is interpolated as a closed periodic loop.
+         * \details Periodic interpolation has an effect only for cubic interpolation with at least
+         *      three distinct keyframes whose first and last poses are identical. It wraps position
+         *      spline boundary conditions and orientation tangents across the duplicated closing
+         *      keyframe. Without a dwell there, playback passes the closing pose at cruise speed
+         *      instead of stopping at both copies. Otherwise interpolation remains open.
+         * \param periodic Whether to use periodic endpoint handling. Changing it stops playback.
+         */
+        void set_path_periodic(bool periodic);
+        /// \return Whether periodic endpoint handling was requested.
+        bool is_path_periodic() const { return path_is_periodic_; }
         //@}
 
         /*! \name Interpolation */
@@ -624,6 +637,7 @@ namespace easy3d {
 
         // is path valid? Adding new keyframes or editing a keyframe invalidates the path
         bool pathIsValid_;
+        bool path_is_periodic_ = false;
 
         LinesDrawable* path_drawable_;
         TrianglesDrawable* cameras_drawable_;

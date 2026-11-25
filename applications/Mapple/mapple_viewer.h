@@ -550,7 +550,8 @@ private:
     // so a malformed time/position sequence cannot leave a partially written path.
     bool write_camera_path(const std::vector<easy3d::Frame> &frames,
                            const std::vector<float> &times,
-                           const std::vector<float> &dwells);
+                           const std::vector<float> &dwells,
+                           bool periodic);
     // Widens the view to cover the authored poses without ever shrinking it.
     void grow_scene_radius_over_path();
 

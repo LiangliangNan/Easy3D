@@ -36,6 +36,7 @@
 
 #include <easy3d/renderer/key_frame_interpolator.h>
 
+#include <algorithm>
 #include <chrono>
 #include <thread>
 #include <limits>
@@ -54,6 +55,95 @@
 
 
 namespace easy3d {
+
+    namespace {
+
+        // Natural cubic spline over unique points plus an implicit return to the first point.
+        // The cyclic tridiagonal system is solved with a Sherman-Morrison correction.
+        class PeriodicSplineCurveInterpolation {
+        public:
+            void set_data(const std::vector<float> &parameters, const std::vector<vec3> &points) {
+                parameters_ = parameters;
+                points_ = points;
+                const int count = static_cast<int>(points.size() - 1);
+                intervals_.resize(static_cast<std::size_t>(count));
+                slopes_.resize(static_cast<std::size_t>(count));
+                for (int i = 0; i < count; ++i) {
+                    intervals_[static_cast<std::size_t>(i)] =
+                            parameters[static_cast<std::size_t>(i + 1)] - parameters[static_cast<std::size_t>(i)];
+                    slopes_[static_cast<std::size_t>(i)] =
+                            (points[static_cast<std::size_t>(i + 1)] - points[static_cast<std::size_t>(i)]) /
+                            intervals_[static_cast<std::size_t>(i)];
+                }
+
+                BandMatrix<float> matrix(count, 1, 1);
+                std::vector<vec3> rhs(static_cast<std::size_t>(count));
+                for (int i = 0; i < count; ++i) {
+                    const std::size_t index = static_cast<std::size_t>(i);
+                    const std::size_t previous = static_cast<std::size_t>((i + count - 1) % count);
+                    const float before = intervals_[previous];
+                    const float after = intervals_[index];
+                    if (i > 0)
+                        matrix(i, i - 1) = before;
+                    matrix(i, i) = 2.0f * (before + after);
+                    if (i + 1 < count)
+                        matrix(i, i + 1) = after;
+                    rhs[index] = 3.0f * (slopes_[index] - slopes_[previous]);
+                }
+
+                const float closing = intervals_.back();
+                const float gamma = -2.0f * closing;
+                matrix(0, 0) -= gamma;
+                matrix(count - 1, count - 1) -= closing * closing / gamma;
+                matrix.lu_decompose();
+
+                std::vector<float> correction_rhs(static_cast<std::size_t>(count), 0.0f);
+                correction_rhs.front() = gamma;
+                correction_rhs.back() = closing;
+                const std::vector<float> correction = matrix.lu_solve(correction_rhs, true);
+
+                second_.assign(static_cast<std::size_t>(count), vec3());
+                for (int component = 0; component < 3; ++component) {
+                    std::vector<float> values(static_cast<std::size_t>(count));
+                    for (int i = 0; i < count; ++i)
+                        values[static_cast<std::size_t>(i)] = rhs[static_cast<std::size_t>(i)][component];
+                    const std::vector<float> solved = matrix.lu_solve(values, true);
+                    const float factor = (solved.front() - 0.5f * solved.back()) /
+                                         (1.0f + correction.front() - 0.5f * correction.back());
+                    for (int i = 0; i < count; ++i)
+                        second_[static_cast<std::size_t>(i)][component] =
+                                solved[static_cast<std::size_t>(i)] - factor * correction[static_cast<std::size_t>(i)];
+                }
+            }
+
+            vec3 eval(float parameter) const {
+                if (parameter <= parameters_.front())
+                    return points_.front();
+                if (parameter >= parameters_.back())
+                    return points_.back();
+
+                const auto next = std::lower_bound(parameters_.begin() + 1, parameters_.end(), parameter);
+                const std::size_t segment = static_cast<std::size_t>(next - parameters_.begin() - 1);
+                if (parameter == *next)
+                    return points_[segment + 1];
+
+                const std::size_t after = (segment + 1) % second_.size();
+                const float interval = intervals_[segment];
+                const float offset = parameter - parameters_[segment];
+                const vec3 a = (second_[after] - second_[segment]) / (3.0f * interval);
+                const vec3 c = slopes_[segment] - interval * (2.0f * second_[segment] + second_[after]) / 3.0f;
+                return ((a * offset + second_[segment]) * offset + c) * offset + points_[segment];
+            }
+
+        private:
+            std::vector<float> parameters_;
+            std::vector<vec3> points_;
+            std::vector<float> intervals_;
+            std::vector<vec3> slopes_;
+            std::vector<vec3> second_;
+        };
+
+    }
 
 
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
@@ -158,6 +248,7 @@ namespace easy3d {
         keyframes_.clear();
         interpolated_path_.clear();
         pathIsValid_ = false;
+        path_is_periodic_ = false;
         last_stopped_index_ = 0;
 
         drop_immediate_drawables();
@@ -235,6 +326,15 @@ namespace easy3d {
         if (fps<=0 || fps>1000) throw std::invalid_argument("interpolation frame rate must be in 1..1000");
         stop_interpolation();
         fps_ = fps;
+        pathIsValid_ = false;
+    }
+
+
+    void KeyFrameInterpolator::set_path_periodic(bool periodic) {
+        if (path_is_periodic_ == periodic)
+            return;
+        stop_interpolation();
+        path_is_periodic_ = periodic;
         pathIsValid_ = false;
     }
 
@@ -522,10 +622,10 @@ namespace easy3d {
 
 // Cinematic speed profile within one travel segment.
 //
-// A segment is the travel between two consecutive keyframes. It starts at rest if it
-// begins at the path's first keyframe or at one that holds a dwell; it ends at rest if
-// it ends at the path's last keyframe or at one that holds a dwell. Between those stops
-// it cruises at constant speed.
+// A segment starts at rest if it begins at an open path's first keyframe or at one that
+// holds a dwell; it ends at rest if it ends at an open path's last keyframe or at one that
+// holds a dwell. A periodic path crosses its duplicated closing pose without stopping.
+// Between those stops it cruises at constant speed.
 //
 // The profile is a trapezoid: accelerate over the first kRamp of the segment's travel
 // time, cruise in the middle, decelerate over the last kRamp. The speed curve in each ramp
@@ -661,34 +761,64 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
             prevQ = frame.orientation();
         }
 
+        const bool closed_position = distance2(keyframes_.front().position(), keyframes_.back().position()) == 0.0f;
+        const bool closed_orientation = std::abs(std::abs(quat::dot(keyframes_.front().orientation(),
+                                                                  keyframes_.back().orientation())) - 1.0f) < 1e-5f;
+        const bool periodic = path_is_periodic_ && interpolation_method_ == INTERPOLATION && n >= 4 &&
+                              closed_position && closed_orientation;
         LOG_IF(keyframes_.size() > 1, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
 
         // Orientation: squad tangents at every keyframe (shared by both methods).
         std::vector<quat> tangents(n);
-        for (std::size_t i = 0; i < n; ++i) {
-            if (i == 0)
-                tangents[i] = keyframes_[0].orientation();
-            else if (i == n - 1)
-                tangents[i] = keyframes_[n - 1].orientation();
-            else
-                tangents[i] = quat::squad_tangent(
-                    keyframes_[i - 1].orientation(),
-                    keyframes_[i].orientation(),
-                    keyframes_[i + 1].orientation());
+        if (periodic) {
+            const std::size_t unique = n - 1;
+            for (std::size_t i = 0; i < unique; ++i) {
+                const std::size_t before = (i == 0) ? unique - 1 : i - 1;
+                const std::size_t after = (i + 1) % unique;
+                quat center = keyframes_[i].orientation();
+                quat previous = keyframes_[before].orientation();
+                quat next = keyframes_[after].orientation();
+                // The sequential sign pass does not constrain the wrapped predecessor.
+                if (quat::dot(previous, center) < 0.0f)
+                    previous.negate();
+                if (quat::dot(next, center) < 0.0f)
+                    next.negate();
+                tangents[i] = quat::squad_tangent(previous, center, next);
+            }
+            tangents.back() = tangents.front();
+            if (quat::dot(tangents.back(), keyframes_.back().orientation()) < 0.0f)
+                tangents.back().negate();
+        } else {
+            for (std::size_t i = 0; i < n; ++i) {
+                if (i == 0)
+                    tangents[i] = keyframes_[0].orientation();
+                else if (i == n - 1)
+                    tangents[i] = keyframes_[n - 1].orientation();
+                else
+                    tangents[i] = quat::squad_tangent(
+                        keyframes_[i - 1].orientation(),
+                        keyframes_[i].orientation(),
+                        keyframes_[i + 1].orientation());
+            }
         }
 
         // Position fitter (method-specific).
         typedef SplineCurveInterpolation<Vec, 3, float> PosInterpFitter;
         typedef SplineCurveFitting <Vec, 3, float> PosFitFitter;
         PosInterpFitter pos_interp_fitter;
+        PeriodicSplineCurveInterpolation periodic_pos_interp_fitter;
         PosFitFitter pos_fit_fitter(3, PosFitFitter::eOPEN_UNIFORM);
         const std::vector<float> length_at = length_fraction();
         if (interpolation_method_ == INTERPOLATION) {
             std::vector<vec3> positions(n);
             for (std::size_t i = 0; i < n; ++i)
                 positions[i] = keyframes_[i].position();
-            pos_interp_fitter.set_boundary(PosInterpFitter::second_deriv, 0, PosInterpFitter::second_deriv, 0);
-            pos_interp_fitter.set_points(length_at, positions);
+            if (periodic)
+                periodic_pos_interp_fitter.set_data(length_at, positions);
+            else {
+                pos_interp_fitter.set_boundary(PosInterpFitter::second_deriv, 0, PosInterpFitter::second_deriv, 0);
+                pos_interp_fitter.set_points(length_at, positions);
+            }
         } else {
             std::vector<vec3> positions(n);
             for (std::size_t i = 0; i < n; ++i)
@@ -738,12 +868,11 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
                 const float travel_dur = keyframes_[seg + 1].time() - keyframes_[seg].time();
                 const float w = std::min(1.0f, (t_k - dwell_end) / travel_dur);
 
-                // Does this segment start or end at a stop?
-                // A stop is the path's first keyframe, its last keyframe, or one
-                // that holds a dwell. A segment that merely passes a keyframe is
-                // cruised at constant speed.
-                const bool stop_start = (seg == 0) || (keyframes_[seg].dwell_time() > 0.0f);
-                const bool stop_end = (seg + 1 == n - 1) || (keyframes_[seg + 1].dwell_time() > 0.0f);
+                // Open paths stop at their ends. A periodic path passes its duplicated
+                // closing keyframe at cruise speed, unless that pose explicitly dwells.
+                const bool stop_start = (!periodic && seg == 0) || (keyframes_[seg].dwell_time() > 0.0f);
+                const bool stop_end = (!periodic && seg + 1 == n - 1) ||
+                                      (keyframes_[seg + 1].dwell_time() > 0.0f);
 
                 // Fraction of this segment's length covered, shaped by the cinematic
                 // profile: accelerate from rest at the segment's start if it is a stop,
@@ -762,7 +891,7 @@ float KeyFrameInterpolator::segment_fraction(float w, bool stop_start, bool stop
 
                 vec3 pos;
                 if (interpolation_method_ == INTERPOLATION) {
-                    pos = pos_interp_fitter.eval_f(u);
+                    pos = periodic ? periodic_pos_interp_fitter.eval(u) : pos_interp_fitter.eval_f(u);
                 } else {
                     pos = pos_fit_fitter.eval_f(u * static_cast<float>(n - 1));
                 }

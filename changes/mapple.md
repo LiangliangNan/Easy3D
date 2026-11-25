@@ -2928,3 +2928,34 @@ history was found and filled during the ToDo review.
   66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
   only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
   Mapple controls and the resulting camera motion were not verified visually.
+
+### 2026-11-25 — Orbit interpolation closes smoothly
+
+- An exact copied closing pose made Orbit's stored keyframes a loop, but the interpolator still
+  treated them as an open natural spline: curvature vanished at both copies of the seam pose and
+  the first/last SQUAT tangents did not see the opposite side of the orbit.
+- `KeyFrameInterpolator` now has an explicit periodic path mode. For cubic interpolation it solves
+  a cyclic natural spline over the unique poses plus the closing interval, and computes SQUAT
+  tangents with wrapped neighbours. Before computing each wrapped tangent, both neighbours are
+  sign-aligned with the centre quaternion; otherwise an antipodal representation turns a short
+  rotation into its long complement. The last unique pose also wraps its successor to the first
+  unique pose, rather than skipping it. These two orientation errors made angular motion stall and
+  reverse near the seam even after positional motion was smooth. The duplicated endpoint, timeline,
+  visualization, playback and recording all continue through the same `interpolate()` result. A
+  dwell-free loop crosses the shared closing pose at cruise speed. Explicit dwells and open-path
+  start/end easing are unchanged.
+- Mapple enables the mode only when one generated Orbit owns the whole path. Parameter rebuilds
+  and undo restore that state, keyframe-editor rebuilds preserve it, and clearing or importing a
+  path returns to open interpolation. Walk, Flight, appended paths and manually opened orbits keep
+  the previous endpoint behavior; a requested periodic path whose endpoints no longer match falls
+  back to open interpolation.
+- A periodic spline through finite keyframes is seamless and C2, but it remains a near-circular
+  approximation rather than a mathematically exact circle. Exact analytic circle sampling would
+  require a separate Orbit-only playback path instead of the shared interpolator.
+- Regressions compare open and periodic seam tangents, check per-frame angular speed for stalls and
+  jumps, verify circular radius and exact endpoint poses, and cover the open fallback, clear/reset
+  behavior, Orbit generation, appending and editor rebuilds.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
+  only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
+  Mapple controls and the resulting camera motion were not verified visually.

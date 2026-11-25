@@ -412,6 +412,15 @@ int main() {
                         kfi.keyframe(added - 1).orientation().rotate(local_forward),
                 "the interpolator did not retain the orbit's exact closing keyframe");
         require(camera.scene_radius() >= diagonal, "the camera radius was not grown to hold the orbit");
+        require(kfi.is_path_periodic(), "a generated whole-path orbit did not enable periodic interpolation");
+
+        kfi.delete_path();
+        Frame manual;
+        manual.set_position(vec3(1000.0f, 1000.0f, 1000.0f));
+        require(kfi.add_keyframe(manual), "the manual keyframe was rejected");
+        builder.generate_orbit(axis, vec3(0.0f));
+        require(!kfi.is_path_periodic(), "appending an orbit made the whole existing path periodic");
+        kfi.delete_path();
 
         // --- flight poses ---------------------------------------------------
         // A track that never turns back: three stations one step apart in X, the third

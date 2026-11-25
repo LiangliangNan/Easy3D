@@ -403,6 +403,7 @@ bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector
         return false;
     if (kfi_->is_interpolation_started())
         kfi_->stop_interpolation();
+    const bool periodic = kfi_->is_path_periodic();
     kfi_->delete_path();
     for (std::size_t i = 0; i < frames.size(); ++i) {
         if (!kfi_->add_keyframe(frames[i], times[i]))
@@ -412,6 +413,7 @@ bool KeyFrameEditor::rebuild(const std::vector<Frame> &frames, const std::vector
         if (i < dwells.size())
             kfi_->set_keyframe_dwell(i, dwells[i]);
     }
+    kfi_->set_path_periodic(periodic);
     return true;
 }
 

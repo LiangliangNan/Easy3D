@@ -90,5 +90,12 @@ int main() {
         kfi.delete_last_keyframe();
         require(same_dwells(kfi, {2.0f, 0.0f, 0.0f, 0.5f}),
                 "removing the last keyframe changed the dwell of the others");
+
+        // Rebuilding for an insert rewrites the interpolator, so it must carry the
+        // path's endpoint policy across delete_path() and re-add the retained poses.
+        kfi.set_path_periodic(true);
+        editor.set_selected(1);
+        require(editor.insert_after_selected() == 2, "the periodic-path insert failed");
+        require(kfi.is_path_periodic(), "the editor rebuild lost periodic interpolation");
     });
 }

@@ -26,6 +26,10 @@ bool close_to(const vec3 &a, const vec3 &b, float tolerance = kTolerance) {
     return distance(a, b) <= tolerance;
 }
 
+float angle_between(const quat &a, const quat &b) {
+    return 2.0f * std::acos(std::min(1.0f, std::abs(quat::dot(a, b))));
+}
+
 // A path along +x with one keyframe per second, all poses keeping the identity
 // orientation, so a frame's position alone says where in time the camera is.
 void make_path(KeyFrameInterpolator &kfi, int count, float step) {
@@ -34,6 +38,23 @@ void make_path(KeyFrameInterpolator &kfi, int count, float step) {
         frame.set_position_and_orientation(vec3(static_cast<float>(i), 0.0f, 0.0f), quat());
         require(kfi.add_keyframe(frame, static_cast<float>(i) * step), "a keyframe was rejected");
     }
+}
+
+void make_circle_path(KeyFrameInterpolator &kfi, int segments, bool close) {
+    const float pi = 3.14159265358979323846f;
+    Frame first;
+    for (int i = 0; i < segments; ++i) {
+        const float angle = 2.0f * pi * static_cast<float>(i) / static_cast<float>(segments);
+        Camera camera;
+        camera.set_position(vec3(10.0f * std::cos(angle), 10.0f * std::sin(angle), 0.0f));
+        camera.set_up_vector(vec3(0.0f, 0.0f, 1.0f));
+        camera.look_at(vec3(0.0f));
+        if (i == 0)
+            first = *camera.frame();
+        require(kfi.add_keyframe(*camera.frame(), static_cast<float>(i)), "a circle keyframe was rejected");
+    }
+    if (close)
+        require(kfi.add_keyframe(first, static_cast<float>(segments)), "the circle closing keyframe was rejected");
 }
 
 // The interpolated frames as positions, with the per-frame time step the samples use.
@@ -372,5 +393,80 @@ int main() {
             }
         }
 
+        // --- periodic Orbit closure ------------------------------------------
+        // The duplicated endpoint stays in the stored path, but the cubic spline treats the
+        // unique poses cyclically: the incoming and outgoing tangents at the seam must agree.
+        kfi.delete_path();
+        kfi.set_frame_rate(50);
+        make_circle_path(kfi, 12, true);
+        positions = sample_positions(kfi, interval);
+        const vec3 open_incoming = normalize(positions.back() - positions[positions.size() - 2]);
+        const vec3 open_outgoing = normalize(positions[1] - positions.front());
+        if (dot(open_incoming, open_outgoing) >= 0.97f)
+            throw std::runtime_error("the open control path does not expose the endpoint tangent mismatch (dot " +
+                                     std::to_string(dot(open_incoming, open_outgoing)) + ")");
+
+        const float orientation_closure = std::abs(quat::dot(kfi.keyframe_orientation(0),
+                                                            kfi.keyframe_orientation(kfi.number_of_keyframes() - 1)));
+        require(close_to(orientation_closure, 1.0f, 1e-5f), "the circle test poses do not close orientationally");
+        kfi.set_path_periodic(true);
+        require(kfi.is_path_periodic(), "periodic interpolation was not enabled");
+        positions = sample_positions(kfi, interval);
+        const vec3 incoming = normalize(positions.back() - positions[positions.size() - 2]);
+        const vec3 outgoing = normalize(positions[1] - positions.front());
+        if (dot(incoming, outgoing) <= 0.999f)
+            throw std::runtime_error("the periodic path still has a tangent discontinuity at its seam (dot " +
+                                     std::to_string(dot(incoming, outgoing)) + ")");
+
+        // The duplicated pose is one point on the loop, not two playback stops. Both
+        // sides must keep the surrounding cruise pace instead of easing to zero twice.
+        const float cruise_step = distance(positions[positions.size() / 2 + 1],
+                                           positions[positions.size() / 2]);
+        if (distance(positions.front(), positions[1]) < 0.75f * cruise_step ||
+            distance(positions.back(), positions[positions.size() - 2]) < 0.75f * cruise_step)
+            throw std::runtime_error("the periodic path still slows to a stop at its closing pose");
+
+        const std::vector<Frame> &frames = kfi.interpolate();
+        std::vector<float> angular_steps;
+        angular_steps.reserve(frames.size() - 1);
+        for (std::size_t i = 1; i < frames.size(); ++i)
+            angular_steps.push_back(angle_between(frames[i - 1].orientation(), frames[i].orientation()));
+        std::vector<float> sorted_steps = angular_steps;
+        std::sort(sorted_steps.begin(), sorted_steps.end());
+        const float median_step = sorted_steps[sorted_steps.size() / 2];
+        const float smallest_step = sorted_steps.front();
+        const float largest_step = sorted_steps.back();
+        if (smallest_step < 0.9f * median_step || largest_step > 1.1f * median_step)
+            throw std::runtime_error("the periodic orbit rotation stalls or jumps at its seam (steps " +
+                                     std::to_string(smallest_step) + ", " + std::to_string(median_step) +
+                                     ", " + std::to_string(largest_step) + ")");
+        require(close_to(std::abs(quat::dot(frames.front().orientation(), frames.back().orientation())), 1.0f, 1e-5f),
+                "periodic interpolation does not close the sampled orientation");
+
+        require(close_to(positions.front(), vec3(10.0f, 0.0f, 0.0f)) &&
+                        close_to(positions.back(), vec3(10.0f, 0.0f, 0.0f)),
+                "periodic interpolation moved the stored closing pose");
+        for (const vec3 &position : positions) {
+            const float radius = std::sqrt(position.x * position.x + position.y * position.y);
+            if (std::abs(radius - 10.0f) > 0.005f)
+                throw std::runtime_error("the periodic orbit is not circular (radius " +
+                                         std::to_string(radius) + ")");
+        }
+
+        // A requested periodic mode is only an endpoint policy; a path without matching
+        // first/last poses must fall back to exactly the ordinary open interpolation.
+        kfi.delete_path();
+        make_path(kfi, 5, 1.0f);
+        kfi.set_path_periodic(true);
+        const std::vector<vec3> requested_periodic = sample_positions(kfi, interval);
+        kfi.set_path_periodic(false);
+        const std::vector<vec3> open = sample_positions(kfi, interval);
+        require(requested_periodic.size() == open.size(), "periodic fallback changed the sample count");
+        for (std::size_t i = 0; i < open.size(); ++i) {
+            if (!close_to(requested_periodic[i], open[i]))
+                throw std::runtime_error("an unclosed path used periodic endpoint handling");
+        }
+        kfi.delete_path();
+        require(!kfi.is_path_periodic(), "delete_path kept stale periodic state");
     });
 }
