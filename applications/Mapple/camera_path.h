@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#ifndef EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
-#define EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
+#ifndef EASY3D_MAPPLE_CAMERA_PATH_H
+#define EASY3D_MAPPLE_CAMERA_PATH_H
 
 #include <cstddef>
 #include <memory>
@@ -53,7 +53,7 @@ namespace mapple {
     using easy3d::vec3;
 
 /**
- * \class CameraPathBuilder applications/Mapple/camera_path_builder.h
+ * \class CameraPath applications/Mapple/camera_path.h
  * \brief Camera-path authoring for demonstrating a 3D scene or object in a video.
  * \details A path is a sequence of keyframe poses that an app hands to a
  *      KeyframeInterpolator for preview, playback and recording. This class covers
@@ -118,7 +118,7 @@ namespace mapple {
  *      normals at all. Heights are measured along the up as well, so a pose on a
  *      slope keeps its vertical height above its own foot.
  */
-class CameraPathBuilder {
+class CameraPath {
 public:
     /// \brief Borrows \p camera and \p interpolator; neither is owned.
     /// \details The camera supplies the view's up direction (the rule behind
@@ -126,18 +126,18 @@ public:
     ///      generating functions may grow. The
     ///      interpolator receives the poses of the generating functions; the pure
     ///      builders never touch it.
-    /// \param camera The viewer's camera; it must remain valid for the builder's
+    /// \param camera The viewer's camera; it must remain valid for this object's
     ///      lifetime.
     /// \param interpolator The interpolator that receives the poses; it must remain
-    ///      valid for the builder's lifetime if a generating function is called.
+    ///      valid for this object's lifetime if a generating function is called.
     /// \note The settings start at eye height 0.2 scene heights, keyframe spacing 0.5
     ///      scene heights, both ground tracks following the terrain's slopes, flight
     ///      height 4.0 scene heights, orbit radius offset 0.2 and vertical offset 0.1
     ///      object heights, pitch 0 degrees and 10 keyframes per closed orbit.
-    CameraPathBuilder(Camera *camera, KeyframeInterpolator *interpolator);
-    /// Destroys the builder. The camera and the interpolator are borrowed, so
+    CameraPath(Camera *camera, KeyframeInterpolator *interpolator);
+    /// Destroys the path object. The camera and the interpolator are borrowed, so
     /// neither is destroyed.
-    ~CameraPathBuilder() = default;
+    ~CameraPath() = default;
 
     /// \name Walking route
     //@{
@@ -165,7 +165,7 @@ public:
     /// \brief Where the path's one up direction comes from.
     /// \details The camera of a walking or flying path never banks: every pose stands
     ///      along the same up, the anti-gravity direction of the scene. The app cannot
-    ///      know that direction, so the user names the rule and the builder resolves
+    ///      know that direction, so the user names the rule and this class resolves
     ///      it once, from scene_box() and the camera.
     enum class GroundUpAxis {
         Auto,   ///< The world axis of the visible scene box's shortest extent: the height
@@ -186,7 +186,7 @@ public:
     /// \return The rule the up direction resolves from.
     GroundUpAxis ground_up_axis() const { return settings_.ground_up_axis; }
 
-    /// \brief The up direction of every pose this builder makes: one anti-gravity
+    /// \brief The up direction of every pose this path makes: one anti-gravity
     ///      direction for the whole path.
     /// \details Resolved from ground_up_axis(): the world axis of the scene box's
     ///      shortest extent, a named world axis, or the camera's up. The scene height
@@ -425,9 +425,9 @@ public:
     /// picked and Settings the numbers that shaped it, so a parameter edit can rebuild the
     /// poses instead of asking for the gesture over.
     //@{
-    /// \brief Every number a builder reads, as one value.
+    /// \brief Every number this path reads, as one value.
     /// \details The members are the settings of the mode sections above, with the defaults
-    ///      a freshly constructed builder starts at. A copy of it is a snapshot: an app
+    ///      a freshly constructed CameraPath starts at. A copy of it is a snapshot: an app
     ///      that regenerates a path compares the snapshot taken at the build against
     ///      settings() to know whether the path's input still produces the same poses.
     ///      The scene bounds are not part of it: they come from set_scene() and are the
@@ -668,7 +668,7 @@ protected:
     // Union of the visible models last passed to set_scene(); invalid when none was
     // visible.
     Box3 scene_box_;
-    // The numbers every builder reads, kept as one value so the setters, settings() and
+    // The numbers this path reads, kept as one value so the setters, settings() and
     // the comparison against a path's build-time copy all see the same fields. The
     // per-field defaults are the ones Settings documents.
     Settings settings_;
@@ -676,4 +676,4 @@ protected:
 
 } // namespace mapple
 
-#endif // EASY3D_MAPPLE_CAMERA_PATH_BUILDER_H
+#endif // EASY3D_MAPPLE_CAMERA_PATH_H

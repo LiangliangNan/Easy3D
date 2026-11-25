@@ -7,7 +7,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
-#include "../../applications/Mapple/camera_path_builder.h"
+#include "../../applications/Mapple/camera_path.h"
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
@@ -15,7 +15,7 @@
 #include "../test.h"
 
 using namespace easy3d;
-using mapple::CameraPathBuilder;
+using mapple::CameraPath;
 using easy3d::test::require;
 
 namespace {
@@ -64,21 +64,21 @@ vec3 flight_roll_reference(const std::vector<Frame> &frames, std::size_t i,
 } // namespace
 
 int main() {
-    return easy3d::test::run("camera path builder", [] {
+    return easy3d::test::run("camera path generation", [] {
         auto box = make_box_model(5.0f);
         Camera camera;
         aim_down(camera);
         camera.set_scene_center(vec3(0.0f));
         camera.set_scene_radius(1.0f);
         KeyframeInterpolator kfi(camera.frame());
-        CameraPathBuilder builder(&camera, &kfi);
+        CameraPath builder(&camera, &kfi);
         // A flight station is the lifted camera position and the ground foot it rose
         // from; the default aim looks at the ground ahead along the track.
         auto make_stations = [](const std::vector<vec3> &positions, const vec3 &lift_up) {
-            std::vector<CameraPathBuilder::FlightStation> stations;
+            std::vector<CameraPath::FlightStation> stations;
             stations.reserve(positions.size());
             for (const vec3 &p : positions)
-                stations.push_back(CameraPathBuilder::FlightStation{p, p - lift_up});
+                stations.push_back(CameraPath::FlightStation{p, p - lift_up});
             return stations;
         };
         // Fix the spacing the route and flight counts below are written against instead of
@@ -106,10 +106,10 @@ int main() {
         // the view rule resolve exactly, and the scene height is measured along the up.
         require(close_to(builder.ground_up_direction(), vec3(1.0f, 0.0f, 0.0f)),
                 "Auto did not resolve the scene box's shortest extent");
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::View);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::View);
         require(close_to(builder.ground_up_direction(), vec3(0.0f, 0.0f, -1.0f)),
                 "the view rule is not the camera's up direction");
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Y);
         require(close_to(builder.ground_up_direction(), vec3(0.0f, 1.0f, 0.0f)),
                 "the +Y rule did not resolve to +Y");
         // A flat scene (wide and deep, shallow in Y) stands on +Y: Y is its shortest extent.
@@ -118,7 +118,7 @@ int main() {
             flat->add_vertex(vec3((i & 1) ? 20.0f : -20.0f, (i & 2) ? 5.0f : -5.0f, (i & 4) ? 20.0f : -20.0f));
         flat->set_renderer(std::make_shared<Renderer>(flat.get(), false));
         builder.set_scene({flat});
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Auto);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Auto);
         require(close_to(builder.ground_up_direction(), vec3(0.0f, 1.0f, 0.0f)),
                 "Auto did not stand a flat scene on its shortest extent");
         // A tall scene (10 x 40 x 10) is equally shallow in X and Z, so the shortest extent
@@ -138,7 +138,7 @@ int main() {
         // Back to the 10 x 10 x 10 cube, whose three extents tie and so gives Auto no answer:
         // the rule is pinned to +Y below, and the eye height above is 2 world units along it.
         builder.set_scene({box});
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Y);
         std::vector<vec3> flat_stroke;
         for (int i = 0; i <= 8; ++i)
             flat_stroke.emplace_back(static_cast<float>(i) - 4.0f, -5.0f, 0.0f);
@@ -220,7 +220,7 @@ int main() {
         }
         // Flight stations lift off the same altitude, and keep their own ground feet: here the
         // feet climb while the stations hold one height.
-        const std::vector<CameraPathBuilder::FlightStation> level_stations =
+        const std::vector<CameraPath::FlightStation> level_stations =
                 builder.flight_stations(climb_stroke);
         require(!level_stations.empty(), "the level flight produced no stations");
         const float level_altitude = level_stations.front().position.y;
@@ -234,9 +234,9 @@ int main() {
 
         // Steep elevation changes must not space a level camera track by ground-stroke
         // length. Test the same geometry along two different up directions.
-        auto check_lifted_track_spacing = [&](CameraPathBuilder::GroundUpAxis axis, const vec3 &up) {
+        auto check_lifted_track_spacing = [&](CameraPath::GroundUpAxis axis, const vec3 &up) {
             builder.set_ground_up_axis(axis);
-            const std::vector<vec3> stroke = axis == CameraPathBuilder::GroundUpAxis::Y
+            const std::vector<vec3> stroke = axis == CameraPath::GroundUpAxis::Y
                     ? std::vector<vec3>{vec3(0.0f, -5.0f, 0.0f), vec3(2.0f, -1.0f, 0.0f),
                                         vec3(4.0f, -5.0f, 0.0f)}
                     : std::vector<vec3>{vec3(0.0f, 0.0f, -5.0f), vec3(2.0f, 0.0f, -1.0f),
@@ -297,9 +297,9 @@ int main() {
                 }
             }
         };
-        check_lifted_track_spacing(CameraPathBuilder::GroundUpAxis::Y, vec3(0.0f, 1.0f, 0.0f));
-        check_lifted_track_spacing(CameraPathBuilder::GroundUpAxis::Z, vec3(0.0f, 0.0f, 1.0f));
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        check_lifted_track_spacing(CameraPath::GroundUpAxis::Y, vec3(0.0f, 1.0f, 0.0f));
+        check_lifted_track_spacing(CameraPath::GroundUpAxis::Z, vec3(0.0f, 0.0f, 1.0f));
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Y);
         builder.set_follow_ground_slopes(true);
 
         // --- a point cloud: no faces, no normals, the same path -----------
@@ -314,7 +314,7 @@ int main() {
                 close_to(builder.ground_up_direction(), vec3(0.0f, 1.0f, 0.0f)),
                 "Auto failed on a point cloud");
         builder.set_scene({box});
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Y);
         const std::size_t cloud_first = kfi.number_of_keyframes();
         const std::size_t cloud_count = builder.generate_ground_route(flat_stroke);
         require(cloud_count == flat_count, "the point-cloud route changed the keyframe count");
@@ -430,7 +430,7 @@ int main() {
         const std::vector<vec3> positions = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f),
                                              vec3(20.0f, 10.0f, 10.0f)};
         const vec3 world_up(0.0f, 1.0f, 0.0f);
-        const std::vector<CameraPathBuilder::FlightStation> flight_stations =
+        const std::vector<CameraPath::FlightStation> flight_stations =
                 make_stations(positions, world_up);
         const std::vector<vec3> targets = {vec3(0.0f), vec3(0.0f), vec3(0.0f)};
         const std::vector<Frame> flight = builder.flight_frames(flight_stations, targets, world_up);
@@ -514,7 +514,7 @@ int main() {
         // view: a preceding known roll must not change its deterministic camera up.
         const std::vector<vec3> explicit_positions = {vec3(0.0f), vec3(10.0f, 0.0f, 0.0f),
                                                       vec3(20.0f, 0.0f, 0.0f)};
-        const std::vector<CameraPathBuilder::FlightStation> explicit_stations =
+        const std::vector<CameraPath::FlightStation> explicit_stations =
                 make_stations(explicit_positions, world_up);
         const std::vector<Frame> coincident_first = builder.flight_frames(
                 {explicit_stations[1], explicit_stations[2]},
@@ -551,7 +551,7 @@ int main() {
         // ground ahead and the roll stays on the supplied up, so the lift cannot bank the
         // flight. The height is measured along the up, not along the lift.
         const vec3 tilted_lift = normalize(vec3(0.0f, 3.0f, 1.0f));
-        const std::vector<CameraPathBuilder::FlightStation> tilted_stations =
+        const std::vector<CameraPath::FlightStation> tilted_stations =
                 make_stations(positions, tilted_lift);
         const std::vector<Frame> tilted_down = builder.flight_frames(tilted_stations, {}, world_up);
         require(tilted_down.size() == positions.size(), "the tilted default-aimed flight dropped stations");
@@ -606,7 +606,7 @@ int main() {
         // the flight's, so the 8-unit stroke at 2 world units is four intervals, i.e. 5
         // stations - the same count the walking route gets over it.
         require(close_to(builder.flight_height_in_world_units(), 40.0f), "the flight height in world units is wrong");
-        const std::vector<CameraPathBuilder::FlightStation> traced = builder.flight_stations(flat_stroke);
+        const std::vector<CameraPath::FlightStation> traced = builder.flight_stations(flat_stroke);
         require(traced.size() == 5, "the flight track was not resampled at the scene spacing");
         for (const auto &s : traced) {
             require(close_to(s.position.y, 35.0f) && close_to(s.position.z, 0.0f),
@@ -624,7 +624,7 @@ int main() {
 
         // The stations rise along the path's up, whatever the stroke's own heights do.
         // The slope stroke is 11.31 units long, so at 2 world units it is 6 intervals.
-        const std::vector<CameraPathBuilder::FlightStation> over_diagonal = builder.flight_stations(diagonal_stroke);
+        const std::vector<CameraPath::FlightStation> over_diagonal = builder.flight_stations(diagonal_stroke);
         require(over_diagonal.size() == 7, "the diagonal flight track was not resampled at the scene spacing");
         for (std::size_t i = 0; i < over_diagonal.size(); ++i) {
             require(close_to(over_diagonal[i].position, over_diagonal[i].foot + vec3(0.0f, 1.0f, 0.0f) * 40.0f),
@@ -656,7 +656,7 @@ int main() {
                                           vec3(10.0f, 10.0f, 0.0f)};
         const std::vector<vec3> aimed_at = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 10.0f, 0.0f),
                                             vec3(20.0f, 10.0f, 0.0f)};
-        const std::vector<CameraPathBuilder::FlightStation> flying_stations = make_stations(flying, world_up);
+        const std::vector<CameraPath::FlightStation> flying_stations = make_stations(flying, world_up);
         const std::size_t flight_keys = builder.generate_flight(flying_stations, aimed_at);
         require(flight_keys == flying.size(), "generate_flight dropped stations");
         require(kfi.number_of_keyframes() == flight_keys, "the flight poses did not reach the interpolator");
@@ -712,7 +712,7 @@ int main() {
             return true;
         };
 
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Y);
         builder.set_keyframe_spacing_in_scene_heights(0.2f);
         builder.set_follow_ground_slopes(true);
         builder.set_flight_height_in_scene_heights(0.5f);
@@ -724,7 +724,7 @@ int main() {
         std::vector<Frame> expected_walk;
         for (std::size_t i = 0; i < kfi.number_of_keyframes(); ++i)
             expected_walk.push_back(kfi.keyframe(i));
-        const CameraPathBuilder::Source walk = CameraPathBuilder::Source::walk({flat_stroke, diagonal_stroke});
+        const CameraPath::Source walk = CameraPath::Source::walk({flat_stroke, diagonal_stroke});
         const std::vector<Frame> rebuilt_walk = builder.frames_of(walk);
         require(same_frames(rebuilt_walk, expected_walk),
                 "frames_of did not reproduce the walking routes");
@@ -733,10 +733,10 @@ int main() {
         // rather than treated as a break in the route.
         const std::vector<vec3> first_half(flat_stroke.begin(), flat_stroke.begin() + 5);
         const std::vector<vec3> second_half(flat_stroke.begin() + 5, flat_stroke.end());
-        CameraPathBuilder::Source flight_source;
-        flight_source.kind = CameraPathBuilder::Source::Kind::Flight;
+        CameraPath::Source flight_source;
+        flight_source.kind = CameraPath::Source::Kind::Flight;
         flight_source.strokes = {first_half, second_half};
-        const std::vector<CameraPathBuilder::FlightStation> source_stations =
+        const std::vector<CameraPath::FlightStation> source_stations =
                 builder.flight_stations(flat_stroke);
         const std::vector<Frame> expected_flight =
                 builder.flight_frames(source_stations, {}, builder.ground_up_direction());
@@ -746,8 +746,8 @@ int main() {
         // An Orbit stores the picked anchor and re-resolves its axis from the current Up rule.
         const vec3 orbit_anchor(1.0f, -5.0f, 2.0f);
         const vec3 orbit_center(0.0f, 1.0f, 0.0f);
-        const CameraPathBuilder::Source orbit_source =
-                CameraPathBuilder::Source::orbit(orbit_anchor, orbit_center);
+        const CameraPath::Source orbit_source =
+                CameraPath::Source::orbit(orbit_anchor, orbit_center);
         const Line3 source_axis = Line3::from_point_and_direction(
                 orbit_anchor, -builder.ground_up_direction());
         std::vector<Frame> expected_orbit = builder.orbit_frames(source_axis, orbit_center);
@@ -755,14 +755,14 @@ int main() {
                 "frames_of did not reproduce the closed orbit from its anchor");
 
         // Raw aims are part of the source, not a one-off edit of the generated orientations.
-        CameraPathBuilder::Source aimed_walk = walk;
+        CameraPath::Source aimed_walk = walk;
         aimed_walk.aims = {vec3(0.0f, 0.0f, 3.0f)};
         const std::vector<vec3> walk_targets =
                 builder.aim_targets(aimed_walk.aims, rebuilt_walk.size());
         require(same_frames(builder.frames_of(aimed_walk),
                             builder.aimed_frames(rebuilt_walk, walk_targets)),
                 "frames_of did not keep the walk's raw aim");
-        CameraPathBuilder::Source aimed_flight = flight_source;
+        CameraPath::Source aimed_flight = flight_source;
         aimed_flight.aims = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f)};
         const std::vector<vec3> flight_targets =
                 builder.aim_targets(aimed_flight.aims, expected_flight.size());
@@ -770,7 +770,7 @@ int main() {
         require(same_frames(builder.frames_of(aimed_flight),
                             builder.aimed_frames(expected_flight, flight_targets, flight_roll_ups)),
                 "frames_of did not keep the flight's raw aim and roll reference");
-        CameraPathBuilder::Source aimed_orbit = orbit_source;
+        CameraPath::Source aimed_orbit = orbit_source;
         aimed_orbit.aims = {vec3(-2.0f, 0.0f, 3.0f), vec3(2.0f, 0.0f, 3.0f)};
         const std::vector<vec3> orbit_aims =
                 builder.aim_targets(aimed_orbit.aims, expected_orbit.size());
@@ -778,12 +778,12 @@ int main() {
                             builder.aimed_frames(expected_orbit, orbit_aims)),
                 "frames_of did not keep the orbit's raw aim over its stored poses");
 
-        const CameraPathBuilder::Settings built = builder.settings();
+        const CameraPath::Settings built = builder.settings();
         require(!builder.settings_changed_for(walk, built) &&
                 !builder.settings_changed_for(flight_source, built) &&
                 !builder.settings_changed_for(orbit_source, built),
                 "unchanged settings reported a stale source");
-        require(!builder.settings_changed_for(CameraPathBuilder::Source{}, built),
+        require(!builder.settings_changed_for(CameraPath::Source{}, built),
                 "a source with no mode reported a settings change");
 
         builder.set_eye_height_in_scene_heights(built.eye_height_in_scene_heights + 0.1f);
@@ -814,7 +814,7 @@ int main() {
                 "the slope rule influenced a mode other than Walk or Flight");
         builder.set_follow_ground_slopes(built.follow_ground_slopes);
 
-        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Z);
+        builder.set_ground_up_axis(CameraPath::GroundUpAxis::Z);
         require(builder.settings_changed_for(walk, built) &&
                 builder.settings_changed_for(flight_source, built) &&
                 builder.settings_changed_for(orbit_source, built),

@@ -42,7 +42,7 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/fileio/translator.h>
-#include "camera_path_builder.h"
+#include "camera_path.h"
 #include <easy3d/renderer/frame.h>
 #include "keyframe_editor.h"
 #include <easy3d/renderer/state.h>
@@ -920,7 +920,7 @@ private:
     // keyframe's overlay (created in init(), once the path exists).
     std::unique_ptr<mapple::KeyframeEditor> keyframe_editor_;
     // Walking, orbit and flight keyframe creation (created in init()).
-    std::unique_ptr<mapple::CameraPathBuilder> camera_path_builder_;
+    std::unique_ptr<mapple::CameraPath> camera_path_;
     // Which one-shot path tool owns the next gesture.
     PathTool path_tool_ = PathTool::Off;
 

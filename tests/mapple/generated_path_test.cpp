@@ -8,14 +8,14 @@
 #include "../test.h"
 
 using namespace easy3d;
-using mapple::CameraPathBuilder;
+using mapple::CameraPath;
 using easy3d::test::require;
 
 int main() {
     return easy3d::test::run("generated path provenance", [] {
         {
             mapple::GeneratedPath path;
-            path.source = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f},
+            path.source = CameraPath::Source::walk({{{0.0f, 0.0f, 0.0f},
                                                            {4.0f, 0.0f, 0.0f}}});
             path.first = 0;
             path.last = 4;
@@ -74,7 +74,7 @@ int main() {
 
         {
             mapple::GeneratedPath path;
-            path.source = CameraPathBuilder::Source::orbit(vec3(0.0f), vec3(1.0f));
+            path.source = CameraPath::Source::orbit(vec3(0.0f), vec3(1.0f));
             path.first = 5;
             path.last = 4;
             path.keyframe_inserted(5);
@@ -91,29 +91,29 @@ int main() {
         Frame frame;
         KeyframeInterpolator interpolator;
         interpolator.set_frame(&frame);
-        CameraPathBuilder builder(&camera, &interpolator);
+        CameraPath builder(&camera, &interpolator);
         builder.set_scene_box(Box3(vec3(-2.0f, -1.0f, -2.0f), vec3(2.0f, 1.0f, 2.0f)));
-        CameraPathBuilder::Settings settings = builder.settings();
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings = builder.settings();
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         settings.eye_height_in_scene_heights = 0.0f;
         settings.flight_height_in_scene_heights = 0.0f;
         builder.set_settings(settings);
-        const auto walk = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f},
+        const auto walk = CameraPath::Source::walk({{{0.0f, 0.0f, 0.0f},
                                                            {4.0f, 0.0f, 0.0f}}});
         require(builder.frames_of(walk).empty(), "the mode-switch fixture accepted a zero Walk height");
-        mapple::prepare_new_path_settings(builder, CameraPathBuilder::Source::Kind::Walk);
-        require(builder.eye_height_in_scene_heights() == CameraPathBuilder::Settings().eye_height_in_scene_heights &&
+        mapple::prepare_new_path_settings(builder, CameraPath::Source::Kind::Walk);
+        require(builder.eye_height_in_scene_heights() == CameraPath::Settings().eye_height_in_scene_heights &&
                         !builder.frames_of(walk).empty() && builder.flight_height_in_scene_heights() == 0.0f,
                 "arming Walk did not default only its degenerate height");
 
-        const auto flight = CameraPathBuilder::Source::flight({vec3(0.0f), vec3(4.0f, 0.0f, 0.0f)});
+        const auto flight = CameraPath::Source::flight({vec3(0.0f), vec3(4.0f, 0.0f, 0.0f)});
         require(builder.frames_of(flight).empty(), "the mode-switch fixture accepted a zero Flight height");
-        mapple::prepare_new_path_settings(builder, CameraPathBuilder::Source::Kind::Flight);
-        require(builder.flight_height_in_scene_heights() == CameraPathBuilder::Settings().flight_height_in_scene_heights &&
+        mapple::prepare_new_path_settings(builder, CameraPath::Source::Kind::Flight);
+        require(builder.flight_height_in_scene_heights() == CameraPath::Settings().flight_height_in_scene_heights &&
                         builder.frames_of(flight).size() >= 2,
                 "arming Flight did not default its degenerate height");
 
-        const auto source = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f},
+        const auto source = CameraPath::Source::walk({{{0.0f, 0.0f, 0.0f},
                                                              {4.0f, 0.0f, 0.0f}}});
         mapple::GeneratedPath first;
         first.source = source;
@@ -132,7 +132,7 @@ int main() {
 
         require(generated_paths.size() == 1 && generated_paths.front().first == 0 &&
                 generated_paths.front().last == 2 && generated_paths.front().source.kind ==
-                CameraPathBuilder::Source::Kind::Walk,
+                CameraPath::Source::Kind::Walk,
                 "restoring an undo snapshot lost the earlier generated path");
         builder.set_eye_height_in_scene_heights(builder.eye_height_in_scene_heights() + 0.1f);
         require(generated_paths.front().stale(builder),

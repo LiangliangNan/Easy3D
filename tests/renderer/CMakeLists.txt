@@ -1,16 +1,16 @@
 # The camera path builders are CPU geometry: no context or backend device, so this
 # test runs unchanged in both builds.
-add_executable(easy3d_camera_path_builder_test
-        camera_path_builder_test.cpp
-        ../../applications/Mapple/camera_path_builder.cpp)
-target_include_directories(easy3d_camera_path_builder_test PRIVATE ../../applications/Mapple)
-target_link_libraries(easy3d_camera_path_builder_test PRIVATE easy3d::renderer)
+add_executable(easy3d_camera_path_test
+        camera_path_test.cpp
+        ../../applications/Mapple/camera_path.cpp)
+target_include_directories(easy3d_camera_path_test PRIVATE ../../applications/Mapple)
+target_link_libraries(easy3d_camera_path_test PRIVATE easy3d::renderer)
 if(Easy3D_ENABLE_VULKAN)
-    add_test(NAME vulkan.camerapathbuilder COMMAND easy3d_camera_path_builder_test)
-    set_tests_properties(vulkan.camerapathbuilder PROPERTIES TIMEOUT 120)
+    add_test(NAME vulkan.camerapathgeneration COMMAND easy3d_camera_path_test)
+    set_tests_properties(vulkan.camerapathgeneration PROPERTIES TIMEOUT 120)
 else()
-    add_test(NAME opengl.camerapathbuilder COMMAND easy3d_camera_path_builder_test)
-    set_tests_properties(opengl.camerapathbuilder PROPERTIES TIMEOUT 120)
+    add_test(NAME opengl.camerapathgeneration COMMAND easy3d_camera_path_test)
+    set_tests_properties(opengl.camerapathgeneration PROPERTIES TIMEOUT 120)
 endif()
 
 # The interpolator's timing (per-keyframe dwell, speed profiles) is CPU arithmetic too.
@@ -25,18 +25,18 @@ else()
 endif()
 
 # Mapple's .kf composition adds generated-source provenance to the library stream.
-add_executable(easy3d_camera_path_file_test
-        camera_path_file_test.cpp
-        ../../applications/Mapple/camera_path_file.cpp
-        ../../applications/Mapple/camera_path_builder.cpp)
-target_include_directories(easy3d_camera_path_file_test PRIVATE ../../applications/Mapple)
-target_link_libraries(easy3d_camera_path_file_test PRIVATE easy3d::renderer)
+add_executable(easy3d_camera_path_io_test
+        camera_path_io_test.cpp
+        ../../applications/Mapple/camera_path_io.cpp
+        ../../applications/Mapple/camera_path.cpp)
+target_include_directories(easy3d_camera_path_io_test PRIVATE ../../applications/Mapple)
+target_link_libraries(easy3d_camera_path_io_test PRIVATE easy3d::renderer)
 if(Easy3D_ENABLE_VULKAN)
-    add_test(NAME vulkan.camerapathfile COMMAND easy3d_camera_path_file_test)
-    set_tests_properties(vulkan.camerapathfile PROPERTIES TIMEOUT 120)
+    add_test(NAME vulkan.camerapathio COMMAND easy3d_camera_path_io_test)
+    set_tests_properties(vulkan.camerapathio PROPERTIES TIMEOUT 120)
 else()
-    add_test(NAME opengl.camerapathfile COMMAND easy3d_camera_path_file_test)
-    set_tests_properties(opengl.camerapathfile PROPERTIES TIMEOUT 120)
+    add_test(NAME opengl.camerapathio COMMAND easy3d_camera_path_io_test)
+    set_tests_properties(opengl.camerapathio PROPERTIES TIMEOUT 120)
 endif()
 
 # The editor's insert/delete rebuild the path, which is CPU bookkeeping as well: the

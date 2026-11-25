@@ -1,5 +1,5 @@
-#ifndef EASY3D_MAPPLE_CAMERA_PATH_FILE_H
-#define EASY3D_MAPPLE_CAMERA_PATH_FILE_H
+#ifndef EASY3D_MAPPLE_CAMERA_PATH_IO_H
+#define EASY3D_MAPPLE_CAMERA_PATH_IO_H
 
 #include "generated_path.h"
 
@@ -12,7 +12,7 @@ namespace mapple {
 
     struct LoadedCameraPath {
         std::vector<GeneratedPath> generated_paths;
-        CameraPathBuilder::Settings settings;
+        CameraPath::Settings settings;
     };
 
     bool save_camera_path(const std::string &file_name,

@@ -25,9 +25,9 @@
  \endcond */
 
 #include "../mapple_viewer.h"
-#include "../camera_path_file.h"
+#include "../camera_path_io.h"
 #include "../keyframe_timeline.h"
-#include "../camera_path_builder.h"
+#include "../camera_path.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -172,15 +172,15 @@ void MappleViewer::draw_animation_window() {
     // its stored strokes or picked anchor instead of asking for the gesture again.
     const PathTool parameters_tool = path_parameters_tool();
     bool parameters_changed = false;
-    if (camera_path_builder_ && parameters_tool != PathTool::Off) {
+    if (camera_path_ && parameters_tool != PathTool::Off) {
         parameters_changed |= draw_ground_up_rule();
         if (parameters_tool == PathTool::GroundWalk || parameters_tool == PathTool::Flight)
             parameters_changed |= draw_follow_slopes_rule();
 
         if (parameters_tool == PathTool::GroundWalk) {
-            float height = camera_path_builder_->eye_height_in_scene_heights();
+            float height = camera_path_->eye_height_in_scene_heights();
             if (ImGui::DragFloat("Eye height", &height, 0.01f, 0.01f, 100.0f, "%.2f x scene")) {
-                camera_path_builder_->set_eye_height_in_scene_heights(height);
+                camera_path_->set_eye_height_in_scene_heights(height);
                 parameters_changed = true;
             }
             ImGui::SetItemTooltip("Eye height above the ground, as a fraction of the scene\n"
@@ -194,32 +194,32 @@ void MappleViewer::draw_animation_window() {
                                   "along the direction the Up rule resolves to. Poses look at the axis;\n"
                                   "Aim... re-aims them. A new orbit replaces the path; Ctrl+Z restores it.\n");
 
-            float zoom = camera_path_builder_->orbit_radius_offset_in_object_heights();
+            float zoom = camera_path_->orbit_radius_offset_in_object_heights();
             if (ImGui::DragFloat("Zoom out", &zoom, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
-                camera_path_builder_->set_orbit_radius_offset_in_object_heights(zoom);
+                camera_path_->set_orbit_radius_offset_in_object_heights(zoom);
                 parameters_changed = true;
             }
-            float offset = camera_path_builder_->orbit_vertical_offset_in_object_heights();
+            float offset = camera_path_->orbit_vertical_offset_in_object_heights();
             if (ImGui::DragFloat("Vertical offset", &offset, 0.01f, -100.0f, 100.0f, "%.2f x height")) {
-                camera_path_builder_->set_orbit_vertical_offset_in_object_heights(offset);
+                camera_path_->set_orbit_vertical_offset_in_object_heights(offset);
                 parameters_changed = true;
             }
-            float pitch = camera_path_builder_->pitch_degrees();
+            float pitch = camera_path_->pitch_degrees();
             if (ImGui::DragFloat("Pitch angle", &pitch, 0.5f, -89.0f, 89.0f, "%.1f deg")) {
-                camera_path_builder_->set_pitch_degrees(pitch);
+                camera_path_->set_pitch_degrees(pitch);
                 parameters_changed = true;
             }
-            int keyframes_per_loop = camera_path_builder_->keyframes_per_loop();
+            int keyframes_per_loop = camera_path_->keyframes_per_loop();
             if (ImGui::DragInt("Keyframes", &keyframes_per_loop, 0.5f, 2, 99)) {
-                camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop);
+                camera_path_->set_keyframes_per_loop(keyframes_per_loop);
                 parameters_changed = true;
             }
             ImGui::SetItemTooltip("Poses around one closed orbit. The final keyframe exactly\n"
                                   "repeats the first, so the camera returns to its starting pose.");
         } else if (parameters_tool == PathTool::Flight) {
-            float height = camera_path_builder_->flight_height_in_scene_heights();
+            float height = camera_path_->flight_height_in_scene_heights();
             if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.01f, 100.0f, "%.2f x scene")) {
-                camera_path_builder_->set_flight_height_in_scene_heights(height);
+                camera_path_->set_flight_height_in_scene_heights(height);
                 parameters_changed = true;
             }
             ImGui::SetItemTooltip("Height above the traced ground, as a fraction of the scene extent\n"
@@ -571,8 +571,8 @@ bool MappleViewer::load_camera_path(const std::string &file_name) {
     clear_generated_paths();
     generated_paths_ = std::move(loaded.generated_paths);
     if (!generated_paths_.empty()) {
-        camera_path_builder_->set_settings(loaded.settings);
-        camera_path_builder_->set_scene(models());
+        camera_path_->set_settings(loaded.settings);
+        camera_path_->set_scene(models());
     }
     camera_path_snapshot_.valid = false;
     camera_path_snapshot_.from_rebuild = false;
@@ -620,7 +620,7 @@ void MappleViewer::export_camera_path() {
 }
 
 void MappleViewer::arm_camera_path_tool(PathTool tool) {
-    if (!camera_path_builder_)
+    if (!camera_path_)
         return;
 
     cancel_path_gesture(); // arming starts from a clean slate
@@ -633,8 +633,8 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
         clear_measurement(); // the measure tool would take this tool's presses
 
     if (tool == PathTool::GroundWalk || tool == PathTool::Orbit || tool == PathTool::Flight) {
-        camera_path_builder_->set_scene(models());
-        if (!camera_path_builder_->scene_box().is_valid()) {
+        camera_path_->set_scene(models());
+        if (!camera_path_->scene_box().is_valid()) {
             LOG(WARNING) << "the camera path tools need a visible model";
             path_tool_ = PathTool::Off;
             update();
@@ -644,9 +644,9 @@ void MappleViewer::arm_camera_path_tool(PathTool tool) {
         // A new gesture needs a usable height; zero remains meaningful only while editing
         // an existing block, where it refuses regeneration and keeps its last poses.
         if (tool == PathTool::GroundWalk)
-            mapple::prepare_new_path_settings(*camera_path_builder_, mapple::CameraPathBuilder::Source::Kind::Walk);
+            mapple::prepare_new_path_settings(*camera_path_, mapple::CameraPath::Source::Kind::Walk);
         else if (tool == PathTool::Flight)
-            mapple::prepare_new_path_settings(*camera_path_builder_, mapple::CameraPathBuilder::Source::Kind::Flight);
+            mapple::prepare_new_path_settings(*camera_path_, mapple::CameraPath::Source::Kind::Flight);
     }
     if (tool == PathTool::Aim && (!latest_generated_path() || latest_generated_path()->size() == 0)) {
         LOG(WARNING) << "there is no generated path to re-aim";
@@ -695,12 +695,12 @@ bool MappleViewer::route_point_at(int x, int y, vec3 &point) const {
 bool MappleViewer::draw_keyframe_spacing() {
     // One value for both ground tracks, measured against the scene, so neither the eye
     // height nor the flight height moves the keyframe density.
-    float spacing = camera_path_builder_->keyframe_spacing_in_scene_heights();
+    float spacing = camera_path_->keyframe_spacing_in_scene_heights();
     // Like the widgets around it, the drag keeps the window's default item width, so the
     // rows of this mode's parameters line up with each other.
     if (!ImGui::DragFloat("Keyframe spacing", &spacing, 0.01f, 0.01f, 10.0f, "%.2f x scene"))
         return false;
-    camera_path_builder_->set_keyframe_spacing_in_scene_heights(spacing);
+    camera_path_->set_keyframe_spacing_in_scene_heights(spacing);
     ImGui::SetItemTooltip("Distance between consecutive keyframes along the track, as a fraction\n"
                           "of the scene extent along the up direction. Changing it resamples the\n"
                           "stored stroke. The walk and the flight share it, so the eye and flight\n"
@@ -715,16 +715,16 @@ bool MappleViewer::draw_ground_up_rule() {
     // from the resulting tilt - or, in Orbit, from the axis it turns around.
     const char *const kRules[] = {"Auto (box shortest)", "+X", "+Y", "+Z", "Up from the view"};
     constexpr int kRuleCount = 5;
-    int rule = static_cast<int>(camera_path_builder_->ground_up_axis());
+    int rule = static_cast<int>(camera_path_->ground_up_axis());
     const bool changed = ImGui::Combo("Up", &rule, kRules, kRuleCount);
     if (changed)
-        camera_path_builder_->set_ground_up_axis(static_cast<mapple::CameraPathBuilder::GroundUpAxis>(rule));
+        camera_path_->set_ground_up_axis(static_cast<mapple::CameraPath::GroundUpAxis>(rule));
     ImGui::SetItemTooltip("The direction the camera's up points, for the whole path. Auto uses the\n"
                           "scene's shortest extent (upright for a building or a terrain); the axes\n"
                           "pin it to the world; Up from the view follows the camera, for a model you\n"
                           "have rotated upright. Changing it rebuilds stored paths: walk and flight\n"
                           "rise along it, and an orbit's axis runs along it.");
-    const vec3 up = camera_path_builder_->ground_up_direction();
+    const vec3 up = camera_path_->ground_up_direction();
     ImGui::SameLine();
     ImGui::TextDisabled("( %.2f, %.2f, %.2f )", up.x, up.y, up.z);
     ImGui::SetItemTooltip("The up direction the rule above resolves to right now. The scene's\n"
@@ -736,10 +736,10 @@ bool MappleViewer::draw_follow_slopes_rule() {
     // Immediately under the up rule: whether the track climbs with the ground. Both ground
     // modes use it, so it sits beside the rule they share rather than in either mode's
     // own parameters. Orbit builds no ground track and does not draw this one.
-    bool follow = camera_path_builder_->follow_ground_slopes();
+    bool follow = camera_path_->follow_ground_slopes();
     const bool changed = ImGui::Checkbox("Follow slopes", &follow);
     if (changed)
-        camera_path_builder_->set_follow_ground_slopes(follow);
+        camera_path_->set_follow_ground_slopes(follow);
     ImGui::SetItemTooltip("On, every pose keeps its height above the ground under it, so the\n"
                           "track climbs and falls with a slope. Changing it rebuilds the stored\n"
                           "track. Off, the whole track keeps the altitude of the stroke's first\n"

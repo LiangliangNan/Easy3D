@@ -33,8 +33,8 @@ keyframes, which is tedious and still does not give smooth speed changes.
   vary speed along the path.
 - Mapple's Camera Path window exposes playback speed, frame rate, interpolation method, and
   video recording (bitrate, samples, FFmpeg). There is no per-keyframe timing control.
-- `CameraPathBuilder` (`applications/Mapple/camera_path_builder.{h,cpp}`) generates orbit,
-  ground-walk and flight keyframes with user-friendly parameters (eye height, spacing, loops,
+- `CameraPath` (`applications/Mapple/camera_path.{h,cpp}`) generates orbit,
+  ground-walk and flight keyframes with user-friendly parameters (eye height, spacing,
   pitch, ...).
 
 ### Root cause
@@ -857,3 +857,12 @@ provide a roll reference.
 - Validation: Vulkan Debug and OpenGL RelWithDebInfo rebuild; the complete non-desktop suites
   pass (Vulkan 67/67, OpenGL 48/48), and `vulkan.camerapath` passes. Interactive Mapple UI
   behavior was not visually checked.
+
+### 2026-11-25 — CameraPath naming matches its files
+
+- Mapple's authoring class is renamed `CameraPath` and now matches
+  `applications/Mapple/camera_path.{h,cpp}`; `.kf` composition lives in
+  `camera_path_io.{h,cpp}`. The free save/read API, provenance format and interpolation
+  behavior are unchanged.
+- The generation and I/O tests are `camera_path_test.cpp` and `camera_path_io_test.cpp`,
+  registered as `camerapathgeneration` and `camerapathio` for both backends.

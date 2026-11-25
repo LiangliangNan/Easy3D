@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#include "camera_path_builder.h"
+#include "camera_path.h"
 
 #include <algorithm>
 #include <cmath>
@@ -93,11 +93,11 @@ namespace mapple {
         }
     }
 
-    CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyframeInterpolator *interpolator)
+    CameraPath::CameraPath(Camera *camera, KeyframeInterpolator *interpolator)
             : camera_(camera), kfi_(interpolator) {
     }
 
-    void CameraPathBuilder::set_scene(const std::vector<std::shared_ptr<Model>> &scene) {
+    void CameraPath::set_scene(const std::vector<std::shared_ptr<Model>> &scene) {
         Box3 box;
         for (const auto &m : scene) {
             if (m->renderer() && m->renderer()->is_visible())
@@ -106,23 +106,23 @@ namespace mapple {
         scene_box_ = box;
     }
 
-    void CameraPathBuilder::set_eye_height_in_scene_heights(float height_in_scene_heights) {
+    void CameraPath::set_eye_height_in_scene_heights(float height_in_scene_heights) {
         settings_.eye_height_in_scene_heights = height_in_scene_heights;
     }
 
-    void CameraPathBuilder::set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights) {
+    void CameraPath::set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights) {
         settings_.keyframe_spacing_in_scene_heights = spacing_in_scene_heights;
     }
 
-    void CameraPathBuilder::set_follow_ground_slopes(bool follow_slopes) {
+    void CameraPath::set_follow_ground_slopes(bool follow_slopes) {
         settings_.follow_ground_slopes = follow_slopes;
     }
 
-    void CameraPathBuilder::set_ground_up_axis(GroundUpAxis axis) {
+    void CameraPath::set_ground_up_axis(GroundUpAxis axis) {
         settings_.ground_up_axis = axis;
     }
 
-    vec3 CameraPathBuilder::ground_up_direction() const {
+    vec3 CameraPath::ground_up_direction() const {
         // One anti-gravity direction for the whole path. Auto takes the world axis of the
         // scene box's shortest extent: a building or a terrain stands along the direction
         // it is least deep in, so that is the way up. The view's up is the last resort, for
@@ -167,7 +167,7 @@ namespace mapple {
         return up.normalize();
     }
 
-    float CameraPathBuilder::scene_height_in_world_units() const {
+    float CameraPath::scene_height_in_world_units() const {
         if (!scene_box_.is_valid())
             return camera_->scene_radius();
 
@@ -179,25 +179,25 @@ namespace mapple {
                std::abs(up.z) * scene_box_.range(2);
     }
 
-    float CameraPathBuilder::eye_height_in_world_units() const {
+    float CameraPath::eye_height_in_world_units() const {
         return scene_height_in_world_units() * settings_.eye_height_in_scene_heights;
     }
 
-    float CameraPathBuilder::flight_height_in_world_units() const {
+    float CameraPath::flight_height_in_world_units() const {
         return scene_height_in_world_units() * settings_.flight_height_in_scene_heights;
     }
 
-    float CameraPathBuilder::keyframe_spacing_in_world_units() const {
+    float CameraPath::keyframe_spacing_in_world_units() const {
         // Clamped to at least 1e-4, so a value at or below zero is accepted without
         // producing an unbounded number of keyframes.
         return std::max(1e-4f, scene_height_in_world_units() * settings_.keyframe_spacing_in_scene_heights);
     }
 
-    void CameraPathBuilder::set_flight_height_in_scene_heights(float height_in_scene_heights) {
+    void CameraPath::set_flight_height_in_scene_heights(float height_in_scene_heights) {
         settings_.flight_height_in_scene_heights = height_in_scene_heights;
     }
 
-    std::vector<vec3> CameraPathBuilder::lifted_feet(const std::vector<vec3> &feet, float height) const {
+    std::vector<vec3> CameraPath::lifted_feet(const std::vector<vec3> &feet, float height) const {
         const vec3 up = ground_up_direction();
         if (settings_.follow_ground_slopes) {
             // Each pose stands its own height above the point under it, so the track climbs
@@ -218,7 +218,7 @@ namespace mapple {
         return lifted;
     }
 
-    bool CameraPathBuilder::resample_track(const std::vector<vec3> &stroke, float height, float spacing,
+    bool CameraPath::resample_track(const std::vector<vec3> &stroke, float height, float spacing,
                                            std::vector<vec3> &feet, std::vector<vec3> &positions) const {
         feet.clear();
         positions.clear();
@@ -236,7 +236,7 @@ namespace mapple {
         return true;
     }
 
-    std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
+    std::size_t CameraPath::generate_ground_route(const std::vector<vec3> &stroke) {
         // One stroke, one route: frames_of() carries the derivation so a route built here and
         // one rebuilt later from the same input cannot drift apart.
         const std::vector<Frame> frames = frames_of(Source::walk({stroke}));
@@ -245,8 +245,8 @@ namespace mapple {
         return frames.size();
     }
 
-    std::vector<CameraPathBuilder::FlightStation>
-    CameraPathBuilder::flight_stations(const std::vector<vec3> &stroke) const {
+    std::vector<CameraPath::FlightStation>
+    CameraPath::flight_stations(const std::vector<vec3> &stroke) const {
         std::vector<FlightStation> stations;
         const float height = flight_height_in_world_units();
         if (height <= 1e-4f)
@@ -266,7 +266,7 @@ namespace mapple {
         return stations;
     }
 
-    std::vector<vec3> CameraPathBuilder::aim_targets(const std::vector<vec3> &stroke, std::size_t count) const {
+    std::vector<vec3> CameraPath::aim_targets(const std::vector<vec3> &stroke, std::size_t count) const {
         std::vector<vec3> targets;
         if (stroke.empty() || count == 0)
             return targets;
@@ -294,7 +294,7 @@ namespace mapple {
         return targets;
     }
 
-    std::size_t CameraPathBuilder::generate_flight(const std::vector<FlightStation> &stations,
+    std::size_t CameraPath::generate_flight(const std::vector<FlightStation> &stations,
                                                    const std::vector<vec3> &targets) {
         const std::vector<Frame> frames = flight_frames(stations, targets, ground_up_direction());
         for (const auto &frame : frames)
@@ -302,7 +302,7 @@ namespace mapple {
         return frames.size();
     }
 
-    std::size_t CameraPathBuilder::generate_orbit(const Line3 &axis, const vec3 &center) {
+    std::size_t CameraPath::generate_orbit(const Line3 &axis, const vec3 &center) {
         const std::size_t before = kfi_->number_of_keyframes();
         const std::vector<Frame> frames = orbit_frames(axis, center);
         for (const auto &frame : frames)
@@ -312,21 +312,21 @@ namespace mapple {
         return frames.size();
     }
 
-    CameraPathBuilder::Source CameraPathBuilder::Source::walk(std::vector<std::vector<vec3>> routes) {
+    CameraPath::Source CameraPath::Source::walk(std::vector<std::vector<vec3>> routes) {
         Source source;
         source.kind = Kind::Walk;
         source.strokes = std::move(routes);
         return source;
     }
 
-    CameraPathBuilder::Source CameraPathBuilder::Source::flight(std::vector<vec3> track) {
+    CameraPath::Source CameraPath::Source::flight(std::vector<vec3> track) {
         Source source;
         source.kind = Kind::Flight;
         source.strokes.push_back(std::move(track));
         return source;
     }
 
-    CameraPathBuilder::Source CameraPathBuilder::Source::orbit(const vec3 &anchor, const vec3 &center) {
+    CameraPath::Source CameraPath::Source::orbit(const vec3 &anchor, const vec3 &center) {
         Source source;
         source.kind = Kind::Orbit;
         source.anchor = anchor;
@@ -334,7 +334,7 @@ namespace mapple {
         return source;
     }
 
-    std::vector<Frame> CameraPathBuilder::frames_of(const Source &source) const {
+    std::vector<Frame> CameraPath::frames_of(const Source &source) const {
         std::vector<Frame> frames;
         switch (source.kind) {
             case Source::Kind::None:
@@ -392,7 +392,7 @@ namespace mapple {
         return aimed_frames(frames, targets);
     }
 
-    bool CameraPathBuilder::settings_changed_for(const Source &source, const Settings &built) const {
+    bool CameraPath::settings_changed_for(const Source &source, const Settings &built) const {
         // Comparison is exact, and only over the settings the mode reads: a control put back
         // where the path was built from is no change, and a setting outside the mode's set
         // cannot move one of its poses.
@@ -426,7 +426,7 @@ namespace mapple {
         return false;
     }
 
-    std::vector<Frame> CameraPathBuilder::orbit_frames(const Line3 &axis, const vec3 &center) const {
+    std::vector<Frame> CameraPath::orbit_frames(const Line3 &axis, const vec3 &center) const {
         std::vector<Frame> frames;
         if (!scene_box_.is_valid() || settings_.keyframes_per_loop < 2)
             return frames;
@@ -472,7 +472,7 @@ namespace mapple {
         return frames;
     }
 
-    std::vector<Frame> CameraPathBuilder::ground_frames(const std::vector<vec3> &feet,
+    std::vector<Frame> CameraPath::ground_frames(const std::vector<vec3> &feet,
                                                         const vec3 &up_direction,
                                                         float eye_height) const {
         std::vector<Frame> frames;
@@ -518,7 +518,7 @@ namespace mapple {
         return frames;
     }
 
-    std::vector<Frame> CameraPathBuilder::flight_frames(const std::vector<FlightStation> &stations,
+    std::vector<Frame> CameraPath::flight_frames(const std::vector<FlightStation> &stations,
                                                         const std::vector<vec3> &targets, const vec3 &up,
                                                         std::size_t look_ahead) const {
         std::vector<Frame> frames;
@@ -557,7 +557,7 @@ namespace mapple {
         return frames;
     }
 
-    std::vector<Frame> CameraPathBuilder::aimed_frames(const std::vector<Frame> &frames,
+    std::vector<Frame> CameraPath::aimed_frames(const std::vector<Frame> &frames,
                                                        const std::vector<vec3> &targets,
                                                        const std::vector<vec3> &roll_ups) const {
         std::vector<Frame> aimed;
@@ -578,23 +578,23 @@ namespace mapple {
         return aimed;
     }
 
-    void CameraPathBuilder::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights) {
+    void CameraPath::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights) {
         settings_.orbit_radius_offset_in_object_heights = offset_in_object_heights;
     }
 
-    void CameraPathBuilder::set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights) {
+    void CameraPath::set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights) {
         settings_.orbit_vertical_offset_in_object_heights = offset_in_object_heights;
     }
 
-    void CameraPathBuilder::set_pitch_degrees(float degrees) {
+    void CameraPath::set_pitch_degrees(float degrees) {
         settings_.pitch_degrees = degrees;
     }
 
-    void CameraPathBuilder::set_keyframes_per_loop(int count) {
+    void CameraPath::set_keyframes_per_loop(int count) {
         settings_.keyframes_per_loop = count;
     }
 
-    void CameraPathBuilder::add_keyframe(const Frame &frame) {
+    void CameraPath::add_keyframe(const Frame &frame) {
         if (kfi_->add_keyframe(frame)) {
             // keep the new keyframe inside the view frustum
             const float dist = distance(camera_->scene_center(), frame.position());
@@ -603,7 +603,7 @@ namespace mapple {
         }
     }
 
-    quat CameraPathBuilder::to_orientation(const vec3 &view_dir, const vec3 &up) {
+    quat CameraPath::to_orientation(const vec3 &view_dir, const vec3 &up) {
         vec3 up_dir = up;
         up_dir.normalize();
         vec3 dir = view_dir;
@@ -618,7 +618,7 @@ namespace mapple {
         return orient;
     }
 
-    quat CameraPathBuilder::look_at_orientation(const vec3 &position, const vec3 &target, const vec3 &up) {
+    quat CameraPath::look_at_orientation(const vec3 &position, const vec3 &target, const vec3 &up) {
         vec3 up_dir = up;
         if (up_dir.length2() < epsilon_sqr<float>())
             up_dir = vec3(0, 0, 1);

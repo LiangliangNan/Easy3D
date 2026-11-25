@@ -3049,3 +3049,19 @@ history was found and filled during the ToDo review.
   non-desktop suites pass (OpenGL RelWithDebInfo 48/48, Vulkan Debug 67/67). The rebuilt
   renderer library exports none of the three moved classes. Interactive Mapple behavior was
   not visually checked.
+
+### 2026-11-25 — CameraPath replaces CameraPathBuilder
+
+- The Mapple-owned authoring class is now `CameraPath`, matching its
+  `applications/Mapple/camera_path.{h,cpp}` files. Include guards, Doxygen references,
+  the viewer's `camera_path_` member, generated-path bookkeeping, UI callers and tests use
+  the same name.
+- `.kf` composition remains in `camera_path_io.{h,cpp}`. `save_camera_path()` and
+  `read_camera_path()` remain free functions; neither the file format nor path generation,
+  editing, interpolation or playback behavior changes.
+- The generation and file-I/O regressions are now `camera_path_test.cpp` and
+  `camera_path_io_test.cpp`, registered as `camerapathgeneration` and `camerapathio` in
+  each backend. Historical entries retain the names used at the time.
+- Validation: Mapple and the three affected test targets build with Vulkan Debug and
+  OpenGL RelWithDebInfo. `camerapathgeneration`, `camerapathio` and `generatedpath` pass
+  on both backends (3/3 each).

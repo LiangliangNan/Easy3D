@@ -10,10 +10,10 @@ add_executable(${name}
         imgui_layer.cpp
         keyframe_timeline.h
         keyframe_timeline.cpp
-        camera_path_file.h
-        camera_path_file.cpp
-        camera_path_builder.h
-        camera_path_builder.cpp
+        camera_path_io.h
+        camera_path_io.cpp
+        camera_path.h
+        camera_path.cpp
         keyframe_editor.h
         keyframe_editor.cpp
         keyframe_gizmo.h

@@ -275,9 +275,9 @@ MappleViewer::~MappleViewer() {
     settings_.log_auto_scroll = log_auto_scroll_;
     settings_.models_auto_focus = models_auto_focus_;
     settings_.models_selected_only = models_selected_only_;
-    if (camera_path_builder_) {
-        settings_.ground_up_axis = static_cast<int>(camera_path_builder_->ground_up_axis());
-        settings_.follow_ground_slopes = camera_path_builder_->follow_ground_slopes();
+    if (camera_path_) {
+        settings_.ground_up_axis = static_cast<int>(camera_path_->ground_up_axis());
+        settings_.follow_ground_slopes = camera_path_->follow_ground_slopes();
     }
 #ifdef HAS_FFMPEG
     settings_.video_bitrate_mbps = video_bitrate_mbps_;
@@ -335,17 +335,17 @@ void MappleViewer::init() {
     imgui_->set_display_size(width(), height());
 
     // The walking and orbit tools create keyframes on the app-owned camera path.
-    camera_path_builder_.reset(new mapple::CameraPathBuilder(camera(), kfi_.get()));
+    camera_path_.reset(new mapple::CameraPath(camera(), kfi_.get()));
     // The up rule of the ground modes survives a restart: a scene that needed +Y (or the
     // view's up) must not silently stand on Auto next time. An unknown stored value keeps
     // the default.
-    if (settings_.ground_up_axis >= static_cast<int>(mapple::CameraPathBuilder::GroundUpAxis::Auto) &&
-        settings_.ground_up_axis <= static_cast<int>(mapple::CameraPathBuilder::GroundUpAxis::View))
-        camera_path_builder_->set_ground_up_axis(
-                static_cast<mapple::CameraPathBuilder::GroundUpAxis>(settings_.ground_up_axis));
+    if (settings_.ground_up_axis >= static_cast<int>(mapple::CameraPath::GroundUpAxis::Auto) &&
+        settings_.ground_up_axis <= static_cast<int>(mapple::CameraPath::GroundUpAxis::View))
+        camera_path_->set_ground_up_axis(
+                static_cast<mapple::CameraPath::GroundUpAxis>(settings_.ground_up_axis));
     // The follow-slopes switch is stored beside it, so a track that should fly level stays
     // level next session.
-    camera_path_builder_->set_follow_ground_slopes(settings_.follow_ground_slopes);
+    camera_path_->set_follow_ground_slopes(settings_.follow_ground_slopes);
     // Editing the poses (handles, aiming, insert/delete) is the app's keyframe
     // editor; its undo point is the same one-level path snapshot as the path tools'.
     keyframe_editor_.reset(new mapple::KeyframeEditor(camera(), kfi_.get()));
@@ -756,7 +756,7 @@ bool MappleViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             // rule, so the press only has to say where the axis stands. Dragging on is the
             // camera looking for a better angle, not part of the orbit.
             apply_orbit_gesture(vec2(static_cast<float>(x), static_cast<float>(y)));
-        } else if (tool != PathTool::Aim && !camera_path_builder_->scene_box().is_valid())
+        } else if (tool != PathTool::Aim && !camera_path_->scene_box().is_valid())
             LOG(WARNING) << "the path tools need a visible model";
         else {
             // Every stroke follows the visible surface under the cursor, so the
@@ -1867,7 +1867,7 @@ void MappleViewer::append_scene_axes_overlay(std::vector<graphics::DrawCommand> 
 
     // The very box the up rule resolves from, so the triad and the window's readout describe
     // one scene; while no model was measured the camera's own scene parameters stand in.
-    const Box3 box = camera_path_builder_ ? camera_path_builder_->scene_box() : Box3();
+    const Box3 box = camera_path_ ? camera_path_->scene_box() : Box3();
     const float reach = box.is_valid() ? 0.5f * std::max({box.range(0), box.range(1), box.range(2)})
                                        : camera()->scene_radius();
     if (!(reach > 0.0f) || !std::isfinite(reach))

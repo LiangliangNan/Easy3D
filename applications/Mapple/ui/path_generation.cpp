@@ -34,15 +34,15 @@
 #include <vector>
 
 #include <easy3d/renderer/camera.h>
-#include "../camera_path_builder.h"
+#include "../camera_path.h"
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
 
 using namespace easy3d;
 
 namespace {
-    void capture_build_context(mapple::GeneratedPath &path, const mapple::CameraPathBuilder &builder, const Camera &camera) {
-        path.scene_box = builder.scene_box();
+    void capture_build_context(mapple::GeneratedPath &path, const mapple::CameraPath &camera_path, const Camera &camera) {
+        path.scene_box = camera_path.scene_box();
         path.scene_radius = camera.scene_radius();
         path.view_up = camera.up_vector();
         path.has_build_context = true;
@@ -64,13 +64,13 @@ MappleViewer::PathTool MappleViewer::generated_path_tool() const {
     if (!path)
         return PathTool::Off;
     switch (path->source.kind) {
-        case mapple::CameraPathBuilder::Source::Kind::Walk:
+        case mapple::CameraPath::Source::Kind::Walk:
             return PathTool::GroundWalk;
-        case mapple::CameraPathBuilder::Source::Kind::Flight:
+        case mapple::CameraPath::Source::Kind::Flight:
             return PathTool::Flight;
-        case mapple::CameraPathBuilder::Source::Kind::Orbit:
+        case mapple::CameraPath::Source::Kind::Orbit:
             return PathTool::Orbit;
-        case mapple::CameraPathBuilder::Source::Kind::None:
+        case mapple::CameraPath::Source::Kind::None:
             break;
     }
     return PathTool::Off;
@@ -83,13 +83,13 @@ const char *MappleViewer::generated_path_aims() const {
     if (!path->source.aims.empty())
         return path->source.aims.size() == 1 ? "at the clicked point" : "along the traced aims";
     switch (path->source.kind) {
-        case mapple::CameraPathBuilder::Source::Kind::Walk:
+        case mapple::CameraPath::Source::Kind::Walk:
             return "along the route";
-        case mapple::CameraPathBuilder::Source::Kind::Flight:
+        case mapple::CameraPath::Source::Kind::Flight:
             return "at the ground ahead";
-        case mapple::CameraPathBuilder::Source::Kind::Orbit:
+        case mapple::CameraPath::Source::Kind::Orbit:
             return "at the orbit axis";
-        case mapple::CameraPathBuilder::Source::Kind::None:
+        case mapple::CameraPath::Source::Kind::None:
             break;
     }
     return "";
@@ -148,12 +148,12 @@ void MappleViewer::grow_scene_radius_over_path() {
 }
 
 bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
-    if (!camera_path_builder_ || !kfi_ || generated_paths_.empty())
+    if (!camera_path_ || !kfi_ || generated_paths_.empty())
         return true;
 
     bool stale = force;
     for (const GeneratedPath &path : generated_paths_)
-        stale = stale || path.stale(*camera_path_builder_);
+        stale = stale || path.stale(*camera_path_);
     if (!stale)
         return true;
 
@@ -183,8 +183,8 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
     if (record_undo && (!camera_path_snapshot_.valid || !camera_path_snapshot_.from_rebuild))
         snapshot_camera_path();
 
-    camera_path_builder_->set_scene(models());
-    const mapple::CameraPathBuilder::Settings settings = camera_path_builder_->settings();
+    camera_path_->set_scene(models());
+    const mapple::CameraPath::Settings settings = camera_path_->settings();
 
     std::vector<Frame> frames;
     std::vector<float> times;
@@ -237,7 +237,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
         }
 
         const int new_first = static_cast<int>(frames.size());
-        const std::vector<Frame> generated = camera_path_builder_->frames_of(path.source);
+        const std::vector<Frame> generated = camera_path_->frames_of(path.source);
 
         // Zero eye/flight height and fewer than two orbit keyframes refuse a rebuild.
         // Keep the last accepted poses, but remember the refused settings so moving an
@@ -327,7 +327,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
         path.pending = false;
         path.built_settings = settings;
         path.build_failed = false;
-        capture_build_context(path, *camera_path_builder_, *camera());
+        capture_build_context(path, *camera_path_, *camera());
         cursor = old_last + 1;
     }
 
@@ -340,7 +340,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
     }
 
     const bool periodic = rebuilt.size() == 1 &&
-                          rebuilt.front().source.kind == mapple::CameraPathBuilder::Source::Kind::Orbit &&
+                          rebuilt.front().source.kind == mapple::CameraPath::Source::Kind::Orbit &&
                           rebuilt.front().first == 0 &&
                           rebuilt.front().last == static_cast<int>(frames.size()) - 1;
     if (!write_camera_path(frames, times, dwells, periodic)) {
@@ -367,19 +367,19 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
 }
 
 void MappleViewer::commit_ground_route() {
-    if (!camera_path_builder_)
+    if (!camera_path_)
         return;
     if (route_segment_.size() >= 2)
         route_segments_.push_back(route_segment_);
     route_segment_.clear();
 
-    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::walk(std::move(route_segments_));
+    mapple::CameraPath::Source source = mapple::CameraPath::Source::walk(std::move(route_segments_));
     route_segments_.clear();
-    if (camera_path_builder_->eye_height_in_world_units() <= 1e-4f) {
+    if (camera_path_->eye_height_in_world_units() <= 1e-4f) {
         LOG(WARNING) << "set a positive Eye height to generate walking keyframes";
         return;
     }
-    if (camera_path_builder_->frames_of(source).empty()) {
+    if (camera_path_->frames_of(source).empty()) {
         LOG(WARNING) << "the stroke is too short to generate walking keyframes";
         return;
     }
@@ -387,8 +387,8 @@ void MappleViewer::commit_ground_route() {
     const int before = static_cast<int>(kfi_->number_of_keyframes());
     GeneratedPath path;
     path.source = std::move(source);
-    path.built_settings = camera_path_builder_->settings();
-    capture_build_context(path, *camera_path_builder_, *camera());
+    path.built_settings = camera_path_->settings();
+    capture_build_context(path, *camera_path_, *camera());
     path.first = before;
     path.last = before - 1;
     generated_paths_.push_back(std::move(path));
@@ -406,7 +406,7 @@ void MappleViewer::commit_ground_route() {
 }
 
 void MappleViewer::commit_flight_track() {
-    if (!camera_path_builder_)
+    if (!camera_path_)
         return;
     if (route_segment_.size() >= 2)
         route_segments_.push_back(route_segment_);
@@ -419,12 +419,12 @@ void MappleViewer::commit_flight_track() {
         points.insert(points.end(), segment.begin(), segment.end());
     route_segments_.clear();
 
-    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::flight(std::move(points));
-    if (camera_path_builder_->flight_height_in_world_units() <= 1e-4f) {
+    mapple::CameraPath::Source source = mapple::CameraPath::Source::flight(std::move(points));
+    if (camera_path_->flight_height_in_world_units() <= 1e-4f) {
         LOG(WARNING) << "set a positive Flight height to trace a flight track";
         return;
     }
-    if (camera_path_builder_->frames_of(source).size() < 2) {
+    if (camera_path_->frames_of(source).size() < 2) {
         LOG(WARNING) << "the stroke is too short to trace a flight track";
         return;
     }
@@ -432,8 +432,8 @@ void MappleViewer::commit_flight_track() {
     const int before = static_cast<int>(kfi_->number_of_keyframes());
     GeneratedPath path;
     path.source = std::move(source);
-    path.built_settings = camera_path_builder_->settings();
-    capture_build_context(path, *camera_path_builder_, *camera());
+    path.built_settings = camera_path_->settings();
+    capture_build_context(path, *camera_path_, *camera());
     path.first = before;
     path.last = before - 1;
     generated_paths_.push_back(std::move(path));
@@ -451,10 +451,10 @@ void MappleViewer::commit_flight_track() {
 }
 
 void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
-    if (!camera_path_builder_)
+    if (!camera_path_)
         return;
-    camera_path_builder_->set_scene(models());
-    if (!camera_path_builder_->scene_box().is_valid()) {
+    camera_path_->set_scene(models());
+    if (!camera_path_->scene_box().is_valid()) {
         LOG(WARNING) << "the orbit needs a visible model";
         return;
     }
@@ -464,8 +464,8 @@ void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
         LOG(WARNING) << "the orbit has to start on a visible model surface";
         return;
     }
-    mapple::CameraPathBuilder::Source source = mapple::CameraPathBuilder::Source::orbit(hit.position, camera()->scene_center());
-    if (camera_path_builder_->frames_of(source).empty()) {
+    mapple::CameraPath::Source source = mapple::CameraPath::Source::orbit(hit.position, camera()->scene_center());
+    if (camera_path_->frames_of(source).empty()) {
         LOG(WARNING) << "the orbit settings could not generate any keyframes";
         return;
     }
@@ -475,8 +475,8 @@ void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
     std::vector<GeneratedPath> previous = std::move(generated_paths_);
     GeneratedPath path;
     path.source = std::move(source);
-    path.built_settings = camera_path_builder_->settings();
-    capture_build_context(path, *camera_path_builder_, *camera());
+    path.built_settings = camera_path_->settings();
+    capture_build_context(path, *camera_path_, *camera());
     path.first = 0;
     path.last = static_cast<int>(kfi_->number_of_keyframes()) - 1;
     generated_paths_.push_back(std::move(path));
@@ -492,7 +492,7 @@ void MappleViewer::apply_orbit_gesture(const vec2 &anchor) {
 }
 
 void MappleViewer::commit_aim_stroke() {
-    if (!camera_path_builder_)
+    if (!camera_path_)
         return;
 
     // Keep the last segment even when it holds only the click's single sample: one point
@@ -517,10 +517,10 @@ void MappleViewer::commit_aim_stroke() {
     }
 
     const std::vector<vec3> previous_aims = path->source.aims;
-    camera_path_builder_->set_scene(models());
-    mapple::CameraPathBuilder::Source aimed = path->source;
+    camera_path_->set_scene(models());
+    mapple::CameraPath::Source aimed = path->source;
     aimed.aims = points;
-    if (camera_path_builder_->frames_of(aimed).empty()) {
+    if (camera_path_->frames_of(aimed).empty()) {
         LOG(WARNING) << "the current path settings cannot generate poses to re-aim";
         return;
     }
@@ -557,7 +557,7 @@ bool MappleViewer::undo_camera_path() {
         return false;
     const std::vector<GeneratedPath> &paths = camera_path_snapshot_.generated_paths;
     const bool periodic = paths.size() == 1 &&
-                          paths.front().source.kind == mapple::CameraPathBuilder::Source::Kind::Orbit &&
+                          paths.front().source.kind == mapple::CameraPath::Source::Kind::Orbit &&
                           paths.front().first == 0 &&
                           paths.front().last == static_cast<int>(camera_path_snapshot_.frames.size()) - 1;
     if (!write_camera_path(camera_path_snapshot_.frames, camera_path_snapshot_.times,

@@ -9,18 +9,18 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
-#include "../../applications/Mapple/camera_path_builder.h"
+#include "../../applications/Mapple/camera_path.h"
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
 #include <3rd_party/nlohmann/json.hpp>
 
-#include "../../applications/Mapple/camera_path_file.h"
+#include "../../applications/Mapple/camera_path_io.h"
 #include "../test.h"
 
 using namespace easy3d;
-using mapple::CameraPathBuilder;
+using mapple::CameraPath;
 using easy3d::test::require;
 
 namespace {
@@ -31,8 +31,8 @@ namespace {
         std::string name;
     };
 
-    void capture_context(mapple::GeneratedPath &path, const CameraPathBuilder &builder, const Camera &camera) {
-        path.scene_box = builder.scene_box();
+    void capture_context(mapple::GeneratedPath &path, const CameraPath &camera_path, const Camera &camera) {
+        path.scene_box = camera_path.scene_box();
         path.scene_radius = camera.scene_radius();
         path.view_up = camera.up_vector();
         path.has_build_context = true;
@@ -96,17 +96,17 @@ namespace {
         Camera camera;
         camera.set_scene_radius(100.0f);
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         const vec3 lo(1000.0f, 20.0f, 2000.0f);
         const vec3 hi(3000.0f, 60.0f, 4000.0f);
         const Box3 box(lo, hi);
         require(box.min_point() == lo && box.max_point() == hi,
                 "constructing a box with positive corners expanded it to the origin");
         builder.set_scene_box(box);
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         builder.set_settings(settings);
-        const CameraPathBuilder::Source input = CameraPathBuilder::Source::walk({
+        const CameraPath::Source input = CameraPath::Source::walk({
                 {vec3(1200.0f, 30.0f, 2200.0f), vec3(2000.0f, 30.0f, 3000.0f),
                  vec3(2800.0f, 30.0f, 3800.0f)}
         });
@@ -151,12 +151,12 @@ namespace {
         Camera camera;
         camera.set_scene_radius(20.0f);
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         builder.set_settings(settings);
-        const CameraPathBuilder::Source input = CameraPathBuilder::Source::walk({
+        const CameraPath::Source input = CameraPath::Source::walk({
                 {vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)}
         });
         const std::vector<Frame> generated = builder.frames_of(input);
@@ -217,14 +217,14 @@ namespace {
         camera.set_scene_radius(12.0f);
         camera.set_up_vector(normalize(vec3(0.2f, 1.0f, 0.1f)));
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::View;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::View;
         settings.eye_height_in_scene_heights = 0.3f;
         settings.keyframe_spacing_in_scene_heights = 0.15f;
         builder.set_settings(settings);
-        CameraPathBuilder::Source input = CameraPathBuilder::Source::walk({
+        CameraPath::Source input = CameraPath::Source::walk({
                 {vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)}
         });
         const std::vector<Frame> generated = builder.frames_of(input);
@@ -240,7 +240,7 @@ namespace {
         Camera replay_camera;
         replay_camera.set_scene_radius(path.scene_radius);
         replay_camera.set_up_vector(path.view_up);
-        CameraPathBuilder replay(&replay_camera, nullptr);
+        CameraPath replay(&replay_camera, nullptr);
         replay.set_scene_box(path.scene_box);
         replay.set_settings(path.built_settings);
         const std::vector<Frame> replayed = replay.frames_of(path.source);
@@ -270,7 +270,7 @@ namespace {
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading walk provenance failed");
         require(result.generated_paths.size() == 1, "the walk provenance was not restored");
-        require(result.generated_paths.front().source.kind == CameraPathBuilder::Source::Kind::Walk,
+        require(result.generated_paths.front().source.kind == CameraPath::Source::Kind::Walk,
                 "the walk mode was not restored");
         require(result.generated_paths.front().manual_before == std::vector<int>{2},
                 "the manual gap was not restored");
@@ -279,7 +279,7 @@ namespace {
 
         builder.set_settings(result.settings);
         builder.set_scene_box(result.generated_paths.front().scene_box);
-        CameraPathBuilder::Settings changed = result.settings;
+        CameraPath::Settings changed = result.settings;
         changed.eye_height_in_scene_heights *= 2.0f;
         builder.set_settings(changed);
         const std::vector<Frame> rebuilt = builder.frames_of(result.generated_paths.front().source);
@@ -293,12 +293,12 @@ namespace {
         camera.set_scene_radius(2.0f);
         camera.set_up_vector(normalize(vec3(0.2f, 1.0f, 0.1f)));
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::View;
+        CameraPath builder(&camera, &source);
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::View;
         settings.keyframe_spacing_in_scene_heights = 0.15f;
         builder.set_settings(settings);
-        const CameraPathBuilder::Source input = CameraPathBuilder::Source::walk({
+        const CameraPath::Source input = CameraPath::Source::walk({
                 {vec3(-1.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f)}
         });
         const std::vector<Frame> generated = builder.frames_of(input);
@@ -328,14 +328,14 @@ namespace {
         Camera camera;
         camera.set_scene_radius(10.0f);
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         settings.flight_height_in_scene_heights = 1.5f;
         settings.keyframe_spacing_in_scene_heights = 0.5f;
         builder.set_settings(settings);
-        CameraPathBuilder::Source input = CameraPathBuilder::Source::flight({
+        CameraPath::Source input = CameraPath::Source::flight({
                 vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)
         });
         input.aims = {vec3(0.0f, 0.0f, -2.0f), vec3(0.0f, 0.0f, 2.0f)};
@@ -356,7 +356,7 @@ namespace {
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading flight provenance failed");
         require(result.generated_paths.size() == 1 &&
-                result.generated_paths.front().source.kind == CameraPathBuilder::Source::Kind::Flight,
+                result.generated_paths.front().source.kind == CameraPath::Source::Kind::Flight,
                 "the flight provenance was not restored");
         require(result.generated_paths.front().source.aims.size() == 2, "the flight aims were not restored");
         require_same_path(source, loaded);
@@ -369,10 +369,10 @@ namespace {
         camera.set_scene_radius(12.0f);
         camera.set_up_vector(vec3(0.0f, 0.0f, 1.0f));
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-8.0f, -1.0f, -5.0f), vec3(8.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         settings.eye_height_in_scene_heights = 0.3f;
         settings.keyframe_spacing_in_scene_heights = 0.4f;
         settings.flight_height_in_scene_heights = 1.0f;
@@ -388,7 +388,7 @@ namespace {
         };
         append(Frame(vec3(-3.0f, 0.0f, 0.0f), quat()));
 
-        CameraPathBuilder::Source walk = CameraPathBuilder::Source::walk({
+        CameraPath::Source walk = CameraPath::Source::walk({
                 {vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)}
         });
         const std::vector<Frame> walk_frames = builder.frames_of(walk);
@@ -402,7 +402,7 @@ namespace {
             append(frame);
         walk_path.last = count - 1;
 
-        CameraPathBuilder::Source flight = CameraPathBuilder::Source::flight({
+        CameraPath::Source flight = CameraPath::Source::flight({
                 vec3(3.0f, 0.0f, 0.0f), vec3(4.5f, 0.0f, 0.0f), vec3(6.0f, 0.0f, 0.0f)
         });
         const std::vector<Frame> flight_frames = builder.frames_of(flight);
@@ -434,8 +434,8 @@ namespace {
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading multiple provenance blocks failed");
         require(result.generated_paths.size() == 2, "not all provenance blocks were restored");
-        require(result.generated_paths[0].source.kind == CameraPathBuilder::Source::Kind::Walk &&
-                        result.generated_paths[1].source.kind == CameraPathBuilder::Source::Kind::Flight,
+        require(result.generated_paths[0].source.kind == CameraPath::Source::Kind::Walk &&
+                        result.generated_paths[1].source.kind == CameraPath::Source::Kind::Flight,
                 "the provenance block modes changed");
         require(result.generated_paths.front().first == 1 &&
                         result.generated_paths.back().last == count - 2,
@@ -451,14 +451,14 @@ namespace {
         Camera camera;
         camera.set_scene_radius(10.0f);
         KeyframeInterpolator source(camera.frame());
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Z;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Z;
         settings.keyframes_per_loop = 12;
         settings.pitch_degrees = 8.0f;
         builder.set_settings(settings);
-        CameraPathBuilder::Source input = CameraPathBuilder::Source::orbit(vec3(0.0f), vec3(0.0f));
+        CameraPath::Source input = CameraPath::Source::orbit(vec3(0.0f), vec3(0.0f));
         const std::vector<Frame> generated = builder.frames_of(input);
         require(generated.size() == 13, "the orbit fixture has the wrong pose count");
         add_frames(source, generated);
@@ -477,7 +477,7 @@ namespace {
         mapple::LoadedCameraPath result;
         require(mapple::read_camera_path(file.name, &loaded, result), "loading orbit provenance failed");
         require(result.generated_paths.size() == 1 &&
-                result.generated_paths.front().source.kind == CameraPathBuilder::Source::Kind::Orbit,
+                result.generated_paths.front().source.kind == CameraPath::Source::Kind::Orbit,
                 "the orbit provenance was not restored");
         require_same_path(source, loaded);
         require(loaded.is_path_periodic(), "the loaded orbit did not restore periodic interpolation");
@@ -586,12 +586,12 @@ namespace {
         require_same_path(source, incompatible_loaded);
 
         TestFile edited("mapple-edited-provenance.kf");
-        CameraPathBuilder builder(&camera, &source);
+        CameraPath builder(&camera, &source);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
-        CameraPathBuilder::Settings settings;
-        settings.ground_up_axis = CameraPathBuilder::GroundUpAxis::Y;
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
         builder.set_settings(settings);
-        CameraPathBuilder::Source input = CameraPathBuilder::Source::walk({
+        CameraPath::Source input = CameraPath::Source::walk({
                 {vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)}
         });
         const std::vector<Frame> generated = builder.frames_of(input);
@@ -614,7 +614,7 @@ namespace {
         TestFile distant_edit("mapple-distant-edit-provenance.kf");
         const vec3 offset(1000000.0f, 0.0f, 0.0f);
         builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f) + offset, vec3(5.0f, 1.0f, 5.0f) + offset));
-        CameraPathBuilder::Source distant_input = CameraPathBuilder::Source::walk({
+        CameraPath::Source distant_input = CameraPath::Source::walk({
                 {vec3(-2.0f, 0.0f, 0.0f) + offset,
                  vec3(0.0f, 0.0f, 0.0f) + offset,
                  vec3(2.0f, 0.0f, 0.0f) + offset}
@@ -646,7 +646,7 @@ namespace {
         add_frames(source, {Frame(vec3(0.0f), quat()), Frame(vec3(1.0f), quat()), Frame(vec3(2.0f), quat())});
 
         mapple::GeneratedPath path;
-        path.source = CameraPathBuilder::Source::walk({{{0.0f, 0.0f, 0.0f}, {2.0f, 0.0f, 0.0f}}});
+        path.source = CameraPath::Source::walk({{{0.0f, 0.0f, 0.0f}, {2.0f, 0.0f, 0.0f}}});
         path.first = 0;
         path.last = 2;
         path.pending = false;

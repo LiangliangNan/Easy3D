@@ -1,4 +1,4 @@
-#include "camera_path_file.h"
+#include "camera_path_io.h"
 
 #include <algorithm>
 #include <cmath>
@@ -11,7 +11,7 @@
 
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
-#include "camera_path_builder.h"
+#include "camera_path.h"
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
 #include <easy3d/util/logging.h>
@@ -43,65 +43,65 @@ namespace {
         return true;
     }
 
-    const char *mode_name(CameraPathBuilder::Source::Kind kind) {
+    const char *mode_name(CameraPath::Source::Kind kind) {
         switch (kind) {
-            case CameraPathBuilder::Source::Kind::Walk:
+            case CameraPath::Source::Kind::Walk:
                 return "walk";
-            case CameraPathBuilder::Source::Kind::Flight:
+            case CameraPath::Source::Kind::Flight:
                 return "flight";
-            case CameraPathBuilder::Source::Kind::Orbit:
+            case CameraPath::Source::Kind::Orbit:
                 return "orbit";
-            case CameraPathBuilder::Source::Kind::None:
+            case CameraPath::Source::Kind::None:
                 break;
         }
         return "";
     }
 
-    bool read_mode(const std::string &name, CameraPathBuilder::Source::Kind &kind) {
+    bool read_mode(const std::string &name, CameraPath::Source::Kind &kind) {
         if (name == "walk")
-            kind = CameraPathBuilder::Source::Kind::Walk;
+            kind = CameraPath::Source::Kind::Walk;
         else if (name == "flight")
-            kind = CameraPathBuilder::Source::Kind::Flight;
+            kind = CameraPath::Source::Kind::Flight;
         else if (name == "orbit")
-            kind = CameraPathBuilder::Source::Kind::Orbit;
+            kind = CameraPath::Source::Kind::Orbit;
         else
             return false;
         return true;
     }
 
-    const char *up_axis_name(CameraPathBuilder::GroundUpAxis axis) {
+    const char *up_axis_name(CameraPath::GroundUpAxis axis) {
         switch (axis) {
-            case CameraPathBuilder::GroundUpAxis::Auto:
+            case CameraPath::GroundUpAxis::Auto:
                 return "auto";
-            case CameraPathBuilder::GroundUpAxis::X:
+            case CameraPath::GroundUpAxis::X:
                 return "x";
-            case CameraPathBuilder::GroundUpAxis::Y:
+            case CameraPath::GroundUpAxis::Y:
                 return "y";
-            case CameraPathBuilder::GroundUpAxis::Z:
+            case CameraPath::GroundUpAxis::Z:
                 return "z";
-            case CameraPathBuilder::GroundUpAxis::View:
+            case CameraPath::GroundUpAxis::View:
                 return "view";
         }
         return "";
     }
 
-    bool read_up_axis(const std::string &name, CameraPathBuilder::GroundUpAxis &axis) {
+    bool read_up_axis(const std::string &name, CameraPath::GroundUpAxis &axis) {
         if (name == "auto")
-            axis = CameraPathBuilder::GroundUpAxis::Auto;
+            axis = CameraPath::GroundUpAxis::Auto;
         else if (name == "x")
-            axis = CameraPathBuilder::GroundUpAxis::X;
+            axis = CameraPath::GroundUpAxis::X;
         else if (name == "y")
-            axis = CameraPathBuilder::GroundUpAxis::Y;
+            axis = CameraPath::GroundUpAxis::Y;
         else if (name == "z")
-            axis = CameraPathBuilder::GroundUpAxis::Z;
+            axis = CameraPath::GroundUpAxis::Z;
         else if (name == "view")
-            axis = CameraPathBuilder::GroundUpAxis::View;
+            axis = CameraPath::GroundUpAxis::View;
         else
             return false;
         return true;
     }
 
-    json write_settings(const CameraPathBuilder::Settings &settings) {
+    json write_settings(const CameraPath::Settings &settings) {
         return {
                 {"ground_up_axis", up_axis_name(settings.ground_up_axis)},
                 {"eye_height", settings.eye_height_in_scene_heights},
@@ -119,10 +119,10 @@ namespace {
         return std::isfinite(value);
     }
 
-    bool read_settings(const json &value, CameraPathBuilder::Settings &settings) {
+    bool read_settings(const json &value, CameraPath::Settings &settings) {
         if (!value.is_object())
             return false;
-        settings = CameraPathBuilder::Settings();
+        settings = CameraPath::Settings();
         if (!read_up_axis(value.at("ground_up_axis").get<std::string>(), settings.ground_up_axis))
             return false;
         settings.eye_height_in_scene_heights = value.at("eye_height").get<float>();
@@ -147,7 +147,7 @@ namespace {
                settings.keyframes_per_loop >= 2 && settings.keyframes_per_loop <= 99;
     }
 
-    json write_source(const CameraPathBuilder::Source &source) {
+    json write_source(const CameraPath::Source &source) {
         json strokes = json::array();
         for (const auto &stroke : source.strokes) {
             json points = json::array();
@@ -167,7 +167,7 @@ namespace {
         };
     }
 
-    bool read_source(const json &value, CameraPathBuilder::Source &source) {
+    bool read_source(const json &value, CameraPath::Source &source) {
         if (!value.is_object() || !read_mode(value.at("mode").get<std::string>(), source.kind))
             return false;
         source.strokes.clear();
@@ -294,10 +294,10 @@ namespace {
         Camera camera;
         camera.set_scene_radius(path.scene_radius);
         camera.set_up_vector(path.view_up);
-        CameraPathBuilder builder(&camera, nullptr);
-        builder.set_scene_box(path.scene_box);
-        builder.set_settings(path.built_settings);
-        return builder.frames_of(path.source);
+        CameraPath camera_path(&camera, nullptr);
+        camera_path.set_scene_box(path.scene_box);
+        camera_path.set_settings(path.built_settings);
+        return camera_path.frames_of(path.source);
     }
 
     bool matches_generated_path(const GeneratedPath &path, const KeyframeInterpolator &interpolator,
@@ -358,7 +358,7 @@ namespace {
                 return false;
         }
 
-        const bool periodic = paths.size() == 1 && paths.front().source.kind == CameraPathBuilder::Source::Kind::Orbit &&
+        const bool periodic = paths.size() == 1 && paths.front().source.kind == CameraPath::Source::Kind::Orbit &&
                               paths.front().first == 0 &&
                               paths.front().last == static_cast<int>(interpolator->number_of_keyframes()) - 1;
         if (provenance.find("playback") != provenance.end() &&
@@ -377,7 +377,7 @@ namespace {
         int cursor = 0;
         for (const GeneratedPath &path : paths) {
             if (!path.has_build_context || path.pending || path.build_failed ||
-                path.source.kind == CameraPathBuilder::Source::Kind::None ||
+                path.source.kind == CameraPath::Source::Kind::None ||
                 path.first < cursor || path.last < path.first || path.last >= count ||
                 !valid_manual_gaps(path) || !finite(path.scene_radius) ||
                 path.scene_radius <= 0.0f || path.view_up.length2() <= std::numeric_limits<float>::epsilon())
@@ -420,7 +420,7 @@ bool save_camera_path(const std::string &file_name,
 
 bool read_camera_path(const std::string &file_name, KeyframeInterpolator *interpolator, LoadedCameraPath &loaded) {
     loaded.generated_paths.clear();
-    loaded.settings = CameraPathBuilder::Settings();
+    loaded.settings = CameraPath::Settings();
     std::ifstream input(file_name.c_str());
     if (input.fail() || !interpolator->load_keyframes(input))
         return false;
