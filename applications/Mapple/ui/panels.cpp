@@ -239,10 +239,10 @@ bool is_current_scheme(const Drawable *drawable, const ColorScheme &scheme) {
            drawable->property_name() == scheme.property;
 }
 
-// The colormaps shipped in resources/colormaps; "random" is generated.
+// The colormaps shipped in resources/colormaps; "color_table" is generated.
 struct ColormapEntry {
     std::string name;
-    std::string file; // empty for the generated random colormap
+    std::string file; // empty for the generated "color_table" colormap
 };
 
 const std::vector<ColormapEntry> &colormaps() {
@@ -250,11 +250,11 @@ const std::vector<ColormapEntry> &colormaps() {
     if (entries.empty()) {
         const std::string dir = resource::directory() + "/colormaps/";
         const char *names[] = {"default", "french", "rainbow", "blue_red",
-                               "blue_white", "blue_yellow", "black_white", "random"};
+                               "blue_white", "blue_yellow", "black_white", "color_table"};
         for (const char *name : names) {
             ColormapEntry entry;
             entry.name = name;
-            if (entry.name != "random")
+            if (entry.name != "color_table")
                 entry.file = dir + entry.name + ".png";
             if (entry.file.empty() || file_system::is_file(entry.file))
                 entries.push_back(entry);
@@ -949,7 +949,7 @@ Texture *MappleViewer::scalar_texture(const ScalarFieldStyle &style) const {
     const int index = std::max(0, std::min(style.colormap, static_cast<int>(entries.size()) - 1));
     const ColormapEntry &entry = entries[index];
     const int stripes = std::max(1, std::min(style.stripes, 256));
-    if (entry.name == "random")
+    if (entry.name == "color_table")
         return TextureManager::request(stripes, 256 / stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     if (style.discrete)
         return TextureManager::request(entry.file, stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);

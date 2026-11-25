@@ -196,10 +196,11 @@ namespace easy3d {
 
 
     void VertexArrayObject::get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data) {
+        GLint binding = 0;
+        glGetIntegerv(target == GL_ELEMENT_ARRAY_BUFFER ? GL_ELEMENT_ARRAY_BUFFER_BINDING : GL_ARRAY_BUFFER_BINDING,
+                      &binding);
         glBindBuffer(target, buffer);                   easy3d_debug_log_gl_error
-		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);	easy3d_debug_log_gl_error
-		glGetBufferSubData(target, offset, size, data);	easy3d_debug_log_gl_error
-        glBindBuffer(target, 0);                        easy3d_debug_log_gl_error
+        glGetBufferSubData(target, offset, size, data); easy3d_debug_log_gl_error
+        glBindBuffer(target, GLuint(binding));          easy3d_debug_log_gl_error
 	}
 }

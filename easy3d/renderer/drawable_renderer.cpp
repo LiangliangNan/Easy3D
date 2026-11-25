@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  \endcond */
 
-#include "drawable.h"
+#include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -40,7 +40,7 @@
 #include <stdexcept>
 
 namespace easy3d {
-    namespace vulkan {
+    namespace graphics {
         struct DrawableRenderer::Impl {
             struct Cached {
                 std::weak_ptr<Drawable> source;
@@ -49,6 +49,8 @@ namespace easy3d {
                 bool flat_shading = false;
                 bool textured = false;
                 bool selection_marked = false;
+                bool mask_marked = false;
+                std::vector<float> highlight_strengths;
                 vec4 highlight_color = vec4(0);
                 float repeat = 1;
                 std::shared_ptr<const graphics::Geometry> geometry;
@@ -69,11 +71,9 @@ namespace easy3d {
                                                  const Camera &camera) const {
                 auto &d = *drawable;
                 const auto width = static_cast<LinesDrawable2D &>(d).line_width();
-                if (!d.has_cpu_buffers())
-                    throw std::logic_error("Vulkan screen-space lines require CPU buffers");
                 if (d.coloring_method() != State::UNIFORM_COLOR)
                     throw std::logic_error("screen-space lines support uniform coloring only");
-                const auto &data = d.cpu_buffers();
+                const auto &data = d.buffer_data();
                 auto &entry = screen_lines[&d];
                 if (entry.source.lock() != drawable || !entry.command.geometry || entry.revision != data.revision ||
                     entry.width != camera.screen_width() || entry.height != camera.screen_height() ||
@@ -152,8 +152,6 @@ namespace easy3d {
                 auto &d = *drawable;
                 if (dynamic_cast<LinesDrawable2D *>(&d))
                     return screen_command(drawable, cam);
-                if (!d.has_cpu_buffers())
-                    throw std::logic_error("drawable must use CPU buffers before Vulkan rendering");
                 if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
                     d.coloring_method() != State::TEXTURED && d.coloring_method() != State::SCALAR_FIELD)
                     throw std::logic_error("unknown drawable coloring method");
@@ -173,7 +171,7 @@ namespace easy3d {
                 }
                 // As with the legacy opaque pass, TrianglesDrawable::opacity() is only
                 // meaningful in a separate transparency pass (not implemented here).
-                const auto &buffers = d.cpu_buffers();
+                const auto &buffers = d.buffer_data();
                 if (auto *p = dynamic_cast<PointsDrawable *>(&d))
                     if (p->impostor_type() == PointsDrawable::SURFEL && !buffers.vertices.empty() &&
                         buffers.normals.empty())
@@ -198,7 +196,8 @@ namespace easy3d {
                 if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
                     entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
                     entry.textured != textured || (textured && entry.repeat != repeat) ||
-                    entry.selection_marked != selection_marked ||
+                    entry.selection_marked != selection_marked || entry.mask_marked != mask_marked ||
+                    entry.highlight_strengths != mask ||
                     entry.highlight_color != setting::highlight_color) {
                     const auto n = buffers.vertices.size();
                     if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
@@ -230,9 +229,16 @@ namespace easy3d {
                             const auto index = buffers.indices.empty() ? uint32_t(i) : buffers.indices[i];
                             if (index >= n)
                                 throw std::out_of_range("point drawable index out of range");
-                            if (unchanged && (entry.points->positions()[i] != buffers.vertices[index] ||
-                                              entry.points->source_ids()[i] != index))
-                                unchanged = false;
+                            if (unchanged) {
+                                const auto &previous = entry.points->positions()[i];
+                                const auto &current = buffers.vertices[index];
+                                for (int axis = 0; axis < 3; ++axis)
+                                    if (previous[axis] != current[axis] &&
+                                        (std::isfinite(previous[axis]) || std::isfinite(current[axis])))
+                                        unchanged = false;
+                                if (entry.points->source_ids()[i] != index)
+                                    unchanged = false;
+                            }
                         }
                         if (!unchanged) {
                             std::vector<vec3> positions;
@@ -297,6 +303,8 @@ namespace easy3d {
                                                                  std::vector<uint32_t>{}, entry.points);
                     }
                     entry.selection_marked = selection_marked;
+                    entry.mask_marked = mask_marked;
+                    entry.highlight_strengths = mask;
                     entry.highlight_color = setting::highlight_color;
                     entry.source = drawable;
                     entry.revision = buffers.revision;
@@ -392,7 +400,7 @@ namespace easy3d {
                             result.eye = vec3(0);
                             result.light = vec3(setting::light_position);
                         }
-                        if (p->impostor_type() != PointsDrawable::SPHERE && d.cpu_buffers().normals.empty())
+                        if (p->impostor_type() != PointsDrawable::SPHERE && d.buffer_data().normals.empty())
                             result.lighting = false;
                     }
                 }
@@ -436,5 +444,5 @@ namespace easy3d {
             impl_->cache.clear();
             impl_->screen_lines.clear();
         }
-    } // namespace vulkan
+    } // namespace graphics
 } // namespace easy3d

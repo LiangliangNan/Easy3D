@@ -838,7 +838,7 @@ EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/tutorials/*.h \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/clipping.cpp \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/dispatch_functions.h \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/loader.h \
-                         @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/drawable.h \
+                         @PROJECT_SOURCE_DIR@/easy3d/renderer/drawable_renderer.h \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/clipping_plane.h \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/backends/vulkan/*.cpp \
                          @PROJECT_SOURCE_DIR@/easy3d/renderer/frame.cpp \

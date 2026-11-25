@@ -37,8 +37,7 @@ namespace easy3d {
 
     class FramebufferObject;
     class Drawable;
-    namespace graphics { class RenderDevice; struct DrawCommand; }
-    namespace vulkan { class DrawableRenderer; }
+    namespace graphics { class RenderDevice; class DrawableRenderer; struct DrawCommand; }
 
     /**
      * \brief Base class for the camera-based picking tools.
@@ -64,15 +63,17 @@ namespace easy3d {
      *        all elements at once and only a compact result (a packed bitmask) is
      *        read back.
      *
-     *      Each technique has one implementation per backend:
+     *      Both backends use the shared graphics::RenderDevice for supported
+     *      single-element picks and point-region selection:
      *
-     *      - OpenGL renders into a private FramebufferObject with selection
-     *        shaders, reads the pixel with glReadPixels, and evaluates regions in a
-     *        vertex shader with transform feedback (each invocation owns one 32-bit
-     *        selection word, avoiding atomics on OpenGL 3.2).
-     *      - Vulkan delegates to the backend-neutral graphics::RenderDevice, which
-     *        re-submits the draw command and samples the ID/depth pixel, and runs
-     *        region selection in a compute shader.
+     *      - OpenGL borrows the caller's current context, uploads backend-neutral
+     *        draw commands, and samples an offscreen ID/depth target. Point-region
+     *        selection currently projects and tests CPU-backed point snapshots.
+     *      - Vulkan uses its own headless device to sample the ID/depth target and
+     *        evaluate point-region selection in a compute shader.
+     *
+     *      Native fallbacks remain for OpenGL operations outside the shared adapter's
+     *      current scope, such as analytic point impostors and clipped picking.
      *
      *      Pickers are scene-independent tools: they take a borrowed Camera and a
      *      caller-supplied model or drawable, and own their offscreen resources.
@@ -115,8 +116,7 @@ namespace easy3d {
          * \brief Destructor.
          */
         virtual ~Picker();
-        /// Pickers own backend pick resources (the Vulkan device or the OpenGL pick
-        /// framebuffer), which are context-local and cannot be shared; copying disabled.
+        /// Pickers own backend query resources, which are context-local and cannot be shared; copying disabled.
         Picker(const Picker&) = delete;
         /// Assignment would duplicate the backend pick resources owned by the picker.
         Picker& operator=(const Picker&) = delete;
@@ -153,57 +153,43 @@ namespace easy3d {
          * \param width The width of the OpenGL viewport in framebuffer pixels.
          * \param height The height of the OpenGL viewport in framebuffer pixels.
          * \note The logical coordinate and framebuffer dimensions must describe the same viewport. This method is
-         *       primarily used internally by OpenGL backend pickers to convert logical window
-         *       coordinates to framebuffer pixels before calling glReadPixels(). Vulkan pickers sample the
-         *       logical coordinate directly through RenderDevice::sample_pixel().
+         *       primarily used internally by native OpenGL fallbacks to convert logical
+         *       window coordinates to bottom-left framebuffer pixels before glReadPixels().
+         *       Shared RenderDevice queries accept top-left framebuffer indices directly.
          * \throws std::invalid_argument if viewport or camera screen dimensions are not positive.
          * \throws std::out_of_range if the converted coordinate exceeds the integer range.
          */
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
-#ifdef EASY3D_HAS_VULKAN
         /**
-         * \brief Return the private Vulkan render device, creating it on first use.
-         * \details Lazily constructs the device via graphics::create_vulkan_device() and
-         *      prunes stale cached drawables so a pick never submits freed resources.
+         * \brief Return the private render device, creating it on first use.
+         * \details Prunes stale cached drawables so a pick never submits freed resources.
          */
         graphics::RenderDevice& render_device();
         /**
-         * \brief Build a pick draw command for a drawable with an encoded primitive ID.
-         * \param drawable Drawable to render into the ID buffer.
-         * \param id Base identifier written by the selection shader.
-         * \details Lazily constructs the DrawableRenderer and packages the drawable, the
-         *      borrowed camera and the active clipping planes into a single DrawCommand
-         *      that the derived picker submits to the render device.
+         * \brief Build a backend-neutral pick command for a drawable.
          */
         graphics::DrawCommand draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id);
-#else
+#ifndef EASY3D_HAS_VULKAN
         /**
-         * \brief Prepare a frame buffer for the offscreen picking pass.
-         * \param width The width of the frame buffer.
-         * \param height The height of the frame buffer.
-         * \details Creates the FBO with color and depth attachments on first use and
-         *      resizes it to the requested dimensions on subsequent calls.
+         * \brief Prepare a frame buffer for legacy OpenGL picking fallbacks.
          */
         void setup_framebuffer(int width, int height);
 #endif
 
         // Borrowed camera; must outlive the picker (see constructor).
         const Camera *camera_;
-
-#ifdef EASY3D_HAS_VULKAN
-    private:
-        // Headless device used only for the pick pass; created on first use by
-        // render_device() and owning no window or swapchain.
-        std::unique_ptr<graphics::RenderDevice> device_;
-        // Uploads drawable geometry and encodes primitive IDs into the pick command;
-        // pruned on every use so freed drawables are never submitted.
-        std::unique_ptr<vulkan::DrawableRenderer> drawable_renderer_;
-#else
-        // A picker owns its framebuffer; GL framebuffer names are context-local.
+#ifndef EASY3D_HAS_VULKAN
+        // A picker owns its fallback framebuffer; GL framebuffer names are context-local.
         std::unique_ptr<FramebufferObject> fbo_;
 #endif
+
+    private:
+        // Headless device used only for query passes; it owns no window or swapchain.
+        std::unique_ptr<graphics::RenderDevice> device_;
+        // Uploads drawable geometry and encodes primitive IDs into the pick command.
+        std::unique_ptr<graphics::DrawableRenderer> drawable_renderer_;
     };
 
 }

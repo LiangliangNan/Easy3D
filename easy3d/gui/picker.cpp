@@ -27,11 +27,10 @@
 
 #include <easy3d/gui/picker.h>
 #include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/renderer/clipping_plane.h>
 
 #ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/backends/vulkan/drawable.h>
-#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
-#include <easy3d/renderer/clipping_plane.h>
 #else
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
@@ -53,10 +52,14 @@ namespace easy3d {
     Picker::~Picker() = default;
 
 
-#ifdef EASY3D_HAS_VULKAN
     graphics::RenderDevice& Picker::render_device() {
-        if (!device_)
+        if (!device_) {
+#ifdef EASY3D_HAS_VULKAN
             device_ = graphics::create_vulkan_device();
+#else
+            device_ = graphics::create_opengl_device();
+#endif
+        }
         if (drawable_renderer_)
             drawable_renderer_->prune();
         return *device_;
@@ -64,11 +67,21 @@ namespace easy3d {
 
     graphics::DrawCommand Picker::draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id) {
         if (!drawable_renderer_)
-            drawable_renderer_.reset(new vulkan::DrawableRenderer);
-        return drawable_renderer_->command(drawable, id, *camera(),
-            vulkan::ClippingPlaneRenderer::planes(*ClippingPlane::instance()));
+            drawable_renderer_.reset(new graphics::DrawableRenderer);
+        std::vector<vec4> planes;
+        const auto *clipping = ClippingPlane::instance();
+        if (clipping->is_enabled()) {
+            const auto n = clipping->normal(), c = clipping->center();
+            planes.push_back(vec4(-n, dot(n, c)));
+            if (clipping->cross_section())
+                planes.push_back(vec4(n, -dot(n, c) +
+                                         clipping->cross_section_width() * clipping->scene_radius()));
+            planes = graphics::normalize_clipping_planes(planes);
+        }
+        return drawable_renderer_->command(drawable, id, *camera(), planes);
     }
-#else
+
+#ifndef EASY3D_HAS_VULKAN
     void Picker::setup_framebuffer(int width, int height) {
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {

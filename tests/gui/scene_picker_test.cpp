@@ -54,6 +54,14 @@ int main() {
                                      ", got " + std::to_string(picked.idx()));
         drawable->set_impostor_type(PointsDrawable::PLAIN);
         require(point_picker.pick_vertex(cloud.get(), x, y) == front, "plain point pick lost depth or source ID");
+#ifndef EASY3D_HAS_VULKAN
+        drawable->set_uniform_coloring(vec4(0, 1, 0, .5f));
+        require(point_picker.pick_vertex(cloud.get(), x, y) == front, "translucent plain point pick did not use native fallback");
+        drawable->set_uniform_coloring(vec4(0, 1, 0, 1));
+        drawable->enable_ao(true);
+        require(point_picker.pick_vertex(cloud.get(), x, y) == front, "AO point pick did not use native fallback");
+        drawable->enable_ao(false);
+#endif
         drawable->set_impostor_type(PointsDrawable::SPHERE);
         require(!model_picker.pick({mesh, cloud}, -1, y) &&
                 !point_picker.pick_vertex(cloud.get(), x, -1).is_valid(), "out-of-bounds pick hit the scene");
@@ -70,6 +78,12 @@ int main() {
         point_picker.pick_vertices(cloud.get(), rect, false);
         auto selected = cloud->get_vertex_property<bool>("v:select");
         require(selected[front] && selected[rear] && !selected[side] && !selected[dead], "rectangle did not select through the cloud");
+        selected[front] = selected[rear] = selected[side] = false;
+        drawable->enable_ao(true);
+        point_picker.pick_vertices(cloud.get(), rect, false);
+        require(selected[front] && selected[rear] && !selected[side] && !selected[dead],
+                "AO region selection did not use the source-slot fallback");
+        drawable->enable_ao(false);
         Polygon2 polygon;
         polygon.push_back(vec2(rect.left(), rect.top()));
         polygon.push_back(vec2(rect.right(), rect.top()));
@@ -95,8 +109,11 @@ int main() {
                 "point pick ignored the clipping plane");
         plane->set_enabled(false);
         PointCloud detached;
+        const auto detached_dead = detached.add_vertex(vec3(0));
+        detached.delete_vertex(detached_dead);
         const auto vertex = detached.add_vertex(vec3(0));
         point_picker.pick_vertices(&detached, rect, false);
-        require(detached.get_vertex_property<bool>("v:select")[vertex], "region selection required an attached renderer");
+        require(detached.get_vertex_property<bool>("v:select")[vertex],
+                "region selection required an attached renderer or lost deleted source slots");
     });
 }

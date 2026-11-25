@@ -273,6 +273,11 @@ if(NOT Easy3D_ENABLE_VULKAN)
     add_test(NAME opengl.texture COMMAND easy3d_opengl_texture_test)
     set_tests_properties(opengl.texture PROPERTIES TIMEOUT 120 LABELS desktop)
 
+    add_executable(easy3d_opengl_render_device_test opengl_render_device_test.cpp)
+    target_link_libraries(easy3d_opengl_render_device_test PRIVATE easy3d::viewer)
+    add_test(NAME opengl.renderdevice COMMAND easy3d_opengl_render_device_test)
+    set_tests_properties(opengl.renderdevice PROPERTIES TIMEOUT 120 LABELS desktop)
+
     add_executable(easy3d_opengl_counterparts_test opengl_counterparts_test.cpp)
     target_link_libraries(easy3d_opengl_counterparts_test PRIVATE easy3d::viewer)
     add_test(NAME opengl.counterparts COMMAND easy3d_opengl_counterparts_test)

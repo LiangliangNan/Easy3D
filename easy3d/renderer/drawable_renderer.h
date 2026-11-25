@@ -25,8 +25,8 @@
  \endcond */
 
 
-#ifndef EASY3D_RENDERER_BACKENDS_VULKAN_DRAWABLE_H
-#define EASY3D_RENDERER_BACKENDS_VULKAN_DRAWABLE_H
+#ifndef EASY3D_RENDERER_DRAWABLE_RENDERER_H
+#define EASY3D_RENDERER_DRAWABLE_RENDERER_H
 
 #include <easy3d/renderer/render_device.h>
 #include <memory>
@@ -35,11 +35,10 @@
 namespace easy3d {
     class Camera;
     class Drawable;
-    namespace vulkan {
+    namespace graphics {
 
-        // Internal rendering implementation for the shared Drawable classes. Owns CPU
-        // command/texture caches, not scene objects, cameras, devices or GPU resources.
-        // One instance per host; immutable command snapshots may outlive the cache.
+        // Converts shared drawables into backend-neutral commands. Owns CPU command and
+        // texture caches, not scene objects, cameras, devices or GPU resources.
         class DrawableRenderer {
         public:
             DrawableRenderer();
@@ -59,6 +58,6 @@ namespace easy3d {
             struct Impl;
             std::unique_ptr<Impl> impl_;
         };
-    } // namespace vulkan
+    } // namespace graphics
 } // namespace easy3d
-#endif
+#endif  // EASY3D_RENDERER_DRAWABLE_RENDERER_H

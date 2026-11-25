@@ -57,10 +57,12 @@ namespace easy3d {
                                               GL_COLOR_LOGIC_OP,
                                               GL_MULTISAMPLE};
             GLboolean enabled[flag_count], depth_mask, color_mask[4];
-            GLint viewport[4], draw_fbo, read_fbo, renderbuffer, program, vao, array, element, active, uniform,
+            GLint viewport[4], scissor_box[4], draw_fbo, read_fbo, read_buffer, renderbuffer, program, vao, array, element, active, uniform,
                 pack_buffer, depth_func, unpack_buffer;
+            GLint samplers[2], texture_buffers[2];
             GLint blend[6], textures[2][2], polygon_mode[2], front_face;
-            std::vector<GLboolean> clip_distances;
+            GLfloat polygon_offset[2];
+            std::vector<GLboolean> clip_distances, indexed_color_mask;
             static const unsigned pack_count = 8;
             const GLenum pack_names[pack_count] = {GL_PACK_ALIGNMENT,  GL_PACK_ROW_LENGTH,   GL_PACK_SKIP_PIXELS,
                                                    GL_PACK_SKIP_ROWS,  GL_PACK_IMAGE_HEIGHT, GL_PACK_SKIP_IMAGES,
@@ -80,8 +82,10 @@ namespace easy3d {
                 for (unsigned i = 0; i < flag_count; ++i)
                     enabled[i] = glIsEnabled(flags[i]);
                 glGetIntegerv(GL_VIEWPORT, viewport);
+                glGetIntegerv(GL_SCISSOR_BOX, scissor_box);
                 glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_fbo);
                 glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_fbo);
+                glGetIntegerv(GL_READ_BUFFER, &read_buffer);
                 glGetIntegerv(GL_RENDERBUFFER_BINDING, &renderbuffer);
                 glGetIntegerv(GL_CURRENT_PROGRAM, &program);
                 glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
@@ -94,9 +98,16 @@ namespace easy3d {
                 glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &unpack_buffer);
                 glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
                 glGetBooleanv(GL_COLOR_WRITEMASK, color_mask);
+                GLint draw_buffers = 0;
+                glGetIntegerv(GL_MAX_DRAW_BUFFERS, &draw_buffers);
+                indexed_color_mask.resize(size_t(draw_buffers) * 4);
+                for (GLint i = 0; i < draw_buffers; ++i)
+                    glGetBooleani_v(GL_COLOR_WRITEMASK, i, &indexed_color_mask[size_t(i) * 4]);
                 glGetDoublev(GL_DEPTH_CLEAR_VALUE, &clear_depth);
                 glGetDoublev(GL_DEPTH_RANGE, depth_range);
                 glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
+                glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &polygon_offset[0]);
+                glGetFloatv(GL_POLYGON_OFFSET_UNITS, &polygon_offset[1]);
                 glGetIntegerv(GL_FRONT_FACE, &front_face);
                 GLint clip_count = 0;
                 glGetIntegerv(GL_MAX_CLIP_DISTANCES, &clip_count);
@@ -118,6 +129,8 @@ namespace easy3d {
                     glActiveTexture(GL_TEXTURE0 + unit);
                     glGetIntegerv(GL_TEXTURE_BINDING_2D, &textures[unit][0]);
                     glGetIntegerv(GL_TEXTURE_BINDING_BUFFER, &textures[unit][1]);
+                    glGetIntegerv(GL_SAMPLER_BINDING, &samplers[unit]);
+                    glGetIntegerv(GL_TEXTURE_BUFFER, &texture_buffers[unit]);
                 }
                 glActiveTexture(active);
                 GLint count = 0;
@@ -132,8 +145,10 @@ namespace easy3d {
             ~QueryState() {
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, draw_fbo);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo);
+                glReadBuffer(GLenum(read_buffer));
                 glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
                 glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+                glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
                 glUseProgram(program);
                 glBindVertexArray(vao);
                 if (vao)
@@ -152,7 +167,9 @@ namespace easy3d {
                 for (unsigned unit = 0; unit < 2; ++unit) {
                     glActiveTexture(GL_TEXTURE0 + unit);
                     glBindTexture(GL_TEXTURE_2D, textures[unit][0]);
-                    glBindTexture(GL_TEXTURE_BUFFER, textures[unit][1]);
+                    glBindBuffer(GL_TEXTURE_BUFFER, textures[unit][1]);
+                    glBindTexture(GL_TEXTURE_BUFFER, texture_buffers[unit]);
+                    glBindSampler(unit, samplers[unit]);
                 }
                 glActiveTexture(active);
                 for (unsigned i = 0; i < pack_count; ++i)
@@ -162,11 +179,15 @@ namespace easy3d {
                 glDepthFunc(depth_func);
                 glDepthMask(depth_mask);
                 glColorMask(color_mask[0], color_mask[1], color_mask[2], color_mask[3]);
+                for (size_t i = 0; i < indexed_color_mask.size(); i += 4)
+                    glColorMaski(GLuint(i / 4), indexed_color_mask[i], indexed_color_mask[i + 1],
+                                 indexed_color_mask[i + 2], indexed_color_mask[i + 3]);
                 glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
                 glClearDepth(clear_depth);
                 glDepthRange(depth_range[0], depth_range[1]);
                 glPointSize(point_size);
                 glLineWidth(line_width);
+                glPolygonOffset(polygon_offset[0], polygon_offset[1]);
                 glPolygonMode(GL_FRONT_AND_BACK, polygon_mode[0]);
                 glFrontFace(front_face);
                 for (unsigned i = 0; i < clip_distances.size(); ++i) {
@@ -199,7 +220,10 @@ namespace easy3d {
                 glClearDepth(1);
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
                 glViewport(0, 0, w, h);
+                glScissor(0, 0, w, h);
                 glActiveTexture(GL_TEXTURE0);
+                glBindSampler(0, 0);
+                glBindSampler(1, 0);
                 glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
                 glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
                 for (unsigned i = 0; i < pack_count; ++i)

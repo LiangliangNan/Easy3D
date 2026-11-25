@@ -309,11 +309,8 @@
   - [x] Rename `CameraPathBuilder` to `CameraPath` and align its files, callers, tests, and comments. **Completed 2026-11-25:** Mapple owns `camera_path.{h,cpp}` and `camera_path_io.{h,cpp}`; the save/read functions remain free functions and `.kf` compatibility is unchanged. See `changes/mapple.md`.
   -
 
-
-- [ ] A unified Overlay class for rendering different types of overlays (2D and 3D, world space and screen space)? Need discussion first.
-
 - [x] TextLayoutEngine is backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations like sth_* functions in text_renderer.cpp and class TextRenderer). Done: `text_renderer.{h,cpp}` and `resources/shaders/text` are removed; Viewer already used `TextLayoutEngine`, and Mapple-Qt now uses it through its own `text_overlay.{h,cpp}`.
-- [ ] RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations).
+- [x] RenderDevice is also backend-independent. The OpenGL backend should use it as much as possible (and try to replace/remove the old OpenGL implementations). **Incremental adapter completed 2026-11-25:** OpenGL now uses the shared device for supported offscreen capture metadata, scene picking/depth, overlays, and point selection; the obsolete OpenGL point selector is removed. Native live rendering and exact fallbacks for unsupported effects remain intentional. See `changes/vulkan.md`.
 - [ ] The Vulkan migration is mostly complete. Which OpenGL classes (and/or their members) in the easy3d::renderer module have become redundant (i.e., not used by the viewer), or could become redundant and be deleted after small modification/adaptation.
 
 - [ ] Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and add_drawable. Should they also return a shared_ptr (instead of raw pointer)? Relevant classes (not a complete list): SurfaceMeshIO, PolyMeshIO, GraphIO, PointCloudIO, ImageIO. and many other places.

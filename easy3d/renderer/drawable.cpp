@@ -39,6 +39,7 @@
 #include <easy3d/util/stop_watch.h>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/vertex_array_object.h>
 #endif
 
 
@@ -90,6 +91,51 @@ namespace easy3d {
         return *cpu_buffers_;
     }
 
+    const Drawable::BufferData& Drawable::buffer_data() {
+#ifdef EASY3D_HAS_VULKAN
+        return cpu_buffers();
+#else
+        if (update_needed_ || (!vertex_buffer_ && (model_ || update_func_))) {
+            update_buffers_internal();
+            update_needed_ = false;
+        }
+        if (num_vertices_ > 0 && !vertex_buffer_)
+            throw std::logic_error("drawable buffer data is unavailable");
+        if (!opengl_snapshot_ || opengl_snapshot_revision_ != buffer_revision_) {
+            auto snapshot = std::unique_ptr<BufferData>(new BufferData);
+            snapshot->revision = buffer_revision_;
+            snapshot->vertices.resize(num_vertices_);
+            snapshot->colors.resize(color_buffer_ ? num_vertices_ : 0);
+            snapshot->normals.resize(normal_buffer_ ? num_vertices_ : 0);
+            snapshot->texcoords.resize(texcoord_buffer_ ? num_vertices_ : 0);
+            snapshot->indices.resize(num_indices_);
+            if (!snapshot->vertices.empty())
+                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, vertex_buffer_, 0,
+                                                   snapshot->vertices.size() * sizeof(vec3),
+                                                   snapshot->vertices.data());
+            if (!snapshot->colors.empty())
+                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, color_buffer_, 0,
+                                                   snapshot->colors.size() * sizeof(vec3),
+                                                   snapshot->colors.data());
+            if (!snapshot->normals.empty())
+                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, normal_buffer_, 0,
+                                                   snapshot->normals.size() * sizeof(vec3),
+                                                   snapshot->normals.data());
+            if (!snapshot->texcoords.empty())
+                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, texcoord_buffer_, 0,
+                                                   snapshot->texcoords.size() * sizeof(vec2),
+                                                   snapshot->texcoords.data());
+            if (!snapshot->indices.empty())
+                VertexArrayObject::get_buffer_data(GL_ELEMENT_ARRAY_BUFFER, element_buffer_, 0,
+                                                   snapshot->indices.size() * sizeof(unsigned int),
+                                                   snapshot->indices.data());
+            opengl_snapshot_ = std::move(snapshot);
+            opengl_snapshot_revision_ = buffer_revision_;
+        }
+        return *opengl_snapshot_;
+#endif
+    }
+
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), buffers_ready_(false), update_func_(nullptr), vertex_buffer_(0),
@@ -131,6 +177,8 @@ namespace easy3d {
         }
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
             opengl_release_buffers();
 #endif
@@ -176,6 +224,8 @@ namespace easy3d {
         if (cpu_buffers_) { cpu_buffers_->indices.clear(); cpu_buffers_->source_faces.clear(); ++cpu_buffers_->revision; }
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         if (element_buffer_) opengl_disable_element_buffer();
 #endif
         num_indices_ = 0;
@@ -222,6 +272,8 @@ namespace easy3d {
         for (const auto& p : vertices) bbox_.grow(p);
 #else
         ++point_revision_;
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         opengl_update_vertex_buffer(vertices, dynamic);
 #endif
         // The buffers now exist, whether they come from the model or from the client.
@@ -235,6 +287,8 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         cpu_buffers_->colors = colors; ++cpu_buffers_->revision;
 #else
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         opengl_update_color_buffer(colors, dynamic);
 #endif
     }
@@ -243,6 +297,8 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         cpu_buffers_->normals = normals; ++cpu_buffers_->revision;
 #else
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         opengl_update_normal_buffer(normals, dynamic);
 #endif
     }
@@ -251,6 +307,8 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         cpu_buffers_->texcoords = texcoords; ++cpu_buffers_->revision;
 #else
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         opengl_update_texcoord_buffer(texcoords, dynamic);
 #endif
     }
@@ -260,6 +318,8 @@ namespace easy3d {
         cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision;
 #else
         ++point_revision_;
+        ++buffer_revision_;
+        opengl_snapshot_.reset();
         opengl_update_element_buffer(indices);
 #endif
         reset_highlight_mask();

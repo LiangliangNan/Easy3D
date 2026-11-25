@@ -535,7 +535,7 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
     bool can_show_scalar = visible && ui_->comboBoxColorScheme->currentText().contains(scalar_prefix_);
     ui_->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui_->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
-    if (ui_->comboBoxScalarFieldStyle->currentText().contains("random")) {
+    if (ui_->comboBoxScalarFieldStyle->currentText().contains("color_table")) {
         ui_->labelScalarFieldDiscrete->setEnabled(false);
         ui_->checkBoxScalarFieldDiscrete->setEnabled(false);
         ui_->labelScalarFieldStripes->setEnabled(false);

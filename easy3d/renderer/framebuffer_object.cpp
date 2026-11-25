@@ -183,7 +183,7 @@ namespace easy3d {
 
     static bool color_format_compatible(GLenum internal_format, GLenum format, GLenum type)
     {
-        if (format != GL_RED && format != GL_RG && format != GL_RGB && format != GL_BGR && format != GL_RGBA && format != GL_BGRA) {
+        if (format != GL_RED && format != GL_RED_INTEGER && format != GL_RG && format != GL_RGB && format != GL_BGR && format != GL_RGBA && format != GL_BGRA && format != GL_RGBA_INTEGER) {
             LOG(ERROR) << "the provided format is not accepted";
             return false;
         }
@@ -227,8 +227,10 @@ namespace easy3d {
             internal_format == GL_R32I || internal_format == GL_R32UI || internal_format == GL_R32F
             )
         {
-            if (format != GL_RED) {
-                LOG(ERROR) << "color format must be GL_R";
+            if (format != GL_RED &&
+                (format != GL_RED_INTEGER ||
+                 (internal_format != GL_R8UI && internal_format != GL_R16UI && internal_format != GL_R32UI))) {
+                LOG(ERROR) << "color format must be GL_R or an unsigned integer GL_R_INTEGER";
                 return false;
             }
         }
@@ -257,8 +259,10 @@ namespace easy3d {
             internal_format == GL_RGBA32I || internal_format == GL_RGBA32UI || internal_format == GL_RGBA32F
             )
         {
-            if (format != GL_RGBA) {
-                LOG(ERROR) << "color format must be GL_RGBA";
+            if (format != GL_RGBA &&
+                (format != GL_RGBA_INTEGER ||
+                 (internal_format != GL_RGBA8UI && internal_format != GL_RGBA16UI && internal_format != GL_RGBA32UI))) {
+                LOG(ERROR) << "color format must be GL_RGBA or an unsigned integer GL_RGBA_INTEGER";
                 return false;
             }
         }

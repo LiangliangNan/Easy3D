@@ -66,8 +66,8 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
             colormaps_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))
             colormaps_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
-        if (file_system::is_file(dir + "random.png"))
-            colormaps_.emplace_back(ColorMap(dir + "random.png", "random"));
+        if (file_system::is_file(dir + "color_table.png"))
+            colormaps_.emplace_back(ColorMap(dir + "color_table.png", "color_table"));
     }
 }
 
@@ -96,7 +96,7 @@ Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes
         return nullptr;
 
     viewer_->makeCurrent();
-    if (colormaps_[idx].name.find("random") != std::string::npos)
+    if (colormaps_[idx].name.find("color_table") != std::string::npos)
         return TextureManager::request(num_stripes, 256/num_stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     else {
         if (discrete)

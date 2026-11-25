@@ -68,9 +68,12 @@ namespace easy3d {
                 if (index >= vertices_.size())
                     throw std::out_of_range("geometry index out of range");
             for (const auto &v : vertices_) {
-                for (int i = 0; i < 3; ++i)
-                    if (!std::isfinite(v.position[i]) || !std::isfinite(v.normal[i]))
+                for (int i = 0; i < 3; ++i) {
+                    if (!std::isfinite(v.position[i]) && (topology != Topology::points || !points))
                         throw std::invalid_argument("non-finite vertex");
+                    if (!std::isfinite(v.normal[i]))
+                        throw std::invalid_argument("non-finite vertex normal");
+                }
                 for (int i = 0; i < 4; ++i)
                     if (!std::isfinite(v.color[i]) || !std::isfinite(v.highlight[i]))
                         throw std::invalid_argument("non-finite color/highlight");
@@ -89,7 +92,13 @@ namespace easy3d {
                         throw std::invalid_argument("point resource count does not match geometry");
                     for (size_t i = 0; i < count; ++i) {
                         const auto index = indices_.empty() ? uint32_t(i) : indices_[i];
-                        if (points->positions()[i] != vertices_[index].position)
+                        const auto &position = points->positions()[i];
+                        const auto &vertex = vertices_[index].position;
+                        bool matches = true;
+                        for (int axis = 0; axis < 3; ++axis)
+                            matches &= position[axis] == vertex[axis] ||
+                                       (!std::isfinite(position[axis]) && !std::isfinite(vertex[axis]));
+                        if (!matches)
                             throw std::invalid_argument("point resource does not match point geometry");
                     }
                     point_data_ = std::move(points);

@@ -70,6 +70,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/renderer/text_layout.h>
+#include <easy3d/renderer/drawable_renderer.h>
 #ifdef EASY3D_HAS_VULKAN
 // vulkan.h must precede glfw3.h (first pulled in by viewer_loop.h): GLFW declares
 // glfwCreateWindowSurface only when VK_VERSION_1_0 is defined.
@@ -84,13 +85,11 @@
 #include <easy3d/renderer/transparency.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/ambient_occlusion.h>
-#include <easy3d/renderer/backends/vulkan/drawable.h>
 #include <easy3d/renderer/backends/vulkan/clipping_plane.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #else
 #include <easy3d/renderer/opengl.h> // for gl functions
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
-#include <easy3d/renderer/backends/opengl/point_selection.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -195,7 +194,7 @@ namespace easy3d {
         std::vector<vec4> clipping_planes;
         mutable std::vector<vec4> shared_clipping_planes;
         mutable vulkan::ClippingPlaneRenderer clipping_plane_renderer;
-        vulkan::DrawableRenderer drawable_renderer;
+        graphics::DrawableRenderer drawable_renderer;
 
         // While active, draw() renders the file-snapshot frame into an offscreen
         // image instead of presenting it; snapshot_frame() owns the state.
@@ -2287,7 +2286,8 @@ namespace easy3d {
         text_layout_.reset();
         hud_overlay_renderer_.reset();
         overlay_renderer_.reset();
-        point_selector_.reset();
+        query_device_.reset();
+        drawable_renderer_.reset();
 
         clear_scene();
 
@@ -2563,6 +2563,124 @@ namespace easy3d {
                 throw std::invalid_argument("unsupported drawable in scene depth query");
         }
     } // namespace
+
+    bool Viewer::supports_device_query(const Camera &camera, int width, int height, bool guides) const {
+        // MultiViewer partitions one target into assigned-cell viewports. Its native
+        // draw_scene() override remains the authoritative query path for this increment.
+        if (dynamic_cast<const MultiViewer *>(this))
+            return false;
+        if (width <= 0 || height <= 0 || ClippingPlane::instance()->is_enabled())
+            return false;
+        const auto supported = [&](const std::shared_ptr<Drawable> &drawable) {
+            if (!drawable || !drawable->is_visible())
+                return true;
+            if (dynamic_cast<LinesDrawable2D *>(drawable.get())) {
+                if (!guides)
+                    return true;
+                const auto *lines = static_cast<const LinesDrawable2D *>(drawable.get());
+                return lines->coloring_method() == State::UNIFORM_COLOR &&
+                       std::abs(lines->line_width() * float(width) / float(camera.screen_width()) - 1.0f) < 1e-6f;
+            }
+            if (drawable->coloring_method() != State::UNIFORM_COLOR &&
+                drawable->coloring_method() != State::COLOR_PROPERTY &&
+                drawable->coloring_method() != State::TEXTURED &&
+                drawable->coloring_method() != State::SCALAR_FIELD)
+                return false;
+            if (drawable->color().w != 1.0f || drawable->is_ao_enabled())
+                return false;
+            const bool textured = drawable->coloring_method() == State::TEXTURED ||
+                                  drawable->coloring_method() == State::SCALAR_FIELD;
+            if (textured && (!drawable->texture() || !drawable->texture()->pixels()))
+                return false;
+            if (auto *points = dynamic_cast<PointsDrawable *>(drawable.get()))
+                return points->impostor_type() == PointsDrawable::PLAIN;
+            if (auto *lines = dynamic_cast<LinesDrawable *>(drawable.get()))
+                return lines->impostor_type() == LinesDrawable::PLAIN && setting::lines_drawable_screen_space_width &&
+                       std::abs(lines->line_width() * float(width) / float(camera.screen_width()) - 1.0f) < 1e-6f;
+            return dynamic_cast<TrianglesDrawable *>(drawable.get()) != nullptr;
+        };
+        for (const auto &model : models_) {
+            if (!model->renderer() || !model->renderer()->is_visible())
+                continue;
+            for (const auto &d : model->renderer()->triangles_drawables())
+                if (!supported(d))
+                    return false;
+            for (const auto &d : model->renderer()->lines_drawables())
+                if (!supported(d))
+                    return false;
+            for (const auto &d : model->renderer()->points_drawables())
+                if (!supported(d))
+                    return false;
+        }
+        for (const auto &d : drawables_)
+            if (!supported(d))
+                return false;
+        return true;
+    }
+
+    graphics::RenderDevice &Viewer::query_device() const {
+        if (!query_device_)
+            query_device_ = graphics::create_opengl_device();
+        return *query_device_;
+    }
+
+    bool Viewer::device_query_commands(const Camera &camera,
+                                       int width,
+                                       int height,
+                                       bool guides,
+                                       std::vector<graphics::DrawCommand> &commands,
+                                       std::vector<DrawSource> *sources) const {
+        if (!supports_device_query(camera, width, height, guides))
+            return false;
+        if (!drawable_renderer_)
+            drawable_renderer_.reset(new graphics::DrawableRenderer);
+        commands.clear();
+        if (sources)
+            sources->clear();
+        const auto append = [&](const std::shared_ptr<Drawable> &drawable,
+                                const std::shared_ptr<Model> &model,
+                                std::uint32_t id,
+                                bool model_selected) {
+            if (!drawable->is_visible())
+                return;
+            if (dynamic_cast<LinesDrawable2D *>(drawable.get()) && !guides)
+                return;
+            auto command = drawable_renderer_->command(drawable, id, camera, {}, model_selected);
+            if (sources) {
+                if (commands.size() >= UINT32_MAX)
+                    throw std::length_error("too many query drawables");
+                // A model-level ID cannot distinguish overlapping drawables. Picking
+                // uses command indices internally and resolves the source afterward.
+                command.object_id = uint32_t(commands.size());
+            }
+            if (command.geometry && command.geometry->topology() == graphics::Topology::points &&
+                camera.screen_width() > 0)
+                command.point_size *= float(width) / float(camera.screen_width());
+            if (dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                command.object_id = UINT32_MAX;
+            commands.push_back(std::move(command));
+            if (sources)
+                sources->push_back({model, drawable});
+        };
+        for (size_t i = 0; i < models_.size(); ++i) {
+            const auto &model = models_[i];
+            if (!model->renderer() || !model->renderer()->is_visible())
+                continue;
+            const auto id = uint32_t(i);
+            const bool selected = model->renderer()->is_selected();
+            for (const auto &d : model->renderer()->triangles_drawables())
+                append(d, model, id, selected);
+            for (const auto &d : model->renderer()->lines_drawables())
+                append(d, model, id, selected);
+            for (const auto &d : model->renderer()->points_drawables())
+                append(d, model, id, selected);
+        }
+        for (size_t i = 0; i < drawables_.size(); ++i)
+            append(drawables_[i], nullptr, uint32_t(models_.size() + i), false);
+        drawable_renderer_->prune();
+        return true;
+    }
+
     const std::vector<vec4> &Viewer::clipping_planes() const {
         selection_planes_.clear();
         const auto *clipping = ClippingPlane::instance();
@@ -2591,31 +2709,13 @@ namespace easy3d {
         if (!owner)
             throw std::invalid_argument("point drawable does not belong to this viewer");
         QueryContext context(window_);
-        if (GLEW_VERSION_4_0 || GLEW_ARB_transform_feedback2) {
-            GLint running = 0;
-            glGetIntegerv(GL_TRANSFORM_FEEDBACK_ACTIVE, &running);
-            if (running)
-                throw std::logic_error("selection cannot interrupt active transform feedback");
-        }
-        QueryState state;
-        state.prepare(framebuffer_width(), framebuffer_height());
-        if (!point_selector_)
-            point_selector_.reset(new opengl::PointSelector);
-        return point_selector_->points(owner);
+        if (!drawable_renderer_)
+            drawable_renderer_.reset(new graphics::DrawableRenderer);
+        return drawable_renderer_->command(owner, 0, *camera(), clipping_planes()).geometry->point_data();
     }
     std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest &request) const {
         QueryContext context(window_);
-        if (GLEW_VERSION_4_0 || GLEW_ARB_transform_feedback2) {
-            GLint running = 0;
-            glGetIntegerv(GL_TRANSFORM_FEEDBACK_ACTIVE, &running);
-            if (running)
-                throw std::logic_error("selection cannot interrupt active transform feedback");
-        }
-        QueryState state;
-        state.prepare(framebuffer_width(), framebuffer_height());
-        if (!point_selector_)
-            point_selector_.reset(new opengl::PointSelector);
-        return point_selector_->select(request);
+        return query_device().select_points(request);
     }
     void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground) {
         QueryContext context(window_);
@@ -2735,46 +2835,57 @@ namespace easy3d {
                 throw std::runtime_error("cannot read capture color");
         }
         if (readback == graphics::FrameReadback::color_depth_ids) {
-            FramebufferObject depth(w, h, 0);
-            if (!depth.add_color_buffer() || !depth.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !depth.bind())
-                throw std::runtime_error("cannot create capture depth target");
-            frame.depth.assign(size_t(w) * h, 1);
-            frame.ids.assign(size_t(w) * h, {UINT32_MAX, UINT32_MAX});
-            std::vector<float> candidate(frame.depth.size());
-            const auto append = [&](const std::shared_ptr<Model> &model, const std::shared_ptr<Drawable> &drawable,
-                                    uint32_t id) {
-                if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                    return;
-                state.prepare(w, h);
-                glClear(GL_DEPTH_BUFFER_BIT);
-                DrawSource source{model, drawable};
-                draw_scene(snapshot, &source);
-                glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, candidate.data());
-                for (int y = 0; y < h; ++y)
-                    for (int x = 0; x < w; ++x) {
-                        const auto p = size_t(y) * w + x;
-                        const auto d = candidate[size_t(h - 1 - y) * w + x];
-                        if (d >= 0 && d < frame.depth[p]) {
-                            frame.depth[p] = d;
-                            frame.ids[p] = {id, UINT32_MAX};
+            std::vector<graphics::DrawCommand> commands;
+            if (device_query_commands(snapshot, w, h, false, commands)) {
+                auto metadata = query_device().render(
+                    uint32_t(w), uint32_t(h), commands, background_color(), 1,
+                    graphics::TransparencyMethod::sorted, 4, readback);
+                frame.depth = std::move(metadata.depth);
+                frame.ids = std::move(metadata.ids);
+                for (auto &id : frame.ids)
+                    id.primitive = UINT32_MAX;
+            } else {
+                FramebufferObject depth(w, h, 0);
+                if (!depth.add_color_buffer() || !depth.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !depth.bind())
+                    throw std::runtime_error("cannot create capture depth target");
+                frame.depth.assign(size_t(w) * h, 1);
+                frame.ids.assign(size_t(w) * h, {UINT32_MAX, UINT32_MAX});
+                std::vector<float> candidate(frame.depth.size());
+                const auto append = [&](const std::shared_ptr<Model> &model, const std::shared_ptr<Drawable> &drawable,
+                                        uint32_t id) {
+                    if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                        return;
+                    state.prepare(w, h);
+                    glClear(GL_DEPTH_BUFFER_BIT);
+                    DrawSource source{model, drawable};
+                    draw_scene(snapshot, &source);
+                    glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, candidate.data());
+                    for (int y = 0; y < h; ++y)
+                        for (int x = 0; x < w; ++x) {
+                            const auto p = size_t(y) * w + x;
+                            const auto d = candidate[size_t(h - 1 - y) * w + x];
+                            if (d >= 0 && d < frame.depth[p]) {
+                                frame.depth[p] = d;
+                                frame.ids[p] = {id, UINT32_MAX};
+                            }
                         }
-                    }
-            };
-            if (models_.size() + drawables_.size() >= UINT32_MAX)
-                throw std::length_error("too many capture objects");
-            for (size_t i = 0; i < models_.size(); ++i) {
-                const auto &model = models_[i];
-                if (!model->renderer())
-                    continue;
-                for (const auto &d : model->renderer()->triangles_drawables())
-                    append(model, d, uint32_t(i));
-                for (const auto &d : model->renderer()->lines_drawables())
-                    append(model, d, uint32_t(i));
-                for (const auto &d : model->renderer()->points_drawables())
-                    append(model, d, uint32_t(i));
+                };
+                if (models_.size() + drawables_.size() >= UINT32_MAX)
+                    throw std::length_error("too many capture objects");
+                for (size_t i = 0; i < models_.size(); ++i) {
+                    const auto &model = models_[i];
+                    if (!model->renderer())
+                        continue;
+                    for (const auto &d : model->renderer()->triangles_drawables())
+                        append(model, d, uint32_t(i));
+                    for (const auto &d : model->renderer()->lines_drawables())
+                        append(model, d, uint32_t(i));
+                    for (const auto &d : model->renderer()->points_drawables())
+                        append(model, d, uint32_t(i));
+                }
+                for (size_t i = 0; i < drawables_.size(); ++i)
+                    append(nullptr, drawables_[i], uint32_t(models_.size() + i));
             }
-            for (size_t i = 0; i < drawables_.size(); ++i)
-                append(nullptr, drawables_[i], uint32_t(models_.size() + i));
         }
         return frame;
     }
@@ -2789,115 +2900,120 @@ namespace easy3d {
             return result;
         int fw, fh;
         framebuffer_size(fw, fh);
-        // Two offscreen passes share one framebuffer:
-        //  1. Draw each visible drawable with its normal shaders and keep the nearest
-        //     depth at the cursor. This identifies the model/drawable actually seen.
-        //  2. For a triangle drawable, redraw it with primitive IDs as colors and read
-        //     the same pixel to recover the triangle. Both passes use the same
-        //     transform and clipping, so the depth winner and the ID agree.
-        // This whole-scene query is intentionally not delegated to the Picker classes:
-        // they operate on one caller-supplied model with a borrowed camera and own
-        // their offscreen resources, while the viewer already owns every model,
-        // drawable and the context, so it can resolve the hit here directly.
         QueryContext context(window_);
-        QueryState state;
-        // Keep the camera logical (as in the on-screen draw); the framebuffer target is
-        // physical, so world-space impostor radii project to the same size as the scene.
         Camera snapshot(*camera());
         snapshot.projection_matrix();
         snapshot.model_view_matrix();
         snapshot.set_projection_matrix(camera()->projection_matrix());
         snapshot.set_model_view_matrix(camera()->model_view_matrix());
-        state.prepare(fw, fh);
-        FramebufferObject target(fw, fh, 0);
-        if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() ||
-            !target.bind())
-            throw std::runtime_error("cannot create picking framebuffer");
-        // Reuse the actual drawable shaders: point impostors, clipping and transforms
-        // must agree with scene depth. Keep the renderer's shared ownership intact.
-        const auto sample = [&](const std::shared_ptr<Drawable> &drawable, const std::shared_ptr<Model> &model) {
-            if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                return;
+        std::vector<graphics::DrawCommand> commands;
+        std::vector<DrawSource> sources;
+        if (device_query_commands(snapshot, fw, fh, false, commands, &sources)) {
+            const auto pixel = query_device().sample_pixel(
+                uint32_t(fw), uint32_t(fh), commands, uint32_t(px), uint32_t(py));
+            if (pixel.id.object == UINT32_MAX || pixel.id.object >= sources.size())
+                return result;
+            result.model = sources[pixel.id.object].model;
+            result.drawable = sources[pixel.id.object].drawable;
+            result.primitive = pixel.id.primitive;
+            result.depth = pixel.depth;
+        } else {
+            // Impostors, clipping, and unsupported effects still use the exact native
+            // drawable shaders. Draw each candidate separately and retain the nearest.
+            QueryState state;
             state.prepare(fw, fh);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            DrawSource source{model, drawable};
-            draw_scene(snapshot, &source);
-            float depth = 1;
-            glReadPixels(px, fh - 1 - py, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-            if (depth >= 0 && depth < result.depth) {
-                result.model = model;
-                result.drawable = drawable;
-                result.depth = depth;
+            FramebufferObject target(fw, fh, 0);
+            if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) ||
+                !target.is_valid() || !target.bind())
+                throw std::runtime_error("cannot create picking framebuffer");
+            const auto sample = [&](const std::shared_ptr<Drawable> &drawable,
+                                    const std::shared_ptr<Model> &model) {
+                if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D *>(drawable.get()))
+                    return;
+                state.prepare(fw, fh);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                DrawSource source{model, drawable};
+                draw_scene(snapshot, &source);
+                float depth = 1;
+                glReadPixels(px, fh - 1 - py, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+                if (depth >= 0 && depth < result.depth) {
+                    result.model = model;
+                    result.drawable = drawable;
+                    result.depth = depth;
+                }
+            };
+            for (const auto &model : models_) {
+                const auto *renderer = model->renderer();
+                if (!renderer)
+                    continue;
+                for (const auto &d : renderer->triangles_drawables())
+                    sample(d, model);
+                for (const auto &d : renderer->lines_drawables())
+                    sample(d, model);
+                for (const auto &d : renderer->points_drawables())
+                    sample(d, model);
             }
-        };
-        for (const auto &model : models_) {
-            const auto *renderer = model->renderer();
-            if (!renderer)
-                continue;
-            for (const auto &d : renderer->triangles_drawables())
-                sample(d, model);
-            for (const auto &d : renderer->lines_drawables())
-                sample(d, model);
-            for (const auto &d : renderer->points_drawables())
-                sample(d, model);
+            for (const auto &d : drawables_)
+                sample(d, nullptr);
+            if (!result)
+                return result;
+            if (result.drawable->type() == Drawable::DT_TRIANGLES) {
+                const std::string name = "selection/selection_single_primitive";
+                auto *program = ShaderManager::get_program(name);
+                if (!program)
+                    program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
+                if (!program)
+                    throw std::runtime_error("picking requires the selection shader '" + name + "'");
+                state.prepare(fw, fh);
+                prepare_pick_view(px, py, fw, fh);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                glClearColor(1, 1, 1, 1);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                program->bind();
+                const mat4 MANIP = result.drawable->manipulated_matrix();
+                program->set_uniform("MANIP", MANIP)
+                    ->set_uniform("MVP_MANIP", snapshot.model_view_projection_matrix() * MANIP);
+                ClippingPlane::instance()->set_program(program);
+                ClippingPlane::instance()->set_discard_primitives(program, result.drawable->plane_clip_discard_primitive());
+                result.drawable->gl_draw();
+                program->release();
+                unsigned char rgba[4] = {255, 255, 255, 255};
+                glReadPixels(px, fh - 1 - py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+                const int id = color::encode(rgba[0], rgba[1], rgba[2], rgba[3]);
+                if (id >= 0)
+                    result.primitive = uint32_t(id);
+            }
         }
-        for (const auto &d : drawables_)
-            sample(d, nullptr);
         if (!result)
             return result;
-        const auto world = [&](float depth) { return pixel_to_world(px, py, depth); };
-        result.position = world(result.depth);
-        if (result.drawable->type() == Drawable::DT_TRIANGLES) {
-            // Recover the primitive from the same rasterized surface: the selection
-            // shader applies the drawable transform and clipping, so the depth winner
-            // and the reported primitive agree.
-            const std::string name = "selection/selection_single_primitive";
-            auto *program = ShaderManager::get_program(name);
-            if (!program)
-                program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
-            if (!program)
-                throw std::runtime_error("picking requires the selection shader '" + name + "'");
-            state.prepare(fw, fh);
-            prepare_pick_view(px, py, fw, fh);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glClearColor(1, 1, 1, 1);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            program->bind();
-            const mat4 MANIP = result.drawable->manipulated_matrix();
-            program->set_uniform("MANIP", MANIP)
-                ->set_uniform("MVP_MANIP", snapshot.model_view_projection_matrix() * MANIP);
-            ClippingPlane::instance()->set_program(program);
-            ClippingPlane::instance()->set_discard_primitives(program, result.drawable->plane_clip_discard_primitive());
-            result.drawable->gl_draw();
-            program->release();
-            unsigned char rgba[4] = {255, 255, 255, 255};
-            glReadPixels(px, fh - 1 - py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
-            const int id = color::encode(rgba[0], rgba[1], rgba[2], rgba[3]);
-            if (id >= 0) {
-                result.primitive = uint32_t(id);
-                auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
-                if (mesh && result.model->renderer()->get_triangles_drawable("faces", false) == result.drawable.get()) {
-                    const auto ranges = mesh->get_face_property<std::pair<int, int>>("f:triangle_range");
-                    if (ranges)
-                        for (auto face : mesh->faces()) {
-                            const auto range = ranges[face];
-                            if (range.first >= 0 && result.primitive >= uint32_t(range.first) &&
-                                result.primitive <= uint32_t(range.second)) {
-                                result.face_index = face.idx();
-                                break;
-                            }
-                        }
+        result.position = pixel_to_world(px, py, result.depth);
+        auto *mesh = dynamic_cast<SurfaceMesh *>(result.model.get());
+        if (mesh && result.primitive != UINT32_MAX &&
+            result.model->renderer()->get_triangles_drawable("faces", false) == result.drawable.get()) {
+            const auto ranges = mesh->get_face_property<std::pair<int, int>>("f:triangle_range");
+            if (ranges)
+                for (auto face : mesh->faces()) {
+                    const auto range = ranges[face];
+                    if (range.first >= 0 && result.primitive >= uint32_t(range.first) &&
+                        result.primitive <= uint32_t(range.second)) {
+                        result.face_index = face.idx();
+                        break;
+                    }
                 }
-            }
         }
         return result;
     }
     bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
         // x/y are framebuffer pixels; the camera carries logical screen dimensions.
-        // Render into a framebuffer-sized target so impostor radii (world-space, from
-        // the logical camera) project to the same physical size as the on-screen scene.
         const int fw = framebuffer_width(), fh = framebuffer_height();
         QueryContext context(window_);
+        std::vector<graphics::DrawCommand> commands;
+        if (device_query_commands(snapshot, fw, fh, false, commands)) {
+            const auto pixel = query_device().sample_pixel(
+                uint32_t(fw), uint32_t(fh), commands, uint32_t(x), uint32_t(y));
+            depth = pixel.depth;
+            return true;
+        }
         QueryState state;
         state.prepare(fw, fh);
         FramebufferObject target(fw, fh, 0);

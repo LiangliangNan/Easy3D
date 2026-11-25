@@ -34,7 +34,6 @@
 
 namespace easy3d {
 
-    namespace opengl { class PointSelector; }
 
     /**
      * \brief Implementation of picking points from a point cloud.
@@ -123,11 +122,6 @@ namespace easy3d {
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 
-    private:
-#ifndef EASY3D_HAS_VULKAN
-        // Region selection does not need a Viewer; the picker owns its GPU selector.
-        std::unique_ptr<opengl::PointSelector> point_selector_;
-#endif
     };
 
 }

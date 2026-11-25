@@ -48,10 +48,10 @@ namespace easy3d {
 
     namespace opengl {
         class OverlayRenderer;
-        class PointSelector;
     }
 
     namespace graphics {
+        class DrawableRenderer;
         class TextLayoutEngine;
     }
 
@@ -1288,6 +1288,17 @@ namespace easy3d {
         // Selects the framebuffer region used by the primitive-ID picking pass.
         // All four arguments are in framebuffer pixels (top-left origin).
         virtual void prepare_pick_view(int x, int y, int width, int height) const;
+        // Returns true when every visible query drawable and effect is supported by
+        // the backend-neutral OpenGL device.
+        bool supports_device_query(const Camera &camera, int width, int height, bool guides) const;
+        // Builds the same scene order as draw_scene(), assigning stable object IDs.
+        bool device_query_commands(const Camera &camera,
+                                   int width,
+                                   int height,
+                                   bool guides,
+                                   std::vector<graphics::DrawCommand> &commands,
+                                   std::vector<DrawSource> *sources = nullptr) const;
+        graphics::RenderDevice &query_device() const;
         // Creates the GLFW window and its context: sets the window hints from the two
         // option structs (MSAA samples, full-screen or resizable from WindowOptions;
         // depth/stencil bits and a forward-compatible core profile at
@@ -1338,9 +1349,10 @@ namespace easy3d {
         std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
         // Keeps built-in HUD text separate from application overlays and their draw order.
         std::unique_ptr<opengl::OverlayRenderer> hud_overlay_renderer_;
-        // OpenGL point-selection pass (render points into an id buffer, then read back);
-        // lazily created and mutable because selection is queried from const paths.
-        mutable std::unique_ptr<opengl::PointSelector> point_selector_;
+        // Backend-neutral command extraction and offscreen queries. The device borrows
+        // this viewer's context and is destroyed before the window in cleanup().
+        mutable std::unique_ptr<graphics::DrawableRenderer> drawable_renderer_;
+        mutable std::unique_ptr<graphics::RenderDevice> query_device_;
         // Scratch buffer that clipping_planes() fills with the active ClippingPlane
         // instance's planes, normalized, so the const getter can return them by reference.
         mutable std::vector<vec4> selection_planes_;

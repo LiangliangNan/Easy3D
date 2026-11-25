@@ -43,9 +43,7 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
     request.polygon={{0,0},{100,0},{100,100},{0,100}};request.points=v.point_resource(points.get());
     require(request.points->source_count()==70,"point source count changed");
     const auto original=request.points;
-#ifndef EASY3D_HAS_VULKAN
-    require(original->positions().empty(),"OpenGL point resource duplicated CPU positions");
-#endif
+    require(original->positions().size()==positions.size(),"point resource lost its position snapshot");
     auto words=v.select_points(request);
     require(words==std::vector<uint32_t>({0x55555555,0x55555555,0x15}),"GPU polygon test/packed word ownership differs");
     request.words=words;request.deselect=true;require(v.select_points(request)==std::vector<uint32_t>(3,0),"GPU deselection failed");

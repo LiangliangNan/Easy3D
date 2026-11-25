@@ -3,8 +3,7 @@ set(private_dependencies)
 set(backend_sources)
 set(backend_headers)
 if(Easy3D_ENABLE_VULKAN)
-    list(APPEND backend_sources backends/vulkan/drawable.cpp
-            backends/vulkan/clipping_plane.cpp)
+    list(APPEND backend_sources backends/vulkan/clipping_plane.cpp)
     include(backends/vulkan/CMakeLists.txt)
 endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
@@ -36,6 +35,7 @@ list(APPEND renderer_headers
         clipping_plane.h
         constraint.h
         drawable.h
+        drawable_renderer.h
         drawable_lines.h
         drawable_lines_2D.h
         drawable_points.h
@@ -63,6 +63,7 @@ list(APPEND renderer_sources
         clipping_plane.cpp
         constraint.cpp
         drawable.cpp
+        drawable_renderer.cpp
         drawable_lines.cpp
         drawable_lines_2D.cpp
         drawable_points.cpp
@@ -98,14 +99,15 @@ list(APPEND renderer_headers
         shader_manager.h
         shader_program.h
         vertex_array_object.h
+        backends/opengl/render_device.h
 )
 
 list(APPEND renderer_sources
         backends/opengl/clipping_plane.cpp
         backends/opengl/drawable_buffers.cpp
         backends/clipping.cpp
-        backends/opengl/point_selection.cpp
         backends/opengl/overlay_renderer.cpp
+        backends/opengl/render_device.cpp
         backends/opengl/shape_draw.cpp
         backends/opengl/drawable_lines_2D.cpp
         framebuffer_object.cpp

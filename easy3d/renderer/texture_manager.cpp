@@ -110,7 +110,7 @@ namespace easy3d {
 
     Texture* TextureManager::request(int num_stripes, int stride, Texture::WrapMode wrap, Texture::FilterMode filter) {
         std::lock_guard<std::mutex> lock(mutex_);
-        const std::string texture_name = "random|" + std::to_string(num_stripes) + "|" + std::to_string(stride) + "|" + std::to_string(int(wrap)) + "|" + std::to_string(int(filter));
+        const std::string texture_name = "color_table|" + std::to_string(num_stripes) + "|" + std::to_string(stride) + "|" + std::to_string(int(wrap)) + "|" + std::to_string(int(filter));
         auto pos = textures_.find(texture_name);
         if (pos != textures_.end()) // program already exists
             return pos->second;

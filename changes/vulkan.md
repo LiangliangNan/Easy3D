@@ -12014,3 +12014,42 @@ of the batch: turning them red would need a driver that fails a read from a *com
 target, which nothing here does, so they are covered by the no-regression runs rather than by a
 failing test. The thread's *other* signature, a crash from
 `Viewer::run()` with no framebuffer log line at all, is untouched by this batch and remains open.
+
+### 2026-11-25 — OpenGL adopts the shared offscreen RenderDevice increment
+
+**Change.** `graphics::DrawableRenderer` moved out of the Vulkan-only backend and now encodes
+`DrawCommand` for both backends. `Drawable::buffer_data()` gives it a cached snapshot of OpenGL
+VBO/EBO contents without changing which backend owns the drawable; readback no longer calls the
+OpenGL 4.2-only `glMemoryBarrier()` and restores the caller's buffer binding. The obsolete OpenGL
+`PointSelector` and transform-feedback selection implementation are removed.
+
+- A new OpenGL `RenderDevice` borrows the caller's current OpenGL 3.2+ context. It supports plain
+  triangles, one-pixel lines and points, textures, basic/material lighting, stable far-to-near
+  sorted transparency, flat/scene-depth-tested triangle overlays, RGBA/depth/object-ID/primitive-ID
+  readback, single-pixel/rectangular picking, point selection, resource caching, exact MSAA
+  capability checks, and caller GL-state preservation. Color may be multisampled; depth and integer
+  picking IDs remain single-sample. It is headless, so `present()` rejects presentation.
+- Supported `Viewer::pick()` and `read_scene_depth()` queries now submit the scene through the shared
+  device. `Viewer::capture()` keeps its native color/overlay/HUD pass and obtains supported-scene
+  depth/object-ID metadata through the device. Pick commands use unique internal command indices,
+  then resolve the exact source drawable, so overlapping drawables from one model cannot be
+  confused. OpenGL capture still reports `UINT32_MAX` primitive provenance.
+- Point-cloud picking and region selection use shared commands on both backends. OpenGL point
+  selection currently projects and tests CPU-backed point snapshots; Vulkan retains GPU selection.
+  Detached clouds and unsupported point effects use a source-slot snapshot with identity IDs and
+  NaN positions for deleted slots. Native OpenGL picking remains the fallback for impostors,
+  clipping, translucency and AO.
+- Capability checks retain exact native fallbacks for clipping, AO, non-opaque drawables, unavailable
+  CPU texture data, analytic point/line impostors, wide lines, advanced transparency, independent
+  HUD depth, EDL/shadow overlays, and `MultiViewer`'s assigned-cell query semantics. The live OpenGL
+  scene-rendering path is intentionally unchanged in this increment.
+- A read-only review found and fixed five edge cases before validation: ambiguous model-level pick
+  IDs, missing identity IDs for deleted source slots, stale cached highlight strengths, unsupported
+  point effects throwing instead of falling back, and failure to restore `GL_SCISSOR_BOX`. Focused
+  regressions cover all five.
+
+**Validation.** Both configured trees rebuilt successfully. The focused/broader OpenGL run passed
+**20/20** tests (12.96 s), including the adapter contract, picking/capture, overlays, parity and
+annotation tutorials. The shared Vulkan run passed **6/6** (7.21 s): query, portable pick/selection,
+offscreen queries, capture and GUI scene picking. Interactive Mapple behavior was not visually
+verified; this change is in the library/offscreen query path.

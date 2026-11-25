@@ -70,6 +70,14 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     const auto annotated=host.capture(4);require(annotated.depth==one.depth && annotated.ids[center].object==0,"annotation contaminated scene metadata");
     require(std::abs(int(annotated.rgba[4*center])-127)<=2 && std::abs(int(annotated.rgba[4*center+1])-128)<=2,"capture overlay compositing differs");
     for(unsigned i=0;i<16;++i)require(host.camera()->model_view_projection_matrix()[i]==matrix[i],"capture mutated the camera");
+    auto* nearer=mesh->renderer()->add_points_drawable("nearer query drawable");
+    nearer->update_vertex_buffer({vec3(0,0,.3f)});nearer->set_point_size(31);
+    nearer->set_impostor_type(PointsDrawable::PLAIN);nearer->set_lighting(false);
+    nearer->set_uniform_coloring(vec4(0,1,0,1));
+    const auto overlap_hit=host.pick(75,56);
+    require(overlap_hit.model==mesh && overlap_hit.drawable.get()==nearer,
+            "model-level query ID selected the wrong overlapping drawable");
+    nearer->set_visible(false);
     auto point=std::make_shared<PointsDrawable>("capture sphere");host.add_drawable(point);
     point->update_vertex_buffer({vec3(0,0,.3f)});point->set_point_size(31);point->set_impostor_type(PointsDrawable::SPHERE);
     point->set_lighting(false);point->set_uniform_coloring(vec4(0,0,1,1));host.set_overlays({});

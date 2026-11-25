@@ -41,10 +41,10 @@ namespace easy3d {
 
         /**
          * \brief Immutable point positions in draw order, mapped to original source slots.
-         * \details Native OpenGL snapshots may contain GPU-only storage (empty CPU
-         * vectors) and are valid only for selection on their owning viewer. The source
-         * count remains available. Devices realize CPU snapshots once as a shared
-         * vertex/storage buffer, reusable when attributes or transforms change.
+         * \details Both backend adapters consume CPU-backed snapshots. OpenGL creates
+         * them by reading the drawable's native vertex buffer; deleted or otherwise
+         * nonfinite positions are retained and skipped during selection. Devices cache
+         * the position resource independently of vertex attributes and transforms.
          */
         class PointData {
         public:
@@ -431,10 +431,12 @@ namespace easy3d {
         // points are skipped (usable for deleted vertex slots). Camera MVP uses [-w,w]
         // depth; centers outside its frustum or local halfspaces are skipped.
         /**
-         * \brief Inputs for GPU selection of point centers inside a screen polygon.
+         * \brief Inputs for selection of point centers inside a screen polygon.
          * \details The polygon uses the even-odd crossing rule with its boundary
          * included. Selection is independent of rasterization, occlusion, point style,
-         * MSAA, and scene readback. Nonfinite point positions are skipped.
+         * MSAA, and scene readback. Nonfinite point positions are skipped. Vulkan
+         * evaluates the selection on the GPU; the OpenGL adapter currently projects
+         * and tests the CPU-backed point snapshot.
          */
         struct PointSelectionRequest {
             /// Immutable point positions and source-slot mapping.
@@ -585,6 +587,9 @@ namespace easy3d {
             // Externally synchronized like render(); no render targets are modified.
             /**
              * \brief Select point source slots inside a framebuffer polygon.
+             * \details The shared selection contract is backend-independent. The
+             *      OpenGL adapter currently evaluates it on the CPU; Vulkan uses a
+             *      compute shader. Both return the same updated bitset.
              * \param request Point data, polygon, bitset, and transform for selection.
              * \return Updated selection bitset.
              */
@@ -601,6 +606,21 @@ namespace easy3d {
             /// \return Number of fragments dropped by linked-list OIT overflow last frame.
             virtual std::uint32_t oit_dropped_fragments() const = 0;
         };
+
+        /**
+         * \brief Creates a headless OpenGL render device using the caller's current context.
+         * \details The caller must have initialized OpenGL and keep the creating context current
+         *      for every operation and for device destruction. The device borrows the context; it
+         *      does not create a window, surface, or OpenGL loader. OpenGL 3.2 or later is required.
+         *      The first adapter increment supports plain geometry, textures, sorted transparency,
+         *      flat/scene-depth overlays, capture, picking queries, and point selection. Unsupported
+         *      advanced commands are rejected during validation. Window presentation remains the
+         *      responsibility of the existing OpenGL viewer.
+         * \return An owning pointer to the initialized render device.
+         * \throws std::runtime_error If no suitable current OpenGL context is available.
+         * \details This factory is available only in Easy3D builds configured with OpenGL support.
+         */
+        std::unique_ptr<RenderDevice> create_opengl_device();
 
         /**
          * \brief Creates a headless Vulkan render device.

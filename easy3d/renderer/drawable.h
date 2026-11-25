@@ -43,7 +43,6 @@ namespace easy3d {
     class Manipulator;
     class ShaderProgram;
     class VertexArrayObject;
-    namespace opengl { class PointSelector; }
 
     /**
      * \brief Base class for objects drawn as points, line segments, or triangles.
@@ -175,6 +174,13 @@ namespace easy3d {
          * \throws std::logic_error when CPU buffers are not enabled for this drawable.
          */
         const BufferData& cpu_buffers();
+
+        /**
+         * \brief Access a backend-neutral snapshot of the drawable buffers.
+         * \details Vulkan returns its CPU buffers. OpenGL refreshes pending geometry and
+         *      reads native buffers once per geometry revision into a CPU snapshot.
+         */
+        const BufferData& buffer_data();
 
         /**
          * \brief Associate rendered triangles with source SurfaceMesh faces.
@@ -410,10 +416,6 @@ namespace easy3d {
     private:
         friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
-        // Selection aliases the rendering VBO directly, so it must be able to
-        // refresh and version that storage without a dispatch through Viewer.
-        friend class opengl::PointSelector;
-
         // OpenGL buffer back ends called from the backend-neutral public and
         // protected entry points above; each keeps the cached GL names and the
         // vertex/index counts in sync with what is actually uploaded.
@@ -439,6 +441,9 @@ namespace easy3d {
         // Version of the position storage, bumped on every buffer change so that
         // point selection can tell that its cached snapshot is stale.
         unsigned long long point_revision_ = 0;
+        std::size_t buffer_revision_ = 0;
+        std::unique_ptr<BufferData> opengl_snapshot_;
+        std::size_t opengl_snapshot_revision_ = 0;
 #endif
 
     protected:
