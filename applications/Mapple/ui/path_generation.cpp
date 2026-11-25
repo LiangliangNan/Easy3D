@@ -200,7 +200,7 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
 
     // A replaced block shifts the times of all later keyframes by its change in span. Thus
     // an untouched keyframe keeps its original travel interval and dwell, even when an
-    // earlier orbit gains loops or a traced track gains stations.
+    // earlier orbit changes density or a traced track gains stations.
     float time_shift = 0.0f;
     cursor = 0;
     for (GeneratedPath &path : rebuilt) {
@@ -229,9 +229,9 @@ bool MappleViewer::rebuild_generated_paths(bool force, bool record_undo) {
         const int new_first = static_cast<int>(frames.size());
         const std::vector<Frame> generated = camera_path_builder_->frames_of(path.source);
 
-        // Zero eye/flight height and non-positive orbit counts refuse a rebuild. Keep the
-        // last accepted poses, but remember the refused settings so moving an unrelated
-        // control does not retry (and warn) on every frame.
+        // Zero eye/flight height and fewer than two orbit keyframes refuse a rebuild.
+        // Keep the last accepted poses, but remember the refused settings so moving an
+        // unrelated control does not retry (and warn) on every frame.
         if (generated.empty() && !path.pending) {
             for (int i = old_first; i <= old_last; ++i) {
                 const auto index = static_cast<std::size_t>(i);

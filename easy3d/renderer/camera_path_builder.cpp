@@ -370,12 +370,6 @@ namespace easy3d {
                 // would. It points the way the camera's up does not, hence the reverse.
                 const Line3 axis = Line3::from_point_and_direction(source.anchor, -ground_up_direction());
                 frames = orbit_frames(axis, source.center);
-                // orbit_frames() closes the loop by repeating its first pose. The
-                // interpolator cannot store that duplicate, so remove it before sampling
-                // traced aims and keep their path fractions aligned with the stored poses.
-                if (frames.size() > 1 &&
-                    distance2(frames.front().position(), frames.back().position()) < epsilon_sqr<float>())
-                    frames.pop_back();
                 break;
             }
         }
@@ -414,14 +408,13 @@ namespace easy3d {
                        now.follow_ground_slopes != built.follow_ground_slopes;
             case Source::Kind::Orbit:
                 // the orbit's axis comes from the up rule and its offsets are measured in the
-                // object height along it; the counts set how many poses the loops have
+                // object height along it; the keyframe count sets how many poses the orbit has
                 return now.ground_up_axis != built.ground_up_axis ||
                        now.orbit_radius_offset_in_object_heights != built.orbit_radius_offset_in_object_heights ||
                        now.orbit_vertical_offset_in_object_heights !=
                        built.orbit_vertical_offset_in_object_heights ||
                        now.pitch_degrees != built.pitch_degrees ||
-                       now.keyframes_per_loop != built.keyframes_per_loop ||
-                       now.num_loops != built.num_loops;
+                       now.keyframes_per_loop != built.keyframes_per_loop;
             case Source::Kind::None:
                 break;
         }
@@ -430,7 +423,7 @@ namespace easy3d {
 
     std::vector<Frame> CameraPathBuilder::orbit_frames(const Line3 &axis, const vec3 &center) const {
         std::vector<Frame> frames;
-        if (!scene_box_.is_valid() || settings_.keyframes_per_loop <= 0 || settings_.num_loops <= 0)
+        if (!scene_box_.is_valid() || settings_.keyframes_per_loop < 2)
             return frames;
 
         const auto up = -axis.direction(); // picking line points inside screen
@@ -449,11 +442,11 @@ namespace easy3d {
         const auto pitch_angle = geom::to_radians(settings_.pitch_degrees);
         const auto pitch_offset = dist_to_axis * std::tan(pitch_angle);
 
-        const int steps = settings_.keyframes_per_loop * settings_.num_loops;
+        const int steps = settings_.keyframes_per_loop;
         const auto angle_step = static_cast<float>(2.0 * M_PI / settings_.keyframes_per_loop);
         frames.reserve(static_cast<std::size_t>(steps) + 1);
-        // The last pose repeats the first: the path closes the requested number of
-        // loops instead of stopping one step short of the start.
+        // The last pose repeats the first: one complete circuit instead of stopping one
+        // step short of the start.
         for (int i = 0; i <= steps; ++i) {
             quat q(up, -angle_step * static_cast<float>(i)); // "-" for counterclockwise rotation
             const auto relative_cam = q.rotate(relative_cam0);
@@ -469,7 +462,7 @@ namespace easy3d {
             frames.emplace_back(*cam.frame());
         }
         // Accumulated quaternion rounding can leave the final position a few ulps away
-        // from the start. Close it exactly so the interpolator recognizes the duplicate.
+        // from the start. Make the closing keyframe exactly identical to the first.
         frames.back() = frames.front();
         return frames;
     }
@@ -594,10 +587,6 @@ namespace easy3d {
 
     void CameraPathBuilder::set_keyframes_per_loop(int count) {
         settings_.keyframes_per_loop = count;
-    }
-
-    void CameraPathBuilder::set_num_loops(int count) {
-        settings_.num_loops = count;
     }
 
     void CameraPathBuilder::add_keyframe(const Frame &frame) {

@@ -2906,3 +2906,25 @@ history was found and filled during the ToDo review.
   66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
   only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
   Mapple behavior and the resulting camera motion were not verified visually.
+
+### 2026-11-25 — Orbit is one closed circuit
+
+- The Orbit parameters no longer offer `Loops`. `CameraPathBuilder::Settings` drops the loop
+  count, and `orbit_frames()` always makes one circuit at the requested keyframe density. The
+  density control is now labeled `Keyframes`; values below two are refused because a one-segment
+  orbit would need two consecutive identical keyframes, which the interpolator rejects.
+- `orbit_frames()` still assigns its final frame from the first, making the closing position and
+  orientation exactly identical rather than merely close after quaternion accumulation.
+  `frames_of()` now retains that closing pose instead of discarding it, so generated and rebuilt
+  Mapple orbits end where they start. The interpolator accepts this non-consecutive duplicate and
+  gives the closing keyframe the usual one-second travel interval.
+- Traced Orbit aims are sampled across the retained closing pose, so the first and last aims reach
+  their own stroke endpoints. Density edits still regenerate only Orbit and resample those raw
+  aims; Walk, Flight and Orbit provenance/timing behavior are otherwise unchanged.
+- Regressions verify the single-circuit pose count, exact position and orientation closure,
+  storage of the closing keyframe, refusal of a one-segment orbit, source regeneration, settings
+  influence and aim resampling after a density edit.
+- Validation: both Mapple targets build; the complete non-desktop suites pass (Vulkan Debug
+  66/66, OpenGL RelWithDebInfo 47/47), including `generatedpath` on both backends. The builds emit
+  only the existing Homebrew FFmpeg versus macOS deployment-version linker warnings. Interactive
+  Mapple controls and the resulting camera motion were not verified visually.

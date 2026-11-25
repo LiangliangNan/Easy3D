@@ -209,15 +209,12 @@ void MappleViewer::draw_animation_window() {
                 parameters_changed = true;
             }
             int keyframes_per_loop = camera_path_builder_->keyframes_per_loop();
-            if (ImGui::DragInt("Keyframes per loop", &keyframes_per_loop, 0.5f, 1, 99)) {
+            if (ImGui::DragInt("Keyframes", &keyframes_per_loop, 0.5f, 2, 99)) {
                 camera_path_builder_->set_keyframes_per_loop(keyframes_per_loop);
                 parameters_changed = true;
             }
-            int loops = camera_path_builder_->num_loops();
-            if (ImGui::DragInt("Loops", &loops, 0.2f, 1, 99)) {
-                camera_path_builder_->set_num_loops(loops);
-                parameters_changed = true;
-            }
+            ImGui::SetItemTooltip("Poses around one closed orbit. The final keyframe exactly\n"
+                                  "repeats the first, so the camera returns to its starting pose.");
         } else if (parameters_tool == PathTool::Flight) {
             float height = camera_path_builder_->flight_height_in_scene_heights();
             if (ImGui::DragFloat("Flight height", &height, 0.01f, 0.0f, 100.0f, "%.2f x scene")) {

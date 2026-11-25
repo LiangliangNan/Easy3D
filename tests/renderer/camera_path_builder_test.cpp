@@ -366,9 +366,13 @@ int main() {
         const Line3 axis = Line3::from_point_and_direction(vec3(0.0f), vec3(0.0f, 0.0f, -1.0f));
         const std::vector<Frame> orbit = builder.orbit_frames(axis, vec3(0.0f));
         const float diagonal = builder.scene_box().diagonal_length();
-        require(static_cast<int>(orbit.size()) == builder.keyframes_per_loop() * builder.num_loops() + 1,
-                "the orbit does not cover the requested number of loops");
-        require(close_to(orbit.front().position(), orbit.back().position(), 1e-3f), "the orbit does not close");
+        require(static_cast<int>(orbit.size()) == builder.keyframes_per_loop() + 1,
+                "the orbit does not make one closed circuit at the requested density");
+        require(orbit.front().position() == orbit.back().position() &&
+                        orbit.front().orientation().rotate(local_up) == orbit.back().orientation().rotate(local_up) &&
+                        orbit.front().orientation().rotate(local_forward) ==
+                        orbit.back().orientation().rotate(local_forward),
+                "the orbit's closing keyframe is not exactly identical to its first");
         for (const Frame &f : orbit) {
             const vec3 pos = f.position();
             require(close_to(pos.z, 0.0f), "a level orbit pose left the horizontal plane");
@@ -393,9 +397,20 @@ int main() {
         builder.set_orbit_vertical_offset_in_object_heights(0.0f);
         builder.set_orbit_radius_offset_in_object_heights(0.0f);
 
+        builder.set_keyframes_per_loop(1);
+        require(builder.orbit_frames(axis, vec3(0.0f)).empty(),
+                "an orbit too short to store its closing keyframe was accepted");
+        builder.set_keyframes_per_loop(10);
+
         const std::size_t added = builder.generate_orbit(axis, vec3(0.0f));
         require(added == orbit.size(), "generate_orbit did not append the orbit poses");
         require(kfi.number_of_keyframes() == added, "the orbit poses did not reach the interpolator");
+        require(kfi.keyframe(0).position() == kfi.keyframe(added - 1).position() &&
+                        kfi.keyframe(0).orientation().rotate(local_up) ==
+                        kfi.keyframe(added - 1).orientation().rotate(local_up) &&
+                        kfi.keyframe(0).orientation().rotate(local_forward) ==
+                        kfi.keyframe(added - 1).orientation().rotate(local_forward),
+                "the interpolator did not retain the orbit's exact closing keyframe");
         require(camera.scene_radius() >= diagonal, "the camera radius was not grown to hold the orbit");
 
         // --- flight poses ---------------------------------------------------
@@ -726,9 +741,8 @@ int main() {
         const Line3 source_axis = Line3::from_point_and_direction(
                 orbit_anchor, -builder.ground_up_direction());
         std::vector<Frame> expected_orbit = builder.orbit_frames(source_axis, orbit_center);
-        expected_orbit.pop_back(); // the interpolator cannot store the closing duplicate
         require(same_frames(builder.frames_of(orbit_source), expected_orbit),
-                "frames_of did not reproduce the orbit from its anchor");
+                "frames_of did not reproduce the closed orbit from its anchor");
 
         // Raw aims are part of the source, not a one-off edit of the generated orientations.
         CameraPathBuilder::Source aimed_walk = walk;
@@ -826,13 +840,6 @@ int main() {
                 builder.settings_changed_for(orbit_source, built),
                 "orbit loop density influenced a mode other than Orbit");
         builder.set_keyframes_per_loop(built.keyframes_per_loop);
-
-        builder.set_num_loops(built.num_loops + 1);
-        require(!builder.settings_changed_for(walk, built) &&
-                !builder.settings_changed_for(flight_source, built) &&
-                builder.settings_changed_for(orbit_source, built),
-                "orbit loop count influenced a mode other than Orbit");
-        builder.set_num_loops(built.num_loops);
         require(!builder.settings_changed_for(walk, built) &&
                 !builder.settings_changed_for(flight_source, built) &&
                 !builder.settings_changed_for(orbit_source, built),
@@ -862,11 +869,17 @@ int main() {
                 "raw aims were not resampled after the generated pose count changed");
         builder.set_keyframe_spacing_in_scene_heights(built.keyframe_spacing_in_scene_heights);
 
-        builder.set_num_loops(built.num_loops + 1);
+        builder.set_keyframes_per_loop(built.keyframes_per_loop + 1);
+        const std::vector<Frame> respaced_orbit = builder.frames_of(orbit_source);
         require(same_frames(walk_built, builder.frames_of(walk)) &&
                 same_frames(flight_built, builder.frames_of(flight_source)) &&
-                !same_frames(orbit_built, builder.frames_of(orbit_source)),
-                "changing loop count did not regenerate exactly the Orbit poses");
-        builder.set_num_loops(built.num_loops);
+                !same_frames(orbit_built, respaced_orbit),
+                "changing orbit density did not regenerate exactly the Orbit poses");
+        const std::vector<vec3> respaced_orbit_aims =
+                builder.aim_targets(aimed_orbit.aims, respaced_orbit.size());
+        require(same_frames(builder.frames_of(aimed_orbit),
+                            builder.aimed_frames(respaced_orbit, respaced_orbit_aims)),
+                "raw orbit aims were not resampled after the generated pose count changed");
+        builder.set_keyframes_per_loop(built.keyframes_per_loop);
     });
 }

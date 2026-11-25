@@ -88,8 +88,8 @@ namespace easy3d {
  *
  *      The setters store their arguments unchecked; the generating functions refuse
  *      the settings that would produce a degenerate track (a zero eye or flight
- *      height, non-positive orbit counts) and return nothing. Each function documents
- *      the refusal and any clamping.
+ *      height, fewer than two orbit keyframes) and return nothing. Each function
+ *      documents the refusal and any clamping.
  *
  * \note The generating functions append with KeyFrameInterpolator::add_keyframe
  *      (const Frame&), which times each new pose one second after the previous one and
@@ -270,16 +270,16 @@ public:
     //@{
     /// \brief Generates the orbit around \p axis, centered where \p center projects
     ///      onto it, and appends it to the interpolator.
-    /// \details The radius, vertical offset, pitch, keyframes per loop and loop
-    ///      count come from the orbit settings; scene_box() supplies the scale. The
-    ///      path closes the requested loops: its last pose repeats its first. Nothing
-    ///      is replaced: callers clear the path first when a replacement is intended.
+    /// \details The radius, vertical offset, pitch and keyframe count come from the
+    ///      orbit settings; scene_box() supplies the scale. The path makes one closed
+    ///      circuit: its last pose exactly repeats its first. Nothing is replaced:
+    ///      callers clear the path first when a replacement is intended.
     /// \param axis The picked axis. The camera's up is its reversed direction, so a
     ///      line picked pointing into the screen produces an upright turntable.
     /// \param center The orbit center; the vertical offset is added to it along the
     ///      orbit's up and the result is projected onto \p axis.
     /// \return The number of poses generated, or 0 while scene_box() is invalid or
-    ///      either count is not positive.
+    ///      the keyframe count is less than two.
     /// \note The interpolator may accept fewer keyframes; see the class description.
     std::size_t generate_orbit(const Line3 &axis, const vec3 &center);
 
@@ -316,19 +316,13 @@ public:
     /// \return The camera pitch, in degrees.
     float pitch_degrees() const { return settings_.pitch_degrees; }
 
-    /// \brief Keyframes per orbit loop (default 10).
-    /// \details Poses are placed every 360 / count degrees around the axis, so the
-    ///      total is keyframes_per_loop() x num_loops() + 1 (the closing pose).
-    /// \param count A positive number; a value at or below zero makes the orbit empty.
+    /// \brief Keyframes per closed orbit (default 10).
+    /// \details Poses are placed every 360 / count degrees around the axis, followed
+    ///      by an exact copy of the first pose, so the total is keyframes_per_loop() + 1.
+    /// \param count At least two; a smaller value makes the orbit empty.
     void set_keyframes_per_loop(int count);
-    /// \return The number of keyframes per loop.
+    /// \return The number of keyframes per closed orbit.
     int keyframes_per_loop() const { return settings_.keyframes_per_loop; }
-
-    /// \brief Number of orbit loops (default 2).
-    /// \param count A positive number; a value at or below zero makes the orbit empty.
-    void set_num_loops(int count);
-    /// \return The number of orbit loops.
-    int num_loops() const { return settings_.num_loops; }
     //@}
 
     /// \name Flight
@@ -432,7 +426,6 @@ public:
         float orbit_vertical_offset_in_object_heights = 0.1f;
         float pitch_degrees = 0.0f;
         int keyframes_per_loop = 10;
-        int num_loops = 2;
     };
 
     /// \return A copy of the settings the builders currently read.
@@ -488,11 +481,11 @@ public:
     ///      resampled at keyframe_spacing_in_scene_heights(), a walk lifts each foot by
     ///      eye_height_in_scene_heights() and a flight each station by
     ///      flight_height_in_scene_heights(), the orbit axis is the ground up through
-    ///      Source::anchor and its radius/offsets/pitch/counts come from the orbit
-    ///      settings, and a non-empty Source::aims replaces the mode's default aim with
-    ///      aim points sampled along the stroke (see aim_targets() and aimed_frames()).
-    ///      The orbit omits orbit_frames()' closing duplicate, which an interpolator
-    ///      cannot store, before its aims are sampled.
+    ///      Source::anchor and its radius/offsets/pitch/keyframe count come from the
+    ///      orbit settings, and a non-empty Source::aims replaces the mode's default
+    ///      aim with aim points sampled along the stroke (see aim_targets() and
+    ///      aimed_frames()). The exact closing pose is retained, so traced aims include
+    ///      both ends of the closed path.
     ///      A Walk builds one route per stroke and concatenates them, exactly as calling
     ///      generate_ground_route() per stroke would; a stroke too short to build a route
     ///      contributes nothing, as the generating function returns 0 for it.
@@ -523,18 +516,18 @@ public:
     /// interpolator, so a caller can preview, filter or edit them first.
     //@{
     /// \brief Poses of an orbit around \p axis.
-    /// \details The radius, vertical offset, pitch, keyframes per loop and loop
-    ///      count come from the orbit settings; scene_box() supplies the scale.
-    ///      The returned path covers keyframes_per_loop() x num_loops() segment steps
-    ///      and closes the loop, i.e. its last pose equals its first.
+    /// \details The radius, vertical offset, pitch and keyframe count come from the
+    ///      orbit settings; scene_box() supplies the scale. The returned path makes one
+    ///      closed circuit of keyframes_per_loop() segment steps, and its last pose
+    ///      exactly equals its first.
     /// \param axis The picked axis. The camera's up is its reversed direction (a line
     ///      picked pointing into the screen gives an upright turntable), and the poses
     ///      look at the axis.
     /// \param center The orbit center; the vertical offset is added to it along the
     ///      orbit's up and the result is projected onto \p axis.
-    /// \return orbit poses in path order (keyframes_per_loop() x num_loops() + 1 of
-    ///      them), or an empty vector while scene_box() is invalid or either count is
-    ///      not positive.
+    /// \return orbit poses in path order (keyframes_per_loop() + 1 of them), or an
+    ///      empty vector while scene_box() is invalid or the keyframe count is less
+    ///      than two.
     std::vector<Frame> orbit_frames(const Line3 &axis, const vec3 &center) const;
 
     /// \brief Eye poses walking through \p feet, all standing along one up direction.
