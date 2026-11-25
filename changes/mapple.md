@@ -2785,3 +2785,67 @@ migrated; retirement proceeded on 2026-11-23, closing Phase 4.
 - Measured: both trees (Vulkan Debug, OpenGL RelWithDebInfo) build the `Mapple` target clean. Not
   measured: the click itself -- the app was not launched, so neither the new gesture nor the
   occluded triad has been seen on screen.
+
+### 2026-11-24 — Generated paths keep their input and rebuild when parameters change
+
+- The Camera Path window no longer treats a generated path as frozen. After a one-shot Walk,
+  Flight or Orbit tool disarms, its parameters stay visible and editing one regenerates the
+  existing block from its stored input. An armed tool still configures its next gesture; the
+  last generated block's mode supplies the controls while no tool is armed.
+- `CameraPathBuilder::Source` stores the original ground strokes or picked orbit anchor/center
+  and any raw aim points. `GeneratedPath` in `generated_path.h` pairs that source with the
+  settings used for its last successful build and the inclusive keyframe range it owns.
+  `settings_changed_for()` keeps irrelevant controls from rebuilding a mode.
+- `ui/path_generation.cpp` owns provenance, generation commits, rebuilding, snapshots and undo.
+  `rebuild_generated_paths()` keeps keyframes outside generated ranges verbatim and splices in
+  new poses. A block's first pose starts at its previous time (shifted by earlier span
+  changes), new poses target one-second intervals, and later unowned keyframes retain their travel
+  intervals and dwells. Generated poses retain dwell by generated-pose ordinal, excluding
+  manual gaps; selected keyframes are remapped to the rebuilt ranges.
+- A degenerate setting (zero eye/flight height or a non-positive orbit count) leaves the last
+  accepted poses in place and remembers the refused settings, so moving an unrelated control
+  does not retry and warn on every frame. The whole replacement is validated before the old
+  path is deleted; no partially written path is left behind.
+- Clicked or traced aims remain raw source data, so they survive spacing, height and orbit
+  edits. Orbit omits its closing duplicate before sampling traced aims, matching the poses the
+  interpolator can actually store. Orbit replacement still owns the old whole range long
+  enough for Ctrl+Z to restore it. Camera-path snapshots now carry generated provenance along
+  with poses, timing and selection, so undoing a later stroke leaves earlier generated paths
+  parameter-driven. A gesture commit keeps the snapshot taken when its tool was armed instead
+  of overwriting it with the pending new source.
+- Parameter drags coalesce into one undo point. The first rebuild snapshots the path, later
+  rebuilds in the same drag keep that snapshot, and the next idle UI frame closes the drag's
+  undo boundary. Add Keyframe, Insert After, Remove Last and Delete Selected update provenance
+  instead of discarding it. A manual pose inserted inside a generated range is stored as a gap
+  anchored by the number of generated poses before it; regeneration preserves that pose, its
+  timing and dwell while replacing only the generated poses. Imports and path deletion still
+  clear provenance because their ranges or meaning no longer match the generated blocks.
+- Measured: both trees (Vulkan Debug, OpenGL RelWithDebInfo) build `Mapple`, and
+  `easy3d_camera_path_builder_test` and `easy3d_keyframe_interpolator_test` pass in each. The
+  dedicated `easy3d_generated_path_test` (`opengl.generatedpath` / `vulkan.generatedpath`) covers
+  edit-surviving provenance: append at the end, insertions inside and before a range,
+  generated/manual deletion, Remove Last, an empty generated range and restoring an earlier
+  generated path from an undo snapshot. It lives in `tests/mapple`, separate from the renderer
+  library tests. Not measured: the controls, drag/undo granularity, mixed generated/free path
+  behavior or the visual result -- Mapple was not launched.
+
+### 2026-11-25 — Review fixes for parameter-driven regeneration
+
+A correctness and structure pass over the generated-path work made these targeted changes:
+
+- Preserved manual poses keep their existing timestamps during regeneration; a timestamp is
+  nudged only when it would otherwise collide with its predecessor. Previously every replacement
+  pose was pushed at least one second past the previous pose, moving midpoint manual edits.
+- Re-aim preflights the candidate source before storing new aims. A degenerate rebuild therefore
+  cannot leave the Aim tool disarmed with unsaved input and a misleading success result.
+- Whole-path replacement resets playback elapsed time as well as stopping interpolation, so a
+  parameter rebuild cannot leave a stale playback readout or timeline position.
+- Closing the Camera Path window through its title bar clears the rebuild drag's undo boundary,
+  just like the normal close path. Add Keyframe and Remove Last now also take undo snapshots.
+- Builder documentation distinguishes raw arc-length aim strokes and settings-only change
+  detection; scene-box and resolved-view-up changes still require a forced rebuild by the caller.
+- Builder tests assert actual frame changes and aim resampling, not only influence booleans.
+  Application provenance coverage moved to its own `tests/mapple` target.
+- Validation: both `Mapple` targets build; the three camera-path tests pass on each backend;
+  the complete non-desktop CTest suites pass (OpenGL RelWithDebInfo 47/47, Vulkan Debug 66/66).
+  Interactive Mapple controls and gestures remain unmeasured.

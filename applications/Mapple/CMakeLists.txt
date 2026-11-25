@@ -10,11 +10,13 @@ add_executable(${name}
         imgui_layer.cpp
         keyframe_timeline.h
         keyframe_timeline.cpp
+        generated_path.h
         ui/menu.cpp
         ui/panels.cpp
         ui/process.cpp
         ui/snapshot.cpp
         ui/animation.cpp
+        ui/path_generation.cpp
         ui/properties.cpp
         )
 set_target_properties(${name} PROPERTIES FOLDER "applications")

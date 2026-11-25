@@ -728,3 +728,43 @@ stands -- one combo, one click, no gesture to learn. The drag state and the scre
 preview went with it, and `Follow slopes`, which belongs to the two ground tracks alone, is now a
 separate widget that Orbit does not draw. The details, and what is still unverified by eye, are in
 the 2026-11-24 orbit entry of `changes/mapple.md`.
+
+### 2026-11-24 — Reproducible camera-path input and parameter-driven rebuilds
+
+A generated path used to be a one-shot result: its strokes, picked anchor and sampled aim
+targets were reduced to keyframes, so changing Eye height, Flight height, spacing or an orbit
+parameter could only affect the next gesture. `CameraPathBuilder` now separates that raw input
+from the settings that shape it:
+
+- `CameraPathBuilder::Source` records a Walk's separate ground strokes, a Flight's ground
+  strokes, or an Orbit's picked anchor and center, plus the raw aim points. It stores no feet,
+  lifted stations, resampled targets or derived orbit axis.
+- `CameraPathBuilder::Settings` is the single value snapshot for every builder parameter.
+  `settings()` returns a copy; `settings_changed_for(source, built)` compares only the fields
+  that mode reads. Up affects all three modes; eye height only Walk; flight height only Flight;
+  spacing and Follow slopes only Walk/Flight; radius, vertical offset, pitch and loop counts
+  only Orbit. A setting moved away and back compares equal.
+- `frames_of(source)` is the pure regeneration entry point. Walk resamples each stroke
+  separately, Flight joins its strokes before resampling, and Orbit re-derives its axis from
+  the anchor and current Up rule. Raw aims are sampled again from the source rather than kept
+  as stale per-keyframe targets. Orbit's closing duplicate is removed before aim sampling,
+  because the interpolator cannot store two coincident positions.
+- Mapple owns the editable-path policy in `applications/Mapple/ui/path_generation.cpp`, not
+  the renderer. Its `GeneratedPath` records pair a source and build-time settings with the
+  keyframe range they own. Add/insert/remove/delete operations shift those ranges instead of
+  discarding them. Insertions inside a range become manual gaps anchored by generated-pose
+  ordinal; deleting a generated pose decrements later anchors, while deleting a manual pose
+  removes only its gap. Rebuilding splices newly generated blocks around unowned keyframes and
+  preserves manual poses, their times and dwells; the application's UI, aims and one-level undo
+  are described in `changes/mapple.md`.
+
+Measured: `easy3d_camera_path_builder_test`, `easy3d_keyframe_interpolator_test` and
+`easy3d_generated_path_test` pass in both the Vulkan Debug and OpenGL RelWithDebInfo trees,
+and both build `Mapple`. The complete non-desktop suites also pass: OpenGL 47/47 and Vulkan
+66/66. The builder test covers reproduction of all three modes, raw aim
+resampling and frame-level effects of the complete per-mode influence matrix. The separate
+Mapple test (`opengl.generatedpath` / `vulkan.generatedpath`) covers edit-surviving provenance
+and undo-snapshot restoration of an earlier generated path without making the renderer test
+depend on application code. Not measured: interactive parameter dragging and keyframe editing
+in Mapple; the app was not launched.
+`easy3d/util/version.h` unchanged.

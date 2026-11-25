@@ -121,7 +121,7 @@ bool MappleViewer::open() {
         const std::string keyframe_file = file_system::replace_extension(files.back(), "kf");
         if (file_system::is_file(keyframe_file) && kfi_->read_keyframes(keyframe_file)) {
             keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
-            clear_aim_range(); // the imported path has no mode default
+            clear_generated_paths(); // the imported path has no mode default
             set_camera_path_visible(true);
             LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << keyframe_file;
         }
@@ -176,7 +176,7 @@ void MappleViewer::open_recent_file(const std::string &file) {
     const std::string keyframe_file = file_system::replace_extension(file, "kf");
     if (file_system::is_file(keyframe_file) && kfi_->read_keyframes(keyframe_file)) {
         keyframe_editor_->set_selected(static_cast<int>(kfi_->number_of_keyframes()) - 1);
-        clear_aim_range(); // the imported path has no mode default
+        clear_generated_paths(); // the imported path has no mode default
         set_camera_path_visible(true);
         LOG(INFO) << kfi_->number_of_keyframes() << " keyframes loaded from " << keyframe_file;
     }

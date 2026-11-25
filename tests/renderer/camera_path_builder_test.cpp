@@ -511,5 +511,201 @@ int main() {
         }
         require(builder.generate_flight(flying_stations, {vec3(0.0f)}) == 0,
                 "generate_flight accepted unpaired aims");
+
+        // --- reproducible sources and their settings influence -----------------
+        auto same_frames = [](const std::vector<Frame> &a, const std::vector<Frame> &b) {
+            if (a.size() != b.size())
+                return false;
+            for (std::size_t i = 0; i < a.size(); ++i) {
+                if (!close_to(a[i].position(), b[i].position(), 1e-4f) ||
+                    !close_to(a[i].orientation().rotate(local_up), b[i].orientation().rotate(local_up), 1e-4f) ||
+                    !close_to(a[i].orientation().rotate(local_forward),
+                              b[i].orientation().rotate(local_forward), 1e-4f))
+                    return false;
+            }
+            return true;
+        };
+
+        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Y);
+        builder.set_keyframe_spacing_in_scene_heights(0.2f);
+        builder.set_follow_ground_slopes(true);
+        builder.set_flight_height_in_scene_heights(0.5f);
+
+        // A Walk keeps its strokes separate and concatenates one generated route per stroke.
+        kfi.delete_path();
+        builder.generate_ground_route(flat_stroke);
+        builder.generate_ground_route(diagonal_stroke);
+        std::vector<Frame> expected_walk;
+        for (std::size_t i = 0; i < kfi.number_of_keyframes(); ++i)
+            expected_walk.push_back(kfi.keyframe(i));
+        const CameraPathBuilder::Source walk = CameraPathBuilder::Source::walk({flat_stroke, diagonal_stroke});
+        const std::vector<Frame> rebuilt_walk = builder.frames_of(walk);
+        require(same_frames(rebuilt_walk, expected_walk),
+                "frames_of did not reproduce the walking routes");
+
+        // A Flight joins its strokes before resampling, so the gap between two drags is flown
+        // rather than treated as a break in the route.
+        const std::vector<vec3> first_half(flat_stroke.begin(), flat_stroke.begin() + 5);
+        const std::vector<vec3> second_half(flat_stroke.begin() + 5, flat_stroke.end());
+        CameraPathBuilder::Source flight_source;
+        flight_source.kind = CameraPathBuilder::Source::Kind::Flight;
+        flight_source.strokes = {first_half, second_half};
+        const std::vector<CameraPathBuilder::FlightStation> source_stations =
+                builder.flight_stations(flat_stroke);
+        const std::vector<Frame> expected_flight =
+                builder.flight_frames(source_stations, {}, builder.ground_up_direction());
+        require(same_frames(builder.frames_of(flight_source), expected_flight),
+                "frames_of did not reproduce the joined flight track");
+
+        // An Orbit stores the picked anchor and re-resolves its axis from the current Up rule.
+        const vec3 orbit_anchor(1.0f, -5.0f, 2.0f);
+        const vec3 orbit_center(0.0f, 1.0f, 0.0f);
+        const CameraPathBuilder::Source orbit_source =
+                CameraPathBuilder::Source::orbit(orbit_anchor, orbit_center);
+        const Line3 source_axis = Line3::from_point_and_direction(
+                orbit_anchor, -builder.ground_up_direction());
+        std::vector<Frame> expected_orbit = builder.orbit_frames(source_axis, orbit_center);
+        expected_orbit.pop_back(); // the interpolator cannot store the closing duplicate
+        require(same_frames(builder.frames_of(orbit_source), expected_orbit),
+                "frames_of did not reproduce the orbit from its anchor");
+
+        // Raw aims are part of the source, not a one-off edit of the generated orientations.
+        CameraPathBuilder::Source aimed_walk = walk;
+        aimed_walk.aims = {vec3(0.0f, 0.0f, 3.0f)};
+        const std::vector<vec3> walk_targets =
+                builder.aim_targets(aimed_walk.aims, rebuilt_walk.size());
+        require(same_frames(builder.frames_of(aimed_walk),
+                            builder.aimed_frames(rebuilt_walk, walk_targets)),
+                "frames_of did not keep the walk's raw aim");
+        CameraPathBuilder::Source aimed_flight = flight_source;
+        aimed_flight.aims = {vec3(0.0f, 0.0f, 10.0f), vec3(10.0f, 0.0f, 10.0f)};
+        const std::vector<vec3> flight_targets =
+                builder.aim_targets(aimed_flight.aims, expected_flight.size());
+        const std::vector<vec3> flight_roll_ups(expected_flight.size(), builder.ground_up_direction());
+        require(same_frames(builder.frames_of(aimed_flight),
+                            builder.aimed_frames(expected_flight, flight_targets, flight_roll_ups)),
+                "frames_of did not keep the flight's raw aim and roll reference");
+        CameraPathBuilder::Source aimed_orbit = orbit_source;
+        aimed_orbit.aims = {vec3(-2.0f, 0.0f, 3.0f), vec3(2.0f, 0.0f, 3.0f)};
+        const std::vector<vec3> orbit_aims =
+                builder.aim_targets(aimed_orbit.aims, expected_orbit.size());
+        require(same_frames(builder.frames_of(aimed_orbit),
+                            builder.aimed_frames(expected_orbit, orbit_aims)),
+                "frames_of did not keep the orbit's raw aim over its stored poses");
+
+        const CameraPathBuilder::Settings built = builder.settings();
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "unchanged settings reported a stale source");
+        require(!builder.settings_changed_for(CameraPathBuilder::Source{}, built),
+                "a source with no mode reported a settings change");
+
+        builder.set_eye_height_in_scene_heights(built.eye_height_in_scene_heights + 0.1f);
+        require(builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "eye height influenced a mode other than Walk");
+        builder.set_eye_height_in_scene_heights(built.eye_height_in_scene_heights);
+
+        builder.set_flight_height_in_scene_heights(built.flight_height_in_scene_heights + 0.1f);
+        require(!builder.settings_changed_for(walk, built) &&
+                builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "flight height influenced a mode other than Flight");
+        builder.set_flight_height_in_scene_heights(built.flight_height_in_scene_heights);
+
+        builder.set_keyframe_spacing_in_scene_heights(built.keyframe_spacing_in_scene_heights + 0.1f);
+        require(builder.settings_changed_for(walk, built) &&
+                builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "keyframe spacing did not influence exactly the two ground tracks");
+        builder.set_keyframe_spacing_in_scene_heights(built.keyframe_spacing_in_scene_heights);
+
+        builder.set_follow_ground_slopes(!built.follow_ground_slopes);
+        require(builder.settings_changed_for(walk, built) &&
+                builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "the slope rule influenced a mode other than Walk or Flight");
+        builder.set_follow_ground_slopes(built.follow_ground_slopes);
+
+        builder.set_ground_up_axis(CameraPathBuilder::GroundUpAxis::Z);
+        require(builder.settings_changed_for(walk, built) &&
+                builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "the Up rule did not influence every generated mode");
+        builder.set_ground_up_axis(built.ground_up_axis);
+
+        builder.set_orbit_radius_offset_in_object_heights(
+                built.orbit_radius_offset_in_object_heights + 0.1f);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "orbit radius influenced a mode other than Orbit");
+        builder.set_orbit_radius_offset_in_object_heights(built.orbit_radius_offset_in_object_heights);
+
+        builder.set_orbit_vertical_offset_in_object_heights(
+                built.orbit_vertical_offset_in_object_heights + 0.1f);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "orbit vertical offset influenced a mode other than Orbit");
+        builder.set_orbit_vertical_offset_in_object_heights(built.orbit_vertical_offset_in_object_heights);
+
+        builder.set_pitch_degrees(built.pitch_degrees + 1.0f);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "orbit pitch influenced a mode other than Orbit");
+        builder.set_pitch_degrees(built.pitch_degrees);
+
+        builder.set_keyframes_per_loop(built.keyframes_per_loop + 1);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "orbit loop density influenced a mode other than Orbit");
+        builder.set_keyframes_per_loop(built.keyframes_per_loop);
+
+        builder.set_num_loops(built.num_loops + 1);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                builder.settings_changed_for(orbit_source, built),
+                "orbit loop count influenced a mode other than Orbit");
+        builder.set_num_loops(built.num_loops);
+        require(!builder.settings_changed_for(walk, built) &&
+                !builder.settings_changed_for(flight_source, built) &&
+                !builder.settings_changed_for(orbit_source, built),
+                "returning a setting to its built value did not clear the change");
+
+        const std::vector<Frame> walk_built = builder.frames_of(walk);
+        const std::vector<Frame> flight_built = builder.frames_of(flight_source);
+        const std::vector<Frame> orbit_built = builder.frames_of(orbit_source);
+
+        builder.set_eye_height_in_scene_heights(built.eye_height_in_scene_heights + 0.1f);
+        require(!same_frames(walk_built, builder.frames_of(walk)) &&
+                same_frames(flight_built, builder.frames_of(flight_source)) &&
+                same_frames(orbit_built, builder.frames_of(orbit_source)),
+                "changing eye height did not regenerate exactly the Walk poses");
+        builder.set_eye_height_in_scene_heights(built.eye_height_in_scene_heights);
+
+        builder.set_keyframe_spacing_in_scene_heights(built.keyframe_spacing_in_scene_heights + 0.1f);
+        const std::vector<Frame> respaced_walk = builder.frames_of(walk);
+        require(!same_frames(walk_built, respaced_walk) &&
+                !same_frames(flight_built, builder.frames_of(flight_source)) &&
+                same_frames(orbit_built, builder.frames_of(orbit_source)),
+                "changing spacing did not regenerate exactly the ground-track poses");
+        const std::vector<vec3> respaced_aims =
+                builder.aim_targets(aimed_walk.aims, respaced_walk.size());
+        require(same_frames(builder.frames_of(aimed_walk),
+                            builder.aimed_frames(respaced_walk, respaced_aims)),
+                "raw aims were not resampled after the generated pose count changed");
+        builder.set_keyframe_spacing_in_scene_heights(built.keyframe_spacing_in_scene_heights);
+
+        builder.set_num_loops(built.num_loops + 1);
+        require(same_frames(walk_built, builder.frames_of(walk)) &&
+                same_frames(flight_built, builder.frames_of(flight_source)) &&
+                !same_frames(orbit_built, builder.frames_of(orbit_source)),
+                "changing loop count did not regenerate exactly the Orbit poses");
+        builder.set_num_loops(built.num_loops);
     });
 }

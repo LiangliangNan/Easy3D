@@ -38,6 +38,7 @@ if(Easy3D_ENABLE_VULKAN AND NOT Easy3D_VALIDATION_LAYER_DIR)
 endif()
 
 add_subdirectory(renderer)
+add_subdirectory(mapple)
 add_subdirectory(viewer)
 add_subdirectory(gui)
 add_subdirectory(core)

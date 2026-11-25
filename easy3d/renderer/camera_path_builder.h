@@ -54,10 +54,9 @@ namespace easy3d {
  *      - orbiting a picked axis: generate_orbit() turns a line into a closed orbit,
  *      - recording a flight: flight_stations() lifts a traced ground stroke to camera
  *        stations at the flight height and generate_flight() appends the poses aiming
- *        down at each station's foot by default (the reverse of its lift, so a tilted
- *        track looks along its own surface normal), or at one target per station when
- *        a target list is given (aim_targets() turns an aim stroke into such a list; a
- *        clicked target is a repeated aim_targets() value),
+ *        at the ground ahead by default, or at one target per station when a target
+ *        list is given (aim_targets() turns an aim stroke into such a list; a clicked
+ *        target is a repeated aim_targets() value),
  *      - pure builders for previewing or editing a path before it is inserted:
  *        orbit_frames(), ground_frames() (eye poses over ground-contact points) and
  *        flight_frames() (stations with a separate aim track), and
@@ -66,6 +65,14 @@ namespace easy3d {
  *        along its track), and aimed_frames() re-aims existing poses at a target per pose,
  *        keeping their position and roll reference. This is how an app lets the user
  *        replace a mode's default aims by a clicked point or a traced aim stroke.
+ *
+ *      A generated path stays editable: a Source keeps the raw input it was traced or
+ *      picked from and Settings holds the numbers that shaped it, so frames_of() can
+ *      produce the same poses again under different settings. That is how an app lets
+ *      the user fine-tune a parameter after the path exists instead of asking for the
+ *      gesture over. settings_changed_for() answers the narrower question of whether a
+ *      source reads any setting that has changed since it was built, so a parameter the
+ *      mode ignores does not trigger a rebuild.
  *
  *      The class borrows a camera and a keyframe interpolator. The builders return
  *      plain frames; the generating functions append them to the interpolator the
@@ -163,7 +170,7 @@ public:
     ///      camera's up like View.
     void set_ground_up_axis(GroundUpAxis axis);
     /// \return The rule the up direction resolves from.
-    GroundUpAxis ground_up_axis() const { return ground_up_axis_; }
+    GroundUpAxis ground_up_axis() const { return settings_.ground_up_axis; }
 
     /// \brief The up direction of every pose this builder makes: one anti-gravity
     ///      direction for the whole path.
@@ -178,15 +185,15 @@ public:
     /// \brief Sets the eye height above the ground, in scene heights (default 0.2).
     /// \details A scene height is the extent of scene_box() along
     ///      ground_up_direction(), or the camera's scene radius while the box is
-    ///      invalid. generate_ground_route() uses the height twice: as the eye offset
-    ///      above each foot and as the unit of the route's keyframe spacing (spacing x
-    ///      eye height), so a taller eye also walks in larger steps.
+    ///      invalid. generate_ground_route() measures the eye offset above each foot
+    ///      along this direction; keyframe density is controlled independently by
+    ///      keyframe_spacing_in_scene_heights().
     /// \param height_in_scene_heights A positive fraction of the scene height;
     ///      typically 0.1-0.3. A height whose world value is at most 1e-4 makes
     ///      generate_ground_route() add nothing.
     void set_eye_height_in_scene_heights(float height_in_scene_heights);
     /// \return The eye height above the ground, in scene heights.
-    float eye_height_in_scene_heights() const { return eye_height_in_scene_heights_; }
+    float eye_height_in_scene_heights() const { return settings_.eye_height_in_scene_heights; }
 
     /// \brief The eye height above the ground in world units, i.e.
     ///      eye_height_in_scene_heights() resolved against scene_box() along
@@ -211,7 +218,7 @@ public:
     ///      number of keyframes for a normal scene.
     void set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights);
     /// \return The keyframe spacing, in scene heights.
-    float keyframe_spacing_in_scene_heights() const { return keyframe_spacing_in_scene_heights_; }
+    float keyframe_spacing_in_scene_heights() const { return settings_.keyframe_spacing_in_scene_heights; }
 
     /// \brief Distance between consecutive keyframes along a ground track, in world
     ///      units.
@@ -231,7 +238,7 @@ public:
     ///      altitude across the track.
     void set_follow_ground_slopes(bool follow_slopes);
     /// \return Whether the ground tracks follow the terrain's slopes.
-    bool follow_ground_slopes() const { return follow_ground_slopes_; }
+    bool follow_ground_slopes() const { return settings_.follow_ground_slopes; }
 
     /// \brief Generates a walking route through \p stroke on the ground and appends
     ///      it to the interpolator.
@@ -283,7 +290,7 @@ public:
     /// \param offset_in_object_heights The radius offset in object heights.
     void set_orbit_radius_offset_in_object_heights(float offset_in_object_heights);
     /// \return The extra orbit radius, in object heights.
-    float orbit_radius_offset_in_object_heights() const { return orbit_radius_offset_in_object_heights_; }
+    float orbit_radius_offset_in_object_heights() const { return settings_.orbit_radius_offset_in_object_heights; }
 
     /// \brief Vertical offset of the orbit center above the picked point, in object
     ///      heights (default 0.1).
@@ -295,7 +302,7 @@ public:
     ///      value raises the center.
     void set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights);
     /// \return The orbit center offset, in object heights.
-    float orbit_vertical_offset_in_object_heights() const { return orbit_vertical_offset_in_object_heights_; }
+    float orbit_vertical_offset_in_object_heights() const { return settings_.orbit_vertical_offset_in_object_heights; }
 
     /// \brief Camera pitch in degrees (default 0).
     /// \details The poses look at the axis raised or lowered by radius x tan(pitch)
@@ -305,7 +312,7 @@ public:
     ///      offset diverges.
     void set_pitch_degrees(float degrees);
     /// \return The camera pitch, in degrees.
-    float pitch_degrees() const { return pitch_degrees_; }
+    float pitch_degrees() const { return settings_.pitch_degrees; }
 
     /// \brief Keyframes per orbit loop (default 10).
     /// \details Poses are placed every 360 / count degrees around the axis, so the
@@ -313,13 +320,13 @@ public:
     /// \param count A positive number; a value at or below zero makes the orbit empty.
     void set_keyframes_per_loop(int count);
     /// \return The number of keyframes per loop.
-    int keyframes_per_loop() const { return keyframes_per_loop_; }
+    int keyframes_per_loop() const { return settings_.keyframes_per_loop; }
 
     /// \brief Number of orbit loops (default 2).
     /// \param count A positive number; a value at or below zero makes the orbit empty.
     void set_num_loops(int count);
     /// \return The number of orbit loops.
-    int num_loops() const { return num_loops_; }
+    int num_loops() const { return settings_.num_loops; }
     //@}
 
     /// \name Flight
@@ -336,7 +343,7 @@ public:
     ///      nothing.
     void set_flight_height_in_scene_heights(float height_in_scene_heights);
     /// \return The flight height above the ground, in scene heights.
-    float flight_height_in_scene_heights() const { return flight_height_in_scene_heights_; }
+    float flight_height_in_scene_heights() const { return settings_.flight_height_in_scene_heights; }
 
     /// \brief The flight height in world units, i.e. flight_height_in_scene_heights()
     ///      resolved against scene_box() along ground_up_direction() (or the camera's
@@ -396,6 +403,114 @@ public:
     /// \note The interpolator may accept fewer keyframes; see the class description.
     std::size_t generate_flight(const std::vector<FlightStation> &stations,
                                 const std::vector<vec3> &targets);
+    //@}
+
+    /// \name Generated paths
+    /// A path is reproducible when its input is: a Source keeps what the user traced or
+    /// picked and Settings the numbers that shaped it, so a parameter edit can rebuild the
+    /// poses instead of asking for the gesture over.
+    //@{
+    /// \brief Every number a builder reads, as one value.
+    /// \details The members are the settings of the mode sections above, with the defaults
+    ///      a freshly constructed builder starts at. A copy of it is a snapshot: an app
+    ///      that regenerates a path compares the snapshot taken at the build against
+    ///      settings() to know whether the path's input still produces the same poses.
+    ///      The scene bounds are not part of it: they come from set_scene() and are the
+    ///      same for every mode.
+    struct Settings {
+        GroundUpAxis ground_up_axis = GroundUpAxis::Auto;
+        float eye_height_in_scene_heights = 0.2f;
+        float keyframe_spacing_in_scene_heights = 0.5f;
+        bool follow_ground_slopes = true;
+        float flight_height_in_scene_heights = 4.0f;
+        float orbit_radius_offset_in_object_heights = 0.2f;
+        float orbit_vertical_offset_in_object_heights = 0.1f;
+        float pitch_degrees = 0.0f;
+        int keyframes_per_loop = 10;
+        int num_loops = 2;
+    };
+
+    /// \return A copy of the settings the builders currently read.
+    Settings settings() const { return settings_; }
+
+    /// \brief The raw input a generated path is derived from.
+    /// \details Only what the user supplied: strokes of picked surface points, the picked
+    ///      orbit anchor. Everything the builders derive from it - resampled feet, lifted
+    ///      stations, the orbit axis, the aim targets - is recomputed by frames_of(),
+    ///      because all of it depends on settings the user may still change. The orbit
+    ///      stores its anchor rather than an axis so a changed ground_up_axis() rule can
+    ///      re-resolve the axis direction, and its center because that is the scene center
+    ///      at the time of the pick, not a setting.
+    /// \note A source is data, not a state: it says nothing about where the resulting
+    ///      poses were inserted, and copying one lets the same input be rebuilt at will.
+    struct Source {
+        /// Which mode the input belongs to, and hence which settings it reads.
+        enum class Kind {
+            None,   ///< Nothing was traced or picked: frames_of() produces no poses.
+            Walk,   ///< Ground strokes, each one walking route.
+            Flight, ///< Ground strokes joined into one flight track.
+            Orbit   ///< The picked anchor point and the orbit center.
+        };
+
+        /// \brief One traced route per walking stroke.
+        /// \details A Walk source keeps the strokes apart because each generated its own
+        ///      poses: the route is resampled per stroke, so concatenating them would
+        ///      invent a segment across the gap between two strokes. A Flight source joins
+        ///      its strokes into one element because a flight is one continuous track.
+        ///      Unused by Orbit.
+        std::vector<std::vector<vec3>> strokes;
+        vec3 anchor = vec3(0.0f, 0.0f, 0.0f); ///< Orbit: the picked surface point the axis rises from.
+        vec3 center = vec3(0.0f, 0.0f, 0.0f);  ///< Orbit: the point the poses turn around.
+        /// Raw aim stroke, sampled by arc length across the generated poses. Empty keeps
+        /// the mode's default aims. The orbit and the walk take their targets from the
+        /// poses' own heading or center, so an Aim of a walked path is an explicit re-aim
+        /// of every pose (see aimed_frames()).
+        std::vector<vec3> aims;
+
+        Kind kind = Kind::None;
+
+        /// \brief A walking route made of \p strokes, one route per stroke.
+        static Source walk(std::vector<std::vector<vec3>> strokes);
+        /// \brief A flight over one track made of \p stroke.
+        static Source flight(std::vector<vec3> stroke);
+        /// \brief An orbit around the axis through \p anchor, turning around \p center.
+        ///      The axis direction comes from ground_up_axis() when the poses are built.
+        static Source orbit(const vec3 &anchor, const vec3 &center);
+    };
+
+    /// \brief The poses \p source produces under the current settings and scene context.
+    /// \details The same derivation the generating functions use: the strokes are
+    ///      resampled at keyframe_spacing_in_scene_heights(), a walk lifts each foot by
+    ///      eye_height_in_scene_heights() and a flight each station by
+    ///      flight_height_in_scene_heights(), the orbit axis is the ground up through
+    ///      Source::anchor and its radius/offsets/pitch/counts come from the orbit
+    ///      settings, and a non-empty Source::aims replaces the mode's default aim with
+    ///      aim points sampled along the stroke (see aim_targets() and aimed_frames()).
+    ///      The orbit omits orbit_frames()' closing duplicate, which an interpolator
+    ///      cannot store, before its aims are sampled.
+    ///      A Walk builds one route per stroke and concatenates them, exactly as calling
+    ///      generate_ground_route() per stroke would; a stroke too short to build a route
+    ///      contributes nothing, as the generating function returns 0 for it.
+    /// \param source The input to derive from. A Source::Kind of None produces no poses.
+    /// \return The poses in path order, or an empty vector when the settings refuse the
+    ///      mode (a world height of at most 1e-4, an invalid scene box, a non-positive
+    ///      orbit count) or the input is empty. The poses carry no time: appending them to
+    ///      an interpolator times them one second apart, which may also drop one that
+    ///      coincides with its predecessor (see the class description).
+    std::vector<Frame> frames_of(const Source &source) const;
+
+    /// \brief Whether a setting that \p source reads differs from \p built.
+    /// \details Only the settings of the source's mode count: an orbit ignores the eye
+    ///      height and the slope rule, a walk ignores the loop counts. Comparison is
+    ///      exact, so a control moved away from \p built and back reports no change.
+    ///      This compares settings only. The scene box, camera scene radius and resolved
+    ///      View/Auto up direction also affect frames_of(); callers must force a rebuild
+    ///      when that context changes.
+    /// \param source The input of a path built with \p built.
+    /// \param built The settings that produced it.
+    /// \return True if a setting read by \p source differs, and false for a source with
+    ///      no mode (Kind of None), which reads no setting at all.
+    bool settings_changed_for(const Source &source, const Settings &built) const;
     //@}
 
     /// \name Path builders
@@ -530,36 +645,13 @@ protected:
     // not use it.
     KeyFrameInterpolator *kfi_;
 
-    // Walking route
     // Union of the visible models last passed to set_scene(); invalid when none was
     // visible.
     Box3 scene_box_;
-    // The rule ground_up_direction() resolves from (default Auto).
-    GroundUpAxis ground_up_axis_;
-    // Eye height above the ground, in scene heights (default 0.2).
-    float eye_height_in_scene_heights_;
-    // Keyframe spacing of the walking route and the flight, in units of the scene's
-    // height (default 0.5). One value for both tracks, so neither track's height moves it.
-    float keyframe_spacing_in_scene_heights_;
-    // Whether the ground tracks follow the terrain's heights (default true). False keeps
-    // every pose at the stroke's first point's altitude.
-    bool follow_ground_slopes_;
-
-    // Flight
-    // Camera stations' height above the traced ground, in scene heights (default 4.0).
-    float flight_height_in_scene_heights_;
-
-    // Orbit
-    // Extra orbit radius beyond the scene diagonal, in object heights (default 0.2).
-    float orbit_radius_offset_in_object_heights_;
-    // Orbit center offset above the picked point, in object heights (default 0.1).
-    float orbit_vertical_offset_in_object_heights_;
-    // Orbit camera pitch, in degrees (default 0).
-    float pitch_degrees_;
-    // Orbit poses per loop (default 10).
-    int keyframes_per_loop_;
-    // Number of closed orbit loops (default 2).
-    int num_loops_;
+    // The numbers every builder reads, kept as one value so the setters, settings() and
+    // the comparison against a path's build-time copy all see the same fields. The
+    // per-field defaults are the ones Settings documents.
+    Settings settings_;
 };
 
 } // namespace easy3d

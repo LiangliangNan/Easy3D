@@ -30,6 +30,7 @@ All test implementations, fixtures, harnesses and registrations are in this fold
 | `kdtree` | All four kd-tree implementations against known nearest/k/radius results |
 | `util` | Assertions for signals, bounded asynchronous timers, and joined logging workers |
 | `renderer` | Headless Vulkan rendering, text, depth annotations/textures and GPU selection |
+| `mapple` | Application-owned generated-path provenance, manual gaps and undo restoration |
 | `gui` | GUI-level mesh and scene picking |
 | `viewer` | Backend/shared viewer regressions, input, picking, captures, GUI and resource lifetime |
 | `viewer/installed` | SDK-free consumers of installed renderer/viewer/gui components |

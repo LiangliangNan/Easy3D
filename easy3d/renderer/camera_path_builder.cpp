@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
@@ -91,11 +92,7 @@ namespace easy3d {
     }
 
     CameraPathBuilder::CameraPathBuilder(Camera *camera, KeyFrameInterpolator *interpolator)
-            : camera_(camera), kfi_(interpolator), ground_up_axis_(GroundUpAxis::Auto),
-              eye_height_in_scene_heights_(0.2f), keyframe_spacing_in_scene_heights_(0.5f),
-              follow_ground_slopes_(true), flight_height_in_scene_heights_(4.0f),
-              orbit_radius_offset_in_object_heights_(0.2f), orbit_vertical_offset_in_object_heights_(0.1f),
-              pitch_degrees_(0.0f), keyframes_per_loop_(10), num_loops_(2) {
+            : camera_(camera), kfi_(interpolator) {
     }
 
     void CameraPathBuilder::set_scene(const std::vector<std::shared_ptr<Model>> &scene) {
@@ -108,19 +105,19 @@ namespace easy3d {
     }
 
     void CameraPathBuilder::set_eye_height_in_scene_heights(float height_in_scene_heights) {
-        eye_height_in_scene_heights_ = height_in_scene_heights;
+        settings_.eye_height_in_scene_heights = height_in_scene_heights;
     }
 
     void CameraPathBuilder::set_keyframe_spacing_in_scene_heights(float spacing_in_scene_heights) {
-        keyframe_spacing_in_scene_heights_ = spacing_in_scene_heights;
+        settings_.keyframe_spacing_in_scene_heights = spacing_in_scene_heights;
     }
 
     void CameraPathBuilder::set_follow_ground_slopes(bool follow_slopes) {
-        follow_ground_slopes_ = follow_slopes;
+        settings_.follow_ground_slopes = follow_slopes;
     }
 
     void CameraPathBuilder::set_ground_up_axis(GroundUpAxis axis) {
-        ground_up_axis_ = axis;
+        settings_.ground_up_axis = axis;
     }
 
     vec3 CameraPathBuilder::ground_up_direction() const {
@@ -128,7 +125,7 @@ namespace easy3d {
         // scene box's shortest extent: a building or a terrain stands along the direction
         // it is least deep in, so that is the way up. The view's up is the last resort, for
         // a scene whose orientation is unknown and which the user has turned upright.
-        switch (ground_up_axis_) {
+        switch (settings_.ground_up_axis) {
             case GroundUpAxis::X:
                 return vec3(1.0f, 0.0f, 0.0f);
             case GroundUpAxis::Y:
@@ -181,26 +178,26 @@ namespace easy3d {
     }
 
     float CameraPathBuilder::eye_height_in_world_units() const {
-        return scene_height_in_world_units() * eye_height_in_scene_heights_;
+        return scene_height_in_world_units() * settings_.eye_height_in_scene_heights;
     }
 
     float CameraPathBuilder::flight_height_in_world_units() const {
-        return scene_height_in_world_units() * flight_height_in_scene_heights_;
+        return scene_height_in_world_units() * settings_.flight_height_in_scene_heights;
     }
 
     float CameraPathBuilder::keyframe_spacing_in_world_units() const {
         // Clamped to at least 1e-4, so a value at or below zero is accepted without
         // producing an unbounded number of keyframes.
-        return std::max(1e-4f, scene_height_in_world_units() * keyframe_spacing_in_scene_heights_);
+        return std::max(1e-4f, scene_height_in_world_units() * settings_.keyframe_spacing_in_scene_heights);
     }
 
     void CameraPathBuilder::set_flight_height_in_scene_heights(float height_in_scene_heights) {
-        flight_height_in_scene_heights_ = height_in_scene_heights;
+        settings_.flight_height_in_scene_heights = height_in_scene_heights;
     }
 
     std::vector<vec3> CameraPathBuilder::lifted_feet(const std::vector<vec3> &feet, float height) const {
         const vec3 up = ground_up_direction();
-        if (follow_ground_slopes_) {
+        if (settings_.follow_ground_slopes) {
             // Each pose stands its own height above the point under it, so the track climbs
             // and falls with the terrain.
             std::vector<vec3> lifted;
@@ -236,18 +233,9 @@ namespace easy3d {
     }
 
     std::size_t CameraPathBuilder::generate_ground_route(const std::vector<vec3> &stroke) {
-        const float eye = eye_height_in_world_units();
-        if (eye <= 1e-4f)
-            return 0;
-        // One spacing for both ground tracks, measured against the scene rather than the
-        // track's own height, so the eye height does not move it.
-        const float spacing = keyframe_spacing_in_world_units();
-
-        std::vector<vec3> feet;
-        if (!resample_stroke(stroke, spacing, feet))
-            return 0;
-
-        const std::vector<Frame> frames = ground_frames(lifted_feet(feet, eye), ground_up_direction(), 0.0f);
+        // One stroke, one route: frames_of() carries the derivation so a route built here and
+        // one rebuilt later from the same input cannot drift apart.
+        const std::vector<Frame> frames = frames_of(Source::walk({stroke}));
         for (const auto &frame : frames)
             add_keyframe(frame);
         return frames.size();
@@ -321,9 +309,129 @@ namespace easy3d {
         return frames.size();
     }
 
+    CameraPathBuilder::Source CameraPathBuilder::Source::walk(std::vector<std::vector<vec3>> routes) {
+        Source source;
+        source.kind = Kind::Walk;
+        source.strokes = std::move(routes);
+        return source;
+    }
+
+    CameraPathBuilder::Source CameraPathBuilder::Source::flight(std::vector<vec3> track) {
+        Source source;
+        source.kind = Kind::Flight;
+        source.strokes.push_back(std::move(track));
+        return source;
+    }
+
+    CameraPathBuilder::Source CameraPathBuilder::Source::orbit(const vec3 &anchor, const vec3 &center) {
+        Source source;
+        source.kind = Kind::Orbit;
+        source.anchor = anchor;
+        source.center = center;
+        return source;
+    }
+
+    std::vector<Frame> CameraPathBuilder::frames_of(const Source &source) const {
+        std::vector<Frame> frames;
+        switch (source.kind) {
+            case Source::Kind::None:
+                return frames;
+            case Source::Kind::Walk: {
+                // One route per stroke, concatenated in stroke order: exactly the poses of
+                // generate_ground_route() called once per stroke. A stroke too short for a
+                // route adds nothing, as that function returns 0 for it, and a refusal of the
+                // eye height takes the whole walk, since it is the same for every stroke.
+                const float eye = eye_height_in_world_units();
+                const float spacing = keyframe_spacing_in_world_units();
+                if (eye > 1e-4f) {
+                    for (const auto &stroke : source.strokes) {
+                        std::vector<vec3> feet;
+                        if (!resample_stroke(stroke, spacing, feet))
+                            continue;
+                        const std::vector<Frame> route =
+                                ground_frames(lifted_feet(feet, eye), ground_up_direction(), 0.0f);
+                        frames.insert(frames.end(), route.begin(), route.end());
+                    }
+                }
+                break;
+            }
+            case Source::Kind::Flight: {
+                // The strokes are one continuous track, joined before the resampling so that
+                // the stations keep the equal spacing across a stroke boundary. With no targets
+                // each station looks at the ground ahead along the track.
+                std::vector<vec3> track;
+                for (const auto &stroke : source.strokes)
+                    track.insert(track.end(), stroke.begin(), stroke.end());
+                frames = flight_frames(flight_stations(track), std::vector<vec3>(), ground_up_direction());
+                break;
+            }
+            case Source::Kind::Orbit: {
+                // The axis is re-derived rather than stored: it is the ground up through the
+                // picked anchor, so a changed up rule tips a kept orbit the way a fresh pick
+                // would. It points the way the camera's up does not, hence the reverse.
+                const Line3 axis = Line3::from_point_and_direction(source.anchor, -ground_up_direction());
+                frames = orbit_frames(axis, source.center);
+                // orbit_frames() closes the loop by repeating its first pose. The
+                // interpolator cannot store that duplicate, so remove it before sampling
+                // traced aims and keep their path fractions aligned with the stored poses.
+                if (frames.size() > 1 &&
+                    distance2(frames.front().position(), frames.back().position()) < epsilon_sqr<float>())
+                    frames.pop_back();
+                break;
+            }
+        }
+
+        if (frames.empty() || source.aims.empty())
+            return frames;
+
+        // Aims the user traced or clicked replace the mode's default, one target per pose
+        // sampled along the aim stroke. A flight keeps the path's up as its roll reference,
+        // because its poses aim at the ground rather than stand on it; a walk and an orbit
+        // keep each pose's own up, which is what makes a walked pose stay upright.
+        const std::vector<vec3> targets = aim_targets(source.aims, frames.size());
+        if (source.kind == Source::Kind::Flight)
+            return aimed_frames(frames, targets, std::vector<vec3>(frames.size(), ground_up_direction()));
+        return aimed_frames(frames, targets);
+    }
+
+    bool CameraPathBuilder::settings_changed_for(const Source &source, const Settings &built) const {
+        // Comparison is exact, and only over the settings the mode reads: a control put back
+        // where the path was built from is no change, and a setting outside the mode's set
+        // cannot move one of its poses.
+        const Settings &now = settings_;
+        switch (source.kind) {
+            case Source::Kind::Walk:
+                // the up rule is the direction the eye height is measured along, the spacing
+                // how many feet the stroke is cut into and the slope rule which altitude
+                // those feet rise from
+                return now.ground_up_axis != built.ground_up_axis ||
+                       now.eye_height_in_scene_heights != built.eye_height_in_scene_heights ||
+                       now.keyframe_spacing_in_scene_heights != built.keyframe_spacing_in_scene_heights ||
+                       now.follow_ground_slopes != built.follow_ground_slopes;
+            case Source::Kind::Flight:
+                return now.ground_up_axis != built.ground_up_axis ||
+                       now.flight_height_in_scene_heights != built.flight_height_in_scene_heights ||
+                       now.keyframe_spacing_in_scene_heights != built.keyframe_spacing_in_scene_heights ||
+                       now.follow_ground_slopes != built.follow_ground_slopes;
+            case Source::Kind::Orbit:
+                // the orbit's axis comes from the up rule and its offsets are measured in the
+                // object height along it; the counts set how many poses the loops have
+                return now.ground_up_axis != built.ground_up_axis ||
+                       now.orbit_radius_offset_in_object_heights != built.orbit_radius_offset_in_object_heights ||
+                       now.orbit_vertical_offset_in_object_heights !=
+                       built.orbit_vertical_offset_in_object_heights ||
+                       now.pitch_degrees != built.pitch_degrees ||
+                       now.keyframes_per_loop != built.keyframes_per_loop ||
+                       now.num_loops != built.num_loops;
+            case Source::Kind::None:
+                break;
+        }
+        return false;
+    }
+
     std::vector<Frame> CameraPathBuilder::orbit_frames(const Line3 &axis, const vec3 &center) const {
         std::vector<Frame> frames;
-        if (!scene_box_.is_valid() || keyframes_per_loop_ <= 0 || num_loops_ <= 0)
+        if (!scene_box_.is_valid() || settings_.keyframes_per_loop <= 0 || settings_.num_loops <= 0)
             return frames;
 
         const auto up = -axis.direction(); // picking line points inside screen
@@ -333,17 +441,17 @@ namespace easy3d {
         const float object_height =
                 std::abs(up.x) * extent.x + std::abs(up.y) * extent.y + std::abs(up.z) * extent.z;
 
-        const auto vertical_offset = orbit_vertical_offset_in_object_heights_ * object_height * up;
+        const auto vertical_offset = settings_.orbit_vertical_offset_in_object_heights * object_height * up;
         const auto at = axis.projection(center + vertical_offset);
         const auto dist_to_axis =
-                scene_box_.diagonal_length() + orbit_radius_offset_in_object_heights_ * object_height;
+                scene_box_.diagonal_length() + settings_.orbit_radius_offset_in_object_heights * object_height;
         const auto relative_cam0 = geom::orthogonal(up).normalize() * dist_to_axis;
 
-        const auto pitch_angle = geom::to_radians(pitch_degrees_);
+        const auto pitch_angle = geom::to_radians(settings_.pitch_degrees);
         const auto pitch_offset = dist_to_axis * std::tan(pitch_angle);
 
-        const int steps = keyframes_per_loop_ * num_loops_;
-        const auto angle_step = static_cast<float>(2.0 * M_PI / keyframes_per_loop_);
+        const int steps = settings_.keyframes_per_loop * settings_.num_loops;
+        const auto angle_step = static_cast<float>(2.0 * M_PI / settings_.keyframes_per_loop);
         frames.reserve(static_cast<std::size_t>(steps) + 1);
         // The last pose repeats the first: the path closes the requested number of
         // loops instead of stopping one step short of the start.
@@ -361,6 +469,9 @@ namespace easy3d {
 
             frames.emplace_back(*cam.frame());
         }
+        // Accumulated quaternion rounding can leave the final position a few ulps away
+        // from the start. Close it exactly so the interpolator recognizes the duplicate.
+        frames.back() = frames.front();
         return frames;
     }
 
@@ -457,23 +568,23 @@ namespace easy3d {
     }
 
     void CameraPathBuilder::set_orbit_radius_offset_in_object_heights(float offset_in_object_heights) {
-        orbit_radius_offset_in_object_heights_ = offset_in_object_heights;
+        settings_.orbit_radius_offset_in_object_heights = offset_in_object_heights;
     }
 
     void CameraPathBuilder::set_orbit_vertical_offset_in_object_heights(float offset_in_object_heights) {
-        orbit_vertical_offset_in_object_heights_ = offset_in_object_heights;
+        settings_.orbit_vertical_offset_in_object_heights = offset_in_object_heights;
     }
 
     void CameraPathBuilder::set_pitch_degrees(float degrees) {
-        pitch_degrees_ = degrees;
+        settings_.pitch_degrees = degrees;
     }
 
     void CameraPathBuilder::set_keyframes_per_loop(int count) {
-        keyframes_per_loop_ = count;
+        settings_.keyframes_per_loop = count;
     }
 
     void CameraPathBuilder::set_num_loops(int count) {
-        num_loops_ = count;
+        settings_.num_loops = count;
     }
 
     void CameraPathBuilder::add_keyframe(const Frame &frame) {

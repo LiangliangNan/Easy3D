@@ -50,6 +50,7 @@
 #include <easy3d/util/progress.h>
 #include <easy3d/viewer/viewer.h>
 
+#include "generated_path.h"
 #include "settings.h"
 
 class KeyframeTimeline;
@@ -434,13 +435,13 @@ private:
     // The path modes' shared parameter: the rule that decides the path's one up direction,
     // and the direction it resolves to right now. Walk and flight stand their poses on it;
     // Orbit runs its rotation axis along it.
-    void draw_ground_up_rule();
+    bool draw_ground_up_rule();
     // The Walk and Flight modes' second shared parameter: whether a track climbs with the
     // ground under it or keeps one altitude. Orbit has no ground track, so it skips this one.
-    void draw_follow_slopes_rule();
+    bool draw_follow_slopes_rule();
     // The Walk and Flight modes' shared parameter: the keyframe spacing along the track,
     // in scene heights (one value for both tracks).
-    void draw_keyframe_spacing();
+    bool draw_keyframe_spacing();
 
     // Whether the Camera Path window is in editing mode: opened, and not closed since.
     // Inside it Alt is the keyframe handles' modifier and never touches the model.
@@ -501,24 +502,30 @@ private:
     // the path (Ctrl+Z restores it).
     void apply_orbit_gesture(const easy3d::vec2 &anchor);
 
-    // The range of keyframes the Aim tool re-aims: what the last path gesture (or the
-    // last aim) produced. Any edit that adds, removes or replaces keyframes clears it,
-    // and the aim prompt goes away with it.
-    struct AimRange {
-        bool valid = false;
-        PathTool mode = PathTool::Off;
-        int first = 0;
-        int last = -1;
-    };
-    void set_aim_range(PathTool mode, int first, int last);
-    void clear_aim_range();
+    // Generated-source provenance and its keyframe span. Manually inserted poses inside
+    // the span stay unowned when the source is regenerated.
+    using GeneratedPath = mapple::GeneratedPath;
 
-    // Re-aims the keyframes of aim_range_ at one target per keyframe. The walking and
-    // orbit poses keep their own up as the roll reference; a flight keeps the horizon
-    // level with the view's up. Snapshots the path for Ctrl+Z first.
-    void aim_path_range(const std::vector<easy3d::vec3> &targets);
-    // The Aim tool's release: one picked point aims every keyframe there, a traced
-    // stroke supplies one target per keyframe in path order.
+    const GeneratedPath *latest_generated_path() const;
+    // The recorded mode whose parameters remain editable after its one-shot tool disarms.
+    PathTool path_parameters_tool() const;
+    PathTool generated_path_tool() const;
+    const char *generated_path_aims() const;
+    void clear_generated_paths();
+    void generated_path_keyframe_inserted(int index);
+    void generated_path_keyframe_removed(int index);
+
+    // Replaces every generated block with frames_of(source) under the current settings,
+    // keeping keyframes outside those blocks and manually inserted poses inside them,
+    // with their timing and dwell. A refused (empty) rebuild keeps the block's existing
+    // keyframes. Returns false only when the resulting path cannot be written. Parameter
+    // drags share one undo point: the first rebuild snapshots, subsequent rebuilds in the
+    // same interaction do not. A gesture already snapshotted when its tool was armed passes
+    // record_undo = false so committing it cannot replace that undo point.
+    bool rebuild_generated_paths(bool force = false, bool record_undo = true);
+
+    // The Aim tool's release: one picked point aims every generated pose there, a traced
+    // stroke supplies the raw aims that are sampled along the path whenever it rebuilds.
     void commit_aim_stroke();
 
     // The path as it was before the last path tool was armed or keyframe edit, for
@@ -527,12 +534,25 @@ private:
         std::vector<easy3d::Frame> frames;
         std::vector<float> times;
         std::vector<float> dwells;
+        std::vector<GeneratedPath> generated_paths;
         int keyframe_index = -1;
         bool valid = false;
+        // True after rebuild_generated_paths() writes a path. It keeps the next parameter
+        // update in the same drag from replacing that drag's undo point; every other edit
+        // starts a new snapshot and clears it.
+        bool from_rebuild = false;
     };
     void snapshot_camera_path();
     // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
+
+    // The one writer for a whole-path replacement. It validates before deleting anything,
+    // so a malformed time/position sequence cannot leave a partially written path.
+    bool write_camera_path(const std::vector<easy3d::Frame> &frames,
+                           const std::vector<float> &times,
+                           const std::vector<float> &dwells);
+    // Widens the view to cover the authored poses without ever shrinking it.
+    void grow_scene_radius_over_path();
 
     // The Camera Path window's timeline strip. It lives as long as the window so its
     // cached segment layout survives between frames; the path it shows is invalidated
@@ -591,8 +611,7 @@ private:
     // caller restores the bounds afterwards.
     void release_camera_path_guides();
 
-    // Draws the path gesture preview: the walking stroke being traced, or the orbit
-    // axis being dragged, in the scene's overlay layer.
+    // Draws the walking or flight stroke being traced in the scene's overlay layer.
     void append_path_stroke_overlay(std::vector<easy3d::graphics::DrawCommand> &commands) const;
 
     // Video recording needs FFmpeg; without it recording_video() is always false.
@@ -912,8 +931,10 @@ private:
     std::vector<easy3d::vec3> route_segment_;                 // points of the current segment
     std::vector<std::vector<easy3d::vec3>> route_segments_;   // segments completed by a missed pick
 
-    // The keyframes the Aim tool acts on; the aim prompt disappears when they change.
-    AimRange aim_range_;
+    // Every generated block still represented in the current keyframe path, in path
+    // order. Keyframe edits update the ranges and manual gaps; importing or clearing the
+    // path discards provenance because the remaining poses are free keyframes.
+    std::vector<GeneratedPath> generated_paths_;
     CameraPathSnapshot camera_path_snapshot_;
 
     float left_width_ = 250.0f;
