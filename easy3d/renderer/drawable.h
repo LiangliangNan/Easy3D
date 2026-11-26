@@ -177,6 +177,7 @@ namespace easy3d {
 
         /**
          * \brief Access a backend-neutral snapshot of the drawable buffers.
+         * \return A backend-neutral snapshot of the drawable buffers.
          * \details Vulkan returns its CPU buffers. OpenGL refreshes pending geometry and
          *      reads native buffers once per geometry revision into a CPU snapshot.
          */
