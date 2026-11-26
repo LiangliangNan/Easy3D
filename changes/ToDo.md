@@ -312,6 +312,76 @@
   - [x] Rename `CameraPathBuilder` to `CameraPath` and align its files, callers, tests, and comments. **Completed 2026-11-25:** Mapple owns `camera_path.{h,cpp}` and `camera_path_io.{h,cpp}`; the save/read functions remain free functions and `.kf` compatibility is unchanged. See `changes/mapple.md`.
 
 
+- Vulkan-OpenGL API Unification
+  - Target: one public API for applications, drawables, and custom rendering, with OpenGL and Vulkan differing only in private implementations and reported capabilities. Backend selection may remain build-time; runtime switching is not required. The proposed contract is in [Vulkan-OpenGL-unification.md](Vulkan-OpenGL-unification.md), especially sections 6 and 7.
+
+  - [ ] Milestone 0 — Freeze the public contract and compatibility policy
+    - [ ] Review every proposed type and member in section 7 of the unification report against the current C++ and Python APIs; classify each as retain, add, adapt, deprecate, make private, or remove.
+    - [ ] Resolve the details not yet fixed by the proposal: `PresentationOptions`, the ownership/lifetime of `Surface`, `DrawableRenderer` ownership boundaries, `FrameImage` readback defaults, effect behavior when a capability is unavailable, and protected versus public methods in `OffScreen` and `MultiViewer`.
+    - [ ] Coordinate model/drawable ownership and return types with the separate raw-pointer modernization TODO rather than introducing a second ownership migration.
+    - [ ] Record exact old-to-new signatures, deprecation attributes, Python replacements, and the release in which each compatibility wrapper may be removed.
+    - [ ] Add minimal C++ compile-smoke programs for interactive, offscreen, multi-view, custom-drawable, and low-level `RenderDevice` usage; each program must compile unchanged against both backend builds without backend macros or backend-specific includes.
+
+  - [ ] Milestone 1 — Complete the backend-neutral graphics contract
+    - [ ] Consolidate the public value vocabulary (`Backend`, topology, point/line styles, transparency methods, readback modes, geometry, images, commands, frame images, and selection requests), reusing existing types where they already match the proposal.
+    - [ ] Group the long `RenderDevice::render()` argument lists into `RenderOptions`; define `PresentationOptions`; retain deprecated positional overloads only during migration.
+    - [ ] Add backend-neutral `create_device()` and `create_surface_device()` factories using common `DeviceOptions`; keep the existing OpenGL/Vulkan factories as temporary forwarding wrappers.
+    - [ ] Make device identity, driver information, validation diagnostics, sample-count queries, and optional capabilities available through `RenderDevice` without exposing native handles.
+    - [ ] Add command factories for common scene geometry, screen-space lines, textured quads, and overlays, while keeping explicit `DrawCommand` fields for source stability.
+    - [ ] Implement and test the consolidated contract in both adapters before routing Viewer through it.
+
+  - [ ] Milestone 2 — Make drawable geometry and realization backend-neutral
+    - [ ] Standardize `Drawable::BufferData` and revision tracking so `buffer_data()` is the portable source for geometry, indices, primitive/source mappings, and cache invalidation.
+    - [ ] Route all drawable buffer updates through the shared realization/cache path; cover dynamic updates, element-buffer disabling, resizing, detachment, and repeated updates in both adapters.
+    - [ ] Move `DrawableRenderer` from command translation toward ownership of portable geometry/image caches; it must not own devices, windows, cameras, or native GPU resources.
+    - [ ] Express point, line, triangle, and screen-space line styling through portable command state; verify plain/impostor rendering, smooth shading, opacity, line width, and framebuffer-pixel conventions on both backends.
+    - [ ] Migrate every in-tree caller of `Drawable::draw()`, `gl_draw()`, `vao()`, and raw buffer getters to `DrawableRenderer` or command assembly, including Python bindings, tutorials, and tests.
+    - [ ] Deprecate and then remove native drawable rendering/resource access only after the preceding callers and both adapters pass parity tests.
+
+  - [ ] Milestone 3 — Turn rendering effects into portable settings
+    - [ ] Add `RenderSettings` and its shadow, ambient-occlusion, transparency, eye-dome-lighting, and clipping substructures with documented defaults, units, and validation.
+    - [ ] Add `set_render_settings()` to all rendering hosts and make shared command assembly consume those settings.
+    - [ ] Implement the shadow settings through both adapters, including hard/soft shadows and virtual background; verify matching light-space transforms and fallback behavior.
+    - [ ] Implement AO and eye-dome-lighting through both adapters without publishing native AO texture IDs or effect framebuffers through `State`.
+    - [ ] Route transparency through `TransparencyMethod` and layer settings; test sorted, average-color, depth-peeling, and linked-list paths, including unsupported-capability fallbacks and dropped-fragment diagnostics.
+    - [ ] Apply clipping planes in shared command/state assembly and verify point, region, and rendered capture results on both backends.
+    - [ ] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration.
+
+  - [ ] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
+    - [ ] Introduce common window/device construction and remove public `OpenGLOptions`/`VulkanOptions` conditionals while preserving backend-specific settings through compatibility overloads.
+    - [ ] Make `device()`, `draw_commands()`, overlays, clipping, render settings, and in-memory capture available consistently across `Viewer`, `OffScreen`, and `MultiViewer`.
+    - [ ] Preserve Viewer lifecycle/customization hooks and move custom drawing to backend-neutral commands; keep window-only operations out of the public `OffScreen` surface.
+    - [ ] Unify overlay submission through `DrawCommand` lists with explicit foreground/background ordering; migrate HUD and application overlays while preserving depth testing, depth writing, transparency, and capture inclusion.
+    - [ ] Implement presented-scene capture behind the shared host/device contract so it includes effects, overlays, HUD, and custom drawing with the same readback options as offscreen rendering.
+    - [ ] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping.
+    - [ ] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
+
+  - [ ] Milestone 5 — Unify picking and remaining exact fallbacks
+    - [ ] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms.
+    - [ ] Preserve CPU/geometric selection helpers where deliberately backend-independent, but remove rendered native fallbacks once shared query behavior is equivalent.
+    - [ ] Retire picker-owned framebuffers and native picking shaders after visible-surface, occlusion, boundary, hidden-object, and empty-region tests pass on both backends.
+    - [ ] Search for `EASY3D_HAS_VULKAN` branches in public headers and migrate client-visible branches to capabilities or common options; retain only private adapter/build implementation branches.
+
+  - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
+    - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.
+    - [ ] Move native framebuffer, shader, VAO, timer, utility, texture-realization, and immediate-mode shape implementations out of the installed public API once their replacements are complete.
+    - [ ] Remove `OverlayRenderer` only after shared overlay presentation and capture parity are verified.
+    - [ ] Replace live OpenGL presentation, effect, texture, and drawable resource plumbing incrementally; do not delete `FramebufferObject`, shaders, or VAOs merely because offscreen `RenderDevice` no longer needs them.
+    - [ ] Delete each deprecated declaration, definition, binding, install/export entry, and test dependency together in a coordinated release.
+
+  - [ ] Milestone 7 — Bindings, documentation, validation, and release
+    - [ ] Expose the unified hosts, drawable data/style APIs, `RenderSettings`, low-level device/value types, and array-like `FrameImage` access in Python without native buffer, texture, VAO, or framebuffer handles.
+    - [ ] Update tutorials and examples to demonstrate user-facing APIs first, then command customization and low-level rendering; no example should require client-side backend selection macros.
+    - [ ] Publish a migration guide covering C++ and Python replacements, compatibility wrappers, behavioral differences, and capability-dependent fallbacks.
+    - [ ] Maintain a backend-parity test matrix for scene rendering, drawable updates, effects, overlays, picking, capture, resize, and MultiViewer; document intentional implementation tolerances and unsupported features.
+    - [ ] Run both complete backend test suites plus public-header/install and Python smoke tests before deprecations and again before removals.
+    - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
+
+
+
+
+
+
 - [ ] Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and add_drawable. Should they also return a shared_ptr (instead of raw pointer)? Relevant classes (not a complete list): SurfaceMeshIO, PolyMeshIO, GraphIO, PointCloudIO, ImageIO. and many other places.
 - [ ] Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).
 - [ ] Use a coding agent to *proofread* the code, documentation, and comments.
