@@ -12051,5 +12051,7 @@ OpenGL 4.2-only `glMemoryBarrier()` and restores the caller's buffer binding. Th
 **Validation.** Both configured trees rebuilt successfully. The focused/broader OpenGL run passed
 **20/20** tests (12.96 s), including the adapter contract, picking/capture, overlays, parity and
 annotation tutorials. The shared Vulkan run passed **6/6** (7.21 s): query, portable pick/selection,
-offscreen queries, capture and GUI scene picking. Interactive Mapple behavior was not visually
-verified; this change is in the library/offscreen query path.
+offscreen queries, capture and GUI scene picking. Interactive Mapple checks verified single-face
+picking, the Snapshot dialog, and a 2500×1834 transparent PNG with its companion view-state file.
+After renaming Windows-hostile `near`/`far` test locals, the focused OpenGL device, capture, and
+scene-picking tests passed **3/3** (1.22 s).

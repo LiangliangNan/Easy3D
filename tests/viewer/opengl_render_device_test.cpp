@@ -150,13 +150,13 @@ namespace {
                                                          highlighted.geometry->indices(), Topology::triangles);
         probe(device.render(65, 65, {highlighted, scene}, vec4(0)), 32, 32, 0, 255, 0);
 
-        auto far = rectangle(-1, -1, 1, 1, .5f, vec4(0, 0, 1, 1));
-        far.object_id = 21;
-        far.transparent = true;
-        auto near = rectangle(-1, -1, 1, 1, -.5f, vec4(1, 0, 0, .5f));
-        near.object_id = 22;
-        near.transparent = true;
-        const FrameImage sorted = device.render(65, 65, {near, far}, vec4(0));
+        auto farther = rectangle(-1, -1, 1, 1, .5f, vec4(0, 0, 1, 1));
+        farther.object_id = 21;
+        farther.transparent = true;
+        auto nearer = rectangle(-1, -1, 1, 1, -.5f, vec4(1, 0, 0, .5f));
+        nearer.object_id = 22;
+        nearer.transparent = true;
+        const FrameImage sorted = device.render(65, 65, {nearer, farther}, vec4(0));
         probe(sorted, 32, 32, 128, 0, 128);
         require(sorted.ids[pixel(65, 32, 32)].object == 22, "nearest transparent surface was not pickable");
 
