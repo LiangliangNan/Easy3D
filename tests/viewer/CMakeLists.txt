@@ -1,4 +1,17 @@
 # Reuse tutorial implementations without test guards in production sources.
+
+# Compile the current public API; main intentionally does not invoke these functions.
+add_executable(easy3d_api_compile_smoke_test
+        api_smoke/main.cpp
+        api_smoke/interactive.cpp
+        api_smoke/offscreen.cpp
+        api_smoke/multi_view.cpp
+        api_smoke/custom_drawable.cpp
+        api_smoke/render_device.cpp)
+target_link_libraries(easy3d_api_compile_smoke_test PRIVATE easy3d::viewer)
+add_test(NAME viewer.apismoke COMMAND easy3d_api_compile_smoke_test)
+set_tests_properties(viewer.apismoke PROPERTIES TIMEOUT 30)
+
 foreach(tutorial IN ITEMS Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_CSG Tutorial_604_Curves
         Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
     set_source_files_properties("../../tutorials/${tutorial}/main.cpp" PROPERTIES

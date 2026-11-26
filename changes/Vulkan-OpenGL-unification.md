@@ -282,6 +282,8 @@ The migration has made **specific offscreen OpenGL implementations redundant**, 
 
 ## 7. Proposed final OpenGL/Vulkan public API
 
+This section is the target contract, not a description of APIs that all exist today. Section 8 records the Milestone 0 audit against the current C++, Python, example, and test surfaces; each future-looking example below is classified there.
+
 **Status:** architectural proposal, not an implemented API or a commitment to exact signatures.
 **Assumption:** all five roadmap phases above have been completed.
 
@@ -345,6 +347,7 @@ struct DeviceOptions {
     bool sync_validation = false;
     bool profiling = false;
     std::string device_name;
+    bool use_native_large_points = true;
 };
 ```
 
@@ -393,10 +396,11 @@ public:
     void set_clipping_planes(const std::vector<vec4>& planes);
     void set_render_settings(const RenderSettings& settings);
 
+    graphics::FrameImage capture() const;
+    graphics::FrameImage capture(unsigned samples) const;
     graphics::FrameImage capture(
-        unsigned samples = 1,
-        graphics::FrameReadback readback =
-            graphics::FrameReadback::color_depth_ids) const;
+        unsigned samples,
+        graphics::FrameReadback readback) const;
 
     bool snapshot(const std::string& file,
                   float scaling = 1.0f,
@@ -442,10 +446,11 @@ public:
                 int background = 0,
                 bool expand = true) const;
 
+    graphics::FrameImage capture() const;
+    graphics::FrameImage capture(unsigned samples) const;
     graphics::FrameImage capture(
-        unsigned samples = 1,
-        graphics::FrameReadback readback =
-            graphics::FrameReadback::color_depth_ids) const;
+        unsigned samples,
+        graphics::FrameReadback readback) const;
 
     void resize(int width, int height);
 
@@ -657,6 +662,8 @@ namespace easy3d::graphics {
 
 enum class Backend { opengl, vulkan };
 enum class Topology { triangles, lines, points };
+enum class TextureWrap { clamp_to_edge, repeat };
+enum class TextureFilter { nearest, linear };
 enum class PointStyle { plain, sphere, surfel };
 enum class LineStyle { plain, cylinder, cone };
 enum class TransparencyMethod { sorted, average, peeling, linked_lists };
@@ -668,6 +675,10 @@ struct Vertex {
     vec4 color;
     vec2 texcoord;
     vec4 highlight;
+};
+
+class PointData {
+    // positions(), source_ids(), source_count()
 };
 
 class Geometry {
@@ -737,13 +748,23 @@ struct RenderOptions {
     FrameReadback readback = FrameReadback::color_depth_ids;
 };
 
+struct DeviceCapabilities {
+    bool shadow = false;
+    bool ambient_occlusion = false;
+    bool eye_dome_lighting = false;
+    std::vector<TransparencyMethod> transparency_methods;
+    bool native_large_points = false;
+};
+
 class RenderDevice {
 public:
     virtual ~RenderDevice() = default;
 
+    // Added with the 3.0 virtual interface; absent from the 2.8 vtable.
     virtual Backend backend() const = 0;
     virtual const std::string& name() const = 0;
     virtual const std::string& driver_version() const = 0;
+    virtual DeviceCapabilities capabilities() const = 0;
 
     virtual std::uint32_t supported_sample_counts(
         PointStyle style = PointStyle::plain) const = 0;
@@ -754,12 +775,6 @@ public:
         std::uint32_t height,
         const std::vector<DrawCommand>& commands,
         const RenderOptions& options = {}) = 0;
-
-    virtual bool present(
-        std::uint32_t width,
-        std::uint32_t height,
-        const std::vector<DrawCommand>& commands,
-        const PresentationOptions& options = {}) = 0;
 
     virtual ScenePixel sample_pixel(
         std::uint32_t width,
@@ -781,6 +796,7 @@ public:
         const PointSelectionRequest& request) = 0;
 
     virtual unsigned validation_errors() const = 0;
+    virtual std::uint64_t point_upload_count() const = 0;
     virtual std::uint32_t oit_dropped_fragments() const = 0;
 };
 ```
@@ -790,13 +806,11 @@ Factories become backend-neutral:
 ```cpp
 std::unique_ptr<RenderDevice> create_device(
     const DeviceOptions& options = {});
-
-std::unique_ptr<RenderDevice> create_surface_device(
-    const Surface& surface,
-    const DeviceOptions& options = {});
 ```
 
-`create_opengl_device()` and `create_vulkan_device()` may remain temporarily as deprecated wrappers. Public concrete classes such as `OpenGLDevice` and `VulkanDevice` are unnecessary; callers program against `RenderDevice`.
+`create_opengl_device()` and `create_vulkan_device()` remain temporarily as deprecated wrappers. Public concrete classes such as `OpenGLDevice` and `VulkanDevice` are unnecessary; callers program against `RenderDevice`.
+
+Presentation is deliberately absent from this headless contract. A configured window/surface is owned by the private host adapter; `RenderDevice::present()` and the proposed generic `Surface`/`create_surface_device()` API are not part of the normal public surface. Embedders that need native window integration use the explicit backend interop header, isolated from backend-neutral application code.
 
 `DrawableRenderer` remains the bridge from scene drawables to commands. Its final role is to own portable geometry/texture caches and produce one or more `DrawCommand` objects per drawable; it does not own devices, windows, cameras, or native GPU resources.
 
@@ -942,9 +956,10 @@ canvas.render("result.png")
 | `State::set_ao_texture()` | `RenderSettings::ambient_occlusion` |
 | `opengl::OverlayRenderer` | `DrawCommand` overlay presentation |
 | Native immediate-mode `shape` drawing | Shape geometry/command builders |
-| `read_pixel`, `OpenGLTimer` | `RenderDevice::render()` and diagnostics |
+| `opengl::read_color`, `read_depth`, their `_ms` variants, and `snapshot_color`/`snapshot_depth` helpers | `RenderDevice::render()` / `FrameImage`, `sample_pixel()`, and `sample_ids()` |
+| `OpenGLTimer` | Render-device diagnostics |
 | Backend-specific public option structs | Common `DeviceOptions` |
-| Backend-specific device factories | `create_device()` / `create_surface_device()` |
+| Backend-specific device factories | `create_device()`; native window integration stays in the explicit backend interop header |
 
 ### 7.12 Compatibility and migration policy
 
@@ -958,3 +973,252 @@ The final API should be reached without forcing every downstream application to 
 6. Keep a compatibility release only where downstream C++ or Python compatibility justifies it.
 
 The essential outcome is **a smaller backend-facing API and a familiar application API**. OpenGL and Vulkan should differ only in private implementations, performance characteristics, and reported capabilities—not in public classes, native handles, or client-side `#ifdef`s.
+
+---
+
+## 8. Milestone 0: current-API audit and frozen direction
+
+Audit date: 2026-11-26. This audit compares section 7 with the current tree, including installed headers, Python bindings, examples, and tests. It freezes direction and compatibility rules; it does not claim that the target API has been implemented.
+
+Status vocabulary:
+
+- **Retain** — already matches the target contract.
+- **Add** — absent and required by the target contract.
+- **Adapt** — exists, but its signature, backend coverage, ownership, or semantics must change.
+- **Deprecate** — keep temporarily with a documented replacement.
+- **Private** — remove from the normal installed/public surface while retaining the implementation internally.
+- **Remove** — delete the redundant declaration, definition, binding, and build/install entry together.
+
+### 8.1 User-facing hosts and scene ownership
+
+| Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
+|---|---|---|---|
+| `WindowOptions::{width, height, samples, full_screen, visible, resizable}` | [viewer.h](../easy3d/viewer/viewer.h#L73) already defines all six fields with the proposed defaults. | Retain | Keep the struct and its current sample-count validation/fallback contract. |
+| `DeviceOptions::{validation, sync_validation, profiling, device_name}` | Vulkan has these controls in `VulkanOptions`; OpenGL instead has `OpenGLOptions` for context requests. | Add | Introduce one common struct. OpenGL context negotiation becomes private implementation detail. Preserve the existing Vulkan large-point comparison control in an advanced/common option rather than silently dropping it. |
+| `Viewer(title, window, options)` | Constructor selects `VulkanOptions` or `OpenGLOptions` through `EASY3D_HAS_VULKAN` in [viewer.h](../easy3d/viewer/viewer.h#L155). | Adapt | Replace the client-visible conditional type with `DeviceOptions`; retain temporary backend-option overloads during migration. |
+| `run`, `run_frames`, `draw_frame`, `show`, `hide`, `resize`, `update`, `camera` | All are available on both backends through `Viewer`/`ViewerBase`; Python omits `draw_frame`, `show`, and `hide`. | Retain C++; add Python parity later | No signature redesign is needed. |
+| `add_model(file, create_drawables, fit_scene)` | Available on both backends; Python's file overload omits `fit_scene`. | Retain C++; adapt Python | Add `fit_scene` to Python without changing existing calls. |
+| `add_model(shared_ptr<Model>, create_drawables, fit_scene)` | Shared ownership is already supported; raw-pointer overloads transfer ownership. | Adapt | Retain the `shared_ptr` overload. Deprecate raw-pointer ownership transfer and coordinate return-type modernization with the separate raw-pointer TODO. |
+| `add_drawable(shared_ptr<Drawable>)` | Shared ownership is already supported; raw-pointer overloads transfer ownership. | Adapt | Retain the `shared_ptr` overload; deprecate raw-pointer ownership transfer and coordinate return types with the model migration. |
+| `delete_model`, `delete_drawable`, `clear_scene`, `fit_screen` | Available on all C++ hosts. Python exposes deletion on `OffScreen` but not on `Viewer`/`MultiViewer`. | Retain C++; add Python parity | Raw pointer parameters here are non-owning observers, distinct from the ownership-transfer overloads. |
+| `pick`, `set_overlays` | Portable C++ APIs already exist and are used by both hosts. | Retain | Keep command-list overlay submission and `PickResult`. |
+| `select_points`, `point_resource` | Both exist, but OpenGL currently requires a viewer-created native point snapshot while Vulkan also accepts portable CPU `PointData`. | Adapt | Keep the methods and make portable `PointData` requests behave consistently on both backends. |
+| `scan_visible_points` | Public only in Vulkan builds and omitted from the abbreviated proposal. | Adapt | Retain the useful capture/selection helper and provide equivalent OpenGL behavior before removing the public backend conditional. |
+| Other existing host queries/callbacks (`models`, `drawables`, `current_model`, window properties, animation/event hooks) | Already shared through `ViewerBase`/`Viewer` and omitted only for brevity in section 7. | Retain | The proposal is not a deletion list for unrelated portable APIs. |
+| `set_clipping_planes` | Public only in Vulkan builds; OpenGL currently has no equivalent setter. | Adapt | Make the same portable operation available in both builds. |
+| `set_render_settings` | No declarative settings API exists. | Add | Add with the effect settings in section 8.3. |
+| `capture(samples, readback)` and legacy capture overloads | `Viewer` already has no-argument, sample-count, and readback overloads; `OffScreen` re-exposes them. | Retain | Preserve all overloads during migration; freeze their readback semantics in section 8.2. |
+| `snapshot(file, scaling, samples, background, expand)` | Already portable and Python-bound. | Retain | Keep it as the file-output convenience API. |
+| `device()` | Public only in Vulkan builds. OpenGL has a private query device. | Adapt | Expose `const RenderDevice&` on all three hosts without exposing native handles. |
+| `init`, `pre_draw`, `post_draw`, `draw`, `cleanup` | Lifecycle/drawing hooks exist; `cleanup()` is not virtual. | Adapt | Retain the hooks and make `cleanup()` protected virtual so subclasses have the documented symmetric cleanup hook. |
+| `draw_commands(camera, width, height, sources, include_hidden_models)` | Protected shared declaration exists, but only the Vulkan path defines it. | Adapt | Define the shared assembly contract for both backends; keep it protected for customization. |
+| `DrawSource` | Protected `{shared_ptr<Model>, shared_ptr<Drawable>}` already exists. | Retain | Keep it protected as a command-assembly snapshot descriptor. Its `shared_ptr` members keep snapshots alive; the host remains authoritative for scene membership. |
+| `ViewerBase::window()` / `Viewer::window()` | Public native `GLFWwindow*` accessor. | Deprecate, then private/protected | Native window handles are not part of the normal portable API. Internal toolkit integration must use a documented interop boundary. |
+| `OffScreen` visibility | Already inherits `Viewer` protected and re-exposes scene/rendering operations. | Retain/adapt | Keep window-only operations protected; expose common scene, camera, picking, overlay, clipping, settings, capture, and device operations publicly. Keep `draw_commands()` protected for subclasses. |
+| `MultiViewer` grid API | `assign`, layout, rows/columns, divisions, grid-aware snapshot/coordinates/picking already exist. | Retain | Keep the grid-specific API and add the same portable effects/device surface inherited by other hosts. |
+
+### 8.2 Drawables, resources, and effects
+
+| Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
+|---|---|---|---|
+| `Drawable::BufferData` fields | [drawable.h](../easy3d/renderer/drawable.h#L70) already has vertices, normals, colors, texcoords, indices, source faces, and revision. | Retain | Keep the existing fields and revision meaning. |
+| `name`, `set_name`, `bounding_box`, `num_vertices`, `num_indices` | All exist in C++. `num_indices` is missing from Python. | Retain C++; add Python | Bind the portable query surface, not native resource IDs. |
+| `buffer_data() const` | Exists but is non-const because it may refresh/read the backend snapshot. | Adapt | Provide a const query without exposing backend handles. Cache refresh may remain mutable internally; callers receive a stable snapshot for the current revision. |
+| Vertex/color/normal/texcoord/element updates and element disabling | Portable C++ implementations exist; Python broadly exposes them. | Retain | Keep current defaults and dynamic-update behavior. |
+| `update`, `set_update_func`, `highlight_mask` | Portable C++ APIs exist. The Python `update_highlight_mask` binding still names a removed two-argument overload. | Retain C++; adapt Python | Keep the one-argument C++ API; repair the stale binding and compile Python before claiming parity. |
+| `set_source_faces`, source-face provenance | Already supported by `BufferData`; omitted from the abbreviated proposal. | Retain | Add to the final API listing because picking/provenance depend on it. |
+| `Drawable::draw`, `gl_draw`, `vao`, raw buffer getters | Public C++ APIs; `draw`, `gl_draw`, `vao`, and raw buffer IDs are also Python-bound. | Deprecate, then private/remove | Replace with `DrawableRenderer`/command assembly before removal. Delete C++, Python, tests, tutorials, declarations, definitions, and install entries together. |
+| `PointsDrawable` style/size API | Plain/sphere/surfel and logical-pixel size API already exist in C++ and Python. | Retain | Keep logical size at the drawable boundary; convert once to framebuffer pixels in command assembly. |
+| `LinesDrawable` style/width API | Plain/cylinder/cone and logical-pixel width API already exist in C++ and Python. | Retain | Keep the same unit boundary as points. |
+| `TrianglesDrawable` smooth shading/opacity | Already exists in C++ and Python. | Retain | No new primitive-specific abstraction is needed. |
+| `Renderer` drawable ownership/retrieval/update API | All proposed getters, adders, lists, and `update()` exist. | Retain | Keep the existing ownership model. |
+| `State` appearance API | Portable coloring/material/clipping state is broadly exposed in C++ and Python. | Retain/adapt | Keep appearance state; remove native AO handoff from the normal API. |
+| `Texture`, `TextureManager`, `State::set_ao_texture` | CPU texture pixels exist, but public `Texture::id/bind/release` and raw AO texture IDs remain. Python uses `TextureManager` internally but does not expose the class. | Adapt; deprecate native members | Keep CPU-resource/cache facades. Correct the proposal's claim that Python exposes `TextureManager`. |
+| Texture/image row order | `Texture::PixelData` is bottom-row-first; `graphics::Image` is top-row-first; `DrawableRenderer` converts between them. | Adapt documentation, retain explicit types | Never introduce implicit global flip state. Document the conversion boundary and add parity coverage. |
+| `ShadowSettings`, `AmbientOcclusionSettings`, `TransparencySettings`, `RenderSettings` | Imperative effect classes exist; no declarative settings type exists. | Add | Add the proposed value types with defaults/units/validation. |
+| `Shadow`, `SoftShadow`, `AmbientOcclusion`, `EyeDomeLighting`, transparency classes and native handoffs | Backend-facing public controls exist. | Deprecate/private | Algorithms remain internally; public facades translate to `RenderSettings` until applications and Python migrate. |
+
+### 8.3 Backend-neutral graphics contract
+
+| Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
+|---|---|---|---|
+| `Backend` | Absent; `name()` embeds backend/device information. | Add | Add an explicit enum and `RenderDevice::backend()` while retaining `name()` for human-readable identity. |
+| `Topology`, `PointStyle`, `LineStyle`, `TransparencyMethod`, `FrameReadback` | Already defined in [render_device.h](../easy3d/renderer/render_device.h#L39). | Retain | Reuse these enums. |
+| `TextureWrap`, `TextureFilter` | Already defined but omitted from the abbreviated proposal. | Retain | Add them to the final public listing. |
+| `PointData` | Already defined and used by selection/geometry. | Retain | Add it to the final public listing. |
+| `Vertex`, `Geometry`, `Sampler`, `Image` | Already backend-neutral; geometry snapshots own copied data and images use top-row-first RGBA8. | Retain | Keep current value/resource semantics. |
+| `DrawCommand` | Already contains the proposed core fields plus material, clipping, overlay/depth, AO/EDL, shadow, impostor, and bias state. | Retain | Keep explicit fields for source stability; helper factories may be added later. |
+| `FrameImage`, `FrameImage::Id`, `ScenePixel` | Already defined with top-row-first color and [0,1] depth. | Retain | Keep defaults and add array-like Python access later. |
+| `PointSelectionRequest` | Already defined with point mapping, polygon, bitset, MVP, dimensions, and clipping. | Retain | Reuse it. |
+| `normalize_clipping_planes`, `screen_space_projection` | Already public backend-neutral helpers. | Retain | Keep them in the final listing. |
+| `RenderDevice::name`, `driver_version`, sample-count queries | Already portable. | Retain | Keep human-readable identity and numeric sample-count masks. |
+| `RenderDevice::render` | Exists with positional background/samples/transparency/peel/readback arguments. | Adapt | Add `RenderOptions`; retain positional overloads as deprecated forwarding wrappers during migration. |
+| `RenderDevice::present`, `PresentationOptions` | `present()` exists only for a configured presentation device; OpenGL reports it unsupported. No `PresentationOptions` exists. | Private/remove from normal `RenderDevice` | Presentation belongs to the private host/surface adapter, not the headless rendering contract. High-level users configure windows through `WindowOptions`; no generic public `Surface` is required. |
+| `sample_pixel`, `sample_ids`, `select_points` | Already portable in both adapters, with documented CPU/GPU implementation differences. | Retain | Keep result semantics; performance may differ. |
+| `validation_errors`, `oit_dropped_fragments` | Already portable diagnostics. | Retain | Keep them. |
+| `point_upload_count` | Already exists but was omitted from the proposal. | Retain | Add this transfer diagnostic to the final listing. |
+| `create_device` | Absent; callers choose a backend-specific factory. | Add | Add a build-time-selected factory using `DeviceOptions`. |
+| `create_surface_device`, generic `Surface` | Absent and underspecified; current native Vulkan interop uses `graphics::VulkanSurface`. | Remove from normal final API | Do not invent a generic native-handle wrapper in Milestone 0. Keep native integration under an explicit backend interop boundary for embedders. |
+| `create_opengl_device`, `create_vulkan_device` | Already public factories with backend-specific parameters. | Adapt/deprecate | Forward to the common factory and retain temporarily for compatibility. |
+| `OpenGLDevice`, `VulkanDevice` | Concrete OpenGL class is installed; Vulkan implementation is internal. | Private/remove public declaration | Applications program against `RenderDevice`. |
+| `DrawableRenderer` | Already owns CPU command/texture caches and explicitly does not own scene objects, cameras, devices, windows, or GPU resources. | Retain | Keep this ownership boundary. Each host owns its bridge; callers may create an independent bridge for command generation. |
+
+### 8.4 Python, examples, and tests
+
+| Surface | Current implementation evidence | Classification | Milestone 0 conclusion |
+|---|---|---|---|
+| Python `Viewer`, `MultiViewer`, `OffScreen`, `Camera`, models, `Renderer`, drawables | Bound today, with inconsistent constructor and scene-operation coverage. | Retain/adapt | Keep the classes; align common operations and constructor options with C++. |
+| Python appearance/state and geometry updates | Broadly bound, including primitive styles and highlight masks. | Retain | Reuse current bindings; add missing portable queries such as `BufferData` and `num_indices`. |
+| Python render settings, overlays, clipping, picking, capture, `FrameImage` | Missing. | Add | Add after the C++ contract is stable; `FrameImage` should expose NumPy-compatible arrays. |
+| Python low-level device/value types | Missing. | Add (optional advanced surface) | Expose only after the C++ API is frozen and both adapters pass the same tests. |
+| Python raw buffer IDs, `draw`, `gl_draw`, `vao`, raw AO texture setter | Currently bound. | Deprecate, then remove | Replace with portable data/command APIs before deleting bindings. |
+| Python `TextureManager` | Not exposed; `State.set_texture` uses it internally. | Correct proposal | Do not document a class that Python users cannot currently import. |
+| Section 7.6 interactive example | Uses APIs that already exist in both C++ backends. | Retain | Keep as the primary top-down example. |
+| Section 7.7 custom-drawable example | Uses existing portable updates/appearance and shared ownership. | Retain | Add to compile-smoke coverage. |
+| Section 7.8 offscreen/capture example | Uses existing C++ `OffScreen::add_model`, `capture`, and `render`. | Retain | Add to compile-smoke coverage; runtime parity remains a separate test. |
+| Section 7.9 low-level example | Fails today because `create_device()` and `RenderOptions` do not exist. | Add prerequisites | Do not present it as buildable until Milestone 1 lands. |
+| Section 7.10 Python example | Fails today because Python `OffScreen.capture()`/`FrameImage` do not exist. | Add prerequisites | Do not present it as usable until Milestone 7 lands. |
+| Installed-package consumer | `tests/viewer/installed/unified.cpp` still branches on `EASY3D_EXPECT_VULKAN` and backend option types. | Adapt | Add a truly backend-neutral compile-smoke consumer now; simplify the installed consumer after Milestone 1. |
+| Runtime tests | Existing tests cover many backend behaviors, but not an unchanged-source public-API compile matrix. | Add | Add compile-smoke coverage for interactive, offscreen, multi-view, custom-drawable, and low-level-device usage without constructing windows/devices. |
+
+### 8.5 Audit result
+
+The existing tree already contains most of the desired application and geometry vocabulary. The critical path is not a rewrite: it is a common device-construction contract, shared command assembly on OpenGL, declarative effects, consistent host access, and deliberate retirement of native handles. Python parity is a distinct later milestone and must not be inferred from C++ progress.
+
+### 8.6 Frozen public-contract decisions
+
+#### Device construction and capabilities
+
+- `DeviceOptions` is the single normal construction options type. It contains `validation`, `sync_validation`, `profiling`, `device_name`, and `use_native_large_points`, all `false`/empty/`true` as shown in section 7.2. The last flag preserves the existing Vulkan comparison/fallback control; backends without that choice accept and ignore it.
+- `create_device()` selects the backend configured at build time. There is no runtime backend switch and no client-side backend macro. `RenderDevice::backend()` reports the selected implementation in the final interface.
+- Section 7 shows the final 3.0 interface. During 2.8, do not add `backend()`, `capabilities()`, or virtual `cleanup()` to an existing public vtable; these arrive with the coordinated 3.0 virtual-interface change.
+
+#### Compatibility overload resolution
+
+- In 2.8, the existing backend-options constructor keeps its default arguments and symbol. The portable constructor is a C++11 constrained template accepting exactly `DeviceOptions`, with no default trailing argument. Template deduction cannot consume a bare `{}`, so existing `Viewer("title", {}, {})` calls keep their current meaning; new callers pass `DeviceOptions options; Viewer("title", {}, options)` or `DeviceOptions{}`. Apply the same rule to `OffScreen` and `MultiViewer`. In 3.0, remove the legacy constructor and use the ordinary concrete constructor shown in section 7.
+- In 2.8, `render(width, height, commands, const RenderOptions&)` has no default argument and forwards to the existing positional virtual. Thus three-argument calls keep using the legacy overload. New callers pass an explicit `RenderOptions` value. In 3.0, remove the positional overload and make the options overload the primary virtual with the default shown in section 7.
+- These transitional forms avoid both default-argument and braced-initializer ambiguity without changing 2.8 symbols or virtual tables. Compile-smoke tests cover the current 2.8 call forms; the future overloads get their own ambiguity tests when introduced.
+
+#### Device construction and capabilities
+
+- Requested validation, synchronization validation, a named device, or a usable graphics context/device are hard requirements: failure to satisfy them throws. They are not silently ignored.
+- MSAA is a quality request: `0`/`1` means single-sample; supported power-of-two requests are honored; unsupported valid power-of-two requests step down to the largest supported count with a warning; invalid counts throw. `supported_sample_counts()` remains the authoritative query.
+- `DeviceCapabilities` reports shadow, AO, EDL, supported transparency methods, and native large-point availability. Low-level `RenderDevice` calls reject unsupported commands/methods explicitly. High-level `set_render_settings()` also rejects an explicitly enabled unsupported effect instead of silently producing different imagery. Applications can inspect capabilities and choose a supported configuration.
+- Default settings use only the common baseline (`sorted` transparency; optional effects disabled). There is no implicit effect downgrade hidden inside a frame.
+
+#### Presentation and native interop
+
+- The normal public `RenderDevice` is a headless render/capture/selection interface. `present()` moves behind a private presentation interface used by windowed hosts.
+- No generic public `Surface`, `PresentationOptions`, or `create_surface_device()` is introduced. Owning a toolkit window, swapchain, and surface lifetime is the host adapter's responsibility.
+- `Viewer`, `OffScreen`, and `MultiViewer` remain the supported portable presentation APIs. `OffScreen` never exposes window-only controls publicly.
+- Native Vulkan surface integration remains an explicit advanced interop boundary, moved to `easy3d::graphics::backends::vulkan` during migration. The old `easy3d::graphics::VulkanSurface` and `create_vulkan_window_device()` spellings remain deprecated forwarding wrappers for one compatibility release. The native window remains caller-owned and must outlive the device; the device owns the created Vulkan surface.
+
+#### Ownership and lifetime
+
+- A rendering host owns its `DrawableRenderer`. The bridge may retain immutable CPU geometry/image snapshots keyed by drawable revision, but it does not own models, drawables, cameras, devices, windows, or native GPU resources.
+- Scene membership and ownership policy stay with the host's existing `shared_ptr` storage. A retained `DrawSource` snapshot keeps its model/drawable alive through its `shared_ptr` members, but adding/removing scene membership remains a host operation. This is distinct from the bridge's weak scene-object cache.
+- The unification work does not change `add_model()`/`add_drawable()` return types. Shared-ownership overloads remain preferred; raw-pointer ownership-transfer overloads are deprecated and removed only in coordination with the separate raw-pointer modernization. Raw pointers used by `delete_model()`, `delete_drawable()`, and other observer APIs are not ownership transfers.
+- `device()` returns a borrowed `const RenderDevice&` valid for the host's lifetime. Clients must not destroy it or use it after host destruction.
+
+#### Capture and readback defaults
+
+- Keep three C++ host overloads: `capture()`, `capture(unsigned samples)`, and `capture(unsigned samples, FrameReadback)`. The sample-count overload must not also have a default argument, because that would be ambiguous with `capture()`.
+- `capture()` uses the host's effective sample count and full readback. `capture(1)` explicitly requests single-sample color with full readback. `capture(samples, FrameReadback::color)` leaves `depth` and `ids` empty.
+- `RenderOptions::readback` defaults to `FrameReadback::color_depth_ids`.
+- Successful capture always sets positive `width`/`height` and exactly `width * height * 4` RGBA bytes. Full readback also sets exactly `width * height` depth values and IDs. Color and IDs are top-row-first; depth is in `[0,1]` with clear depth `1`; background IDs are `{UINT32_MAX, UINT32_MAX}`.
+- Captured color includes the composited presentation result, including supported overlays/HUD. Depth and picking IDs describe scene geometry and exclude overlays. OpenGL may report `UINT32_MAX` for unavailable primitive provenance, as documented today.
+- A default-constructed `FrameImage` is an empty value. A successful capture never returns that empty sentinel; invalid sizes/readback requests throw.
+
+#### Host visibility
+
+| Operation | `Viewer` | `OffScreen` | `MultiViewer` |
+|---|---|---|---|
+| Scene, camera, picking, overlays, clipping, render settings, capture, `device()` | Public | Public | Public |
+| `render(file, ...)` | n/a | Public | n/a |
+| Grid assignment/layout/divisions | n/a | n/a | Public |
+| `run`, window show/hide/resize/position/title | Public | Protected | Public |
+| Native `window()` handle | Protected | Protected | Protected |
+| `init`, `cleanup`, `pre_draw`, `post_draw`, `draw`, `draw_commands` | Protected customization hooks | Protected customization hooks | Protected customization hooks |
+
+`cleanup()` becomes protected virtual. `ViewerBase::window()` and `Viewer::window()` become protected, with a deprecation period for external native-window callers.
+
+#### Image conventions
+
+- `graphics::Image` and `FrameImage` are canonical top-row-first CPU images.
+- Legacy `Texture::PixelData` remains bottom-row-first during compatibility; `DrawableRenderer` performs the explicit row conversion at that boundary.
+- No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
+
+### 8.7 Migration and deprecation policy
+
+#### Release policy
+
+- **2.8.0 — compatibility release:** add portable replacements and deprecate old APIs. Preserve existing symbols, public class layouts, and virtual tables. New convenience overloads may be non-virtual forwarding wrappers.
+- **3.0.0 — removal release:** remove deprecated declarations, definitions, Python bindings, forwarding headers, and install/export entries; make native handles protected/private; land virtual-interface changes that cannot preserve the 2.x vtable.
+- A deprecated API must survive at least one complete 2.8.x release series. Removal is allowed in 3.0.0 only after every gate in section 8.8 passes.
+- The raw-pointer ownership migration is coordinated with, but not silently folded into, this API work. Its ownership-transfer overloads target 3.0.0 only if the separate modernization is complete; otherwise they remain deprecated until the next coordinated major release.
+
+Because Easy3D requires C++11, deprecations use one project macro rather than C++14 `[[deprecated]]` syntax. Define `EASY3D_DEPRECATED(message)` once in `easy3d/core/types.h`: use `[[deprecated(message)]]` for C++14+, `__declspec(deprecated(message))` on MSVC, `__attribute__((deprecated(message)))` on GCC/Clang, and an empty definition only on compilers with no supported diagnostic.
+
+#### Exact C++ migrations
+
+| Old signature/API | Replacement and compatibility wrapper | Deprecate | Remove |
+|---|---|---|---|
+| `Viewer(title, WindowOptions, VulkanOptions/OpenGLOptions)` | Final `Viewer(title, WindowOptions, DeviceOptions)`; 2.8 adds an exact-`DeviceOptions` constrained-template constructor without trailing defaults, leaving existing calls and symbols unchanged. | 2.8.0 | Legacy constructor and transitional template in 3.0.0; ordinary target constructor then remains. |
+| `OffScreen(width, height, VulkanOptions/OpenGLOptions)` | Same transition to `OffScreen(width, height, DeviceOptions)`. | 2.8.0 | 3.0.0 |
+| `MultiViewer(rows, cols, title, WindowOptions, VulkanOptions/OpenGLOptions)` | Same transition to the final `DeviceOptions` constructor. | 2.8.0 | 3.0.0 |
+| `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload has no default argument and forwards to the existing positional virtual. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
+| `RenderDevice::present(...)` | No normal public replacement. Windowed hosts present through their private adapter; headless callers use `render()`. | 2.8.0 | 3.0.0 |
+| `create_opengl_device()` / `create_vulkan_device(...)` | `create_device(DeviceOptions)`; old factories forward and retain their exact parameter order. | 2.8.0 | 3.0.0 |
+| `graphics::VulkanSurface` / `graphics::create_vulkan_window_device(...)` | Advanced native interop moves to `graphics::backends::vulkan`; old names are deprecated aliases/wrappers. | 2.8.0 | 3.0.0 |
+| Public `OpenGLDevice` | Use `RenderDevice` returned by `create_device()`. | 2.8.0 | Public class/header removed in 3.0.0 |
+| `Drawable::draw(const Camera*)`, `gl_draw()` | `DrawableRenderer::command(...)` or host `draw_commands()`. | 2.8.0 | 3.0.0 |
+| `Drawable::vao()`, `vertex_buffer()`, `color_buffer()`, `normal_buffer()`, `texcoord_buffer()`, `element_buffer()` | `Drawable::buffer_data()` and `DrawableRenderer`; no native-handle replacement. | 2.8.0 | 3.0.0 |
+| `const BufferData& Drawable::buffer_data()` non-const member | Add `const BufferData& buffer_data() const`; deprecate the non-const overload and remove it in 3.0. | 2.8.0 | 3.0.0 |
+| `Texture::id()`, `bind()`, `release()` | `Texture::pixels()` / `graphics::Image` plus `DrawCommand::texture`. | 2.8.0 | 3.0.0 |
+| `State::set_ao_texture(unsigned int)` | `RenderSettings::ambient_occlusion` through `set_render_settings()`. | 2.8.0 | 3.0.0 |
+| `Shadow`, `SoftShadow`, `AmbientOcclusion`, `EyeDomeLighting`, `AverageColorBlending`, `DualDepthPeeling`, `PerPixelLinkedListsOIT`, and their backend-facing draw/generate methods | `RenderSettings` compatibility facades; algorithms become private. | 2.8.0 | 3.0.0 |
+| `ViewerBase::window()` / `Viewer::window()` public native handle | Protected native interop only; normal clients use portable window methods. | 2.8.0 | Visibility reduced in 3.0.0 |
+| Raw-pointer ownership-transfer `add_model(Model*, ...)` / `add_drawable(Drawable*)` | Existing `shared_ptr` overloads; return types remain unchanged in this migration. | 2.8.0 | 3.0.0, coordinated with raw-pointer modernization |
+| Public `FramebufferObject`, `ShaderProgram`, `ShaderManager`, `VertexArrayObject`, `opengl::read_color`/`read_depth` (including `_ms` and snapshot variants), `OpenGLTimer`, and `opengl::shape` helpers | `RenderDevice`, `DrawCommand`, shape command builders, and capture/diagnostics. Forwarding headers may remain deprecated in 2.8. | 2.8.0 | 3.0.0 |
+| `opengl::OverlayRenderer` | `DrawCommand` overlay lists through `set_overlays()`. | 2.8.0 | 3.0.0 |
+
+`Viewer::cleanup()` changes from non-virtual protected to virtual protected in 3.0.0. `RenderDevice::backend()` and `capabilities()` are likewise introduced as virtual methods in 3.0.0, not added to the 2.8 public vtable. Existing source-level deprecation warnings in 2.8 must not be accompanied by ABI-breaking class changes.
+
+#### Exact Python migrations
+
+| Current Python API | Replacement | Deprecate | Remove |
+|---|---|---|---|
+| Raw drawable buffer getters | `buffer_data()` exposing vertices/normals/colors/texcoords/indices/source faces/revision. | 2.8.0 | 3.0.0 |
+| `draw(camera)`, `gl_draw()`, `vao()` | Add the drawable to a host or use bound `DrawableRenderer`/command APIs; no native equivalent. | 2.8.0 | 3.0.0 |
+| `State.set_ao_texture(id)` | `RenderSettings` plus host `set_render_settings()`. | 2.8.0 | 3.0.0 |
+| Texture IDs/native texture operations, if exposed by downstream bindings | `graphics.Image` / CPU texture data; Easy3D currently exposes texture loading only through `State.set_texture(file)`. | 2.8.0 | 3.0.0 |
+| Missing common host operations | Add `draw_frame`, `show`, `hide`, `device`, clipping, overlays, render settings, capture, and `delete_model`/`delete_drawable` consistently. | n/a | n/a |
+| Missing `OffScreen.capture()` / `FrameImage` | Add capture and NumPy-compatible read-only `rgba`, `depth`, and `ids` arrays. | n/a | n/a |
+| Flattened constructor keywords | Keep them and add optional `DeviceOptions`; do not break existing positional calls. | n/a | n/a |
+
+Python deprecations use `PyErr_WarnEx(PyExc_DeprecationWarning, message, 1)` while keeping the old callable binding. The warning names the exact replacement. Native-handle bindings are deleted in the same 3.0.0 change that removes their C++ declarations.
+
+`FrameImage` Python arrays have these shapes and dtypes: `rgba` `(height, width, 4)` `uint8`, `depth` `(height, width)` `float32`, and `ids` `(height, width, 2)` `uint32`. Arrays are copies or read-only views with host-independent lifetime; they never expose internal vectors as mutable writable buffers.
+
+### 8.8 Removal gates
+
+A compatibility wrapper may be removed in 3.0.0 only when all of the following are true:
+
+1. Its portable replacement is implemented and documented for both backends.
+2. Backend-parity tests cover rendering, updates, picking, capture, overlays, effects, and fallback behavior relevant to that API.
+3. All in-tree C++ callers, Python bindings, tutorials, examples, and tests use the replacement or an intentional documented interop boundary.
+4. Public-header and installed-package consumers compile without backend macros or native includes.
+5. The 2.8 migration guide and release notes name the old signature, exact replacement, behavioral differences, and 3.0 removal.
+6. At least one complete 2.8.x deprecation release has shipped.
+7. Declaration, definition, binding, forwarding header, CMake source/install entry, and test dependency are removed together.
+
+### 8.9 Milestone 0 validation
+
+Validation date: 2026-11-26.
+
+- Added `easy3d_api_compile_smoke_test` under `tests/viewer/api_smoke/`, covering the current public C++ API for interactive `Viewer`, `OffScreen`, `MultiViewer`, custom drawables plus `DrawableRenderer`, and a mock headless `RenderDevice`. The mock avoids requiring a real GPU and keeps the source backend-neutral.
+- The smoke functions are compiled and linked but deliberately not called. CTest verifies the executable starts and exits; it does not claim runtime rendering, installed-package, Python, or future 3.0 API validation.
+- Vulkan: built `easy3d_api_compile_smoke_test` in `build/` with `Easy3D_ENABLE_VULKAN=ON`; `viewer.apismoke` passed.
+- OpenGL: built the same target in `build-api-smoke-opengl/` with `Easy3D_ENABLE_VULKAN=OFF`; `viewer.apismoke` passed.
+- Checked all local Markdown file links in this report and `changes/ToDo.md`; every target exists.
+- The Python audit found a pre-existing stale `update_highlight_mask(strengths, dynamic)` binding after the C++ API became one-argument. Python compilation remains a Milestone 7 task; no Python parity is claimed here.

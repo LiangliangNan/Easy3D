@@ -1,18 +1,18 @@
 - Vulkan-OpenGL API Unification
   - Target: one public API for applications, drawables, and custom rendering, with OpenGL and Vulkan differing only in private implementations and reported capabilities. Backend selection may remain build-time; runtime switching is not required. The proposed contract is in [Vulkan-OpenGL-unification.md](Vulkan-OpenGL-unification.md), especially sections 6 and 7.
 
-  - [ ] Milestone 0 — Freeze the public contract and compatibility policy
-    - [ ] Review every proposed type and member in section 7 of the unification report against the current C++ and Python APIs; classify each as retain, add, adapt, deprecate, make private, or remove.
-    - [ ] Resolve the details not yet fixed by the proposal: `PresentationOptions`, the ownership/lifetime of `Surface`, `DrawableRenderer` ownership boundaries, `FrameImage` readback defaults, effect behavior when a capability is unavailable, and protected versus public methods in `OffScreen` and `MultiViewer`.
-    - [ ] Coordinate model/drawable ownership and return types with the separate raw-pointer modernization TODO rather than introducing a second ownership migration.
-    - [ ] Record exact old-to-new signatures, deprecation attributes, Python replacements, and the release in which each compatibility wrapper may be removed.
-    - [ ] Add minimal C++ compile-smoke programs for interactive, offscreen, multi-view, custom-drawable, and low-level `RenderDevice` usage; each program must compile unchanged against both backend builds without backend macros or backend-specific includes.
+  - [x] Milestone 0 — Freeze the public contract and compatibility policy
+    - [x] Review every proposed type and member in section 7 of the unification report against the current C++ and Python APIs; classify each as retain, add, adapt, deprecate, make private, or remove. See [section 8](Vulkan-OpenGL-unification.md#8-milestone-0-current-api-audit-and-frozen-direction).
+    - [x] Resolve the details not yet fixed by the proposal: `PresentationOptions`, the ownership/lifetime of `Surface`, `DrawableRenderer` ownership boundaries, `FrameImage` readback defaults, effect behavior when a capability is unavailable, and protected versus public methods in `OffScreen` and `MultiViewer`. See [section 8.6](Vulkan-OpenGL-unification.md#86-frozen-public-contract-decisions).
+    - [x] Coordinate model/drawable ownership and return types with the separate raw-pointer modernization TODO rather than introducing a second ownership migration.
+    - [x] Record exact old-to-new signatures, deprecation attributes, Python replacements, and the release in which each compatibility wrapper may be removed. See [section 8.7](Vulkan-OpenGL-unification.md#87-migration-and-deprecation-policy).
+    - [x] Add minimal C++ compile-smoke programs for interactive, offscreen, multi-view, custom-drawable, and low-level `RenderDevice` usage; each program must compile unchanged against both backend builds without backend macros or backend-specific includes. Both builds pass `viewer.apismoke`; see [section 8.9](Vulkan-OpenGL-unification.md#89-milestone-0-validation).
 
   - [ ] Milestone 1 — Complete the backend-neutral graphics contract
     - [ ] Consolidate the public value vocabulary (`Backend`, topology, point/line styles, transparency methods, readback modes, geometry, images, commands, frame images, and selection requests), reusing existing types where they already match the proposal.
-    - [ ] Group the long `RenderDevice::render()` argument lists into `RenderOptions`; define `PresentationOptions`; retain deprecated positional overloads only during migration.
-    - [ ] Add backend-neutral `create_device()` and `create_surface_device()` factories using common `DeviceOptions`; keep the existing OpenGL/Vulkan factories as temporary forwarding wrappers.
-    - [ ] Make device identity, driver information, validation diagnostics, sample-count queries, and optional capabilities available through `RenderDevice` without exposing native handles.
+    - [ ] Group the long `RenderDevice::render()` argument lists into `RenderOptions`; keep presentation behind the private host adapter and do not add a generic public `Surface`; retain deprecated positional overloads only during migration.
+    - [ ] Add backend-neutral `create_device()` using common `DeviceOptions`; keep native surface integration in the explicit backend interop boundary and the existing OpenGL/Vulkan factories as temporary forwarding wrappers.
+    - [ ] Make device identity, driver information, validation diagnostics, sample-count queries, and optional capabilities available through `RenderDevice` without exposing native handles; add `backend()` and `capabilities()` with the coordinated 3.0 virtual-interface change.
     - [ ] Add command factories for common scene geometry, screen-space lines, textured quads, and overlays, while keeping explicit `DrawCommand` fields for source stability.
     - [ ] Implement and test the consolidated contract in both adapters before routing Viewer through it.
 
@@ -56,6 +56,7 @@
     - [ ] Delete each deprecated declaration, definition, binding, install/export entry, and test dependency together in a coordinated release.
 
   - [ ] Milestone 7 — Bindings, documentation, validation, and release
+    - [ ] Repair the stale Python `Drawable.update_highlight_mask(strengths, dynamic)` binding to match the current one-argument C++ API, then compile the Python bindings.
     - [ ] Expose the unified hosts, drawable data/style APIs, `RenderSettings`, low-level device/value types, and array-like `FrameImage` access in Python without native buffer, texture, VAO, or framebuffer handles.
     - [ ] Update tutorials and examples to demonstrate user-facing APIs first, then command customization and low-level rendering; no example should require client-side backend selection macros.
     - [ ] Publish a migration guide covering C++ and Python replacements, compatibility wrappers, behavioral differences, and capability-dependent fallbacks.
