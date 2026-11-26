@@ -1096,10 +1096,10 @@ The existing tree already contains most of the desired application and geometry 
 #### Compatibility overload resolution
 
 - In 2.8, the existing backend-options constructor keeps its default arguments and symbol. The portable constructor is a C++11 constrained template accepting exactly `DeviceOptions`, with no default trailing argument. Template deduction cannot consume a bare `{}`, so existing `Viewer("title", {}, {})` calls keep their current meaning; new callers pass `DeviceOptions options; Viewer("title", {}, options)` or `DeviceOptions{}`. Apply the same rule to `OffScreen` and `MultiViewer`. In 3.0, remove the legacy constructor and use the ordinary concrete constructor shown in section 7.
-- In 2.8, `render(width, height, commands, const RenderOptions&)` has no default argument and forwards to the existing positional virtual. Thus three-argument calls keep using the legacy overload. New callers pass an explicit `RenderOptions` value. In 3.0, remove the positional overload and make the options overload the primary virtual with the default shown in section 7.
+- In 2.8, `render(width, height, commands, const RenderOptions&)` is an exact-type constrained template with no default argument and forwards directly to the existing eight-argument positional virtual. Thus three-argument calls keep using the legacy overload, while a bare `{}` still value-initializes the legacy `vec4` parameter instead of attempting template deduction. New callers pass an explicit `RenderOptions` value. In 3.0, remove the positional overload and make the options overload the primary virtual with the default shown in section 7.
 - These transitional forms avoid both default-argument and braced-initializer ambiguity without changing 2.8 symbols or virtual tables. Compile-smoke tests cover the current 2.8 call forms; the future overloads get their own ambiguity tests when introduced.
 
-#### Device construction and capabilities
+#### Requested options and fallback behavior
 
 - Requested validation, synchronization validation, a named device, or a usable graphics context/device are hard requirements: failure to satisfy them throws. They are not silently ignored.
 - MSAA is a quality request: `0`/`1` means single-sample; supported power-of-two requests are honored; unsupported valid power-of-two requests step down to the largest supported count with a warning; invalid counts throw. `supported_sample_counts()` remains the authoritative query.
@@ -1111,7 +1111,7 @@ The existing tree already contains most of the desired application and geometry 
 - The normal public `RenderDevice` is a headless render/capture/selection interface. `present()` moves behind a private presentation interface used by windowed hosts.
 - No generic public `Surface`, `PresentationOptions`, or `create_surface_device()` is introduced. Owning a toolkit window, swapchain, and surface lifetime is the host adapter's responsibility.
 - `Viewer`, `OffScreen`, and `MultiViewer` remain the supported portable presentation APIs. `OffScreen` never exposes window-only controls publicly.
-- Native Vulkan surface integration remains an explicit advanced interop boundary, moved to `easy3d::graphics::backends::vulkan` during migration. The old `easy3d::graphics::VulkanSurface` and `create_vulkan_window_device()` spellings remain deprecated forwarding wrappers for one compatibility release. The native window remains caller-owned and must outlive the device; the device owns the created Vulkan surface.
+- Native Vulkan surface integration remains an explicit advanced interop boundary under `easy3d::graphics::backends::vulkan`. Its `VulkanSurface` derives without adding data from the deprecated `easy3d::graphics::VulkanSurface` compatibility base. Keeping the original base as a real type preserves the legacy factory's C++ mangled symbol; a typedef would not. The old factory forwards to the interop factory. The native window remains caller-owned and must outlive the device; the device owns the created Vulkan surface.
 
 #### Ownership and lifetime
 
@@ -1144,7 +1144,7 @@ The existing tree already contains most of the desired application and geometry 
 
 #### Image conventions
 
-- `graphics::Image` and `FrameImage` are canonical top-row-first CPU images.
+- `graphics::Image` and `FrameImage` are canonical top-row-first CPU images. Both adapters preserve that row order on upload; screen-space `(0,0)` is the top-left corner. No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
 - Legacy `Texture::PixelData` remains bottom-row-first during compatibility; `DrawableRenderer` performs the explicit row conversion at that boundary.
 - No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
 
@@ -1166,10 +1166,10 @@ Because Easy3D requires C++11, deprecations use one project macro rather than C+
 | `Viewer(title, WindowOptions, VulkanOptions/OpenGLOptions)` | Final `Viewer(title, WindowOptions, DeviceOptions)`; 2.8 adds an exact-`DeviceOptions` constrained-template constructor without trailing defaults, leaving existing calls and symbols unchanged. | 2.8.0 | Legacy constructor and transitional template in 3.0.0; ordinary target constructor then remains. |
 | `OffScreen(width, height, VulkanOptions/OpenGLOptions)` | Same transition to `OffScreen(width, height, DeviceOptions)`. | 2.8.0 | 3.0.0 |
 | `MultiViewer(rows, cols, title, WindowOptions, VulkanOptions/OpenGLOptions)` | Same transition to the final `DeviceOptions` constructor. | 2.8.0 | 3.0.0 |
-| `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload has no default argument and forwards to the existing positional virtual. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
+| `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload is an exact-type constrained template with no default argument and forwards directly to the existing positional virtual, preserving legacy `{}` calls. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
 | `RenderDevice::present(...)` | No normal public replacement. Windowed hosts present through their private adapter; headless callers use `render()`. | 2.8.0 | 3.0.0 |
 | `create_opengl_device()` / `create_vulkan_device(...)` | `create_device(DeviceOptions)`; old factories forward and retain their exact parameter order. | 2.8.0 | 3.0.0 |
-| `graphics::VulkanSurface` / `graphics::create_vulkan_window_device(...)` | Advanced native interop moves to `graphics::backends::vulkan`; old names are deprecated aliases/wrappers. | 2.8.0 | 3.0.0 |
+| `graphics::VulkanSurface` / `graphics::create_vulkan_window_device(...)` | Advanced native interop moves to `graphics::backends::vulkan`; the original surface remains an ABI-preserving compatibility base and the old factory forwards to the interop factory. | 2.8.0 | 3.0.0 |
 | Public `OpenGLDevice` | Use `RenderDevice` returned by `create_device()`. | 2.8.0 | Public class/header removed in 3.0.0 |
 | `Drawable::draw(const Camera*)`, `gl_draw()` | `DrawableRenderer::command(...)` or host `draw_commands()`. | 2.8.0 | 3.0.0 |
 | `Drawable::vao()`, `vertex_buffer()`, `color_buffer()`, `normal_buffer()`, `texcoord_buffer()`, `element_buffer()` | `Drawable::buffer_data()` and `DrawableRenderer`; no native-handle replacement. | 2.8.0 | 3.0.0 |
@@ -1222,3 +1222,51 @@ Validation date: 2026-11-26.
 - OpenGL: built the same target in `build-api-smoke-opengl/` with `Easy3D_ENABLE_VULKAN=OFF`; `viewer.apismoke` passed.
 - Checked all local Markdown file links in this report and `changes/ToDo.md`; every target exists.
 - The Python audit found a pre-existing stale `update_highlight_mask(strengths, dynamic)` binding after the C++ API became one-argument. Python compilation remains a Milestone 7 task; no Python parity is claimed here.
+
+### 8.10 Milestone 1 implementation and validation
+
+Validation date: 2026-11-26.
+
+#### User-facing API
+
+Applications can now create the build-selected headless device, group frame settings, and assemble common drawing commands without backend macros or native includes:
+
+```cpp
+#include <easy3d/renderer/render_device.h>
+#include <easy3d/renderer/shape.h>
+
+easy3d::graphics::DeviceOptions device_options;
+auto device = easy3d::graphics::create_device(device_options);
+
+easy3d::graphics::RenderOptions render_options;
+render_options.background = easy3d::vec4(0, 0, 0, 1);
+render_options.samples = 4;
+
+std::vector<easy3d::graphics::Vertex> vertices(3);
+vertices[0].position = easy3d::vec3(-1, -1, 0);
+vertices[1].position = easy3d::vec3(1, -1, 0);
+vertices[2].position = easy3d::vec3(0, 1, 0);
+const auto triangle = easy3d::graphics::shape::draw_triangles(vertices);
+const auto frame = device->render(64, 64, {triangle}, render_options);
+```
+
+`Backend`, `DeviceOptions`, `RenderOptions`, and `DeviceCapabilities` join the existing portable topology, style, transparency, readback, geometry, image, command, frame, and selection types. `draw_triangles()` and `draw_quad_textured()` complement the existing filled/wire quad, screen-line, 3D-line, box, depth, and effect factories. Commands remain ordinary values with explicit public fields.
+
+#### Compatibility and implementation boundaries
+
+- The existing positional `RenderDevice::render()` virtual remains unchanged and deprecated. The exact-type `RenderOptions` template is non-virtual, has no default argument, and calls the positional virtual directly. Legacy three-argument and empty-braces calls retain their overload resolution and behavior.
+- `create_device(const DeviceOptions&)` is the normal factory. The OpenGL and Vulkan factories retain their exact signatures as deprecated forwarding wrappers. OpenGL rejects explicitly requested validation, profiling, and physical-device selection instead of silently ignoring them.
+- Device name, driver version, sample-count queries, validation diagnostics, dropped-fragment counts, and point-upload counts are available through the existing non-virtual interface. The `DeviceCapabilities` value type lands here; virtual `backend()`, `capabilities()`, and `cleanup()` remain deferred to the coordinated 3.0 vtable change.
+- Native Vulkan window integration uses `graphics::backends::vulkan::VulkanSurface`. Its data-free derivation from the original compatibility base preserves the old factory's mangled symbol while giving new interop callers the explicit namespace.
+- `graphics::Image` stays top-row-first. Both adapters upload rows without flipping, and screen-space overlay UV `(0,0)` is the top-left. The RealCamera tutorial now uses the shared textured-quad factory rather than duplicating geometry and projection assembly.
+- General `Viewer` rendering is intentionally not routed through the new device contract yet; that integration follows after this contract is stable.
+
+#### Validation coverage
+
+- `devicecontract` is a CPU-only test of value defaults, exact options forwarding, legacy `{}` resolution, and command factories. It does not claim adapter execution.
+- `viewer.apismoke` compiles and links the same backend-neutral low-level API in both builds.
+- `vulkan.interopsmoke` checks the native surface inheritance and both interop factory signatures, and links the legacy Vulkan window factory symbol.
+- `opengl.renderdevice` executes the OpenGL factory and checks option rejection, frame readback, picking, textures, overlays, transparency, and resize behavior.
+- `vulkan.picking`, `vulkan.render`, `vulkan.depthoverlay`, and `vulkan.depthtexture` execute the Vulkan adapter, including validation-enabled picking and overlay paths.
+- `opengl.realcamera` and `vulkan.realcamera` compare rendered inset pixels against the source image, covering orientation, filtering, resizing, and capture behavior on each backend.
+- Vulkan: all eight targeted tests passed. OpenGL: all four targeted tests passed. The portable CPU regression suites passed 5/5 in each build, grouped-options calls passed strict deprecation-warning checks in C++11 and C++14 through both base and concrete OpenGL device types, and `git diff --check` passed.

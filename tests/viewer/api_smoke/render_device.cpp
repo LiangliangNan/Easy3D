@@ -2,10 +2,12 @@
 #include "api_smoke.h"
 
 #include <easy3d/renderer/render_device.h>
+#include <easy3d/renderer/shape.h>
 
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace {
@@ -94,9 +96,31 @@ void smoke_render_device() {
 
     const std::vector<easy3d::graphics::DrawCommand> commands{command};
     api.render(32, 32, commands);
+    api.render(32, 32, commands, {});
+    easy3d::graphics::RenderOptions render_options;
+    api.render(32, 32, commands, render_options);
     api.render(32, 32, commands, easy3d::vec4(1), 1,
                easy3d::graphics::TransparencyMethod::sorted, 4,
                easy3d::graphics::FrameReadback::color);
+    easy3d::graphics::DeviceOptions device_options;
+    using DeviceFactory = std::unique_ptr<easy3d::graphics::RenderDevice> (*)();
+    using CommonDeviceFactory = std::unique_ptr<easy3d::graphics::RenderDevice> (*)(
+        const easy3d::graphics::DeviceOptions &);
+    using VulkanFactory = std::unique_ptr<easy3d::graphics::RenderDevice> (*)(
+        bool, bool, bool, bool, const std::string &);
+    static_assert(std::is_same<decltype(&easy3d::graphics::create_device), CommonDeviceFactory>::value,
+                  "common device factory signature changed");
+    static_assert(std::is_same<decltype(&easy3d::graphics::create_opengl_device), DeviceFactory>::value,
+                  "legacy OpenGL factory signature changed");
+    static_assert(std::is_same<decltype(&easy3d::graphics::create_vulkan_device), VulkanFactory>::value,
+                  "legacy Vulkan factory signature changed");
+    (void) easy3d::graphics::create_device(device_options);
+    (void) easy3d::graphics::create_device();
+    (void) easy3d::graphics::shape::draw_triangles(vertices);
+    (void) easy3d::graphics::shape::draw_quad_textured(easy3d::Rect(0, 32, 0, 32), image, 32, 32);
+    (void) easy3d::graphics::shape::draw_lines_2d({easy3d::vec2(0, 0), easy3d::vec2(1, 1)},
+                                                easy3d::vec4(1), 32, 32);
+    (void) easy3d::graphics::shape::draw_quad_filled(easy3d::Rect(0, 32, 0, 32), easy3d::vec4(1), 32, 32);
     api.present(32, 32, commands);
     api.sample_pixel(32, 32, commands, 0, 0);
     api.sample_ids(32, 32, commands, 0, 0, 1, 1);

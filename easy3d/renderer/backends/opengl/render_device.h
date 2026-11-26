@@ -8,8 +8,10 @@
 namespace easy3d {
     namespace graphics {
 
-        class OpenGLDevice : public RenderDevice {
+        class OpenGLDevice
+            : public RenderDevice {
         public:
+            using RenderDevice::render;
             OpenGLDevice();
             ~OpenGLDevice() override;
 

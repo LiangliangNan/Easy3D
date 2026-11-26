@@ -381,8 +381,16 @@ namespace easy3d {
 }
 
 namespace easy3d { namespace graphics { namespace shape {
-// Backend-independent counterparts of the screen-space shape drawing helpers. Return
-// immutable triangle overlay commands; submission is the host's responsibility.
+// Backend-independent scene and overlay command factories.
+graphics::DrawCommand draw_triangles(const std::vector<graphics::Vertex>& vertices,
+                                     const std::vector<std::uint32_t>& indices = {},
+                                     const mat4& mvp = mat4::identity(),
+                                     const vec4& color = vec4(1),
+                                     std::uint32_t object_id = 0);
+graphics::DrawCommand draw_quad_textured(const Rect& rect,
+                                         const std::shared_ptr<const graphics::Image>& texture,
+                                         unsigned width, unsigned height,
+                                         const vec4& color = vec4(1));
 graphics::DrawCommand draw_quad_filled(const Rect& rect, const vec4& color, unsigned width, unsigned height);
 // Counterpart of OpenGL's depth-texture quad: samples this frame's scene depth
 // directly on the GPU, in top-left image order. No image upload or CPU readback.

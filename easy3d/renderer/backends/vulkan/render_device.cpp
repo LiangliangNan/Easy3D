@@ -193,6 +193,13 @@ namespace easy3d {
                                                             void *user) {
                     auto *self = static_cast<Context *>(user);
                     const std::string message = data->pMessage ? data->pMessage : "";
+                    // MoltenVK 1.4.2 checks integer attachments for blend support without
+                    // testing blendEnable. Easy3D disables blending on every ID attachment;
+                    // upstream MoltenVK added that test and stays silent.
+                    if (self->driver == "MoltenVK 1.4.2" &&
+                        message == "VK_ERROR_FEATURE_NOT_PRESENT: Blending is enabled for attachment with format "
+                                   "VK_FORMAT_R32G32_UINT, which does not support it.")
+                        return VK_FALSE;
                     if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
                         ++self->errors;
                         std::cerr << "Vulkan validation: " << message << '\n';
@@ -200,11 +207,7 @@ namespace easy3d {
                         return VK_FALSE;
                     }
                     // An implementation reports one warning per pipeline or command buffer, and
-                    // the repetitions hide the next distinct problem. MoltenVK 1.4.2, for example,
-                    // rejects the picking ID attachment (VK_FORMAT_R32G32_UINT) as blend
-                    // unsupported once per pipeline without testing blendEnable, which every
-                    // Easy3D pipeline clears at that attachment index; upstream MoltenVK added
-                    // that test and stays silent.
+                    // the repetitions hide the next distinct problem.
                     {
                         std::lock_guard<std::mutex> guard(self->message_lock);
                         if (!self->reported_messages.insert(message).second)
@@ -219,7 +222,7 @@ namespace easy3d {
                           bool profiling,
                           bool use_native_large_points,
                           const std::string &device_name,
-                          const VulkanSurface *window = nullptr) {
+                          const ::easy3d::graphics::VulkanSurface *window = nullptr) {
                     profile_enabled = profile_enabled || profiling;
                     library = window && window->loader ? window->loader : internal::VulkanLoader::open();
                     load_global(*library);
@@ -4512,7 +4515,7 @@ namespace easy3d {
                           bool profiling,
                           bool use_native_large_points,
                           const std::string &device_name,
-                          const VulkanSurface *surface = nullptr) {
+                          const backends::vulkan::VulkanSurface *surface = nullptr) {
                     c_.init(validation, sync_validation, profiling, use_native_large_points, device_name, surface);
                     name_ = c_.properties.deviceName;
                     white_ = std::make_shared<Image>(1, 1, std::vector<unsigned char>(4, 255));
@@ -5407,22 +5410,53 @@ namespace easy3d {
                 }
             };
         } // namespace
+        std::unique_ptr<RenderDevice> create_device(const DeviceOptions &options) {
+            std::unique_ptr<VulkanDevice> device(new VulkanDevice);
+            device->init(options.validation, options.sync_validation, options.profiling, options.use_native_large_points,
+                         options.device_name);
+            return std::unique_ptr<RenderDevice>(device.release());
+        }
+
         std::unique_ptr<RenderDevice>
         create_vulkan_device(bool validation, bool sync_validation, bool profiling,
                              bool use_native_large_points, const std::string &device_name) {
-            std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-            device->init(validation, sync_validation, profiling, use_native_large_points, device_name);
-            return std::unique_ptr<RenderDevice>(device.release());
+            DeviceOptions options;
+            options.validation = validation;
+            options.sync_validation = sync_validation;
+            options.profiling = profiling;
+            options.use_native_large_points = use_native_large_points;
+            options.device_name = device_name;
+            return create_device(options);
         }
+        namespace backends {
+            namespace vulkan {
+                std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
+                                                                          const DeviceOptions &options) {
+                    std::unique_ptr<VulkanDevice> device(new VulkanDevice);
+                    device->init(options.validation, options.sync_validation, options.profiling,
+                                 options.use_native_large_points, options.device_name, &surface);
+                    return std::unique_ptr<RenderDevice>(device.release());
+                }
+            } // namespace vulkan
+        } // namespace backends
+
         std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
                                                                   bool validation,
                                                                   bool sync_validation,
                                                                   bool profiling,
                                                                   bool use_native_large_points,
                                                                   const std::string &device_name) {
-            std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-            device->init(validation, sync_validation, profiling, use_native_large_points, device_name, &surface);
-            return std::unique_ptr<RenderDevice>(device.release());
+            DeviceOptions options;
+            options.validation = validation;
+            options.sync_validation = sync_validation;
+            options.profiling = profiling;
+            options.use_native_large_points = use_native_large_points;
+            options.device_name = device_name;
+            backends::vulkan::VulkanSurface interop_surface;
+            interop_surface.instance_extensions = surface.instance_extensions;
+            interop_surface.create = surface.create;
+            interop_surface.loader = surface.loader;
+            return backends::vulkan::create_vulkan_window_device(interop_surface, options);
         }
 
     } // namespace graphics

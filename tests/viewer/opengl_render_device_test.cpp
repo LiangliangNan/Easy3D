@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/render_device.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/camera.h>
@@ -40,10 +41,10 @@ namespace {
         vertices[1].position = vec3(x1, y0, z);
         vertices[2].position = vec3(x1, y1, z);
         vertices[3].position = vec3(x0, y1, z);
-        vertices[0].texcoord = vec2(0, 0);
-        vertices[1].texcoord = vec2(1, 0);
-        vertices[2].texcoord = vec2(1, 1);
-        vertices[3].texcoord = vec2(0, 1);
+        vertices[0].texcoord = vec2(0, 1);
+        vertices[1].texcoord = vec2(1, 1);
+        vertices[2].texcoord = vec2(1, 0);
+        vertices[3].texcoord = vec2(0, 0);
         DrawCommand command;
         command.geometry = std::make_shared<Geometry>(std::move(vertices),
                                                      std::vector<uint32_t>{0, 1, 2, 0, 2, 3},
@@ -83,7 +84,9 @@ namespace {
         require(!device.driver_version().empty(), "OpenGL driver version missing");
         require((device.supported_sample_counts() & 1) != 0, "single-sample count missing");
 
-        const FrameImage blank = device.render(17, 13, {}, vec4(.1f, .2f, .3f, .4f));
+        RenderOptions blank_options;
+        blank_options.background = vec4(.1f, .2f, .3f, .4f);
+        const FrameImage blank = device.render(17, 13, {}, blank_options);
         require(blank.width == 17 && blank.height == 13, "empty frame dimensions differ");
         require(blank.rgba.size() == 17 * 13 * 4 && blank.depth.size() == 17 * 13 && blank.ids.size() == 17 * 13,
                 "empty frame readback sizes differ");
@@ -127,6 +130,16 @@ namespace {
         const FrameImage texture_frame = device.render(65, 65, {textured}, vec4(0));
         probe(texture_frame, 32, 54, 255, 0, 0);
         probe(texture_frame, 32, 10, 0, 255, 0);
+
+        const auto image_quad = graphics::shape::draw_quad_textured(Rect(0, 64, 0, 64), image, 65, 65);
+        RenderOptions overlay_options;
+        overlay_options.background = vec4(0);
+        overlay_options.readback = FrameReadback::color;
+        const FrameImage overlay_frame = device.render(65, 65, {image_quad}, overlay_options);
+        probe(overlay_frame, 32, 54, 255, 0, 0);
+        probe(overlay_frame, 32, 10, 0, 255, 0);
+        require(overlay_frame.depth.empty() && overlay_frame.ids.empty(),
+                "textured overlay options did not select color-only readback");
 
         auto hidden = rectangle(-1, -1, 1, 1, .5f, vec4(1, 0, 0, .5f), true, true);
         hidden.object_id = 99;
@@ -323,9 +336,22 @@ namespace {
 
 int main() {
     try {
+        DeviceOptions validation;
+        validation.validation = true;
+        rejects([&] { create_device(validation); });
+        DeviceOptions synchronization;
+        synchronization.sync_validation = true;
+        rejects([&] { create_device(synchronization); });
+        DeviceOptions profiling;
+        profiling.profiling = true;
+        rejects([&] { create_device(profiling); });
+        DeviceOptions selection;
+        selection.device_name = "required device";
+        rejects([&] { create_device(selection); });
+
         initialize(false, false, false);
         OffScreen host(64, 48);
-        auto device = create_opengl_device();
+        auto device = create_device();
         exercise(*device);
         std::cout << "PASS: OpenGL RenderDevice capture, overlays, transparency, MSAA, picking, selection and state isolation\n";
     } catch (const std::exception &e) {

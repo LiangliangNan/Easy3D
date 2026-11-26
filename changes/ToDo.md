@@ -8,13 +8,13 @@
     - [x] Record exact old-to-new signatures, deprecation attributes, Python replacements, and the release in which each compatibility wrapper may be removed. See [section 8.7](Vulkan-OpenGL-unification.md#87-migration-and-deprecation-policy).
     - [x] Add minimal C++ compile-smoke programs for interactive, offscreen, multi-view, custom-drawable, and low-level `RenderDevice` usage; each program must compile unchanged against both backend builds without backend macros or backend-specific includes. Both builds pass `viewer.apismoke`; see [section 8.9](Vulkan-OpenGL-unification.md#89-milestone-0-validation).
 
-  - [ ] Milestone 1 — Complete the backend-neutral graphics contract
-    - [ ] Consolidate the public value vocabulary (`Backend`, topology, point/line styles, transparency methods, readback modes, geometry, images, commands, frame images, and selection requests), reusing existing types where they already match the proposal.
-    - [ ] Group the long `RenderDevice::render()` argument lists into `RenderOptions`; keep presentation behind the private host adapter and do not add a generic public `Surface`; retain deprecated positional overloads only during migration.
-    - [ ] Add backend-neutral `create_device()` using common `DeviceOptions`; keep native surface integration in the explicit backend interop boundary and the existing OpenGL/Vulkan factories as temporary forwarding wrappers.
-    - [ ] Make device identity, driver information, validation diagnostics, sample-count queries, and optional capabilities available through `RenderDevice` without exposing native handles; add `backend()` and `capabilities()` with the coordinated 3.0 virtual-interface change.
-    - [ ] Add command factories for common scene geometry, screen-space lines, textured quads, and overlays, while keeping explicit `DrawCommand` fields for source stability.
-    - [ ] Implement and test the consolidated contract in both adapters before routing Viewer through it.
+  - [x] Milestone 1 — Complete the backend-neutral graphics contract
+    - [x] Consolidate the public value vocabulary (`Backend`, topology, point/line styles, transparency methods, readback modes, geometry, images, commands, frame images, and selection requests), reusing existing types where they already match the proposal.
+    - [x] Group the long `RenderDevice::render()` argument lists into `RenderOptions`; keep presentation behind the private host adapter and do not add a generic public `Surface`; retain deprecated positional overloads only during migration.
+    - [x] Add backend-neutral `create_device()` using common `DeviceOptions`; keep native surface integration in the explicit backend interop boundary and the existing OpenGL/Vulkan factories as temporary forwarding wrappers.
+    - [x] Make device identity, driver information, validation diagnostics, sample-count queries, and optional capability values available without exposing native handles. Virtual `backend()`/`capabilities()` queries remain deferred to the coordinated 3.0 vtable change.
+    - [x] Add command factories for common scene geometry, screen-space lines, textured quads, and overlays, while keeping explicit `DrawCommand` fields for source stability.
+    - [x] Implement and test the consolidated contract in both adapters before routing Viewer through it. See [section 8.10](Vulkan-OpenGL-unification.md#810-milestone-1-implementation-and-validation).
 
   - [ ] Milestone 2 — Make drawable geometry and realization backend-neutral
     - [ ] Standardize `Drawable::BufferData` and revision tracking so `buffer_data()` is the portable source for geometry, indices, primitive/source mappings, and cache invalidation.

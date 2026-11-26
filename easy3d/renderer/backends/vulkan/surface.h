@@ -37,14 +37,11 @@ namespace easy3d {
         namespace internal {
             class VulkanLoader;
         }
+
         /**
-         * \brief Native-window integration data for a Vulkan render device.
-         * \details This boundary lets a window toolkit provide a Vulkan surface without
-         * adding a GLFW, Qt, or other toolkit dependency to the graphics API. The
-         * factory consumes this structure synchronously and does not retain the
-         * callback or extension-name storage. The returned device owns and destroys
-         * the VkSurfaceKHR created by the callback; the native window itself remains
-         * caller-owned and must outlive the device.
+         * \brief Compatibility form of the native Vulkan surface integration data.
+         * \details Its definition remains in this namespace so the 2.8 factory keeps
+         * its original ABI symbol. New code uses backends::vulkan::VulkanSurface.
          */
         struct VulkanSurface {
             /// Instance extensions required by the callback to create the native surface.
@@ -56,7 +53,7 @@ namespace easy3d {
              *        \ref instance_extensions enabled.
              * \param surface Receives the created surface.
              * \return VK_SUCCESS on success; another VkResult causes device creation
-             *         to fail with std::runtime_error.
+             *        to fail with std::runtime_error.
              * \details The callback is invoked during device creation. It must return
              * VK_SUCCESS and a non-null surface. The callback and any data it captures
              * need remain valid only until the factory call returns.
@@ -70,6 +67,17 @@ namespace easy3d {
              */
             std::shared_ptr<internal::VulkanLoader> loader;
         };
+
+        namespace backends {
+            namespace vulkan {
+                /// Native-window integration data for a Vulkan render device.
+                struct VulkanSurface : ::easy3d::graphics::VulkanSurface {};
+
+                /// Create a Vulkan device attached to a native surface.
+                std::unique_ptr<RenderDevice> create_vulkan_window_device(
+                    const VulkanSurface &surface, const DeviceOptions &options = {});
+            } // namespace vulkan
+        } // namespace backends
 
         /**
          * \brief Create a Vulkan render device for an externally created native window.
@@ -94,6 +102,7 @@ namespace easy3d {
          * device owns the VkSurfaceKHR, but not the native window or other toolkit
          * resources used by the callback.
          */
+        EASY3D_DEPRECATED("use graphics::backends::vulkan::create_vulkan_window_device(surface, DeviceOptions)")
         std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface &surface,
                                                                   bool validation = false,
                                                                   bool sync_validation = false,

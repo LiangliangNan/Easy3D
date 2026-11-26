@@ -360,16 +360,20 @@ namespace easy3d {
             const char **required = glfwGetRequiredInstanceExtensions(&count);
             if (!required || !count)
                 throw std::runtime_error("GLFW has no Vulkan surface extensions for this platform");
-            graphics::VulkanSurface surface;
+            graphics::backends::vulkan::VulkanSurface surface;
             surface.loader = runtime->vulkan_loader();
             for (uint32_t i = 0; i < count; ++i)
                 surface.instance_extensions.emplace_back(required[i]);
             surface.create = [this](VkInstance instance, VkSurfaceKHR *result) {
                 return glfwCreateWindowSurface(instance, handle, nullptr, result);
             };
-            return graphics::create_vulkan_window_device(surface, options.validation, options.sync_validation,
-                                                         options.profiling, options.use_native_large_points,
-                                                         options.device_name);
+            graphics::DeviceOptions device_options;
+            device_options.validation = options.validation;
+            device_options.sync_validation = options.sync_validation;
+            device_options.profiling = options.profiling;
+            device_options.use_native_large_points = options.use_native_large_points;
+            device_options.device_name = options.device_name;
+            return graphics::backends::vulkan::create_vulkan_window_device(surface, device_options);
         }
         int modifiers() const {
             return detail::GlfwRuntime::modifiers(handle);

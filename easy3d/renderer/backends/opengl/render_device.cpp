@@ -219,15 +219,16 @@ void main() {
                         glBufferData(GL_ELEMENT_ARRAY_BUFFER, data->indices().size() * sizeof(uint32_t),
                                      data->indices().data(), GL_STATIC_DRAW);
                     }
-                    if (!data->primitive_ids().empty()) {
-                        glGenBuffers(1, &resource.primitive_buffer);
-                        glBindBuffer(GL_TEXTURE_BUFFER, resource.primitive_buffer);
-                        glBufferData(GL_TEXTURE_BUFFER, GLsizeiptr(data->primitive_ids().size() * sizeof(uint32_t)),
-                                     data->primitive_ids().data(), GL_STATIC_DRAW);
-                        glGenTextures(1, &resource.primitive_texture);
-                        glBindTexture(GL_TEXTURE_BUFFER, resource.primitive_texture);
-                        glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, resource.primitive_buffer);
-                    }
+                    const uint32_t empty_id = 0;
+                    const auto &primitive_ids = data->primitive_ids();
+                    glGenBuffers(1, &resource.primitive_buffer);
+                    glBindBuffer(GL_TEXTURE_BUFFER, resource.primitive_buffer);
+                    glBufferData(GL_TEXTURE_BUFFER,
+                                 GLsizeiptr((primitive_ids.empty() ? 1 : primitive_ids.size()) * sizeof(uint32_t)),
+                                 primitive_ids.empty() ? &empty_id : primitive_ids.data(), GL_STATIC_DRAW);
+                    glGenTextures(1, &resource.primitive_texture);
+                    glBindTexture(GL_TEXTURE_BUFFER, resource.primitive_texture);
+                    glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, resource.primitive_buffer);
                     return geometries_.emplace(data.get(), std::move(resource)).first->second;
                 }
 
@@ -253,14 +254,8 @@ void main() {
                         glGetIntegerv(names[i], &saved[i]);
                         glPixelStorei(names[i], i ? 0 : 1);
                     }
-                    const auto &rgba = data->rgba();
-                    std::vector<unsigned char> flipped(rgba.size());
-                    const size_t row_bytes = size_t(data->width()) * 4;
-                    for (uint32_t y = 0; y < data->height(); ++y)
-                        std::copy_n(rgba.data() + size_t(data->height() - 1 - y) * row_bytes, row_bytes,
-                                    flipped.data() + size_t(y) * row_bytes);
                     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, data->width(), data->height(), 0,
-                                 GL_RGBA, GL_UNSIGNED_BYTE, flipped.data());
+                                 GL_RGBA, GL_UNSIGNED_BYTE, data->rgba().data());
                     const auto sampler = data->sampler();
                     const GLint filter = sampler.filter == TextureFilter::linear ? GL_LINEAR : GL_NEAREST;
                     const GLint wrap = sampler.wrap == TextureWrap::repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
@@ -776,6 +771,9 @@ void main() {
                         glBindVertexArray(resource.vao);
                         glActiveTexture(GL_TEXTURE0);
                         glBindTexture(GL_TEXTURE_2D, resources.texture(d->texture));
+                        glActiveTexture(GL_TEXTURE1);
+                        glBindTexture(GL_TEXTURE_BUFFER, resource.primitive_texture);
+                        glActiveTexture(GL_TEXTURE0);
                         if (resource.indices)
                             glDrawElements(GL_TRIANGLES, GLsizei(d->geometry->indices().size()), GL_UNSIGNED_INT, nullptr);
                         else
@@ -1015,8 +1013,18 @@ void main() {
             return 0;
         }
 
-        std::unique_ptr<RenderDevice> create_opengl_device() {
+        std::unique_ptr<RenderDevice> create_device(const DeviceOptions &options) {
+            if (options.validation || options.sync_validation)
+                throw std::invalid_argument("OpenGL does not support requested validation diagnostics");
+            if (options.profiling)
+                throw std::invalid_argument("OpenGL does not support requested profiling");
+            if (!options.device_name.empty())
+                throw std::invalid_argument("OpenGL does not support physical-device selection");
             return std::unique_ptr<RenderDevice>(new OpenGLDevice);
+        }
+
+        std::unique_ptr<RenderDevice> create_opengl_device() {
+            return create_device(DeviceOptions{});
         }
 
     } // namespace graphics

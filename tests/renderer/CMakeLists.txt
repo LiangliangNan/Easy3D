@@ -1,3 +1,14 @@
+# Portable value types, options forwarding, and command factories need no device.
+add_executable(easy3d_render_device_contract_test render_device_contract_test.cpp)
+target_link_libraries(easy3d_render_device_contract_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.devicecontract COMMAND easy3d_render_device_contract_test)
+    set_tests_properties(vulkan.devicecontract PROPERTIES TIMEOUT 30)
+else()
+    add_test(NAME opengl.devicecontract COMMAND easy3d_render_device_contract_test)
+    set_tests_properties(opengl.devicecontract PROPERTIES TIMEOUT 30)
+endif()
+
 # The camera path builders are CPU geometry: no context or backend device, so this
 # test runs unchanged in both builds.
 add_executable(easy3d_camera_path_test

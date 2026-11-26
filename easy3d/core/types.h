@@ -28,6 +28,16 @@
 #include <easy3d/core/polygon.h>
 #include <easy3d/core/constant.h>
 
+#if defined(__cplusplus) && __cplusplus >= 201402L
+#define EASY3D_DEPRECATED(message) [[deprecated(message)]]
+#elif defined(_MSC_VER)
+#define EASY3D_DEPRECATED(message) __declspec(deprecated(message))
+#elif defined(__GNUC__) || defined(__clang__)
+#define EASY3D_DEPRECATED(message) __attribute__((deprecated(message)))
+#else
+#define EASY3D_DEPRECATED(message)
+#endif
+
 /**
  * Gathers different basic types for geometric operations.
  * Types defined here are points/vectors, lines, segments,

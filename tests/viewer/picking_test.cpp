@@ -8,6 +8,7 @@
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/texture.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
 #include <algorithm>
@@ -30,7 +31,24 @@ std::shared_ptr<SurfaceMesh> quad(float z=0) {
 }
 void shader_highlights(const VulkanOptions& options) {
     using namespace graphics;
-    auto device=create_vulkan_device(options.validation, options.sync_validation, false, true, options.device_name);
+    DeviceOptions device_options;
+    device_options.validation = options.validation;
+    device_options.sync_validation = options.sync_validation;
+    device_options.profiling = options.profiling;
+    device_options.device_name = options.device_name;
+    device_options.use_native_large_points = true;
+    auto device = create_device(device_options);
+    const auto image = std::make_shared<Image>(2, 2, std::vector<unsigned char>{
+        0, 255, 0, 255, 0, 255, 0, 255,
+        255, 0, 0, 255, 255, 0, 0, 255});
+    const auto overlay = graphics::shape::draw_quad_textured(Rect(0, 64, 0, 64), image, 65, 65);
+    RenderOptions overlay_options;
+    overlay_options.background = vec4(0);
+    const auto overlay_frame = device->render(65, 65, {overlay}, overlay_options);
+    const auto overlay_pixel = [&](unsigned y) { return size_t(y) * 65 + 32; };
+    require(overlay_frame.rgba[4 * overlay_pixel(10) + 1] == 255 &&
+                overlay_frame.rgba[4 * overlay_pixel(54)] == 255,
+            "portable textured quad changed top-left image order");
     for (int style=0;style<8;++style) {
         DrawCommand draw; draw.object_id=77; draw.lighting=true;
         draw.viewport=ivec4(4, 7, 55, 51);
@@ -53,7 +71,10 @@ void shader_highlights(const VulkanOptions& options) {
             if (!(mask&count)) continue;
             for (auto& p:v) p.highlight=vec4(0);
             draw.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{},topology);
-            const auto baseline=device->render(65,65,{draw},vec4(0),count);
+            RenderOptions baseline_options;
+            baseline_options.background = vec4(0);
+            baseline_options.samples = count;
+            const auto baseline = device->render(65, 65, {draw}, baseline_options);
             if (count == 1) {
                 DrawCommand overlay;
                 overlay.overlay = true;
@@ -76,7 +97,7 @@ void shader_highlights(const VulkanOptions& options) {
             }
             for (auto& p:v) p.highlight=vec4(1,0,0,1);
             draw.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{},topology);
-            const auto selected=device->render(65,65,{draw},vec4(0),count);
+            const auto selected = device->render(65, 65, {draw}, baseline_options);
             same_picking(baseline,selected);
             unsigned hits=0,visible=0;
             char detail[128];

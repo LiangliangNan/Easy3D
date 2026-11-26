@@ -31,10 +31,14 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace easy3d {
     namespace graphics {
+
+        /// Rendering implementation selected when Easy3D was built.
+        enum class Backend { opengl, vulkan };
 
         /// Primitive descriptions deliberately contain no OpenGL or Vulkan handles.
         enum class Topology { triangles, lines, points };
@@ -396,6 +400,20 @@ namespace easy3d {
             color_depth_ids
         };
 
+        /// Common diagnostics and physical-device selection parameters.
+        struct DeviceOptions {
+            /// Enable backend validation diagnostics when supported.
+            bool validation = false;
+            /// Enable synchronization validation; implies validation.
+            bool sync_validation = false;
+            /// Enable backend profiling output when supported.
+            bool profiling = false;
+            /// Required physical-device name substring; empty accepts any compatible device.
+            std::string device_name;
+            /// Prefer native large points when supported; false forces portable expansion.
+            bool use_native_large_points = true;
+        };
+
         /// Color/depth/ID result for one scene pixel.
         struct ScenePixel {
             /// Object and primitive IDs; background uses UINT32_MAX.
@@ -421,6 +439,34 @@ namespace easy3d {
             // Provides perfect transparency quality regardless of surface intersections.
             // Requires more memory and is slower than peeling, but produces correct results.
             linked_lists
+        };
+
+        /// Common frame-rendering parameters.
+        struct RenderOptions {
+            /// RGBA clear color.
+            vec4 background = vec4(1);
+            /// Requested MSAA sample count; one disables MSAA.
+            unsigned samples = 1;
+            /// Composite method for transparent commands.
+            TransparencyMethod transparency = TransparencyMethod::sorted;
+            /// Depth-peeling layer limit; zero requests the backend's maximum.
+            unsigned peel_layers = 4;
+            /// Scene data copied back from the rendered frame.
+            FrameReadback readback = FrameReadback::color_depth_ids;
+        };
+
+        /// Optional effects and implementation choices reported by a device.
+        struct DeviceCapabilities {
+            /// Shadow mapping is available.
+            bool shadow = false;
+            /// Screen-space ambient occlusion is available.
+            bool ambient_occlusion = false;
+            /// Eye-dome lighting is available.
+            bool eye_dome_lighting = false;
+            /// Supported transparency methods.
+            std::vector<TransparencyMethod> transparency_methods;
+            /// Native large-point rasterization is enabled.
+            bool native_large_points = false;
         };
 
         // GPU through-selection of projected point centers in a top-left framebuffer
@@ -510,6 +556,7 @@ namespace easy3d {
              * \return Color, depth, and picking buffers for the rendered frame, as
              *         requested by \p readback.
              */
+            EASY3D_DEPRECATED("use render(width, height, commands, const RenderOptions&)")
             virtual FrameImage render(std::uint32_t width,
                                       std::uint32_t height,
                                       const std::vector<DrawCommand> &commands,
@@ -518,6 +565,29 @@ namespace easy3d {
                                       TransparencyMethod transparency = TransparencyMethod::sorted,
                                       unsigned peel_layers = 4,
                                       FrameReadback readback = FrameReadback::color_depth_ids) = 0;
+            /// Render through grouped options; this 2.8 wrapper preserves the positional vtable.
+            template<class Options>
+            typename std::enable_if<std::is_same<Options, RenderOptions>::value, FrameImage>::type
+            render(std::uint32_t width,
+                   std::uint32_t height,
+                   const std::vector<DrawCommand> &commands,
+                   const Options &options) {
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+                // Deprecated for callers, but still required by this compatibility forwarder.
+                return render(width, height, commands, options.background, options.samples, options.transparency,
+                              options.peel_layers, options.readback);
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+            }
             // Render scene IDs and depth at one top-left framebuffer pixel center.
             // The full viewport and draw order are preserved. Overlays are excluded.
             /**
@@ -573,6 +643,7 @@ namespace easy3d {
              * \return False for a zero extent or out-of-date surface; unsupported
              *         headless presentation reports an error.
              */
+            EASY3D_DEPRECATED("window presentation belongs to the private host adapter")
             virtual bool present(std::uint32_t width,
                                  std::uint32_t height,
                                  const std::vector<DrawCommand> &commands,
@@ -607,6 +678,9 @@ namespace easy3d {
             virtual std::uint32_t oit_dropped_fragments() const = 0;
         };
 
+        /// Create the build-selected headless backend; unsupported requested options throw.
+        std::unique_ptr<RenderDevice> create_device(const DeviceOptions &options = {});
+
         /**
          * \brief Creates a headless OpenGL render device using the caller's current context.
          * \details The caller must have initialized OpenGL and keep the creating context current
@@ -620,6 +694,7 @@ namespace easy3d {
          * \throws std::runtime_error If no suitable current OpenGL context is available.
          * \details This factory is available only in Easy3D builds configured with OpenGL support.
          */
+        EASY3D_DEPRECATED("use create_device(const DeviceOptions&)")
         std::unique_ptr<RenderDevice> create_opengl_device();
 
         /**
@@ -645,8 +720,10 @@ namespace easy3d {
          * The parameters are optional and ordered from commonly used diagnostics/device selection to less common
          * rendering and profiling controls. For example, \c create_vulkan_device() uses defaults, while
          * \c create_vulkan_device(true, true) enables both validation layers.
-         * \see create_vulkan_window_device()
+         * \see create_device()
+         * \see backends::vulkan::create_vulkan_window_device()
          */
+        EASY3D_DEPRECATED("use create_device(const DeviceOptions&)")
         std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false,
                                                            bool sync_validation = false,
                                                            bool profiling = false,

@@ -12,6 +12,13 @@ target_link_libraries(easy3d_api_compile_smoke_test PRIVATE easy3d::viewer)
 add_test(NAME viewer.apismoke COMMAND easy3d_api_compile_smoke_test)
 set_tests_properties(viewer.apismoke PROPERTIES TIMEOUT 30)
 
+if(Easy3D_ENABLE_VULKAN)
+    add_executable(easy3d_vulkan_interop_compile_smoke_test api_smoke/vulkan_interop.cpp)
+    target_link_libraries(easy3d_vulkan_interop_compile_smoke_test PRIVATE easy3d::renderer)
+    add_test(NAME vulkan.interopsmoke COMMAND easy3d_vulkan_interop_compile_smoke_test)
+    set_tests_properties(vulkan.interopsmoke PROPERTIES TIMEOUT 30)
+endif()
+
 foreach(tutorial IN ITEMS Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_CSG Tutorial_604_Curves
         Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
     set_source_files_properties("../../tutorials/${tutorial}/main.cpp" PROPERTIES
@@ -254,6 +261,15 @@ if(Easy3D_ENABLE_VULKAN)
         add_test(NAME vulkan.imageviewer COMMAND easy3d_vulkan_image_viewer_test ${validation_args})
         set_tests_properties(vulkan.imageviewer PROPERTIES TIMEOUT 120 LABELS desktop)
     endif()
+endif()
+
+if(NOT Easy3D_ENABLE_VULKAN)
+    add_executable(easy3d_opengl_real_camera_test opengl_real_camera_orientation_test.cpp
+            ../../tutorials/Tutorial_205_RealCamera/viewer.cpp
+            ../../tutorials/Tutorial_205_RealCamera/read_bundler_file.cpp)
+    target_link_libraries(easy3d_opengl_real_camera_test PRIVATE easy3d::viewer 3rd_glfw)
+    add_test(NAME opengl.realcamera COMMAND easy3d_opengl_real_camera_test)
+    set_tests_properties(opengl.realcamera PROPERTIES TIMEOUT 120 LABELS desktop)
 endif()
 
 if(NOT Easy3D_ENABLE_VULKAN)

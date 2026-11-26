@@ -273,18 +273,8 @@ void TutorialRealCamera::pre_draw() {
                          overlay_rect_.x_max() != rect.x_max() || overlay_rect_.y_min() != rect.y_min() ||
                          overlay_rect_.y_max() != rect.y_max();
     if (changed) {
-        std::vector<graphics::Vertex> vertices(4);
-        const vec2 corners[] = {vec2(rect.x_min(), rect.y_min()), vec2(rect.x_max(), rect.y_min()),
-                                vec2(rect.x_max(), rect.y_max()), vec2(rect.x_min(), rect.y_max())};
-        const vec2 uv[] = {vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)};
-        for (unsigned i = 0; i < 4; ++i) {
-            vertices[i].position = vec3(corners[i], 0);
-            vertices[i].texcoord = uv[i];
-        }
-        graphics::DrawCommand image;
-        image.geometry = std::make_shared<graphics::Geometry>(vertices, std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
-        image.texture = image_;
-        image.model_view_projection = graphics::screen_space_projection(framebuffer_width(), framebuffer_height());
+        graphics::DrawCommand image = graphics::shape::draw_quad_textured(
+            rect, image_, framebuffer_width(), framebuffer_height());
         image_commands_ = {image, graphics::shape::draw_quad_wire(rect, vec4(1, 0, 0, 1), framebuffer_width(),
                                                                   framebuffer_height(), dpi_scaling())};
         overlay_image_ = image_.get();
