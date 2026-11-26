@@ -53,6 +53,11 @@ namespace easy3d {
     class ModelPicker;
     class SurfaceMeshPicker;
     class PointCloudPicker;
+    namespace graphics {
+        class DrawableRenderer;
+        class RenderDevice;
+        struct DrawCommand;
+    }
 }
 
 class QWidget;
@@ -280,9 +285,15 @@ protected:
     void closeEvent(QCloseEvent *) override;
 
 protected:
+    void createCornerAxes();
     void drawCornerAxes();
+    void appendCornerAxes(std::vector<easy3d::graphics::DrawCommand>& commands, std::uint32_t id);
     void drawPickedFaceAndItsVerticesIDs();
     void drawPickedVertexID();
+    bool drawPortable();
+    void drawNative();
+    void drawInteractionGuidesNative();
+    void drawNativeOverlays();
 
 protected:
     MainWindow* window_;
@@ -311,9 +322,12 @@ protected:
     //----------------- viewer data -------------------
 
     // corner axes
-    easy3d::TrianglesDrawable* drawable_axes_;
+    std::shared_ptr<easy3d::TrianglesDrawable> drawable_axes_;
     // anchor sphere and manipulated frame
-    easy3d::LinesDrawable* drawable_manip_sphere_;
+    std::shared_ptr<easy3d::LinesDrawable> drawable_manip_sphere_;
+
+    std::unique_ptr<easy3d::graphics::DrawableRenderer> drawable_renderer_;
+    std::unique_ptr<easy3d::graphics::RenderDevice> device_;
 
     easy3d::ModelPicker* model_picker_;
     bool    allow_select_model_;

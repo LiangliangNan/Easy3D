@@ -32,11 +32,16 @@
 #include <QOpenGLWidget>
 
 #include <easy3d/core/types.h>
+#include <memory>
 
 
 namespace easy3d {
     class Camera;
     class TrianglesDrawable;
+    namespace graphics {
+        class DrawableRenderer;
+        class RenderDevice;
+    }
 }
 
 class WidgetCheckerSphere : public QOpenGLWidget
@@ -72,8 +77,10 @@ private:
 
 private:
     easy3d::Camera*         camera_;
-    easy3d::TrianglesDrawable*  checkerSphere_;
-    easy3d::TrianglesDrawable*  lightSphere_;
+    std::shared_ptr<easy3d::TrianglesDrawable> checkerSphere_;
+    std::shared_ptr<easy3d::TrianglesDrawable> lightSphere_;
+    std::unique_ptr<easy3d::graphics::DrawableRenderer> drawable_renderer_;
+    std::unique_ptr<easy3d::graphics::RenderDevice> device_;
 
     bool	 mouseDown_;
     float    scene_radius_;

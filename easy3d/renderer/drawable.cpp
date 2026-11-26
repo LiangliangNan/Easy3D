@@ -39,7 +39,6 @@
 #include <easy3d/util/stop_watch.h>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/vertex_array_object.h>
 #endif
 
 
@@ -67,23 +66,66 @@ namespace easy3d {
     }
 #endif
 
-    void Drawable::set_source_faces(const std::vector<int>& faces) {
-        if (!cpu_buffers_ || type()!=DT_TRIANGLES) throw std::logic_error("face provenance requires CPU triangle buffers");
-        const auto count=(cpu_buffers_->indices.empty() ? cpu_buffers_->vertices.size() : cpu_buffers_->indices.size())/3;
-        if (!faces.empty() && faces.size()!=count) throw std::invalid_argument("face provenance count does not match triangles");
-        for (auto id:faces) if (id < -1) throw std::invalid_argument("invalid source face index");
-        cpu_buffers_->source_faces=faces; ++cpu_buffers_->revision;
+    unsigned int Drawable::vertex_buffer() const {
+#ifdef EASY3D_HAS_VULKAN
+        return 0;
+#else
+        const_cast<Drawable*>(this)->opengl_realize_buffers();
+        return vertex_buffer_;
+#endif
     }
+
+    unsigned int Drawable::color_buffer() const {
+#ifdef EASY3D_HAS_VULKAN
+        return 0;
+#else
+        const_cast<Drawable*>(this)->opengl_realize_buffers();
+        return color_buffer_;
+#endif
+    }
+
+    unsigned int Drawable::normal_buffer() const {
+#ifdef EASY3D_HAS_VULKAN
+        return 0;
+#else
+        const_cast<Drawable*>(this)->opengl_realize_buffers();
+        return normal_buffer_;
+#endif
+    }
+
+    unsigned int Drawable::texcoord_buffer() const {
+#ifdef EASY3D_HAS_VULKAN
+        return 0;
+#else
+        const_cast<Drawable*>(this)->opengl_realize_buffers();
+        return texcoord_buffer_;
+#endif
+    }
+
+    unsigned int Drawable::element_buffer() const {
+#ifdef EASY3D_HAS_VULKAN
+        return 0;
+#else
+        const_cast<Drawable*>(this)->opengl_realize_buffers();
+        return element_buffer_;
+#endif
+    }
+
+    void Drawable::set_source_faces(const std::vector<int>& faces) {
+        if (type() != DT_TRIANGLES)
+            throw std::logic_error("face provenance requires triangle buffers");
+        const auto count = (cpu_buffers_->indices.empty() ? cpu_buffers_->vertices.size()
+                                                          : cpu_buffers_->indices.size()) / 3;
+        if (!faces.empty() && faces.size() != count)
+            throw std::invalid_argument("face provenance count does not match triangles");
+        for (auto id : faces)
+            if (id < -1)
+                throw std::invalid_argument("invalid source face index");
+        cpu_buffers_->source_faces = faces;
+        ++cpu_buffers_->revision;
+    }
+
     const Drawable::BufferData& Drawable::cpu_buffers() {
-        if (!cpu_buffers_) throw std::logic_error("CPU buffers were not enabled");
-        // Extract the buffers once, then only when an update is requested. The test
-        // must not depend on the extracted vertex count: a drawable may legitimately
-        // produce no vertex at all (e.g. the lock markers of a mesh without locked
-        // vertices), and such a drawable would then be re-extracted on every call,
-        // which for a large model means rescanning it every frame. A drawable whose
-        // buffers were uploaded by the client is not extracted from the model either,
-        // matching the OpenGL backend, where the guard is the existence of the GPU
-        // buffer rather than its vertex count.
         if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
             update_buffers_internal();
             update_needed_ = false;
@@ -91,49 +133,8 @@ namespace easy3d {
         return *cpu_buffers_;
     }
 
-    const Drawable::BufferData& Drawable::buffer_data() {
-#ifdef EASY3D_HAS_VULKAN
-        return cpu_buffers();
-#else
-        if (update_needed_ || (!vertex_buffer_ && (model_ || update_func_))) {
-            update_buffers_internal();
-            update_needed_ = false;
-        }
-        if (num_vertices_ > 0 && !vertex_buffer_)
-            throw std::logic_error("drawable buffer data is unavailable");
-        if (!opengl_snapshot_ || opengl_snapshot_revision_ != buffer_revision_) {
-            auto snapshot = std::unique_ptr<BufferData>(new BufferData);
-            snapshot->revision = buffer_revision_;
-            snapshot->vertices.resize(num_vertices_);
-            snapshot->colors.resize(color_buffer_ ? num_vertices_ : 0);
-            snapshot->normals.resize(normal_buffer_ ? num_vertices_ : 0);
-            snapshot->texcoords.resize(texcoord_buffer_ ? num_vertices_ : 0);
-            snapshot->indices.resize(num_indices_);
-            if (!snapshot->vertices.empty())
-                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, vertex_buffer_, 0,
-                                                   snapshot->vertices.size() * sizeof(vec3),
-                                                   snapshot->vertices.data());
-            if (!snapshot->colors.empty())
-                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, color_buffer_, 0,
-                                                   snapshot->colors.size() * sizeof(vec3),
-                                                   snapshot->colors.data());
-            if (!snapshot->normals.empty())
-                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, normal_buffer_, 0,
-                                                   snapshot->normals.size() * sizeof(vec3),
-                                                   snapshot->normals.data());
-            if (!snapshot->texcoords.empty())
-                VertexArrayObject::get_buffer_data(GL_ARRAY_BUFFER, texcoord_buffer_, 0,
-                                                   snapshot->texcoords.size() * sizeof(vec2),
-                                                   snapshot->texcoords.data());
-            if (!snapshot->indices.empty())
-                VertexArrayObject::get_buffer_data(GL_ELEMENT_ARRAY_BUFFER, element_buffer_, 0,
-                                                   snapshot->indices.size() * sizeof(unsigned int),
-                                                   snapshot->indices.data());
-            opengl_snapshot_ = std::move(snapshot);
-            opengl_snapshot_revision_ = buffer_revision_;
-        }
-        return *opengl_snapshot_;
-#endif
+    const Drawable::BufferData& Drawable::buffer_data() const {
+        return const_cast<Drawable*>(this)->cpu_buffers();
     }
 
     Drawable::Drawable(const std::string &name, Model *model)
@@ -143,15 +144,25 @@ namespace easy3d {
               highlight_texture_(0), highlight_primitives_(0), manipulator_(nullptr) {
 #ifndef EASY3D_HAS_VULKAN
         opengl_initialize();
-#else
-        cpu_buffers_.reset(new BufferData);
 #endif
+        cpu_buffers_.reset(new BufferData);
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }
 
 
     Drawable::~Drawable() {
         clear();
+    }
+
+
+    void Drawable::set_model(Model *m) {
+        if (model_ == m)
+            return;
+        model_ = m;
+        buffers_ready_ = false;
+        update_needed_ = m != nullptr;
+        if (!m)
+            clear();
     }
 
 
@@ -179,9 +190,11 @@ namespace easy3d {
         ++point_revision_;
         ++buffer_revision_;
         opengl_snapshot_.reset();
+        opengl_upload_needed_ = true;
         if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
             opengl_release_buffers();
 #endif
+        client_colors_ = client_normals_ = client_texcoords_ = client_indices_ = false;
         reset_highlight_mask();
         num_vertices_ = 0;
         num_indices_ = 0;
@@ -194,6 +207,7 @@ namespace easy3d {
         highlight_strengths_.clear();
 #ifndef EASY3D_HAS_VULKAN
         highlight_primitives_ = 0;
+        opengl_highlight_needed_ = true;
 #endif
     }
 
@@ -212,21 +226,23 @@ namespace easy3d {
         if (strengths == highlight_strengths_)
             return;
         highlight_strengths_ = strengths;
-#ifdef EASY3D_HAS_VULKAN
         ++cpu_buffers_->revision;
-#else
-        opengl_update_highlight_mask(strengths);
+#ifndef EASY3D_HAS_VULKAN
+        opengl_highlight_needed_ = true;
 #endif
     }
 
 
     void Drawable::disable_element_buffer() {
-        if (cpu_buffers_) { cpu_buffers_->indices.clear(); cpu_buffers_->source_faces.clear(); ++cpu_buffers_->revision; }
+        cpu_buffers_->indices.clear();
+        cpu_buffers_->source_faces.clear();
+        if (!realizing_) client_indices_ = true;
+        ++cpu_buffers_->revision;
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        if (element_buffer_) opengl_disable_element_buffer();
+        opengl_upload_needed_ = true;
 #endif
         num_indices_ = 0;
         reset_highlight_mask();
@@ -244,19 +260,46 @@ namespace easy3d {
         }
 
         StopWatch w;
-        if (cpu_buffers_) {
-            // Extraction may change which attributes exist (e.g. removal of a
-            // color/normal property). Do not retain arrays from the old snapshot.
-            const auto revision = cpu_buffers_->revision + 1;
-            *cpu_buffers_ = BufferData();
-            cpu_buffers_->revision = revision;
-            num_vertices_ = num_indices_ = 0;
-        }
+        const bool keep_colors = client_colors_;
+        const bool keep_normals = client_normals_;
+        const bool keep_texcoords = client_texcoords_;
+        const bool keep_indices = client_indices_;
+        BufferData pending;
+        if (keep_colors) pending.colors = cpu_buffers_->colors;
+        if (keep_normals) pending.normals = cpu_buffers_->normals;
+        if (keep_texcoords) pending.texcoords = cpu_buffers_->texcoords;
+        if (keep_indices) pending.indices = cpu_buffers_->indices;
+        const auto revision = cpu_buffers_->revision + 1;
+        *cpu_buffers_ = BufferData();
+        cpu_buffers_->revision = revision;
+        num_vertices_ = num_indices_ = 0;
+        realizing_ = true;
         if (update_func_)
             update_func_(model_, this);
         else
             buffer::update(model_, this);
+        realizing_ = false;
+        if (keep_colors) {
+            cpu_buffers_->colors = std::move(pending.colors);
+            ++cpu_buffers_->revision;
+        }
+        if (keep_normals) {
+            cpu_buffers_->normals = std::move(pending.normals);
+            ++cpu_buffers_->revision;
+        }
+        if (keep_texcoords) {
+            cpu_buffers_->texcoords = std::move(pending.texcoords);
+            ++cpu_buffers_->revision;
+        }
+        if (keep_indices) {
+            cpu_buffers_->indices = std::move(pending.indices);
+            num_indices_ = cpu_buffers_->indices.size();
+            ++cpu_buffers_->revision;
+        }
         buffers_ready_ = true;
+#ifndef EASY3D_HAS_VULKAN
+        opengl_upload_needed_ = true;
+#endif
 
         LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "updating rendering buffers for drawable '" << name()
                                                 << "' took " << w.time_string();
@@ -264,63 +307,75 @@ namespace easy3d {
 
 
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
-#ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->vertices = vertices; cpu_buffers_->source_faces.clear();
+        update_needed_ = false;
+        cpu_buffers_->vertices = vertices;
+        cpu_buffers_->source_faces.clear();
         ++cpu_buffers_->revision;
         num_vertices_ = vertices.size();
         bbox_.clear();
-        for (const auto& p : vertices) bbox_.grow(p);
-#else
+        if (model_)
+            bbox_ = model_->bounding_box();
+        else
+            for (const auto &p : vertices)
+                bbox_.grow(p);
+#ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        opengl_update_vertex_buffer(vertices, dynamic);
+        opengl_upload_needed_ = true;
+        dynamic_vertices_ = dynamic;
 #endif
-        // The buffers now exist, whether they come from the model or from the client.
-        // The model must not overwrite them afterwards, matching the OpenGL backend,
-        // where the GPU buffer exists as soon as it has been uploaded.
         buffers_ready_ = true;
         reset_highlight_mask();
     }
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
-#ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->colors = colors; ++cpu_buffers_->revision;
-#else
+        cpu_buffers_->colors = colors;
+        if (!realizing_) client_colors_ = true;
+        ++cpu_buffers_->revision;
+#ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        opengl_update_color_buffer(colors, dynamic);
+        opengl_upload_needed_ = true;
+        dynamic_colors_ = dynamic;
 #endif
     }
 
     void Drawable::update_normal_buffer(const std::vector<vec3> &normals, bool dynamic) {
-#ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->normals = normals; ++cpu_buffers_->revision;
-#else
+        cpu_buffers_->normals = normals;
+        if (!realizing_) client_normals_ = true;
+        ++cpu_buffers_->revision;
+#ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        opengl_update_normal_buffer(normals, dynamic);
+        opengl_upload_needed_ = true;
+        dynamic_normals_ = dynamic;
 #endif
     }
 
     void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic) {
-#ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->texcoords = texcoords; ++cpu_buffers_->revision;
-#else
+        cpu_buffers_->texcoords = texcoords;
+        if (!realizing_) client_texcoords_ = true;
+        ++cpu_buffers_->revision;
+#ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        opengl_update_texcoord_buffer(texcoords, dynamic);
+        opengl_upload_needed_ = true;
+        dynamic_texcoords_ = dynamic;
 #endif
     }
 
     void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
-#ifdef EASY3D_HAS_VULKAN
-        cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision;
-#else
+        cpu_buffers_->indices = indices;
+        cpu_buffers_->source_faces.clear();
+        if (!realizing_) client_indices_ = true;
+        num_indices_ = indices.size();
+        ++cpu_buffers_->revision;
+#ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
         ++buffer_revision_;
         opengl_snapshot_.reset();
-        opengl_update_element_buffer(indices);
+        opengl_upload_needed_ = true;
 #endif
         reset_highlight_mask();
     }

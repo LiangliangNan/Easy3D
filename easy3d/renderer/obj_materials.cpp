@@ -214,8 +214,7 @@ namespace easy3d {
                 target->update_normal_buffer(snapshot->normals);
                 target->update_texcoord_buffer(snapshot->texcoords);
                 target->update_element_buffer(snapshot->indices);
-                if (target->has_cpu_buffers())
-                    target->set_source_faces(snapshot->source_faces);
+                target->set_source_faces(snapshot->source_faces);
             };
             d->set_update_func(upload);
             upload(mesh.get(), d);

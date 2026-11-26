@@ -455,7 +455,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
     else if (style == "sphere")
         d->set_impostor_type(PointsDrawable::SPHERE);
     else if (style == "surfel") {
-        if (d->normal_buffer() == 0) { // surfel requires point normals
+        if (d->buffer_data().normals.empty()) { // surfel requires point normals
             auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
             if (mesh) {
                 auto normals = mesh->get_vertex_property<vec3>("v:normal");
@@ -467,7 +467,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
                 d->update_normal_buffer(normals.vector());
                 viewer_->doneCurrent();
             } else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
-                if (d->normal_buffer() == 0) { // surfel requires point normals
+                if (d->buffer_data().normals.empty()) { // surfel requires point normals
                     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
                     auto normals = cloud->get_vertex_property<vec3>("v:normal");
                     if (normals) {
@@ -479,7 +479,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
             }
         }
 
-        if (d->normal_buffer())
+        if (!d->buffer_data().normals.empty())
             d->set_impostor_type(PointsDrawable::SURFEL);
         else
             LOG(WARNING) << "point imposter SURFEL requires normal information";

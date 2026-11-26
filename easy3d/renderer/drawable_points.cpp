@@ -26,6 +26,7 @@
 
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/setting.h>
+#include <cmath>
 #include <stdexcept>
 
 #ifndef EASY3D_HAS_VULKAN
@@ -51,16 +52,19 @@ namespace easy3d {
         set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     }
 
+    void PointsDrawable::set_point_size(float diameter) {
+        if (!std::isfinite(diameter) || diameter <= 0)
+            throw std::invalid_argument("point size must be positive and finite");
+        point_size_ = diameter;
+    }
+
 #ifndef EASY3D_HAS_VULKAN
 
 
 
 
     void PointsDrawable::draw(const Camera *camera) const {
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<PointsDrawable *>(this)->update_buffers_internal();
-            const_cast<PointsDrawable *>(this)->update_needed_ = false;
-        }
+        const_cast<PointsDrawable *>(this)->opengl_realize_buffers();
 
         switch (impostor_type_) {
             case PLAIN:

@@ -25,6 +25,16 @@
 #endif
 
 
+namespace {
+
+void warn_deprecated(const char *message) {
+    if (PyErr_WarnEx(PyExc_DeprecationWarning, message, 1) != 0)
+        throw pybind11::error_already_set();
+}
+
+}
+
+
 // easy3d::Drawable file:easy3d/renderer/drawable.h line:56
 struct PyCallBack_easy3d_Drawable : public easy3d::Drawable {
     using easy3d::Drawable::Drawable;
@@ -183,6 +193,15 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
                 .value("DT_TRIANGLES", easy3d::Drawable::DT_TRIANGLES)
                 .export_values();
 
+        pybind11::class_<easy3d::Drawable::BufferData>(cl, "BufferData")
+                .def_readonly("vertices", &easy3d::Drawable::BufferData::vertices)
+                .def_readonly("normals", &easy3d::Drawable::BufferData::normals)
+                .def_readonly("colors", &easy3d::Drawable::BufferData::colors)
+                .def_readonly("texcoords", &easy3d::Drawable::BufferData::texcoords)
+                .def_readonly("indices", &easy3d::Drawable::BufferData::indices)
+                .def_readonly("source_faces", &easy3d::Drawable::BufferData::source_faces)
+                .def_readonly("revision", &easy3d::Drawable::BufferData::revision);
+
         cl.def("type", (enum easy3d::Drawable::Type (easy3d::Drawable::*)() const) &easy3d::Drawable::type, "Returns the type of the drawable.\n\nC++: easy3d::Drawable::type() const --> enum easy3d::Drawable::Type");
         cl.def("name", (const std::string & (easy3d::Drawable::*)() const) &easy3d::Drawable::name, "C++: easy3d::Drawable::name() const --> const std::string &", pybind11::return_value_policy::automatic);
         cl.def("set_name", (void (easy3d::Drawable::*)(const std::string &)) &easy3d::Drawable::set_name, "C++: easy3d::Drawable::set_name(const std::string &) --> void", pybind11::arg("n"));
@@ -191,11 +210,29 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def("bounding_box", (const class easy3d::GenericBox<3, float> & (easy3d::Drawable::*)() const) &easy3d::Drawable::bounding_box, "C++: easy3d::Drawable::bounding_box() const --> const class easy3d::GenericBox<3, float> &", pybind11::return_value_policy::automatic);
         cl.def("state", (class easy3d::State & (easy3d::Drawable::*)()) &easy3d::Drawable::state, "C++: easy3d::Drawable::state() --> class easy3d::State &", pybind11::return_value_policy::automatic);
         cl.def("set_state", (void (easy3d::Drawable::*)(const class easy3d::State &)) &easy3d::Drawable::set_state, "C++: easy3d::Drawable::set_state(const class easy3d::State &) --> void", pybind11::arg("s"));
-        cl.def("vertex_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::vertex_buffer, "@{\n\nC++: easy3d::Drawable::vertex_buffer() const --> unsigned int");
-        cl.def("color_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::color_buffer, "C++: easy3d::Drawable::color_buffer() const --> unsigned int");
-        cl.def("normal_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::normal_buffer, "C++: easy3d::Drawable::normal_buffer() const --> unsigned int");
-        cl.def("texcoord_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::texcoord_buffer, "C++: easy3d::Drawable::texcoord_buffer() const --> unsigned int");
-        cl.def("element_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::element_buffer, "C++: easy3d::Drawable::element_buffer() const --> unsigned int");
+        cl.def("vertex_buffer", [](const easy3d::Drawable &self) {
+            warn_deprecated("vertex_buffer() is deprecated; use buffer_data().vertices");
+            return self.vertex_buffer();
+        });
+        cl.def("color_buffer", [](const easy3d::Drawable &self) {
+            warn_deprecated("color_buffer() is deprecated; use buffer_data().colors");
+            return self.color_buffer();
+        });
+        cl.def("normal_buffer", [](const easy3d::Drawable &self) {
+            warn_deprecated("normal_buffer() is deprecated; use buffer_data().normals");
+            return self.normal_buffer();
+        });
+        cl.def("texcoord_buffer", [](const easy3d::Drawable &self) {
+            warn_deprecated("texcoord_buffer() is deprecated; use buffer_data().texcoords");
+            return self.texcoord_buffer();
+        });
+        cl.def("element_buffer", [](const easy3d::Drawable &self) {
+            warn_deprecated("element_buffer() is deprecated; use buffer_data().indices");
+            return self.element_buffer();
+        });
+        cl.def("buffer_data", (const easy3d::Drawable::BufferData &(easy3d::Drawable::*)() const) &easy3d::Drawable::buffer_data,
+               "Returns the authoritative backend-neutral geometry snapshot.",
+               pybind11::return_value_policy::reference_internal);
 
         // Liangliang: In C++, the compiler can differentiate between function overloads based on the argument types at
         //      compile time. However, in Python, the type checking is dynamic, so pybind11 uses the order in which
@@ -266,17 +303,27 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def("update_element_buffer", (void (easy3d::Drawable::*)(const class std::vector<unsigned int> &)) &easy3d::Drawable::update_element_buffer, "C++: easy3d::Drawable::update_element_buffer(const class std::vector<unsigned int> &) --> void", pybind11::arg("elements"));
         cl.def("update_element_buffer", (void (easy3d::Drawable::*)(const class std::vector<class std::vector<unsigned int> > &)) &easy3d::Drawable::update_element_buffer, "Updates the element buffer.\n \n\n This is an overload of the above update_element_buffer() method.\n \n\n Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).\n\nC++: easy3d::Drawable::update_element_buffer(const class std::vector<class std::vector<unsigned int> > &) --> void", pybind11::arg("elements"));
         cl.def("disable_element_buffer", (void (easy3d::Drawable::*)()) &easy3d::Drawable::disable_element_buffer, "Disables the use of the element buffer.\n \n\n This method should be used if existing vertex data is sufficient for rendering (may require\n         duplicating vertex data).\n \n\n This method also releases the element buffer.\n\nC++: easy3d::Drawable::disable_element_buffer() --> void");
-        cl.def("update_highlight_mask", (void (easy3d::Drawable::*)(const class std::vector<float> &, bool)) &easy3d::Drawable::update_highlight_mask, "Uploads the highlight mask: one strength in [0, 1] per rendered primitive, or an empty list to clear.\n\nC++: easy3d::Drawable::update_highlight_mask(const std::vector<float> &, bool) --> void", pybind11::arg("strengths"), pybind11::arg("dynamic") = false);
+        cl.def("update_highlight_mask", (void (easy3d::Drawable::*)(const class std::vector<float> &)) &easy3d::Drawable::update_highlight_mask, "Uploads the highlight mask: one strength in [0, 1] per rendered primitive, or an empty list to clear.\n\nC++: easy3d::Drawable::update_highlight_mask(const std::vector<float> &) --> void", pybind11::arg("strengths"));
         cl.def("highlight_mask", (const class std::vector<float> & (easy3d::Drawable::*)() const) &easy3d::Drawable::highlight_mask, "Returns the per-primitive highlight mask currently in use (empty when nothing is highlighted).\n\nC++: easy3d::Drawable::highlight_mask() const --> const std::vector<float> &", pybind11::return_value_policy::automatic);
         cl.def("num_vertices", (std::size_t (easy3d::Drawable::*)() const) &easy3d::Drawable::num_vertices, "@}\n\nC++: easy3d::Drawable::num_vertices() const --> std::size_t");
-        cl.def("draw", (void (easy3d::Drawable::*)(const class easy3d::Camera *) const) &easy3d::Drawable::draw, "The draw method.\n\nC++: easy3d::Drawable::draw(const class easy3d::Camera *) const --> void", pybind11::arg("camera"));
-        cl.def("gl_draw", (void (easy3d::Drawable::*)() const) &easy3d::Drawable::gl_draw, "The internal draw method of this drawable.\n NOTE: this functions should be called when your shader program is in use,\n		 i.e., between glUseProgram(id) and glUseProgram(0);\n\nC++: easy3d::Drawable::gl_draw() const --> void");
+        cl.def("draw", [](const easy3d::Drawable &self, const easy3d::Camera *camera) {
+            warn_deprecated("draw(camera) is deprecated; add the drawable to a host or use DrawableRenderer");
+            self.draw(camera);
+        }, pybind11::arg("camera"));
+        cl.def("gl_draw", [](const easy3d::Drawable &self) {
+            warn_deprecated("gl_draw() is deprecated; use DrawableRenderer and RenderDevice");
+            self.gl_draw();
+        });
+        cl.def("vao", [](easy3d::Drawable &self) {
+            warn_deprecated("vao() is deprecated; use DrawableRenderer and RenderDevice");
+            return self.vao();
+        }, pybind11::return_value_policy::reference_internal);
+
         cl.def("update", (void (easy3d::Drawable::*)()) &easy3d::Drawable::update, "Requests an update of the OpenGL buffers.\n \n\n This function sets the status to trigger an update of the OpenGL buffers. The actual update does\n      not occur immediately but is deferred to the rendering phase.\n \n\n This method works for both standard drawables (no update function required) and non-standard\n      drawable (update function required). Standard drawables include:\n            - SurfaceMesh: \"faces\", \"edges\", \"vertices\", \"borders\", and \"locks\";\n            - PointCloud: \"vertices\";\n            - Graph: \"edges\", and \"vertices\",\n            - PolyMesh: \"faces:border\" and \"faces:interior\".\n \n\n set_update_func(), Renderer::update()\n\nC++: easy3d::Drawable::update() --> void");
         cl.def("set_update_func", (void (easy3d::Drawable::*)(const class std::function<void (class easy3d::Model *, class easy3d::Drawable *)> &)) &easy3d::Drawable::set_update_func, "Setups how a drawable updates its rendering buffers.\n \n\n This function is required by only non-standard drawables for a special visualization purpose.\n      Rendering buffers of standard drawables attached to a model can be automatically updated and do not\n      require this function.\n      The drawable is considered standalone if  is \n \n\n update(), Renderer::update().\n \n\n For a subclassed drawable, you can also reimplement update_buffers_internal() for the same purpose.\n\nC++: easy3d::Drawable::set_update_func(const class std::function<void (class easy3d::Model *, class easy3d::Drawable *)> &) --> void", pybind11::arg("func"));
         cl.def("manipulator", (class easy3d::Manipulator * (easy3d::Drawable::*)()) &easy3d::Drawable::manipulator, "@{\n\n \n Gets the manipulator attached to this drawable.\n \n\n If the drawable is part of a model, it returns the model's manipulator.\n      Returns  if the drawable cannot be manipulated.\n\nC++: easy3d::Drawable::manipulator() --> class easy3d::Manipulator *", pybind11::return_value_policy::automatic);
         cl.def("set_manipulator", (void (easy3d::Drawable::*)(class easy3d::Manipulator *)) &easy3d::Drawable::set_manipulator, "Attaches a manipulator to this model.\n \n\n This is used to manipulate a drawable that is not part of a model.\n\nC++: easy3d::Drawable::set_manipulator(class easy3d::Manipulator *) --> void", pybind11::arg("manip"));
         cl.def("manipulated_matrix", (class easy3d::Mat4<float> (easy3d::Drawable::*)() const) &easy3d::Drawable::manipulated_matrix, "Returns the manipulation matrix.\n\nC++: easy3d::Drawable::manipulated_matrix() const --> class easy3d::Mat4<float>");
-        cl.def("vao", (class easy3d::VertexArrayObject * (easy3d::Drawable::*)()) &easy3d::Drawable::vao, "Returns the vertex array object of this drawable.\n\nC++: easy3d::Drawable::vao() --> class easy3d::VertexArrayObject *", pybind11::return_value_policy::automatic);
     }
 
 	{ // easy3d::LinesDrawable file:easy3d/renderer/drawable_lines.h line:40
@@ -328,7 +375,10 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         pybind11::class_<easy3d::LinesDrawable2D, std::shared_ptr<easy3d::LinesDrawable2D>, easy3d::Drawable> cl(m, "LinesDrawable2D");
         cl.def(pybind11::init<const std::string &>(), pybind11::arg("name") = "");
         cl.def("type", &easy3d::LinesDrawable2D::type);
-        cl.def("draw", &easy3d::LinesDrawable2D::draw, pybind11::arg("camera"));
+        cl.def("draw", [](easy3d::LinesDrawable2D &self, const easy3d::Camera *camera) {
+            warn_deprecated("draw(camera) is deprecated; use DrawableRenderer and RenderDevice");
+            self.draw(camera);
+        }, pybind11::arg("camera"));
 
         cl.def("update_vertex_buffer",
                [](easy3d::LinesDrawable2D &self, const class std::vector<class easy3d::Vec<2, float> > &vertices, int width, int height, bool dynamic = false) -> void {

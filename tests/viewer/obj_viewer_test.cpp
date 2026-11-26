@@ -52,10 +52,10 @@ int main(int argc,char**) {
         for (const auto& d:model->renderer()->triangles_drawables()) {
             d->set_lighting(false);
             if (!d->texture()) continue;
+            require(d->has_cpu_buffers() && !static_cast<const Drawable &>(*d).buffer_data().vertices.empty(),
+                    "material drawable did not expose portable CPU geometry");
 #ifdef EASY3D_HAS_VULKAN
-            require(d->has_cpu_buffers() && d->texture()->id()==0,"native material viewer used OpenGL resources");
-#else
-            require(!d->has_cpu_buffers() && d->texture()->id() && glIsTexture(d->texture()->id()),"legacy material viewer did not use GL textures");
+            require(d->texture()->id()==0,"native material viewer used OpenGL resources");
 #endif
         }
 #ifdef EASY3D_HAS_VULKAN

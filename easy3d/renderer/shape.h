@@ -169,6 +169,7 @@ namespace easy3d {
          * \param m The transformation matrix defining the sphere's location, radius, and orientation.
          * \param axes \c true will also draw the three main axes.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_sphere_big_circles() and RenderDevice")
         void draw_sphere_big_circles(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool axes = true);
 
         /**
@@ -178,6 +179,7 @@ namespace easy3d {
          * \param m The transformation matrix defining the box's location, sizes, and orientation.
          * \param abstracted \c true to draw an abstracted version (only part of its corners).
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_box_wire() and RenderDevice")
         void draw_box_wire(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool abstracted = false);
         // @}
 #endif
@@ -427,6 +429,10 @@ graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec
 // `line_width` is in the pixel space of `width`/`height`, as for draw_lines_2d().
 graphics::DrawCommand draw_lines_3d(const std::vector<vec3>& segments,const std::vector<vec3>& colors,
                                    const mat4& mvp,unsigned width,unsigned height,float line_width = 1);
+// Three colored great circles and optional axes, transformed as a depth-tested guide.
+graphics::DrawCommand draw_sphere_big_circles(const mat4& mvp, const mat4& transform,
+                                             unsigned width, unsigned height, float line_width = 1,
+                                             bool axes = true);
 // Depth-tested RGB box guide. Uses the same create_box() corner geometry as
 // OpenGL, expanding homogeneously clipped segments into triangle ribbons.
 graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,

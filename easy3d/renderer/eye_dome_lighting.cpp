@@ -138,7 +138,7 @@ namespace easy3d {
         if (!projection_fbo_) {
             projection_fbo_ = new FramebufferObject(w, h, 0);
             projection_fbo_->add_color_texture();	// color render target for projection pass
-            projection_fbo_->add_depth_texture();	// depth render target for projection pass
+            projection_fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F);	// matches RenderDevice scene depth
         }
         projection_fbo_->ensure_size(w, h);
 

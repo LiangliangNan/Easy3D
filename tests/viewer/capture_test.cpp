@@ -69,6 +69,14 @@ int main(int argc,char**) {return test::run("shared capture and tutorial scanner
     auto overlay=graphics::shape::draw_quad_filled(Rect(0,151,0,113),vec4(0,1,0,.5f),151,113);host.set_overlays({overlay});
     const auto annotated=host.capture(4);require(annotated.depth==one.depth && annotated.ids[center].object==0,"annotation contaminated scene metadata");
     require(std::abs(int(annotated.rgba[4*center])-127)<=2 && std::abs(int(annotated.rgba[4*center+1])-128)<=2,"capture overlay compositing differs");
+    host.set_overlays({graphics::shape::draw_depth_texture(Rect(0,151,0,113),151,113)});
+    for (unsigned samples : {1u, 4u}) {
+        const auto preview=host.capture(samples);
+        const auto *rgba=&preview.rgba[4*center];
+        require(std::abs(int(rgba[0])-int(one.depth[center]*255))<=2 && rgba[0]==rgba[1] && rgba[1]==rgba[2],
+                "capture depth preview lost presented scene depth");
+        require(preview.depth==one.depth && preview.ids[center].object==0,"depth preview contaminated scene metadata");
+    }
     for(unsigned i=0;i<16;++i)require(host.camera()->model_view_projection_matrix()[i]==matrix[i],"capture mutated the camera");
     auto* nearer=mesh->renderer()->add_points_drawable("nearer query drawable");
     nearer->update_vertex_buffer({vec3(0,0,.3f)});nearer->set_point_size(31);

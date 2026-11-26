@@ -166,12 +166,33 @@ namespace easy3d {
     }
 
 
-    void Drawable::gl_draw() const {
-        if (cpu_buffers_) throw std::logic_error("gl_draw() is OpenGL-only; this drawable uses CPU buffers");
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<Drawable *>(this)->update_buffers_internal();
-            const_cast<Drawable *>(this)->update_needed_ = false;
+    void Drawable::opengl_realize_buffers() {
+        if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
+            update_buffers_internal();
+            update_needed_ = false;
         }
+        if (opengl_upload_needed_) {
+            const auto &data = *cpu_buffers_;
+            opengl_update_vertex_buffer(data.vertices, dynamic_vertices_);
+            opengl_update_color_buffer(data.colors, dynamic_colors_);
+            opengl_update_normal_buffer(data.normals, dynamic_normals_);
+            opengl_update_texcoord_buffer(data.texcoords, dynamic_texcoords_);
+            if (data.indices.empty())
+                opengl_disable_element_buffer();
+            else
+                opengl_update_element_buffer(data.indices);
+            opengl_upload_needed_ = false;
+        }
+        if (opengl_highlight_needed_) {
+            opengl_update_highlight_mask(highlight_strengths_);
+            opengl_highlight_needed_ = false;
+        }
+    }
+
+
+    void Drawable::gl_draw() const {
+        if (!vao_) throw std::logic_error("gl_draw() is OpenGL-only; this drawable uses CPU buffers");
+        const_cast<Drawable *>(this)->opengl_realize_buffers();
 
 #ifndef NDEBUG
         LOG_IF_FIRST_N(1, num_indices_ > 0 && num_vertices_ == 0, ERROR)

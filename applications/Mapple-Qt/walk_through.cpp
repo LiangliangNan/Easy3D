@@ -30,6 +30,10 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/keyframe_interpolator.h>
+#include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 
@@ -265,11 +269,51 @@ int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /*
 }
 
 
-void WalkThrough::draw() const {
-    if (cameras_visible())
-        kfi_->draw_cameras(camera_, character_height() * 0.2f);
-    if (path_visible())
-        kfi_->draw_path(camera_, 2.0f);
+void WalkThrough::update_drawables() const {
+    if (cameras_visible_) {
+        if (!cameras_drawable_)
+            cameras_drawable_ = std::make_shared<TrianglesDrawable>("keyframe cameras");
+        if (!kfi_->update_cameras_drawable(*cameras_drawable_, camera_, character_height() * 0.2f)) {
+            cameras_drawable_->update_vertex_buffer(std::vector<vec3>{});
+            cameras_drawable_->update_element_buffer(std::vector<unsigned int>{});
+        }
+        cameras_drawable_->set_visible(true);
+    } else if (cameras_drawable_)
+        cameras_drawable_->set_visible(false);
+
+    if (path_visible_) {
+        if (!path_drawable_)
+            path_drawable_ = std::make_shared<LinesDrawable>("camera path");
+        if (!kfi_->update_path_drawable(*path_drawable_, 2.0f)) {
+            path_drawable_->update_vertex_buffer(std::vector<vec3>{});
+            path_drawable_->disable_element_buffer();
+        }
+        path_drawable_->set_visible(true);
+    } else if (path_drawable_)
+        path_drawable_->set_visible(false);
+}
+
+
+void WalkThrough::draw(graphics::DrawableRenderer &renderer,
+                       std::vector<graphics::DrawCommand> &commands,
+                       std::uint32_t first_id, float pixel_scale) const {
+    update_drawables();
+    if (cameras_drawable_ && cameras_drawable_->is_visible())
+        commands.push_back(renderer.command(cameras_drawable_, first_id++, *camera_, {}));
+    if (path_drawable_ && path_drawable_->is_visible()) {
+        auto command = renderer.command(path_drawable_, first_id, *camera_, {});
+        command.line_width *= pixel_scale;
+        commands.push_back(std::move(command));
+    }
+}
+
+
+void WalkThrough::draw_native() const {
+    update_drawables();
+    if (cameras_drawable_ && cameras_drawable_->is_visible())
+        cameras_drawable_->draw(camera_);
+    if (path_drawable_ && path_drawable_->is_visible())
+        path_drawable_->draw(camera_);
 }
 
 

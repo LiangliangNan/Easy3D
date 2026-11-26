@@ -217,7 +217,7 @@ namespace easy3d {
 		// the image (and reaches the resolve path of issue #215).
 		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
 		const bool color_ok = fbo->add_color_buffer();
-		const bool depth_ok = fbo->add_depth_buffer();
+		const bool depth_ok = fbo->add_depth_buffer(GL_DEPTH_COMPONENT32F);
 		if (!color_ok || !depth_ok) {
 			delete fbo;
 			LOG(ERROR) << "failed to create the " << sub_w << " x " << sub_h << " snapshot framebuffer";
@@ -246,6 +246,20 @@ namespace easy3d {
 		// the tile explicitly and restore the window viewport afterwards.
 		GLint viewport[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
+
+        const vec4 snapshot_background = back_ground == 1 ? vec4(1, 1, 1, 1)
+                                     : back_ground == 2 ? vec4(0, 0, 0, 0)
+                                                        : vec4(background_color_);
+        auto* host = const_cast<Viewer*>(this);
+        struct SnapshotState {
+            Viewer* viewer;
+            ~SnapshotState() { viewer->snapshot_active_ = false; }
+        } snapshot_state{host};
+        host->snapshot_active_ = true;
+        host->snapshot_width_ = w;
+        host->snapshot_height_ = h;
+        host->snapshot_samples_ = unsigned(samples);
+        host->snapshot_background_ = snapshot_background;
 
 		for (int i = 0; i < nbX; i++) {
 			for (int j = 0; j < nbY; j++) {

@@ -84,7 +84,7 @@ namespace easy3d {
     	 * \note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering
 		 *		is enabled.
 		 */
-		void set_opacity(float opacity) { opacity_ = opacity; }
+		void set_opacity(float opacity);
 
     	/**
 		 * \brief Draws the drawable.

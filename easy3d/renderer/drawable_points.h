@@ -84,7 +84,7 @@ namespace easy3d {
 		 * \param diameter The new point diameter in logical pixels.
 		 * \note On a 2× DPI display, a 1-pixel point is 2 physical framebuffer pixels wide.
 		 */
-        void set_point_size(float diameter) { point_size_ = diameter; }
+        void set_point_size(float diameter);
 
 		/**
 		 * \brief Draws the drawable.

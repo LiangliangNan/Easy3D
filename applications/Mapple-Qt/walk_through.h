@@ -27,7 +27,9 @@
 #ifndef EASY3D_RENDERER_WALK_THROUGH_H
 #define EASY3D_RENDERER_WALK_THROUGH_H
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 #include <easy3d/core/types.h>
 #include "easy3d/util/signal.h"
@@ -39,6 +41,12 @@ namespace easy3d {
     class Camera;
     class Model;
     class KeyframeInterpolator;
+    class TrianglesDrawable;
+    class LinesDrawable;
+    namespace graphics {
+        class DrawableRenderer;
+        struct DrawCommand;
+    }
 }
 
 /// \brief WalkThrough enables to interactively creat a camera path for visualizing large scenes or demonstrating
@@ -185,8 +193,13 @@ public:
     /// Returns whether the path is visible.
     bool path_visible() const { return path_visible_; }
 
-    /// Draws the camera path and the virtual cameras.
-    void draw() const;
+    /// Appends portable commands for the camera path and virtual cameras.
+    void draw(easy3d::graphics::DrawableRenderer &renderer,
+              std::vector<easy3d::graphics::DrawCommand> &commands,
+              std::uint32_t first_id, float pixel_scale = 1.0f) const;
+
+    /// Compatibility path for hosts that cannot use portable presentation.
+    void draw_native() const;
     //@}
 
     /// Returns the keyframe interpolator.
@@ -206,6 +219,8 @@ protected:
 
     // convert view direction to orientation
     easy3d::quat to_orientation(const easy3d::vec3 &view_dir) const;
+
+    void update_drawables() const;
 
 protected:
     easy3d::Camera *camera_;
@@ -240,6 +255,9 @@ protected:
     bool cameras_visible_;
     bool path_visible_;
     int current_frame_idx_;
+
+    mutable std::shared_ptr<easy3d::TrianglesDrawable> cameras_drawable_;
+    mutable std::shared_ptr<easy3d::LinesDrawable> path_drawable_;
 
 public:
     easy3d::Signal<> path_modified;

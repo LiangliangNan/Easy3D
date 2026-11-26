@@ -460,6 +460,7 @@ namespace easy3d {
          *      10% of the character height (in walking mode), for instance.
          * \param color The color of the cameras.
          */
+        EASY3D_DEPRECATED("use update_cameras_drawable() and DrawableRenderer::command()")
         void draw_cameras(const Camera* camera, float camera_width, const vec4& color = vec4(0.5f, 0.8f, 0.5f, 1.0f));
 
         /**
@@ -470,6 +471,7 @@ namespace easy3d {
          * \param thickness The thickness of the path.
          * \param color The color of the path.
          */
+        EASY3D_DEPRECATED("use update_path_drawable() and DrawableRenderer::command()")
         void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(0.15f, 0.45f, 1.0f, 1.0f));
 
         /**

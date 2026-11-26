@@ -95,7 +95,7 @@ out vec4 fragment;
 void main() {
     fragment=depth_image?
         vec4(vec3(texture(image,vec2(texcoord.x,1-texcoord.y)).r),1):tint*color*texture(image,texcoord);
-    if (lighting && material_lighting) {
+    if (lighting && material_lighting && dot(world_normal, world_normal) > 0.0) {
         vec3 n=normalize(world_normal), view_dir=normalize(eye-world_position), l=normalize(light);
         if (distinct_back && !gl_FrontFacing) fragment.rgb=back_color.rgb;
         float df=dot(l,n); df=two_sides?abs(df):max(df,0);
@@ -284,9 +284,10 @@ void main() {
                     if (phase < 2) {
                         glEnable(GL_DEPTH_TEST);
                         glDepthFunc(phase == 1 ? GL_LESS : GL_LEQUAL);
+                        glDepthRange(c.depth_range.x, c.depth_range.y);
                     } else
                         glDisable(GL_DEPTH_TEST);
-                    glUniform1i(glGetUniformLocation(program_, "lighting"), phase == 1 && c.lighting);
+                    glUniform1i(glGetUniformLocation(program_, "lighting"), phase < 2 && c.lighting);
                     glUniformMatrix3fv(glGetUniformLocation(program_, "normal_matrix"), 1, GL_FALSE, c.normal_matrix);
                     glUniform1i(glGetUniformLocation(program_, "material_lighting"), c.material_lighting);
                     glUniform1i(glGetUniformLocation(program_, "two_sides"), c.lighting_two_sides);

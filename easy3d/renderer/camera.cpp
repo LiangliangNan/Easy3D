@@ -538,11 +538,13 @@ namespace easy3d {
 	// change the view, e.g., grabbing a large snapshot from the framebuffer...
 	void Camera::set_projection_matrix(const mat4& proj) {
 		projection_matrix_ = proj;
+		projection_matrix_is_up_to_date_ = true;
 	}
 
 
 	void Camera::set_model_view_matrix(const mat4& mv) {
 		model_view_matrix_ = mv;
+		model_view_matrix_is_up_to_date_ = true;
 	}
 
 	/*! Sets the scene_radius() value. Invalid (non positive or near zero) values are

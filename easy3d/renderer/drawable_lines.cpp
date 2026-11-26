@@ -55,10 +55,7 @@ namespace easy3d {
 
 
     void LinesDrawable::draw(const Camera *camera) const {
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<LinesDrawable *>(this)->update_buffers_internal();
-            const_cast<LinesDrawable *>(this)->update_needed_ = false;
-        }
+        const_cast<LinesDrawable *>(this)->opengl_realize_buffers();
 
         switch (impostor_type_) {
             case PLAIN:

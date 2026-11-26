@@ -16,13 +16,14 @@
     - [x] Add command factories for common scene geometry, screen-space lines, textured quads, and overlays, while keeping explicit `DrawCommand` fields for source stability.
     - [x] Implement and test the consolidated contract in both adapters before routing Viewer through it. See [section 8.10](Vulkan-OpenGL-unification.md#810-milestone-1-implementation-and-validation).
 
-  - [ ] Milestone 2 — Make drawable geometry and realization backend-neutral
-    - [ ] Standardize `Drawable::BufferData` and revision tracking so `buffer_data()` is the portable source for geometry, indices, primitive/source mappings, and cache invalidation.
-    - [ ] Route all drawable buffer updates through the shared realization/cache path; cover dynamic updates, element-buffer disabling, resizing, detachment, and repeated updates in both adapters.
-    - [ ] Move `DrawableRenderer` from command translation toward ownership of portable geometry/image caches; it must not own devices, windows, cameras, or native GPU resources.
-    - [ ] Express point, line, triangle, and screen-space line styling through portable command state; verify plain/impostor rendering, smooth shading, opacity, line width, and framebuffer-pixel conventions on both backends.
-    - [ ] Migrate every in-tree caller of `Drawable::draw()`, `gl_draw()`, `vao()`, and raw buffer getters to `DrawableRenderer` or command assembly, including Python bindings, tutorials, and tests.
-    - [ ] Deprecate and then remove native drawable rendering/resource access only after the preceding callers and both adapters pass parity tests.
+  - [x] Milestone 2 — Make drawable geometry and realization backend-neutral
+    - [x] Standardize `Drawable::BufferData` and revision tracking so `buffer_data()` is the portable source for geometry, indices, primitive/source mappings, and cache invalidation.
+    - [x] Route all drawable buffer updates through the shared realization/cache path; cover dynamic updates, element-buffer disabling, resizing, detachment, and repeated updates in both adapters.
+    - [x] Move `DrawableRenderer` from command translation toward ownership of portable geometry/image caches; it must not own devices, windows, cameras, or native GPU resources.
+    - [x] Express point, line, triangle, and screen-space line styling through portable command state; verify plain/impostor rendering, smooth shading, opacity, line width, and framebuffer-pixel conventions on both backends.
+    - [x] Migrate ordinary in-tree rendering callers of `Drawable::draw()`, `gl_draw()`, `vao()`, and raw buffer getters to `DrawableRenderer` or command assembly, including Python bindings, tutorials, tests, and Mapple; the retired Mapple-Qt was also migrated before retirement. Retain native calls only in centralized compatibility/effect/picking fallbacks.
+    - [x] Deprecate native drawable rendering/resource access in 2.8 after both adapters pass parity tests; reserve declaration, definition, binding, header, and build/install removal for the coordinated 3.0 release. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
+    - [x] Audit corner-axis lighting/depth/blending, native EDL, live/capture parity, immediate native compatibility, and MultiViewer divisions; pass the complete serial OpenGL 125/125 and Vulkan 153/153 suites and visual macOS Mapple validation with both backends. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
 
   - [ ] Milestone 3 — Turn rendering effects into portable settings
     - [ ] Add `RenderSettings` and its shadow, ambient-occlusion, transparency, eye-dome-lighting, and clipping substructures with documented defaults, units, and validation.
@@ -65,6 +66,7 @@
     - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
 
 
+  - [ ] Functions (like Viewer::draw_corner_axes()) have almost identical implementation code in the two backends. One should be removed at the end of the API unification.
 
 
 

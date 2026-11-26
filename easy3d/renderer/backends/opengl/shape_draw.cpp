@@ -564,7 +564,7 @@ namespace easy3d {
             if (!program)
                 return;
 
-            if (drawable->vertex_buffer() == 0) {
+            if (drawable->buffer_data().vertices.empty()) {
                 std::vector<vec3> points, colors;
                 std::vector<unsigned int> indices;
 
@@ -652,7 +652,7 @@ namespace easy3d {
             if (!program)
                 return;
 
-            if (drawable->vertex_buffer() == 0) {
+            if (drawable->buffer_data().vertices.empty()) {
                 std::vector<vec3> points, colors;
                 create_box(points, colors, abstracted);
                 drawable->update_vertex_buffer(points);

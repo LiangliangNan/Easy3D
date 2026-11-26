@@ -354,6 +354,8 @@ namespace easy3d {
             // does with glPolygonOffset, so coplanar line drawables stay visible.
             // Ignored for other topologies and overlays.
             bool depth_bias = false; ///< Offset filled triangles to expose coplanar lines.
+            // Appended for 2.8 source/ABI stability; existing command fields keep their offsets.
+            vec2 depth_range = vec2(0, 1); ///< Window-space depth interval mapped to [0, 1].
         };
 
         // Validates and normalizes finite plane equations with nonzero normals.

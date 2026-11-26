@@ -61,7 +61,8 @@ namespace easy3d {
             const auto count = indices_.empty() ? vertices_.size() : indices_.size();
             const unsigned size = topology == Topology::triangles ? 3 : topology == Topology::lines ? 2 : 1;
             if (count % size || count > std::numeric_limits<std::uint32_t>::max())
-                throw std::invalid_argument("invalid primitive element count");
+                throw std::invalid_argument("invalid primitive element count: " + std::to_string(count) +
+                                            " elements for topology " + std::to_string(int(topology)));
             if (!primitive_ids_.empty() && primitive_ids_.size() != count / size)
                 throw std::invalid_argument("one ID is required per primitive");
             for (auto index : indices_)

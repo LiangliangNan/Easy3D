@@ -46,7 +46,8 @@ Texture* Texture::create(const std::vector<unsigned char>& data, int width, int 
     if (width <= 0 || height <= 0 || comp < 1 || comp > 4 ||
         uint64_t(width)*height > std::numeric_limits<size_t>::max()/unsigned(comp) ||
         data.size() != uint64_t(width)*height*unsigned(comp)) {
-        LOG(ERROR) << "image data does not match positive dimensions/channel count";
+        LOG(ERROR) << "image data does not match dimensions/channels: " << width << "x" << height
+                   << "x" << comp << ", " << data.size() << " bytes";
         return nullptr;
     }
     if ((wrap != CLAMP_TO_EDGE && wrap != REPEAT) || (filter != NEAREST && filter != LINEAR)) {

@@ -99,7 +99,6 @@ namespace easy3d {
 
         glGenFramebuffers(1, &fbo_id_);
         easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
     }
 
 

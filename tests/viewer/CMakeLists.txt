@@ -176,7 +176,7 @@ if(Easy3D_ENABLE_VULKAN)
         add_test(NAME vulkan.clippingplane COMMAND easy3d_vulkan_clipping_plane_test ${validation_args})
         set_tests_properties(vulkan.clippingplane PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_corner_axes_test corner_axes_test.cpp)
-        target_link_libraries(easy3d_vulkan_corner_axes_test PRIVATE easy3d::viewer)
+        target_link_libraries(easy3d_vulkan_corner_axes_test PRIVATE easy3d::viewer 3rd_glfw)
         add_test(NAME vulkan.corneraxes COMMAND easy3d_vulkan_corner_axes_test ${validation_args})
         set_tests_properties(vulkan.corneraxes PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_real_camera_test real_camera_test.cpp
@@ -264,6 +264,11 @@ if(Easy3D_ENABLE_VULKAN)
 endif()
 
 if(NOT Easy3D_ENABLE_VULKAN)
+    add_executable(easy3d_opengl_corner_axes_test corner_axes_test.cpp)
+    target_link_libraries(easy3d_opengl_corner_axes_test PRIVATE easy3d::viewer 3rd_glfw)
+    add_test(NAME opengl.corneraxes COMMAND easy3d_opengl_corner_axes_test)
+    set_tests_properties(opengl.corneraxes PROPERTIES TIMEOUT 120 LABELS desktop)
+
     add_executable(easy3d_opengl_real_camera_test opengl_real_camera_orientation_test.cpp
             ../../tutorials/Tutorial_205_RealCamera/viewer.cpp
             ../../tutorials/Tutorial_205_RealCamera/read_bundler_file.cpp)

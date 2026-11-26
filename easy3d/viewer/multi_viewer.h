@@ -173,6 +173,13 @@ namespace easy3d {
         vec3 window_to_world(const vec3& window) const override;
 
         /**
+         * \brief Query the visible scene point beneath a logical grid pixel.
+         * \details Depth is queried from the whole grid, then unprojected through
+         *          the camera of the cell containing the requested position.
+         */
+        vec3 point_under_pixel(int x, int y, bool& found) const override;
+
+        /**
          * \brief Remove a model and its assignments from every cell.
          * \param model Model to remove.
          * \return True if the model was managed by this viewer and removed.
@@ -213,34 +220,25 @@ namespace easy3d {
         // the division drawable's geometry) after layout or size changes.
         void update_division();
 
-#ifndef EASY3D_HAS_VULKAN
-        // Draws every cell in its own viewport, then the grid division lines and
-        // the overlays.
-        void draw() const override;
-
-        // Renders the content of every cell into the currently bound framebuffer,
-        // then the grid lines when guides are requested.
-        void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
-
-        // Restricts the primitive-ID pick pass to the active cell's viewport, so a
-        // cursor position resolves against that cell only.
-        void prepare_pick_view(int x, int y, int width, int height) const override;
-#else
-        // Assembles one cell's scene commands for the requested output size,
-        // appending the cached division lines; Viewer::draw_frame() repeats this
-        // per cell instead of issuing a single scene pass. The output size is in
-        // target pixels, not logical window pixels (see Viewer::draw_commands()).
+        // Assembles every assigned cell's scene commands for the requested output
+        // size, followed by the cached grid-division overlay.
         std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
                                                        std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
+
+        bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
+
+        // OpenGL compatibility path for unsupported effects and legacy queries.
+#ifndef EASY3D_HAS_VULKAN
+        bool supports_portable_rendering() const;
+        void draw() const override;
+        void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
+        void prepare_pick_view(int x, int y, int width, int height) const override;
 #endif
         //@}
 
 #ifdef EASY3D_HAS_VULKAN
-        // Cell-division lines cached as screen-space draw commands (the Vulkan backend
-        // has no GL drawable for them); cleared whenever the division changes.
+        // Grid divisions cached as screen-space commands for one target size.
         mutable std::vector<graphics::DrawCommand> division_commands_;
-        // Output size the cached division commands were built for, so a resize rebuilds
-        // them; zero after a clear forces that rebuild on the next frame.
         mutable int division_width_ = 0, division_height_ = 0;
 #endif
         // Cell that currently receives camera drags; clamped to the grid when the
@@ -267,6 +265,10 @@ namespace easy3d {
         // OpenGL cell-division lines, rebuilt on resize; Vulkan keeps them as cached
         // draw commands (division_commands_) instead of a drawable.
         std::unique_ptr<LinesDrawable2D> drawable_division_;
+#ifndef EASY3D_HAS_VULKAN
+        mutable std::vector<graphics::DrawCommand> division_commands_;
+        mutable int division_width_ = 0, division_height_ = 0;
+#endif
     };
 
 }

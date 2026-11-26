@@ -71,6 +71,8 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/util/timer.h>
+
 #ifdef EASY3D_HAS_VULKAN
 // vulkan.h must precede glfw3.h (first pulled in by viewer_loop.h): GLFW declares
 // glfwCreateWindowSurface only when VK_VERSION_1_0 is defined.
@@ -97,7 +99,6 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/util/timer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/core/matrix.h>
 #endif
@@ -1119,32 +1120,12 @@ namespace easy3d {
                 camera()->set_pivot_point(found ? point : camera()->scene_center());
                 show_pivot_point_ = found;
                 if (found) {
-#ifdef EASY3D_HAS_VULKAN
-                    // pivot_pixel_ is logical; the overlay expires after ten seconds.
                     pivot_pixel_ = vec2(float(x), float(y));
                     pivot_expires_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-#else
-                    // We draw the pivot mark in screen space (a 3D version is in
-                    // Tutorial_204_Viewer_Qt) and hide the hint after a delay.
-                    if (!drawable_pivot_)
-                        drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
-                    // The pivot cross is ten logical pixels long and one logical pixel wide;
-                    // both backends draw it in framebuffer pixels, so the arm is 10 * dpi and
-                    // the ribbon width is dpi (one logical pixel; a fixed width of one would be
-                    // a thinner device-pixel hairline on HiDPI). Screen-space lines are
-                    // corner-based (texel (i, j) spans [i, i+1) x [j, j+1)), so center the
-                    // ribbon on the marked pixel's center instead of its corner.
-                    const float dpi = dpi_scaling();
-                    const float px = (x + 0.5f) * dpi, py = (y + 0.5f) * dpi, size = 10.0f * dpi;
-                    const std::vector<vec2> points = {vec2(px - size, py), vec2(px + size, py),
-                                                      vec2(px, py - size), vec2(px, py + size)};
-                    drawable_pivot_->update_vertex_buffer(points, framebuffer_width(), framebuffer_height(), true);
-                    drawable_pivot_->set_line_width(dpi);
                     Timer<>::single_shot(10000, [&]() {
                         show_pivot_point_ = false;
                         update();
                     });
-#endif
                     if (input_.key == KEY_Z && modifiers == 0) {
 #if 1 // with animation  Do NOT delete!!!
                         camera()->interpolate_to_look_at(point);
@@ -1411,13 +1392,22 @@ namespace easy3d {
 } // namespace easy3d
 
 
-#ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
     std::vector<graphics::DrawCommand> Viewer::draw_commands(
         const Camera &cam, int width, int, std::vector<DrawSource> *sources, bool include_hidden_models) const {
+#ifdef EASY3D_HAS_VULKAN
         impl_->drawable_renderer.prune();
+#else
+        if (!drawable_renderer_)
+            drawable_renderer_.reset(new graphics::DrawableRenderer);
+        drawable_renderer_->prune();
+#endif
         std::vector<graphics::DrawCommand> commands;
+#ifdef EASY3D_HAS_VULKAN
         const auto &planes = impl_->active_clipping_planes();
+#else
+        const auto &planes = clipping_planes();
+#endif
         // Drawable point/line sizes are logical pixels; the device rasterizes plain
         // points/lines in framebuffer pixels. Scale by the target-to-camera ratio,
         // not dpi_scaling(): it is the DPI scale only when the target is the window
@@ -1432,7 +1422,11 @@ namespace easy3d {
                           bool selected, bool depth_bias = false) {
             if (!d->is_visible())
                 return;
+#ifdef EASY3D_HAS_VULKAN
             auto command = impl_->drawable_renderer.command(d, id, cam, planes, selected);
+#else
+            auto command = drawable_renderer_->command(d, id, cam, planes, selected);
+#endif
             command.point_size *= pixel_scale;
             command.line_width *= pixel_scale;
             command.depth_bias = depth_bias;
@@ -1464,13 +1458,19 @@ namespace easy3d {
         }
         for (size_t i = 0; i < drawables_.size(); ++i)
             append(drawables_[i], uint32_t(models_.size() + i), nullptr, false);
+#ifdef EASY3D_HAS_VULKAN
         const auto guide = impl_->clipping_plane_renderer.draw(*ClippingPlane::instance(), cam);
         for (auto command : guide) {
             command.object_id = UINT32_MAX;
             commands.push_back(std::move(command));
         }
+#endif
         return commands;
     }
+} // namespace easy3d
+
+#ifdef EASY3D_HAS_VULKAN
+namespace easy3d {
     std::vector<graphics::DrawCommand> Viewer::frame_commands(
         const Camera &cam, int width, int height, std::vector<DrawSource> *sources, bool include_hud) const {
         auto commands = draw_commands(cam, width, height, sources);
@@ -1552,10 +1552,8 @@ namespace easy3d {
         impl_->viewer_overlays = std::move(commands);
     }
     void Viewer::set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const {
-        for (auto &command : commands) {
-            command.overlay = command.overlay_independent_depth = true;
-            command.overlay_depth_test = false;
-        }
+        for (auto &command : commands)
+            command.overlay = true;
         impl_->viewer_3d_overlays = std::move(commands);
     }
     void Viewer::set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const {
@@ -1880,16 +1878,28 @@ namespace easy3d {
             }
             corner_axes_geometry_ = std::make_shared<graphics::Geometry>(std::move(vertices));
         }
-        int w, h;
-        viewer_size(w, h);
-        const float sx = 100.0f / static_cast<float>(w), sy = 100.0f / static_cast<float>(h);
         const mat4 view = camera()->orientation().inverse().matrix();
-        const mat4 viewport = mat4::translation(vec3(-1 + sx, -1 + sy, 0)) * mat4::scale(sx, sy, 1, 1);
         graphics::DrawCommand axes;
         axes.geometry = corner_axes_geometry_;
-        axes.model_view_projection = viewport * transform::ortho(-1, 1, -1, 1, -1, 1) * view;
+        axes.model_view_projection = transform::ortho(-1, 1, -1, 1, -1, 1) * view;
         axes.normal_matrix = mat3(view);
         axes.lighting = true;
+        axes.material_lighting = true;
+        axes.lighting_two_sides = false;
+        axes.ambient = setting::material_ambient;
+        axes.specular = setting::material_specular;
+        axes.shininess = setting::material_shininess;
+        axes.model = view;
+        axes.eye = vec3(0);
+        axes.light = vec3(setting::light_position);
+        axes.object_id = UINT32_MAX;
+        axes.depth_range = vec2(0.0f, 0.01f);
+        axes.overlay = true;
+        axes.overlay_depth_test = false;
+        axes.overlay_independent_depth = true;
+        const int size = std::max(1, std::min({static_cast<int>(100 * dpi_scaling()),
+                                              framebuffer_width(), framebuffer_height()}));
+        axes.viewport = ivec4(0, framebuffer_height() - size, size, size);
         set_viewer_3d_overlays({axes});
     }
 
@@ -2285,8 +2295,7 @@ namespace easy3d {
         glfwMakeContextCurrent(window_);
         glfwSetWindowUserPointer(window_, nullptr);
         camera_.reset();
-        drawable_axes_.reset();
-        drawable_pivot_.reset();
+        corner_axes_commands_.clear();
         text_layout_.reset();
         hud_overlay_renderer_.reset();
         overlay_renderer_.reset();
@@ -2336,87 +2345,56 @@ namespace easy3d {
     void Viewer::draw_corner_axes() const {
         if (!show_corner_axes_)
             return;
-        ShaderProgram *program = ShaderManager::get_program("surface/surface");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
-                ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
-                ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")};
-            program = ShaderManager::create_program_from_files("surface/surface", attributes);
-        }
-        if (!program)
-            return;
-
-        if (!drawable_axes_) {
+        if (corner_axes_commands_.empty()) {
             float base = 0.5f; // the cylinder length, relative to the allowed region
             float head = 0.2f; // the cone length, relative to the allowed region
             std::vector<vec3> points, normals, colors;
             shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
             shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
             shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
-            shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
-                               colors);
+        shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
+                           colors);
             shape::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
                                colors);
             shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                                colors);
             shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-            const_cast<Viewer *>(this)->drawable_axes_ =
-                std::unique_ptr<TrianglesDrawable>(new TrianglesDrawable("corner_axes"));
-            drawable_axes_->update_vertex_buffer(points);
-            drawable_axes_->update_normal_buffer(normals);
-            drawable_axes_->update_color_buffer(colors);
-            drawable_axes_->set_property_coloring(State::VERTEX);
+            std::vector<graphics::Vertex> vertices(points.size());
+            for (size_t i = 0; i < points.size(); ++i) {
+                vertices[i].position = points[i];
+                vertices[i].normal = normals[i];
+                vertices[i].color = vec4(colors[i], 1);
+            }
+            graphics::DrawCommand axes;
+            axes.geometry = std::make_shared<graphics::Geometry>(std::move(vertices));
+            axes.lighting = true;
+            axes.material_lighting = true;
+            axes.lighting_two_sides = false;
+            axes.ambient = setting::material_ambient;
+            axes.specular = setting::material_specular;
+            axes.shininess = setting::material_shininess;
+            axes.color = vec4(1);
+            axes.object_id = UINT32_MAX;
+            corner_axes_commands_.push_back(std::move(axes));
         }
-        // The viewport is changed to fit the lower left corner.
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-
-        static int corner_frame_size = static_cast<int>(100 * dpi_scaling());
-        glViewport(0, 0, corner_frame_size, corner_frame_size);
-
-        // To make the axis appear over other objects: reserve a tiny bit of the
-        // front depth range. NOTE: do remember to restore it later.
-        glDepthRange(0, 0.01f);
-
-        const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
+        const mat4 &projection = transform::ortho(-1, 1, -1, 1, -1, 1);
         const mat4 &view = camera_->orientation().inverse().matrix();
-        const mat4 &MVP = proj * view;
-
-        // camera position is defined in world coordinate system.
-        const vec3 &wCamPos = camera_->position();
-        // it can also be computed as follows:
-        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4 &MV = camera_->model_view_matrix();
-        const vec4 &wLightPos = inverse(MV) * setting::light_position;
-
-        program->bind();
-        program
-            ->set_uniform("MVP_MANIP", MVP) // MANIP is identity for the corner axes
-            ->set_uniform("MANIP", mat4::identity())
-            ->set_uniform("NORMAL", mat3::identity()) // needs be padded when using uniform blocks
-            ->set_uniform("lighting", true)
-            ->set_uniform("two_sides_lighting", false)
-            ->set_uniform("smooth_shading", true)
-            ->set_uniform("wLightPos", wLightPos)
-            ->set_uniform("wCamPos", wCamPos)
-            ->set_uniform("aoEnabled", false)
-            ->set_uniform("per_vertex_color", true)
-            ->set_uniform("distinct_back_color", false)
-            ->set_block_uniform("Material", "ambient", setting::material_ambient)
-            ->set_block_uniform("Material", "specular", setting::material_specular)
-            ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-            ->set_uniform("clippingPlaneEnabled", false)
-            ->set_uniform("selected", false)
-            ->set_uniform("highlight_color", setting::highlight_color)
-            ->set_uniform("use_texture", false);
-        drawable_axes_->gl_draw();
-        program->release();
-
-        // restore the viewport
-        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        glDepthRange(0.0f, 1.0f);
+        for (auto &axes : corner_axes_commands_) {
+            axes.model_view_projection = projection * view;
+            axes.model_view = view;
+            axes.model = view;
+            axes.normal_matrix = mat3(view);
+            axes.projection = projection;
+            axes.eye = vec3(0);
+            axes.light = vec3(setting::light_position);
+            const int size = std::max(1, std::min({static_cast<int>(100 * dpi_scaling()),
+                                                  framebuffer_width(), framebuffer_height()}));
+            axes.viewport = ivec4(0, framebuffer_height() - size, size, size);
+            axes.depth_range = vec2(0.0f, 0.01f);
+            axes.overlay = true;
+            axes.overlay_depth_test = false;
+            axes.overlay_independent_depth = true;
+        }
     }
     void Viewer::pre_draw() {
         glfwMakeContextCurrent(window_);
@@ -2425,45 +2403,42 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     void Viewer::post_draw() {
-        std::vector<graphics::DrawCommand> text_commands;
-        update_hud_text(text_commands);
-        const bool has_text = !text_commands.empty();
-        if (!hud_overlay_renderer_ && has_text)
-            hud_overlay_renderer_.reset(new opengl::OverlayRenderer);
-        if (hud_overlay_renderer_) {
-            for (auto &command : text_commands)
-                command.overlay = true;
-            hud_overlay_renderer_->set(std::move(text_commands), true);
-            if (has_text) {
-                opengl::QueryState state;
-                state.prepare(framebuffer_width(), framebuffer_height());
-                hud_overlay_renderer_->draw(true, framebuffer_width(), framebuffer_height(), overlay_tile_, {});
-            }
+        std::vector<graphics::DrawCommand> commands;
+        update_hud_text(commands);
+        draw_corner_axes();
+        if (show_corner_axes_)
+            commands.insert(commands.end(), corner_axes_commands_.begin(), corner_axes_commands_.end());
+
+        // Shown only when it is not animating. Screen-space coordinates are
+        // framebuffer pixels and the cross is centered on the picked pixel.
+        if (show_pivot_point_ && std::chrono::steady_clock::now() < pivot_expires_) {
+            const float dpi = dpi_scaling();
+            const float px = (pivot_pixel_.x + 0.5f) * dpi, py = (pivot_pixel_.y + 0.5f) * dpi, size = 10.0f * dpi;
+            commands.push_back(graphics::shape::draw_lines_2d(
+                {vec2(px - size, py), vec2(px + size, py), vec2(px, py - size), vec2(px, py + size)},
+                vec4(0, 0, 0, 1), framebuffer_width(), framebuffer_height(), dpi));
         }
-
-        // shown only when it is not animating
-        if (show_pivot_point_)
-            drawable_pivot_->draw(camera());
-
-        // ------------- draw the picking region with transparency  ---------------
 
         if (zoom_region_ && (input_.x != input_.press_x || input_.y != input_.press_y)) {
-            const Rect rect(static_cast<float>(input_.press_x), static_cast<float>(input_.x),
-                            static_cast<float>(input_.press_y), static_cast<float>(input_.y));
-            if (rect.width() > 0 || rect.height() > 0) {
-                // draw the boundary of the rect
-                shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
-                // draw the transparent face
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
-                glDisable(GL_BLEND);
-            }
+            const float dpi = dpi_scaling();
+            const Rect rect{(input_.press_x + 0.5f) * dpi, (input_.x + 0.5f) * dpi,
+                            (input_.press_y + 0.5f) * dpi, (input_.y + 0.5f) * dpi};
+            commands.push_back(graphics::shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f),
+                                                                 framebuffer_width(), framebuffer_height()));
+            commands.push_back(graphics::shape::draw_quad_wire(rect, vec4(0, 0, 1, 1),
+                                                               framebuffer_width(), framebuffer_height(), dpi));
         }
 
-        // ------- draw the axes indicating the orientation of the model  ----------
-
-        draw_corner_axes();
+        if (!commands.empty()) {
+            if (!hud_overlay_renderer_)
+                hud_overlay_renderer_.reset(new opengl::OverlayRenderer);
+            hud_overlay_renderer_->set(std::move(commands), true);
+            opengl::QueryState state;
+            state.prepare(framebuffer_width(), framebuffer_height());
+            hud_overlay_renderer_->draw(true, framebuffer_width(), framebuffer_height(), overlay_tile_, {});
+        } else if (hud_overlay_renderer_) {
+            hud_overlay_renderer_->set({}, true);
+        }
         draw_overlays(true);
     }
     void Viewer::draw() const {
@@ -2487,52 +2462,96 @@ namespace easy3d {
 #else
 
         Shadow *active_shadow = Shadow::active(camera());
-        for (const auto m : models_) {
-            if (!m->renderer()->is_visible())
-                continue;
-
-            // Let's check if edges and surfaces are both shown. If true, we
-            // make the depth coordinates of the surface smaller, so that displaying
-            // the mesh and the surface together does not cause Z-fighting.
-            std::size_t count = 0;
-            for (auto d : m->renderer()->lines_drawables()) {
-                if (d->is_visible()) {
+        const auto draw_native = [&]() {
+            for (const auto m : models_) {
+                if (!m->renderer()->is_visible())
+                    continue;
+                std::size_t count = 0;
+                for (auto d : m->renderer()->lines_drawables()) {
+                    if (d->is_visible()) {
+                        d->draw(camera());
+                        easy3d_debug_log_gl_error
+                        ++count;
+                    }
+                }
+                for (auto d : m->renderer()->points_drawables()) {
+                    if (d->is_visible())
+                        d->draw(camera());
+                    easy3d_debug_log_gl_error
+                }
+                if (count > 0) {
+                    glEnable(GL_POLYGON_OFFSET_FILL);
+                    glPolygonOffset(0.5f, -0.0001f);
+                }
+                for (auto d : m->renderer()->triangles_drawables()) {
+                    if (!d->is_visible())
+                        continue;
+                    if (active_shadow && std::find(active_shadow->surfaces().begin(), active_shadow->surfaces().end(),
+                                                   d.get()) != active_shadow->surfaces().end())
+                        continue;
                     d->draw(camera());
                     easy3d_debug_log_gl_error
-                    ++count;
                 }
+                if (count > 0)
+                    glDisable(GL_POLYGON_OFFSET_FILL);
             }
-
-            for (auto d : m->renderer()->points_drawables()) {
+            for (auto d : drawables_) {
                 if (d->is_visible())
                     d->draw(camera());
-                easy3d_debug_log_gl_error
             }
+        };
 
-            if (count > 0) {
-                glEnable(GL_POLYGON_OFFSET_FILL);
-                glPolygonOffset(0.5f, -0.0001f);
+        bool portable = !active_shadow;
+        const auto supported = [&](const std::shared_ptr<Drawable> &d) {
+            if (!d)
+                return false;
+            if (d->is_ao_enabled() && d->has_ao_texture()) {
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: AO on '" << d->name() << "'";
+                return false;
             }
-            for (auto d : m->renderer()->triangles_drawables()) {
-                if (!d->is_visible())
-                    continue;
-                if (active_shadow && std::find(active_shadow->surfaces().begin(), active_shadow->surfaces().end(),
-                                               d.get()) != active_shadow->surfaces().end())
-                    continue;
-                d->draw(camera());
-                easy3d_debug_log_gl_error
-            }
-            if (count > 0)
-                glDisable(GL_POLYGON_OFFSET_FILL);
+            const Drawable &drawable = *d;
+            const bool result = typeid(drawable) == typeid(TrianglesDrawable) || typeid(drawable) == typeid(LinesDrawable) ||
+                                typeid(drawable) == typeid(PointsDrawable) || typeid(drawable) == typeid(LinesDrawable2D);
+            if (!result)
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: custom type '" << d->name() << "' ("
+                                        << typeid(drawable).name() << ")";
+            return result;
+        };
+        for (const auto &m : models_) {
+            if (!m->renderer()->is_visible())
+                continue;
+            for (const auto &d : m->renderer()->triangles_drawables())
+                portable = portable && supported(d);
+            for (const auto &d : m->renderer()->lines_drawables())
+                portable = portable && supported(d);
+            for (const auto &d : m->renderer()->points_drawables())
+                portable = portable && supported(d);
         }
+        for (const auto &d : drawables_)
+            portable = portable && supported(d);
+
+        if (portable) {
+            try {
+                GLint viewport[4];
+                glGetIntegerv(GL_VIEWPORT, viewport);
+                const int command_width = snapshot_active_ ? snapshot_width_ : framebuffer_width();
+                const int command_height = snapshot_active_ ? snapshot_height_ : framebuffer_height();
+                auto commands = draw_commands(*camera(), command_width, command_height);
+                query_device().present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands,
+                                       snapshot_active_ ? snapshot_background_ : background_color(),
+                                       snapshot_active_ ? snapshot_samples_ : samples(),
+                                       graphics::TransparencyMethod::sorted, 4);
+                drawable_renderer_->prune();
+            } catch (const std::logic_error &e) {
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
+                portable = false;
+            }
+        }
+        if (!portable)
+            draw_native();
 
         if (active_shadow)
             active_shadow->draw(active_shadow->surfaces());
-
-        for (auto d : drawables_) {
-            if (d->is_visible())
-                d->draw(camera());
-        }
 
 #endif
 
@@ -2569,10 +2588,6 @@ namespace easy3d {
     } // namespace
 
     bool Viewer::supports_device_query(const Camera &camera, int width, int height, bool guides) const {
-        // MultiViewer partitions one target into assigned-cell viewports. Its native
-        // draw_scene() override remains the authoritative query path for this increment.
-        if (dynamic_cast<const MultiViewer *>(this))
-            return false;
         if (width <= 0 || height <= 0 || ClippingPlane::instance()->is_enabled())
             return false;
         const auto supported = [&](const std::shared_ptr<Drawable> &drawable) {
@@ -2590,17 +2605,17 @@ namespace easy3d {
                 drawable->coloring_method() != State::TEXTURED &&
                 drawable->coloring_method() != State::SCALAR_FIELD)
                 return false;
-            if (drawable->color().w != 1.0f || drawable->is_ao_enabled())
+            if (drawable->color().w != 1.0f ||
+                (drawable->is_ao_enabled() && drawable->has_ao_texture()))
                 return false;
             const bool textured = drawable->coloring_method() == State::TEXTURED ||
                                   drawable->coloring_method() == State::SCALAR_FIELD;
             if (textured && (!drawable->texture() || !drawable->texture()->pixels()))
                 return false;
             if (auto *points = dynamic_cast<PointsDrawable *>(drawable.get()))
-                return points->impostor_type() == PointsDrawable::PLAIN;
+                return true;
             if (auto *lines = dynamic_cast<LinesDrawable *>(drawable.get()))
-                return lines->impostor_type() == LinesDrawable::PLAIN && setting::lines_drawable_screen_space_width &&
-                       std::abs(lines->line_width() * float(width) / float(camera.screen_width()) - 1.0f) < 1e-6f;
+                return true;
             return dynamic_cast<TrianglesDrawable *>(drawable.get()) != nullptr;
         };
         for (const auto &model : models_) {
@@ -2624,7 +2639,7 @@ namespace easy3d {
 
     graphics::RenderDevice &Viewer::query_device() const {
         if (!query_device_)
-            query_device_ = graphics::create_opengl_device();
+            query_device_ = graphics::create_device();
         return *query_device_;
     }
 
@@ -2636,51 +2651,26 @@ namespace easy3d {
                                        std::vector<DrawSource> *sources) const {
         if (!supports_device_query(camera, width, height, guides))
             return false;
-        if (!drawable_renderer_)
-            drawable_renderer_.reset(new graphics::DrawableRenderer);
-        commands.clear();
-        if (sources)
-            sources->clear();
-        const auto append = [&](const std::shared_ptr<Drawable> &drawable,
-                                const std::shared_ptr<Model> &model,
-                                std::uint32_t id,
-                                bool model_selected) {
-            if (!drawable->is_visible())
-                return;
-            if (dynamic_cast<LinesDrawable2D *>(drawable.get()) && !guides)
-                return;
-            auto command = drawable_renderer_->command(drawable, id, camera, {}, model_selected);
-            if (sources) {
-                if (commands.size() >= UINT32_MAX)
-                    throw std::length_error("too many query drawables");
-                // A model-level ID cannot distinguish overlapping drawables. Picking
-                // uses command indices internally and resolves the source afterward.
-                command.object_id = uint32_t(commands.size());
+        commands = draw_commands(camera, width, height, sources);
+        if (!guides) {
+            std::vector<DrawSource> visible_sources;
+            for (auto &command : commands) {
+                if (command.overlay) {
+                    if (sources)
+                        continue;
+                    command.object_id = UINT32_MAX;
+                } else if (sources) {
+                    const auto source_id = command.object_id;
+                    command.object_id = uint32_t(visible_sources.size());
+                    visible_sources.push_back(sources->at(source_id));
+                }
             }
-            if (command.geometry && command.geometry->topology() == graphics::Topology::points &&
-                camera.screen_width() > 0)
-                command.point_size *= float(width) / float(camera.screen_width());
-            if (dynamic_cast<LinesDrawable2D *>(drawable.get()))
-                command.object_id = UINT32_MAX;
-            commands.push_back(std::move(command));
             if (sources)
-                sources->push_back({model, drawable});
-        };
-        for (size_t i = 0; i < models_.size(); ++i) {
-            const auto &model = models_[i];
-            if (!model->renderer() || !model->renderer()->is_visible())
-                continue;
-            const auto id = uint32_t(i);
-            const bool selected = model->renderer()->is_selected();
-            for (const auto &d : model->renderer()->triangles_drawables())
-                append(d, model, id, selected);
-            for (const auto &d : model->renderer()->lines_drawables())
-                append(d, model, id, selected);
-            for (const auto &d : model->renderer()->points_drawables())
-                append(d, model, id, selected);
+                *sources = std::move(visible_sources);
+            commands.erase(std::remove_if(commands.begin(), commands.end(), [](const graphics::DrawCommand &command) {
+                return command.overlay;
+            }), commands.end());
         }
-        for (size_t i = 0; i < drawables_.size(); ++i)
-            append(drawables_[i], nullptr, uint32_t(models_.size() + i), false);
         drawable_renderer_->prune();
         return true;
     }
@@ -2817,16 +2807,29 @@ namespace easy3d {
         graphics::FrameImage frame;
         frame.width = w;
         frame.height = h;
+        std::vector<graphics::DrawCommand> scene_commands;
+        const bool device_scene = device_query_commands(snapshot, w, h, false, scene_commands);
+        auto color_commands = scene_commands;
+        if (device_scene) {
+            const auto all_commands = draw_commands(snapshot, w, h);
+            for (const auto &command : all_commands)
+                if (command.overlay)
+                    color_commands.push_back(command);
+        }
         {
             FramebufferObject color(w, h, int(count));
-            if (!color.add_color_buffer() || !color.add_depth_buffer() || !color.bind())
+            if (!color.add_color_buffer() || !color.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !color.bind())
                 throw std::runtime_error("cannot create capture color target");
             state.prepare(w, h);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
             const auto bg = background_color();
             glClearColor(bg.x, bg.y, bg.z, bg.w);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-            draw_scene(snapshot, nullptr, true);
+            if (device_scene)
+                query_device().present(uint32_t(w), uint32_t(h), color_commands, bg, count,
+                                       graphics::TransparencyMethod::sorted, 4);
+            else
+                draw_scene(snapshot, nullptr, true);
             glViewport(0, 0, w, h);
             draw_overlays(false);
             if (snapshot_hud_)
@@ -2839,10 +2842,9 @@ namespace easy3d {
                 throw std::runtime_error("cannot read capture color");
         }
         if (readback == graphics::FrameReadback::color_depth_ids) {
-            std::vector<graphics::DrawCommand> commands;
-            if (device_query_commands(snapshot, w, h, false, commands)) {
+            if (device_scene) {
                 auto metadata = query_device().render(
-                    uint32_t(w), uint32_t(h), commands, background_color(), 1,
+                    uint32_t(w), uint32_t(h), scene_commands, background_color(), 1,
                     graphics::TransparencyMethod::sorted, 4, readback);
                 frame.depth = std::move(metadata.depth);
                 frame.ids = std::move(metadata.ids);

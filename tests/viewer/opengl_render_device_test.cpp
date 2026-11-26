@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "test_window.h"
 #include <easy3d/viewer/offscreen.h>
+#include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/util/initializer.h>
 
@@ -109,6 +114,19 @@ namespace {
                 frame.ids[pixel(65, 32, 32)].primitive == 71, "triangle picking ID mismatch");
         require(std::abs(frame.depth[pixel(65, 32, 32)] - .5f) < 1e-6f, "OpenGL clip depth was converted twice");
 
+        auto left = rectangle(-1, -1, 1, 1, 0, vec4(1, 0, 0, 1));
+        left.object_id = 14;
+        left.viewport = ivec4(0, 0, 32, 32);
+        auto right = rectangle(-1, -1, 1, 1, 0, vec4(0, 0, 1, 1));
+        right.object_id = 15;
+        right.viewport = ivec4(32, 0, 32, 32);
+        const auto full_width_overlay = graphics::shape::draw_quad_filled(Rect(0, 64, 0, 16), vec4(0, 1, 0, 1), 64, 32);
+        const auto adjacent_overlay = device.render(64, 32, {left, right, full_width_overlay}, vec4(0));
+        probe(adjacent_overlay, 8, 8, 0, 255, 0);
+        probe(adjacent_overlay, 56, 8, 0, 255, 0);
+        probe(adjacent_overlay, 8, 24, 255, 0, 0);
+        probe(adjacent_overlay, 56, 24, 0, 0, 255);
+
         auto reordered = rectangle(-1, -1, 1, 1, 0, vec4(0, 0, 1, 1));
         reordered.object_id = 13;
         reordered.geometry = std::make_shared<Geometry>(scene.geometry->vertices(),
@@ -163,6 +181,22 @@ namespace {
                                                          highlighted.geometry->indices(), Topology::triangles);
         probe(device.render(65, 65, {highlighted, scene}, vec4(0)), 32, 32, 0, 255, 0);
 
+        auto hud_far = rectangle(-1, -1, 1, 1, .5f, vec4(1, 0, 0, 1), true);
+        hud_far.overlay_independent_depth = true;
+        auto hud_near = rectangle(-1, -1, 1, 1, -.5f, vec4(0, 1, 0, 1), true);
+        hud_near.overlay_independent_depth = true;
+        for (unsigned samples : {1u, 4u}) {
+            if (!(device.supported_sample_counts() & samples))
+                continue;
+            const FrameImage hud_frame = device.render(65, 65, {hud_far, hud_near, scene}, vec4(0), samples);
+            const FrameImage hud_reversed = device.render(65, 65, {hud_near, hud_far, scene}, vec4(0), samples);
+            probe(hud_frame, 32, 32, 0, 255, 0);
+            require(hud_reversed.rgba == hud_frame.rgba, "independent HUD ignored nearest-surface depth");
+            require(same_ids(hud_frame, frame) && hud_frame.depth == frame.depth,
+                    "independent HUD changed scene picking or depth");
+            probe(device.render(65, 65, {flat, hud_near, hud_far, scene}, vec4(0), samples), 32, 32, 0, 255, 0);
+        }
+
         auto farther = rectangle(-1, -1, 1, 1, .5f, vec4(0, 0, 1, 1));
         farther.object_id = 21;
         farther.transparent = true;
@@ -190,6 +224,17 @@ namespace {
             }
         }
         require(hits == 144, "plain point is not an exact framebuffer-pixel square");
+
+        auto ranged_point = points;
+        ranged_point.point_style = PointStyle::sphere;
+        ranged_point.sphere_radius = .5f;
+        const FrameImage unscaled_impostor = device.render(64, 48, {ranged_point}, vec4(0));
+        ranged_point.depth_range = vec2(.4f, .6f);
+        const FrameImage impostor_depth = device.render(64, 48, {ranged_point}, vec4(0));
+        probe(impostor_depth, 32, 24, 255, 0, 0);
+        const float expected_depth = .4f + .2f * unscaled_impostor.depth[pixel(64, 32, 24)];
+        require(std::abs(impostor_depth.depth[pixel(64, 32, 24)] - expected_depth) < 1e-6f,
+                "analytic impostor ignored the command depth range");
 
         if (device.supported_sample_counts() & 4) {
             auto msaa_scene = rectangle(-.8f, -.8f, .8f, .8f, 0, vec4(0, 0, 1, 1));
@@ -261,6 +306,32 @@ namespace {
         require(encoder.command(cached_drawable, 0, camera, {}).geometry->vertices()[0].highlight.w == 0,
                 "clearing the highlight mask reused stale geometry");
 
+        auto native = std::make_shared<TrianglesDrawable>("native buffer contract");
+        native->update_vertex_buffer({vec3(0), vec3(1, 0, 0), vec3(0, 1, 0)}, true);
+        native->update_color_buffer({vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)}, true);
+        native->update_normal_buffer({vec3(0, 0, 1), vec3(0, 0, 1), vec3(0, 0, 1)}, true);
+        native->update_texcoord_buffer({vec2(0), vec2(1, 0), vec2(0, 1)}, true);
+        native->update_element_buffer({0, 1, 2});
+        const GLuint native_buffers[] = {native->vertex_buffer(), native->color_buffer(),
+                                         native->normal_buffer(), native->texcoord_buffer()};
+        for (const GLuint buffer : native_buffers) {
+            require(buffer != 0, "legacy native buffer getter did not realize pending geometry");
+            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+            GLint usage = 0;
+            glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_USAGE, &usage);
+            require(usage == GL_DYNAMIC_DRAW, "deferred native upload discarded dynamic usage");
+        }
+        const GLuint native_elements = native->element_buffer();
+        require(native_elements != 0, "legacy native element getter did not realize pending indices");
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, native_elements);
+        GLint index_count = 0;
+        glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &index_count);
+        require(index_count == 3 * sizeof(GLuint), "native element buffer has incorrect size");
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        native->disable_element_buffer();
+        require(native->element_buffer() == 0, "disabling native indices retained an element buffer");
+
         GLint viewport[4], scissor_box[4];
         GLfloat clear_color[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -315,21 +386,80 @@ namespace {
 
         auto unsupported = points;
         unsupported.point_style = PointStyle::sphere;
+        unsupported.sphere_radius = 0;
         rejects([&] { device.render(32, 32, {unsupported}); });
         auto conflicting = visible;
         conflicting.overlay_independent_depth = true;
         rejects([&] { device.render(32, 32, {conflicting}); });
         rejects([&] { device.render(32, 32, {}, vec4(0), 1, TransparencyMethod::average); });
-        require(device.validation_errors() == 3, "validation error count mismatch");
+        require(device.validation_errors() == 0, "rejected commands were reported as backend validation errors");
         require(device.oit_dropped_fragments() == 0, "unsupported OIT reported dropped fragments");
-        bool present_rejected = false;
-        try {
-            device.present(32, 32, {});
-        } catch (const std::logic_error &) {
-            present_rejected = true;
-        }
-        require(present_rejected, "headless device accepted presentation");
+        auto presented = rectangle(-1, -1, 1, 1, 0, vec4(1, 0, 0, 1));
+        presented.viewport = ivec4(0, 0, 16, 32);
+        auto presented_right = rectangle(-1, -1, 1, 1, 0, vec4(0, 1, 0, 1));
+        presented_right.viewport = ivec4(16, 0, 16, 32);
+        require(device.present(32, 32, {presented, presented_right}, vec4(0)),
+                "window device rejected presentation");
+        GLint previous_read_buffer = GL_NONE;
+        glGetIntegerv(GL_READ_BUFFER, &previous_read_buffer);
+        glReadBuffer(GL_BACK);
+        unsigned char presented_pixel[4] = {0, 0, 0, 0};
+        glReadPixels(8, 16, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, presented_pixel);
+        glReadBuffer(GLenum(previous_read_buffer));
+        require(presented_pixel[0] > 250 && presented_pixel[1] == 0 && presented_pixel[2] == 0 &&
+                        presented_pixel[3] == 255,
+                "presentation did not copy every viewport to the default framebuffer");
+        glReadBuffer(GL_BACK);
+        glReadPixels(24, 16, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, presented_pixel);
+        glReadBuffer(GLenum(previous_read_buffer));
+        require(presented_pixel[0] == 0 && presented_pixel[1] > 250 && presented_pixel[2] == 0 &&
+                        presented_pixel[3] == 255,
+                "presentation lost the final viewport");
+
+        auto edl_near = rectangle(-1, -1, 0, 1, -.8f, vec4(.8f, .8f, .8f, 1));
+        auto edl_far = rectangle(0, -1, 1, 1, .6f, vec4(.8f, .8f, .8f, 1));
+        const std::vector<DrawCommand> edl_scene{edl_near, edl_far};
+        Camera edl_camera;
+        edl_camera.set_type(Camera::ORTHOGRAPHIC);
+        EyeDomeLighting edl(&edl_camera);
+        glViewport(0, 0, 64, 48);
+        glClearColor(0, 0, 0, 1);
+        glClearDepth(1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        require(device.present(64, 48, edl_scene, vec4(0)), "window device rejected EDL input");
+        unsigned char unshaded[4] = {0, 0, 0, 0};
+        glReadPixels(30, 24, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, unshaded);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        edl.begin();
+        require(device.present(64, 48, edl_scene, vec4(0)), "window device rejected EDL projection");
+        edl.end();
+        unsigned char shaded[4] = {0, 0, 0, 0};
+        glReadPixels(30, 24, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, shaded);
+        require(unshaded[0] > 200 && shaded[0] > 20 && shaded[0] < unshaded[0] - 20 && shaded[3] == 255,
+                "native EDL did not receive the presented scene depth");
         require(glGetError() == GL_NO_ERROR, "OpenGL device leaked a GL error");
+    }
+
+    void exercise_default_depth(RenderDevice &device) {
+        std::vector<Vertex> vertices(4);
+        vertices[0].position = vec3(-1, -1, 0);
+        vertices[1].position = vec3(1, -1, 0);
+        vertices[2].position = vec3(1, 1, 0);
+        vertices[3].position = vec3(-1, 1, 0);
+        DrawCommand scene;
+        scene.geometry = std::make_shared<Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+        scene.color = vec4(1, 0, 0, 1);
+        require(device.present(32, 32, {scene}, vec4(0), 4), "window device rejected MSAA depth presentation");
+        FramebufferObject resolved(32, 32, 0);
+        require(resolved.add_depth_buffer(GL_DEPTH_COMPONENT32F), "cannot allocate default-depth resolve target");
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        resolved.bind(GL_DRAW_FRAMEBUFFER);
+        glBlitFramebuffer(0, 0, 32, 32, 0, 0, 32, 32, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        require(glGetError() == GL_NO_ERROR, "default framebuffer did not receive multisample scene depth");
+        GLfloat depth = 1;
+        resolved.bind(GL_READ_FRAMEBUFFER);
+        glReadPixels(16, 16, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        require(std::abs(depth - .5f) < 1e-6f, "default framebuffer received incorrect scene depth");
     }
 
 } // namespace
@@ -353,7 +483,12 @@ int main() {
         OffScreen host(64, 48);
         auto device = create_device();
         exercise(*device);
-        std::cout << "PASS: OpenGL RenderDevice capture, overlays, transparency, MSAA, picking, selection and state isolation\n";
+        if (device->supported_sample_counts() & 4) {
+            Viewer window("OpenGL depth presentation", window_options(64, 48, 4, false, false), OpenGLOptions());
+            auto window_device = create_device();
+            exercise_default_depth(*window_device);
+        }
+        std::cout << "PASS: OpenGL RenderDevice capture, overlays, transparency, MSAA, picking, selection, native EDL and state isolation\n";
     } catch (const std::exception &e) {
         std::cerr << "FAIL: " << e.what() << '\n';
         return 1;

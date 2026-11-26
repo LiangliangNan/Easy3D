@@ -25,6 +25,7 @@
  \endcond */
 
 #include <easy3d/renderer/drawable_triangles.h>
+#include <cmath>
 #include <easy3d/util/setting.h>
 #include <stdexcept>
 
@@ -53,16 +54,19 @@ namespace easy3d {
         set_uniform_coloring(setting::surface_mesh_faces_color);
     }
 
+    void TrianglesDrawable::set_opacity(float opacity) {
+        if (!std::isfinite(opacity) || opacity < 0 || opacity > 1)
+            throw std::invalid_argument("triangle opacity must lie in [0, 1]");
+        opacity_ = opacity;
+    }
+
 #ifndef EASY3D_HAS_VULKAN
 
 
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<TrianglesDrawable *>(this)->update_buffers_internal();
-            const_cast<TrianglesDrawable *>(this)->update_needed_ = false;
-        }
+        const_cast<TrianglesDrawable *>(this)->opengl_realize_buffers();
 
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {

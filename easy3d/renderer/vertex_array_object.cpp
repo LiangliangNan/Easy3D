@@ -97,6 +97,13 @@ namespace easy3d {
             LOG(ERROR) << "creating an array buffer requires a current OpenGL context";
             return false;
         }
+        if (size == 0) {
+            release_buffer(buffer);
+            bind();
+            glDisableVertexAttribArray(index);       easy3d_debug_log_gl_error
+            release();
+            return glGetError() == GL_NO_ERROR;
+        }
         // glGetError() is sticky. An error from Qt or an earlier draw must not
         // cause a newly created, valid buffer to be deleted below.
         std::string pending_error;

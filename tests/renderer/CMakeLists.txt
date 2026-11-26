@@ -9,6 +9,17 @@ else()
     set_tests_properties(opengl.devicecontract PROPERTIES TIMEOUT 30)
 endif()
 
+# Drawable realization and command styling are CPU-only and run unchanged in both builds.
+add_executable(easy3d_drawable_contract_test drawable_contract_test.cpp)
+target_link_libraries(easy3d_drawable_contract_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.drawablecontract COMMAND easy3d_drawable_contract_test)
+    set_tests_properties(vulkan.drawablecontract PROPERTIES TIMEOUT 30)
+else()
+    add_test(NAME opengl.drawablecontract COMMAND easy3d_drawable_contract_test)
+    set_tests_properties(opengl.drawablecontract PROPERTIES TIMEOUT 30)
+endif()
+
 # The camera path builders are CPU geometry: no context or backend device, so this
 # test runs unchanged in both builds.
 add_executable(easy3d_camera_path_test
@@ -111,6 +122,12 @@ if(Easy3D_ENABLE_VULKAN)
     set_tests_properties(vulkan.shadow PROPERTIES TIMEOUT 120)
     add_test(NAME vulkan.render COMMAND easy3d_vulkan_test ${validation_args})
     set_tests_properties(vulkan.render PROPERTIES TIMEOUT 120)
+else()
+    add_executable(easy3d_opengl_render_test render_test.cpp)
+    target_compile_definitions(easy3d_opengl_render_test PRIVATE EASY3D_TEST_OPENGL)
+    target_link_libraries(easy3d_opengl_render_test PRIVATE easy3d::renderer easy3d::viewer)
+    add_test(NAME opengl.render COMMAND easy3d_opengl_render_test)
+    set_tests_properties(opengl.render PROPERTIES TIMEOUT 120)
 endif()
 
 include(../properties.cmake)

@@ -28,6 +28,7 @@
 #include "paint_canvas.h"
 
 #include <limits>
+#include <typeinfo>
 
 #include <QKeyEvent>
 #include <QOpenGLFunctions>
@@ -42,6 +43,8 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -143,12 +146,14 @@ PaintCanvas::~PaintCanvas() {
 
 
 void PaintCanvas::cleanup() {
+    device_.reset();
+    drawable_renderer_.reset();
     models_.clear();
 
     delete camera_;
     delete walkThrough();
-    delete drawable_axes_;
-    delete drawable_manip_sphere_;
+    drawable_axes_.reset();
+    drawable_manip_sphere_.reset();
     delete ao_;
     delete shadow_;
     delete transparency_;
@@ -206,6 +211,9 @@ void PaintCanvas::initializeGL() {
     if (major * 10 + minor < 32) {
         throw std::runtime_error("Mapple requires at least OpenGL 3.2");
     }
+
+    drawable_renderer_.reset(new graphics::DrawableRenderer);
+    device_ = graphics::create_device();
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
     dpi_scaling_ = static_cast<float>(devicePixelRatioF());
@@ -1049,9 +1057,9 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
     //      These platform-specific behaviors are hard to resolve without fully understanding the source code of the
     //      QOpenGLWidget class. It is bad the Qt keeps such implementation private, and it may change over the time.
     //
-    //      Solution: rendering into my own framebuffer object with only a depth attachment and then reading the depth
-    //      values. This ensures we have full control over the depth buffer and avoids relying on the QOpenGLWidget's
-    //      internal framebuffer.
+    //      Solution: render into a dedicated framebuffer with color and depth attachments, then read its depth values.
+    //      Color is required because the portable device presents both attachments. This avoids relying on the
+    //      QOpenGLWidget's internal framebuffer.
 
     makeCurrent();
 
@@ -1060,9 +1068,9 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
     const int w = viewport[2];
     const int h = viewport[3];
 
-    // Create an FBO with a depth attachment
+    // Color is required because the portable device presents both color and depth.
     QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::Depth);
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(0); // No multisampling
     QOpenGLFramebufferObject fbo(w, h, format);
 
@@ -1154,6 +1162,60 @@ void PaintCanvas::paintGL() {
 }
 
 
+void PaintCanvas::createCornerAxes() {
+    if (drawable_axes_)
+        return;
+    const float base = 0.5f;
+    const float head = 0.2f;
+    std::vector<vec3> points, normals, colors;
+    shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
+    shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
+    shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
+    shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
+                         colors);
+    shape::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
+                         colors);
+    shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
+                         colors);
+    shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
+    drawable_axes_ = std::make_shared<TrianglesDrawable>("corner_axes");
+    drawable_axes_->update_vertex_buffer(points);
+    drawable_axes_->update_normal_buffer(normals);
+    drawable_axes_->update_color_buffer(colors);
+    drawable_axes_->set_property_coloring(State::VERTEX);
+}
+
+
+void PaintCanvas::appendCornerAxes(std::vector<graphics::DrawCommand> &commands, std::uint32_t id) {
+    createCornerAxes();
+    if (!drawable_axes_->is_visible())
+        return;
+
+    auto command = drawable_renderer_->command(drawable_axes_, id, *camera_, {});
+    const mat4 proj = transform::ortho(-1, 1, -1, 1, -1, 1);
+    const mat4 view = camera_->orientation().inverse().matrix();
+    command.model_view_projection = proj * view;
+    command.model_view = view;
+    command.projection = proj;
+    command.normal_matrix = mat3(view);
+    command.model = view;
+    command.eye = vec3(0);
+    command.light = vec3(setting::light_position);
+    command.lighting = true;
+    command.lighting_two_sides = false;
+    command.ambient = setting::material_ambient;
+    command.specular = setting::material_specular;
+    command.shininess = setting::material_shininess;
+    command.object_id = UINT32_MAX;
+    command.overlay = true;
+    command.overlay_independent_depth = true;
+    command.depth_range = vec2(0.0f, 0.01f);
+    const int size = static_cast<int>(100 * dpiScaling());
+    command.viewport = ivec4(0, static_cast<int>(height() * dpiScaling()) - size, size, size);
+    commands.push_back(std::move(command));
+}
+
+
 void PaintCanvas::drawCornerAxes() {
     ShaderProgram *program = ShaderManager::get_program("surface/surface");
     if (!program) {
@@ -1167,26 +1229,7 @@ void PaintCanvas::drawCornerAxes() {
     if (!program)
         return;
 
-    if (!drawable_axes_) {
-        const float base = 0.5f;   // the cylinder length, relative to the allowed region
-        const float head = 0.2f;   // the cone length, relative to the allowed region
-        std::vector<vec3> points, normals, colors;
-        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
-        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
-        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
-        shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
-                             colors);
-        shape::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
-                             colors);
-        shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
-                             colors);
-        shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-        drawable_axes_ = new TrianglesDrawable("corner_axes");
-        drawable_axes_->update_vertex_buffer(points);
-        drawable_axes_->update_normal_buffer(normals);
-        drawable_axes_->update_color_buffer(colors);
-        drawable_axes_->set_property_coloring(State::VERTEX);
-    }
+    createCornerAxes();
     if (!drawable_axes_->is_visible())
         return;
 
@@ -1337,11 +1380,6 @@ void PaintCanvas::postDraw() {
             texter_->draw(fps_string.toStdString(), 20.0f * dpiScaling(), 50.0f * dpiScaling(), 16 * dpiScaling(), 1);
     }
 
-    // shown only when it is not animating
-    if (walkThrough() && !walkThrough()->interpolator()->is_interpolation_started())
-        walkThrough()->draw();
-    easy3d_debug_log_gl_error
-
     if (show_primitive_id_under_mouse_) {
         drawPickedFaceAndItsVerticesIDs();
         drawPickedVertexID();
@@ -1352,20 +1390,6 @@ void PaintCanvas::postDraw() {
         GLenum last_blend_src; glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);
         GLenum last_blend_dst; glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
 
-        // ------------- draw the picking region with transparency  ---------------
-        if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
-            const Rect rect(static_cast<float>(mouse_pressed_pos_.x()), static_cast<float>(mouse_current_pos_.x()), static_cast<float>(mouse_pressed_pos_.y()), static_cast<float>(mouse_current_pos_.y()));
-            if (rect.width() > 0 || rect.height() > 0) {
-                // draw the boundary of the rect
-                shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
-
-                // draw the transparent face
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
-            }
-        }
-
         // ------------------ draw elements from the tool --------------------------
         tool_manager()->draw_hint();    easy3d_debug_log_gl_error
 
@@ -1373,23 +1397,6 @@ void PaintCanvas::postDraw() {
         glBlendFunc(last_blend_src, last_blend_dst);
     }
 
-    // -------------------- draw a sphere outline
-    Model* m = currentModel();
-    if (m && m->renderer()->is_visible() && m->renderer()->is_selected()) {
-        m->manipulator()->draw_frame(camera_);
-    }
-    else if (show_manip_sphere_) {
-        if (!drawable_manip_sphere_)
-            drawable_manip_sphere_ = new LinesDrawable;
-
-        const int radius = 150; // pixels
-        float ratio = camera_->world_pixel_ratio(camera_->pivot_point());
-        auto manip = mat4::translation(camera_->pivot_point()) * mat4::scale(radius * ratio) ;
-        shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->model_view_projection_matrix(), manip);
-    }
-
-    // ------- draw the axes indicating the orientation of the model  ----------
-    drawCornerAxes(); easy3d_debug_log_gl_error
 }
 
 
@@ -1825,32 +1832,6 @@ void PaintCanvas::showCoordinatesUnderMouse(bool b) {
 
 
 void PaintCanvas::draw() {
-#if 0
-    // Example code: split the view to have different rendering styles for the same object/scene.
-    glEnable(GL_SCISSOR_TEST);
-    int viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glScissor(viewport[0], viewport[1], viewport[2] * 0.5f, viewport[3]);
-    for (const auto m : models_) {
-        for (auto d : m->renderer()->triangles_drawables())
-            d->draw(camera());
-    }
-    glScissor(viewport[2] * 0.5f, viewport[1], viewport[2] * 0.5f, viewport[3]);
-    for (const auto m : models_) {
-        for (auto d : m->renderer()->lines_drawables())
-            d->draw(camera());
-    }
-    glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-#else 
-
-    if (models_.empty())
-        return;
-
-    easy3d_debug_log_gl_error
-    // Optimization tips: rendering with multi-effects (e.g., shadowing, AO)
-    // can benefit from sharing the same geometry pass.
-
     std::vector<TrianglesDrawable *> surfaces;
     for (auto m : models_) {
         if (!m->renderer()->is_visible())
@@ -1859,18 +1840,18 @@ void PaintCanvas::draw() {
             surfaces.push_back(d.get());
     }
 
-    if (edl())
-        edl()->begin();
-
-    if (shadow()) {
+    if (!models_.empty() && shadow()) {
         shadow()->draw(surfaces); easy3d_debug_log_gl_error
-        return;
-    } else if (transparency()) {
-        transparency()->draw(surfaces); easy3d_debug_log_gl_error
+        drawNativeOverlays();
         return;
     }
-    else if (ao()) {
-        auto ao_texture = ao()->generate(models());
+    if (!models_.empty() && transparency()) {
+        transparency()->draw(surfaces); easy3d_debug_log_gl_error
+        drawNativeOverlays();
+        return;
+    }
+    if (!models_.empty() && ao()) {
+        const auto ao_texture = ao()->generate(models());
         for (const auto m : models_) {
             if (!m->renderer()->is_visible())
                 continue;
@@ -1883,43 +1864,158 @@ void PaintCanvas::draw() {
         }
     }
 
-    easy3d_debug_log_gl_error
+    if (drawPortable())
+        return;
 
+    if (edl())
+        edl()->begin();
+    drawNative();
+    if (edl())
+        edl()->end();
+    drawNativeOverlays();
+}
+
+
+bool PaintCanvas::drawPortable() {
+    if (!device_ || !drawable_renderer_ || edl() || ClippingPlane::instance()->is_enabled() ||
+        ClippingPlane::instance()->is_visible())
+        return false;
+
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    const float pixel_scale = camera_->screen_width() > 0
+            ? float(viewport[2]) / float(camera_->screen_width()) : 1.0f;
+    std::vector<graphics::DrawCommand> commands;
+    try {
+        for (const auto &m : models_) {
+            const auto *renderer = m->renderer();
+            if (!renderer->is_visible())
+                continue;
+            const auto append = [&](const std::shared_ptr<Drawable> &drawable) {
+                if (!drawable->is_visible())
+                    return;
+                if (typeid(*drawable) != typeid(TrianglesDrawable) &&
+                    typeid(*drawable) != typeid(LinesDrawable) &&
+                    typeid(*drawable) != typeid(PointsDrawable))
+                    throw std::logic_error("custom drawable requires native rendering");
+                if (drawable->is_ao_enabled() && drawable->has_ao_texture())
+                    throw std::logic_error("AO requires native rendering");
+                auto command = drawable_renderer_->command(drawable, uint32_t(commands.size()), *camera_, {},
+                                                            renderer->is_selected());
+                command.point_size *= pixel_scale;
+                command.line_width *= pixel_scale;
+                if (drawable->type() == Drawable::DT_TRIANGLES)
+                    command.depth_range = vec2(0.001f, 1.0f);
+                commands.push_back(std::move(command));
+            };
+            for (const auto &d : renderer->triangles_drawables())
+                append(d);
+            for (const auto &d : renderer->lines_drawables())
+                append(d);
+            for (const auto &d : renderer->points_drawables())
+                append(d);
+        }
+        if (walk_through_ && !walk_through_->interpolator()->is_interpolation_started())
+            walk_through_->draw(*drawable_renderer_, commands, uint32_t(commands.size()), pixel_scale);
+        appendCornerAxes(commands, UINT32_MAX);
+        if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
+            const float scale = dpiScaling();
+            const Rect rect(mouse_pressed_pos_.x() * scale, mouse_current_pos_.x() * scale,
+                            mouse_pressed_pos_.y() * scale, mouse_current_pos_.y() * scale);
+            if (rect.width() > 0 || rect.height() > 0) {
+                commands.push_back(graphics::shape::draw_quad_wire(rect, vec4(0, 0, 1, 1),
+                                                                   viewport[2], viewport[3]));
+                commands.push_back(graphics::shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f),
+                                                                     viewport[2], viewport[3]));
+            }
+        }
+        Model *model = currentModel();
+        if (model && model->renderer()->is_visible() && model->renderer()->is_selected())
+            commands.push_back(model->manipulator()->draw_frame(camera_, viewport[2], viewport[3]));
+        else if (show_manip_sphere_) {
+            const int radius = 150;
+            const float ratio = camera_->world_pixel_ratio(camera_->pivot_point());
+            const mat4 manip = mat4::translation(camera_->pivot_point()) * mat4::scale(radius * ratio);
+            commands.push_back(graphics::shape::draw_sphere_big_circles(camera_->model_view_projection_matrix(),
+                                                                        manip, viewport[2], viewport[3]));
+        }
+        return device_->present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands, background_color_,
+                                uint32_t(samples_ > 1 ? samples_ : 1));
+    } catch (const std::exception &error) {
+        LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << error.what();
+        return false;
+    }
+}
+
+
+void PaintCanvas::drawNative() {
     for (const auto m : models_) {
         if (!m->renderer()->is_visible())
             continue;
 
-        // Overlaying edges on faces will cause Z-fighting. Previously I used GL_POLYGON_OFFSET_FILL,
-        // but it is deprecated. Now the trick is to temporarily change the depth range and depth comparison method to
-        // properly render edges.
-
-        glDepthRange(0.001, 1.0);
-        for (auto d: m->renderer()->triangles_drawables()) {
+        glDepthRange(0.001f, 1.0f);
+        for (auto d : m->renderer()->triangles_drawables()) {
             if (d->is_visible())
                 d->draw(camera());
             easy3d_debug_log_gl_error
         }
 
-        glDepthRange(0.0, 1.0);
+        glDepthRange(0.0f, 1.0f);
         glDepthFunc(GL_LEQUAL);
-        for (auto d: m->renderer()->lines_drawables()) {
+        for (auto d : m->renderer()->lines_drawables()) {
             if (d->is_visible())
                 d->draw(camera());
             easy3d_debug_log_gl_error
         }
         glDepthFunc(GL_LESS);
 
-        for (auto d: m->renderer()->points_drawables()) {
+        for (auto d : m->renderer()->points_drawables()) {
             if (d->is_visible())
                 d->draw(camera());
             easy3d_debug_log_gl_error
         }
     }
 
-    if (edl())
-        edl()->end();
-#endif
+    ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
+}
 
-    // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
-    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error
+
+void PaintCanvas::drawNativeOverlays() {
+    if (walk_through_ && !walk_through_->interpolator()->is_interpolation_started())
+        walk_through_->draw_native();
+    drawInteractionGuidesNative();
+    drawCornerAxes(); easy3d_debug_log_gl_error
+}
+
+
+void PaintCanvas::drawInteractionGuidesNative() {
+    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
+        const Rect rect(static_cast<float>(mouse_pressed_pos_.x()), static_cast<float>(mouse_current_pos_.x()),
+                        static_cast<float>(mouse_pressed_pos_.y()), static_cast<float>(mouse_current_pos_.y()));
+        if (rect.width() > 0 || rect.height() > 0) {
+            shape::draw_quad_wire(rect, vec4(0, 0, 1, 1), width(), height(), -1.0f);
+            const GLboolean blend = glIsEnabled(GL_BLEND);
+            GLint source = GL_ONE, destination = GL_ZERO;
+            glGetIntegerv(GL_BLEND_SRC, &source);
+            glGetIntegerv(GL_BLEND_DST, &destination);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            shape::draw_quad_filled(rect, vec4(0, 0, 1, .2f), width(), height(), -.9f);
+            glBlendFunc(GLenum(source), GLenum(destination));
+            if (!blend)
+                glDisable(GL_BLEND);
+        }
+    }
+
+    Model *model = currentModel();
+    if (model && model->renderer()->is_visible() && model->renderer()->is_selected())
+        model->manipulator()->draw_frame(camera_);
+    else if (show_manip_sphere_) {
+        if (!drawable_manip_sphere_)
+            drawable_manip_sphere_ = std::make_shared<LinesDrawable>();
+        const int radius = 150;
+        const float ratio = camera_->world_pixel_ratio(camera_->pivot_point());
+        const mat4 manip = mat4::translation(camera_->pivot_point()) * mat4::scale(radius * ratio);
+        shape::draw_sphere_big_circles(drawable_manip_sphere_.get(), camera_->model_view_projection_matrix(), manip);
+    }
 }

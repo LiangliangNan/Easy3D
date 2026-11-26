@@ -59,13 +59,10 @@ namespace easy3d {
 
     class Drawable : public State {
     public:
-        // CPU-owned geometry selected automatically by a Vulkan build.
-        // OpenGL builds use native GL buffers.
         /**
-         * \brief CPU-side snapshot of drawable geometry and optional provenance.
-         * \details Available when the drawable uses CPU buffers (as in Vulkan
-         *      builds). Buffer updates change the revision and invalidate any
-         *      source-face provenance associated with prior geometry.
+         * \brief Backend-neutral geometry and optional source-face provenance.
+         * \details Every drawable owns this CPU snapshot. Buffer updates advance
+         *      revision and invalidate source-face provenance tied to old geometry.
          */
         struct BufferData {
             /// Uploaded vertex positions in drawable order.
@@ -80,7 +77,7 @@ namespace easy3d {
             std::vector<unsigned int> indices;
             /// Original SurfaceMesh face index for each rendered triangle; -1 means unknown.
             std::vector<int> source_faces;
-            /// Incremented when the CPU-side buffer snapshot changes.
+            /// Incremented whenever geometry or source-face provenance changes.
             std::size_t revision = 0;
         };
 
@@ -135,7 +132,7 @@ namespace easy3d {
          * \brief Sets the model to which the drawable is attached.
          * \param m The model to which the drawable is attached.
          */
-        void set_model(Model *m) { model_ = m; }
+        void set_model(Model *m);
 
         /**
          * \brief Returns the bounding box of the drawable.
@@ -169,19 +166,19 @@ namespace easy3d {
         bool has_cpu_buffers() const { return bool(cpu_buffers_); }
 
         /**
-         * \brief Access the current CPU-side buffer snapshot.
+         * \brief Access the authoritative CPU-side buffer snapshot.
          * \return Current buffer data, refreshing it first when an update is pending.
-         * \throws std::logic_error when CPU buffers are not enabled for this drawable.
          */
         const BufferData& cpu_buffers();
 
         /**
          * \brief Access a backend-neutral snapshot of the drawable buffers.
-         * \return A backend-neutral snapshot of the drawable buffers.
-         * \details Vulkan returns its CPU buffers. OpenGL refreshes pending geometry and
-         *      reads native buffers once per geometry revision into a CPU snapshot.
+         * \return Current geometry, indices, provenance, and revision.
+         * \details Pending model or callback updates are realized before returning.
          */
-        const BufferData& buffer_data();
+        const BufferData& buffer_data() const;
+        EASY3D_DEPRECATED("use buffer_data() const")
+        const BufferData& buffer_data() { return const_cast<const Drawable *>(this)->buffer_data(); }
 
         /**
          * \brief Associate rendered triangles with source SurfaceMesh faces.
@@ -221,27 +218,32 @@ namespace easy3d {
          * \brief Returns the vertex buffer ID.
          * \return The vertex buffer ID.
          */
-        unsigned int vertex_buffer() const { return vertex_buffer_; }
+        EASY3D_DEPRECATED("use buffer_data()")
+        unsigned int vertex_buffer() const;
         /**
          * \brief Returns the color buffer ID.
          * \return The color buffer ID.
          */
-        unsigned int color_buffer() const { return color_buffer_; }
+        EASY3D_DEPRECATED("use buffer_data().colors")
+        unsigned int color_buffer() const;
         /**
          * \brief Returns the normal buffer ID.
          * \return The normal buffer ID.
          */
-        unsigned int normal_buffer() const { return normal_buffer_; }
+        EASY3D_DEPRECATED("use buffer_data().normals")
+        unsigned int normal_buffer() const;
         /**
          * \brief Returns the texture coordinate buffer ID.
          * \return The texture coordinate buffer ID.
          */
-        unsigned int texcoord_buffer() const { return texcoord_buffer_; }
+        EASY3D_DEPRECATED("use buffer_data().texcoords")
+        unsigned int texcoord_buffer() const;
         /**
          * \brief Returns the element buffer ID.
          * \return The element buffer ID.
          */
-        unsigned int element_buffer() const { return element_buffer_; }
+        EASY3D_DEPRECATED("use buffer_data().indices")
+        unsigned int element_buffer() const;
 
         /**
          * \brief Creates/Updates the vertex buffer.
@@ -307,16 +309,24 @@ namespace easy3d {
          * \brief Returns the vertex array object of this drawable.
          * \return The vertex array object.
          */
+        EASY3D_DEPRECATED("use DrawableRenderer and RenderDevice")
         VertexArrayObject *vao() {
-            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            if (!vao_) throw std::logic_error("vao() is OpenGL-only");
+#ifndef EASY3D_HAS_VULKAN
+            opengl_realize_buffers();
+#endif
             return vao_.get();
         }
         /**
          * \brief Returns the vertex array object of this drawable (const version).
          * \return The vertex array object.
          */
+        EASY3D_DEPRECATED("use DrawableRenderer and RenderDevice")
         const VertexArrayObject *vao() const {
-            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            if (!vao_) throw std::logic_error("vao() is OpenGL-only");
+#ifndef EASY3D_HAS_VULKAN
+            const_cast<Drawable*>(this)->opengl_realize_buffers();
+#endif
             return vao_.get();
         }
         ///@}
@@ -328,6 +338,7 @@ namespace easy3d {
          * \brief Draws the drawable.
          * \param camera The camera used for rendering.
          */
+        EASY3D_DEPRECATED("use DrawableRenderer::command() and RenderDevice")
         virtual void draw(const Camera *camera) const = 0;
 
         /**
@@ -335,6 +346,7 @@ namespace easy3d {
          * \details This function should be called when your shader program is in use,
          *          i.e., between glUseProgram(id) and glUseProgram(0).
          */
+        EASY3D_DEPRECATED("use DrawableRenderer::command() and RenderDevice")
         void gl_draw() const;
 
         /**
@@ -415,6 +427,7 @@ namespace easy3d {
         ///@}
 
     private:
+        friend class LinesDrawable2D;
         friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
         // OpenGL buffer back ends called from the backend-neutral public and
@@ -439,12 +452,14 @@ namespace easy3d {
         // Uploads the per-primitive highlight mask and rebuilds the lookup texture.
         void opengl_update_highlight_mask(const std::vector<float>&);
 
-        // Version of the position storage, bumped on every buffer change so that
-        // point selection can tell that its cached snapshot is stale.
+        // Retain the 2.8 private storage layout for binary-compatible subclasses.
         unsigned long long point_revision_ = 0;
         std::size_t buffer_revision_ = 0;
         std::unique_ptr<BufferData> opengl_snapshot_;
         std::size_t opengl_snapshot_revision_ = 0;
+
+        bool opengl_upload_needed_ = true;
+        bool opengl_highlight_needed_ = false;
 #endif
 
     protected:
@@ -462,6 +477,9 @@ namespace easy3d {
         void reset_highlight_mask();
 
 #ifndef EASY3D_HAS_VULKAN
+        // Realizes pending CPU data and native buffers before legacy native access.
+        void opengl_realize_buffers();
+
         // Framebuffer-to-logical pixel scale of the currently bound OpenGL viewport:
         // queries GL_VIEWPORT and divides its width by camera.screen_width(), which is
         // the DPI scale for a window, the cell scale for a MultiViewer, or the output
@@ -494,7 +512,7 @@ namespace easy3d {
         std::size_t num_indices_;   //!< The number of indices.
 
         bool update_needed_;        //!< Whether an update is needed.
-        bool buffers_ready_;        //!< Whether the rendering buffers exist: produced by the model extraction or uploaded by the client. Only the Vulkan backend reads it; the OpenGL one tests the existence of the GPU buffer instead.
+        bool buffers_ready_;        //!< Whether model extraction or a client upload has realized the CPU buffers.
         std::function<void(Model*, Drawable*)> update_func_;    //!< The update function.
 
         unsigned int vertex_buffer_;    //!< The vertex buffer ID.
@@ -509,6 +527,19 @@ namespace easy3d {
         // drawables not attached to a model can also be manipulated
         std::shared_ptr<Manipulator> manipulator_;   //!< The manipulator for the drawable.
         std::unique_ptr<BufferData> cpu_buffers_;
+
+    private:
+        bool client_colors_ = false;
+        bool client_normals_ = false;
+        bool client_texcoords_ = false;
+        bool client_indices_ = false;
+        bool realizing_ = false;
+#ifndef EASY3D_HAS_VULKAN
+        bool dynamic_vertices_ = false;
+        bool dynamic_colors_ = false;
+        bool dynamic_normals_ = false;
+        bool dynamic_texcoords_ = false;
+#endif
     };
 
 }

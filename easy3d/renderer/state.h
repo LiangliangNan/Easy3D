@@ -320,6 +320,7 @@ namespace easy3d {
          * \return \c true if AO is enabled, \c false otherwise.
          */
         bool is_ao_enabled() const { return ao_enabled_; }
+        bool has_ao_texture() const { return ao_texture_ != 0; }
         /**
          * \brief Enables or disables AO.
          * \param b \c true to enable AO, \c false to disable.

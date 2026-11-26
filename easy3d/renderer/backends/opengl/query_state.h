@@ -57,10 +57,10 @@ namespace easy3d {
                                               GL_COLOR_LOGIC_OP,
                                               GL_MULTISAMPLE};
             GLboolean enabled[flag_count], depth_mask, color_mask[4];
-            GLint viewport[4], scissor_box[4], draw_fbo, read_fbo, read_buffer, renderbuffer, program, vao, array, element, active, uniform,
+            GLint viewport[4], scissor_box[4], draw_fbo, read_fbo, read_buffer, draw_buffer, renderbuffer, program, vao, array, element, active, uniform,
                 pack_buffer, depth_func, unpack_buffer;
-            GLint samplers[2], texture_buffers[2];
-            GLint blend[6], textures[2][2], polygon_mode[2], front_face;
+            GLint samplers[2];
+            GLint blend[6], textures[2][2], multisample_textures[2], polygon_mode[2], front_face;
             GLfloat polygon_offset[2];
             std::vector<GLboolean> clip_distances, indexed_color_mask;
             static const unsigned pack_count = 8;
@@ -86,6 +86,7 @@ namespace easy3d {
                 glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &draw_fbo);
                 glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &read_fbo);
                 glGetIntegerv(GL_READ_BUFFER, &read_buffer);
+                glGetIntegerv(GL_DRAW_BUFFER, &draw_buffer);
                 glGetIntegerv(GL_RENDERBUFFER_BINDING, &renderbuffer);
                 glGetIntegerv(GL_CURRENT_PROGRAM, &program);
                 glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vao);
@@ -98,10 +99,10 @@ namespace easy3d {
                 glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &unpack_buffer);
                 glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
                 glGetBooleanv(GL_COLOR_WRITEMASK, color_mask);
-                GLint draw_buffers = 0;
-                glGetIntegerv(GL_MAX_DRAW_BUFFERS, &draw_buffers);
-                indexed_color_mask.resize(size_t(draw_buffers) * 4);
-                for (GLint i = 0; i < draw_buffers; ++i)
+                GLint draw_buffer_count = 0;
+                glGetIntegerv(GL_MAX_DRAW_BUFFERS, &draw_buffer_count);
+                indexed_color_mask.resize(size_t(draw_buffer_count) * 4);
+                for (GLint i = 0; i < draw_buffer_count; ++i)
                     glGetBooleani_v(GL_COLOR_WRITEMASK, i, &indexed_color_mask[size_t(i) * 4]);
                 glGetDoublev(GL_DEPTH_CLEAR_VALUE, &clear_depth);
                 glGetDoublev(GL_DEPTH_RANGE, depth_range);
@@ -129,8 +130,8 @@ namespace easy3d {
                     glActiveTexture(GL_TEXTURE0 + unit);
                     glGetIntegerv(GL_TEXTURE_BINDING_2D, &textures[unit][0]);
                     glGetIntegerv(GL_TEXTURE_BINDING_BUFFER, &textures[unit][1]);
+                    glGetIntegerv(GL_TEXTURE_BINDING_2D_MULTISAMPLE, &multisample_textures[unit]);
                     glGetIntegerv(GL_SAMPLER_BINDING, &samplers[unit]);
-                    glGetIntegerv(GL_TEXTURE_BUFFER, &texture_buffers[unit]);
                 }
                 glActiveTexture(active);
                 GLint count = 0;
@@ -146,6 +147,7 @@ namespace easy3d {
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, draw_fbo);
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo);
                 glReadBuffer(GLenum(read_buffer));
+                glDrawBuffer(GLenum(draw_buffer));
                 glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
                 glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
                 glScissor(scissor_box[0], scissor_box[1], scissor_box[2], scissor_box[3]);
@@ -167,8 +169,8 @@ namespace easy3d {
                 for (unsigned unit = 0; unit < 2; ++unit) {
                     glActiveTexture(GL_TEXTURE0 + unit);
                     glBindTexture(GL_TEXTURE_2D, textures[unit][0]);
-                    glBindBuffer(GL_TEXTURE_BUFFER, textures[unit][1]);
-                    glBindTexture(GL_TEXTURE_BUFFER, texture_buffers[unit]);
+                    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisample_textures[unit]);
+                    glBindTexture(GL_TEXTURE_BUFFER, textures[unit][1]);
                     glBindSampler(unit, samplers[unit]);
                 }
                 glActiveTexture(active);

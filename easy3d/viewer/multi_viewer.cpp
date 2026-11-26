@@ -35,6 +35,8 @@
 #include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/logging.h>
@@ -44,7 +46,6 @@
 #include <limits>
 #include <stdexcept>
 #ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/shape.h>
 #else
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -105,9 +106,7 @@ void MultiViewer::set_layout(int rows,int cols) {
         throw std::invalid_argument("multi-view layout must contain a positive, representable number of cells");
     num_rows_=rows;num_cols_=cols;active_row_=std::min(active_row_,rows-1);active_col_=std::min(active_col_,cols-1);views_.resize(rows);
     for(auto& row:views_) row.resize(cols);
-#ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
-#endif
     cancel_interaction();
     update_division();
 }
@@ -136,9 +135,7 @@ void MultiViewer::update_division() {
     const auto active=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
     camera()->set_screen_width_and_height(active.z,active.w);
     const int fw=framebuffer_width(),fh=framebuffer_height();
-#ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
-#endif
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         auto bounds=cell_bounds(r,c,num_rows_,num_cols_,fw,fh);
 #ifndef EASY3D_HAS_VULKAN
@@ -146,8 +143,8 @@ void MultiViewer::update_division() {
 #endif
         views_[r][c].viewport=bounds;
     }
-    const auto points=division_lines(num_rows_,num_cols_,width(),height());
-    drawable_division_->update_vertex_buffer(points,width(),height(),true);
+    const auto points=division_lines(num_rows_,num_cols_,fw,fh);
+    drawable_division_->update_vertex_buffer(points,fw,fh,true);
 }
 bool MultiViewer::delete_model(Model* model) {
     auto owned=std::find_if(models_.begin(),models_.end(),[&](const std::shared_ptr<Model>& m) {return m.get()==model;});
@@ -196,12 +193,43 @@ vec3 MultiViewer::window_to_world(const vec3& window) const {
     const int viewport[] = {vp.x,vp.y,vp.z,vp.w};
     return transform::unproject(window,cell.model_view_projection_matrix(),viewport,false);
 }
+bool MultiViewer::read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const {
+    const int width = framebuffer_width(), height = framebuffer_height();
+    if (x < 0 || y < 0 || x >= width || y >= height)
+        return false;
+    auto commands = draw_commands(snapshot, width, height, nullptr);
+    commands.erase(std::remove_if(commands.begin(), commands.end(), [](const graphics::DrawCommand& command) {
+        return command.overlay;
+    }), commands.end());
+#ifndef EASY3D_HAS_VULKAN
+    auto& query = query_device();
+#else
+    auto& query = const_cast<graphics::RenderDevice&>(device());
+#endif
+    const auto pixel = query.sample_pixel(
+            uint32_t(width), uint32_t(height), commands, uint32_t(x), uint32_t(y));
+    depth = pixel.depth;
+    return pixel.id.object != UINT32_MAX;
+}
+vec3 MultiViewer::point_under_pixel(int x, int y, bool& found) const {
+    found = false;
+    int px = 0, py = 0;
+    if (!window_pixel(x, y, px, py))
+        return vec3(0);
+    float depth = 1;
+    if (!read_scene_depth(px, py, *camera(), depth) || !std::isfinite(depth) || depth < 0 || depth >= 1)
+        return vec3(0);
+    const int fw = framebuffer_width(), fh = framebuffer_height();
+    const vec3 window(float(transform::scale_coordinate(px + .5f, fw, width())),
+                      float(transform::scale_coordinate(py + .5f, fh, height())), depth);
+    found = true;
+    return window_to_world(window);
+}
 bool MultiViewer::snapshot() const {
     std::string name=current_model()?file_system::replace_extension(current_model()->name(),"png"):"untitled.png";
     const auto file=dialog::save("Please choose a file name",name,{"Image Files (*.png *.jpg *.bmp *.tga)","*.png *.jpg *.bmp *.tga","All Files (*.*)","*"},true);
     return !file.empty() && snapshot(file,1,samples(),0);
 }
-#ifdef EASY3D_HAS_VULKAN
 std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,int width,int height,
                                                             std::vector<DrawSource>* sources, bool) const {
     std::vector<graphics::DrawCommand> result;std::vector<DrawSource> ignored;
@@ -245,81 +273,118 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     }
     return result;
 }
-#else
+#ifndef EASY3D_HAS_VULKAN
+bool MultiViewer::supports_portable_rendering() const {
+    const auto supported = [](const std::shared_ptr<Drawable> &d) {
+        if (!d || (d->is_ao_enabled() && d->has_ao_texture()))
+            return false;
+        const Drawable &drawable = *d;
+        return typeid(drawable) == typeid(TrianglesDrawable) || typeid(drawable) == typeid(LinesDrawable) ||
+               typeid(drawable) == typeid(PointsDrawable) || typeid(drawable) == typeid(LinesDrawable2D);
+    };
+    for (const auto &model : models_) {
+        if (!model->renderer() || !model->renderer()->is_visible())
+            continue;
+        for (const auto &d : model->renderer()->triangles_drawables())
+            if (!supported(d)) return false;
+        for (const auto &d : model->renderer()->lines_drawables())
+            if (!supported(d)) return false;
+        for (const auto &d : model->renderer()->points_drawables())
+            if (!supported(d)) return false;
+    }
+    for (const auto &d : drawables_)
+        if (!supported(d)) return false;
+    return true;
+}
+
 void MultiViewer::draw() const {
     CellScissor clip;
-    // remember the viewer port, later we will have to restore it after drawing each view
     ivec4 viewport;
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    // ------------------------------------------------------------
-
-    for (const auto& row : views_) {
-        for (const auto& view : row) {
-            const auto &vp = view.viewport;
-            if(vp[2]<=0 || vp[3]<=0) continue;
-            glViewport(vp[0], vp[1], vp[2], vp[3]);
-            glScissor(vp[0],vp[1],vp[2],vp[3]);
-            for (const auto& owned: models_) {
-                const auto* m=owned.get();
-                if (std::find(view.models.begin(),view.models.end(),m)==view.models.end() || !m->renderer() || !m->renderer()->is_visible())
-                    continue;
-
-                // Let's check if edges and surfaces are both shown. If true, we
-                // make the depth coordinates of the surface smaller, so that displaying
-                // the mesh and the surface together does not cause Z-fighting.
-                std::size_t count = 0;
-                for (auto d: m->renderer()->lines_drawables()) {
-                    if (d->is_visible()) {
-                        d->draw(camera());
-                        ++count;
+    const auto draw_native = [&]() {
+        for (const auto& row : views_) {
+            for (const auto& view : row) {
+                const auto &vp = view.viewport;
+                if(vp[2]<=0 || vp[3]<=0) continue;
+                glViewport(vp[0], vp[1], vp[2], vp[3]);
+                glScissor(vp[0],vp[1],vp[2],vp[3]);
+                for (const auto& owned: models_) {
+                    const auto* m=owned.get();
+                    if (std::find(view.models.begin(),view.models.end(),m)==view.models.end() || !m->renderer() || !m->renderer()->is_visible())
+                        continue;
+                    std::size_t count = 0;
+                    for (auto d: m->renderer()->lines_drawables()) {
+                        if (d->is_visible()) {
+                            d->draw(camera());
+                            ++count;
+                        }
                     }
+                    for (auto d: m->renderer()->points_drawables()) {
+                        if (d->is_visible())
+                            d->draw(camera());
+                    }
+                    if (count > 0) {
+                        glEnable(GL_POLYGON_OFFSET_FILL);
+                        glPolygonOffset(0.5f, -0.0001f);
+                    }
+                    for (auto d: m->renderer()->triangles_drawables()) {
+                        if (d->is_visible())
+                            d->draw(camera());
+                    }
+                    if (count > 0)
+                        glDisable(GL_POLYGON_OFFSET_FILL);
                 }
-
-                for (auto d: m->renderer()->points_drawables()) {
+                for (const auto d: view.drawables) {
                     if (d->is_visible())
                         d->draw(camera());
                 }
-
-                if (count > 0) {
-                    glEnable(GL_POLYGON_OFFSET_FILL);
-                    glPolygonOffset(0.5f, -0.0001f);
-                }
-                for (auto d: m->renderer()->triangles_drawables()) {
-                    if (d->is_visible())
-                        d->draw(camera());
-                }
-                if (count > 0)
-                    glDisable(GL_POLYGON_OFFSET_FILL);
+                ClippingPlane::instance()->draw(camera());
             }
+        }
+    };
 
-            for (const auto d: view.drawables) {
-                if (d->is_visible())
-                    d->draw(camera());
+    bool portable = supports_portable_rendering();
+    if (portable) {
+        try {
+            const int fw = viewport[2], fh = viewport[3];
+            auto commands = draw_commands(*camera(), fw, fh, nullptr, false);
+            query_device().present(uint32_t(fw), uint32_t(fh), commands, background_color(), samples(),
+                                   graphics::TransparencyMethod::sorted, 4);
+            drawable_renderer_->prune();
+            for (int r = 0; r < num_rows_; ++r) {
+                for (int c = 0; c < num_cols_; ++c) {
+                    const auto physical = cell_bounds(r, c, num_rows_, num_cols_, fw, fh);
+                    if (physical.z <= 0 || physical.w <= 0)
+                        continue;
+                    const auto logical = cell_bounds(r, c, num_rows_, num_cols_, width(), height());
+                    Camera cell(*camera());
+                    cell.frame()->set_pivot_point(camera()->pivot_point());
+                    configure_cell(cell, *camera(), logical.z, logical.w);
+                    glViewport(physical.x, fh - physical.y - physical.w, physical.z, physical.w);
+                    glScissor(physical.x, fh - physical.y - physical.w, physical.z, physical.w);
+                    ClippingPlane::instance()->draw(&cell);
+                }
             }
-
-            // draw the transparent clipping plane
-            ClippingPlane::instance()->draw(camera());
+        } catch (const std::logic_error &e) {
+            LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
+            portable = false;
         }
     }
+    if (!portable)
+        draw_native();
 
-    // ------------------------------------------------------------
-
-    // restore viewport.
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     glScissor(viewport[0],viewport[1],viewport[2],viewport[3]);
-
-    // draw the division of views
-    if (drawable_division_->is_visible()) {
-        // The drawable width is in target pixels; keep the grid one logical pixel wide.
+    if (!portable && division_visible()) {
         drawable_division_->set_line_width(division_line_width(viewport[2], width()));
         drawable_division_->draw(camera());
     }
     draw_overlays(false);
 }
+#endif
 
-
-
+#ifndef EASY3D_HAS_VULKAN
 void MultiViewer::prepare_pick_view(int x,int y,int width,int height) const {
     // x/y and width/height are framebuffer pixels (the primitive-ID pass target).
     if(x<0 || y<0 || x>=width || y>=height) {glDisable(GL_SCISSOR_TEST);glViewport(0,0,width,height);return;}
@@ -424,30 +489,77 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     catch(...) {self->camera()->set_projection_matrix(original);snapshot_active_=active;throw;}
 #else
     GLFWwindow* previous=glfwGetCurrentContext();glfwMakeContextCurrent(window_);
-    GLint viewport[4],draw_fbo,read_fbo;GLfloat clear[4];glGetIntegerv(GL_VIEWPORT,viewport);glGetFloatv(GL_COLOR_CLEAR_VALUE,clear);
+    GLint viewport[4],draw_fbo,read_fbo,scissor[4];GLfloat clear[4];glGetIntegerv(GL_VIEWPORT,viewport);glGetFloatv(GL_COLOR_CLEAR_VALUE,clear);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&draw_fbo);glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&read_fbo);
+    glGetIntegerv(GL_SCISSOR_BOX,scissor);const GLboolean scissor_enabled=glIsEnabled(GL_SCISSOR_TEST);
     const auto saved=views_;
     try {
-        // The grid is rendered once into one target, so an unaffordable count must
-        // become an affordable one here rather than mid-tiling; the base class resolves
-        // it against GL_MAX_SAMPLES and says what it changed.
-        count=Viewer::supported_sample_count(count);
-        FramebufferObject target(w,h,count);
-        if(!target.add_color_buffer() || !target.add_depth_buffer() || !target.is_valid() || !target.bind()) throw std::runtime_error("cannot create multi-view snapshot target");
-        for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {auto vp=cell_bounds(r,c,num_rows_,num_cols_,w,h);vp.y=h-vp.y-vp.w;self->views_[r][c].viewport=vp;}
-        glViewport(0,0,w,h);const vec4 color=bg==0?background_color():bg==1?vec4(1):vec4(0);
-        glClearColor(color.x,color.y,color.z,color.w);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-        self->draw();self->draw_overlays(true);target.release();
-        if(bg==2) {
-            std::vector<unsigned char> rgba;
-            if(target.read_color(0,rgba,GL_RGBA,true)) {
-                for(size_t i=0;i<rgba.size();i+=4) if(rgba[i+3] && rgba[i+3]<255)
-                    for(unsigned c=0;c<3;++c) rgba[i+c]=static_cast<unsigned char>(std::min(255u,(static_cast<unsigned>(rgba[i+c])*255+rgba[i+3]/2)/rgba[i+3]));
-                result=ImageIO::save(file,rgba,w,h,4);
+        bool portable = supports_portable_rendering();
+        if (portable) {
+            try {
+                count = Viewer::supported_sample_count(count);
+                const vec4 color = bg == 0 ? background_color() : bg == 1 ? vec4(1) : vec4(0);
+                const auto commands = draw_commands(*camera(), w, h, nullptr, false);
+                FramebufferObject target(w, h, count);
+                if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
+                    throw std::runtime_error("cannot create multi-view snapshot target");
+                glViewport(0, 0, w, h);
+                glDisable(GL_SCISSOR_TEST);
+                query_device().present(uint32_t(w), uint32_t(h), commands, color, count,
+                                       graphics::TransparencyMethod::sorted, 4);
+                draw_overlays(false);
+                draw_overlays(true);
+                std::vector<unsigned char> rgba;
+                if (!target.read_color(0, rgba, GL_RGBA, true))
+                    throw std::runtime_error("cannot read multi-view snapshot color");
+                if (bg == 2) {
+                    for (size_t i = 0; i < rgba.size(); i += 4) {
+                        const unsigned alpha = rgba[i + 3];
+                        if (alpha && alpha < 255)
+                            for (unsigned c = 0; c < 3; ++c)
+                                rgba[i + c] = static_cast<unsigned char>(std::min(255u,
+                                    (unsigned(rgba[i + c]) * 255 + alpha / 2) / alpha));
+                    }
+                }
+                result = ImageIO::save(file, rgba, w, h, 4);
+            } catch (const std::logic_error &e) {
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
+                portable = false;
             }
-        } else result=target.snapshot_color(0,file);
-    } catch(const std::exception& e) {LOG(ERROR)<<"Multi-view snapshot failed: "<<e.what();}
-    self->views_=saved;glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);glClearColor(clear[0],clear[1],clear[2],clear[3]);glfwMakeContextCurrent(previous);
+        }
+        if (!portable) {
+            FramebufferObject target(w, h, count);
+            if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
+                throw std::runtime_error("cannot create multi-view snapshot target");
+            for (int r = 0; r < num_rows_; ++r) for (int c = 0; c < num_cols_; ++c) {
+                auto vp = cell_bounds(r, c, num_rows_, num_cols_, w, h);
+                vp.y = h - vp.y - vp.w;
+                self->views_[r][c].viewport = vp;
+            }
+            glViewport(0, 0, w, h);
+            glDisable(GL_SCISSOR_TEST);
+            const vec4 color = bg == 0 ? background_color() : bg == 1 ? vec4(1) : vec4(0);
+            glClearColor(color.x, color.y, color.z, color.w);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            self->draw();
+            self->draw_overlays(true);
+            target.release();
+            if (bg == 2) {
+                std::vector<unsigned char> rgba;
+                if (target.read_color(0, rgba, GL_RGBA, true)) {
+                    for (size_t i = 0; i < rgba.size(); i += 4) if (rgba[i + 3] && rgba[i + 3] < 255)
+                        for (unsigned c = 0; c < 3; ++c)
+                            rgba[i + c] = static_cast<unsigned char>(std::min(255u,
+                                (static_cast<unsigned>(rgba[i + c]) * 255 + rgba[i + 3] / 2) / rgba[i + 3]));
+                    result = ImageIO::save(file, rgba, w, h, 4);
+                }
+            } else result = target.snapshot_color(0, file);
+        }
+    } catch (const std::exception &e) {
+        LOG(ERROR) << "Multi-view snapshot failed: " << e.what();
+    }
+    self->views_=saved;glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);glClearColor(clear[0],clear[1],clear[2],clear[3]);
+    glScissor(scissor[0],scissor[1],scissor[2],scissor[3]);if(scissor_enabled) glEnable(GL_SCISSOR_TEST);else glDisable(GL_SCISSOR_TEST);glfwMakeContextCurrent(previous);
 #endif
     self->camera()->set_projection_matrix(original);snapshot_active_=active;return result;
 }

@@ -53,6 +53,7 @@ namespace easy3d {
     namespace graphics {
         class DrawableRenderer;
         class TextLayoutEngine;
+        struct DrawCommand;
     }
 
     class Camera;
@@ -1167,6 +1168,20 @@ namespace easy3d {
         void notify_resize();
         int resize_width_ = -1, resize_height_ = -1;
         int resize_fb_width_ = -1, resize_fb_height_ = -1;
+    protected:
+        /// \name Backend-neutral command assembly
+        //@{
+
+        // Scene commands for one camera and output size, recording in sources which
+        // model or standalone drawable produced each command. Point/line sizes are
+        // logical and scale by target width / camera width; impostor radii are world-space.
+        virtual std::vector<graphics::DrawCommand> draw_commands(const Camera &camera,
+                                                                 int width,
+                                                                 int height,
+                                                                 std::vector<DrawSource> *sources = nullptr,
+                                                                 bool include_hidden_models = false) const;
+        //@}
+
 #ifdef EASY3D_HAS_VULKAN
     private:
         struct Window;
@@ -1217,27 +1232,8 @@ namespace easy3d {
         //@}
 
     protected:
-        /// \name Vulkan command assembly
+        /// \name Vulkan frame composition
         //@{
-
-        // Scene commands for one camera and output size, recording in sources which
-        // model or standalone drawable produced each command.
-        //
-        // `width`/`height` are the pixel size of the render target - the framebuffer
-        // size for a live frame, the requested capture size during snapshot_frame(),
-        // and a MultiViewer cell's share of either for its cell cameras - never the
-        // logical window size. Drawable point/line sizes are logical, so this method
-        // multiplies them by width / camera.screen_width(): that ratio is the DPI
-        // scale only when the target is the window framebuffer. For a file snapshot
-        // it is output/logical (sizes must grow with the image) and for a
-        // MultiViewer cell it is target-cell/logical-cell (integer cell_bounds make
-        // it only approximately the DPI scale). Do not replace this ratio with
-        // dpi_scaling(). Impostor radii are world-space and need no scaling.
-        virtual std::vector<graphics::DrawCommand> draw_commands(const Camera &camera,
-                                                                 int width,
-                                                                 int height,
-                                                                 std::vector<DrawSource> *sources = nullptr,
-                                                                 bool include_hidden_models = false) const;
 
         // Scene commands plus the current annotations and, when include_hud is
         // set, the Viewer HUD overlays, with overlay viewports scaled from the
@@ -1348,7 +1344,7 @@ namespace easy3d {
         // set_viewer_overlays()/set_viewer_annotations() and replays them in draw_overlays().
         std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
         // Keeps built-in HUD text separate from application overlays and their draw order.
-        std::unique_ptr<opengl::OverlayRenderer> hud_overlay_renderer_;
+        mutable std::unique_ptr<opengl::OverlayRenderer> hud_overlay_renderer_;
         // Backend-neutral command extraction and offscreen queries. The device borrows
         // this viewer's context and is destroyed before the window in cleanup().
         mutable std::unique_ptr<graphics::DrawableRenderer> drawable_renderer_;
@@ -1359,6 +1355,15 @@ namespace easy3d {
         // Viewport tile (x, y, w, h) currently rendered; nonzero only while a tiled
         // snapshot is in flight, and used to keep overlays aligned inside the tile.
         mutable ivec4 overlay_tile_ = ivec4(0);
+        // File snapshots render through virtual draw(), so portable presentation must
+        // use the requested output size and background rather than the window's.
+        bool snapshot_active_ = false;
+        int snapshot_width_ = 0, snapshot_height_ = 0;
+        unsigned snapshot_samples_ = 1;
+        vec4 snapshot_background_ = vec4(0);
+        mutable std::vector<graphics::DrawCommand> corner_axes_commands_;
+        vec2 pivot_pixel_ = vec2(0);
+        std::chrono::steady_clock::time_point pivot_expires_;
 #endif
     };
 }

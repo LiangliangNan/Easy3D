@@ -69,8 +69,8 @@ namespace easy3d {
 
             graphics::DrawCommand screen_command(const std::shared_ptr<Drawable> &drawable,
                                                  const Camera &camera) const {
-                auto &d = *drawable;
-                const auto width = static_cast<LinesDrawable2D &>(d).line_width();
+                const auto &d = *drawable;
+                const auto width = static_cast<const LinesDrawable2D &>(d).line_width();
                 if (d.coloring_method() != State::UNIFORM_COLOR)
                     throw std::logic_error("screen-space lines support uniform coloring only");
                 const auto &data = d.buffer_data();
@@ -149,30 +149,30 @@ namespace easy3d {
                                           const Camera &cam,
                                           const std::vector<vec4> &clipping_planes,
                                           bool model_selected) const {
-                auto &d = *drawable;
-                if (dynamic_cast<LinesDrawable2D *>(&d))
+                const auto &d = *drawable;
+                if (dynamic_cast<const LinesDrawable2D *>(&d))
                     return screen_command(drawable, cam);
                 if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
                     d.coloring_method() != State::TEXTURED && d.coloring_method() != State::SCALAR_FIELD)
                     throw std::logic_error("unknown drawable coloring method");
-                if (d.color().w != 1 || d.is_ao_enabled())
-                    throw std::logic_error("opacity and AO are not yet ported");
-                if (auto *p = dynamic_cast<PointsDrawable *>(&d)) {
+                if (d.is_ao_enabled() && d.has_ao_texture())
+                    throw std::logic_error("AO is not yet ported");
+                if (auto *p = dynamic_cast<const PointsDrawable *>(&d)) {
                     if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE &&
                         p->impostor_type() != PointsDrawable::SURFEL)
                         throw std::logic_error("unknown point impostor type");
                 }
-                if (auto *l = dynamic_cast<LinesDrawable *>(&d)) {
+                if (auto *l = dynamic_cast<const LinesDrawable *>(&d)) {
                     if (l->impostor_type() != LinesDrawable::PLAIN && l->impostor_type() != LinesDrawable::CYLINDER &&
                         l->impostor_type() != LinesDrawable::CONE)
                         throw std::logic_error("unknown line impostor type");
                     if (!std::isfinite(l->line_width()) || l->line_width() <= 0)
                         throw std::invalid_argument("line width must be finite and positive");
                 }
-                // As with the legacy opaque pass, TrianglesDrawable::opacity() is only
-                // meaningful in a separate transparency pass (not implemented here).
+                // Opacity belongs to the host's separate transparency pass; the
+                // ordinary opaque pass preserves the legacy surface behavior.
                 const auto &buffers = d.buffer_data();
-                if (auto *p = dynamic_cast<PointsDrawable *>(&d))
+                if (auto *p = dynamic_cast<const PointsDrawable *>(&d))
                     if (p->impostor_type() == PointsDrawable::SURFEL && !buffers.vertices.empty() &&
                         buffers.normals.empty())
                         throw std::logic_error("surfel rendering requires point normals");
@@ -255,6 +255,9 @@ namespace easy3d {
                         }
                     } else
                         entry.points.reset();
+                    if (topology == graphics::Topology::triangles && buffers.indices.empty() && n % 3)
+                        throw std::invalid_argument("drawable '" + d.name() + "' has " + std::to_string(n) +
+                                                    " non-indexed triangle vertices");
                     auto geometry = std::make_shared<graphics::Geometry>(vertices, buffers.indices, topology,
                                                                          std::vector<uint32_t>{}, entry.points);
                     if (flat_shading) {
@@ -318,7 +321,7 @@ namespace easy3d {
                 result.geometry = entry.geometry;
                 entry.texture_image = textured ? image(d.texture()) : nullptr;
                 result.texture = entry.texture_image;
-                if (auto *p = dynamic_cast<PointsDrawable *>(&d)) {
+                if (auto *p = dynamic_cast<const PointsDrawable *>(&d)) {
                     result.point_size = p->point_size();
                     result.point_style = p->impostor_type() == PointsDrawable::SPHERE   ? graphics::PointStyle::sphere
                                          : p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel
@@ -334,7 +337,7 @@ namespace easy3d {
                     // impostor shaders dot it against camera-space ray normals.
                     result.sphere_light = vec3(setting::light_position);
                 }
-                if (auto *l = dynamic_cast<LinesDrawable *>(&d)) {
+                if (auto *l = dynamic_cast<const LinesDrawable *>(&d)) {
                     result.line_style = l->impostor_type() == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder
                                         : l->impostor_type() == LinesDrawable::CONE   ? graphics::LineStyle::cone
                                                                                       : graphics::LineStyle::plain;
@@ -384,7 +387,7 @@ namespace easy3d {
                 // impostors are lit.
                 if (lines && !line_impostor)
                     result.lighting = false;
-                if (dynamic_cast<PointsDrawable *>(&d) || dynamic_cast<TrianglesDrawable *>(&d)) {
+                if (dynamic_cast<const PointsDrawable *>(&d) || dynamic_cast<const TrianglesDrawable *>(&d)) {
                     result.material_lighting = true;
                     result.lighting_two_sides = d.lighting_two_sides();
                     result.distinct_back_color = d.distinct_back_color();
@@ -395,7 +398,7 @@ namespace easy3d {
                     result.model = d.manipulated_matrix();
                     result.eye = cam.position();
                     result.light = vec3(inverse(cam.model_view_matrix()) * setting::light_position);
-                    if (auto *p = dynamic_cast<PointsDrawable *>(&d)) {
+                    if (auto *p = dynamic_cast<const PointsDrawable *>(&d)) {
                         if (p->impostor_type() != PointsDrawable::PLAIN) {
                             result.eye = vec3(0);
                             result.light = vec3(setting::light_position);

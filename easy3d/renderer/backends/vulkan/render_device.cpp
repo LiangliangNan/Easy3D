@@ -3550,7 +3550,8 @@ namespace easy3d {
                     c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
                     const auto set_view = [&](const DrawCommand &d) {
                         const auto &r = d.viewport;
-                        VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+                        VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height),
+                                     d.depth_range.x, d.depth_range.y};
                         VkRect2D s{{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
                         if (pixel) {
                             if (pixel->x < s.offset.x || pixel->y < s.offset.y ||
@@ -3917,7 +3918,15 @@ namespace easy3d {
                         if (vp != ivec4(0) &&
                             (vp.x < 0 || vp.y < 0 || vp.z <= 0 || vp.w <= 0 ||
                              uint64_t(vp.x) + uint64_t(vp.z) > width || uint64_t(vp.y) + uint64_t(vp.w) > height))
-                            throw std::invalid_argument("draw viewport is outside the render target");
+                            throw std::invalid_argument("draw viewport is outside the render target: target " +
+                                                        std::to_string(width) + "x" + std::to_string(height) +
+                                                        ", viewport " + std::to_string(vp.x) + "," +
+                                                        std::to_string(vp.y) + "," + std::to_string(vp.z) + "," +
+                                                        std::to_string(vp.w));
+                        if (!std::isfinite(command.depth_range.x) || !std::isfinite(command.depth_range.y) ||
+                            command.depth_range.x < 0 || command.depth_range.x > command.depth_range.y ||
+                            command.depth_range.y > 1)
+                            throw std::invalid_argument("draw depth range must be an ordered interval in [0,1]");
                         if (!command.geometry ||
                             (!command.overlay && command.object_id == UINT32_MAX && !command.shadow_background))
                             throw std::invalid_argument("scene draw requires geometry and a non-background object ID");

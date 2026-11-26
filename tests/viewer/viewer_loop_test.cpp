@@ -15,6 +15,7 @@ using TestHost = easy3d::Viewer;
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;
@@ -46,6 +47,7 @@ struct LoopViewer : TestHost {
     }
     unsigned before = 0, after = 0, ticks = 0, observed_ticks = 0, close_at = 0;
     bool throw_frame = false, throw_key = false, inject_key_after_frame = false;
+    std::function<void()> inspect_presented;
     void pre_draw() override {
         TestHost::pre_draw();
         if (throw_frame) throw std::runtime_error("expected frame failure");
@@ -53,6 +55,8 @@ struct LoopViewer : TestHost {
     }
     void post_draw() override {
         TestHost::post_draw();
+        if (inspect_presented)
+            inspect_presented();
         ++after;
         if (inject_key_after_frame) {
             inject_key_after_frame = false;
@@ -170,6 +174,33 @@ void exercise(bool validation) {
     require(viewer.run_frames(1) == 0 && viewer.after == presented + 1, "rendering failure left the host unusable");
     require(viewer.initializations == 1, "bounded/repeated runs reinitialized the host");
 #ifdef EASY3D_TEST_OPENGL_VIEWER
+    const int fw = viewer.framebuffer_width(), fh = viewer.framebuffer_height();
+    std::vector<graphics::Vertex> vertices(4);
+    const vec3 positions[] = {vec3(0, 0, 0), vec3(float(fw), 0, 0),
+                              vec3(float(fw), float(fh), 0), vec3(0, float(fh), 0)};
+    const vec2 uv[] = {vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)};
+    for (unsigned i = 0; i < 4; ++i) {
+        vertices[i].position = positions[i];
+        vertices[i].texcoord = uv[i];
+    }
+    graphics::DrawCommand overlay;
+    overlay.geometry = std::make_shared<graphics::Geometry>(vertices, std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+    overlay.model_view_projection = graphics::screen_space_projection(fw, fh);
+    overlay.color = vec4(0, 0, 1, 1);
+    bool foreground_visible = false;
+    viewer.inspect_presented = [&] {
+        unsigned char pixel[4];
+        glReadPixels(fw / 2, fh / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        foreground_visible = pixel[2] > 200;
+    };
+    viewer.set_overlays({overlay}, true);
+    one_frame(viewer);
+    require(foreground_visible, "live frame omitted foreground application overlays");
+    foreground_visible = true;
+    viewer.set_overlays({});
+    one_frame(viewer);
+    require(!foreground_visible, "cleared foreground overlay remained on the live frame");
+    viewer.inspect_presented = {};
     require(glGetError() == GL_NO_ERROR, "OpenGL frame execution error");
 #else
     require(viewer.device().validation_errors() == 0, "Vulkan frame execution validation error");

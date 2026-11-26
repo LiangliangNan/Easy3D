@@ -32,8 +32,8 @@
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/drawable_renderer.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/util/setting.h>
@@ -62,8 +62,10 @@ WidgetCheckerSphere::WidgetCheckerSphere(QWidget *parent)
 WidgetCheckerSphere::~WidgetCheckerSphere()
 {
     makeCurrent();
-    delete checkerSphere_;
-    delete lightSphere_;
+    device_.reset();
+    drawable_renderer_.reset();
+    checkerSphere_.reset();
+    lightSphere_.reset();
     delete camera_;
     doneCurrent();
 }
@@ -75,6 +77,8 @@ void WidgetCheckerSphere::initializeGL()
     QOpenGLFunctions* func = context()->functions();
     func->initializeOpenGLFunctions();
     OpenglUtil::init();
+    drawable_renderer_.reset(new graphics::DrawableRenderer);
+    device_ = graphics::create_device();
 
     createSpheres();
 
@@ -186,80 +190,45 @@ void WidgetCheckerSphere::createSpheres() {
     std::vector<vec3> vertices, normals, colors;
 	shape::create_checker_sphere(center, radius, slices, stacks, checker_size, color1, color2, vertices, normals, colors);
 
-    checkerSphere_ = new TrianglesDrawable("checker_sphere");
+    checkerSphere_ = std::make_shared<TrianglesDrawable>("checker_sphere");
     checkerSphere_->update_vertex_buffer(vertices);
     checkerSphere_->update_normal_buffer(normals);
     checkerSphere_->update_color_buffer(colors);
+    checkerSphere_->set_property_coloring(State::VERTEX);
+    checkerSphere_->set_lighting(true);
 
     // light
     vertices.clear();
     normals.clear();
     colors.clear();
     shape::create_sphere(vec3(0, 0, 0), 0.1, 10, 10, vec3(1, 0, 0), vertices, normals, colors);
-    lightSphere_ = new TrianglesDrawable("light");
+    lightSphere_ = std::make_shared<TrianglesDrawable>("light");
     lightSphere_->update_vertex_buffer(vertices);
     lightSphere_->update_normal_buffer(normals);
     lightSphere_->update_color_buffer(colors);
+    lightSphere_->set_property_coloring(State::VERTEX);
+    lightSphere_->set_lighting(true);
 }
 
 
 void WidgetCheckerSphere::paintGL() {
-    if (!checkerSphere_)
+    if (!checkerSphere_ || !device_ || !drawable_renderer_)
         return;
 
-    ShaderProgram* program = ShaderManager::get_program("surface/surface");
-    if (!program) {
-        std::vector<ShaderProgram::Attribute> attributes;
-        attributes.emplace_back(ShaderProgram::POSITION, "vtx_position");
-        attributes.emplace_back(ShaderProgram::TEXCOORD, "vtx_texcoord");
-        attributes.emplace_back(ShaderProgram::COLOR, "vtx_color");
-        attributes.emplace_back(ShaderProgram::NORMAL, "vtx_normal");
-        program = ShaderManager::create_program_from_files("surface/surface", attributes);
-    }
-    if (!program)
-        return;
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    std::vector<graphics::DrawCommand> commands;
+    commands.push_back(drawable_renderer_->command(checkerSphere_, 0, *camera_, {}));
+    auto light = drawable_renderer_->command(lightSphere_, 1, *camera_, {});
+    const mat4 manip = mat4::translation(lightPos_.xyz());
+    light.model = manip;
+    light.model_view = camera_->model_view_matrix() * manip;
+    light.model_view_projection = camera_->model_view_projection_matrix() * manip;
+    light.normal_matrix = mat3::identity();
+    commands.push_back(std::move(light));
 
-    // The Qt6 documentation says (https://doc.qt.io/qt-6/qopenglwidget.html#paintGL):
-    //      Default implementation performs a glClear(). Subclasses are not expected to invoke
-    //      the base class implementation and should perform clearing on their own.
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    const mat4& MVP = camera_->model_view_projection_matrix();
-    // camera position is defined in world coordinate system.
-    const vec3& wCamPos = camera_->position();
-    // it can also be computed as follows:
-    //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-    const mat4& MV = camera_->model_view_matrix();
-    const vec4& wLightPos = inverse(MV) * setting::light_position;
-
-    const mat4 lightManip = mat4::translation(lightPos_.xyz());
-    program->bind();
-    program->set_uniform("aoTexture", 0);
-    program->set_uniform("MVP_MANIP", MVP * lightManip)
-            ->set_uniform("MANIP", lightManip)
-            ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
-            ->set_uniform("lighting", true)
-            ->set_uniform("wLightPos", wLightPos)
-            ->set_uniform("wCamPos", wCamPos)
-            ->set_uniform("two_sides_lighting", false)
-            ->set_uniform("distinct_back_color", false)
-            ->set_uniform("smooth_shading", true)
-            ->set_uniform("aoEnabled", false)
-            ->set_uniform("per_vertex_color", true)
-            ->set_block_uniform("Material", "ambient", setting::material_ambient)
-            ->set_block_uniform("Material", "specular", setting::material_specular)
-            ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-            ->set_uniform("selected", false)
-            ->set_uniform("highlight_color", setting::highlight_color)
-            ->set_uniform("clippingPlaneEnabled", false)
-            ->set_uniform("use_texture", false);
-
-    lightSphere_->gl_draw();
-
-    program->set_uniform("MVP_MANIP", MVP)   // MANIP is identity for the checker sphere
-            ->set_uniform("MANIP", mat4::identity());
-    checkerSphere_->gl_draw();
-
-    program->release_texture();
-    program->release();
+    GLint samples = 1;
+    glGetIntegerv(GL_SAMPLES, &samples);
+    const vec4 background(backgroundColor_.redF(), backgroundColor_.greenF(), backgroundColor_.blueF(), 1.0f);
+    device_->present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands, background, uint32_t(samples));
 }

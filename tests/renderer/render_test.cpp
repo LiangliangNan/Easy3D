@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/render_device.h>
+#ifdef EASY3D_TEST_OPENGL
+#include <easy3d/viewer/offscreen.h>
+#include <easy3d/util/initializer.h>
+#endif
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -484,7 +488,8 @@ void wide_lines(RenderDevice& device) {
                     "wide line screen-space silhouette/ID mismatch");
             // Rasterizer subpixel quantization slightly perturbs the triangle's
             // interpolation plane; center picking must still match across MSAA.
-            require(std::abs(diagonal.depth[pixel]-(0.2+0.6*along)) < 5e-5,
+            const double expected_depth = 0.2+0.6*along;
+            require(std::abs(diagonal.depth[pixel]-expected_depth) < 5e-5,
                     "wide line interpolated depth mismatch");
         } else if (along < -1e-5 || along > 1+1e-5 || across > 3.75+1e-5)
             require(diagonal.ids[pixel].object == UINT32_MAX, "wide line escaped its butt-capped rectangle");
@@ -537,7 +542,8 @@ void wide_lines(RenderDevice& device) {
         require(std::abs(perspective.rgba[4*pixel]-255*(1-fraction)) < 2 &&
                 std::abs(perspective.rgba[4*pixel+1]-255*fraction) < 2,
                 "wide-line endpoint colors are not perspective correct");
-        require(std::abs(perspective.depth[pixel]-(5.0/9+10.0/27*t)) < 5e-5,
+        const double expected_depth = 5.0/9+10.0/27*t;
+        require(std::abs(perspective.depth[pixel]-expected_depth) < 5e-5,
                 "wide-line perspective depth mismatch");
     }
     // Use solid red for a strict silhouette-coverage MSAA test.
@@ -687,8 +693,16 @@ void overlays(RenderDevice& device) {
 int main(int argc, char**) {
     try {
         const bool validation = argc > 1;
+#ifdef EASY3D_TEST_OPENGL
+        initialize(false, false, false);
+        OffScreen host(64, 48);
+        auto device = create_device();
+#else
         auto device = create_vulkan_device(validation, validation);
+#endif
+#ifndef EASY3D_TEST_OPENGL
         std::cout << "Vulkan device: " << device->name() << std::endl;
+#endif
         rejects([] { Geometry({}, {0}); });
         rejects([] { Image(0, 1, {}); });
         rejects([] { Geometry(std::vector<Vertex>(3), {}, Topology::triangles, {UINT32_MAX}); });
@@ -706,6 +720,16 @@ int main(int argc, char**) {
         // Y-up input must appear toward the top of the returned image.
         require(image.ids[12 * 64 + 32].object == 21, "image orientation flipped");
         require(image.ids[52 * 64 + 10].object == 21, "triangle base orientation mismatch");
+        auto depth_range = near_command;
+        depth_range.depth_range = vec2(.25f, .5f);
+        const auto ranged = device->render(64, 64, {depth_range}, vec4(0));
+        require(std::abs(ranged.depth[center] - .3125f) < 1e-6f,
+                "window-space depth range did not remap scene depth");
+        depth_range.depth_range = vec2(.5f, .25f); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.depth_range = vec2(-.1f, 1); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.depth_range = vec2(0, 1.1f); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.depth_range = vec2(std::numeric_limits<float>::quiet_NaN(), 1);
+        rejects([&] { device->render(32, 32, {depth_range}); });
         std::cout << "Supported color sample counts:";
         for (unsigned count = 1; count <= 64; count <<= 1)
             if (device->supported_sample_counts() & count) std::cout << ' ' << count;
@@ -754,7 +778,11 @@ int main(int argc, char**) {
         require(std::abs(float(lit.rgba[center * 4]) - diffuse * 255) < 2, "normal transform/lighting layout mismatch");
         near_command.lighting = false; near_command.normal_matrix = mat3::identity();
         // Immutable geometry can be realized on two independently owned devices.
+#ifdef EASY3D_TEST_OPENGL
+        auto second = create_device();
+#else
         auto second = create_vulkan_device(validation, validation);
+#endif
         require(second->render(64, 64, {near_command}).ids[center].object == 21, "cross-device snapshot reuse failed");
         for (unsigned i = 0; i < 20; ++i) {
             near_command.geometry = triangle(0, vec4(float(i % 2), 0, 1, 1));

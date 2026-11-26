@@ -53,13 +53,9 @@ void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2>& vertices, in
         if (!std::isfinite(ndc.back().x) || !std::isfinite(ndc.back().y))
             throw std::invalid_argument("screen-space line coordinate overflow");
     }
-#ifdef EASY3D_HAS_VULKAN
     std::vector<vec3> points; points.reserve(ndc.size());
     for (const auto& p:ndc) points.emplace_back(p.x,p.y,0);
     Drawable::update_vertex_buffer(points,dynamic);
-#else
-    opengl_update_vertex_buffer(ndc,dynamic);
-#endif
 }
 }
 

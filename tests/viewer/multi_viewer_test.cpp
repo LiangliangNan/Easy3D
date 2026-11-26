@@ -80,7 +80,32 @@ void frame(Grid& grid) {
 }
 void color_at(const std::vector<unsigned char>& rgba,int width,int x,int y,const vec4& expected) {
     const auto p=4*(size_t(y)*width+x);
-    for(unsigned c=0;c<3;++c) require(std::abs(int(rgba.at(p+c))-int(std::lround(expected[c]*255)))<=3,"wrong cell image or lost material");
+    for(unsigned c=0;c<3;++c) {
+        if(std::abs(int(rgba.at(p+c))-int(std::lround(expected[c]*255)))>3) {
+            std::cerr<<"pixel "<<x<<','<<y<<" channel "<<c<<" actual "<<int(rgba.at(p+c))
+                     <<" expected "<<int(std::lround(expected[c]*255))<<'\n';
+            throw std::runtime_error("wrong cell image or lost material");
+        }
+    }
+}
+void require_black_at(const std::vector<unsigned char>& rgba,int width,int x,int y) {
+    const auto p=4*(size_t(y)*width+x);
+    if(rgba.at(p)>=5 || rgba.at(p+1)>=5 || rgba.at(p+2)>=5)
+        throw std::runtime_error("grid division is missing or misaligned at "+std::to_string(x)+","+std::to_string(y));
+}
+void require_dividers(const std::vector<unsigned char>& rgba,int width,int height) {
+    for(int col=1;col<3;++col) {
+        const int x=col*width/3;
+        for(int y:{height/4,3*height/4}) {
+            require_black_at(rgba,width,x-1,y);
+            require_black_at(rgba,width,x,y);
+        }
+    }
+    const int y=height/2;
+    for(int x:{width/4,width/2,3*width/4}) {
+        require_black_at(rgba,width,x,y-1);
+        require_black_at(rgba,width,x,y);
+    }
 }
 // Reconciles the stored cell rects with the framebuffer partition they are supposed to
 // be, at the current window size and grid layout.
@@ -131,7 +156,15 @@ int main(int argc,char**) {
         grid.assign(0,0,red.get());grid.assign(0,1,blue.get());grid.assign(1,0,red->renderer()->get_triangles_drawable("faces"));
         auto point=std::make_shared<PointsDrawable>("sphere");grid.add_drawable(point);point->update_vertex_buffer({vec3(0)});point->set_impostor_type(PointsDrawable::SPHERE);point->set_point_size(23);point->set_lighting(false);point->set_uniform_coloring(vec4(0,1,0,1));grid.assign(1,1,point.get());
         auto line=std::make_shared<LinesDrawable>("cylinder");grid.add_drawable(line);line->update_vertex_buffer({vec3(0,-.5f,0),vec3(0,.5f,0)});line->set_impostor_type(LinesDrawable::CYLINDER);line->set_line_width(13);line->set_lighting(false);line->set_uniform_coloring(vec4(1,0,1,1));grid.assign(1,2,line.get());
-        grid.fit_screen();frame(grid);check_cells(grid);snapshot(grid,"multiview.png",1);snapshot(grid,"multiview-scaled.png",1.25f);
+        grid.fit_screen();frame(grid);check_cells(grid);
+        // Odd logical extents expose logical-to-framebuffer rounding in native divisions.
+        require(grid.width()==301 && grid.height()==223,"divider fixture logical extents changed");
+        const float scale=grid.dpi_scaling();
+        require(grid.framebuffer_width()==int(std::ceil(301*scale)) &&
+                grid.framebuffer_height()==int(std::ceil(223*scale)),"divider fixture framebuffer extents disagree with DPI");
+        if(scale==2.0f)
+            require(grid.framebuffer_width()==602 && grid.framebuffer_height()==446,"DPI-2 divider fixture was not exercised");
+        snapshot(grid,"multiview.png",1);snapshot(grid,"multiview-scaled.png",1.25f);
         require(grid.snapshot("multiview-transparent.png",1,4,2,false),"transparent/cropped grid snapshot failed");
         std::vector<unsigned char> transparent;int tw,th,tc;
         require(ImageIO::load("multiview-transparent.png",transparent,tw,th,tc,4,false) && transparent[3]==0,"grid snapshot lost transparent background");
@@ -150,7 +183,7 @@ int main(int argc,char**) {
             require(found!=(row==0 && col==2),"portable query included an unassigned cell or missed assigned geometry");
             if(found && !(row==1 && col>=1)) require(std::abs(p.x)<1e-4f,"portable cell query unprojected through the whole canvas");
             bool direct=false;const auto q=grid.point_under_pixel(x,y,direct);require(direct==found && (!found || (p-q).norm()<1e-3f),"direct and portable cell queries disagree");
-            auto hit=grid.pick_cell(vp);require(bool(hit)==found,"cell picking lost the source ID");
+            auto hit=grid.pick_cell(vp);require(bool(hit)==found,("cell picking lost the source ID at "+std::to_string(row)+","+std::to_string(col)).c_str());
             if(hit) {
                 require(hit.drawable && (hit.position-p).norm()<.03f,"pixel picking used another cell's inverse projection");
                 // pick_cell() routes through logical coordinates (x,y); compare against the
@@ -188,7 +221,21 @@ int main(int argc,char**) {
             for(size_t i=0;i<before.ids.size();++i) require(before.ids[i].object==msaa.ids[i].object && before.ids[i].primitive==msaa.ids[i].primitive,"MSAA changed cell source IDs");
         }
         grid.set_division_visible(true);auto divider=grid.capture(1);require(divider.depth==before.depth && divider.rgba!=before.rgba,"divider changed depth or did not draw");
-        for(size_t i=0;i<before.ids.size();++i) require(before.ids[i].object==divider.ids[i].object,"divider changed source IDs");grid.set_division_visible(false);
+        for(size_t i=0;i<before.ids.size();++i) require(before.ids[i].object==divider.ids[i].object,"divider changed source IDs");
+        require(grid.snapshot("multiview-divider.png",1,4,0),"portable grid divider snapshot failed");
+        std::vector<unsigned char> portable;int pw,ph,pc;
+        require(ImageIO::load("multiview-divider.png",portable,pw,ph,pc,4,false),"portable divider snapshot unreadable");
+        require_dividers(portable,pw,ph);
+#ifndef EASY3D_HAS_VULKAN
+        auto fallback=std::make_shared<PointsDrawable>("native fallback");grid.add_drawable(fallback);
+        fallback->set_visible(false);fallback->enable_ao(true);fallback->set_ao_texture(1);
+        require(grid.snapshot("multiview-native-divider.png",1,4,0),"native fallback grid snapshot failed");
+        std::vector<unsigned char> native;int nw,nh,nc;
+        require(ImageIO::load("multiview-native-divider.png",native,nw,nh,nc,4,false),"native fallback snapshot unreadable");
+        require_dividers(native,nw,nh);
+        require(grid.delete_drawable(fallback.get()),"native fallback fixture removal failed");
+#endif
+        grid.set_division_visible(false);
         point->set_point_size(300);auto large=grid.capture();const auto empty=grid.bounds(0,2);
         for(int y=empty.y;y<empty.y+empty.w;++y) for(int x=empty.x;x<empty.x+empty.z;++x)
             require(large.ids[size_t(y)*large.width+x].object==UINT32_MAX,"large point escaped its cell scissor");

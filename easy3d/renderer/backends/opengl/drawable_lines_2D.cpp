@@ -25,6 +25,7 @@
  \endcond */
 
 #include <easy3d/renderer/drawable_lines_2D.h>
+#include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/vertex_array_object.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -47,9 +48,15 @@ namespace easy3d {
     }
 
     void LinesDrawable2D::draw(const Camera*) const {
-        if (update_needed_ || vertex_buffer_==0) {
-            const_cast<LinesDrawable2D*>(this)->update_buffers_internal();
-            const_cast<LinesDrawable2D*>(this)->update_needed_=false;
+        if (opengl_upload_needed_) {
+            const auto &data = buffer_data();
+            const_cast<LinesDrawable2D*>(this)->opengl_update_vertex_buffer(
+                std::vector<vec2>(data.vertices.begin(), data.vertices.end()), dynamic_vertices_);
+            if (data.indices.empty())
+                const_cast<LinesDrawable2D*>(this)->opengl_disable_element_buffer();
+            else
+                const_cast<LinesDrawable2D*>(this)->opengl_update_element_buffer(data.indices);
+            const_cast<LinesDrawable2D*>(this)->opengl_upload_needed_ = false;
         }
         const bool indexed=element_buffer_!=0;
         const size_t count=indexed ? num_indices_ : num_vertices_;

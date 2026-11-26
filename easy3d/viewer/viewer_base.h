@@ -53,7 +53,9 @@ namespace easy3d {
      * Window dimensions and input positions use logical window coordinates: x
      * increases rightward, y increases downward, and the origin is at the top-left.
      * These coordinates are DPI-independent and are the units for width(),
-     * height(), mouse events, world_to_window(), and window_to_world().
+     * height(), mouse events, world_to_window(), and window_to_world(). The
+     * orientation axes are displayed in the bottom-left corner without changing
+     * this coordinate origin.
      *
      * Framebuffer dimensions are physical pixels and are intended for GPU work,
      * render targets, and pixel readback. On a high-DPI window they are related to

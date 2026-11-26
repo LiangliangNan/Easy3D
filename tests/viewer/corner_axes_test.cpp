@@ -1,9 +1,15 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
+#endif
 #include <iostream>
+#include <algorithm>
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* message) {if (!ok) throw std::runtime_error(message);}
@@ -20,32 +26,54 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
+#ifdef EASY3D_HAS_VULKAN
         TestWindow options;options.visible=false;options.width=360;options.height=280;
         options.device.validation=options.device.sync_validation=argc>1;
         AxesViewer viewer("Corner axes", options.window(), options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
+#else
+        OpenGLOptions options;
+        AxesViewer viewer("Corner axes", window_options(360,280,1,false,false), options);viewer.set_background_color(vec4(0));viewer.hide_logo();
+#endif
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
         auto toggle=[&]{key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,0);};
         require(viewer.visible(),"axes not visible by default");
         for (unsigned count:{1u,4u}) {
+#ifdef EASY3D_HAS_VULKAN
             if (!(viewer.device().supported_sample_counts()&count)) continue;
-            viewer.set_samples(count);const auto shown=viewer.capture();
+#else
+            if (!(viewer.supported_sample_mask()&count)) continue;
+#endif
+            const auto shown=viewer.capture(count);
             int logical_width=0,logical_height=0;glfwGetWindowSize(viewer.window(),&logical_width,&logical_height);
             const unsigned size=unsigned(100.0*viewer.framebuffer_width()/logical_width)+1;
-            unsigned pixels=0,partial=0;
+            unsigned pixels=0,partial=0,shaded=0,bright=0;
             for (unsigned y=0;y<shown.height;++y) for (unsigned x=0;x<shown.width;++x) {
                 const auto i=size_t(y)*shown.width+x;
                 require(shown.ids[i].object==UINT32_MAX && shown.depth[i]==1,"axes became a scene surface");
                 if (!shown.rgba[4*i+3]) continue;
-                require(x<size && y+size>=shown.height,"axes escaped DPI-scaled lower-left corner");
+                require(x<size && y>=shown.height-size,"axes escaped DPI-scaled bottom-left corner");
                 ++pixels;partial+=shown.rgba[4*i+3]<255;
+                const auto *rgba=&shown.rgba[4*i];
+                shaded+=(rgba[0]>5 && rgba[1]>5) || (rgba[0]>5 && rgba[2]>5);
+                bright+=std::max(rgba[0],std::max(rgba[1],rgba[2]))>128;
             }
             require(pixels>100,"axes did not render");
+            auto occluder=std::make_shared<TrianglesDrawable>("axes depth occluder");
+            occluder->update_vertex_buffer({vec3(-10,-10,2.9f),vec3(10,-10,2.9f),vec3(0,10,2.9f)});
+            occluder->set_lighting(false);occluder->set_uniform_coloring(vec4(0,0,1,1));
+            viewer.add_drawable(occluder);const auto covered=viewer.capture(count);
+            for(size_t i=0;i<shown.rgba.size();i+=4) if(shown.rgba[i+3]==255)
+                for(unsigned c=0;c<4;++c) require(covered.rgba[i+c]==shown.rgba[i+c],"scene depth occluded the corner axes");
+            require(viewer.delete_drawable(occluder.get()),"cannot remove axes depth occluder");
+            require(shaded>20,"axes material lighting is missing");
+            require(bright>20,"axes front faces are too dark");
             if (count==4) require(partial>20,"axes edges lack MSAA coverage");
             key(viewer.window(),Viewer::KEY_A,0,GLFW_PRESS,Viewer::MODIF_SHIFT);
             require(viewer.visible(),"Shift-A toggled axes");
-            toggle();require(!viewer.visible(),"A did not hide axes");const auto hidden=viewer.capture();same_picking(shown,hidden);
+            toggle();require(!viewer.visible(),"A did not hide axes");const auto hidden=viewer.capture(count);same_picking(shown,hidden);
             for (auto value:hidden.rgba) require(value==0,"hidden axes left stale pixels");
-            toggle();require(viewer.capture().rgba==shown.rgba,"axes toggle did not restore rendering");
+            toggle();const auto restored=viewer.capture(count);
+            require(restored.width==shown.width && restored.height==shown.height && restored.rgba==shown.rgba,"axes toggle did not restore rendering");
         }
         const auto before=viewer.capture();
         viewer.camera()->set_orientation(viewer.camera()->orientation()*quat(vec3(0,1,0),.7f));
@@ -64,7 +92,7 @@ int main(int argc,char**) {
         require(scene.rgba!=without.rgba,"axes did not coexist with scene/HUD");toggle();
         viewer.set_overlays({});const auto no_app=viewer.capture();same_picking(scene,no_app);
         require(scene.rgba!=no_app.rgba,"axes erased application overlay");
-        viewer.set_overlays({app});require(viewer.snapshot("vulkan-corner-axes.png",1.5f,int(viewer.samples()),1),"axes snapshot failed");
+        viewer.set_overlays({app});require(viewer.snapshot("corner-axes.png",1.5f,int(viewer.samples()),1),"axes snapshot failed");
         viewer.resize(420,320);Viewer::poll_events();viewer.draw_frame();
         require(viewer.visible(),"resize lost axes visibility");
         const auto resized=viewer.capture();toggle();const auto resized_hidden=viewer.capture();same_picking(resized,resized_hidden);
@@ -75,16 +103,26 @@ int main(int argc,char**) {
             const auto i=(size_t(y)*resized.width+x)*4;
             bool different=false;for (unsigned c=0;c<4;++c) different|=resized.rgba[i+c]!=resized_hidden.rgba[i+c];
             if (!different) continue;
-            require(x<size && y+size>=resized.height,"resized axes used stale placement");++changed;
+            require(x<size && y>=resized.height-size,"resized axes used stale bottom-left placement");++changed;
         }
         require(changed>100,"resized axes did not render");toggle();
         viewer.clear_scene();require(viewer.visible(),"scene clear lost axes visibility");
-        AxesViewer independent("Independent corner axes", options.window(), options.device);
+        AxesViewer independent("Independent corner axes"
+#ifdef EASY3D_HAS_VULKAN
+                                , options.window(), options.device
+#else
+                                , window_options(360,280,1,false,false), options
+#endif
+                                );
         toggle();require(!viewer.visible() && independent.visible(),"axes visibility leaked across viewers");
         bool bound=false;
         viewer.bind_shortcut([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);
         toggle();require(bound && !viewer.visible(),"custom axes binding did not take precedence");
+#ifdef EASY3D_HAS_VULKAN
         require(viewer.device().validation_errors()==0 && independent.device().validation_errors()==0,"axes validation errors");
-        std::cout<<"PASS: corner axes, visibility/modifiers, orientation-only transform, DPI, MSAA, overlays, independent viewers and preserved depth/IDs\n";
+#else
+        require(glGetError()==GL_NO_ERROR,"axes OpenGL errors");
+#endif
+        std::cout<<"PASS: corner axes, lighting, bottom-left placement, visibility/modifiers, orientation-only transform, DPI, MSAA, overlays, independent viewers and preserved depth/IDs\n";
     } catch(const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

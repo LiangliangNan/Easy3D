@@ -2425,10 +2425,8 @@ namespace easy3d {
 
 
         void update(SurfaceMesh *model, TrianglesDrawable *drawable) {
-            if (drawable->has_cpu_buffers()) drawable->set_source_faces({});
             update_surface_triangles(model,drawable);
             update_highlight_mask(model, drawable);
-            if (!drawable->has_cpu_buffers()) return;
             const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
             if (!ranges) return;
             const auto count=(drawable->num_indices() ? drawable->num_indices() : drawable->num_vertices())/3;

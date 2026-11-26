@@ -258,7 +258,7 @@ namespace easy3d {
                             ->set_block_uniform("Material", "specular", d->material().specular)
                             ->set_block_uniform("Material", "shininess", &d->material().shininess)
                             ->set_uniform("Alpha", d->opacity())
-                            ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer())
+                            ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && !d->buffer_data().colors.empty())
                             ->set_uniform("default_color", d->color())
                             ->set_uniform("selected", d->is_selected())
                             ->set_uniform("highlight_color", setting::highlight_color);

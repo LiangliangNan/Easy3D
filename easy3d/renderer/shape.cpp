@@ -677,6 +677,32 @@ graphics::DrawCommand draw_lines_3d(const std::vector<vec3>& points,const std::v
     result.overlay=result.overlay_depth_test=true;
     return result;
 }
+graphics::DrawCommand draw_sphere_big_circles(const mat4& mvp, const mat4& transform,
+                                              unsigned width, unsigned height, float line_width, bool axes) {
+    std::vector<vec3> circle, points, colors;
+    std::vector<unsigned int> indices;
+    easy3d::shape::create_circle(50, circle, indices);
+    const mat4 rotations[] = {mat4::identity(),
+                              mat4::rotation(vec3(1, 0, 0), static_cast<float>(M_PI * .5)),
+                              mat4::rotation(vec3(0, 1, 0), static_cast<float>(M_PI * .5))};
+    const vec3 circle_colors[] = {vec3(0, 0, 1), vec3(0, 1, 0), vec3(1, 0, 0)};
+    for (int c = 0; c < 3; ++c) {
+        for (size_t i = 0; i < indices.size(); ++i) {
+            points.push_back(rotations[c] * circle[indices[i]]);
+            colors.push_back(circle_colors[c]);
+        }
+    }
+    if (axes) {
+        for (int axis = 0; axis < 3; ++axis) {
+            const vec3 color(axis == 0, axis == 1, axis == 2);
+            points.emplace_back(vec3(axis == 0 ? -1 : 0, axis == 1 ? -1 : 0, axis == 2 ? -1 : 0));
+            points.emplace_back(vec3(axis == 0 ? 1 : 0, axis == 1 ? 1 : 0, axis == 2 ? 1 : 0));
+            colors.push_back(color);
+            colors.push_back(color);
+        }
+    }
+    return draw_lines_3d(points, colors, mvp * transform, width, height, line_width);
+}
 graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,float line_width,bool abstracted) {
     std::vector<vec3> points,colors;
     easy3d::shape::create_box(points,colors,abstracted);
