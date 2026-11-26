@@ -113,7 +113,7 @@ cmake --build build --parallel
 ```
 On Windows, use the `x64 Native Tools Command Prompt` (not `x86`), or open the root `CMakeLists.txt` in an IDE set for
 `x64` (e.g., [CLion](https://www.jetbrains.com/clion/)). New to C++? See
-[How to build Easy3D step by step](https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md).
+[How to build Easy3D step by step](https://github.com/LiangliangNan/Easy3D/blob/main/docs/HowToBuild.md).
 
 Useful options: `Easy3D_BUILD_TUTORIALS` (off by default), `Easy3D_BUILD_TESTS` (off by default),
 `Easy3D_BUILD_DOCUMENTATION` (off by default, needs Doxygen), and `Easy3D_ENABLE_CGAL` (off by default; enables advanced surface mesh
