@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
-**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, the Milestone 4 host unification in section 8.13, the Milestone 5 picking unification in section 8.14, and the completed analytic-clipping follow-up in section 8.15. The follow-up removed the remaining OpenGL analytic-impostor clipping limitation and its backend-specific picking/query fallbacks.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, the Milestone 4 host unification in section 8.13, the Milestone 5 picking unification in section 8.14, the completed analytic-clipping follow-up in section 8.15, and the completed unified-effect-presentation follow-up in section 8.16. Section 8.15 removed the remaining OpenGL analytic-impostor clipping limitation and its backend-specific picking/query fallbacks; section 8.16 moved settings-driven effects onto the shared command path and retired the remaining OpenGL effect-composition limitations.
 
 ## Executive summary
 
@@ -1344,7 +1344,7 @@ auto frame = device->render(256, 256, {command});
 
 Validation date: 2026-11-27.
 
-Status: complete with the documented backend limitations below. The final all-target builds succeeded, the new CPU and interactive regressions passed, and both complete serial CTest suites passed on the final tree. The analytic-clipping deviation listed below was subsequently resolved by section 8.15. The native OpenGL effect-composition limitations remain; their consolidated remediation plan is section 8.16.
+Status: complete. The final all-target builds succeeded, the new CPU and interactive regressions passed, and both complete serial CTest suites passed on the final tree. The analytic-clipping deviation listed below was subsequently resolved by section 8.15, and section 8.16 resolved deviations 2–4 by moving settings-driven effect composition into `graphics::RenderDevice`. The capability fallbacks and application-owned legacy compatibility paths that remain are documented below.
 
 #### Declarative effect settings
 
@@ -1364,14 +1364,14 @@ Status: complete with the documented backend limitations below. The final all-ta
 #### Deviations and limitations
 
 1. `TransparencySettings` adds an explicit `enabled` switch. Without it, configuring any unrelated effect would activate a transparency pass over every triangle drawable because `TrianglesDrawable::opacity()` defaults to 0.6 while ordinary opaque rendering has always ignored that value. The switch preserves the default frame and keeps the method/layers fields portable.
-2. OpenGL cannot compose its native effect framebuffers with the declarative transparency pass. When any shadow/AO/EDL setting is enabled, transparency settings are ignored with a warning; Vulkan composes all four transparency methods.
-3. OpenGL cannot compose AO with EDL. EDL takes precedence and the conflict is reported once; Vulkan retains the existing overlay order.
-4. OpenGL native effect, non-sorted transparency, and sorted-fallback paths apply only the process-wide `ClippingPlane`, not `RenderSettings::clipping_planes`, and warn when explicit settings planes are present. The portable OpenGL sorted/default paths and Vulkan apply the settings planes. Section 8.16 plans to remove this split by moving settings-driven effect composition into `RenderDevice`.
-5. OpenGL analytic sphere/surfel and cylinder/cone clipping was initially a deviation because the proxy shaders could not use the CPU clip. Section 8.15 resolved it with fragment-side actual-surface tests; plain points and lines were already supported. The remaining native effect-composition behavior is covered by deviation 4.
+2. Resolved by section 8.16: settings-driven shadow/AO/EDL and all four transparency methods now compose through `graphics::RenderDevice` on both backends. The legacy native facades remain application-owned compatibility paths and are not silently treated as settings parity.
+3. Resolved by section 8.16: OpenGL composes AO and EDL in the same stream order as Vulkan. The old EDL-precedence warning is retained only for the genuine native fallback path.
+4. Resolved by section 8.16 for settings-driven frames: `graphics::effective_clipping_planes()` resolves one plane set before command assembly, and the OpenGL device applies it to scene geometry, transparent/OIT passes, shadow casters, and AO/EDL depth inputs. A genuine native fallback for unsupported drawables or custom draw calls still applies only the process-wide `ClippingPlane` and warns; the clipping-plane guide remains an unclipped, depth-tested overlay.
+5. OpenGL analytic sphere/surfel and cylinder/cone clipping was initially a deviation because the proxy shaders could not use the CPU clip. Section 8.15 resolved it with fragment-side actual-surface tests; plain points and lines were already supported. Section 8.16 resolved the remaining effect-composition split described in deviation 4.
 6. Below OpenGL 4.3, linked-list transparency falls back to depth peeling. Sorted transparency falls back to native peeling for custom drawables, native AO textures, or adapter rejection. Both fallbacks are reported.
-7. In-memory `capture()` remains a raw scene-command frame in both builds. Settings shadows, AO, EDL, and selected native transparency methods are applied only to live frames and file snapshots; command-level transparent styling and clipping remain visible in capture. Presented-capture parity for effect-bearing frames is part of the section 8.16 follow-up.
+7. In-memory `capture()` remains a raw scene-command frame in both builds. Settings shadows, AO, EDL, and capability-supported transparency methods are applied to live frames and file snapshots; command-level transparent styling and clipping remain visible in capture. Section 8.16 records the presentation-parity validation; the raw in-memory semantics are unchanged.
 8. Legacy `Shadow`, `SoftShadow`, `AmbientOcclusion`, `EyeDomeLighting`, and transparency facades remain application-owned compatibility paths and emit precedence warnings where they conflict with settings. Their control-to-settings translation is deferred with the Python and tutorial migration.
-9. Vulkan reports dropped linked-list fragments through the device counter and a one-time warning. The native OpenGL linked-list facade does not expose an equivalent counter, so no OpenGL dropped-fragment diagnostic is claimed.
+9. Vulkan reports dropped linked-list fragments through the device counter and a one-time warning. Section 8.16 also reports drops from the OpenGL `RenderDevice` linked-list path; the application-owned native facade still does not expose an equivalent counter.
 
 #### Validation coverage
 
@@ -1380,7 +1380,7 @@ Status: complete with the documented backend limitations below. The final all-ta
 - The viewer fixture exercises triangle, plain-point, and plain-line clipping through command assembly on both backends. The shared `vulkan.clipping` oracle covers halfspaces, slabs, interpolation, source IDs, whole-primitive policy, analytic surfaces, MSAA, world transforms, and face picking; section 8.15 ports that oracle to `opengl.clipping` and adds the host-query cases on both backends.
 - The existing default-rendering, drawable, effect, picking, snapshot, and MultiViewer suites were rerun unchanged; default settings take the legacy/portable path and do not alter ordinary scene output.
 - The default, settings-clipping, and sorted-transparency snapshots are byte-identical between the OpenGL and Vulkan runs. Native hard/soft shadow, AO, EDL, average-color, peeling, and linked-list imagery use each backend's established algorithm and are validated by their difference from the plain frame, not by cross-backend pixel equality.
-- Final serial macOS results on the rebuilt tree: Vulkan 156/156 in 242.22 seconds and OpenGL 127/127 in 136.70 seconds, both with zero failures. The new settings tests passed on both backends, and targeted reruns preceded each complete suite.
+- Final serial macOS results on the Milestone 3 tree: Vulkan 156/156 in 242.22 seconds and OpenGL 127/127 in 136.70 seconds, both with zero failures. The new settings tests passed on both backends, and targeted reruns preceded each complete suite. The final post-follow-up counts are recorded in section 8.16.
 - No public class layout or virtual-table entry changed. The new API consists of value types, free validation functions, and non-virtual `Viewer` methods; the OpenGL host stores settings and effect caches privately. `git diff --check` passed.
 
 ### 8.13 Milestone 4 implementation and validation
@@ -1407,7 +1407,7 @@ Overlay submission through `set_overlays(std::vector<graphics::DrawCommand>, boo
 
 In-memory `capture()` (with overloads `capture()`, `capture(unsigned samples)`, `capture(unsigned samples, FrameReadback)`) is public on all three hosts and routes through the shared `RenderDevice` contract on both backends. `capture()` uses the host's effective sample count and full readback; `capture(1)` explicitly requests single-sample color; `capture(samples, FrameReadback::color)` skips depth/ID readback. `RenderOptions::readback` defaults to `FrameReadback::color_depth_ids`.
 
-Viewer's direct capture FBO path on OpenGL has been removed: file snapshots and in-memory captures now go through `RenderDevice::render()` via the shared command assembly path. Presented frames and file snapshots use that path with effects, overlays, HUD, and custom drawing; raw in-memory `capture()` intentionally excludes presentation effects. Section 8.16 tracks the remaining parity work for effect-bearing presented captures.
+Viewer's direct capture FBO path on OpenGL has been removed: file snapshots and in-memory captures now go through `RenderDevice::render()` via the shared command assembly path. Presented frames and file snapshots use that path with effects, overlays, HUD, and custom drawing; raw in-memory `capture()` intentionally excludes presentation effects. Section 8.16 records the completed parity validation for effect-bearing presented captures.
 
 #### MultiViewer parity
 
@@ -1466,7 +1466,7 @@ Status: complete. The OpenGL adapter now serves analytic point/line clipping fro
 - Multisampled color multiplies coverage by `edge_coverage(distance)` so the cut receives the same ramp as silhouette edges; single-sample depth/ID passes discard hard. The OpenGL loops mirror [points.frag](../resources/shaders/vulkan/points.frag) and [lines.frag](../resources/shaders/vulkan/lines.frag).
 - `object_clipping_planes` remains the camera-independent form used by the geometric CPU clip and its cache. Analytic shaders consume the normalized view-space `clipping_planes`; hosts set both forms.
 
-Scope boundary: the native OpenGL effect paths' process-wide `ClippingPlane` behavior from Milestone 3 deviation 4 is unchanged. This work makes the portable command, capture, and query paths support analytic clipping; live native shadow/AO/EDL composition with `RenderSettings::clipping_planes` remains the separately documented limitation, with the consolidated remediation plan recorded in section 8.16.
+Scope boundary at the time of this follow-up: the native OpenGL effect paths' process-wide `ClippingPlane` behavior from Milestone 3 deviation 4 was unchanged. This work made the portable command, capture, and query paths support analytic clipping; live native shadow/AO/EDL composition with `RenderSettings::clipping_planes` remained a separately documented limitation. Section 8.16 subsequently resolved that split for settings-driven frames by moving effect composition into `graphics::RenderDevice`. Genuine native fallbacks for unsupported drawables or custom draw calls still apply only the process-wide `ClippingPlane` and warn.
 
 #### Adapter and query changes
 
@@ -1507,7 +1507,9 @@ Query changes:
 
 ### 8.16 Milestone 5 follow-up 2: unified effect presentation and clipping
 
-Status: planned, not implemented. This is follow-up #2 after the completed analytic-clipping work in section 8.15. It is the consolidated plan for Milestone 3 deviations 2–4 and the remaining scope boundary in section 8.15.
+Validation date: 2026-11-27.
+
+Status: complete. This is follow-up #2 after the completed analytic-clipping work in section 8.15. It retired Milestone 3 deviations 2–4 and the remaining scope boundary in section 8.15 by moving settings-driven shadow, AO, EDL, transparency, and clipping onto the shared `graphics::RenderDevice` command path on both backends.
 
 #### Objective
 
@@ -1543,7 +1545,7 @@ Out of scope:
 
 1. **Single command and clipping path.** Move effective-plane resolution into one backend-neutral helper used by `draw_commands()` and both backend viewers. Keep the process-wide guide on the overlay path. `apply_settings_effects()` remains the only builder of settings-effect commands.
 
-2. **Capability gate.** Define the exact effect and transparency capabilities required by each `RenderSettings` combination. Reuse the existing `validate_render_settings(settings, capabilities)` overload by sourcing real host/device capabilities in host validation and warnings, without changing the public vtable. Capability checks must happen before any native fallback is chosen.
+2. **Validation boundary.** Keep host validation about settings values and device validation about backend support. `Viewer` and `MultiViewer` call the value-only `validate_render_settings(settings)` before any fallback choice; `graphics::RenderDevice` checks actual backend support at render entry and owns the one-time fallback diagnostics. The existing `validate_render_settings(settings, capabilities)` overload remains available to callers that genuinely hold a `DeviceCapabilities` instance, but the viewer no longer fabricates one. No virtual method or public class layout is added.
 
 3. **OpenGL shadow pass.** Let the OpenGL adapter accept triangle `shadow_caster` commands, virtual `shadow_background` receivers, and fullscreen `shadow` commands. Render clipped triangle casters into a cached depth map, keep the background receiver unclipped as today, support hard and soft filtering and virtual backgrounds, and apply the overlay using the frame's resolved depth. Cache keys must include viewport size, map size, softness mode, and sample count.
 
@@ -1564,11 +1566,36 @@ Out of scope:
 - Cover live frames, file snapshots, raw `capture()`, `OffScreen`, and every `MultiViewer` cell, including resize and sample-count changes.
 - Rerun focused clipping, capture, render-settings, picker, and MultiViewer tests, then complete serial suites in both approved build trees. Record counts and times only after the final source state.
 
+#### Implementation result
+
+- `graphics::effective_clipping_planes()` resolves one plane set before command assembly. A process-wide `ClippingPlane` overrides `RenderSettings::clipping_planes`; otherwise normalized settings planes are used. Scene geometry, transparent commands, triangle shadow casters, and the depth consumed by AO/EDL share that set. Effect quads, the virtual shadow receiver, HUD, annotations, and the clipping-plane guide remain overlays.
+- Validation has one clear boundary: `Viewer`, `MultiViewer`, and the OpenGL viewer state validate settings *values* before any fallback choice; `graphics::RenderDevice` validates backend *support* and resolves fallbacks at render entry. No virtual method or public class layout changed. `Viewer::append_settings_effects()` and the validation helper are protected and nonvirtual. The unused host capability descriptor was removed rather than being made artificially “accurate”.
+- `OpenGLDevice::Impl` owns all new effect shaders, framebuffers, textures, and pass state. The device applies Vulkan precedence (`shadow > ambient_occlusion > eye_dome_lighting > scene_depth_texture`) and frame order: shadow map, OIT prepass, optional ID/depth prepass, AO compute, color scene with composite/overlays, optional capture ID pass. Clipping of analytic impostors and shadow casters uses the existing shared uniforms; effect overlays are unclipped.
+- OpenGL linked lists below 4.3 fall back to depth peeling and average-color blending without floating-point color blending falls back to sorted transparency. The exact one-time diagnostics for those paths, settings/legacy shadow precedence, native transparency conflicts, native `MultiViewer` fallback, AO textures, custom types, and sorted fallback are preserved.
+- `capture()` remains a raw scene-command readback: effects are excluded from in-memory captures but included in live frames and file snapshots. Raw capture also restores the drawable alpha that presentation transparency replaces with `TrianglesDrawable::opacity()`. `MultiViewer` keeps the stable model/standalone capture IDs used by `pick()`; source recovery for raw alpha restoration is limited to hosts whose command order matches the source order.
+
+#### Validation
+
+1. [tests/viewer/render_settings_test.cpp](../tests/viewer/render_settings_test.cpp) covers hard, soft, and scene-only settings shadows, AO, EDL, AO+EDL, all four transparency methods, and one combined shadow+AO+EDL+peeling frame on both backends. It also asserts that setters still reject invalid values while accepting every known transparency method. File snapshots differ from the plain frame; in-memory `capture()` stays byte-identical to the raw reference after every presentation effect.
+2. [tests/viewer/effects_presentation_test.cpp](../tests/viewer/effects_presentation_test.cpp) is a new shared device-path oracle for both backends. It checks stream-ordered effect composition, AO+EDL, shadow+AO+EDL, EDL and shadow over peeled transparency, clipped cut pixels for AO/EDL/shadow casters/transparent geometry, unchanged picking IDs and depth, and per-cell OIT viewports for sorted, average, peeling, and linked lists. Both runs report zero backend validation errors.
+3. [tests/viewer/opengl_render_device_test.cpp](../tests/viewer/opengl_render_device_test.cpp) now asserts that average-color transparency falls back to sorted transparency when floating-point color blending is unavailable. The existing clipping, capture, snapshot, picker, and MultiViewer regressions pass with the new command path.
+4. All targets rebuilt successfully in both approved trees. Focused runs of `effectpresentation`, `rendersettingseffects`, `snapshoteffects`, `renderdevice`, `rendersettings`, `drawablecontract`, `clipping`, `multiview`, and `capture` passed OpenGL 9/9 in 14.20 seconds and Vulkan 8/8 in 11.31 seconds.
+5. Final serial desktop CTest on the final source state: OpenGL **129/129 in 154.35 seconds** and Vulkan **157/157 in 256.90 seconds**, both with zero failures and `CTEST_PARALLEL_LEVEL=1`. `git diff --check` passed.
+
 #### Acceptance checklist
 
-- [ ] Settings-driven shadow, AO, EDL, transparency, and clipping use one command/presentation path on both backends.
-- [ ] Effective planes are applied to visible geometry, triangle shadow casters, and AO/EDL depth inputs; overlay geometry and the clipping-plane guide are not scene-clipped, and guide depth testing is unchanged.
-- [ ] AO+EDL and effect+transparency combinations compose on OpenGL without a silent precedence warning where the device advertises support.
-- [ ] Unsupported combinations are capability-gated and diagnosed once; legacy facades and exact fallbacks remain documented and working.
-- [ ] `capture()`, presented snapshots, picking, depth reads, and `MultiViewer` cells preserve their documented semantics.
-- [ ] Milestone 3 deviations 2–4 and the section 8.15 scope boundary are updated from "limitation" to the measured result, with both complete suites passing.
+- [x] Settings-driven shadow, AO, EDL, transparency, and clipping use one command/presentation path on both backends.
+- [x] Effective planes are applied to visible geometry, triangle shadow casters, and AO/EDL depth inputs; overlay geometry and the clipping-plane guide are not scene-clipped, and guide depth testing is unchanged.
+- [x] AO+EDL and effect+transparency combinations compose on OpenGL without a silent precedence warning where the device advertises support.
+- [x] Unsupported combinations are diagnosed once by `RenderDevice` before fallback; legacy facades and exact fallbacks remain documented and working.
+- [x] `capture()`, presented snapshots, picking, depth reads, and `MultiViewer` cells preserve their documented semantics.
+- [x] Milestone 3 deviations 2–4 and the section 8.15 scope boundary are updated from "limitation" to the measured result, with both complete suites passing.
+
+#### Residual coverage gaps
+
+- Diagnostics are preserved in code and exercised indirectly by fallback behavior, but no test captures the exact one-time log strings.
+- The new effect matrix does not include AO textures, custom `Drawable` subclasses, or custom `Viewer::draw()` overrides with settings effects; those states still take their exact native fallbacks and are covered only by the earlier fallback-specific regressions.
+- `OffScreen` capture/snapshot, resize, and sample-count changes are covered by the existing device and viewer suites, but not repeated for every settings-effect combination.
+- `MultiViewer` cells are covered by the default, clipping, and snapshot regressions; they are not measured with a full numeric effect matrix in every cell.
+- There is no host-side low-capability simulation: by design the viewer accepts all known settings methods and the device resolves actual support. Backend fallbacks are exercised at the device level.
+- Cross-backend effect images are compared by difference-from-plain plus ID/depth invariants, not by exact or tolerance-bounded pixel equality, because the two backends intentionally keep their established shadow/AO/EDL/OIT algorithms.

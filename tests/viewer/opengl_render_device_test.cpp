@@ -423,7 +423,13 @@ namespace {
         auto conflicting = visible;
         conflicting.overlay_independent_depth = true;
         rejects([&] { device.render(32, 32, {conflicting}); });
-        rejects([&] { device.render(32, 32, {}, vec4(0), 1, TransparencyMethod::average); });
+        // Without floating-point color blending the device reports the capability
+        // limitation once and falls back to sorted transparency; it does not reject
+        // the settings combination. An empty scene makes the fallback pixel-exact.
+        const auto average_fallback = device.render(32, 32, {}, vec4(0), 1, TransparencyMethod::average);
+        const auto sorted_reference = device.render(32, 32, {}, vec4(0), 1, TransparencyMethod::sorted);
+        require(average_fallback.rgba == sorted_reference.rgba,
+                "average-color fallback did not use sorted transparency");
         require(device.validation_errors() == 0, "rejected commands were reported as backend validation errors");
         require(device.oit_dropped_fragments() == 0, "unsupported OIT reported dropped fragments");
         auto presented = rectangle(-1, -1, 1, 1, 0, vec4(1, 0, 0, 1));

@@ -55,16 +55,16 @@
     - [x] Stop rejecting clipping in `Viewer::supports_device_query` now that the adapter supports analytic clipping, so `Viewer::pick`, `Viewer::read_scene_depth`, and capture use the shared query for clipped supported scenes; keep the exact pass only for unsupported drawable/effect states.
     - [x] Extend the clipping regression to both backends, add clipped-impostor shared-pick and invalid-plane coverage, and rerun the complete OpenGL and Vulkan suites. Final results: OpenGL 128/128 in 140.14 seconds and Vulkan 156/156 in 210.86 seconds; recorded in section 8.15 and linked from section 8.14.
 
-  - [ ] Milestone 5 follow-up #2 — Unified effect presentation and clipping
-    - [ ] Consolidate effective clipping resolution into one backend-neutral helper: an enabled process-wide `ClippingPlane` overrides `RenderSettings::clipping_planes`; otherwise the normalized settings planes are used. Keep `object_clipping_planes` and the clipping-plane guide separate. See section 8.16.
-    - [ ] Reuse the existing capability overload of `validate_render_settings()` by sourcing real device capabilities in host validation and one-time warnings, without adding virtual methods or changing public class layouts, so unsupported effect/transparency combinations are rejected or diagnosed before a native fallback is selected.
-    - [ ] Implement OpenGL `RenderDevice` shadow commands: clipped triangle shadow casters, unclipped virtual background receivers, cached depth maps, hard/soft filtering, virtual backgrounds, and the fullscreen overlay using the frame's resolved depth.
-    - [ ] Implement OpenGL `RenderDevice` AO and EDL commands from the clipped scene depth, preserving setting units and supporting simultaneous AO and EDL in the Vulkan reference order.
-    - [ ] Compose sorted transparency with all effects in the OpenGL device; add capability-gated average-color, depth-peeling, and linked-list paths with explicit fallbacks and diagnostics where OpenGL cannot support a method.
-    - [ ] Move OpenGL settings-driven frames onto the shared host submit path and remove the settings-effect sidecar and `warn_native_clipping()` branch for states the device supports; retain legacy facades and the exact pass for genuine custom-drawable/`draw()` cases.
-    - [ ] Verify MSAA resolve, depth/ID readback, viewport/scissor restoration, effect resource lifetime, and per-cell `MultiViewer` targets; keep picking and depth queries sampling scene depth rather than effect overlays.
-    - [ ] Extend clipping and render-settings regressions with an effect-composition matrix, clipped shadow casters, cut-pixel AO/EDL checks, guide visibility, transparency combinations, supported and fallback drawables, and live/snapshot/raw-capture/OffScreen/MultiViewer cases on both backends.
-    - [ ] Update Milestone 3 deviations 2–4 and the section 8.15 scope boundary from "limitation" to the measured result; rerun focused tests and complete serial suites in both approved build trees.
+  - [x] Milestone 5 follow-up #2 — Unified effect presentation and clipping
+    - [x] Consolidate effective clipping resolution into one backend-neutral helper: an enabled process-wide `ClippingPlane` overrides `RenderSettings::clipping_planes`; otherwise the normalized settings planes are used. Keep `object_clipping_planes` and the clipping-plane guide separate. See section 8.16.
+    - [x] Separate validation responsibilities: viewer/MultiViewer validate settings values before any fallback choice, while `RenderDevice` validates backend support and owns fallback diagnostics. The unused host capability descriptor was removed; no virtual methods or public class layouts were added. See section 8.16.
+    - [x] Implement OpenGL `RenderDevice` shadow commands: clipped triangle shadow casters, unclipped virtual background receivers, cached depth maps, hard/soft filtering, virtual backgrounds, and the fullscreen overlay using the frame's resolved depth.
+    - [x] Implement OpenGL `RenderDevice` AO and EDL commands from the clipped scene depth, preserving setting units and supporting simultaneous AO and EDL in the Vulkan reference order.
+    - [x] Compose sorted transparency with all effects in the OpenGL device; add capability-gated average-color, depth-peeling, and linked-list paths with explicit fallbacks and diagnostics where OpenGL cannot support a method.
+    - [x] Move OpenGL settings-driven frames onto the shared host submit path and remove the settings-effect sidecar and `warn_native_clipping()` branch for states the device supports; retain legacy facades and the exact pass for genuine custom-drawable/`draw()` cases.
+    - [x] Verify MSAA resolve, depth/ID readback, viewport/scissor restoration, effect resource lifetime, and per-cell `MultiViewer` targets; keep picking and depth queries sampling scene depth rather than effect overlays.
+    - [x] Extend clipping and render-settings regressions with an effect-composition matrix, clipped shadow casters, cut-pixel AO/EDL checks, guide visibility, transparency combinations, and live/snapshot/raw-capture cases on both backends. Residual gaps for AO textures, custom drawables, custom `draw()`, OffScreen/resize/sample matrices, and full MultiViewer effect matrices are recorded in section 8.16.
+    - [x] Update Milestone 3 deviations 2–4 and the section 8.15 scope boundary from "limitation" to the measured result; rerun focused tests and complete serial suites in both approved build trees. Final results: OpenGL 129/129 in 154.35 seconds and Vulkan 157/157 in 256.90 seconds; recorded in section 8.16.
 
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
     - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.
@@ -82,7 +82,7 @@
     - [ ] Run both complete backend test suites plus public-header/install and Python smoke tests before deprecations and again before removals.
     - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
 
-
+  - After API unification, the OpenGL shader files should disappear?
   - After API unification, how will the tutorials' code look like, e.g., Tutorial_504_Transparency, Tutorial_505_EyeDomeLighting?
   - [ ] Functions (like Viewer::draw_corner_axes()) have almost identical implementation code in the two backends. One should be removed at the end of the API unification.
 

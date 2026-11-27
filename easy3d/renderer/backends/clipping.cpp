@@ -25,6 +25,7 @@
  \endcond */
 
 #include <easy3d/renderer/backends/clipping.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -32,6 +33,20 @@
 
 namespace easy3d {
     namespace graphics {
+        std::vector<vec4> effective_clipping_planes(const std::vector<vec4> &settings_planes,
+                                                    const ClippingPlane &global_plane) {
+            if (!global_plane.is_enabled())
+                return normalize_clipping_planes(settings_planes);
+            const vec3 n = global_plane.normal(), c = global_plane.center();
+            // Match ClippingPlane::set_program(): keep the negative-normal halfspace,
+            // or a slab ending at the plane, rather than the opposite public Plane3.
+            std::vector<vec4> planes{vec4(-n, dot(n, c))};
+            if (global_plane.cross_section())
+                planes.push_back(vec4(n, -dot(n, c) +
+                                          global_plane.cross_section_width() * global_plane.scene_radius()));
+            return normalize_clipping_planes(planes);
+        }
+
         std::vector<vec4> normalize_clipping_planes(const std::vector<vec4> &planes) {
             if (planes.size() > 2)
                 throw std::invalid_argument("at most two clipping planes are supported");

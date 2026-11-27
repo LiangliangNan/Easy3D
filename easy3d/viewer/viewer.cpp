@@ -47,6 +47,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/frustum.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -54,6 +55,9 @@
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/shadow.h>
+#include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
@@ -73,6 +77,7 @@
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/render_settings.h>
+#include <easy3d/renderer/backends/clipping.h>
 #include <easy3d/util/timer.h>
 
 #ifdef EASY3D_HAS_VULKAN
@@ -115,6 +120,261 @@
 
 
 namespace easy3d {
+    namespace {
+        // Light-space data for a declarative shadow frame. Computing it here keeps
+        // the settings path independent of backend-specific legacy effect classes.
+        struct SettingsShadowFrame {
+            mat4 shadow_matrix;
+            std::vector<vec3> background_corners;
+            vec4 background_color = vec4(0);
+            unsigned shadow_map_size = 1024;
+            float darkness = 0;
+            float softness = 0;
+            float light_near = 1;
+            float light_far = 2;
+        };
+
+        bool compute_settings_shadow_frame(const Camera &camera, const ShadowSettings &settings,
+                                           SettingsShadowFrame &data) {
+            if (!settings.enabled)
+                return false;
+
+            Frustum camera_frustum(Frustum::PERSPECTIVE);
+            camera_frustum.set_perspective(float(camera.field_of_view()) + 0.2f,
+                                           float(camera.aspect_ratio()),
+                                           float(camera.z_near()), float(camera.z_far()));
+            const vec3 &position = camera.position();
+            camera_frustum.orient(position, position + camera.view_direction(), camera.up_vector());
+
+            Frustum light_frustum(Frustum::PERSPECTIVE);
+            const vec3 &center = camera.scene_center();
+            const mat3 transform = transform::normal_matrix(inverse(camera.model_view_matrix()));
+            vec3 direction = normalize(transform * vec3(-vec3(setting::light_position)));
+            const float radius = camera.scene_radius();
+            const vec3 light_position = center - direction * radius * std::max(1.1f, settings.light_distance);
+            light_frustum.orient(light_position, center, transform * vec3(0, 1, 0));
+
+            float max_z = -std::numeric_limits<float>::max();
+            float min_z = std::numeric_limits<float>::max();
+            const mat4 light_view = light_frustum.view_matrix();
+            const vec4 center_in_light = light_view * vec4(center, 1.0f);
+            max_z = std::max(max_z, center_in_light.z + radius);
+            min_z = std::min(min_z, center_in_light.z - radius);
+            if (!settings.virtual_background) {
+                for (const auto &point : camera_frustum.vertices()) {
+                    const vec4 projected = light_view * vec4(point, 1.0f);
+                    min_z = std::min(min_z, projected.z);
+                }
+            }
+            float near_distance = -max_z;
+            float far_distance = -min_z;
+            far_distance = std::min(far_distance, near_distance + radius * 10.0f);
+
+            float max_x = -std::numeric_limits<float>::max();
+            float max_y = -std::numeric_limits<float>::max();
+            light_frustum.set_ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_distance, far_distance);
+            const mat4 initial_shadow_matrix = light_frustum.projection_matrix() * light_view;
+            const vec4 center_projected = initial_shadow_matrix * vec4(center, 1.0f);
+            max_x = std::max(max_x, center_projected.x + radius);
+            max_y = std::max(max_y, center_projected.y + radius);
+            near_distance = std::max(near_distance, 0.001f);
+            light_frustum.set_frustum(max_x * 2.0f, max_y * 2.0f, near_distance, far_distance);
+
+            if (settings.virtual_background) {
+                const vec3 normal = normalize(transform * vec3(setting::light_position));
+                const float offset = radius * 0.002f;
+                const vec3 background_center = light_frustum.far_center() + normal * offset;
+                const vec3 up = light_frustum.up_vector();
+                const vec3 dx = normalize(cross(up, normal)) * light_frustum.far_width();
+                const vec3 dy = normalize(up) * light_frustum.far_width();
+                data.background_corners = {background_center - dx - dy, background_center + dx - dy,
+                                           background_center + dx + dy, background_center - dx + dy};
+            } else
+                data.background_corners.clear();
+
+            const mat4 clip_to_texture(
+                vec4(0.5f, 0.0f, 0.0f, 0.0f),
+                vec4(0.0f, 0.5f, 0.0f, 0.0f),
+                vec4(0.0f, 0.0f, 0.5f, 0.0f),
+                vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
+            data.shadow_matrix = clip_to_texture * light_frustum.projection_matrix() * light_view;
+            data.background_color = settings.virtual_background_color;
+            data.shadow_map_size = settings.map_size;
+            data.darkness = settings.darkness;
+            data.softness = settings.softness;
+            data.light_near = light_frustum.near_distance();
+            data.light_far = light_frustum.far_distance();
+            return true;
+        }
+
+        // This is the only builder of settings-driven effect commands. Both viewers
+        // submit the result through graphics::RenderDevice; capture() never calls it.
+        void build_settings_effects(std::vector<graphics::DrawCommand> &commands, const Camera &cam,
+                                     int width, int height, const RenderSettings &settings) {
+            if (width <= 0 || height <= 0)
+                return;
+            if (settings.shadow.enabled) {
+                SettingsShadowFrame data;
+                if (compute_settings_shadow_frame(cam, settings.shadow, data)) {
+                    const mat4 clip_to_shadow = data.shadow_matrix * inverse(cam.model_view_projection_matrix());
+                    for (auto &command : commands) {
+                        if (command.overlay || !command.geometry ||
+                            command.geometry->topology() != graphics::Topology::triangles)
+                            continue;
+                        command.shadow_caster = true;
+                        command.shadow_matrix = clip_to_shadow;
+                        command.shadow_map_size = data.shadow_map_size;
+                    }
+                    if (!data.background_corners.empty()) {
+                        std::vector<graphics::Vertex> vertices(4);
+                        for (unsigned i = 0; i < 4; ++i)
+                            vertices[i].position = data.background_corners[i];
+                        graphics::DrawCommand background;
+                        background.geometry = std::make_shared<graphics::Geometry>(
+                            std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+                        background.color = data.background_color;
+                        background.object_id = UINT32_MAX;
+                        background.model_view_projection = cam.model_view_projection_matrix();
+                        background.shadow_background = true;
+                        background.shadow_matrix = clip_to_shadow;
+                        background.shadow_map_size = data.shadow_map_size;
+                        commands.push_back(std::move(background));
+                    }
+                    commands.insert(commands.begin(),
+                                    graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
+                                                                 data.darkness, data.softness, data.light_near,
+                                                                 data.light_far, data.shadow_map_size));
+                }
+            }
+            if (settings.ambient_occlusion.enabled) {
+                const auto &ao = settings.ambient_occlusion;
+                const float radius = std::max(cam.scene_radius() * ao.radius_ratio, 1e-4f);
+                commands.insert(commands.begin(),
+                                graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height), radius,
+                                                                        ao.bias, ao.intensity, cam.projection_matrix()));
+            }
+            if (settings.eye_dome_lighting) {
+                float z_near, z_far;
+                if (cam.type() == Camera::PERSPECTIVE) {
+                    z_near = cam.z_near();
+                    z_far = cam.z_far();
+                } else {
+                    const float radius = cam.scene_radius();
+                    z_near = 2.0f * radius;
+                    z_far = 10.0f * radius;
+                }
+                commands.insert(commands.begin(),
+                                graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height), z_near,
+                                                                        z_far, 2.0f * cam.scene_radius()));
+            }
+        }
+
+#ifdef EASY3D_HAS_VULKAN
+        // The Vulkan facade publishes a complete frame for application-owned shadows.
+        // The OpenGL facade keeps its effect objects private, so there an active
+        // legacy shadow uses the exact native fallback instead.
+        template <typename Source>
+        void append_legacy_shadow(std::vector<graphics::DrawCommand> &commands,
+                                  const std::vector<Source> &sources, const Camera &cam,
+                                  int width, int height, Shadow *active_shadow) {
+            if (!active_shadow || width <= 0 || height <= 0)
+                return;
+            Shadow::FrameData data;
+            if (!Shadow::frame_data(&cam, data))
+                return;
+            const mat4 clip_to_shadow = data.shadow_matrix * inverse(cam.model_view_projection_matrix());
+            const auto &surfaces = active_shadow->surfaces();
+            for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
+                auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
+                if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
+                    continue;
+                if (!commands[i].geometry || commands[i].geometry->topology() != graphics::Topology::triangles)
+                    continue;
+                commands[i].shadow_caster = true;
+                commands[i].shadow_matrix = clip_to_shadow;
+                commands[i].shadow_map_size = data.shadow_map_size;
+            }
+            if (!data.background_corners.empty()) {
+                std::vector<graphics::Vertex> vertices(4);
+                for (unsigned i = 0; i < 4; ++i)
+                    vertices[i].position = data.background_corners[i];
+                graphics::DrawCommand background;
+                background.geometry = std::make_shared<graphics::Geometry>(
+                    std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+                background.color = data.background_color;
+                background.object_id = UINT32_MAX;
+                background.model_view_projection = cam.model_view_projection_matrix();
+                background.shadow_background = true;
+                background.shadow_matrix = clip_to_shadow;
+                background.shadow_map_size = data.shadow_map_size;
+                commands.push_back(std::move(background));
+            }
+            commands.insert(commands.begin(),
+                            graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
+                                                         data.darkness, data.softness, data.light_near,
+                                                         data.light_far, data.shadow_map_size));
+        }
+#endif
+
+        void append_legacy_ao(std::vector<graphics::DrawCommand> &commands, const Camera &cam,
+                              int width, int height) {
+#ifdef EASY3D_HAS_VULKAN
+            float radius_ratio, bias, intensity;
+            mat4 projection;
+            if (width <= 0 || height <= 0 ||
+                !AmbientOcclusion::frame_params(&cam, radius_ratio, bias, intensity, projection))
+                return;
+            const float radius = std::max(cam.scene_radius() * radius_ratio, 1e-4f);
+            commands.insert(commands.begin(), graphics::shape::draw_ambient_occlusion(
+                                                  unsigned(width), unsigned(height), radius, bias, intensity, projection));
+#else
+            (void)commands;
+            (void)cam;
+            (void)width;
+            (void)height;
+#endif
+        }
+
+        void append_legacy_edl(std::vector<graphics::DrawCommand> &commands, const Camera &cam,
+                               int width, int height) {
+#ifdef EASY3D_HAS_VULKAN
+            float z_near, z_far, scene_size;
+            if (width <= 0 || height <= 0 ||
+                !EyeDomeLighting::frame_params(&cam, z_near, z_far, scene_size))
+                return;
+            commands.insert(commands.begin(), graphics::shape::draw_eye_dome_lighting(
+                                                  unsigned(width), unsigned(height), z_near, z_far, scene_size));
+#else
+            (void)commands;
+            (void)cam;
+            (void)width;
+            (void)height;
+#endif
+        }
+    }
+
+    void Viewer::validate_render_settings_for_presentation() const {
+        validate_render_settings(render_settings());
+    }
+
+    void Viewer::strip_settings_transparency(std::vector<graphics::DrawCommand> &commands,
+                                             const std::vector<DrawSource> *sources) const {
+        if (!render_settings().transparency.enabled)
+            return;
+        for (size_t i = 0; i < commands.size(); ++i) {
+            auto &command = commands[i];
+            if (command.overlay || !command.geometry ||
+                command.geometry->topology() != graphics::Topology::triangles)
+                continue;
+            command.transparent = false;
+            // draw_commands() replaces the drawable's color alpha with its opacity
+            // for the presentation pass. Raw capture restores the original alpha.
+            if (sources && i < sources->size() && sources->at(i).drawable)
+                command.color.w = sources->at(i).drawable->color().w;
+        }
+    }
+
 #ifndef EASY3D_HAS_VULKAN
     // 2.8 keeps Viewer's public layout unchanged; this scratch state is owned by
     // the implementation and erased by cleanup/destruction.
@@ -127,7 +387,7 @@ namespace easy3d {
         std::chrono::steady_clock::time_point pivot_expires;
         std::vector<graphics::DrawCommand> corner_axes_commands;
         RenderSettings render_settings;
-        // Declarative effects reuse the native algorithms. Their framebuffers are
+        // Native effect objects remain for exact fallbacks; their framebuffers are
         // context resources, so the cache is released before the context is destroyed.
         std::unique_ptr<Shadow> settings_shadow;
         const Camera *settings_shadow_camera = nullptr;
@@ -260,12 +520,6 @@ namespace easy3d {
         mutable vulkan::ClippingPlaneRenderer clipping_plane_renderer;
         graphics::DrawableRenderer drawable_renderer;
 
-        // Settings-driven shadow frames need the light-space math of the existing
-        // algorithm. The facade is only a calculator here: its publish/unpublish
-        // bracket copies one frame of data and never drives rendering.
-        mutable std::unique_ptr<Shadow> settings_shadow;
-        mutable const Camera *settings_shadow_camera = nullptr;
-
         // While active, draw() renders the file-snapshot frame into an offscreen
         // image instead of presenting it; snapshot_frame() owns the state.
         struct SnapshotFrame {
@@ -317,39 +571,9 @@ namespace easy3d {
         }
 
         const std::vector<vec4> &active_clipping_planes() const {
-            const auto &plane = *ClippingPlane::instance();
-            if (!plane.is_enabled())
-                return clipping_planes;
-            shared_clipping_planes = vulkan::ClippingPlaneRenderer::planes(plane);
+            shared_clipping_planes = graphics::effective_clipping_planes(clipping_planes,
+                                                                        *ClippingPlane::instance());
             return shared_clipping_planes;
-        }
-
-        bool declarative_shadow_frame(const Camera &cam, Shadow::FrameData &data) const {
-            const auto &shadow = render_settings.shadow;
-            if (!shadow.enabled)
-                return false;
-            const bool soft = shadow.softness > 0.0f;
-            auto *current = dynamic_cast<SoftShadow *>(settings_shadow.get());
-            const bool recreate = !settings_shadow || settings_shadow_camera != &cam ||
-                                  (soft ? current == nullptr : current != nullptr);
-            if (recreate) {
-                if (soft)
-                    settings_shadow.reset(new SoftShadow(const_cast<Camera *>(&cam)));
-                else
-                    settings_shadow.reset(new Shadow(const_cast<Camera *>(&cam)));
-                settings_shadow_camera = &cam;
-            }
-            settings_shadow->set_shadow_map_size(int(shadow.map_size));
-            settings_shadow->set_light_distance(shadow.light_distance);
-            settings_shadow->set_darkness(shadow.darkness);
-            settings_shadow->set_virtual_background(shadow.virtual_background);
-            settings_shadow->set_virtual_background_color(shadow.virtual_background_color);
-            if (soft)
-                static_cast<SoftShadow *>(settings_shadow.get())->set_softness(shadow.softness);
-            settings_shadow->begin({});
-            const bool published = Shadow::frame_data(&cam, data);
-            settings_shadow->end();
-            return published;
         }
 
         // Inject the effect overlays declared in RenderSettings. Legacy facades keep
@@ -357,64 +581,9 @@ namespace easy3d {
         // readback and does not receive these presentation overlays.
         void apply_settings_effects(std::vector<graphics::DrawCommand> &commands, const Camera &cam,
                                     int width, int height) const {
-            if (width <= 0 || height <= 0 || commands.empty())
+            if (commands.empty())
                 return;
-            const auto &settings = render_settings;
-            if (settings.shadow.enabled) {
-                Shadow::FrameData data;
-                if (declarative_shadow_frame(cam, data)) {
-                    const mat4 clip_to_shadow = data.shadow_matrix * inverse(cam.model_view_projection_matrix());
-                    for (auto &command : commands) {
-                        if (command.overlay || !command.geometry ||
-                            command.geometry->topology() != graphics::Topology::triangles)
-                            continue;
-                        command.shadow_caster = true;
-                        command.shadow_matrix = clip_to_shadow;
-                        command.shadow_map_size = data.shadow_map_size;
-                    }
-                    if (!data.background_corners.empty()) {
-                        std::vector<graphics::Vertex> vertices(4);
-                        for (unsigned i = 0; i < 4; ++i)
-                            vertices[i].position = data.background_corners[i];
-                        graphics::DrawCommand background;
-                        background.geometry = std::make_shared<graphics::Geometry>(
-                            std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
-                        background.color = data.background_color;
-                        background.object_id = UINT32_MAX;
-                        background.model_view_projection = cam.model_view_projection_matrix();
-                        background.shadow_background = true;
-                        background.shadow_matrix = clip_to_shadow;
-                        background.shadow_map_size = data.shadow_map_size;
-                        commands.push_back(std::move(background));
-                    }
-                    commands.insert(commands.begin(),
-                                    graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
-                                                                 data.darkness, data.softness, data.light_near,
-                                                                 data.light_far, data.shadow_map_size));
-                }
-            }
-            if (settings.ambient_occlusion.enabled) {
-                const auto &ao = settings.ambient_occlusion;
-                const float radius = std::max(cam.scene_radius() * ao.radius_ratio, 1e-4f);
-                commands.insert(commands.begin(),
-                                graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height), radius,
-                                                                        ao.bias, ao.intensity,
-                                                                        cam.projection_matrix()));
-            }
-            if (settings.eye_dome_lighting) {
-                float z_near, z_far;
-                if (cam.type() == Camera::PERSPECTIVE) {
-                    z_near = cam.z_near();
-                    z_far = cam.z_far();
-                } else {
-                    const float radius = cam.scene_radius();
-                    z_near = 2.0f * radius;
-                    z_far = 10.0f * radius;
-                }
-                commands.insert(commands.begin(),
-                                graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height), z_near,
-                                                                        z_far, 2.0f * cam.scene_radius()));
-            }
+            build_settings_effects(commands, cam, width, height, render_settings);
         }
 
         graphics::FrameImage capture(const Camera &cam,
@@ -433,9 +602,25 @@ namespace easy3d {
             options.samples = samples;
             options.readback = readback;
             auto commands = owner.frame_commands(cam, width, height, nullptr, include_hud);
+            // MultiViewer::draw_commands() remaps IDs when sources are requested;
+            // capture() must keep the model/standalone IDs used by pick(). Recover
+            // drawable colors only where the command order matches the source order.
+            std::vector<DrawSource> sources;
+            if (owner.render_settings().transparency.enabled && !dynamic_cast<const MultiViewer *>(&owner))
+                owner.draw_commands(cam, width, height, &sources);
+            owner.strip_settings_transparency(commands, &sources);
             return device->render(uint32_t(width), uint32_t(height), std::move(commands), options);
         }
     };
+
+    void Viewer::append_settings_effects(std::vector<graphics::DrawCommand> &commands,
+                                         const Camera &camera, int width, int height) const {
+        if (commands.empty())
+            return;
+        validate_render_settings(impl_->render_settings);
+        build_settings_effects(commands, camera, width, height, impl_->render_settings);
+    }
+
     namespace {
         const char *const default_manual =
             "--------------------------------------------------------------\n"
@@ -1589,11 +1774,7 @@ namespace easy3d {
         drawable_renderer_->prune();
 #endif
         std::vector<graphics::DrawCommand> commands;
-#ifdef EASY3D_HAS_VULKAN
-        const auto &planes = impl_->active_clipping_planes();
-#else
         const auto &planes = clipping_planes();
-#endif
         // Drawable point/line sizes are logical pixels; the device rasterizes plain
         // points/lines in framebuffer pixels. Scale by the target-to-camera ratio,
         // not dpi_scaling(): it is the DPI scale only when the target is the window
@@ -1777,8 +1958,11 @@ namespace easy3d {
         impl_->viewer_annotations = std::move(commands);
     }
     void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
-        impl_->clipping_planes = graphics::normalize_clipping_planes(planes);
-        impl_->render_settings.clipping_planes = impl_->clipping_planes;
+        RenderSettings settings = impl_->render_settings;
+        settings.clipping_planes = graphics::normalize_clipping_planes(planes);
+        validate_render_settings(settings);
+        impl_->clipping_planes = settings.clipping_planes;
+        impl_->render_settings.clipping_planes = std::move(settings.clipping_planes);
     }
     const std::vector<vec4> &Viewer::clipping_planes() const {
         return impl_->active_clipping_planes();
@@ -1873,11 +2057,11 @@ namespace easy3d {
                 for (const auto &d : model->renderer()->points_drawables())
                     if (d.get() == drawable)
                         return impl_->drawable_renderer
-                            .command(d, 0, *camera(), impl_->clipping_planes, model->renderer()->is_selected())
+                            .command(d, 0, *camera(), clipping_planes(), model->renderer()->is_selected())
                             .geometry->point_data();
         for (const auto &d : drawables_)
             if (d.get() == drawable)
-                return impl_->drawable_renderer.command(d, 0, *camera(), impl_->clipping_planes).geometry->point_data();
+                return impl_->drawable_renderer.command(d, 0, *camera(), clipping_planes()).geometry->point_data();
         throw std::invalid_argument("point drawable does not belong to this viewer");
     }
     void Viewer::init() {}
@@ -1887,61 +2071,18 @@ namespace easy3d {
         int width = 0, height = 0;
         impl_->frame_size(width, height);
         const auto &settings = render_settings();
-        Shadow::FrameData shadow;
         Shadow *active_shadow = Shadow::active(camera());
-        const bool legacy_shadow = !settings.shadow.enabled && active_shadow &&
-                                   Shadow::frame_data(camera(), shadow);
+        const bool legacy_shadow = !settings.shadow.enabled && active_shadow;
         std::vector<DrawSource> sources;
         auto commands =
             frame_commands(*camera(), width, height, legacy_shadow ? &sources : nullptr, !impl_->snapshot.active);
         impl_->apply_settings_effects(commands, *camera(), width, height);
-        if (legacy_shadow) {
-            const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->model_view_projection_matrix());
-            const auto &surfaces = active_shadow->surfaces();
-            for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
-                auto *triangles = dynamic_cast<TrianglesDrawable *>(sources[i].drawable.get());
-                if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
-                    continue;
-                if (!commands[i].geometry || commands[i].geometry->topology() != graphics::Topology::triangles)
-                    continue;
-                commands[i].shadow_caster = true;
-                commands[i].shadow_matrix = clip_to_shadow;
-                commands[i].shadow_map_size = shadow.shadow_map_size;
-            }
-            if (!shadow.background_corners.empty()) {
-                std::vector<graphics::Vertex> vertices(4);
-                for (unsigned i = 0; i < 4; ++i)
-                    vertices[i].position = shadow.background_corners[i];
-                graphics::DrawCommand background;
-                background.geometry =
-                    std::make_shared<graphics::Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
-                background.color = shadow.background_color;
-                background.object_id = UINT32_MAX;
-                background.model_view_projection = camera()->model_view_projection_matrix();
-                background.shadow_background = true;
-                background.shadow_matrix = clip_to_shadow;
-                background.shadow_map_size = shadow.shadow_map_size;
-                commands.push_back(std::move(background));
-            }
-            commands.insert(commands.begin(),
-                            graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
-                                                         shadow.darkness, shadow.softness, shadow.light_near,
-                                                         shadow.light_far, shadow.shadow_map_size));
-        }
-        float radius_ratio, bias, intensity;
-        mat4 projection;
-        if (!settings.ambient_occlusion.enabled &&
-            AmbientOcclusion::frame_params(camera(), radius_ratio, bias, intensity, projection)) {
-            // The AO pass samples in view-space units, so the scene-relative ratio
-            // is resolved against the scene bounding sphere here.
-            const float radius = std::max(camera()->scene_radius() * radius_ratio, 1e-4f);
-            commands.insert(commands.begin(), graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height),
-                                                                                      radius, bias, intensity, projection));
-        }
-        float z_near, z_far, scene_size;
-        if (!settings.eye_dome_lighting && EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
-            commands.insert(commands.begin(), graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
-                                                                                      z_near, z_far, scene_size));
+        if (legacy_shadow)
+            append_legacy_shadow(commands, sources, *camera(), width, height, active_shadow);
+        if (!settings.ambient_occlusion.enabled)
+            append_legacy_ao(commands, *camera(), width, height);
+        if (!settings.eye_dome_lighting)
+            append_legacy_edl(commands, *camera(), width, height);
         if (settings.transparency.enabled)
             impl_->submit(std::move(commands), settings.transparency.method, settings.transparency.layers);
         else
@@ -2697,8 +2838,9 @@ namespace easy3d {
 
         Shadow *prepare_settings_shadow(ViewerOpenGLState &state, Camera *camera, const ShadowSettings &settings) {
             const bool soft = settings.softness > 0.0f;
-            const bool current_soft = dynamic_cast<SoftShadow *>(state.settings_shadow.get()) != nullptr;
-            if (!state.settings_shadow || state.settings_shadow_camera != camera || current_soft != soft) {
+            auto *current = dynamic_cast<SoftShadow *>(state.settings_shadow.get());
+            if (!state.settings_shadow || state.settings_shadow_camera != camera ||
+                (soft ? current == nullptr : current != nullptr)) {
                 if (soft)
                     state.settings_shadow.reset(new SoftShadow(camera));
                 else
@@ -2740,31 +2882,83 @@ namespace easy3d {
     } // namespace
 
     void Viewer::draw() const {
-#if 0
-        // Example code: split the view to have different rendering styles for the same object/scene.
-        glEnable(GL_SCISSOR_TEST);
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        glScissor(viewport[0], viewport[1], viewport[2] * 0.5f, viewport[3]);
-        for (const auto m : models_) {
-            for (auto d : m->renderer()->triangles_drawables())
-                d->draw(camera());
-        }
-        glScissor(viewport[2] * 0.5f, viewport[1], viewport[2] * 0.5f, viewport[3]);
-        for (const auto m : models_) {
-            for (auto d : m->renderer()->lines_drawables())
-                d->draw(camera());
-        }
-        glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
-
-#else
-
         auto &state = opengl_viewer_state(this);
         const RenderSettings &settings = state.render_settings;
+        // Settings values are checked before any fallback choice. Backend support
+        // and fallback policy belong to RenderDevice; setters already validate, and
+        // repeating it here keeps direct state edits honest too.
+        try {
+            validate_render_settings(settings);
+        } catch (const std::exception &e) {
+            LOG_N_TIMES(1, WARNING) << "invalid render settings: " << e.what();
+            throw;
+        }
+
+        Shadow *active_shadow = Shadow::active(camera());
+        if (settings.shadow.enabled && active_shadow && active_shadow != state.settings_shadow.get())
+            LOG_N_TIMES(1, WARNING) << "RenderSettings shadow takes precedence over the legacy active shadow";
+        GLint viewport[4] = {0, 0, 0, 0};
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        const int width = viewport[2], height = viewport[3];
         const bool effects_enabled = settings.shadow.enabled || settings.ambient_occlusion.enabled ||
                                      settings.eye_dome_lighting;
         const bool transparency_enabled = settings.transparency.enabled;
-        Shadow *active_shadow = Shadow::active(camera());
+        // An application-owned active legacy shadow requires the exact native
+        // fallback: Shadow::begin()/end() only bracket the pass, and the composite
+        // is produced by Shadow::draw().
+        const bool legacy_shadow = !settings.shadow.enabled && active_shadow;
+
+        // Only scenes that cannot be encoded as DrawCommand use the exact native
+        // pass. The device owns every settings effect and every transparency method.
+        bool portable = width > 0 && height > 0 && !legacy_shadow;
+        const auto supported = [&](const std::shared_ptr<Drawable> &d) {
+            if (!d)
+                return false;
+            if (d->is_ao_enabled() && d->has_ao_texture()) {
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: AO on '" << d->name() << "'";
+                return false;
+            }
+            const Drawable &drawable = *d;
+            const bool result = typeid(drawable) == typeid(TrianglesDrawable) ||
+                                typeid(drawable) == typeid(LinesDrawable) ||
+                                typeid(drawable) == typeid(PointsDrawable) ||
+                                typeid(drawable) == typeid(LinesDrawable2D);
+            if (!result)
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: custom type '" << d->name() << "' ("
+                                        << typeid(drawable).name() << ")";
+            return result;
+        };
+        for (const auto &m : models_) {
+            if (!m->renderer() || !m->renderer()->is_visible())
+                continue;
+            for (const auto &d : m->renderer()->triangles_drawables())
+                portable = portable && supported(d);
+            for (const auto &d : m->renderer()->lines_drawables())
+                portable = portable && supported(d);
+            for (const auto &d : m->renderer()->points_drawables())
+                portable = portable && supported(d);
+        }
+        for (const auto &d : drawables_)
+            portable = portable && supported(d);
+
+        const auto warn_native_clipping = [&]() {
+            if (!settings.clipping_planes.empty() && !ClippingPlane::instance()->is_enabled()) {
+                LOG_N_TIMES(1, WARNING) << "OpenGL native rendering applies the process-wide clipping plane only; "
+                                           "RenderSettings::clipping_planes are ignored";
+            }
+        };
+        const auto submit = [&](std::vector<graphics::DrawCommand> commands,
+                                graphics::TransparencyMethod method, unsigned layers) {
+            query_device().present(uint32_t(width), uint32_t(height), commands,
+                                   state.snapshot_active ? state.snapshot_background : background_color(),
+                                   state.snapshot_active ? state.snapshot_samples : unsigned(samples()),
+                                   method, layers);
+            if (method == graphics::TransparencyMethod::linked_lists &&
+                query_device().oit_dropped_fragments() > 0)
+                LOG_N_TIMES(1, WARNING) << "per-pixel linked lists dropped "
+                                        << query_device().oit_dropped_fragments()
+                                        << " transparent fragments; increase RenderSettings::transparency.layers";
+        };
 
         const auto visible_triangles = [&]() {
             std::vector<TrianglesDrawable *> surfaces;
@@ -2783,8 +2977,7 @@ namespace easy3d {
             }
             return surfaces;
         };
-
-        const auto draw_native = [&](bool skip_all_triangles, Shadow *skip_shadow) {
+        const auto native_scene = [&](bool skip_all_triangles, Shadow *skip_shadow) {
             const auto shadow_surface = [&](TrianglesDrawable *d) {
                 if (!skip_shadow)
                     return false;
@@ -2812,9 +3005,7 @@ namespace easy3d {
                     glPolygonOffset(0.5f, -0.0001f);
                 }
                 for (auto d : m->renderer()->triangles_drawables()) {
-                    if (!d->is_visible())
-                        continue;
-                    if (skip_all_triangles || shadow_surface(d.get()))
+                    if (!d->is_visible() || skip_all_triangles || shadow_surface(d.get()))
                         continue;
                     d->draw(camera());
                     easy3d_debug_log_gl_error
@@ -2831,245 +3022,119 @@ namespace easy3d {
             }
         };
 
-        const auto warn_native_clipping = [&]() {
-            if (!settings.clipping_planes.empty() && !ClippingPlane::instance()->is_enabled()) {
-                LOG_N_TIMES(1, WARNING) << "OpenGL native rendering applies the process-wide clipping plane only; "
-                                           "RenderSettings::clipping_planes are ignored";
+        if (portable) {
+            try {
+                auto commands = draw_commands(*camera(), width, height);
+                build_settings_effects(commands, *camera(), width, height, settings);
+                if (!settings.ambient_occlusion.enabled)
+                    append_legacy_ao(commands, *camera(), width, height);
+                if (!settings.eye_dome_lighting)
+                    append_legacy_edl(commands, *camera(), width, height);
+                if (transparency_enabled)
+                    submit(std::move(commands), settings.transparency.method, settings.transparency.layers);
+                else
+                    submit(std::move(commands), graphics::TransparencyMethod::sorted, 4);
+                drawable_renderer_->prune();
+            } catch (const std::exception &e) {
+                LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
+                portable = false;
             }
-        };
-
-        if (effects_enabled) {
-            warn_native_clipping();
-            if (settings.transparency.enabled) {
-                LOG_N_TIMES(1, WARNING) << "OpenGL native effects cannot be composed with the RenderSettings "
-                                           "transparency pass; rendering the effects without transparency";
-            }
-            if (settings.ambient_occlusion.enabled && settings.eye_dome_lighting) {
-                LOG_N_TIMES(1, WARNING) << "OpenGL cannot compose ambient occlusion with eye-dome lighting; "
-                                           "eye-dome lighting takes precedence";
-            }
-
-            Shadow *effect_shadow = nullptr;
-            const std::vector<TrianglesDrawable *> *effect_surfaces = nullptr;
-            std::vector<TrianglesDrawable *> settings_surfaces;
-            if (settings.shadow.enabled) {
-                if (active_shadow && active_shadow != state.settings_shadow.get())
-                    LOG_N_TIMES(1, WARNING) << "RenderSettings shadow takes precedence over the legacy active shadow";
-                settings_surfaces = visible_triangles();
-                effect_shadow = prepare_settings_shadow(state, const_cast<Camera *>(camera()), settings.shadow);
-                effect_surfaces = &settings_surfaces;
-            } else if (active_shadow) {
-                effect_shadow = active_shadow;
-                effect_surfaces = &active_shadow->surfaces();
-            }
-
-            EyeDomeLighting *edl = nullptr;
-            AmbientOcclusion *ao = nullptr;
-            if (settings.eye_dome_lighting) {
-                if (!state.settings_edl)
-                    state.settings_edl.reset(new EyeDomeLighting(const_cast<Camera *>(camera())));
-                edl = state.settings_edl.get();
-                edl->begin();
-            } else if (settings.ambient_occlusion.enabled) {
-                if (!state.settings_ao)
-                    state.settings_ao.reset(new AmbientOcclusion(const_cast<Camera *>(camera())));
-                ao = state.settings_ao.get();
-                ao->set_radius_ratio(settings.ambient_occlusion.radius_ratio);
-                ao->set_bias(settings.ambient_occlusion.bias);
-                ao->set_intensity(settings.ambient_occlusion.intensity);
-                ao->begin(models_);
-            }
-
-            draw_native(settings.shadow.enabled, settings.shadow.enabled ? nullptr : effect_shadow);
-            if (effect_shadow && !effect_surfaces->empty())
-                effect_shadow->draw(*effect_surfaces);
-
-            if (edl)
-                edl->end();
-            else if (ao)
-                ao->end();
-        } else if (transparency_enabled) {
-            graphics::TransparencyMethod method = settings.transparency.method;
-            if (method == graphics::TransparencyMethod::linked_lists && !opengl_linked_lists_available()) {
-                LOG_N_TIMES(1, WARNING) << "OpenGL per-pixel linked lists require OpenGL 4.3; "
-                                           "falling back to depth peeling";
-                method = graphics::TransparencyMethod::peeling;
-            }
-
-            const auto native_transparency = [&]() {
-                const unsigned layers = std::min(settings.transparency.layers,
-                                                  unsigned(std::numeric_limits<int>::max()));
-                draw_native(true, nullptr);
-                if (auto *transparency = prepare_settings_transparency(state, const_cast<Camera *>(camera()), method, layers))
-                    transparency->draw(visible_triangles());
-            };
-
-            if (method == graphics::TransparencyMethod::sorted) {
-                if (active_shadow) {
-                    LOG_N_TIMES(1, WARNING) << "the legacy active shadow cannot be combined with RenderSettings "
-                                               "transparency; ignoring the legacy shadow";
-                    active_shadow = nullptr;
-                }
-                bool portable = true;
-                const auto supported = [&](const std::shared_ptr<Drawable> &d) {
-                    if (!d)
-                        return false;
-                    if (d->is_ao_enabled() && d->has_ao_texture()) {
-                        LOG_N_TIMES(1, WARNING) << "native drawable fallback: AO on '" << d->name() << "'";
-                        return false;
-                    }
-                    const Drawable &drawable = *d;
-                    const bool result = typeid(drawable) == typeid(TrianglesDrawable) || typeid(drawable) == typeid(LinesDrawable) ||
-                                        typeid(drawable) == typeid(PointsDrawable) || typeid(drawable) == typeid(LinesDrawable2D);
-                    if (!result)
-                        LOG_N_TIMES(1, WARNING) << "native drawable fallback: custom type '" << d->name() << "' ("
-                                                << typeid(drawable).name() << ")";
-                    return result;
-                };
-                for (const auto &m : models_) {
-                    if (!m->renderer()->is_visible())
-                        continue;
-                    for (const auto &d : m->renderer()->triangles_drawables())
-                        portable = portable && supported(d);
-                    for (const auto &d : m->renderer()->lines_drawables())
-                        portable = portable && supported(d);
-                    for (const auto &d : m->renderer()->points_drawables())
-                        portable = portable && supported(d);
-                }
-                for (const auto &d : drawables_)
-                    portable = portable && supported(d);
-
-                if (portable) {
-                    try {
-                        GLint viewport[4];
-                        glGetIntegerv(GL_VIEWPORT, viewport);
-                        const int command_width = state.snapshot_active ? state.snapshot_width : framebuffer_width();
-                        const int command_height = state.snapshot_active ? state.snapshot_height : framebuffer_height();
-                        auto commands = draw_commands(*camera(), command_width, command_height);
-                        query_device().present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands,
-                                               state.snapshot_active ? state.snapshot_background : background_color(),
-                                               state.snapshot_active ? state.snapshot_samples : samples(),
-                                               settings.transparency.method, settings.transparency.layers);
-                        drawable_renderer_->prune();
-                    } catch (const std::logic_error &e) {
-                        LOG_N_TIMES(1, WARNING) << "sorted transparency fallback: " << e.what();
-                        portable = false;
-                    }
-                }
-                if (!portable) {
-                    LOG_N_TIMES(1, WARNING) << "sorted transparency fallback: depth peeling";
-                    warn_native_clipping();
-                    method = graphics::TransparencyMethod::peeling;
-                    native_transparency();
-                }
-            } else {
-                warn_native_clipping();
-                native_transparency();
-            }
-        } else {
-            const auto draw_native_legacy = [&]() {
-                // Preserve the pre-settings draw order exactly, including the
-                // active-shadow surface exclusion in model triangle drawables.
-                for (const auto m : models_) {
-                    if (!m->renderer()->is_visible())
-                        continue;
-                    std::size_t count = 0;
-                    for (auto d : m->renderer()->lines_drawables()) {
-                        if (d->is_visible()) {
-                            d->draw(camera());
-                            easy3d_debug_log_gl_error
-                            ++count;
-                        }
-                    }
-                    for (auto d : m->renderer()->points_drawables()) {
-                        if (d->is_visible())
-                            d->draw(camera());
-                        easy3d_debug_log_gl_error
-                    }
-                    if (count > 0) {
-                        glEnable(GL_POLYGON_OFFSET_FILL);
-                        glPolygonOffset(0.5f, -0.0001f);
-                    }
-                    for (auto d : m->renderer()->triangles_drawables()) {
-                        if (!d->is_visible())
-                            continue;
-                        if (active_shadow && std::find(active_shadow->surfaces().begin(), active_shadow->surfaces().end(),
-                                                       d.get()) != active_shadow->surfaces().end())
-                            continue;
-                        d->draw(camera());
-                        easy3d_debug_log_gl_error
-                    }
-                    if (count > 0)
-                        glDisable(GL_POLYGON_OFFSET_FILL);
-                }
-                for (auto d : drawables_) {
-                    if (d->is_visible())
-                        d->draw(camera());
-                }
-            };
-
-            bool portable = !active_shadow;
-            const auto supported = [&](const std::shared_ptr<Drawable> &d) {
-                if (!d)
-                    return false;
-                if (d->is_ao_enabled() && d->has_ao_texture()) {
-                    LOG_N_TIMES(1, WARNING) << "native drawable fallback: AO on '" << d->name() << "'";
-                    return false;
-                }
-                const Drawable &drawable = *d;
-                const bool result = typeid(drawable) == typeid(TrianglesDrawable) || typeid(drawable) == typeid(LinesDrawable) ||
-                                    typeid(drawable) == typeid(PointsDrawable) || typeid(drawable) == typeid(LinesDrawable2D);
-                if (!result)
-                    LOG_N_TIMES(1, WARNING) << "native drawable fallback: custom type '" << d->name() << "' ("
-                                            << typeid(drawable).name() << ")";
-                return result;
-            };
-            for (const auto &m : models_) {
-                if (!m->renderer()->is_visible())
-                    continue;
-                for (const auto &d : m->renderer()->triangles_drawables())
-                    portable = portable && supported(d);
-                for (const auto &d : m->renderer()->lines_drawables())
-                    portable = portable && supported(d);
-                for (const auto &d : m->renderer()->points_drawables())
-                    portable = portable && supported(d);
-            }
-            for (const auto &d : drawables_)
-                portable = portable && supported(d);
-
-            if (portable) {
-                try {
-                    GLint viewport[4];
-                    glGetIntegerv(GL_VIEWPORT, viewport);
-                    const int command_width = state.snapshot_active ? state.snapshot_width : framebuffer_width();
-                    const int command_height = state.snapshot_active ? state.snapshot_height : framebuffer_height();
-                    auto commands = draw_commands(*camera(), command_width, command_height);
-                    query_device().present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands,
-                                           state.snapshot_active ? state.snapshot_background : background_color(),
-                                           state.snapshot_active ? state.snapshot_samples : samples(),
-                                           graphics::TransparencyMethod::sorted, 4);
-                    drawable_renderer_->prune();
-                } catch (const std::logic_error &e) {
-                    LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
-                    portable = false;
-                }
-            }
-            if (!portable) {
-                warn_native_clipping();
-                draw_native_legacy();
-            }
-
-            if (active_shadow)
-                active_shadow->draw(active_shadow->surfaces());
         }
 
-#endif
+        if (!portable) {
+            warn_native_clipping();
+            if (effects_enabled) {
+                if (transparency_enabled)
+                    LOG_N_TIMES(1, WARNING) << "OpenGL native effects cannot be composed with the RenderSettings "
+                                               "transparency pass; rendering the effects without transparency";
+                if (settings.ambient_occlusion.enabled && settings.eye_dome_lighting)
+                    LOG_N_TIMES(1, WARNING) << "OpenGL cannot compose ambient occlusion with eye-dome lighting; "
+                                               "eye-dome lighting takes precedence";
+
+                Shadow *effect_shadow = nullptr;
+                const std::vector<TrianglesDrawable *> *effect_surfaces = nullptr;
+                std::vector<TrianglesDrawable *> settings_surfaces;
+                if (settings.shadow.enabled) {
+                    if (active_shadow && active_shadow != state.settings_shadow.get())
+                        LOG_N_TIMES(1, WARNING) << "RenderSettings shadow takes precedence over the legacy active shadow";
+                    settings_surfaces = visible_triangles();
+                    effect_shadow = prepare_settings_shadow(state, const_cast<Camera *>(camera()), settings.shadow);
+                    effect_surfaces = &settings_surfaces;
+                } else if (active_shadow) {
+                    effect_shadow = active_shadow;
+                    effect_surfaces = &active_shadow->surfaces();
+                }
+
+                EyeDomeLighting *edl = nullptr;
+                AmbientOcclusion *ao = nullptr;
+                if (settings.eye_dome_lighting) {
+                    if (!state.settings_edl)
+                        state.settings_edl.reset(new EyeDomeLighting(const_cast<Camera *>(camera())));
+                    edl = state.settings_edl.get();
+                    edl->begin();
+                } else if (settings.ambient_occlusion.enabled) {
+                    if (!state.settings_ao)
+                        state.settings_ao.reset(new AmbientOcclusion(const_cast<Camera *>(camera())));
+                    ao = state.settings_ao.get();
+                    ao->set_radius_ratio(settings.ambient_occlusion.radius_ratio);
+                    ao->set_bias(settings.ambient_occlusion.bias);
+                    ao->set_intensity(settings.ambient_occlusion.intensity);
+                    ao->begin(models_);
+                }
+
+                native_scene(settings.shadow.enabled, settings.shadow.enabled ? nullptr : effect_shadow);
+                if (effect_shadow && !effect_surfaces->empty())
+                    effect_shadow->draw(*effect_surfaces);
+                if (edl)
+                    edl->end();
+                else if (ao)
+                    ao->end();
+            } else if (transparency_enabled) {
+                graphics::TransparencyMethod method = settings.transparency.method;
+                if (method == graphics::TransparencyMethod::linked_lists && !opengl_linked_lists_available()) {
+                    LOG_N_TIMES(1, WARNING) << "OpenGL per-pixel linked lists require OpenGL 4.3; "
+                                               "falling back to depth peeling";
+                    method = graphics::TransparencyMethod::peeling;
+                }
+                // Every native transparency method bypasses the legacy shadow because
+                // native_scene() excludes it, so diagnose that once regardless of method.
+                if (active_shadow)
+                    LOG_N_TIMES(1, WARNING) << "the legacy active shadow cannot be combined with RenderSettings "
+                                               "transparency; ignoring the legacy shadow";
+                if (method == graphics::TransparencyMethod::sorted) {
+                    LOG_N_TIMES(1, WARNING) << "sorted transparency fallback: depth peeling";
+                    method = graphics::TransparencyMethod::peeling;
+                }
+                const unsigned layers = std::min(settings.transparency.layers,
+                                                  unsigned(std::numeric_limits<int>::max()));
+                native_scene(true, nullptr);
+                if (auto *transparency = prepare_settings_transparency(
+                        state, const_cast<Camera *>(camera()), method, layers))
+                    transparency->draw(visible_triangles());
+            } else {
+                // Preserve the exact legacy frame: exclude the shadow caster surfaces
+                // from the ordinary scene, then let Shadow::draw() render its own
+                // shadow map and composite.
+                native_scene(false, active_shadow);
+                if (active_shadow)
+                    active_shadow->draw(active_shadow->surfaces());
+            }
+        }
+
 
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
         ClippingPlane::instance()->draw(camera());
         easy3d_debug_log_gl_error
         draw_overlays(false);
     }
+    void Viewer::append_settings_effects(std::vector<graphics::DrawCommand> &commands,
+                                         const Camera &camera, int width, int height) const {
+        if (commands.empty())
+            return;
+        validate_render_settings(opengl_viewer_state(this).render_settings);
+        build_settings_effects(commands, camera, width, height, opengl_viewer_state(this).render_settings);
+    }
+
     namespace {
         struct QueryContext {
             GLFWwindow *previous;
@@ -3193,17 +3258,8 @@ namespace easy3d {
     }
 
     const std::vector<vec4> &Viewer::clipping_planes() const {
-        selection_planes_.clear();
-        const auto *clipping = ClippingPlane::instance();
-        if (clipping->is_enabled()) {
-            const auto n = clipping->normal(), c = clipping->center();
-            selection_planes_.push_back(vec4(-n, dot(n, c)));
-            if (clipping->cross_section())
-                selection_planes_.push_back(
-                    vec4(n, -dot(n, c) + clipping->cross_section_width() * clipping->scene_radius()));
-        } else
-            selection_planes_ = render_settings().clipping_planes;
-        selection_planes_ = graphics::normalize_clipping_planes(selection_planes_);
+        selection_planes_ = graphics::effective_clipping_planes(render_settings().clipping_planes,
+                                                               *ClippingPlane::instance());
         return selection_planes_;
     }
     void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
@@ -3342,6 +3398,15 @@ namespace easy3d {
         frame.height = h;
         std::vector<graphics::DrawCommand> scene_commands;
         const bool device_scene = device_query_commands(snapshot, w, h, false, scene_commands);
+        // capture() keeps the stable model/standalone IDs used by pick(). Querying
+        // sources would renumber them, so recover the drawable colors only when the
+        // command order is known to match the source order (non-MultiViewer hosts).
+        std::vector<DrawSource> scene_sources;
+        if (render_settings().transparency.enabled && !dynamic_cast<const MultiViewer *>(this))
+            draw_commands(snapshot, w, h, &scene_sources);
+        // Presentation transparency is a RenderSettings effect, so it must not
+        // alter the raw in-memory capture.
+        strip_settings_transparency(scene_commands, &scene_sources);
         auto color_commands = scene_commands;
         if (device_scene) {
             std::vector<graphics::DrawCommand> all_commands;

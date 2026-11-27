@@ -6,6 +6,7 @@
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
 #include <easy3d/renderer/backends/clipping.h>
+#include <easy3d/util/logging.h>
 
 #include <algorithm>
 #include <cmath>
@@ -408,6 +409,544 @@ void main() {
     out_id=uvec2(object_id,primitive);
 })";
 
+            // Device-private presentation shaders. Effects darken the resolved scene
+            // with premultiplied overlays, exactly like the Vulkan compositor, so the
+            // scene's IDs and depth attachment are never modified.
+            const char *effect_vertex_shader = R"(#version 150
+in vec3 position;
+in vec2 uv;
+uniform mat4 mvp;
+out vec2 uv_coord;
+void main() {
+    gl_Position = mvp * vec4(position, 1.0);
+    uv_coord = uv;
+})";
+
+            const char *texture_composite_fragment_shader = R"(#version 150
+uniform sampler2D image;
+in vec2 uv_coord;
+out vec4 out_color;
+void main() {
+    out_color = texture(image, vec2(uv_coord.x, 1.0 - uv_coord.y));
+})";
+
+            const char *shadow_depth_vertex_shader = R"(#version 150
+in vec3 position;
+uniform mat4 mvp;
+void main() {
+    vec4 h = mvp * vec4(position, 1.0);
+    gl_Position = vec4(2.0 * h.x - h.w, 2.0 * h.y - h.w, 2.0 * h.z - h.w, h.w);
+})";
+
+            const char *empty_fragment_shader = R"(#version 150
+out vec4 out_color;
+void main() { out_color = vec4(1.0); }
+)";
+
+            const char *shadow_fragment_shader = R"(#version 150
+uniform sampler2D scene_depth;
+uniform sampler2D shadow_map;
+uniform mat4 shadow_matrix;
+uniform vec4 effect;
+uniform vec2 resolution;
+in vec2 uv_coord;
+out vec4 out_color;
+const int SEARCH_TAPS = 32;
+const int FILTER_TAPS = 64;
+const float GOLDEN_ANGLE = 2.39996323;
+vec2 disc(int i, int count, float angle) {
+    float a = float(i) * GOLDEN_ANGLE + angle;
+    float radius = sqrt((float(i) + 0.5) / float(count));
+    return vec2(cos(a), sin(a)) * radius;
+}
+float pixel_angle() {
+    vec2 p = gl_FragCoord.xy;
+    return 6.2831853 * fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+float stored_depth(vec2 c) {
+    if (c.x < 0.0 || c.x > 1.0 || c.y < 0.0 || c.y > 1.0)
+        return 1.0;
+    return texture(shadow_map, c).r;
+}
+float texel_depth(ivec2 p) {
+    ivec2 size = textureSize(shadow_map, 0);
+    if (p.x < 0 || p.y < 0 || p.x >= size.x || p.y >= size.y)
+        return 1.0;
+    return texelFetch(shadow_map, p, 0).r;
+}
+float compare_filtered(vec2 c, float z) {
+    vec2 pos = c * vec2(textureSize(shadow_map, 0)) - 0.5;
+    vec2 base = floor(pos), f = pos - base;
+    ivec2 p = ivec2(base);
+    float s00 = texel_depth(p) < z ? 0.0 : 1.0;
+    float s10 = texel_depth(p + ivec2(1, 0)) < z ? 0.0 : 1.0;
+    float s01 = texel_depth(p + ivec2(0, 1)) < z ? 0.0 : 1.0;
+    float s11 = texel_depth(p + ivec2(1, 1)) < z ? 0.0 : 1.0;
+    return mix(mix(s00, s10, f.x), mix(s01, s11, f.x), f.y);
+}
+float hard_visibility(vec2 c, float z) {
+    vec2 o = 0.75 / vec2(textureSize(shadow_map, 0));
+    return 0.25 * (compare_filtered(c + vec2(-o.x, -o.y), z) +
+                   compare_filtered(c + vec2(o.x, -o.y), z) +
+                   compare_filtered(c + vec2(-o.x, o.y), z) +
+                   compare_filtered(c + vec2(o.x, o.y), z));
+}
+float clip_to_eye(float z) {
+    return effect.w * effect.z / (effect.w - z * (effect.w - effect.z));
+}
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution;
+    float depth = texture(scene_depth, uv).r;
+    if (depth >= 1.0) { out_color = vec4(0.0); return; }
+    vec4 clip = vec4(2.0 * uv.x - 1.0, 2.0 * uv.y - 1.0, 2.0 * depth - 1.0, 1.0);
+    vec4 q = shadow_matrix * clip;
+    if (abs(q.w) < 1e-8) { out_color = vec4(0.0); return; }
+    vec3 coord = q.xyz / q.w;
+    if (coord.x < 0.0 || coord.x > 1.0 || coord.y < 0.0 || coord.y > 1.0 ||
+        coord.z <= 0.0 || coord.z >= 1.0) { out_color = vec4(0.0); return; }
+    float darkness = clamp(effect.x, 0.0, 1.0), softness = max(effect.y, 0.0);
+    float visibility = 1.0;
+    if (softness > 0.0) {
+        float texel = 1.0 / float(textureSize(shadow_map, 0).x), angle = pixel_angle();
+        float eye = clip_to_eye(coord.z);
+        float search = max(texel, softness * (eye - effect.z) / max(eye, 1e-6));
+        float blockers = 0.0, blocker_depth = 0.0;
+        for (int i = 0; i < SEARCH_TAPS; ++i) {
+            float sample_z = stored_depth(coord.xy + disc(i, SEARCH_TAPS, angle) * search);
+            if (sample_z < coord.z - 0.005) { blocker_depth += sample_z; blockers += 1.0; }
+        }
+        if (blockers > 0.0) {
+            float blocker_eye = clip_to_eye(blocker_depth / blockers);
+            float radius = max(texel, softness * (eye - blocker_eye) / max(blocker_eye, 1e-6) *
+                                    effect.z / max(eye, 1e-6));
+            float lit = 0.0;
+            for (int i = 0; i < FILTER_TAPS; ++i)
+                lit += compare_filtered(coord.xy + disc(i, FILTER_TAPS, angle) * radius, coord.z - 0.005);
+            visibility = lit / float(FILTER_TAPS);
+        }
+    } else
+        visibility = hard_visibility(coord.xy, coord.z - 0.005);
+    visibility = (1.0 - darkness) + visibility * darkness;
+    out_color = vec4(0.0, 0.0, 0.0, 1.0 - visibility);
+})";
+
+            const char *ao_fragment_shader = R"(#version 150
+uniform sampler2D scene_depth;
+uniform mat4 projection, inverse_projection;
+uniform vec4 effect;
+uniform vec2 resolution;
+in vec2 uv_coord;
+out vec4 out_color;
+const int SLICES = 12, STEPS = 12;
+const float MIN_STEP_PIXELS = 1.5;
+float noise(vec2 p) { return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
+vec3 view_position(vec2 uv, float depth) {
+    vec4 p = inverse_projection * vec4(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    return p.xyz / p.w;
+}
+vec3 neighbor(vec2 c, vec3 center, out bool valid) {
+    float depth = texture(scene_depth, c).r;
+    valid = depth < 1.0;
+    return valid ? view_position(c, depth) : center;
+}
+vec3 surface_normal(vec2 uv, vec3 center, vec2 texel) {
+    bool vl, vr, vu, vd;
+    vec3 l = neighbor(uv - vec2(texel.x, 0.0), center, vl);
+    vec3 r = neighbor(uv + vec2(texel.x, 0.0), center, vr);
+    vec3 u = neighbor(uv + vec2(0.0, texel.y), center, vu);
+    vec3 d = neighbor(uv - vec2(0.0, texel.y), center, vd);
+    const float far_away = 1e30;
+    float dl = vl ? abs(l.z - center.z) : far_away, dr = vr ? abs(r.z - center.z) : far_away;
+    float du = vu ? abs(u.z - center.z) : far_away, dd = vd ? abs(d.z - center.z) : far_away;
+    vec3 n = cross(dl < dr ? center - l : r - center, du < dd ? u - center : center - d);
+    if (dot(n, n) < 1e-20) n = -normalize(center);
+    n = normalize(n);
+    return dot(n, center) > 0.0 ? -n : n;
+}
+float horizon(vec2 c, vec3 center, vec3 normal, float radius, float bias) {
+    if (c.x < 0.0 || c.x > 1.0 || c.y < 0.0 || c.y > 1.0)
+        return 0.0;
+    float depth = texture(scene_depth, c).r;
+    if (depth >= 1.0)
+        return 0.0;
+    vec3 delta = view_position(c, depth) - center;
+    float d2 = dot(delta, delta);
+    if (d2 >= radius * radius || d2 < 1e-10)
+        return 0.0;
+    float elevation = dot(delta, normal);
+    return elevation <= bias ? 0.0 : clamp(elevation / sqrt(d2), 0.0, 1.0);
+}
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution;
+    float depth = texture(scene_depth, uv).r;
+    if (depth >= 1.0) { out_color = vec4(1.0); return; }
+    vec2 size = vec2(textureSize(scene_depth, 0)), texel = 1.0 / size;
+    vec3 center = view_position(uv, depth), normal = surface_normal(uv, center, texel);
+    vec3 tangent = cross(normal, abs(normal.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0));
+    if (dot(tangent, tangent) < 1e-12) tangent = cross(normal, vec3(0.0, 0.0, 1.0));
+    tangent = normalize(tangent);
+    vec3 bitangent = cross(normal, tangent);
+    float radius = effect.x, bias = effect.y, jitter = noise(gl_FragCoord.xy);
+    vec4 center_clip = projection * vec4(center, 1.0);
+    if (center_clip.w <= 0.0) { out_color = vec4(1.0); return; }
+    vec2 center_uv = vec2(center_clip.x / center_clip.w * 0.5 + 0.5,
+                          center_clip.y / center_clip.w * 0.5 + 0.5);
+    float visibility = 0.0;
+    for (int slice = 0; slice < SLICES; ++slice) {
+        float phi = (float(slice) + jitter) * 6.28318530718 / float(SLICES);
+        vec3 omega = tangent * cos(phi) + bitangent * sin(phi);
+        vec4 edge_clip = projection * vec4(center + omega * radius, 1.0);
+        if (edge_clip.w <= 0.0) continue;
+        vec2 edge_uv = vec2(edge_clip.x / edge_clip.w * 0.5 + 0.5,
+                            edge_clip.y / edge_clip.w * 0.5 + 0.5);
+        vec2 span = (edge_uv - center_uv) * size;
+        float span_length = length(span);
+        if (span_length < 1.0) continue;
+        vec2 step_direction = span / span_length / size;
+        float step_stride = max(MIN_STEP_PIXELS, span_length / float(STEPS));
+        float hp = 0.0, hn = 0.0;
+        for (int step = 0; step < STEPS; ++step) {
+            float step_offset = (float(step) + 0.5) * step_stride;
+            if (step_offset > span_length) break;
+            hp = max(hp, horizon(uv + step_direction * step_offset, center, normal, radius, bias));
+            hn = max(hn, horizon(uv - step_direction * step_offset, center, normal, radius, bias));
+        }
+        visibility += 1.0 - 0.5 * (hp * hp + hn * hn);
+    }
+    out_color = vec4(clamp(visibility / float(SLICES), 0.0, 1.0));
+})";
+
+            const char *ao_blur_fragment_shader = R"(#version 150
+uniform sampler2D scene_depth, ao_raw;
+uniform mat4 inverse_projection;
+uniform vec4 effect;
+uniform vec2 resolution;
+in vec2 uv_coord;
+out vec4 out_color;
+const int TAPS = 4;
+const float SPATIAL_SIGMA = 2.0;
+vec3 view_position(vec2 uv, float depth) {
+    vec4 p = inverse_projection * vec4(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    return p.xyz / p.w;
+}
+vec3 neighbor(vec2 c, vec3 center, out bool valid) {
+    float depth = texture(scene_depth, c).r;
+    valid = depth < 1.0;
+    return valid ? view_position(c, depth) : center;
+}
+vec3 surface_normal(vec2 uv, vec3 center, vec2 texel) {
+    bool vl, vr, vu, vd;
+    vec3 l = neighbor(uv - vec2(texel.x, 0.0), center, vl);
+    vec3 r = neighbor(uv + vec2(texel.x, 0.0), center, vr);
+    vec3 u = neighbor(uv + vec2(0.0, texel.y), center, vu);
+    vec3 d = neighbor(uv - vec2(0.0, texel.y), center, vd);
+    const float far_away = 1e30;
+    float dl = vl ? abs(l.z - center.z) : far_away, dr = vr ? abs(r.z - center.z) : far_away;
+    float du = vu ? abs(u.z - center.z) : far_away, dd = vd ? abs(d.z - center.z) : far_away;
+    vec3 n = cross(dl < dr ? center - l : r - center, du < dd ? u - center : center - d);
+    if (dot(n, n) < 1e-20) n = -normalize(center);
+    n = normalize(n);
+    return dot(n, center) > 0.0 ? -n : n;
+}
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution;
+    float depth = texture(scene_depth, uv).r;
+    if (depth >= 1.0) { out_color = vec4(1.0); return; }
+    vec2 texel = 1.0 / vec2(textureSize(scene_depth, 0));
+    vec3 center = view_position(uv, depth), normal = surface_normal(uv, center, texel);
+    float tolerance = max(0.05 * effect.x, 1e-6), sum = 0.0, weights = 0.0;
+    for (int y = 0; y < TAPS; ++y) {
+        for (int x = 0; x < TAPS; ++x) {
+            vec2 offset = (vec2(float(x), float(y)) + 0.5 - 0.5 * float(TAPS)) * 1.5;
+            vec2 coord = uv + offset * texel;
+            float nd = texture(scene_depth, coord).r;
+            if (nd >= 1.0) continue;
+            vec3 p = view_position(coord, nd);
+            float w = exp(-dot(offset, offset) / (SPATIAL_SIGMA * SPATIAL_SIGMA)) *
+                      exp(-abs(dot(p - center, normal)) / tolerance);
+            sum += texture(ao_raw, coord).r * w;
+            weights += w;
+        }
+    }
+    float ao = weights > 0.0 ? sum / weights : 1.0;
+    out_color = vec4(clamp(mix(1.0, ao, effect.z), 0.0, 1.0));
+})";
+
+            const char *darkness_composite_fragment_shader = R"(#version 150
+uniform sampler2D factor;
+uniform vec2 resolution;
+in vec2 uv_coord;
+out vec4 out_color;
+void main() {
+    float value = clamp(texture(factor, gl_FragCoord.xy / resolution).r, 0.0, 1.0);
+    out_color = vec4(0.0, 0.0, 0.0, 1.0 - value);
+})";
+
+            const char *edl_fragment_shader = R"(#version 150
+uniform sampler2D scene_depth;
+uniform vec4 effect;
+uniform vec2 resolution;
+in vec2 uv_coord;
+out vec4 out_color;
+float transform(float z, float zn, float zf, float scene) {
+    float ndc = (z - 0.5) * 2.0;
+    float eye = -2.0 * zf * zn / ((zf - zn) * (ndc - (zf + zn) / (zf - zn)));
+    return 1.0 - (eye - zn) / scene;
+}
+float response(float t, float zj, float divisor) { return max(0.0, t - zj) / divisor; }
+float shade(vec2 uv, float step_px, float divisor, float zn, float zf, float scene, vec2 texel) {
+    float t = transform(texture(scene_depth, uv).r, zn, zf, scene), total = 0.0;
+    for (int c = 0; c < 8; ++c) {
+        float a = 6.28318530718 * float(c) / 8.0;
+        vec2 n = vec2(cos(a), sin(a));
+        total += response(t, transform(texture(scene_depth, uv + step_px * texel * n).r, zn, zf, scene), divisor);
+    }
+    return exp(-5.0 * 20.0 * total);
+}
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution;
+    vec2 texel = 1.0 / vec2(textureSize(scene_depth, 0));
+    float lum = clamp(mix(shade(uv, 1.0, 1.0, effect.x, effect.y, effect.z, texel),
+                          shade(uv, 4.0, 2.0, effect.x, effect.y, effect.z, texel), 0.3), 0.0, 1.0);
+    out_color = vec4(0.0, 0.0, 0.0, 1.0 - lum);
+})";
+
+            const char *oit_fragment_shader = R"(#version 150
+in vec4 tint;
+in vec2 texcoord;
+in vec3 world_normal, world_position;
+in vec4 highlight_tint;
+uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform vec3 eye, light;
+uniform vec4 ambient, specular, back_color, color;
+uniform float shininess;
+uniform sampler2D image;
+out vec4 out_color;
+out vec4 out_count;
+vec4 shade_fragment() {
+    vec4 result = tint * color * texture(image, texcoord);
+    if (lighting && dot(world_normal, world_normal) > 0.0) {
+        vec3 n = normalize(world_normal);
+        if (!material_lighting)
+            result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
+        else {
+            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
+            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            float df = dot(l, n);
+            df = two_sides ? abs(df) : max(df, 0.0);
+            float sf = 0.0;
+            if (df > 0.0) {
+                sf = dot(normalize(l + view_dir), n);
+                sf = two_sides ? abs(sf) : max(sf, 0.0);
+                sf = pow(sf, shininess);
+            }
+            result.rgb = result.rgb * df + specular.rgb * sf + ambient.rgb;
+        }
+    }
+    if (!ignore_highlight)
+        result.rgb = mix(result.rgb, highlight_tint.rgb, highlight_tint.a);
+    return result;
+}
+void main() {
+    vec4 c = shade_fragment();
+    float alpha = clamp(c.a, 0.0, 1.0);
+    out_color = vec4(c.rgb * alpha, alpha);
+    out_count = vec4(1.0);
+})";
+
+            const char *oit_peel_fragment_shader = R"(#version 150
+in vec4 tint;
+in vec2 texcoord;
+in vec3 world_normal, world_position;
+in vec4 highlight_tint;
+uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform vec3 eye, light;
+uniform vec4 ambient, specular, back_color, color;
+uniform float shininess;
+uniform sampler2D image, previous_depth;
+out vec4 out_color;
+vec4 shade_fragment() {
+    vec4 result = tint * color * texture(image, texcoord);
+    if (lighting && dot(world_normal, world_normal) > 0.0) {
+        vec3 n = normalize(world_normal);
+        if (!material_lighting)
+            result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
+        else {
+            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
+            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            float df = dot(l, n);
+            df = two_sides ? abs(df) : max(df, 0.0);
+            float sf = 0.0;
+            if (df > 0.0) {
+                sf = dot(normalize(l + view_dir), n);
+                sf = two_sides ? abs(sf) : max(sf, 0.0);
+                sf = pow(sf, shininess);
+            }
+            result.rgb = result.rgb * df + specular.rgb * sf + ambient.rgb;
+        }
+    }
+    if (!ignore_highlight)
+        result.rgb = mix(result.rgb, highlight_tint.rgb, highlight_tint.a);
+    return result;
+}
+void main() {
+    vec2 previous_uv = gl_FragCoord.xy / vec2(textureSize(previous_depth, 0));
+    if (gl_FragCoord.z <= texture(previous_depth, previous_uv).r + 0.000001)
+        discard;
+    gl_FragDepth = gl_FragCoord.z;
+    vec4 c = shade_fragment();
+    float alpha = clamp(c.a, 0.0, 1.0);
+    out_color = vec4(c.rgb * alpha, alpha);
+})";
+
+            const char *oit_composite_fragment_shader = R"(#version 150
+uniform sampler2D accumulated, fragment_count;
+uniform bool use_count;
+in vec2 uv_coord;
+out vec4 out_color;
+void main() {
+    vec2 uv = vec2(uv_coord.x, 1.0 - uv_coord.y);
+    vec4 result = texture(accumulated, uv);
+    if (use_count) {
+        float n = texture(fragment_count, uv).r;
+        if (n <= 0.0) { out_color = vec4(0.0); return; }
+        vec3 average = result.a > 0.0 ? result.rgb / result.a : vec3(0.0);
+        float alpha = clamp(result.a / n, 0.0, 1.0);
+        float transmittance = pow(max(0.0, 1.0 - alpha), n);
+        result = vec4(average * (1.0 - transmittance), 1.0 - transmittance);
+    }
+    out_color = result;
+})";
+
+            const char *linked_vertex_shader = R"(#version 430
+in vec3 position;
+in vec4 color;
+in vec2 uv;
+in vec3 normal;
+in vec4 highlight;
+uniform mat4 mvp, model;
+uniform mat3 normal_matrix;
+out vec4 tint;
+out vec2 texcoord;
+out vec3 world_normal, world_position;
+out vec4 highlight_tint;
+void main() {
+    gl_Position = mvp * vec4(position, 1.0);
+    tint = color;
+    texcoord = uv;
+    world_normal = normal_matrix * normal;
+    world_position = (model * vec4(position, 1.0)).xyz;
+    highlight_tint = highlight;
+})";
+
+            const char *linked_quad_vertex_shader = R"(#version 430
+in vec3 position;
+in vec2 uv;
+uniform mat4 mvp;
+out vec2 uv_coord;
+void main() {
+    gl_Position = mvp * vec4(position, 1.0);
+    uv_coord = uv;
+})";
+
+            const char *linked_build_fragment_shader = R"(#version 430
+struct FragmentNode { vec4 color; float depth; int next; float pad0; float pad1; };
+layout(std430, binding = 0) buffer HeadBuffer { int head[]; };
+layout(std430, binding = 1) buffer NodeBuffer { FragmentNode nodes[]; };
+layout(binding = 0) uniform atomic_uint node_counter;
+uniform uint max_nodes, viewport_width;
+in vec4 tint;
+in vec2 texcoord;
+in vec3 world_normal, world_position;
+in vec4 highlight_tint;
+uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform vec3 eye, light;
+uniform vec4 ambient, specular, back_color, color;
+uniform float shininess;
+uniform sampler2D image;
+out vec4 out_color;
+vec4 shade_fragment() {
+    vec4 result = tint * color * texture(image, texcoord);
+    if (lighting && dot(world_normal, world_normal) > 0.0) {
+        vec3 n = normalize(world_normal);
+        if (!material_lighting)
+            result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
+        else {
+            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
+            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            float df = dot(l, n);
+            df = two_sides ? abs(df) : max(df, 0.0);
+            float sf = 0.0;
+            if (df > 0.0) {
+                sf = dot(normalize(l + view_dir), n);
+                sf = two_sides ? abs(sf) : max(sf, 0.0);
+                sf = pow(sf, shininess);
+            }
+            result.rgb = result.rgb * df + specular.rgb * sf + ambient.rgb;
+        }
+    }
+    if (!ignore_highlight)
+        result.rgb = mix(result.rgb, highlight_tint.rgb, highlight_tint.a);
+    return result;
+}
+void main() {
+    out_color = vec4(0.0);
+    uint index = atomicCounterIncrement(node_counter);
+    if (index >= max_nodes)
+        return;
+    vec4 c = shade_fragment();
+    float alpha = clamp(c.a, 0.0, 1.0);
+    uint pixel = uint(gl_FragCoord.y) * viewport_width + uint(gl_FragCoord.x);
+    nodes[index].color = vec4(c.rgb * alpha, alpha);
+    nodes[index].depth = gl_FragCoord.z;
+    int old = head[pixel];
+    for (;;) {
+        nodes[index].next = old;
+        int previous = atomicCompSwap(head[pixel], old, int(index));
+        if (previous == old) break;
+        old = previous;
+    }
+})";
+
+            const char *linked_resolve_fragment_shader = R"(#version 430
+#define MAX_FRAGMENTS 64
+struct FragmentNode { vec4 color; float depth; int next; float pad0; float pad1; };
+layout(std430, binding = 0) buffer HeadBuffer { int head[]; };
+layout(std430, binding = 1) buffer NodeBuffer { FragmentNode nodes[]; };
+uniform uint viewport_width;
+in vec2 uv_coord;
+out vec4 out_color;
+void main() {
+    uint pixel = uint(gl_FragCoord.y) * viewport_width + uint(gl_FragCoord.x);
+    vec4 colors[MAX_FRAGMENTS];
+    float depths[MAX_FRAGMENTS];
+    int count = 0;
+    for (int i = head[pixel]; i != -1 && count < MAX_FRAGMENTS; i = nodes[i].next) {
+        colors[count] = nodes[i].color;
+        depths[count] = nodes[i].depth;
+        ++count;
+    }
+    if (count == 0) { out_color = vec4(0.0); return; }
+    for (int i = 1; i < count; ++i) {
+        vec4 c = colors[i];
+        float d = depths[i];
+        int j = i - 1;
+        while (j >= 0 && depths[j] > d) {
+            colors[j + 1] = colors[j];
+            depths[j + 1] = depths[j];
+            --j;
+        }
+        colors[j + 1] = c;
+        depths[j + 1] = d;
+    }
+    vec4 accum = vec4(0.0);
+    for (int i = 0; i < count; ++i) {
+        accum.rgb += colors[i].rgb * (1.0 - accum.a);
+        accum.a += colors[i].a * (1.0 - accum.a);
+    }
+    out_color = accum;
+})";
+
             GLuint compile_shader(GLenum type, const char *source) {
                 std::string portable_source(source);
                 size_t cursor = 0;
@@ -481,6 +1020,47 @@ void main() {
                         glGetProgramInfoLog(program, length, nullptr, &log[0]);
                     glDeleteProgram(program);
                     throw std::runtime_error("OpenGL RenderDevice shader linking failed: " + log);
+                }
+                return program;
+            }
+
+            GLuint create_effect_program(const char *vertex, const char *fragment, bool geometry, bool count = false) {
+                const GLuint vertex_shader_id = compile_shader(GL_VERTEX_SHADER, vertex);
+                GLuint fragment_shader_id = 0;
+                try {
+                    fragment_shader_id = compile_shader(GL_FRAGMENT_SHADER, fragment);
+                } catch (...) {
+                    glDeleteShader(vertex_shader_id);
+                    throw;
+                }
+                const GLuint program = glCreateProgram();
+                glAttachShader(program, vertex_shader_id);
+                glAttachShader(program, fragment_shader_id);
+                if (geometry) {
+                    const char *attributes[] = {"position", "color", "uv", "normal", "highlight"};
+                    for (unsigned i = 0; i < 5; ++i)
+                        glBindAttribLocation(program, i, attributes[i]);
+                } else {
+                    // Effect quads reuse Geometry's attribute layout: position=0, uv=2.
+                    glBindAttribLocation(program, 0, "position");
+                    glBindAttribLocation(program, 2, "uv");
+                }
+                glBindFragDataLocation(program, 0, "out_color");
+                if (count)
+                    glBindFragDataLocation(program, 1, "out_count");
+                glLinkProgram(program);
+                glDeleteShader(vertex_shader_id);
+                glDeleteShader(fragment_shader_id);
+                GLint linked = GL_FALSE;
+                glGetProgramiv(program, GL_LINK_STATUS, &linked);
+                if (!linked) {
+                    GLint length = 0;
+                    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+                    std::string log(length > 1 ? size_t(length) : 1, '\0');
+                    if (length > 1)
+                        glGetProgramInfoLog(program, length, nullptr, &log[0]);
+                    glDeleteProgram(program);
+                    throw std::runtime_error("OpenGL RenderDevice effect shader linking failed: " + log);
                 }
                 return program;
             }
@@ -859,6 +1439,116 @@ void main() {
                 std::unique_ptr<FramebufferObject> color_, scene_, output_;
             };
 
+            // Private effect scratch targets. They are reallocated only when the
+            // frame shape or an explicit effect parameter changes, and never appear
+            // in the public RenderDevice API.
+            class EffectResources {
+            public:
+                std::unique_ptr<FramebufferObject> shadow, ao_raw, ao_blur, average, accumulate;
+                std::unique_ptr<FramebufferObject> peel[2], linked_build;
+                GLuint head = 0, nodes = 0, counter = 0;
+                uint32_t width = 0, height = 0, layers = 0;
+                uint32_t shadow_width = 0, shadow_height = 0;
+                unsigned shadow_size = 0, shadow_samples = 0;
+                bool shadow_soft = false;
+
+                ~EffectResources() {
+                    if (head) glDeleteBuffers(1, &head);
+                    if (nodes) glDeleteBuffers(1, &nodes);
+                    if (counter) glDeleteBuffers(1, &counter);
+                }
+
+                void reset_shadow(uint32_t frame_width, uint32_t frame_height, unsigned size,
+                                  bool soft, unsigned samples) {
+                    if (shadow && shadow_width == frame_width && shadow_height == frame_height &&
+                        shadow_size == size && shadow_soft == soft && shadow_samples == samples)
+                        return;
+                    shadow.reset(new FramebufferObject(int(size), int(size), 0));
+                    if (!shadow->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR) || !shadow->is_valid())
+                        throw std::runtime_error("cannot allocate OpenGL RenderDevice shadow map");
+                    shadow->deactivate_draw_buffers();
+                    shadow_width = frame_width;
+                    shadow_height = frame_height;
+                    shadow_size = size;
+                    shadow_soft = soft;
+                    shadow_samples = samples;
+                }
+
+                void reset_ao(uint32_t w, uint32_t h) {
+                    if (ao_raw && ao_raw->width() == int(w) && ao_raw->height() == int(h) &&
+                        ao_blur && ao_blur->width() == int(w) && ao_blur->height() == int(h))
+                        return;
+                    ao_raw.reset(new FramebufferObject(int(w), int(h), 0));
+                    ao_blur.reset(new FramebufferObject(int(w), int(h), 0));
+                    if (!ao_raw->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR) || !ao_raw->is_valid() ||
+                        !ao_blur->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_LINEAR) || !ao_blur->is_valid())
+                        throw std::runtime_error("cannot allocate OpenGL RenderDevice ambient-occlusion targets");
+                }
+
+                void reset_average(uint32_t w, uint32_t h) {
+                    if (average && average->width() == int(w) && average->height() == int(h))
+                        return;
+                    average.reset(new FramebufferObject(int(w), int(h), 0));
+                    if (!average->add_color_texture(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST) ||
+                        !average->add_color_texture(GL_R32F, GL_RED, GL_FLOAT, GL_NEAREST) || !average->is_valid())
+                        throw std::runtime_error("cannot allocate OpenGL RenderDevice average transparency target");
+                    average->activate_draw_buffers(0, 1);
+                }
+
+                void reset_peel(uint32_t w, uint32_t h) {
+                    if (peel[0] && peel[0]->width() == int(w) && peel[0]->height() == int(h) &&
+                        peel[1] && peel[1]->height() == int(h))
+                        return;
+                    for (int i = 0; i < 2; ++i) {
+                        peel[i].reset(new FramebufferObject(int(w), int(h), 0));
+                        if (!peel[i]->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST) ||
+                            !peel[i]->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_NEAREST) || !peel[i]->is_valid())
+                            throw std::runtime_error("cannot allocate OpenGL RenderDevice depth-peeling targets");
+                    }
+                }
+
+                void reset_accumulate(uint32_t w, uint32_t h) {
+                    if (accumulate && accumulate->width() == int(w) && accumulate->height() == int(h))
+                        return;
+                    accumulate.reset(new FramebufferObject(int(w), int(h), 0));
+                    if (!accumulate->add_color_texture(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST) ||
+                        !accumulate->is_valid())
+                        throw std::runtime_error("cannot allocate OpenGL RenderDevice transparency target");
+                }
+
+                void reset_linked(uint32_t w, uint32_t h, unsigned max_fragments) {
+                    const size_t pixels = size_t(w) * h;
+                    const size_t node_count = pixels * std::max(1u, max_fragments);
+                    if (head && width == w && height == h && layers == max_fragments)
+                        return;
+                    if (head) glDeleteBuffers(1, &head);
+                    if (nodes) glDeleteBuffers(1, &nodes);
+                    if (counter) glDeleteBuffers(1, &counter);
+                    width = w;
+                    height = h;
+                    layers = max_fragments;
+                    glGenBuffers(1, &head);
+                    glBindBuffer(GL_SHADER_STORAGE_BUFFER, head);
+                    glBufferData(GL_SHADER_STORAGE_BUFFER, GLsizeiptr(pixels * sizeof(int)), nullptr, GL_DYNAMIC_DRAW);
+                    glGenBuffers(1, &nodes);
+                    glBindBuffer(GL_SHADER_STORAGE_BUFFER, nodes);
+                    glBufferData(GL_SHADER_STORAGE_BUFFER, GLsizeiptr(node_count * 32), nullptr, GL_DYNAMIC_DRAW);
+                    glGenBuffers(1, &counter);
+                    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, counter);
+                    glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(uint32_t), nullptr, GL_DYNAMIC_DRAW);
+                    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+                    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+                    if (!linked_build || linked_build->width() != int(w) || linked_build->height() != int(h)) {
+                        linked_build.reset(new FramebufferObject(int(w), int(h), 0));
+                        if (!linked_build->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST) ||
+                            !linked_build->add_depth_buffer(GL_DEPTH_COMPONENT32F) || !linked_build->is_valid())
+                            throw std::runtime_error("cannot allocate OpenGL RenderDevice linked-list target");
+                    }
+                }
+
+                uint32_t node_count() const { return width * height * std::max(1u, layers); }
+            };
+
             bool finite(const vec3 &v) {
                 for (int i = 0; i < 3; ++i)
                     if (!std::isfinite(v[i]))
@@ -928,19 +1618,66 @@ void main() {
             mutable unsigned sample_mask = 0;
             mutable bool sample_mask_ready = false;
             GLuint program = 0, point_program = 0, line_program = 0, wide_line_program = 0;
+            GLuint texture_program = 0, shadow_depth_program = 0, shadow_program = 0;
+            GLuint ao_program = 0, ao_blur_program = 0, darkness_program = 0, edl_program = 0;
+            GLuint oit_program = 0, oit_peel_program = 0, oit_composite_program = 0;
+            GLuint linked_program = 0, linked_resolve_program = 0;
             ResourceCache resources;
             FrameTarget target;
+            EffectResources effects;
             opengl::OverlayRenderer overlays;
+            TransparencyMethod transparency = TransparencyMethod::sorted;
+            unsigned peel_layers = 4;
+            std::uint32_t dropped_fragments = 0;
+            int gl_major = 0, gl_minor = 0;
 
             ~Impl() {
-                if (point_program)
-                    glDeleteProgram(point_program);
-                if (line_program)
-                    glDeleteProgram(line_program);
-                if (wide_line_program)
-                    glDeleteProgram(wide_line_program);
-                if (program)
-                    glDeleteProgram(program);
+                const GLuint programs[] = {point_program, line_program, wide_line_program, program,
+                                           texture_program, shadow_depth_program, shadow_program, ao_program,
+                                           ao_blur_program, darkness_program, edl_program, oit_program,
+                                           oit_peel_program, oit_composite_program, linked_program,
+                                           linked_resolve_program};
+                for (GLuint p : programs)
+                    if (p)
+                        glDeleteProgram(p);
+            }
+
+            bool linked_lists_supported() const {
+                return gl_major > 4 || (gl_major == 4 && gl_minor >= 3);
+            }
+
+            void ensure_effect_programs(bool linked = false) {
+                if (!texture_program)
+                    texture_program = create_effect_program(effect_vertex_shader, texture_composite_fragment_shader,
+                                                            false);
+                if (!shadow_depth_program)
+                    shadow_depth_program = create_effect_program(shadow_depth_vertex_shader, empty_fragment_shader,
+                                                                 false);
+                if (!shadow_program)
+                    shadow_program = create_effect_program(effect_vertex_shader, shadow_fragment_shader, false);
+                if (!ao_program)
+                    ao_program = create_effect_program(effect_vertex_shader, ao_fragment_shader, false);
+                if (!ao_blur_program)
+                    ao_blur_program = create_effect_program(effect_vertex_shader, ao_blur_fragment_shader, false);
+                if (!darkness_program)
+                    darkness_program = create_effect_program(effect_vertex_shader, darkness_composite_fragment_shader,
+                                                             false);
+                if (!edl_program)
+                    edl_program = create_effect_program(effect_vertex_shader, edl_fragment_shader, false);
+                if (!oit_program)
+                    oit_program = create_effect_program(vertex_shader, oit_fragment_shader, true, true);
+                if (!oit_peel_program)
+                    oit_peel_program = create_effect_program(vertex_shader, oit_peel_fragment_shader, true);
+                if (!oit_composite_program)
+                    oit_composite_program = create_effect_program(effect_vertex_shader, oit_composite_fragment_shader,
+                                                                  false);
+                if (linked && linked_lists_supported()) {
+                    if (!linked_program)
+                        linked_program = create_effect_program(linked_vertex_shader, linked_build_fragment_shader, true);
+                    if (!linked_resolve_program)
+                        linked_resolve_program = create_effect_program(linked_quad_vertex_shader,
+                                                                      linked_resolve_fragment_shader, false);
+                }
             }
 
             void require_context() {
@@ -961,9 +1698,16 @@ void main() {
                 glGetIntegerv(GL_MAX_VIEWPORT_DIMS, viewport);
                 if (int(width) > viewport[0] || int(height) > viewport[1])
                     reject("render target exceeds OpenGL viewport limits");
-                if (transparency != TransparencyMethod::sorted)
-                    reject("this OpenGL RenderDevice increment supports sorted transparency only");
-                if (!(capabilities() & samples))
+                switch (transparency) {
+                    case TransparencyMethod::sorted:
+                    case TransparencyMethod::average:
+                    case TransparencyMethod::peeling:
+                    case TransparencyMethod::linked_lists:
+                        break;
+                    default:
+                        reject("unknown transparency method");
+                }
+                if (!samples || (samples & (samples - 1)) || !(capabilities() & samples))
                     reject("unsupported OpenGL MSAA sample count");
             }
 
@@ -984,16 +1728,43 @@ void main() {
                 if (d.model_view(3, 0) != 0 || d.model_view(3, 1) != 0 || d.model_view(3, 2) != 0 ||
                     d.model_view(3, 3) != 1)
                     reject("impostor view matrix must be affine");
-                if (d.color.w < 0 || d.color.w > 1)
-                    reject("draw alpha must be in [0,1]");
+                if (d.transparent && (d.color.w < 0 || d.color.w > 1))
+                    reject("transparent draw alpha must be in [0,1]");
                 if (d.overlay_depth_test && !d.overlay)
                     reject("scene-depth annotation requires overlay=true");
                 if (d.overlay_independent_depth && (!d.overlay || d.overlay_depth_test))
                     reject("independent-depth HUD requires overlay=true and excludes scene-depth testing");
-                if (d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow)
-                    reject("full-screen depth/effect overlays are not supported by this OpenGL RenderDevice increment");
-                if (d.shadow_caster || d.shadow_background)
-                    reject("shadow commands are not supported by this OpenGL RenderDevice increment");
+                const bool depth_effect = d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow;
+                if (depth_effect &&
+                    (!d.overlay || d.overlay_depth_test || d.overlay_independent_depth || d.texture))
+                    reject("full-screen depth effects require a flat overlay without an image texture");
+                if (d.eye_dome_lighting &&
+                    (!std::isfinite(d.color.x) || !std::isfinite(d.color.y) || !std::isfinite(d.color.z) ||
+                     d.color.x <= 0 || d.color.y <= d.color.x || d.color.z <= 0))
+                    reject("eye-dome lighting requires a positive near/far/scene range");
+                if (d.ambient_occlusion &&
+                    (!std::isfinite(d.color.x) || d.color.x <= 0 || !std::isfinite(d.color.y) || d.color.y < 0 ||
+                     !std::isfinite(d.color.z) || d.color.z < 0 || d.color.z > 1 || !finite(d.projection)))
+                    reject("ambient occlusion requires radius, bias, intensity, and a finite projection");
+                if (d.shadow &&
+                    (!std::isfinite(d.color.x) || d.color.x < 0 || d.color.x > 1 ||
+                     !std::isfinite(d.color.y) || d.color.y < 0 ||
+                     !std::isfinite(d.color.z) || !std::isfinite(d.color.w) ||
+                     d.color.z <= 0 || d.color.w <= d.color.z))
+                    reject("shadow requires darkness in [0,1], non-negative softness, and a light near/far range");
+                if ((d.shadow || d.shadow_caster || d.shadow_background) &&
+                    (!d.shadow_map_size || (d.shadow_map_size & (d.shadow_map_size - 1))))
+                    reject("shadow map size must be a nonzero power of two");
+                if ((d.shadow || d.shadow_caster || d.shadow_background)) {
+                    GLint max_size = 0;
+                    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_size);
+                    if (d.shadow_map_size > unsigned(std::max(0, max_size)))
+                        reject("shadow map size exceeds the OpenGL texture limit");
+                }
+                if ((d.shadow_caster || d.shadow_background) && d.geometry->topology() != Topology::triangles)
+                    reject("shadow casters and receivers require triangle geometry");
+                if (d.shadow_background && (d.overlay || d.object_id != UINT32_MAX))
+                    reject("shadow background requires a scene draw with the background ID");
                 // Analytic point/line draws carry clipping through their fragment shaders
                 // (see the point/line impostor programs below); plain points and lines clip
                 // geometrically through the shared CPU path in prepare().
@@ -1025,8 +1796,18 @@ void main() {
                      (d.line_style == LineStyle::plain && !d.line_screen_space_width &&
                       (!std::isfinite(d.line_radius) || d.line_radius <= 0))))
                     reject("line radius must be positive and finite");
-                if (!d.overlay && d.object_id == UINT32_MAX)
+                if (!d.overlay && !d.shadow_background && d.object_id == UINT32_MAX)
                     reject("UINT32_MAX is reserved for the background object ID");
+            }
+
+            bool float_blending_supported() const {
+                // Blending to 32-bit float attachments is core from OpenGL 4.4. On
+                // earlier contexts it requires an advertised extension; core
+                // floating-point color buffers alone are not sufficient.
+                return glewIsSupported("GL_ARB_color_buffer_float") ||
+                       glewIsSupported("GL_EXT_color_buffer_float") ||
+                       glewIsSupported("GL_EXT_float_blend") ||
+                       gl_major > 4 || (gl_major == 4 && gl_minor >= 4);
             }
 
             unsigned capabilities() {
@@ -1133,7 +1914,11 @@ void main() {
                 glUniformMatrix4fv(location("mvp"), 1, GL_FALSE, static_cast<const float *>(d.model_view_projection));
                 glUniformMatrix4fv(location("model"), 1, GL_FALSE, static_cast<const float *>(d.model));
                 glUniformMatrix3fv(location("normal_matrix"), 1, GL_FALSE, static_cast<const float *>(d.normal_matrix));
-                glUniform4fv(location(p == program ? "color" : "tint"), 1, d.color.data());
+                // Scene programs name the material color `color`; impostor programs
+                // name the per-vertex tint `tint`. OIT programs use both. Uniform
+                // locations that do not exist are ignored by OpenGL.
+                glUniform4fv(location("color"), 1, d.color.data());
+                glUniform4fv(location("tint"), 1, d.color.data());
                 glUniform3fv(location("eye"), 1, d.eye.data());
                 glUniform3fv(location("light"), 1, d.light.data());
                 glUniform4fv(location("ambient"), 1, d.ambient.data());
@@ -1277,8 +2062,13 @@ void main() {
             void draw_overlays(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height) {
                 std::vector<DrawCommand> overlays;
                 for (const auto &d : commands) {
-                    if (d.overlay)
-                        overlays.push_back(d);
+                    if (!d.overlay)
+                        continue;
+                    // Depth effects are composed by the device into the resolved color
+                    // target; they must not be drawn again by the legacy overlay encoder.
+                    if (d.shadow || d.ambient_occlusion || d.eye_dome_lighting || d.scene_depth_texture)
+                        continue;
+                    overlays.push_back(d);
                 }
                 auto &output = target.color();
                 output.bind();
@@ -1287,16 +2077,412 @@ void main() {
                 this->overlays.draw(false, int(width), int(height), ivec4(0), {});
             }
 
+            DrawCommand fullscreen_quad(uint32_t width, uint32_t height) {
+                static std::shared_ptr<Geometry> geometry;
+                if (!geometry) {
+                    std::vector<Vertex> vertices(6);
+                    const vec2 points[] = {vec2(0, 0), vec2(1, 0), vec2(1, 1),
+                                           vec2(0, 0), vec2(1, 1), vec2(0, 1)};
+                    for (unsigned i = 0; i < 6; ++i) {
+                        vertices[i].position = vec3(points[i], 0);
+                        vertices[i].texcoord = points[i];
+                    }
+                    geometry = std::make_shared<Geometry>(std::move(vertices));
+                }
+                DrawCommand result;
+                result.geometry = geometry;
+                // The quad is normalized to [0, 1], so it needs a normalized screen
+                // projection. graphics::screen_space_projection() maps pixel coordinates
+                // and would cover only one pixel of this quad.
+                mat4 projection = mat4::identity();
+                projection(0, 0) = 2.0f;
+                projection(1, 1) = -2.0f;
+                projection(0, 3) = -1.0f;
+                projection(1, 3) = 1.0f;
+                result.model_view_projection = projection;
+                return result;
+            }
+
+            void bind_2d(GLenum unit, GLuint texture) {
+                glActiveTexture(unit);
+                glBindTexture(GL_TEXTURE_2D, texture);
+                glActiveTexture(GL_TEXTURE0);
+            }
+
+            void set_resolution(GLuint program, uint32_t width, uint32_t height) {
+                glUniform2f(glGetUniformLocation(program, "resolution"), float(width), float(height));
+            }
+
+            void draw_fullscreen(GLuint p, const DrawCommand &d, uint32_t width, uint32_t height) {
+                glUseProgram(p);
+                set_resolution(p, width, height);
+                glUniformMatrix4fv(glGetUniformLocation(p, "mvp"), 1, GL_FALSE,
+                                   static_cast<const float *>(d.model_view_projection));
+                auto &resource = resources.geometry(d.geometry);
+                glBindVertexArray(resource.vao);
+                const ivec4 viewport = viewport_of(d, width, height);
+                glDisable(GL_SCISSOR_TEST);
+                glViewport(viewport.x, int(height) - viewport.y - viewport.w, viewport.z, viewport.w);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                const auto &indices = d.geometry->indices();
+                if (indices.empty())
+                    glDrawArrays(GL_TRIANGLES, 0, GLsizei(d.geometry->vertices().size()));
+                else
+                    glDrawElements(GL_TRIANGLES, GLsizei(indices.size()), GL_UNSIGNED_INT, nullptr);
+            }
+
+            void draw_geometry(const DrawCommand &d, GLuint p, uint32_t width, uint32_t height) {
+                glUseProgram(p);
+                set_uniforms(p, d);
+                bind_2d(GL_TEXTURE0, resources.texture(d.texture));
+                auto &resource = resources.geometry(d.geometry);
+                glBindVertexArray(resource.vao);
+                // OIT prepasses draw into full-target attachments. Scene commands may
+                // carry a cell viewport, so apply the same top-left command viewport
+                // and scissor as the ordinary scene pass; fullscreen composite quads
+                // are drawn separately by draw_fullscreen().
+                const ivec4 viewport = viewport_of(d, width, height);
+                const int x = viewport.x, y = int(height) - viewport.y - viewport.w;
+                glViewport(x, y, viewport.z, viewport.w);
+                glEnable(GL_SCISSOR_TEST);
+                glScissor(x, y, viewport.z, viewport.w);
+                const auto &indices = d.geometry->indices();
+                if (indices.empty())
+                    glDrawArrays(topology(d.geometry->topology()), 0,
+                                 GLsizei(d.geometry->vertices().size()));
+                else
+                    glDrawElements(topology(d.geometry->topology()), GLsizei(indices.size()),
+                                   GL_UNSIGNED_INT, nullptr);
+            }
+
+            // Vulkan composes depth effects while walking overlays in submitted
+            // command order. Keep the same order here; the flags on a single command
+            // still use Vulkan's shadow > AO > EDL > depth-preview precedence.
+            std::vector<const DrawCommand *> find_effects(const std::vector<DrawCommand> &commands) const {
+                std::vector<const DrawCommand *> result;
+                for (const auto &d : commands) {
+                    if (d.shadow || d.ambient_occlusion || d.eye_dome_lighting || d.scene_depth_texture)
+                        result.push_back(&d);
+                }
+                return result;
+            }
+
+            void render_shadow_map(const std::vector<DrawCommand> &scene, unsigned map_size,
+                                   uint32_t width, uint32_t height, unsigned samples, bool soft) {
+                effects.reset_shadow(width, height, map_size, soft, samples);
+                auto &map = *effects.shadow;
+                map.bind();
+                map.deactivate_draw_buffers();
+                glViewport(0, 0, int(map_size), int(map_size));
+                glDisable(GL_SCISSOR_TEST);
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                glDepthMask(GL_TRUE);
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LESS);
+                glClearDepth(1);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                glUseProgram(shadow_depth_program);
+                for (const auto &d : scene) {
+                    if (!d.shadow_caster)
+                        continue;
+                    const mat4 mvp = d.shadow_matrix * d.model_view_projection;
+                    glUniformMatrix4fv(glGetUniformLocation(shadow_depth_program, "mvp"), 1, GL_FALSE,
+                                       static_cast<const float *>(mvp));
+                    auto &resource = resources.geometry(d.geometry);
+                    glBindVertexArray(resource.vao);
+                    const auto &indices = d.geometry->indices();
+                    if (indices.empty())
+                        glDrawArrays(GL_TRIANGLES, 0, GLsizei(d.geometry->vertices().size()));
+                    else
+                        glDrawElements(GL_TRIANGLES, GLsizei(indices.size()), GL_UNSIGNED_INT, nullptr);
+                }
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            }
+
+            void composite_shadow(const DrawCommand &d, uint32_t width, uint32_t height) {
+                target.color().bind();
+                target.color().activate_draw_buffer(0);
+                glEnable(GL_BLEND);
+                // Match Vulkan: shadow darkening preserves the accumulated alpha.
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+                                    GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glUseProgram(shadow_program);
+                bind_2d(GL_TEXTURE0, target.scene().depth_texture());
+                bind_2d(GL_TEXTURE1, effects.shadow->depth_texture());
+                glUniform1i(glGetUniformLocation(shadow_program, "scene_depth"), 0);
+                glUniform1i(glGetUniformLocation(shadow_program, "shadow_map"), 1);
+                glUniformMatrix4fv(glGetUniformLocation(shadow_program, "shadow_matrix"), 1, GL_FALSE,
+                                   static_cast<const float *>(d.shadow_matrix));
+                glUniform4fv(glGetUniformLocation(shadow_program, "effect"), 1, d.color.data());
+                draw_fullscreen(shadow_program, d, width, height);
+            }
+
+            void composite_ao(const DrawCommand &d, uint32_t width, uint32_t height) {
+                effects.reset_ao(width, height);
+                glDisable(GL_BLEND);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                effects.ao_raw->bind();
+                effects.ao_raw->activate_draw_buffer(0);
+                glViewport(0, 0, int(width), int(height));
+                glDisable(GL_SCISSOR_TEST);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                float one[] = {1, 1, 1, 1};
+                glClearBufferfv(GL_COLOR, 0, one);
+                glUseProgram(ao_program);
+                bind_2d(GL_TEXTURE0, target.scene().depth_texture());
+                glUniform1i(glGetUniformLocation(ao_program, "scene_depth"), 0);
+                glUniformMatrix4fv(glGetUniformLocation(ao_program, "projection"), 1, GL_FALSE,
+                                   static_cast<const float *>(d.projection));
+                const mat4 inverse_projection = inverse(d.projection);
+                glUniformMatrix4fv(glGetUniformLocation(ao_program, "inverse_projection"), 1, GL_FALSE,
+                                   static_cast<const float *>(inverse_projection));
+                glUniform4fv(glGetUniformLocation(ao_program, "effect"), 1, d.color.data());
+                draw_fullscreen(ao_program, d, width, height);
+
+                effects.ao_blur->bind();
+                effects.ao_blur->activate_draw_buffer(0);
+                glViewport(0, 0, int(width), int(height));
+                glClearBufferfv(GL_COLOR, 0, one);
+                glUseProgram(ao_blur_program);
+                bind_2d(GL_TEXTURE0, target.scene().depth_texture());
+                bind_2d(GL_TEXTURE1, effects.ao_raw->color_texture(0));
+                glUniform1i(glGetUniformLocation(ao_blur_program, "scene_depth"), 0);
+                glUniform1i(glGetUniformLocation(ao_blur_program, "ao_raw"), 1);
+                glUniformMatrix4fv(glGetUniformLocation(ao_blur_program, "inverse_projection"), 1, GL_FALSE,
+                                   static_cast<const float *>(inverse_projection));
+                glUniform4fv(glGetUniformLocation(ao_blur_program, "effect"), 1, d.color.data());
+                draw_fullscreen(ao_blur_program, d, width, height);
+
+                target.color().bind();
+                target.color().activate_draw_buffer(0);
+                glEnable(GL_BLEND);
+                // Match Vulkan: AO/EDL darkening leaves destination alpha intact.
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+                                    GL_ZERO, GL_ONE);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glUseProgram(darkness_program);
+                bind_2d(GL_TEXTURE0, effects.ao_blur->color_texture(0));
+                glUniform1i(glGetUniformLocation(darkness_program, "factor"), 0);
+                draw_fullscreen(darkness_program, d, width, height);
+            }
+
+            void composite_edl(const DrawCommand &d, uint32_t width, uint32_t height) {
+                target.color().bind();
+                target.color().activate_draw_buffer(0);
+                glEnable(GL_BLEND);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+                                    GL_ZERO, GL_ONE);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glUseProgram(edl_program);
+                bind_2d(GL_TEXTURE0, target.scene().depth_texture());
+                glUniform1i(glGetUniformLocation(edl_program, "scene_depth"), 0);
+                glUniform4fv(glGetUniformLocation(edl_program, "effect"), 1, d.color.data());
+                draw_fullscreen(edl_program, d, width, height);
+            }
+
+            void composite_scene_depth(const DrawCommand &d, uint32_t width, uint32_t height) {
+                target.color().bind();
+                target.color().activate_draw_buffer(0);
+                glDisable(GL_BLEND);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glUseProgram(texture_program);
+                bind_2d(GL_TEXTURE0, target.scene().depth_texture());
+                glUniform1i(glGetUniformLocation(texture_program, "image"), 0);
+                draw_fullscreen(texture_program, d, width, height);
+            }
+
+            void composite_oit(GLuint texture, uint32_t width, uint32_t height, bool use_count) {
+                target.color().bind();
+                target.color().activate_draw_buffer(0);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glUseProgram(oit_composite_program);
+                bind_2d(GL_TEXTURE0, texture);
+                // Average-color OIT stores the per-pixel fragment count in the second
+                // color attachment; peeling and linked lists resolve to premultiplied
+                // color that needs no count texture.
+                bind_2d(GL_TEXTURE1, use_count ? effects.average->color_texture(1) : texture);
+                glUniform1i(glGetUniformLocation(oit_composite_program, "accumulated"), 0);
+                glUniform1i(glGetUniformLocation(oit_composite_program, "fragment_count"), 1);
+                glUniform1i(glGetUniformLocation(oit_composite_program, "use_count"), use_count ? 1 : 0);
+                draw_fullscreen(oit_composite_program, fullscreen_quad(width, height), width, height);
+            }
+
+            struct OitResult {
+                GLuint texture = 0;
+                bool use_count = false;
+            };
+
+            OitResult accumulate_oit(const std::vector<DrawCommand> &scene, uint32_t width, uint32_t height,
+                                     TransparencyMethod method, unsigned layers) {
+                OitResult result;
+                std::vector<const DrawCommand *> transparent;
+                for (const auto &d : scene)
+                    if (d.transparent)
+                        transparent.push_back(&d);
+                if (transparent.empty())
+                    return result;
+                ensure_effect_programs(method == TransparencyMethod::linked_lists);
+                glDisable(GL_SCISSOR_TEST);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                if (method == TransparencyMethod::average) {
+                    effects.reset_average(width, height);
+                    effects.average->bind();
+                    effects.average->activate_draw_buffers(0, 1);
+                    glViewport(0, 0, int(width), int(height));
+                    float zero[4] = {0, 0, 0, 0};
+                    glClearBufferfv(GL_COLOR, 0, zero);
+                    glClearBufferfv(GL_COLOR, 1, zero);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_ONE, GL_ONE);
+                    for (const DrawCommand *d : transparent)
+                        draw_geometry(*d, oit_program, width, height);
+                    result.texture = effects.average->color_texture(0);
+                    result.use_count = true;
+                } else if (method == TransparencyMethod::linked_lists) {
+                    effects.reset_linked(width, height, layers);
+                    GLint previous_ssbo[2] = {0, 0}, previous_atomic = 0;
+                    GLint previous_generic_ssbo = 0, previous_generic_atomic = 0;
+                    glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 0, &previous_ssbo[0]);
+                    glGetIntegeri_v(GL_SHADER_STORAGE_BUFFER_BINDING, 1, &previous_ssbo[1]);
+                    glGetIntegeri_v(GL_ATOMIC_COUNTER_BUFFER_BINDING, 0, &previous_atomic);
+                    glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &previous_generic_ssbo);
+                    glGetIntegerv(GL_ATOMIC_COUNTER_BUFFER_BINDING, &previous_generic_atomic);
+                    const int empty = -1;
+                    glBindBuffer(GL_SHADER_STORAGE_BUFFER, effects.head);
+                    glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32I, GL_RED_INTEGER, GL_INT, &empty);
+                    const uint32_t zero = 0;
+                    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, effects.counter);
+                    glClearBufferData(GL_ATOMIC_COUNTER_BUFFER, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &zero);
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, effects.head);
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, effects.nodes);
+                    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, effects.counter);
+                    effects.linked_build->bind();
+                    effects.linked_build->activate_draw_buffer(0);
+                    glViewport(0, 0, int(width), int(height));
+                    glClearColor(0, 0, 0, 0);
+                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    glDisable(GL_BLEND);
+                    glUseProgram(linked_program);
+                    glUniform1ui(glGetUniformLocation(linked_program, "max_nodes"), effects.node_count());
+                    glUniform1ui(glGetUniformLocation(linked_program, "viewport_width"), width);
+                    for (const DrawCommand *d : transparent)
+                        draw_geometry(*d, linked_program, width, height);
+                    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_ATOMIC_COUNTER_BARRIER_BIT |
+                                    GL_BUFFER_UPDATE_BARRIER_BIT);
+                    uint32_t attempts = 0;
+                    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, effects.counter);
+                    glGetBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(attempts), &attempts);
+                    const uint32_t capacity = effects.node_count();
+                    dropped_fragments = attempts > capacity ? attempts - capacity : 0;
+                    effects.reset_accumulate(width, height);
+                    effects.accumulate->bind();
+                    effects.accumulate->activate_draw_buffer(0);
+                    glViewport(0, 0, int(width), int(height));
+                    float zero_color[4] = {0, 0, 0, 0};
+                    glClearBufferfv(GL_COLOR, 0, zero_color);
+                    glUseProgram(linked_resolve_program);
+                    glUniform1ui(glGetUniformLocation(linked_resolve_program, "viewport_width"), width);
+                    draw_fullscreen(linked_resolve_program, fullscreen_quad(width, height), width, height);
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, GLuint(previous_ssbo[0]));
+                    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, GLuint(previous_ssbo[1]));
+                    glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, GLuint(previous_atomic));
+                    glBindBuffer(GL_SHADER_STORAGE_BUFFER, GLuint(previous_generic_ssbo));
+                    glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, GLuint(previous_generic_atomic));
+                    result.texture = effects.accumulate->color_texture(0);
+                } else if (method == TransparencyMethod::peeling) {
+                    effects.reset_peel(width, height);
+                    effects.reset_accumulate(width, height);
+                    for (auto &layer : effects.peel) {
+                        layer->bind();
+                        layer->activate_draw_buffer(0);
+                        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                        glClearDepth(0);
+                        glClear(GL_DEPTH_BUFFER_BIT);
+                        glClearDepth(1);
+                    }
+                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                    effects.accumulate->bind();
+                    effects.accumulate->activate_draw_buffer(0);
+                    glViewport(0, 0, int(width), int(height));
+                    float zero_color[4] = {0, 0, 0, 0};
+                    glClearBufferfv(GL_COLOR, 0, zero_color);
+                    for (unsigned i = 0; i < layers; ++i) {
+                        const unsigned target = i & 1u, previous = 1u - target;
+                        effects.peel[target]->bind();
+                        effects.peel[target]->activate_draw_buffer(0);
+                        glViewport(0, 0, int(width), int(height));
+                        glClearColor(0, 0, 0, 0);
+                        glClearDepth(1);
+                        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                        glEnable(GL_DEPTH_TEST);
+                        glDepthFunc(GL_ALWAYS);
+                        glDepthMask(GL_TRUE);
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_ONE, GL_ONE);
+                        glUseProgram(oit_peel_program);
+                        bind_2d(GL_TEXTURE1, effects.peel[previous]->depth_texture());
+                        glUniform1i(glGetUniformLocation(oit_peel_program, "previous_depth"), 1);
+                        for (const DrawCommand *d : transparent)
+                            draw_geometry(*d, oit_peel_program, width, height);
+                        effects.accumulate->bind();
+                        effects.accumulate->activate_draw_buffer(0);
+                        glViewport(0, 0, int(width), int(height));
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_ONE, GL_ONE);
+                        glDisable(GL_DEPTH_TEST);
+                        glDepthMask(GL_FALSE);
+                        glUseProgram(oit_composite_program);
+                        bind_2d(GL_TEXTURE0, effects.peel[target]->color_texture(0));
+                        glUniform1i(glGetUniformLocation(oit_composite_program, "accumulated"), 0);
+                        glUniform1i(glGetUniformLocation(oit_composite_program, "use_count"), 0);
+                        draw_fullscreen(oit_composite_program, fullscreen_quad(width, height), width, height);
+                    }
+                    result.texture = effects.accumulate->color_texture(0);
+                }
+                glDisable(GL_BLEND);
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                return result;
+            }
+
             void render(uint32_t width, uint32_t height, const std::vector<DrawCommand> &commands,
                         const vec4 &background, unsigned samples, FrameReadback readback,
-                        bool overlays, bool include_color, bool pixel_query) {
+                        bool overlays, bool include_color, bool pixel_query,
+                        TransparencyMethod method, unsigned layers) {
                 require_context();
+                drain_errors();
                 resources.prune();
-                validate(width, height, samples, TransparencyMethod::sorted);
+                dropped_fragments = 0;
+                validate(width, height, samples, method);
                 for (const auto &d : commands) {
                     if (!pixel_query || !d.overlay)
                         validate(d, width, height);
                 }
+                // The viewer validates settings values; this device is the authority on
+                // backend support. Capability checks precede every native/fallback
+                // choice so unsupported methods degrade with an explicit one-time
+                // diagnostic instead of being rejected before the device can explain.
+                transparency = method;
+                if (method == TransparencyMethod::linked_lists && !linked_lists_supported()) {
+                    LOG_N_TIMES(1, WARNING) << "OpenGL per-pixel linked lists require OpenGL 4.3; falling back to depth peeling";
+                    transparency = TransparencyMethod::peeling;
+                } else if (method == TransparencyMethod::average && !float_blending_supported()) {
+                    LOG_N_TIMES(1, WARNING) << "OpenGL average-color blending requires floating-point color blending; falling back to sorted transparency";
+                    transparency = TransparencyMethod::sorted;
+                }
+                peel_layers = layers ? layers : 16;
                 if (!program)
                     program = create_program(0);
                 if (!point_program)
@@ -1308,8 +2494,57 @@ void main() {
                 target.ensure(width, height, samples);
                 clear_scene(background);
                 const auto scene = prepare(commands, width, height);
-                draw_scene(scene, width, height, include_color, true, samples);
+                const bool present_effects = include_color && !pixel_query;
+                OitResult oit;
+                if (present_effects) {
+                    ensure_effect_programs(transparency == TransparencyMethod::linked_lists &&
+                                          linked_lists_supported());
+                    unsigned shadow_size = 0;
+                    bool shadow_soft = false;
+                    for (const auto &d : commands) {
+                        if ((d.shadow || d.shadow_caster || d.shadow_background) && d.shadow_map_size > shadow_size)
+                            shadow_size = d.shadow_map_size;
+                        shadow_soft = shadow_soft || (d.shadow && d.color.y > 0);
+                    }
+                    if (shadow_size)
+                        render_shadow_map(scene, shadow_size, width, height, samples, shadow_soft);
+                    if (transparency != TransparencyMethod::sorted)
+                        oit = accumulate_oit(scene, width, height, transparency, peel_layers);
+                    check_error();
+                }
+                // The single-sample ID/depth target is the authoritative scene depth for
+                // picking, AO, EDL, and shadow lookup. It is produced before color and
+                // never receives effect overlays.
+                draw_scene(scene, width, height, false, true, 1);
                 if (include_color) {
+                    if (transparency == TransparencyMethod::sorted || !present_effects)
+                        draw_scene(scene, width, height, true, false, samples);
+                    else {
+                        std::vector<DrawCommand> opaque;
+                        for (const auto &d : scene)
+                            if (!d.transparent)
+                                opaque.push_back(d);
+                        draw_scene(opaque, width, height, true, false, samples);
+                    }
+                    // A frame containing only transparent commands performs no opaque
+                    // color pass, so the preceding ID/depth pass leaves color writes
+                    // masked off. Compositing must restore them explicitly.
+                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                    if (oit.texture)
+                        composite_oit(oit.texture, width, height, oit.use_count);
+                    if (present_effects) {
+                        for (const auto *effect : find_effects(commands)) {
+                            if (effect->shadow && effects.shadow)
+                                composite_shadow(*effect, width, height);
+                            else if (effect->ambient_occlusion)
+                                composite_ao(*effect, width, height);
+                            else if (effect->eye_dome_lighting)
+                                composite_edl(*effect, width, height);
+                            else if (effect->scene_depth_texture)
+                                composite_scene_depth(*effect, width, height);
+                        }
+                        check_error();
+                    }
                     glViewport(0, 0, int(width), int(height));
                     glScissor(0, 0, int(width), int(height));
                     if (overlays)
@@ -1323,6 +2558,7 @@ void main() {
                     glReadBuffer(GL_COLOR_ATTACHMENT0);
                     glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
                                       GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                    check_error();
                 }
             }
 
@@ -1357,10 +2593,17 @@ void main() {
                 return result;
             }
 
+            void drain_errors() {
+                while (glGetError() != GL_NO_ERROR) {}
+            }
+
             void check_error() {
                 const GLenum error = glGetError();
-                if (error != GL_NO_ERROR)
-                    throw std::runtime_error("OpenGL RenderDevice encountered GL error " + std::to_string(error));
+                if (error == GL_NO_ERROR)
+                    return;
+                // Drain the queue so a later call cannot misattribute a stale error.
+                drain_errors();
+                throw std::runtime_error("OpenGL RenderDevice encountered GL error " + std::to_string(error));
             }
         };
 
@@ -1375,6 +2618,8 @@ void main() {
             glGetIntegerv(GL_MINOR_VERSION, &minor);
             if (major < 3 || (major == 3 && minor < 2))
                 throw std::runtime_error("OpenGL RenderDevice requires OpenGL 3.2 or later");
+            impl_->gl_major = major;
+            impl_->gl_minor = minor;
         }
 
         OpenGLDevice::~OpenGLDevice() = default;
@@ -1399,14 +2644,13 @@ void main() {
 
         FrameImage OpenGLDevice::render(uint32_t width, uint32_t height, const std::vector<DrawCommand> &commands,
                                         const vec4 &background, unsigned samples, TransparencyMethod transparency,
-                                        unsigned, FrameReadback readback) {
-            if (transparency != TransparencyMethod::sorted)
-                impl_->reject("this OpenGL RenderDevice increment supports sorted transparency only");
+                                        unsigned peel_layers, FrameReadback readback) {
             if (readback != FrameReadback::color && readback != FrameReadback::color_depth_ids)
                 impl_->reject("unknown frame readback mode");
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, background, samples, readback, true, true, false);
+            impl_->render(width, height, commands, background, samples, readback, true, true, false,
+                          transparency, peel_layers);
             FrameImage result = impl_->capture(width, height, readback);
             impl_->check_error();
             return result;
@@ -1418,7 +2662,8 @@ void main() {
                 impl_->reject("pixel query is outside the render target");
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true);
+            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true,
+                          TransparencyMethod::sorted, 0);
             auto &scene = impl_->target.scene();
             scene.bind(GL_READ_FRAMEBUFFER);
             glReadBuffer(GL_COLOR_ATTACHMENT1);
@@ -1443,7 +2688,8 @@ void main() {
             }
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true);
+            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true,
+                          TransparencyMethod::sorted, 0);
             auto &scene = impl_->target.scene();
             scene.bind(GL_READ_FRAMEBUFFER);
             glReadBuffer(GL_COLOR_ATTACHMENT1);
@@ -1460,9 +2706,7 @@ void main() {
 
         bool OpenGLDevice::present(uint32_t width, uint32_t height, const std::vector<DrawCommand> &commands,
                                    const vec4 &background, unsigned samples, TransparencyMethod transparency,
-                                   unsigned) {
-            if (transparency != TransparencyMethod::sorted)
-                impl_->reject("this OpenGL RenderDevice increment supports sorted transparency only");
+                                   unsigned peel_layers) {
             opengl::QueryState state;
             state.prepare(int(width), int(height));
             GLint destination_samples = 0;
@@ -1493,7 +2737,8 @@ void main() {
                     throw std::runtime_error(std::string("OpenGL presentation failed at ") + stage + ": " +
                                              std::to_string(error));
             };
-            impl_->render(width, height, commands, background, target_samples, FrameReadback::color, true, true, false);
+            impl_->render(width, height, commands, background, target_samples, FrameReadback::color, true, true, false,
+                          transparency, peel_layers);
             check("scene rendering");
             auto &output = impl_->target.output();
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLenum(state.draw_fbo));
@@ -1632,7 +2877,7 @@ void main() {
         }
 
         std::uint32_t OpenGLDevice::oit_dropped_fragments() const {
-            return 0;
+            return impl_->dropped_fragments;
         }
 
         std::unique_ptr<RenderDevice> create_device(const DeviceOptions &options) {

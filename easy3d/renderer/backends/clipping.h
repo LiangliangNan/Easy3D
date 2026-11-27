@@ -32,7 +32,14 @@
 #include <array>
 #include <vector>
 namespace easy3d {
+    class ClippingPlane;
+
     namespace graphics {
+        // Resolve the scene halfspaces once for every host: an enabled process-wide clipping
+        // plane overrides the normalized RenderSettings planes, while the guide itself remains
+        // an overlay. The returned planes are normalized and safe to attach to draw commands.
+        std::vector<vec4> effective_clipping_planes(const std::vector<vec4> &settings_planes,
+                                                    const ClippingPlane &global_plane);
         namespace internal {
             // A halfspace in the geometry's own space, kept in the double precision the CPU clip
             // arithmetic uses so that a cache key can compare it without losing a bit.

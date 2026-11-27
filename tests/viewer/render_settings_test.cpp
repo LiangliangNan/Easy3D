@@ -137,6 +137,20 @@ int main(int argc, char **argv) {
             require(snapshot(defaults, "render-settings-defaults.png") == plain,
                     "the default settings changed the rendered scene");
 
+            // The viewer validates values; backend support and fallbacks belong to
+            // RenderDevice. Invalid values must still be rejected at the setter.
+            bool rejected = false;
+            RenderSettings invalid = defaults;
+            invalid.shadow.map_size = 3;
+            try { viewer.set_render_settings(invalid); } catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "settings setter accepted a non-power-of-two shadow map");
+            rejected = false;
+            invalid = defaults;
+            invalid.transparency.method = static_cast<graphics::TransparencyMethod>(99);
+            try { viewer.set_render_settings(invalid); } catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "settings setter accepted an unknown transparency method");
+            viewer.set_render_settings(defaults);
+
             RenderSettings settings = defaults;
             settings.shadow.enabled = true;
             settings.shadow.virtual_background = true;
@@ -175,9 +189,35 @@ int main(int argc, char **argv) {
                 settings.transparency.method = method;
                 settings.transparency.layers = 6;
                 const std::string name = "render-settings-transparency-" + std::to_string(int(method)) + ".png";
+                viewer.set_render_settings(settings);
+                require(viewer.capture(1).rgba == raw_capture.rgba,
+                        (std::string("in-memory capture applied presentation-only transparency for method ") +
+                         std::to_string(int(method)))
+                            .c_str());
                 require(snapshot(settings, name) != plain,
                         "the settings transparency pass did not change the opaque frame");
             }
+
+            settings = defaults;
+            settings.ambient_occlusion.enabled = true;
+            settings.ambient_occlusion.intensity = 0.8f;
+            settings.eye_dome_lighting = true;
+            require(snapshot(settings, "render-settings-ao-edl.png") != plain,
+                    "combined AO and EDL settings were not composed");
+            require(viewer.capture(1).rgba == raw_capture.rgba,
+                    "in-memory capture applied presentation-only AO+EDL effects");
+
+            settings.shadow.enabled = true;
+            settings.shadow.virtual_background = true;
+            settings.shadow.virtual_background_color = viewer.background_color();
+            settings.transparency.enabled = true;
+            settings.transparency.method = graphics::TransparencyMethod::peeling;
+            settings.transparency.layers = 6;
+            viewer.set_render_settings(settings);
+            require(viewer.capture(1).rgba == raw_capture.rgba,
+                    "in-memory capture applied the combined shadow+AO+EDL+peeling presentation effects");
+            require(snapshot(settings, "render-settings-all-effects.png") != plain,
+                    "shadow, AO, EDL, and transparency did not compose in one settings frame");
         }
         {
             Viewer viewer("Render settings clipping", window_options(181, 141, 1, false, false, true), options);

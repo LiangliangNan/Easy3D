@@ -30,6 +30,7 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/render_settings.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
@@ -265,7 +266,7 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     std::vector<graphics::DrawCommand> result;std::vector<DrawSource> ignored;
     auto& mapped=sources?*sources:ignored;
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
-        const auto vp=cell_bounds(r,c,num_rows_,num_cols_,width,height);
+        const ivec4 vp=cell_bounds(r,c,num_rows_,num_cols_,width,height);
         if(vp.z<=0 || vp.w<=0) continue;
         // Logical cell bounds drive the cell camera (DPI-independent impostor sizing);
         // the framebuffer cell width drives plain point/line scaling in draw_commands.
@@ -379,13 +380,33 @@ void MultiViewer::draw() const {
         }
     };
 
+    // Settings validation belongs before the fallback choice. RenderDevice owns
+    // backend support and fallback policy. Setters already validate, but this
+    // keeps direct state edits and MultiViewer's native path consistent with
+    // Viewer::draw().
+    try {
+        validate_render_settings_for_presentation();
+    } catch (const std::exception &e) {
+        LOG_N_TIMES(1, WARNING) << "invalid render settings: " << e.what();
+        throw;
+    }
+
     bool portable = supports_portable_rendering();
     if (portable) {
         try {
             const int fw = viewport[2], fh = viewport[3];
-            auto commands = draw_commands(*camera(), fw, fh, nullptr, false);
+            const auto &settings = render_settings();
+            std::vector<graphics::DrawCommand> commands = draw_commands(*camera(), fw, fh, nullptr, false);
+            // configure_cell() gives every cell the parent projection/model-view. One
+            // full-frame effect composition is therefore valid for all cells and keeps
+            // the single shadow map, AO image and effect UVs consistent on both
+            // backends (per-cell effect quads sample the wrong Vulkan UV region).
+            Viewer::append_settings_effects(commands, *camera(), fw, fh);
+            const auto method = settings.transparency.enabled ? settings.transparency.method
+                                                              : graphics::TransparencyMethod::sorted;
+            const unsigned layers = settings.transparency.enabled ? settings.transparency.layers : 4u;
             query_device().present(uint32_t(fw), uint32_t(fh), commands, background_color(), samples(),
-                                   graphics::TransparencyMethod::sorted, 4);
+                                   method, layers);
             drawable_renderer_->prune();
             for (int r = 0; r < num_rows_; ++r) {
                 for (int c = 0; c < num_cols_; ++c) {
@@ -401,13 +422,20 @@ void MultiViewer::draw() const {
                     ClippingPlane::instance()->draw(&cell);
                 }
             }
-        } catch (const std::logic_error &e) {
-            LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
+        } catch (const std::exception &e) {
+            LOG_N_TIMES(1, WARNING) << "portable MultiViewer rendering failed; using native fallback: " << e.what();
             portable = false;
         }
     }
-    if (!portable)
+    if (!portable) {
+        const auto &settings = render_settings();
+        if (settings.shadow.enabled || settings.ambient_occlusion.enabled || settings.eye_dome_lighting ||
+            settings.transparency.enabled)
+            LOG_N_TIMES(1, WARNING) << "native MultiViewer fallback ignores RenderSettings effects and transparency";
+        if (!settings.clipping_planes.empty() && !ClippingPlane::instance()->is_enabled())
+            LOG_N_TIMES(1, WARNING) << "native MultiViewer fallback ignores RenderSettings clipping planes";
         draw_native();
+    }
 
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     glScissor(viewport[0],viewport[1],viewport[2],viewport[3]);

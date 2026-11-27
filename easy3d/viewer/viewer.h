@@ -1252,6 +1252,19 @@ namespace easy3d {
                                                          int height,
                                                          std::vector<DrawSource> *sources = nullptr,
                                                          bool include_hidden_models = false) const;
+
+        // Append the command overlays for settings-driven effects to one frame.
+        // Non-virtual so subclasses and MultiViewer cells use the same builder.
+        void append_settings_effects(std::vector<graphics::DrawCommand> &commands,
+                                     const Camera &camera, int width, int height) const;
+        // Validate current settings values before presentation/fallback selection.
+        // Backend support and fallback policy are owned by RenderDevice.
+        // Non-virtual so MultiViewer can gate its fallback exactly like Viewer::draw().
+        void validate_render_settings_for_presentation() const;
+        // Remove only the transparency flag introduced by RenderSettings from raw
+        // capture commands; legacy transparency state remains untouched.
+        void strip_settings_transparency(std::vector<graphics::DrawCommand> &commands,
+                                         const std::vector<DrawSource> *sources = nullptr) const;
         //@}
 
 #ifdef EASY3D_HAS_VULKAN
