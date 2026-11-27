@@ -522,16 +522,16 @@ namespace {
 
 int main() {
     try {
-        DeviceOptions validation;
+        graphics::DeviceOptions validation;
         validation.validation = true;
         rejects([&] { create_device(validation); });
-        DeviceOptions synchronization;
+        graphics::DeviceOptions synchronization;
         synchronization.sync_validation = true;
         rejects([&] { create_device(synchronization); });
-        DeviceOptions profiling;
+        graphics::DeviceOptions profiling;
         profiling.profiling = true;
         rejects([&] { create_device(profiling); });
-        DeviceOptions selection;
+        graphics::DeviceOptions selection;
         selection.device_name = "required device";
         rejects([&] { create_device(selection); });
 
@@ -541,7 +541,7 @@ int main() {
         exercise(*device);
         exercise_screen_line_refresh();
         if (device->supported_sample_counts() & 4) {
-            Viewer window("OpenGL depth presentation", window_options(64, 48, 4, false, false), OpenGLOptions());
+            Viewer window("OpenGL depth presentation", window_options(64, 48, 4, false, false));
             auto window_device = create_device();
             exercise_default_depth(*window_device);
         }

@@ -25,9 +25,9 @@ struct Pixels {
 void frame(Viewer& v) {require(v.run_frames(2)==0,"overlay viewer frame failed");}
 int main(int argc,char**) {return test::run("shared annotations and image/text tutorials",[&] {
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     AnnotationView v("Annotations",window_options(161,121,4,false,false,true),options);v.set_usage("");v.hide_logo();
     v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));

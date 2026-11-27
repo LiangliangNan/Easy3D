@@ -295,9 +295,9 @@ void tutorials() {
 }
 int main(int argc,char**) {return test::run("portable picking depth, provenance, ownership, styles and tutorial input",[&] {
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     for(int samples:{1,4}) {
         Viewer v("Portable pick",window_options(241,181,samples,false,false,true),options);impostor_widths(v);sphere_snapshots(v);exercise(v);

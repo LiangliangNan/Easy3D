@@ -106,13 +106,13 @@ int main() {
         initialize(false, false, false);
 #ifdef EASY3D_HAS_VULKAN
         {
-            VulkanOptions options;
+            DeviceOptions options;
             options.use_native_large_points = true;
             Viewer v("Point benchmark", window_options(1600, 917, 4, false, false, true), options);
             measure(v, "vulkan-native");
         }
         {
-            VulkanOptions options;
+            DeviceOptions options;
             options.use_native_large_points = false;
             Viewer v("Point benchmark", window_options(1600, 917, 4, false, false, true), options);
             measure(v, "vulkan-expanded");

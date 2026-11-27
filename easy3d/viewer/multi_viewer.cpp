@@ -94,22 +94,8 @@ void configure_cell(Camera& cell,const Camera& source,int width,int height) {
 }
 MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
                          const WindowOptions& window,
-#ifdef EASY3D_HAS_VULKAN
-                         const VulkanOptions& options)
-#else
-                         const OpenGLOptions& options)
-#endif
-    : MultiViewer(rows,cols,title,window,options,detail::DeviceOptionsTag{}) {
-}
-MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
-                         const WindowOptions& window,
-#ifdef EASY3D_HAS_VULKAN
-                         const VulkanOptions& options,
-#else
-                         const OpenGLOptions& options,
-#endif
-                         detail::DeviceOptionsTag)
-    : Viewer(title,window,options,detail::DeviceOptionsTag{}) {
+                         const DeviceOptions& options)
+    : Viewer(title,window,options) {
     snapshot_hud_=false;
     set_layout(rows,cols);
 }

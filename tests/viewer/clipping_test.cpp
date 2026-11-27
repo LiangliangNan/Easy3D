@@ -31,7 +31,7 @@ struct SharedQueryProbe : public Picker {
 
 // OffScreen hides Viewer's protected query hooks; this fixture only exposes them.
 struct ClippingHost : public OffScreen {
-    ClippingHost(int width, int height, const DeviceOptions &options)
+    ClippingHost(int width, int height, const easy3d::DeviceOptions &options)
         : OffScreen(width, height, options) {}
     using Viewer::draw_commands;
     using Viewer::read_scene_depth;
@@ -402,14 +402,17 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         (void)argc;
-        DeviceOptions options;
+        easy3d::DeviceOptions host_options;
+        graphics::DeviceOptions device_options;
 #ifdef EASY3D_HAS_VULKAN
-        options.validation=options.sync_validation=argc>1;
+        host_options.validation=host_options.sync_validation=argc>1;
+        device_options.validation=host_options.validation;
+        device_options.sync_validation=host_options.sync_validation;
 #endif
         // The host owns the OpenGL context that the shared device borrows. Vulkan
         // builds need no presentation surface, but the same setup serves both.
-        ClippingHost viewer(181,141,options);
-        auto device=create_device(options);
+        ClippingHost viewer(181,141,host_options);
+        auto device=create_device(device_options);
         polygon_clipping(*device); point_line_clipping(*device); analytic_clipping(*device);
         require(device->validation_errors()==0,"clipping device validation errors");
         scene_clipping(viewer,*device);

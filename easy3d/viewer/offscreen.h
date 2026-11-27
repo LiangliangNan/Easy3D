@@ -53,35 +53,14 @@ namespace easy3d {
          * \brief Create an offscreen rendering canvas.
          * \param width Positive canvas width in pixels.
          * \param height Positive canvas height in pixels.
-         * \param options Backend-specific Vulkan device or OpenGL context options.
+         * \param options DeviceOptions for the configured backend: Vulkan device
+         *      settings in Vulkan builds, or OpenGL context requests in OpenGL builds.
          * \details OpenGL construction creates a hidden context. Vulkan
          *      construction creates no window or surface.
          */
-        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable OffScreen constructor")
         explicit OffScreen(int width = 800,
                            int height = 600,
-#ifdef EASY3D_HAS_VULKAN
-                           const VulkanOptions &options = {});
-#else
-                           const OpenGLOptions &options = {});
-#endif
-
-        /// Portable 2.8 construction with backend-neutral DeviceOptions.
-        template <typename Options>
-        OffScreen(int width, int height, const Options &options,
-                  typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : OffScreen(width, height, detail::make_device_options(options), detail::DeviceOptionsTag{})
-        {
-        }
-
-    protected:
-        OffScreen(int width, int height,
-#ifdef EASY3D_HAS_VULKAN
-                  const VulkanOptions &options,
-#else
-                  const OpenGLOptions &options,
-#endif
-                  detail::DeviceOptionsTag);
+                           const DeviceOptions &options = {});
 
     public:
         /// Release the offscreen canvas and its graphics resources.

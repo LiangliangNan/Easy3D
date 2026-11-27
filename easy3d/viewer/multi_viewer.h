@@ -62,37 +62,13 @@ namespace easy3d {
          * \param title Window title.
          * \param window Initial size, multisample count and window flags, shared
          *        with Viewer - see \ref WindowOptions.
-         * \param options Backend-specific Vulkan or OpenGL creation options.
+         * \param options DeviceOptions for the configured backend: Vulkan device
+         *        settings in Vulkan builds, or OpenGL context requests in OpenGL builds.
          * \throws std::invalid_argument if rows or cols is not positive.
          */
-        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable MultiViewer constructor")
         MultiViewer(int rows, int cols, const std::string &title = "Easy3D MultiViewer",
                           const WindowOptions& window = {},
-#ifdef EASY3D_HAS_VULKAN
-                          const VulkanOptions& options = {});
-#else
-                          const OpenGLOptions& options = {});
-#endif
-
-        /// Portable 2.8 construction with backend-neutral DeviceOptions.
-        template <typename Options>
-        MultiViewer(int rows, int cols, const std::string &title,
-                    const WindowOptions &window, const Options &options,
-                    typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : MultiViewer(rows, cols, title, window, detail::make_device_options(options), detail::DeviceOptionsTag{})
-        {
-        }
-
-    protected:
-        MultiViewer(int rows, int cols, const std::string &title,
-                    const WindowOptions &window,
-#ifdef EASY3D_HAS_VULKAN
-                    const VulkanOptions &options,
-#else
-                    const OpenGLOptions &options,
-#endif
-                    detail::DeviceOptionsTag);
-
+                          const DeviceOptions& options = {});
     public:
         /**
          * \brief Destructor.

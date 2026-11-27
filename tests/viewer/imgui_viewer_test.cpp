@@ -56,9 +56,9 @@ bool same(const mat4& a,const mat4& b) {
 }
 void run(bool validation) {
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=validation;
+    DeviceOptions options;options.validation=options.sync_validation=validation;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     ImGuiViewer v("ImGui backend regression",window_options(800,600,1,false,true,true),options);
     v.show(); // OpenGL Viewer normally shows its window in run(), not draw_frame().

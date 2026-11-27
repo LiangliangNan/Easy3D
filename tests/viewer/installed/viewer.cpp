@@ -34,7 +34,7 @@ int main() {
         void post_draw() override { ++after; }
     };
     try {
-        easy3d::graphics::DeviceOptions options;
+        DeviceOptions options;
         // Written the way a user sets the struct: default-construct, then assign
         // what differs. samples 1 and a resizable window are already the defaults.
         WindowOptions window;

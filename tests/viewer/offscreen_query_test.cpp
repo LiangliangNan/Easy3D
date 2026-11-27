@@ -37,9 +37,9 @@ struct Pixels {
 };
 int main(int argc,char**) {return test::run("shared OffScreen queries, selection and annotations",[&]{
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     Viewer window("Interleaved query host",window_options(151,113,4,false,false,true),options);window.set_usage("");
     OffScreen a(161,127,options),b(103,79,options);

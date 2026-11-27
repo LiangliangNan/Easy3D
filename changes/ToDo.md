@@ -35,7 +35,7 @@
     - [x] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration. The facades remain unchanged in this milestone, with settings taking precedence where both are active; their control translation is deferred to the Python/tutorial migration.
 
   - [x] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
-    - [x] Introduce common window/device construction and remove public `OpenGLOptions`/`VulkanOptions` conditionals while preserving backend-specific settings through compatibility overloads.
+    - [x] Introduce common window/device construction with one public `easy3d::DeviceOptions` type for Viewer, OffScreen, and MultiViewer; its fields describe the configured backend. The temporary backend-option overloads and `DeviceOptionsTag` dispatch were removed on 2026-11-27 to keep the constructor signatures simple.
     - [x] Make `device()`, `draw_commands()`, overlays, clipping, render settings, and in-memory capture available consistently across `Viewer`, `OffScreen`, and `MultiViewer`.
     - [x] Preserve Viewer lifecycle/customization hooks and move custom drawing to backend-neutral commands; keep window-only operations out of the public `OffScreen` surface.
     - [x] Unify overlay submission through `DrawCommand` lists with explicit foreground/background ordering; migrate HUD and application overlays while preserving depth testing, depth writing, transparency, and capture inclusion.

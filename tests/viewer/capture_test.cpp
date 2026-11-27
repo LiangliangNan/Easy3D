@@ -36,9 +36,9 @@ struct Scanner:TutorialVirtualScanner {using TutorialVirtualScanner::key_press_e
 }
 int main(int argc,char**) {return test::run("shared capture and tutorial scanner",[&]{
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     OffScreen host(151,113,options);auto mesh=quad();host.add_model(mesh);material(mesh);camera(host);
     const auto matrix=host.camera()->model_view_projection_matrix();

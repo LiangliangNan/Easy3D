@@ -31,7 +31,7 @@ void probe_color(const OffScreen& renderer, const graphics::FrameImage& frame, f
     require(std::abs(int(frame.rgba[4*i])-int(r)) <= 2 && std::abs(int(frame.rgba[4*i+1])-int(g)) <= 2 &&
             std::abs(int(frame.rgba[4*i+2])-int(b)) <= 2,"texture/scalar probe color mismatch");
 }
-void tests(const VulkanOptions& options) {
+void tests(const DeviceOptions& options) {
     // Public texture data uses bottom-first rows, including file-decoded data.
     std::vector<unsigned char> rgba = {255,0,0,255, 0,255,0,255, 0,0,255,255, 255,255,0,255};
     std::unique_ptr<Texture> texture(Texture::create(rgba,2,2,4,Texture::CLAMP_TO_EDGE,Texture::NEAREST));
@@ -168,7 +168,7 @@ void tests(const VulkanOptions& options) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanOptions options;
+        DeviceOptions options;
         options.validation=options.sync_validation=argc>1;
         tests(options);
         TextureManager::terminate();

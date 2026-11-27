@@ -31,7 +31,7 @@ int main(int argc,char**) {
         options.device.validation=options.device.sync_validation=argc>1;
         AxesViewer viewer("Corner axes", options.window(), options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
 #else
-        OpenGLOptions options;
+        DeviceOptions options;
         AxesViewer viewer("Corner axes", window_options(360,280,1,false,false), options);viewer.set_background_color(vec4(0));viewer.hide_logo();
 #endif
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);

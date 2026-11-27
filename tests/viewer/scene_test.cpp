@@ -24,7 +24,7 @@ unsigned hits(const graphics::FrameImage& frame) {
 int main(int argc, char**) {
     try {
         initialize(false, false, false);
-        VulkanOptions options;
+        DeviceOptions options;
         options.validation = argc > 1;
         options.sync_validation = options.validation;
         options.profiling = true;

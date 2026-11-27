@@ -29,10 +29,7 @@
 
 #ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
-    OffScreen::OffScreen(int w, int h, const VulkanOptions &options)
-        : OffScreen(w, h, options, detail::DeviceOptionsTag{}) {
-    }
-    OffScreen::OffScreen(int w, int h, const VulkanOptions &options, detail::DeviceOptionsTag)
+    OffScreen::OffScreen(int w, int h, const DeviceOptions &options)
         : Viewer(w, h, options) {
         snapshot_hud_ = false;
     }
@@ -62,10 +59,7 @@ namespace easy3d {
 #include <limits>
 #include <stdexcept>
 namespace easy3d {
-    OffScreen::OffScreen(int w, int h, const OpenGLOptions &gl_options)
-        : OffScreen(w, h, gl_options, detail::DeviceOptionsTag{}) {
-    }
-    OffScreen::OffScreen(int w, int h, const OpenGLOptions &gl_options, detail::DeviceOptionsTag)
+    OffScreen::OffScreen(int w, int h, const DeviceOptions &options)
         : Viewer("Easy3D OffScreen Renderer", [&] {
             // A hidden, fixed-size window that is only ever captured, so these are
             // decided here rather than by the caller. 4 samples is what the canvas
@@ -76,7 +70,7 @@ namespace easy3d {
             window.samples = 4;
             window.visible = false;
             return window;
-        }(), gl_options, detail::DeviceOptionsTag{}) {
+        }(), options) {
         snapshot_hud_ = false;
         manual_.clear();
         width_ = w;

@@ -81,14 +81,16 @@ namespace easy3d {
  */
 class MappleViewer : public easy3d::Viewer, public easy3d::logging::Logger, public easy3d::ProgressClient {
 public:
+    /**
+     * \brief Create the Mapple shell around a Viewer.
+     * \param title Window title.
+     * \param window Initial size, multisample count and window flags.
+     * \param options DeviceOptions for the configured Easy3D backend.
+     */
     explicit MappleViewer(
             const std::string &title = "Mapple",
             const easy3d::WindowOptions &window = {},
-#ifdef EASY3D_HAS_VULKAN
-            const easy3d::VulkanOptions &options = {}
-#else
-            const easy3d::OpenGLOptions &options = {}
-#endif
+            const easy3d::DeviceOptions &options = {}
     );
 
     ~MappleViewer() override;

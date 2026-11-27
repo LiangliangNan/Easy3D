@@ -48,9 +48,9 @@ inline WindowOptions window_options(int width, int height, int samples = 1, bool
 #ifdef EASY3D_HAS_VULKAN   // The helpers below pass Vulkan device options to the viewer
 namespace easy3d {
 
-// Window and device settings of a test. The viewer constructors take them as a
-// WindowOptions plus the backend's own options struct, so window() hands out the
-// portable half and full_screen stays false everywhere a TestWindow is used.
+// Window and device settings of a test. The viewer constructors take WindowOptions
+// plus DeviceOptions for the configured backend, so window() hands out the portable
+// half and full_screen stays false everywhere a TestWindow is used.
 struct TestWindow {
     TestWindow() { ensure_test_glfw(); }
     int width = 800, height = 600, samples = 1;
@@ -64,7 +64,7 @@ struct TestWindow {
         result.resizable = resizable;
         return result;
     }
-    VulkanOptions device;
+    DeviceOptions device;
 };
 
 // Single-view tests need both the framebuffer callback and camera resize to settle

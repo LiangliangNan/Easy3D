@@ -24,9 +24,9 @@ struct SelectionView:TutorialPointSelection {
 };
 int main(int argc,char**) {return test::run("portable GPU selection and shared point storage",[&]{
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     std::shared_ptr<const graphics::PointData> surviving;
     {

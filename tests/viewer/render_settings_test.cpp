@@ -108,10 +108,10 @@ int main(int argc, char **argv) {
         }
         initialize(false, false, false);
 #ifdef EASY3D_HAS_VULKAN
-        VulkanOptions options;
+        DeviceOptions options;
         options.validation = options.sync_validation = validation;
 #else
-        OpenGLOptions options;
+        DeviceOptions options;
         (void)validation;
 #endif
         {

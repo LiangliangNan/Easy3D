@@ -49,11 +49,7 @@ using namespace easy3d;
 // in init(), once the window and rendering context exist.
 ViewerImGui::ViewerImGui(const std::string &title,
                          const WindowOptions &window,
-#ifdef EASY3D_HAS_VULKAN
-                         const VulkanOptions &options
-#else
-                         const OpenGLOptions &options
-#endif
+                         const DeviceOptions &options
     ) : Viewer(title, window, options)
 {
     // Liangliang: the internal glfw won't be shared across dll boundaries (Linux and macOS resolve GLFW to one instance).

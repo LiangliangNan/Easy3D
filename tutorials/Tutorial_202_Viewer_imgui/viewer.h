@@ -62,11 +62,7 @@ public:
     explicit ViewerImGui(
         const std::string &title = "Easy3D ViewerImGui",
         const easy3d::WindowOptions &window = {},
-#ifdef EASY3D_HAS_VULKAN
-        const easy3d::VulkanOptions &options = {}
-#else
-        const easy3d::OpenGLOptions &options = {}
-#endif
+        const easy3d::DeviceOptions &options = {}
         );
 
     /**

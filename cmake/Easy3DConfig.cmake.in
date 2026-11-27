@@ -67,7 +67,7 @@ else ()
 endif ()
 if (Easy3D_REQUIRE_BACKEND AND NOT "${Easy3D_REQUIRE_BACKEND}" STREQUAL "${Easy3D_BACKEND}")
     message(FATAL_ERROR "Easy3D was built with the ${Easy3D_BACKEND} backend, but this project requires "
-                        "${Easy3D_REQUIRE_BACKEND}. Use an Easy3D build with the matching Easy3D_ENABLE_VULKAN setting.")
+                        "${Easy3D_REQUIRE_BACKEND}. Use an Easy3D built with your required backend.")
 endif ()
 set(Easy3D_AVAILABLE_COMPONENTS "@CONF_Easy3D_COMPONENTS@")
 set(Easy3D_VERSION_STRING "@CONF_Easy3D_VERSION@")

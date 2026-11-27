@@ -284,12 +284,15 @@ int main(int argc, char **argv) {
     try {
         initialize(false, false, false);
         (void)argv;
-        DeviceOptions options;
+        easy3d::DeviceOptions host_options;
+        graphics::DeviceOptions device_options;
 #ifdef EASY3D_HAS_VULKAN
-        options.validation = options.sync_validation = argc > 1;
+        host_options.validation = host_options.sync_validation = argc > 1;
+        device_options.validation = host_options.validation;
+        device_options.sync_validation = host_options.sync_validation;
 #endif
-        OffScreen host(64, 48, options);
-        auto device = create_device(options);
+        OffScreen host(64, 48, host_options);
+        auto device = create_device(device_options);
         effect_order_and_clipping(*device);
         mixed_effects_and_shadow_casters(*device);
         oit_cell_viewports(*device);

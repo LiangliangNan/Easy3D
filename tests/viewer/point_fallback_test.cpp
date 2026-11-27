@@ -28,7 +28,7 @@ void require(bool condition, const char *message) {
 }
 
 PointRender render_points(bool native_large_points, bool validation) {
-    VulkanOptions options;
+    DeviceOptions options;
     options.validation = validation;
     options.sync_validation = validation;
     options.use_native_large_points = native_large_points;

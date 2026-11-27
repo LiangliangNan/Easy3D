@@ -744,7 +744,7 @@ namespace easy3d {
             if (handle)
                 glfwDestroyWindow(handle);
         }
-        std::unique_ptr<graphics::RenderDevice> device(const VulkanOptions &options) {
+        std::unique_ptr<graphics::RenderDevice> device(const DeviceOptions &options) {
             uint32_t count = 0;
             const char **required = glfwGetRequiredInstanceExtensions(&count);
             if (!required || !count)
@@ -1917,7 +1917,7 @@ namespace easy3d {
             append_overlays(impl_->overlays);
         return commands;
     }
-    Viewer::Viewer(int width, int height, const VulkanOptions &options)
+    Viewer::Viewer(int width, int height, const DeviceOptions &options)
         : window_(nullptr), width_(width), height_(height), camera_(new Camera), samples_(1),
           background_color_(setting::background_color), show_frame_rate_(false),
           show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
@@ -2169,17 +2169,11 @@ namespace easy3d {
     }
     Viewer::Viewer(const std::string &title,
                    const WindowOptions &window,
-                   const VulkanOptions &vk_options)
-        : Viewer(title, window, vk_options, detail::DeviceOptionsTag{}) {
-    }
-    Viewer::Viewer(const std::string &title,
-                   const WindowOptions &window,
-                   const VulkanOptions &vk_options,
-                   detail::DeviceOptionsTag)
+                   const DeviceOptions &options)
         : Viewer(std::make_shared<Window>(title, window.width, window.height, window.samples, window.full_screen,
-                                          window.visible, window.resizable), vk_options) {
+                                          window.visible, window.resizable), options) {
     }
-    Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions &options)
+    Viewer::Viewer(std::shared_ptr<Window> host, const DeviceOptions &options)
         : window_(host->handle), width_(host->width), height_(host->height), title_(host->title), camera_(new Camera),
           samples_(1), background_color_(setting::background_color), show_frame_rate_(false),
           show_easy3d_logo_(true), model_idx_(-1), window_host_(std::move(host)),
@@ -2373,13 +2367,7 @@ namespace easy3d {
     }
     Viewer::Viewer(const std::string &title,
                    const WindowOptions &window,
-                   const OpenGLOptions &gl_options)
-        : Viewer(title, window, gl_options, detail::DeviceOptionsTag{}) {
-    }
-    Viewer::Viewer(const std::string &title,
-                   const WindowOptions &window,
-                   const OpenGLOptions &gl_options,
-                   detail::DeviceOptionsTag)
+                   const DeviceOptions &options)
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0), // Liangliang: actual samples received known only after window creation
           visible_(window.visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
@@ -2399,7 +2387,7 @@ namespace easy3d {
             logging::initialize(false, true, true, false, "default", 9);
 
         // create and setup window
-        window_ = create_window(title, window, gl_options);
+        window_ = create_window(title, window, options);
         try {
             setup_callbacks(window_);
 
@@ -2469,10 +2457,10 @@ namespace easy3d {
     }
     GLFWwindow *Viewer::create_window(const std::string &title,
                                       const WindowOptions &window,
-                                      const OpenGLOptions &gl_options) {
+                                      const DeviceOptions &options) {
         const int samples = window.samples;
-        const int gl_major = gl_options.major;
-        const int gl_minor = gl_options.minor;
+        const int gl_major = options.major;
+        const int gl_minor = options.minor;
         int width = window.width;
         int height = window.height;
 
@@ -2490,8 +2478,8 @@ namespace easy3d {
 
         glfwWindowHint(GLFW_SAMPLES, msaa_hint);
 
-        glfwWindowHint(GLFW_STENCIL_BITS, gl_options.stencil_bits);
-        glfwWindowHint(GLFW_DEPTH_BITS, gl_options.depth_bits);
+        glfwWindowHint(GLFW_STENCIL_BITS, options.stencil_bits);
+        glfwWindowHint(GLFW_DEPTH_BITS, options.depth_bits);
 
         /* Request a forward compatible OpenGL glMajor.glMinor core profile context.
            Default value is an OpenGL 3.2 core profile context. */

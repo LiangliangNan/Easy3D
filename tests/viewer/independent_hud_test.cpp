@@ -35,9 +35,9 @@ void near_color(const unsigned char* p,int r,int g,int b,int a,const char* messa
 }
 int main(int argc,char**) {return test::run("independent 3D HUD depth, lighting and captures",[&]{
 #ifdef EASY3D_HAS_VULKAN
-    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+    DeviceOptions options;options.validation=options.sync_validation=argc>1;
 #else
-    OpenGLOptions options;
+    DeviceOptions options;
 #endif
     HudView v("Independent HUD",window_options(161,121,4,false,false,true),options);v.hide_hud();
     v.camera()->set_view_direction(vec3(0,0,-1));v.camera()->set_up_vector(vec3(0,1,0));

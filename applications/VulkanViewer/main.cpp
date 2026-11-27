@@ -11,11 +11,11 @@ int main(int argc, char** argv) {
         easy3d::initialize();
         std::string model;
         unsigned frames = 0;
-        easy3d::VulkanOptions vk_options;
+        easy3d::DeviceOptions options;
         int samples = 4;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
-            if (arg == "--validation") { vk_options.validation = true; vk_options.sync_validation = true; }
+            if (arg == "--validation") { options.validation = true; options.sync_validation = true; }
             else if (arg == "--frames" || arg == "--samples") {
                 const auto message = arg + " requires a positive integer";
                 if (++i == argc) throw std::invalid_argument(message);
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
         // Only the sample count comes from the command line; the rest is default.
         easy3d::WindowOptions window;
         window.samples = samples;
-        auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", window, vk_options);
+        auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", window, options);
         if (model.empty()) {
             // The installed demo works without any source-tree data files.
             auto bunny = std::make_shared<easy3d::SurfaceMesh>();

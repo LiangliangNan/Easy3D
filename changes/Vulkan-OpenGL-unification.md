@@ -343,9 +343,10 @@ struct WindowOptions {
 
 #### `DeviceOptions`
 
-The mutually exclusive public `OpenGLOptions` and `VulkanOptions` should be replaced by common diagnostics and device-selection options:
+Low-level `graphics::RenderDevice` creation uses the common diagnostics and device-selection options:
 
 ```cpp
+namespace graphics {
 struct DeviceOptions {
     bool validation = false;
     bool sync_validation = false;
@@ -353,9 +354,14 @@ struct DeviceOptions {
     std::string device_name;
     bool use_native_large_points = true;
 };
+}
 ```
 
 OpenGL context-version negotiation and Vulkan instance/device construction become implementation details.
+The three rendering hosts instead take `easy3d::DeviceOptions`, whose public fields describe the configured
+backend: Vulkan device/validation settings or OpenGL context requests. Keeping the host type in one name avoids
+backend conditionals in constructor declarations; it is distinct from `graphics::DeviceOptions` because the host
+options configure window/context construction, while the low-level options configure a standalone render device.
 
 #### `Viewer`
 
@@ -1155,7 +1161,7 @@ The existing tree already contains most of the desired application and geometry 
 
 #### Release policy
 
-- The 2.8 compatibility baseline is pre-unification `main`, including the intentional 2.7 API renames and ownership moves already present there. APIs removed or renamed by those documented 2.7 changes are not restored as compatibility aliases.
+- The 2.8 compatibility baseline is pre-unification `main`, including the intentional 2.7 API renames and ownership moves already present there. APIs removed or renamed by those documented 2.7 changes are not restored as compatibility aliases. One later simplification supersedes the original host-constructor compatibility plan: the temporary `VulkanOptions`/`OpenGLOptions` overloads and `DeviceOptionsTag` dispatch were removed on 2026-11-27 in favor of a single `easy3d::DeviceOptions` parameter on each host. This is an intentional API break for callers that explicitly named the old option types: those type names and the old constructor symbols are not retained, although the host constructors retain their parameter order and defaults.
 - **2.8.0 — compatibility release:** add portable replacements and deprecate old APIs. Preserve existing symbols, public class layouts, and virtual tables. New convenience overloads may be non-virtual forwarding wrappers.
 - **3.0.0 — removal release:** remove deprecated declarations, definitions, Python bindings, forwarding headers, and install/export entries; make native handles protected/private; land virtual-interface changes that cannot preserve the 2.x vtable.
 - A deprecated API must survive at least one complete 2.8.x release series. Removal is allowed in 3.0.0 only after every gate in section 8.8 passes.
@@ -1167,9 +1173,9 @@ Because Easy3D requires C++11, deprecations use one project macro rather than C+
 
 | Old signature/API | Replacement and compatibility wrapper | Deprecate | Remove |
 |---|---|---|---|
-| `Viewer(title, WindowOptions, VulkanOptions/OpenGLOptions)` | Final `Viewer(title, WindowOptions, DeviceOptions)`; 2.8 adds an exact-`DeviceOptions` constrained-template constructor without trailing defaults, leaving existing calls and symbols unchanged. | 2.8.0 | Legacy constructor and transitional template in 3.0.0; ordinary target constructor then remains. |
-| `OffScreen(width, height, VulkanOptions/OpenGLOptions)` | Same transition to `OffScreen(width, height, DeviceOptions)`. | 2.8.0 | 3.0.0 |
-| `MultiViewer(rows, cols, title, WindowOptions, VulkanOptions/OpenGLOptions)` | Same transition to the final `DeviceOptions` constructor. | 2.8.0 | 3.0.0 |
+| `Viewer(title, WindowOptions, VulkanOptions/OpenGLOptions)` | `Viewer(title, WindowOptions, easy3d::DeviceOptions)` with the same parameter order and defaults. The old backend-option overloads and transitional template were removed on 2026-11-27 rather than carried to 3.0. | Simplified API | Completed in the unification branch |
+| `OffScreen(width, height, VulkanOptions/OpenGLOptions)` | `OffScreen(width, height, easy3d::DeviceOptions)`; no separate compatibility overload. | Simplified API | Completed in the unification branch |
+| `MultiViewer(rows, cols, title, WindowOptions, VulkanOptions/OpenGLOptions)` | `MultiViewer(rows, cols, title, WindowOptions, easy3d::DeviceOptions)`; no separate compatibility overload. | Simplified API | Completed in the unification branch |
 | `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload is an exact-type constrained template with no default argument and forwards through a private out-of-line bridge to the existing positional virtual, preserving legacy `{}` calls. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
 | `RenderDevice::present(...)` | No normal public replacement. Windowed hosts present through their private adapter; headless callers use `render()`. | 2.8.0 | 3.0.0 |
 | `create_opengl_device()` / `create_vulkan_device(...)` | `create_device(DeviceOptions)`; old factories forward and retain their exact parameter order. | 2.8.0 | 3.0.0 |
@@ -1398,9 +1404,9 @@ Status: complete with the documented backend limitations below. The final all-ta
 
 **`draw_commands()` remains virtual on both backends.** It was already virtual on `main`; Milestone 4 preserves that existing extension point rather than adding a vtable entry.
 
-**`DeviceOptions` constructors for all three hosts.** Viewer, OffScreen, and MultiViewer each gained a C++11 constrained-template constructor taking `graphics::DeviceOptions` alongside the existing backend-specific `VulkanOptions`/`OpenGLOptions` constructors. Existing calls such as `Viewer("title", {}, {})` keep resolving to the backend-specific constructor; new callers pass a `DeviceOptions` value. The `detail::make_device_options()` helper maps `DeviceOptions` to backend-specific options field by field (C++11 cannot brace-init structs with default member initializers).
+**One `easy3d::DeviceOptions` constructor for all three hosts.** Viewer, OffScreen, and MultiViewer each take `easy3d::DeviceOptions` directly, with no constrained template, dispatch tag, or deprecated backend-option overload. The type has the Vulkan fields in Vulkan builds and the OpenGL context fields in OpenGL builds, so constructor declarations contain no backend conditional. Existing calls that rely on default options, such as `Viewer("title")`, `Viewer("title", {})`, and `Viewer("title", {}, {})`, remain unchanged. Callers that explicitly named `VulkanOptions` or `OpenGLOptions` must use `DeviceOptions` and the configured backend's field names.
 
-**No public `OpenGLOptions`/`VulkanOptions` conditionals remain in host construction.** Both option types remain available as temporary compatibility overloads; they are removed only in the coordinated 3.0 release. Backend-specific settings (validation layers, device name, GL version, depth/stencil bits) are preserved through the compatibility overloads.
+**Host options and low-level device options are distinct.** `easy3d::DeviceOptions` configures Viewer/OffScreen/MultiViewer construction. `graphics::DeviceOptions` remains the backend-neutral value accepted by `graphics::create_device()` and native interop factories. Applications that configure both must construct each type explicitly rather than assuming an implicit conversion.
 
 #### Overlay and capture unification
 
@@ -1674,7 +1680,7 @@ Validation on the final source state:
 The public-header search still finds `EASY3D_HAS_VULKAN` in 15 headers. Many
 occurrences are private storage or native compatibility fallbacks retained by the
 2.8 policy; client-visible differences also remain in the legacy effect facades,
-`VulkanOptions` overloads, `Viewer::set_samples()`, and the documented
+the backend-dependent fields of `easy3d::DeviceOptions`, `Viewer::set_samples()`, and the documented
 `scan_visible_points()` exception. The Milestone 5 header-audit item therefore
 remains open rather than being closed by the runtime tests.
 
@@ -1686,3 +1692,34 @@ item and Milestones 6 and 7 remain open, and the root package version is still
 `2.7.0` although the compatibility policy targets 2.8; release bookkeeping
 is not changed by this audit. No new interactive Mapple visual comparison is
 claimed by this pass.
+
+### 8.18 Simplified host constructors
+
+Validation date: 2026-11-28.
+
+The compatibility-preserving host-constructor design recorded in sections 8.7 and 8.13 was
+superseded to keep the public signatures simple:
+
+- `Viewer`, `OffScreen`, and `MultiViewer` now take `easy3d::DeviceOptions` directly. Its fields
+  describe the configured backend: Vulkan device/validation settings or OpenGL context requests.
+  Their parameter order and default arguments are unchanged.
+- The `VulkanOptions` and `OpenGLOptions` names, deprecated compatibility constructors, constrained
+  templates, `detail::make_device_options()` helper, and `DeviceOptionsTag` dispatch were removed.
+  Default construction such as `Viewer("title")` and `Viewer("title", {}, {})` is unchanged;
+  callers that explicitly named an old option type must migrate to `DeviceOptions`; the old
+  type names and constructor symbols are not retained as binary-compatibility aliases.
+- `graphics::DeviceOptions` remains the backend-neutral low-level render-device option type.
+  Host and device options no longer convert implicitly, and code configuring both creates each
+  value explicitly.
+- In-tree applications, tutorials, tests, installed consumers, and API-smoke programs were migrated
+  to the simplified host API. OpenGL host-option rejection tests were removed because Vulkan-only
+  diagnostics fields no longer exist in the OpenGL host type; the equivalent low-level device
+  rejection tests remain in `opengl_render_device_test`.
+
+This intentionally revises the earlier 2.8 host-constructor compatibility exception described in
+section 8.7; it does not change rendering behavior or the low-level device factory contract.
+
+Both all-target backend builds succeeded. Complete serial CTest passed **Vulkan 157/157 in
+247.69 seconds** and **OpenGL 130/130 in 153.36 seconds**, with zero failures. Fresh isolated
+Release packages were rebuilt and installed, and all five installed consumer executables
+(three Vulkan, two OpenGL) passed. `git diff --check` passed.

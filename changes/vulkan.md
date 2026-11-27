@@ -18,6 +18,12 @@ consumer checks on both backends. See
 [section 8.17 of the unification report](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading)
 for the independent branch audit and remaining gaps.
 
+**Constructor simplification (2026-11-27):** all three rendering hosts now take
+`easy3d::DeviceOptions` directly, with backend-specific fields selected by the build. The
+temporary `VulkanOptions`/`OpenGLOptions` overloads and `DeviceOptionsTag` dispatch were
+removed; the old type names and constructor symbols are not retained. Low-level
+render-device creation retains the separate backend-neutral `graphics::DeviceOptions`; see [section 8.18 of the unification report](Vulkan-OpenGL-unification.md#818-simplified-host-constructors).
+
 This is local macOS/MoltenVK evidence, not Linux, Windows, or hosted-CI validation.
 The former `tests.yml` is currently stored as `.github/workflows/tests.txt`, so no
 active test workflow validates this branch. The successful 2026-11-12 workflow run
@@ -86,7 +92,7 @@ by both backends), then backend-specific protected/private parts, each in its ow
 
 ```cpp
 #ifdef EASY3D_HAS_VULKAN
-struct VulkanOptions {
+struct DeviceOptions {
     bool validation = false;
     bool sync_validation = false;
     bool profiling = false;
@@ -94,7 +100,7 @@ struct VulkanOptions {
     std::string device_name;
 };
 #else
-struct OpenGLOptions {
+struct DeviceOptions {
     int major = 3;
     int minor = 2;
     int depth_bits = 24;
@@ -117,11 +123,7 @@ class Viewer : public ViewerBase {
 public:
     explicit Viewer(const std::string& title = "Easy3D Viewer",
                     const WindowOptions& window = {},
-#ifdef EASY3D_HAS_VULKAN
-                    const VulkanOptions& vk_options = {});
-#else
-                    const OpenGLOptions& gl_options = {});
-#endif
+                    const DeviceOptions& options = {});
     ~Viewer() override;
     int run(bool see_all = true) override;
     // ... some public functions: the unified APIs used by both backends
@@ -137,10 +139,10 @@ protected: /* or */ private:
 };
 ```
 
-The constructor is the one public place where the backends differ: the last parameter is
-`VulkanOptions` or `OpenGLOptions` (D1), so everything before it is portable — and the
+The constructor declaration is identical on both backends: the last parameter is `DeviceOptions`
+(D1), whose fields describe the configured backend. Everything before it is portable — and the
 portable window settings are grouped in `WindowOptions` rather than passed positionally.
-All three option structs are filled the same way, by default construction plus field
+The option structs are filled the same way, by default construction plus field
 assignment: default member initializers make a struct non-aggregate in C++11, so
 `WindowOptions{171, 129, 4}` does not compile and `WindowOptions window; window.samples = 4;`
 is the portable form.
@@ -178,18 +180,20 @@ OpenGL/Vulkan backend files, and new test files.
 in `main`; add conditions only where a dependency or source genuinely differs by backend.
 
 **P6. One switch.** After the migration, users only switch `Easy3D_ENABLE_VULKAN` `ON` or
-`OFF` (this defines or leaves undefined the C++ macro `EASY3D_HAS_VULKAN`). Their code
-needs no change.
+`OFF` (this defines or leaves undefined the C++ macro `EASY3D_HAS_VULKAN`). Ordinary viewer
+construction needs no backend conditional; code that sets backend-specific `DeviceOptions`
+fields must use the fields available in the configured build.
 
-**Decisions (2026-10-31, constructor types revised 2026-11-04, window settings grouped 2026-11-19):**
+**Decisions (2026-10-31, constructor types revised 2026-11-04, window settings grouped 2026-11-19, host options simplified 2026-11-27):**
 
 - **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, window, options)`, where
   `window` is a `WindowOptions` holding `width`, `height` and `samples` of type `int` (revised 2026-11-04)
-  plus `full_screen`, `visible` and `resizable`, `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
-  version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
-  validation, device name, and native large-points preference), as in the layout of P2.
-  The struct is named *plural*, after the two option structs it sits beside in the same
-  header; a singular "option" would read as one choice rather than a set of them.
+  plus `full_screen`, `visible` and `resizable`, `samples` defaulting to **1**, and `options`
+  being `easy3d::DeviceOptions`. That type has one public name on both backends: OpenGL builds
+  expose GL version/depth/stencil requests, and Vulkan builds expose validation, synchronization
+  validation, profiling, device name, and native large-points preference. The low-level
+  `graphics::DeviceOptions` used by render-device factories remains a separate backend-neutral type.
+  `WindowOptions` is named *plural* because it holds a set of window settings.
   Consequences, recorded because they break
   the otherwise unchanged client code: `main`'s order was `(title, samples, gl_major,
   gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)` and its default
@@ -201,15 +205,13 @@ needs no change.
   default. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass more than a
   title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
   audit. *Status: implemented on the OpenGL and Vulkan viewers, on `MultiViewer` and on Mapple's
-  own `MappleViewer`.* `WindowOptions` uses default member initializers, like `VulkanOptions` and
-  `OpenGLOptions`;
+  own `MappleViewer`.* `WindowOptions` uses default member initializers, like `DeviceOptions`;
   default construction with `{}` works in C++11, while custom values are assigned to fields; `WindowOptions` is defined directly in `viewer.h`,
   outside the two backend structs' `#ifdef` because its fields mean the same on both backends.
   The Python bindings keep their keyword arguments (`easy3d.Viewer(title=..., width=1600, samples=4)`)
-  through a lambda that fills the struct, and bind no `WindowOptions` type, exactly as
-  `VulkanOptions` and `OpenGLOptions` have never been bound.
+  through a lambda that fills the struct, and bind no `WindowOptions` or `DeviceOptions` type.
   Renderer factories take validation, sync-validation, device-name, and native large-points
-  preference arguments directly. Set `VulkanOptions::use_native_large_points` to `false` to
+  preference arguments directly. Set `DeviceOptions::use_native_large_points` to `false` to
   force the portable expanded-point path for diagnostics and controlled comparisons; it
   defaults to `true` and has no effect on devices without the feature. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
@@ -228,8 +230,9 @@ needs no change.
   `Viewer`, `OffScreen` and the other unified classes is written **inline** in their own
   `.cpp` files (`viewer.cpp`, `offscreen.cpp`, …) inside `#ifdef EASY3D_HAS_VULKAN`, not in
   separate `vulkan_*.cpp` files.
-- **D4 Vulkan-only options** enter through the last constructor parameter (`VulkanOptions`).
-  `VulkanViewerOptions` and the convenience overload that took it are removed.
+- **D4 Vulkan-only options** enter through the fields of the last constructor parameter
+  (`easy3d::DeviceOptions`) in Vulkan builds. `VulkanViewerOptions` and the convenience overload
+  that took it are removed.
 - **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
   `MultiViewer(rows, cols, title, window, options)` (both backends), where `window` is the same
   `WindowOptions` as D1 and the row/column counts stay `int`, and `OffScreen(width, height,
@@ -246,7 +249,7 @@ needs no change.
   306, is computed for the default window and the test refits; and the validation layers can
   no longer be enabled for tests that construct tutorial classes (they run without
   validation), while the tests that construct `Viewer` directly still pass
-  `VulkanOptions`.
+  `easy3d::DeviceOptions`.
 
 ## Coordinate System Conventions
 
@@ -505,8 +508,9 @@ backend, including all supported tutorials. The original OpenGL `Viewer` API is
 the behavioral reference. Keep common renderer/viewer/gui operations consistent
 across backends. The complete installed API is not guaranteed to be symbol
 identical: backend-specific low-level extensions must remain explicit and be
-guarded by `EASY3D_HAS_VULKAN`; constructor source compatibility is a tracked
-completion gate. Do not reintroduce `easy3d/graphics`.
+guarded by `EASY3D_HAS_VULKAN`; the three host constructors share one declaration and
+`easy3d::DeviceOptions` type, while advanced backend-specific fields remain conditional.
+Do not reintroduce `easy3d/graphics`.
 The host classes follow P1 (the `main` file names), superseding both the root-level
 `opengl_*`/`vulkan_*` files and the earlier relocation into backend directories.
 Device/pipeline/shader operations still belong in renderer backend implementations;
@@ -533,8 +537,8 @@ outstanding migration ports.
 
 The API-unification work is **not yet validated complete**:
 
-* Final local macOS serial CTest passed Vulkan **157/157 in 251.98 seconds** and
-  OpenGL **130/130 in 114.57 seconds**, with zero failures. Fresh isolated Release
+* Final local macOS serial CTest after the constructor simplification passed Vulkan
+  **157/157 in 247.69 seconds** and OpenGL **130/130 in 153.36 seconds**, with zero failures. Fresh isolated Release
   packages also passed installed offscreen, unified, and public-viewer consumer
   checks on both backends. These runs do not establish Linux/Mesa or Windows
   behavior.
@@ -1512,9 +1516,8 @@ No deprecated compatibility overload is provided.
 The default sample count is now one. The OpenGL-era heuristic that warned when both
 requested dimensions were at most 16 pixels is gone from both constructors: with
 `WindowOptions` a positional misread cannot happen, and a warning would only
-second-guess a caller who sized a window deliberately. `OpenGLOptions` and
-`VulkanOptions` are available only in their respective configured builds, while
-`WindowOptions` is defined in both.
+second-guess a caller who sized a window deliberately. `easy3d::DeviceOptions` is defined in
+both builds, with backend-specific fields; `WindowOptions` has identical fields in both.
 
 The following `Viewer` extensions are Vulkan-only, guarded by
 `EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,

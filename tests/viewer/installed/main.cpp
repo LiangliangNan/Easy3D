@@ -13,8 +13,7 @@ int main() {
     easy3d::initialize(false, false, false);
     if (easy3d::resource::directory() != easy3d::file_system::convert_to_native_style(Easy3D_RESOURCE_DIR))
         throw std::runtime_error("installed resources were rejected or resolved to the source tree");
-    easy3d::graphics::DeviceOptions device_options;
-    easy3d::OffScreen renderer(101, 77, device_options);
+    easy3d::OffScreen renderer(101, 77);
     auto mesh = std::make_shared<easy3d::SurfaceMesh>();
     auto a = mesh->add_vertex(easy3d::vec3(0, -1, -1));
     auto b = mesh->add_vertex(easy3d::vec3(0, 1, -1));

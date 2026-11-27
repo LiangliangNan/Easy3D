@@ -125,8 +125,10 @@ and `CGAL_DIR` can point to a specific version).
 **Migrating from the OpenGL-only Easy3D (i.e., v2.6.1 or earlier).** Core class names, headers, and the
 `virtual void draw() const` hook are unchanged, but there are a few breaking API changes:
 - The viewer constructor is `Viewer(title, window, options)`, where `window` is a `WindowOptions` struct (`width`,
-  `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is normally a `DeviceOptions` value.
-  Backend-specific `VulkanOptions`/`OpenGLOptions` overloads remain for compatibility. Old positional calls such as
+  `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is an `easy3d::DeviceOptions` value.
+  `DeviceOptions` has one public name on both backends: Vulkan builds expose device/validation settings, while
+  OpenGL builds expose context-version and buffer-precision requests. Low-level `graphics::RenderDevice` creation
+  uses the separate backend-neutral `graphics::DeviceOptions`. Old positional calls such as
   `Viewer(title, 4, 3, 2, false, false)` must be updated.
 - `Camera`, `Frame` and related classes now use snake_case method names (e.g., `viewDirection()` became
   `view_direction()`, `showEntireScene()` became `show_entire_scene()`).

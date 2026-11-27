@@ -20,7 +20,7 @@
 #endif
 int main() {
     easy3d::initialize(false,false,false);
-    easy3d::graphics::DeviceOptions options;
+    easy3d::DeviceOptions options;
     easy3d::OffScreen renderer(101,77,options);
     auto mesh=std::make_shared<easy3d::SurfaceMesh>();
     auto a=mesh->add_vertex(easy3d::vec3(0,-1,-1)),b=mesh->add_vertex(easy3d::vec3(0,1,-1)),c=mesh->add_vertex(easy3d::vec3(0,0,1));

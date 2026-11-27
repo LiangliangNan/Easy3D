@@ -66,9 +66,8 @@ namespace easy3d {
 
     /**
      * \brief Window settings of a Viewer - the part both backends agree on.
-     * \details These are the portable half of viewer construction: every field
-     *      means the same thing on both backends, unlike VulkanOptions/OpenGLOptions,
-     *      the backend-specific last parameter of the same constructor. Build one by
+     * \details Every field means the same thing on both backends. DeviceOptions
+     *      is the separate backend-specific part of viewer construction. Build one by
      *      default-constructing it and assigning the fields that differ, as those two
      *      are used: default member initializers make a struct with them non-aggregate
      *      in C++11, so field-by-field assignment is the only portable way to set them.
@@ -94,13 +93,14 @@ namespace easy3d {
         bool resizable = true;
     };
 
+// Host-construction options, distinct from graphics::DeviceOptions used by low-level factories.
 #ifdef EASY3D_HAS_VULKAN
     /**
      * \brief Options for creating a Vulkan-backed Viewer.
      * \details Vulkan is selected by the Easy3D build configuration; these
      *      settings do not switch an existing viewer between graphics backends.
      */
-    struct VulkanOptions {
+    struct DeviceOptions {
         /// Request Vulkan validation layers; construction fails if they are unavailable.
         bool validation = false;
         /// Request synchronization validation; this also enables validation layers.
@@ -119,7 +119,7 @@ namespace easy3d {
      * \details OpenGL is selected by the Easy3D build configuration. The requested
      * context must support at least OpenGL 3.2.
      */
-    struct OpenGLOptions {
+    struct DeviceOptions {
         /// Requested OpenGL context major version (at least 3).
         int major = 3;
         /// Requested OpenGL context minor version (at least 2).
@@ -130,42 +130,6 @@ namespace easy3d {
         int stencil_bits = 8;
     };
 #endif
-
-    namespace detail {
-        struct DeviceOptionsTag {};
-
-        /// Convert backend-neutral DeviceOptions to backend-specific options.
-        /// C++11 does not allow brace-init of structs with default member
-        /// initializers, so we build them field by field here.
-#ifdef EASY3D_HAS_VULKAN
-        inline VulkanOptions make_device_options(const graphics::DeviceOptions &o) {
-            VulkanOptions v;
-            v.validation = o.validation;
-            v.sync_validation = o.sync_validation;
-            v.profiling = o.profiling;
-            v.use_native_large_points = o.use_native_large_points;
-            v.device_name = o.device_name;
-            return v;
-        }
-#else
-        inline OpenGLOptions make_device_options(const graphics::DeviceOptions &o) {
-            if (o.validation || o.sync_validation)
-                throw std::invalid_argument("OpenGL does not support requested validation diagnostics");
-            if (o.profiling)
-                throw std::invalid_argument("OpenGL does not support requested profiling");
-            if (!o.device_name.empty())
-                throw std::invalid_argument("OpenGL does not support device-name selection");
-            // use_native_large_points is accepted for source compatibility; OpenGL
-            // always uses its native point rendering.
-            OpenGLOptions gl;
-            gl.major = 3;
-            gl.minor = 2;
-            gl.depth_bits = 24;
-            gl.stencil_bits = 8;
-            return gl;
-        }
-#endif
-    } // namespace detail
 
     /**
      * \brief The default viewer implementation for both OpenGL and Vulkan backends.
@@ -187,43 +151,16 @@ namespace easy3d {
          * \param window Initial size, multisample count and window flags, see
          *      \ref WindowOptions. Everything before the last parameter is
          *      portable: it means the same thing on both backends.
-         * \param options Backend-specific Vulkan device or OpenGL context options.
-         * \details The final options parameter is backend-specific: Vulkan
-         * builds accept VulkanOptions and OpenGL builds accept OpenGLOptions.
+         * \param options DeviceOptions for the configured backend: Vulkan device
+         *      settings in Vulkan builds, or OpenGL context requests in OpenGL builds.
+         * \details The options type has one name on both backends, while its fields
+         *      describe the backend selected by the Easy3D build configuration.
          */
-        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable Viewer constructor")
         explicit Viewer(
             const std::string &title = "Easy3D Viewer",
             const WindowOptions &window = {},
-#ifdef EASY3D_HAS_VULKAN
-            const VulkanOptions &options = {}
-#else
-            const OpenGLOptions& options = {}
-#endif
+            const DeviceOptions &options = {}
             );
-
-        /// Portable 2.8 construction with backend-neutral DeviceOptions.
-        /// Existing calls such as Viewer("title", {}, {}) keep resolving to the
-        /// backend-specific constructor above; new callers pass a DeviceOptions value.
-        template <typename Options>
-        explicit Viewer(
-            const std::string &title,
-            const WindowOptions &window,
-            const Options &options,
-            typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : Viewer(title, window, detail::make_device_options(options), detail::DeviceOptionsTag{})
-        {
-        }
-
-    protected:
-        Viewer(const std::string &title,
-               const WindowOptions &window,
-#ifdef EASY3D_HAS_VULKAN
-               const VulkanOptions &options,
-#else
-               const OpenGLOptions &options,
-#endif
-               detail::DeviceOptionsTag);
 
     public:
         /// Destroy the viewer and release its window and graphics resources.
@@ -1320,7 +1257,7 @@ namespace easy3d {
 
         // Window-backed construction: adopts an already created GLFW window host and
         // builds the render device for it. The public constructor delegates here.
-        Viewer(std::shared_ptr<Window> window, const VulkanOptions &options);
+        Viewer(std::shared_ptr<Window> window, const DeviceOptions &options);
         //@}
 
         /// \name Vulkan handles and cached overlay state
@@ -1354,7 +1291,7 @@ namespace easy3d {
                                                           bool include_hud = true) const;
 
         // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
-        Viewer(int width, int height, const VulkanOptions &options);
+        Viewer(int width, int height, const DeviceOptions &options);
 
         // Updates the cached physical size, the logical camera extent and the
         // swapchain render pass after a resize or when an offscreen target is created.
@@ -1405,11 +1342,11 @@ namespace easy3d {
         // Creates the GLFW window and its context: sets the window hints from the two
         // option structs (MSAA samples, full-screen or resizable from WindowOptions;
         // depth/stencil bits and a forward-compatible core profile at
-        // gl_options.major.minor from OpenGLOptions), acquires the shared GLFW
+        // options.major.minor in OpenGL builds), acquires the shared GLFW
         // runtime, makes the context current and stores the window pointer. Returns
         // null when creation fails. WindowOptions::visible is not a hint here: the
         // window is always created hidden, and run() reveals it through show().
-        GLFWwindow *create_window(const std::string &title, const WindowOptions &window, const OpenGLOptions &gl_options);
+        GLFWwindow *create_window(const std::string &title, const WindowOptions &window, const DeviceOptions &options);
 
         // Installs the GLFW callback trampolines on the window; each one resolves the
         // user pointer back to this Viewer through dispatch_callback() and forwards to
