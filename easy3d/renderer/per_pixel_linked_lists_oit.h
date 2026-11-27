@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_PER_PIXEL_LINKED_LISTS_OIT_H
 #define EASY3D_RENDERER_PER_PIXEL_LINKED_LISTS_OIT_H
 
+#include <easy3d/core/types.h>
+
 #ifdef EASY3D_HAS_VULKAN
 
 #include <vector>
@@ -132,7 +134,7 @@ namespace easy3d {
      *
      * \sa Transparency, DualDepthPeeling, AverageColorBlending
      */
-    class PerPixelLinkedListsOIT : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") PerPixelLinkedListsOIT : public Transparency
     {
     public:
         /**
@@ -284,7 +286,7 @@ namespace easy3d {
      *
      * \sa Transparency, DualDepthPeeling, AverageColorBlending
      */
-    class PerPixelLinkedListsOIT : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") PerPixelLinkedListsOIT : public Transparency
     {
     public:
         /**

@@ -40,6 +40,8 @@
 #include <vector>
 #include <string>
 
+#include <easy3d/core/types.h>
+
 
 namespace easy3d {
 
@@ -71,7 +73,7 @@ namespace easy3d {
      *
      *		To retrieve the model view projection matrix, call camera's <code> model_view_projection_matrix() </code>
      */
-	class ShaderProgram
+	class EASY3D_DEPRECATED("use portable DrawCommand and RenderDevice APIs; custom shaders are backend internals") ShaderProgram
 	{
 	public:
 		/// Types of vertex attributes

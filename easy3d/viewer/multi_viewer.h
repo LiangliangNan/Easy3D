@@ -200,6 +200,8 @@ namespace easy3d {
         /// \name View hooks reimplemented for a grid
         //@{
 
+        friend class Viewer;
+
         // Builds the grid cell viewports and the division lines once the backend
         // is ready; delegates to Viewer::init() first.
         void init() override;
@@ -221,9 +223,14 @@ namespace easy3d {
         void update_division();
 
         // Assembles every assigned cell's scene commands for the requested output
-        // size, followed by the cached grid-division overlay.
+        // size, followed by the grid-division overlay.
+#ifdef EASY3D_HAS_VULKAN
         std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
                                                        std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
+#else
+        std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
+                                                       std::vector<DrawSource>* sources, bool include_hidden_models = false) const;
+#endif
 
         bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
 
@@ -265,10 +272,6 @@ namespace easy3d {
         // OpenGL cell-division lines, rebuilt on resize; Vulkan keeps them as cached
         // draw commands (division_commands_) instead of a drawable.
         std::unique_ptr<LinesDrawable2D> drawable_division_;
-#ifndef EASY3D_HAS_VULKAN
-        mutable std::vector<graphics::DrawCommand> division_commands_;
-        mutable int division_width_ = 0, division_height_ = 0;
-#endif
     };
 
 }

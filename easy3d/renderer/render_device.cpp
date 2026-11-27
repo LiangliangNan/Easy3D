@@ -32,6 +32,35 @@
 
 namespace easy3d {
     namespace graphics {
+        void DrawCommand::set_depth_range(const vec2 &range) {
+            const auto encode = [](float value) -> std::uint16_t {
+                if (!(value >= 0.0f && value <= 1.0f))
+                    return 0x8000;
+                return static_cast<std::uint16_t>(std::lround(value * 32767.0f));
+            };
+            depth_range_min = encode(range.x);
+            depth_range_max = encode(range.y);
+        }
+
+        vec2 DrawCommand::depth_range() const {
+            const auto decode = [](std::uint16_t value) -> float {
+                return value == 0x8000 ? std::numeric_limits<float>::quiet_NaN()
+                                       : float(value) / 32767.0f;
+            };
+            return vec2(decode(depth_range_min), decode(depth_range_max));
+        }
+
+        FrameImage RenderDevice::render_positional(std::uint32_t width,
+                                                   std::uint32_t height,
+                                                   const std::vector<DrawCommand> &commands,
+                                                   const vec4 &background,
+                                                   unsigned samples,
+                                                   TransparencyMethod transparency,
+                                                   unsigned peel_layers,
+                                                   FrameReadback readback) {
+            return render(width, height, commands, background, samples, transparency, peel_layers, readback);
+        }
+
         PointData::PointData(std::vector<vec3> positions, std::vector<uint32_t> ids, uint32_t count)
             : positions_(std::move(positions)), source_ids_(std::move(ids)), source_count_(count) {
             if (positions_.size() > UINT32_MAX)

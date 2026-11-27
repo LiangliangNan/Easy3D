@@ -1209,7 +1209,7 @@ void PaintCanvas::appendCornerAxes(std::vector<graphics::DrawCommand> &commands,
     command.object_id = UINT32_MAX;
     command.overlay = true;
     command.overlay_independent_depth = true;
-    command.depth_range = vec2(0.0f, 0.01f);
+    command.set_depth_range(vec2(0.0f, 0.01f));
     const int size = static_cast<int>(100 * dpiScaling());
     command.viewport = ivec4(0, static_cast<int>(height() * dpiScaling()) - size, size, size);
     commands.push_back(std::move(command));
@@ -1905,7 +1905,7 @@ bool PaintCanvas::drawPortable() {
                 command.point_size *= pixel_scale;
                 command.line_width *= pixel_scale;
                 if (drawable->type() == Drawable::DT_TRIANGLES)
-                    command.depth_range = vec2(0.001f, 1.0f);
+                    command.set_depth_range(vec2(0.001f, 1.0f));
                 commands.push_back(std::move(command));
             };
             for (const auto &d : renderer->triangles_drawables())

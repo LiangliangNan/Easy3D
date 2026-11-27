@@ -5,14 +5,6 @@
 #include <string>
 #include <type_traits>
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
 namespace {
 
     using LegacySurface = easy3d::graphics::VulkanSurface;
@@ -32,26 +24,8 @@ namespace {
 
 } // namespace
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
-
 int main() {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
     LegacyFactory volatile legacy_factory = &easy3d::graphics::create_vulkan_window_device;
     (void) legacy_factory;
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
     return 0;
 }

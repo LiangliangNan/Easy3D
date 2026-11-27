@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 #define EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 
+#include <easy3d/core/types.h>
+
 #ifdef EASY3D_HAS_VULKAN
 
 #include <vector>
@@ -46,7 +48,7 @@ namespace easy3d {
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
      * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT
      */
-    class AverageColorBlending : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") AverageColorBlending : public Transparency
     {
     public:
         /**
@@ -94,7 +96,7 @@ namespace easy3d {
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
      * \sa Transparency, DualDepthPeeling, PerPixelLinkedListsOIT
      */
-    class AverageColorBlending : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") AverageColorBlending : public Transparency
     {
     public:
         /**

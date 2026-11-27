@@ -28,6 +28,7 @@
 #ifndef EASY3D_RENDERER_BACKENDS_OPENGL_OVERLAY_RENDERER_H
 #define EASY3D_RENDERER_BACKENDS_OPENGL_OVERLAY_RENDERER_H
 
+#include <easy3d/core/types.h>
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -35,7 +36,7 @@
 namespace easy3d {
     namespace opengl {
         // Per-context realization of immutable triangle annotations. Viewer owns GL state isolation.
-        class OverlayRenderer {
+        class EASY3D_DEPRECATED("use Viewer::set_overlays() with graphics::DrawCommand") OverlayRenderer {
         public:
             ~OverlayRenderer();
             void set(std::vector<graphics::DrawCommand> commands, bool foreground);

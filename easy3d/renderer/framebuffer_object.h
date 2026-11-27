@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 
+#include <easy3d/core/types.h>
 #include <easy3d/renderer/opengl.h>
 
 
@@ -118,7 +119,7 @@ namespace easy3d {
      *   - modify the attach_color_texture() and attach_depth_texture() to use TextureFormat.
      *   - replace ColorAttachment by TextureFormat.
      */
-    class FramebufferObject
+    class EASY3D_DEPRECATED("use RenderDevice framebuffer, texture, and capture APIs") FramebufferObject
     {
     public:
         /**

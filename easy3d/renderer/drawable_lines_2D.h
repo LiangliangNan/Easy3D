@@ -63,6 +63,7 @@ namespace easy3d {
          * \brief Draws the drawable.
          * \param camera The camera used for rendering.
          */
+        EASY3D_DEPRECATED("use DrawableRenderer::command() and RenderDevice")
         void draw(const Camera* camera) const override;
 
         /// \name Screen-space line width
@@ -97,7 +98,6 @@ namespace easy3d {
          * \details Coordinates are normalized using the supplied viewport. Resizing scales their
          *      relative placement, matching the OpenGL implementation. Vulkan renders variable-width
          *      triangle ribbons as camera-independent overlays, without scene depth or picking IDs.
-         *      Attach to a native host before uploading so CPU buffers are selected in dual builds.
          *      Pass framebuffer dimensions together with framebuffer-pixel coordinates (and a
          *      framebuffer-pixel line width, see line_width()) to draw a DPI-independent overlay;
          *      logical coordinates with a DPI-scaled width would mix two pixel spaces.

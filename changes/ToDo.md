@@ -21,9 +21,9 @@
     - [x] Route all drawable buffer updates through the shared realization/cache path; cover dynamic updates, element-buffer disabling, resizing, detachment, and repeated updates in both adapters.
     - [x] Move `DrawableRenderer` from command translation toward ownership of portable geometry/image caches; it must not own devices, windows, cameras, or native GPU resources.
     - [x] Express point, line, triangle, and screen-space line styling through portable command state; verify plain/impostor rendering, smooth shading, opacity, line width, and framebuffer-pixel conventions on both backends.
-    - [x] Migrate ordinary in-tree rendering callers of `Drawable::draw()`, `gl_draw()`, `vao()`, and raw buffer getters to `DrawableRenderer` or command assembly, including Python bindings, tutorials, tests, and Mapple; the retired Mapple-Qt was also migrated before retirement. Retain native calls only in centralized compatibility/effect/picking fallbacks.
+    - [x] Migrate ordinary in-tree rendering callers of `Drawable::draw()`, `gl_draw()`, `vao()`, and raw buffer getters to `DrawableRenderer` or command assembly, including Python bindings, tutorials, tests, supported Mapple, and the retired Mapple-Qt reference source. Retain native calls only in centralized compatibility/effect/picking fallbacks.
     - [x] Deprecate native drawable rendering/resource access in 2.8 after both adapters pass parity tests; reserve declaration, definition, binding, header, and build/install removal for the coordinated 3.0 release. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
-    - [x] Audit corner-axis lighting/depth/blending, native EDL, live/capture parity, immediate native compatibility, and MultiViewer divisions; pass the complete serial OpenGL 125/125 and Vulkan 153/153 suites and visual macOS Mapple validation with both backends. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
+    - [x] Audit corner-axis lighting/depth/blending, native EDL, live/capture parity, immediate native compatibility, and MultiViewer divisions; compare deterministic baseline rendering, pass the complete serial OpenGL 125/125 and Vulkan 154/154 suites, and run visual macOS Mapple validation with both backends. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
 
   - [ ] Milestone 3 — Turn rendering effects into portable settings
     - [ ] Add `RenderSettings` and its shadow, ambient-occlusion, transparency, eye-dome-lighting, and clipping substructures with documented defaults, units, and validation.
@@ -57,7 +57,7 @@
     - [ ] Delete each deprecated declaration, definition, binding, install/export entry, and test dependency together in a coordinated release.
 
   - [ ] Milestone 7 — Bindings, documentation, validation, and release
-    - [ ] Repair the stale Python `Drawable.update_highlight_mask(strengths, dynamic)` binding to match the current one-argument C++ API, then compile the Python bindings.
+    - [x] Verify the one-argument Python `Drawable.update_highlight_mask(strengths)` binding and compile the Python bindings.
     - [ ] Expose the unified hosts, drawable data/style APIs, `RenderSettings`, low-level device/value types, and array-like `FrameImage` access in Python without native buffer, texture, VAO, or framebuffer handles.
     - [ ] Update tutorials and examples to demonstrate user-facing APIs first, then command customization and low-level rendering; no example should require client-side backend selection macros.
     - [ ] Publish a migration guide covering C++ and Python replacements, compatibility wrappers, behavioral differences, and capability-dependent fallbacks.

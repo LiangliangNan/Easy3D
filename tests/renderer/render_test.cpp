@@ -607,6 +607,16 @@ void texture_samplers(RenderDevice& device) {
             "linear sampler did not blend its neighboring texels");
     require(linear.ids[center].object == 61 && repeated.ids[center].object == clamp.ids[center].object &&
             linear.depth[center] == clamp.depth[center],"sampler selection changed picking/depth");
+    auto vertical_vertices = triangle(0,vec4(1))->vertices();
+    vertical_vertices[0].texcoord = vertical_vertices[1].texcoord = vec2(0.5f,0.0f);
+    vertical_vertices[2].texcoord = vec2(0.5f,1.0f);
+    draw.geometry = std::make_shared<Geometry>(vertical_vertices);
+    draw.texture = std::make_shared<Image>(1,2,std::vector<unsigned char>{
+        255,0,0,255, 0,0,255,255});
+    const auto oriented = device.render(32,32,{draw});
+    require(oriented.rgba[(8*32+16)*4] == 255 && oriented.rgba[(8*32+16)*4+2] == 0 &&
+            oriented.rgba[(23*32+16)*4] == 0 && oriented.rgba[(23*32+16)*4+2] == 255,
+            "top-first image rows were flipped by the backend");
     sampler.wrap = static_cast<TextureWrap>(42);
     rejects([&] { Image invalid(2,1,pixels,sampler); });
 }
@@ -621,6 +631,19 @@ DrawCommand overlay_quad(unsigned width,unsigned height,float left,float top,flo
     result.model_view_projection=screen_space_projection(width,height);
     result.color=color; result.overlay=true; result.object_id=UINT32_MAX;
     return result;
+}
+void transparent_primitive_ids(RenderDevice& device) {
+    std::vector<Vertex> vertices(6);
+    vertices[0].position=vec3(-.8f,-.8f,0); vertices[1].position=vec3(0,-.8f,0); vertices[2].position=vec3(-.4f,.8f,0);
+    vertices[3].position=vertices[1].position; vertices[4].position=vec3(.8f,-.8f,0); vertices[5].position=vec3(.4f,.8f,0);
+    DrawCommand draw;
+    draw.geometry=std::make_shared<Geometry>(vertices);
+    draw.object_id=91; draw.transparent=true; draw.color=vec4(1,0,0,.5f);
+    const auto frame=device.render(64,64,{draw},vec4(0));
+    const size_t left=32*64+16,right=32*64+48;
+    require(frame.ids[left].object==91 && frame.ids[left].primitive==0 &&
+            frame.ids[right].object==91 && frame.ids[right].primitive==1,
+            "transparent triangle expansion lost original primitive IDs");
 }
 void overlays(RenderDevice& device) {
     DrawCommand scene;
@@ -721,14 +744,15 @@ int main(int argc, char**) {
         require(image.ids[12 * 64 + 32].object == 21, "image orientation flipped");
         require(image.ids[52 * 64 + 10].object == 21, "triangle base orientation mismatch");
         auto depth_range = near_command;
-        depth_range.depth_range = vec2(.25f, .5f);
+        depth_range.set_depth_range(vec2(.25f, .5f));
         const auto ranged = device->render(64, 64, {depth_range}, vec4(0));
-        require(std::abs(ranged.depth[center] - .3125f) < 1e-6f,
+        // DrawCommand stores depth-range endpoints with 15-bit normalized precision.
+        require(std::abs(ranged.depth[center] - .3125f) < 2.0f / 32767.0f,
                 "window-space depth range did not remap scene depth");
-        depth_range.depth_range = vec2(.5f, .25f); rejects([&] { device->render(32, 32, {depth_range}); });
-        depth_range.depth_range = vec2(-.1f, 1); rejects([&] { device->render(32, 32, {depth_range}); });
-        depth_range.depth_range = vec2(0, 1.1f); rejects([&] { device->render(32, 32, {depth_range}); });
-        depth_range.depth_range = vec2(std::numeric_limits<float>::quiet_NaN(), 1);
+        depth_range.set_depth_range(vec2(.5f, .25f)); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.set_depth_range(vec2(-.1f, 1)); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.set_depth_range(vec2(0, 1.1f)); rejects([&] { device->render(32, 32, {depth_range}); });
+        depth_range.set_depth_range(vec2(std::numeric_limits<float>::quiet_NaN(), 1));
         rejects([&] { device->render(32, 32, {depth_range}); });
         std::cout << "Supported color sample counts:";
         for (unsigned count = 1; count <= 64; count <<= 1)
@@ -760,6 +784,7 @@ int main(int argc, char**) {
         line_impostors(*device);
         wide_lines(*device);
         texture_samplers(*device);
+        transparent_primitive_ids(*device);
         overlays(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near_command.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});

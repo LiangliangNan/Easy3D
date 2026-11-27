@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_DUAL_DEPTH_PEELING_H
 #define EASY3D_RENDERER_DUAL_DEPTH_PEELING_H
 
+#include <easy3d/core/types.h>
+
 #ifdef EASY3D_HAS_VULKAN
 
 #include <vector>
@@ -48,7 +50,7 @@ namespace easy3d {
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
      * \sa Transparency, AverageColorBlending, PerPixelLinkedListsOIT
      */
-    class DualDepthPeeling : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") DualDepthPeeling : public Transparency
     {
     public:
         /**
@@ -152,7 +154,7 @@ namespace easy3d {
      *
      * \sa AverageColorBlending
      */
-    class DualDepthPeeling : public Transparency
+    class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") DualDepthPeeling : public Transparency
     {
     public:
         /**

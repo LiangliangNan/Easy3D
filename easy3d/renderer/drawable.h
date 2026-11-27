@@ -178,7 +178,7 @@ namespace easy3d {
          */
         const BufferData& buffer_data() const;
         EASY3D_DEPRECATED("use buffer_data() const")
-        const BufferData& buffer_data() { return const_cast<const Drawable *>(this)->buffer_data(); }
+        const BufferData& buffer_data();
 
         /**
          * \brief Associate rendered triangles with source SurfaceMesh faces.
@@ -218,31 +218,31 @@ namespace easy3d {
          * \brief Returns the vertex buffer ID.
          * \return The vertex buffer ID.
          */
-        EASY3D_DEPRECATED("use buffer_data()")
+        EASY3D_DEPRECATED("use buffer_data() const")
         unsigned int vertex_buffer() const;
         /**
          * \brief Returns the color buffer ID.
          * \return The color buffer ID.
          */
-        EASY3D_DEPRECATED("use buffer_data().colors")
+        EASY3D_DEPRECATED("use buffer_data() const")
         unsigned int color_buffer() const;
         /**
          * \brief Returns the normal buffer ID.
          * \return The normal buffer ID.
          */
-        EASY3D_DEPRECATED("use buffer_data().normals")
+        EASY3D_DEPRECATED("use buffer_data() const")
         unsigned int normal_buffer() const;
         /**
          * \brief Returns the texture coordinate buffer ID.
          * \return The texture coordinate buffer ID.
          */
-        EASY3D_DEPRECATED("use buffer_data().texcoords")
+        EASY3D_DEPRECATED("use buffer_data() const")
         unsigned int texcoord_buffer() const;
         /**
          * \brief Returns the element buffer ID.
          * \return The element buffer ID.
          */
-        EASY3D_DEPRECATED("use buffer_data().indices")
+        EASY3D_DEPRECATED("use buffer_data() const")
         unsigned int element_buffer() const;
 
         /**
@@ -290,7 +290,8 @@ namespace easy3d {
         /**
          * \brief Disables the use of the element buffer.
          * \details This method should be used if existing vertex data is sufficient for rendering (may require
-         *         duplicating vertex data). This method also releases the element buffer.
+         *         duplicating vertex data). It clears the portable indices and invalidates the cached native
+         *         element buffer; native resources are released or reused during a later upload.
          */
         void disable_element_buffer();
 
@@ -350,11 +351,10 @@ namespace easy3d {
         void gl_draw() const;
 
         /**
-         * \brief Requests an update of the OpenGL buffers.
-         * \details This function sets the status to trigger an update of the OpenGL buffers. The actual update does
-         *      not occur immediately but is deferred to the rendering phase.
-         * \note This method works for both standard drawables (no update function required) and non-standard
-         *      drawable (update function required). Standard drawables include:
+         * \brief Requests an update of the rendering buffers.
+         * \details The geometry is realized lazily on the next portable-buffer access or draw. This works for
+         *      both standard drawables (no update function required) and drawables with an update function.
+         *      Standard drawables include:
          *            - SurfaceMesh: "faces", "edges", "vertices", "borders", and "locks";
          *            - PointCloud: "vertices";
          *            - Graph: "edges", and "vertices",
@@ -370,6 +370,8 @@ namespace easy3d {
          *      Rendering buffers of standard drawables attached to a model can be automatically updated and do not
          *      require this function.
          *      For a subclassed drawable, you can also reimplement update_buffers_internal() for the same purpose.
+         *      Such an override owns its generated attributes and must explicitly replace or clear them.
+         *      The callback must not change the drawable's model, update function, or ownership.
          * \param func The update function.
          * \sa update(), Renderer::update().
          */
@@ -427,6 +429,7 @@ namespace easy3d {
         ///@}
 
     private:
+        void realize_buffers();
         friend class LinesDrawable2D;
         friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
@@ -453,23 +456,19 @@ namespace easy3d {
         void opengl_update_highlight_mask(const std::vector<float>&);
 
         // Retain the 2.8 private storage layout for binary-compatible subclasses.
-        unsigned long long point_revision_ = 0;
-        std::size_t buffer_revision_ = 0;
-        std::unique_ptr<BufferData> opengl_snapshot_;
-        std::size_t opengl_snapshot_revision_ = 0;
-
-        bool opengl_upload_needed_ = true;
-        bool opengl_highlight_needed_ = false;
+        mutable unsigned long long point_revision_ = 0;
+        mutable std::size_t buffer_revision_ = 0;
+        mutable std::unique_ptr<BufferData> opengl_snapshot_;
+        mutable std::size_t opengl_snapshot_revision_ = 0;
 #endif
 
     protected:
-        // actual update of the rendering buffers are here: refreshes the CPU
-        // snapshot or the OpenGL buffers from the model (or the user update
-        // function) and recomputes the bounding box and element counts.
+        // Refreshes the portable geometry from the model or user update function and
+        // recomputes the bounding box and element counts before native upload.
         virtual void update_buffers_internal();
 
-        // clears all buffers: releases the CPU snapshot or the OpenGL buffers and
-        // resets the vertex/index counts and the bounding box.
+        // Clears the portable snapshot and native buffers, and resets vertex/index counts
+        // and the bounding box.
         void clear();
 
         // Drops the per-primitive highlight mask; called whenever the geometry changes,
@@ -503,16 +502,33 @@ namespace easy3d {
     protected:
         std::string name_;  //!< The name of the drawable.
         Model *model_;      //!< The model to which the drawable is attached.
-        Box3 bbox_;         //!< The bounding box of the drawable.
+        mutable Box3 bbox_;         //!< The bounding box of the drawable.
 
         // vertex array object
         std::shared_ptr<VertexArrayObject> vao_;    //!< The vertex array object.
 
-        std::size_t num_vertices_;  //!< The number of vertices.
-        std::size_t num_indices_;   //!< The number of indices.
+        mutable std::size_t num_vertices_;  //!< The number of vertices.
+        mutable std::size_t num_indices_;   //!< The number of indices.
 
-        bool update_needed_;        //!< Whether an update is needed.
-        bool buffers_ready_;        //!< Whether model extraction or a client upload has realized the CPU buffers.
+        mutable bool update_needed_;        //!< Whether an update is needed.
+        mutable bool buffers_ready_;        //!< Whether model extraction or a client upload has realized the CPU buffers.
+
+    private:
+        mutable unsigned int client_colors_ : 1;
+        mutable unsigned int client_normals_ : 1;
+        mutable unsigned int client_texcoords_ : 1;
+        mutable unsigned int client_indices_ : 1;
+        mutable unsigned int realizing_ : 1;
+#ifndef EASY3D_HAS_VULKAN
+        mutable unsigned int opengl_upload_needed_ : 1;
+        mutable unsigned int opengl_highlight_needed_ : 1;
+        mutable unsigned int dynamic_vertices_ : 1;
+        mutable unsigned int dynamic_colors_ : 1;
+        mutable unsigned int dynamic_normals_ : 1;
+        mutable unsigned int dynamic_texcoords_ : 1;
+#endif
+
+    protected:
         std::function<void(Model*, Drawable*)> update_func_;    //!< The update function.
 
         unsigned int vertex_buffer_;    //!< The vertex buffer ID.
@@ -521,25 +537,12 @@ namespace easy3d {
         unsigned int texcoord_buffer_;  //!< The texture coordinate buffer ID.
         unsigned int element_buffer_;   //!< The element buffer ID.
         unsigned int highlight_texture_;    //!< The highlight mask texture ID; owned by the OpenGL backend.
-        std::size_t highlight_primitives_;  //!< Number of primitives described by highlight_texture_; 0 = no mask.
-        std::vector<float> highlight_strengths_;  //!< Per-primitive strengths backing the mask; empty = no mask.
+        mutable std::size_t highlight_primitives_;  //!< Number of primitives described by highlight_texture_; 0 = no mask.
+        mutable std::vector<float> highlight_strengths_;  //!< Per-primitive strengths backing the mask; empty = no mask.
 
         // drawables not attached to a model can also be manipulated
         std::shared_ptr<Manipulator> manipulator_;   //!< The manipulator for the drawable.
         std::unique_ptr<BufferData> cpu_buffers_;
-
-    private:
-        bool client_colors_ = false;
-        bool client_normals_ = false;
-        bool client_texcoords_ = false;
-        bool client_indices_ = false;
-        bool realizing_ = false;
-#ifndef EASY3D_HAS_VULKAN
-        bool dynamic_vertices_ = false;
-        bool dynamic_colors_ = false;
-        bool dynamic_normals_ = false;
-        bool dynamic_texcoords_ = false;
-#endif
     };
 
 }

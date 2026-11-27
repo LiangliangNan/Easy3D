@@ -87,6 +87,7 @@ namespace easy3d {
 		 * \brief Draws the drawable.
 		 * \param camera The camera used for rendering.
 		 */
+        EASY3D_DEPRECATED("use DrawableRenderer::command() and RenderDevice")
         void draw(const Camera* camera) const override;
 
     protected:

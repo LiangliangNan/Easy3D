@@ -8,7 +8,7 @@
 namespace easy3d {
     namespace graphics {
 
-        class OpenGLDevice
+        class EASY3D_DEPRECATED("use RenderDevice returned by create_device()") OpenGLDevice
             : public RenderDevice {
         public:
             using RenderDevice::render;
@@ -19,6 +19,7 @@ namespace easy3d {
             const std::string &driver_version() const override;
             std::uint32_t supported_sample_counts(PointStyle style = PointStyle::plain) const override;
             std::uint32_t supported_sample_counts(LineStyle style) const override;
+            EASY3D_DEPRECATED("use render(width, height, commands, const RenderOptions&)")
             FrameImage render(std::uint32_t width,
                               std::uint32_t height,
                               const std::vector<DrawCommand> &commands,
@@ -39,6 +40,7 @@ namespace easy3d {
                                                    std::uint32_t y,
                                                    std::uint32_t region_width,
                                                    std::uint32_t region_height) override;
+            EASY3D_DEPRECATED("window presentation belongs to the private host adapter")
             bool present(std::uint32_t width,
                          std::uint32_t height,
                          const std::vector<DrawCommand> &commands,

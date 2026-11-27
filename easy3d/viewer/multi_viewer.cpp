@@ -49,6 +49,7 @@
 #else
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/backends/opengl/query_state.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #endif
@@ -106,7 +107,9 @@ void MultiViewer::set_layout(int rows,int cols) {
         throw std::invalid_argument("multi-view layout must contain a positive, representable number of cells");
     num_rows_=rows;num_cols_=cols;active_row_=std::min(active_row_,rows-1);active_col_=std::min(active_col_,cols-1);views_.resize(rows);
     for(auto& row:views_) row.resize(cols);
+#ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
+#endif
     cancel_interaction();
     update_division();
 }
@@ -135,7 +138,9 @@ void MultiViewer::update_division() {
     const auto active=cell_bounds(active_row_,active_col_,num_rows_,num_cols_,width(),height());
     camera()->set_screen_width_and_height(active.z,active.w);
     const int fw=framebuffer_width(),fh=framebuffer_height();
+#ifdef EASY3D_HAS_VULKAN
     division_commands_.clear();
+#endif
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         auto bounds=cell_bounds(r,c,num_rows_,num_cols_,fw,fh);
 #ifndef EASY3D_HAS_VULKAN
@@ -197,19 +202,44 @@ bool MultiViewer::read_scene_depth(int x, int y, const Camera& snapshot, float& 
     const int width = framebuffer_width(), height = framebuffer_height();
     if (x < 0 || y < 0 || x >= width || y >= height)
         return false;
+#ifndef EASY3D_HAS_VULKAN
+    if (supports_device_query(snapshot, width, height, false)) {
+        auto commands = draw_commands(snapshot, width, height, nullptr);
+        commands.erase(std::remove_if(commands.begin(), commands.end(), [](const graphics::DrawCommand& command) {
+            return command.overlay;
+        }), commands.end());
+        auto &query = query_device();
+#else
     auto commands = draw_commands(snapshot, width, height, nullptr);
     commands.erase(std::remove_if(commands.begin(), commands.end(), [](const graphics::DrawCommand& command) {
         return command.overlay;
     }), commands.end());
-#ifndef EASY3D_HAS_VULKAN
-    auto& query = query_device();
-#else
-    auto& query = const_cast<graphics::RenderDevice&>(device());
+    auto &query = const_cast<graphics::RenderDevice&>(device());
 #endif
-    const auto pixel = query.sample_pixel(
-            uint32_t(width), uint32_t(height), commands, uint32_t(x), uint32_t(y));
-    depth = pixel.depth;
-    return pixel.id.object != UINT32_MAX;
+        const auto pixel = query.sample_pixel(
+                uint32_t(width), uint32_t(height), commands, uint32_t(x), uint32_t(y));
+        depth = pixel.depth;
+        return pixel.id.object != UINT32_MAX;
+#ifndef EASY3D_HAS_VULKAN
+    }
+    GLFWwindow *previous = glfwGetCurrentContext();
+    glfwMakeContextCurrent(window_);
+    struct ContextGuard {
+        GLFWwindow *previous;
+        ~ContextGuard() { glfwMakeContextCurrent(previous); }
+    } context_guard{previous};
+    opengl::QueryState state;
+    state.prepare(width, height);
+    FramebufferObject target(width, height, 0);
+    if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid())
+        throw std::runtime_error("cannot create multi-view scene depth framebuffer");
+    if (!target.bind())
+        throw std::runtime_error("cannot bind multi-view scene depth framebuffer");
+    glClear(GL_DEPTH_BUFFER_BIT);
+    draw_scene(snapshot);
+    glReadPixels(x, height - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+    return depth < 1.0f;
+#endif
 }
 vec3 MultiViewer::point_under_pixel(int x, int y, bool& found) const {
     found = false;
@@ -260,9 +290,9 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
         }
     }
     if(division_visible()) {
-        // Cached for one target size; the ribbon is one logical pixel wide, so its
-        // target-pixel width follows the target (DPI for a window, output/logical
-        // for a snapshot).
+        // The ribbon is one logical pixel wide, so its target-pixel width follows
+        // the target (DPI for a window, output/logical for a snapshot).
+#ifdef EASY3D_HAS_VULKAN
         if(division_commands_.empty() || division_width_!=width || division_height_!=height) {
             const auto points=division_lines(num_rows_,num_cols_,width,height);
             division_commands_.clear();
@@ -270,6 +300,11 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
             division_width_=width;division_height_=height;
         }
         result.insert(result.end(),division_commands_.begin(),division_commands_.end());
+#else
+        const auto points=division_lines(num_rows_,num_cols_,width,height);
+        if(!points.empty())
+            result.push_back(graphics::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,division_line_width(width,Viewer::width())));
+#endif
     }
     return result;
 }
@@ -472,6 +507,8 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     if(!std::isfinite(scale) || scale<=0 || count<=0 || count>64 || (count&(count-1)) || bg<0 || bg>2 ||
        framebuffer_width()*static_cast<double>(scale)>max_target_width || framebuffer_height()*static_cast<double>(scale)>max_target_height) return false;
     auto* self=const_cast<MultiViewer*>(this);
+    const int original_samples=self->samples_;
+    const vec4 original_background=self->background_color_;
     if(!initialized_) { self->init(); self->initialized_=true; }
     const int w=static_cast<int>(std::ceil(framebuffer_width()*static_cast<double>(scale))),h=static_cast<int>(std::ceil(framebuffer_height()*static_cast<double>(scale)));
     const mat4 original=camera()->projection_matrix();const bool active=snapshot_active_;
@@ -494,71 +531,43 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     glGetIntegerv(GL_SCISSOR_BOX,scissor);const GLboolean scissor_enabled=glIsEnabled(GL_SCISSOR_TEST);
     const auto saved=views_;
     try {
-        bool portable = supports_portable_rendering();
-        if (portable) {
-            try {
-                count = Viewer::supported_sample_count(count);
-                const vec4 color = bg == 0 ? background_color() : bg == 1 ? vec4(1) : vec4(0);
-                const auto commands = draw_commands(*camera(), w, h, nullptr, false);
-                FramebufferObject target(w, h, count);
-                if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
-                    throw std::runtime_error("cannot create multi-view snapshot target");
-                glViewport(0, 0, w, h);
-                glDisable(GL_SCISSOR_TEST);
-                query_device().present(uint32_t(w), uint32_t(h), commands, color, count,
-                                       graphics::TransparencyMethod::sorted, 4);
-                draw_overlays(false);
-                draw_overlays(true);
-                std::vector<unsigned char> rgba;
-                if (!target.read_color(0, rgba, GL_RGBA, true))
-                    throw std::runtime_error("cannot read multi-view snapshot color");
-                if (bg == 2) {
-                    for (size_t i = 0; i < rgba.size(); i += 4) {
-                        const unsigned alpha = rgba[i + 3];
-                        if (alpha && alpha < 255)
-                            for (unsigned c = 0; c < 3; ++c)
-                                rgba[i + c] = static_cast<unsigned char>(std::min(255u,
-                                    (unsigned(rgba[i + c]) * 255 + alpha / 2) / alpha));
-                    }
-                }
-                result = ImageIO::save(file, rgba, w, h, 4);
-            } catch (const std::logic_error &e) {
-                LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
-                portable = false;
+        count = Viewer::supported_sample_count(count);
+        const vec4 color = bg == 0 ? original_background : bg == 1 ? vec4(1) : vec4(0);
+        self->samples_ = count;
+        self->background_color_ = color;
+        FramebufferObject target(w, h, count);
+        if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
+            throw std::runtime_error("cannot create multi-view snapshot target");
+        for (int r = 0; r < num_rows_; ++r) for (int c = 0; c < num_cols_; ++c) {
+            auto vp = cell_bounds(r, c, num_rows_, num_cols_, w, h);
+            vp.y = h - vp.y - vp.w;
+            self->views_[r][c].viewport = vp;
+        }
+        glViewport(0, 0, w, h);
+        glDisable(GL_SCISSOR_TEST);
+        glClearColor(color.x, color.y, color.z, color.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        self->draw();
+        self->draw_overlays(true);
+        std::vector<unsigned char> rgba;
+        if (!target.read_color(0, rgba, GL_RGBA, true))
+            throw std::runtime_error("cannot read multi-view snapshot color");
+        target.release();
+        if (bg == 2) {
+            for (size_t i = 0; i < rgba.size(); i += 4) {
+                const unsigned alpha = rgba[i + 3];
+                if (alpha && alpha < 255)
+                    for (unsigned c = 0; c < 3; ++c)
+                        rgba[i + c] = static_cast<unsigned char>(std::min(255u,
+                            (unsigned(rgba[i + c]) * 255 + alpha / 2) / alpha));
             }
         }
-        if (!portable) {
-            FramebufferObject target(w, h, count);
-            if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
-                throw std::runtime_error("cannot create multi-view snapshot target");
-            for (int r = 0; r < num_rows_; ++r) for (int c = 0; c < num_cols_; ++c) {
-                auto vp = cell_bounds(r, c, num_rows_, num_cols_, w, h);
-                vp.y = h - vp.y - vp.w;
-                self->views_[r][c].viewport = vp;
-            }
-            glViewport(0, 0, w, h);
-            glDisable(GL_SCISSOR_TEST);
-            const vec4 color = bg == 0 ? background_color() : bg == 1 ? vec4(1) : vec4(0);
-            glClearColor(color.x, color.y, color.z, color.w);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-            self->draw();
-            self->draw_overlays(true);
-            target.release();
-            if (bg == 2) {
-                std::vector<unsigned char> rgba;
-                if (target.read_color(0, rgba, GL_RGBA, true)) {
-                    for (size_t i = 0; i < rgba.size(); i += 4) if (rgba[i + 3] && rgba[i + 3] < 255)
-                        for (unsigned c = 0; c < 3; ++c)
-                            rgba[i + c] = static_cast<unsigned char>(std::min(255u,
-                                (static_cast<unsigned>(rgba[i + c]) * 255 + rgba[i + 3] / 2) / rgba[i + 3]));
-                    result = ImageIO::save(file, rgba, w, h, 4);
-                }
-            } else result = target.snapshot_color(0, file);
-        }
+        result = ImageIO::save(file, rgba, w, h, 4);
     } catch (const std::exception &e) {
         LOG(ERROR) << "Multi-view snapshot failed: " << e.what();
     }
-    self->views_=saved;glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);glClearColor(clear[0],clear[1],clear[2],clear[3]);
+    self->views_=saved;self->samples_=original_samples;self->background_color_=original_background;
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);glClearColor(clear[0],clear[1],clear[2],clear[3]);
     glScissor(scissor[0],scissor[1],scissor[2],scissor[3]);if(scissor_enabled) glEnable(GL_SCISSOR_TEST);else glDisable(GL_SCISSOR_TEST);glfwMakeContextCurrent(previous);
 #endif
     self->camera()->set_projection_matrix(original);snapshot_active_=active;return result;

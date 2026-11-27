@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <limits>
 #include <stdexcept>
 
 #include <easy3d/core/model.h>
@@ -43,6 +44,18 @@
 
 
 namespace easy3d {
+
+    namespace {
+        void require_revision(const Drawable::BufferData &data) {
+            if (data.revision == std::numeric_limits<std::size_t>::max())
+                throw std::overflow_error("drawable buffer revision overflow");
+        }
+
+        void advance_revision(Drawable::BufferData &data) {
+            require_revision(data);
+            ++data.revision;
+        }
+    }
 
     float Drawable::impostor_radius(const Camera& camera, float diameter) {
         // Liangliang: this doesn't work when zooming puts the pivot in or behind the eye plane
@@ -114,6 +127,8 @@ namespace easy3d {
     void Drawable::set_source_faces(const std::vector<int>& faces) {
         if (type() != DT_TRIANGLES)
             throw std::logic_error("face provenance requires triangle buffers");
+        if (!realizing_)
+            cpu_buffers();
         const auto count = (cpu_buffers_->indices.empty() ? cpu_buffers_->vertices.size()
                                                           : cpu_buffers_->indices.size()) / 3;
         if (!faces.empty() && faces.size() != count)
@@ -121,25 +136,114 @@ namespace easy3d {
         for (auto id : faces)
             if (id < -1)
                 throw std::invalid_argument("invalid source face index");
+        require_revision(*cpu_buffers_);
         cpu_buffers_->source_faces = faces;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
     }
 
     const Drawable::BufferData& Drawable::cpu_buffers() {
-        if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
-            update_buffers_internal();
-            update_needed_ = false;
-        }
+        if (update_needed_ || !buffers_ready_)
+            realize_buffers();
         return *cpu_buffers_;
     }
 
     const Drawable::BufferData& Drawable::buffer_data() const {
-        return const_cast<Drawable*>(this)->cpu_buffers();
+        return const_cast<Drawable *>(this)->cpu_buffers();
+    }
+
+    const Drawable::BufferData& Drawable::buffer_data() {
+        return cpu_buffers();
+    }
+
+    void Drawable::realize_buffers() {
+        if (realizing_)
+            throw std::logic_error("recursive drawable realization");
+
+        const bool keep_colors = client_colors_;
+        const bool keep_normals = client_normals_;
+        const bool keep_texcoords = client_texcoords_;
+        const bool keep_indices = client_indices_;
+        const bool generate = model_ || update_func_;
+        BufferData pending;
+        if (keep_colors) pending.colors = cpu_buffers_->colors;
+        if (keep_normals) pending.normals = cpu_buffers_->normals;
+        if (keep_texcoords) pending.texcoords = cpu_buffers_->texcoords;
+        if (keep_indices) pending.indices = cpu_buffers_->indices;
+
+        BufferData previous = *cpu_buffers_;
+        const auto previous_vertices = num_vertices_;
+        const auto previous_indices = num_indices_;
+        const Box3 previous_bbox = bbox_;
+        const std::vector<float> previous_highlights = highlight_strengths_;
+        if (previous.revision == std::numeric_limits<std::size_t>::max())
+            throw std::overflow_error("drawable buffer revision overflow");
+        if (generate) {
+            *cpu_buffers_ = BufferData();
+            cpu_buffers_->revision = previous.revision;
+            num_vertices_ = num_indices_ = 0;
+            bbox_.clear();
+            reset_highlight_mask();
+        }
+
+        realizing_ = true;
+        struct RealizationGuard {
+            Drawable& drawable;
+            ~RealizationGuard() { drawable.realizing_ = false; }
+        } guard{*this};
+        try {
+            update_buffers_internal();
+
+            if (keep_colors && (generate || cpu_buffers_->colors != pending.colors)) {
+                cpu_buffers_->colors = std::move(pending.colors);
+                advance_revision(*cpu_buffers_);
+            }
+            if (keep_normals && (generate || cpu_buffers_->normals != pending.normals)) {
+                cpu_buffers_->normals = std::move(pending.normals);
+                advance_revision(*cpu_buffers_);
+            }
+            if (keep_texcoords && (generate || cpu_buffers_->texcoords != pending.texcoords)) {
+                cpu_buffers_->texcoords = std::move(pending.texcoords);
+                advance_revision(*cpu_buffers_);
+            }
+            if (keep_indices && (generate || cpu_buffers_->indices != pending.indices)) {
+                cpu_buffers_->indices = std::move(pending.indices);
+                cpu_buffers_->source_faces.clear();
+                num_indices_ = cpu_buffers_->indices.size();
+                advance_revision(*cpu_buffers_);
+                reset_highlight_mask();
+            }
+            buffers_ready_ = true;
+            update_needed_ = false;
+#ifndef EASY3D_HAS_VULKAN
+            opengl_upload_needed_ = true;
+#endif
+        } catch (...) {
+            *cpu_buffers_ = std::move(previous);
+            num_vertices_ = previous_vertices;
+            num_indices_ = previous_indices;
+            bbox_ = previous_bbox;
+            highlight_strengths_ = std::move(previous_highlights);
+            update_needed_ = true;
+            buffers_ready_ = false;
+#ifndef EASY3D_HAS_VULKAN
+            opengl_upload_needed_ = true;
+            opengl_highlight_needed_ = true;
+#endif
+            throw;
+        }
     }
 
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
-              update_needed_(false), buffers_ready_(false), update_func_(nullptr), vertex_buffer_(0),
+              update_needed_(false), buffers_ready_(false),
+              client_colors_(false), client_normals_(false), client_texcoords_(false),
+              client_indices_(false), realizing_(false),
+#ifndef EASY3D_HAS_VULKAN
+              opengl_upload_needed_(true), opengl_highlight_needed_(false),
+              dynamic_vertices_(false), dynamic_colors_(false), dynamic_normals_(false),
+              dynamic_texcoords_(false),
+#endif
+              update_func_(nullptr), vertex_buffer_(0),
               color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), element_buffer_(0),
               highlight_texture_(0), highlight_primitives_(0), manipulator_(nullptr) {
 #ifndef EASY3D_HAS_VULKAN
@@ -175,16 +279,19 @@ namespace easy3d {
 
 
     void Drawable::update() {
-        bbox_.clear();
+        if (model_ || update_func_)
+            bbox_.clear();
         update_needed_ = true;
     }
 
 
     void Drawable::clear() {
         if (cpu_buffers_) {
-            const auto revision = cpu_buffers_->revision + 1;
+            const auto revision = cpu_buffers_->revision;
             *cpu_buffers_ = BufferData();
             cpu_buffers_->revision = revision;
+            if (revision != std::numeric_limits<std::size_t>::max())
+                advance_revision(*cpu_buffers_);
         }
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
@@ -213,6 +320,8 @@ namespace easy3d {
 
 
     void Drawable::update_highlight_mask(const std::vector<float> &strengths) {
+        if (!realizing_)
+            cpu_buffers();
         const std::size_t stride = type() == DT_TRIANGLES ? 3 : type() == DT_LINES ? 2 : 1;
         const std::size_t base = num_indices_ ? num_indices_ : num_vertices_;
         const std::size_t primitives = base / stride;
@@ -225,8 +334,9 @@ namespace easy3d {
         }
         if (strengths == highlight_strengths_)
             return;
+        require_revision(*cpu_buffers_);
         highlight_strengths_ = strengths;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         opengl_highlight_needed_ = true;
 #endif
@@ -234,10 +344,11 @@ namespace easy3d {
 
 
     void Drawable::disable_element_buffer() {
+        require_revision(*cpu_buffers_);
         cpu_buffers_->indices.clear();
         cpu_buffers_->source_faces.clear();
         if (!realizing_) client_indices_ = true;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
         ++buffer_revision_;
@@ -250,67 +361,30 @@ namespace easy3d {
 
 
     void Drawable::update_buffers_internal() {
-        if (!model_ && !update_func_) {
-            LOG_N_TIMES(3, ERROR) << "drawable not associated with a model and no update function provided. " << COUNTER;
+        if (!model_ && !update_func_)
             return;
-        } else if (model_ && model_->points().empty()) {
-            clear();
+        if (model_ && model_->points().empty()) {
+            reset_highlight_mask();
             LOG_N_TIMES(3, WARNING) << "model has no valid geometry. " << COUNTER;
             return;
         }
 
         StopWatch w;
-        const bool keep_colors = client_colors_;
-        const bool keep_normals = client_normals_;
-        const bool keep_texcoords = client_texcoords_;
-        const bool keep_indices = client_indices_;
-        BufferData pending;
-        if (keep_colors) pending.colors = cpu_buffers_->colors;
-        if (keep_normals) pending.normals = cpu_buffers_->normals;
-        if (keep_texcoords) pending.texcoords = cpu_buffers_->texcoords;
-        if (keep_indices) pending.indices = cpu_buffers_->indices;
-        const auto revision = cpu_buffers_->revision + 1;
-        *cpu_buffers_ = BufferData();
-        cpu_buffers_->revision = revision;
-        num_vertices_ = num_indices_ = 0;
-        realizing_ = true;
         if (update_func_)
             update_func_(model_, this);
         else
             buffer::update(model_, this);
-        realizing_ = false;
-        if (keep_colors) {
-            cpu_buffers_->colors = std::move(pending.colors);
-            ++cpu_buffers_->revision;
-        }
-        if (keep_normals) {
-            cpu_buffers_->normals = std::move(pending.normals);
-            ++cpu_buffers_->revision;
-        }
-        if (keep_texcoords) {
-            cpu_buffers_->texcoords = std::move(pending.texcoords);
-            ++cpu_buffers_->revision;
-        }
-        if (keep_indices) {
-            cpu_buffers_->indices = std::move(pending.indices);
-            num_indices_ = cpu_buffers_->indices.size();
-            ++cpu_buffers_->revision;
-        }
-        buffers_ready_ = true;
-#ifndef EASY3D_HAS_VULKAN
-        opengl_upload_needed_ = true;
-#endif
-
         LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "updating rendering buffers for drawable '" << name()
                                                 << "' took " << w.time_string();
     }
 
 
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
+        require_revision(*cpu_buffers_);
         update_needed_ = false;
         cpu_buffers_->vertices = vertices;
         cpu_buffers_->source_faces.clear();
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
         num_vertices_ = vertices.size();
         bbox_.clear();
         if (model_)
@@ -330,9 +404,10 @@ namespace easy3d {
     }
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
+        require_revision(*cpu_buffers_);
         cpu_buffers_->colors = colors;
         if (!realizing_) client_colors_ = true;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
@@ -342,9 +417,10 @@ namespace easy3d {
     }
 
     void Drawable::update_normal_buffer(const std::vector<vec3> &normals, bool dynamic) {
+        require_revision(*cpu_buffers_);
         cpu_buffers_->normals = normals;
         if (!realizing_) client_normals_ = true;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
@@ -354,9 +430,10 @@ namespace easy3d {
     }
 
     void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic) {
+        require_revision(*cpu_buffers_);
         cpu_buffers_->texcoords = texcoords;
         if (!realizing_) client_texcoords_ = true;
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++buffer_revision_;
         opengl_snapshot_.reset();
@@ -366,11 +443,12 @@ namespace easy3d {
     }
 
     void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
+        require_revision(*cpu_buffers_);
         cpu_buffers_->indices = indices;
         cpu_buffers_->source_faces.clear();
         if (!realizing_) client_indices_ = true;
         num_indices_ = indices.size();
-        ++cpu_buffers_->revision;
+        advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
         ++buffer_revision_;

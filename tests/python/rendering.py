@@ -5,6 +5,7 @@ from pathlib import Path
 import struct
 import sys
 import tempfile
+import warnings
 
 sys.path.insert(0, sys.argv[1])
 import easy3d
@@ -35,6 +36,57 @@ def add_triangle(host, path):
     faces.set_uniform_coloring(easy3d.vec4(1, 0, 0, 1))
     host.fit_screen()
     return model
+
+
+def check_compatibility_wrappers(viewer):
+    faces = viewer.models()[0].renderer().get_triangles_drawable("faces")
+
+    def deprecated(call):
+        unavailable = False
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result = call()
+            except RuntimeError as error:
+                assert ("unavailable in Vulkan" in str(error) or
+                        "OpenGL-only" in str(error)), str(error)
+                result = None
+                unavailable = True
+        assert any(issubclass(w.category, DeprecationWarning) for w in caught)
+        return result, unavailable
+
+    data = faces.buffer_data()
+    draw_result, native_unavailable = deprecated(lambda: faces.draw(viewer.camera()))
+    if native_unavailable:
+        assert draw_result is None
+        assert deprecated(faces.gl_draw)[1]
+    else:
+        assert draw_result is None
+        # gl_draw() requires a bound shader, which the packaged API does not expose.
+        assert callable(faces.gl_draw)
+
+    handles = {}
+    for getter in ("vertex_buffer", "color_buffer", "normal_buffer", "texcoord_buffer", "element_buffer"):
+        handle, unavailable = deprecated(lambda getter=getter: getattr(faces, getter)())
+        assert isinstance(handle, int) and not unavailable
+        handles[getter] = handle
+    if native_unavailable:
+        assert all(handle == 0 for handle in handles.values())
+    else:
+        assert handles["vertex_buffer"] > 0 and handles["element_buffer"] > 0
+
+    assert faces.num_vertices() == len(data.vertices)
+    assert faces.highlight_mask() == []
+    faces.update_highlight_mask([0.5])
+    assert faces.highlight_mask() == [0.5]
+    faces.update_highlight_mask([])
+    vao, vao_unavailable = deprecated(faces.vao)
+    assert vao_unavailable == native_unavailable
+    if not native_unavailable:
+        assert isinstance(vao, easy3d.VertexArrayObject) and vao.id() > 0
+    ao_result, ao_unavailable = deprecated(lambda: faces.set_ao_texture(1))
+    assert ao_result is None and not ao_unavailable
+    faces.enable_ao(False)
 
 
 def check_mesh_states(directory):
@@ -551,6 +603,7 @@ with tempfile.TemporaryDirectory(prefix="easy3d-python-") as directory:
     assert pixel(w // 2, h // 2) == (255, 0, 0)
     assert (viewer.before, viewer.after) == (before, after)
     assert viewer.models()[0] is model
+    check_compatibility_wrappers(viewer)
     viewer.clear_scene()
     assert not viewer.models() and model.n_vertices() == 3
 

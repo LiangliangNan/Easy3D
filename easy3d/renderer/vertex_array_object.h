@@ -27,6 +27,7 @@
 #ifndef EASY_RENDERER_VERTEX_ARRAY_OBJECT_H
 #define EASY_RENDERER_VERTEX_ARRAY_OBJECT_H
 
+#include <easy3d/core/types.h>
 #include <easy3d/renderer/opengl.h>
 
 #include <string>
@@ -48,7 +49,7 @@ namespace easy3d {
 	 * \note This implementation is more than the standard VAO. It also provides functions
 	 *       for creating and managing other buffer objects (i.e., shader storage buffer).
 	 */
-	class VertexArrayObject
+	class EASY3D_DEPRECATED("use Drawable::buffer_data() and graphics::DrawableRenderer") VertexArrayObject
 	{
 	public:
 		/**

@@ -284,7 +284,7 @@ void main() {
                     if (phase < 2) {
                         glEnable(GL_DEPTH_TEST);
                         glDepthFunc(phase == 1 ? GL_LESS : GL_LEQUAL);
-                        glDepthRange(c.depth_range.x, c.depth_range.y);
+                        glDepthRange(c.depth_range().x, c.depth_range().y);
                     } else
                         glDisable(GL_DEPTH_TEST);
                     glUniform1i(glGetUniformLocation(program_, "lighting"), phase < 2 && c.lighting);

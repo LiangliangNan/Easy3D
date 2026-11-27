@@ -51,6 +51,18 @@ struct Grid : MultiViewer {
     }
     using MultiViewer::active_row_;
     using MultiViewer::active_col_;
+    mutable int draw_calls = 0;
+    int custom_draw_calls() const { return draw_calls; }
+protected:
+    void draw() const override {
+        ++draw_calls;
+#ifdef EASY3D_HAS_VULKAN
+        Viewer::draw();
+#else
+        MultiViewer::draw();
+#endif
+    }
+public:
     // The same partition of the *logical* window, which is what update_division()
     // calibrates the shared camera with (the other half of issue #179: a camera fed
     // framebuffer pixels at a scale factor of two doubles every pointer delta).
@@ -64,6 +76,10 @@ struct Grid : MultiViewer {
         return pick(int(double(vp.x+vp.z/2)*width()/framebuffer_width()),
                     int(double(vp.y+vp.w/2)*height()/framebuffer_height()));
     }
+};
+class NativeFallbackPoints final : public PointsDrawable {
+public:
+    using PointsDrawable::PointsDrawable;
 };
 std::shared_ptr<SurfaceMesh> triangle(const char* name) {
     auto m=std::make_shared<SurfaceMesh>();m->set_name(name);
@@ -96,16 +112,12 @@ void require_black_at(const std::vector<unsigned char>& rgba,int width,int x,int
 void require_dividers(const std::vector<unsigned char>& rgba,int width,int height) {
     for(int col=1;col<3;++col) {
         const int x=col*width/3;
-        for(int y:{height/4,3*height/4}) {
-            require_black_at(rgba,width,x-1,y);
+        for(int y=0;y<height;++y)
             require_black_at(rgba,width,x,y);
-        }
     }
     const int y=height/2;
-    for(int x:{width/4,width/2,3*width/4}) {
-        require_black_at(rgba,width,x,y-1);
+    for(int x=0;x<width;++x)
         require_black_at(rgba,width,x,y);
-    }
 }
 // Reconciles the stored cell rects with the framebuffer partition they are supposed to
 // be, at the current window size and grid layout.
@@ -132,12 +144,15 @@ void check_cells(const Grid& grid) {
 }
 void snapshot(Grid& grid,const char* file,float scale) {
     const auto matrix=grid.camera()->model_view_projection_matrix();
+    const int draws=grid.custom_draw_calls();
     require(grid.snapshot(file,scale,4,0),"multi-view file snapshot failed");
+    require(grid.custom_draw_calls()>draws,"multi-view snapshot bypassed custom draw()");
     for(unsigned i=0;i<16;++i) require(std::abs(grid.camera()->model_view_projection_matrix()[i]-matrix[i])<1e-6f,"snapshot changed the shared camera");
     std::vector<unsigned char> rgba;int w,h,c;require(ImageIO::load(file,rgba,w,h,c,4,false),"snapshot was not readable");
     require(w==int(std::ceil(grid.framebuffer_width()*double(scale))) && h==int(std::ceil(grid.framebuffer_height()*double(scale))),"snapshot dimensions incorrect");
     color_at(rgba,w,w/6,h/4,vec4(1,0,0,1));color_at(rgba,w,w/2,h/4,vec4(0,0,1,1));
     color_at(rgba,w,5*w/6,h/4,vec4(1));color_at(rgba,w,w/6,3*h/4,vec4(1,0,0,1));
+    color_at(rgba,w,w/2,3*h/4,vec4(0,1,0,1));color_at(rgba,w,5*w/6,3*h/4,vec4(1,0,1,1));
 }
 }
 int main(int argc,char**) {
@@ -227,12 +242,33 @@ int main(int argc,char**) {
         require(ImageIO::load("multiview-divider.png",portable,pw,ph,pc,4,false),"portable divider snapshot unreadable");
         require_dividers(portable,pw,ph);
 #ifndef EASY3D_HAS_VULKAN
-        auto fallback=std::make_shared<PointsDrawable>("native fallback");grid.add_drawable(fallback);
-        fallback->set_visible(false);fallback->enable_ao(true);fallback->set_ao_texture(1);
+        auto fallback=std::make_shared<NativeFallbackPoints>("native fallback");grid.add_drawable(fallback);
+        fallback->update_vertex_buffer({vec3(0)});fallback->set_point_size(23);fallback->set_lighting(false);fallback->set_uniform_coloring(vec4(1,1,0,1));
+        grid.assign(0,2,fallback.get());fallback->set_visible(false);
         require(grid.snapshot("multiview-native-divider.png",1,4,0),"native fallback grid snapshot failed");
+        fallback->set_visible(true);
+        require(grid.snapshot("multiview-native-fallback.png",1,4,0),"visible native fallback snapshot failed");
+        std::vector<unsigned char> visible;int vw,vh,vc;
+        require(ImageIO::load("multiview-native-fallback.png",visible,vw,vh,vc,4,false),"visible native fallback snapshot unreadable");
+        color_at(visible,vw,5*vw/6,vh/4,vec4(1,1,0,1));
+        bool fallback_found=false;
+        grid.point_under_pixel(5*grid.width()/6,grid.height()/4,fallback_found);
+        require(fallback_found,"native fallback did not answer a MultiViewer depth query");
+        const auto fallback_hit=grid.pick_cell(grid.bounds(0,2));
+        require(fallback_hit.drawable.get()==fallback.get(),"native fallback picking lost its source drawable");
+        fallback->set_visible(false);
         std::vector<unsigned char> native;int nw,nh,nc;
         require(ImageIO::load("multiview-native-divider.png",native,nw,nh,nc,4,false),"native fallback snapshot unreadable");
         require_dividers(native,nw,nh);
+        require(nw==pw && nh==ph && native.size()==portable.size(),"native and portable divider extents differ");
+        color_at(native,nw,nw/6,nh/4,vec4(1,0,0,1));color_at(native,nw,nw/2,nh/4,vec4(0,0,1,1));
+        color_at(native,nw,5*nw/6,nh/4,vec4(1));color_at(native,nw,nw/6,3*nh/4,vec4(1,0,0,1));
+        color_at(native,nw,nw/2,3*nh/4,vec4(0,1,0,1));color_at(native,nw,5*nw/6,3*nh/4,vec4(1,0,1,1));
+        for(size_t p=0;p<portable.size();p+=4) {
+            const bool portable_black=portable[p]<5 && portable[p+1]<5 && portable[p+2]<5;
+            const bool native_black=native[p]<5 && native[p+1]<5 && native[p+2]<5;
+            require(portable_black==native_black,"native and portable divider masks differ");
+        }
         require(grid.delete_drawable(fallback.get()),"native fallback fixture removal failed");
 #endif
         grid.set_division_visible(false);

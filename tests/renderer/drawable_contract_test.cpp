@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -39,10 +40,46 @@ namespace {
         require(rejected, message);
     }
 
+    template<class Function>
+    void overflows(Function function, const char *message = "revision exhaustion did not reject the update") {
+        bool rejected = false;
+        try {
+            function();
+        } catch (const std::overflow_error &) {
+            rejected = true;
+        }
+        require(rejected, message);
+    }
+
     class TestTriangles final : public TrianglesDrawable {
     public:
         using TrianglesDrawable::TrianglesDrawable;
         using Drawable::clear;
+    };
+
+    class RealizingTriangles final : public TrianglesDrawable {
+    public:
+        using TrianglesDrawable::TrianglesDrawable;
+
+        bool colors = true;
+        bool indices = true;
+
+    protected:
+        void update_buffers_internal() override {
+            ++calls;
+            update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+            if (colors)
+                update_color_buffer({vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)});
+            else
+                update_color_buffer({});
+            if (indices)
+                update_element_buffer({0, 1, 2});
+            else
+                disable_element_buffer();
+        }
+
+    public:
+        int calls = 0;
     };
 
     void test_geometry_updates() {
@@ -50,6 +87,8 @@ namespace {
         const auto *snapshot = &data(triangles);
         require(snapshot->vertices.empty() && snapshot->revision == 0,
                 "new drawable does not have empty portable geometry");
+        require(&triangles.buffer_data() == snapshot,
+                "compatibility buffer_data overload changed snapshot identity");
 
         triangles.update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
         triangles.update_element_buffer({0, 1, 2});
@@ -65,6 +104,17 @@ namespace {
                 "portable upload did not update element counts");
         require(triangles.bounding_box().max_point().x == 1 && triangles.bounding_box().max_point().y == 1,
                 "standalone upload did not update its bounding box");
+        const auto uploaded = data(triangles);
+        triangles.update();
+        require(data(triangles).vertices == uploaded.vertices &&
+                        data(triangles).colors == uploaded.colors &&
+                        data(triangles).normals == uploaded.normals &&
+                        data(triangles).texcoords == uploaded.texcoords &&
+                        data(triangles).indices == uploaded.indices &&
+                        data(triangles).source_faces == uploaded.source_faces &&
+                        data(triangles).revision == uploaded.revision &&
+                        triangles.bounding_box().max_point().x == 1,
+                "update() erased or invalidated standalone client geometry");
 
         triangles.update_vertex_buffer({vec3(2, 2, 2), vec3(4, 2, 2), vec3(2, 4, 2),
                                         vec3(2, 2, 4), vec3(4, 2, 4), vec3(2, 4, 4)}, true);
@@ -173,6 +223,148 @@ namespace {
                 "realized non-indexed geometry overrode a later indexed callback");
     }
 
+    void test_realization_exception_recovery() {
+        TestTriangles callback("throwing callback");
+        int calls = 0;
+        callback.set_update_func([&calls](Model *, Drawable *target) {
+            if (++calls == 1) {
+                target->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+                target->update_element_buffer({0, 1, 2});
+                target->update_normal_buffer({vec3(0, 0, 1), vec3(0, 0, 1), vec3(0, 0, 1)});
+                throw std::runtime_error("realization failed");
+            }
+            target->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+        });
+
+        bool rejected = false;
+        try {
+            static_cast<void>(data(callback));
+        } catch (const std::runtime_error& error) {
+            rejected = std::string(error.what()) == "realization failed";
+        }
+        require(rejected, "realization exception did not reach the caller");
+
+        callback.update_normal_buffer({vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0)});
+        require(data(callback).vertices.size() == 3 && calls == 2,
+                "drawable did not recover after a realization exception");
+        require(data(callback).normals == std::vector<vec3>({vec3(0, 1, 0), vec3(0, 1, 0), vec3(0, 1, 0)}),
+                "failed realization left stale callback state and discarded a client upload");
+    }
+
+    void test_standalone_virtual_realization() {
+        RealizingTriangles triangles("virtual realization");
+        require(data(triangles).vertices.size() == 3 && triangles.calls == 1,
+                "standalone virtual realization was skipped or repeated");
+        require(data(triangles).colors.size() == 3 && data(triangles).indices.size() == 3,
+                "generated attributes became client-owned or were lost");
+
+        triangles.colors = false;
+        triangles.indices = false;
+        triangles.update();
+        const auto &refreshed = data(triangles);
+        require(triangles.calls == 2 && refreshed.colors.empty() && refreshed.indices.empty(),
+                "a virtual override could not remove generated attributes or indices");
+        triangles.indices = true;
+        triangles.update();
+        const auto &indexed = data(triangles);
+        require(triangles.calls == 3 && indexed.indices == std::vector<unsigned int>{0, 1, 2},
+                "realized non-indexed geometry overrode a later virtual update");
+    }
+
+    void test_explicit_indices_clear_generated_provenance() {
+        TestTriangles triangles("explicit indices");
+        int calls = 0;
+        triangles.set_update_func([&calls](Model *, Drawable *target) {
+            ++calls;
+            target->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+            target->update_element_buffer({0, 1, 2});
+            target->set_source_faces({17});
+            target->update_highlight_mask({.5f});
+        });
+        triangles.update_element_buffer({2, 1, 0, 0, 1, 2});
+        require(data(triangles).indices == std::vector<unsigned int>{2, 1, 0, 0, 1, 2} &&
+                        data(triangles).source_faces.empty() && triangles.highlight_mask().empty(),
+                "explicit indices retained stale generated provenance or highlights");
+        triangles.update();
+        const auto &refreshed_indices = data(triangles);
+        require(calls == 2 && refreshed_indices.source_faces.empty() && triangles.highlight_mask().empty(),
+                "callback refresh reintroduced provenance for explicit client indices");
+    }
+
+    void test_first_use_provenance_and_highlights() {
+        auto cloud = std::make_shared<PointCloud>();
+        cloud->add_vertex(vec3(0, 0, 0));
+        cloud->add_vertex(vec3(1, 0, 0));
+        PointsDrawable points("pending highlights", cloud.get());
+        points.update_highlight_mask({.5f, .25f});
+        require(points.highlight_mask() == std::vector<float>{.5f, .25f} &&
+                        data(points).vertices.size() == 2,
+                "first-use highlight validation did not realize pending geometry");
+
+        TestTriangles triangles("pending provenance");
+        int calls = 0;
+        triangles.set_update_func([&calls](Model *, Drawable *target) {
+            ++calls;
+            target->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+        });
+        triangles.set_source_faces({19});
+        require(calls == 1 && data(triangles).source_faces == std::vector<int>{19},
+                "first-use provenance validation did not realize pending geometry");
+    }
+
+    void test_const_realization_and_revision_exhaustion() {
+        auto cloud = std::make_shared<PointCloud>();
+        cloud->add_vertex(vec3(1, 2, 3));
+        const PointsDrawable points("const points", cloud.get());
+        require(data(points).vertices.size() == 1, "const model-backed drawable was not realized");
+
+        TestTriangles triangles("revision exhaustion");
+        triangles.update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+        auto &snapshot = const_cast<Drawable::BufferData &>(data(triangles));
+        snapshot.revision = std::numeric_limits<std::size_t>::max();
+        triangles.set_update_func([](Model *, Drawable *target) {
+            target->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+        });
+        triangles.update();
+        bool rejected = false;
+        try {
+            static_cast<void>(data(triangles));
+        } catch (const std::overflow_error &) {
+            rejected = true;
+        }
+        require(rejected && snapshot.vertices.size() == 3 &&
+                        snapshot.revision == std::numeric_limits<std::size_t>::max(),
+                "revision exhaustion wrapped or discarded the previous geometry");
+
+        TestTriangles updates("public update exhaustion");
+        updates.update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
+        updates.update_color_buffer({vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1)});
+        updates.update_normal_buffer({vec3(0, 0, 1), vec3(0, 0, 1), vec3(0, 0, 1)});
+        updates.update_texcoord_buffer({vec2(0, 0), vec2(1, 0), vec2(0, 1)});
+        updates.update_element_buffer({0, 1, 2});
+        updates.set_source_faces({4});
+        updates.update_highlight_mask({.5f});
+        auto &exhausted = const_cast<Drawable::BufferData &>(data(updates));
+        exhausted.revision = std::numeric_limits<std::size_t>::max();
+        const auto before = data(updates);
+        const auto highlights = updates.highlight_mask();
+        overflows([&] { updates.update_vertex_buffer({vec3(2, 2, 2)}); });
+        overflows([&] { updates.update_color_buffer({vec3(0, 0, 0)}); });
+        overflows([&] { updates.update_normal_buffer({vec3(0, 1, 0)}); });
+        overflows([&] { updates.update_texcoord_buffer({vec2(1, 1)}); });
+        overflows([&] { updates.update_element_buffer({2, 1, 0}); });
+        overflows([&] { updates.disable_element_buffer(); });
+        overflows([&] { updates.set_source_faces({8}); });
+        overflows([&] { updates.update_highlight_mask({.25f}); });
+        const auto &after = data(updates);
+        require(after.vertices == before.vertices && after.colors == before.colors &&
+                        after.normals == before.normals && after.texcoords == before.texcoords &&
+                        after.indices == before.indices && after.source_faces == before.source_faces &&
+                        after.revision == before.revision && updates.highlight_mask() == highlights &&
+                        updates.num_vertices() == 3 && updates.num_indices() == 3,
+                "a rejected public update partially changed drawable state");
+    }
+
     void test_command_styles() {
         DrawableRenderer renderer;
         Camera camera;
@@ -186,6 +378,16 @@ namespace {
         require(command.point_style == PointStyle::plain && command.point_size == 7 &&
                         command.geometry->point_data()->source_ids()[1] == 1,
                 "plain point command lost size or source-slot mapping");
+        const auto plain_geometry = command.geometry;
+        points->update_highlight_mask({.5f, .25f});
+        command = renderer.command(points, 4, camera, {});
+        require(command.geometry != plain_geometry &&
+                        command.geometry->vertices()[0].highlight.w > 0,
+                "highlight-only update did not invalidate the geometry cache");
+        const auto highlighted_geometry = command.geometry;
+        points->update_highlight_mask({});
+        require(renderer.command(points, 4, camera, {}).geometry != highlighted_geometry,
+                "clearing highlights did not invalidate the geometry cache");
         points->set_impostor_type(PointsDrawable::SPHERE);
         command = renderer.command(points, 4, camera, {});
         require(command.point_style == PointStyle::sphere && command.sphere_radius > 0,
@@ -244,6 +446,24 @@ namespace {
                         command.geometry->vertices()[0].position.x > first_x,
                 "screen-space line cache did not follow a geometry update");
 
+        auto provenance = std::make_shared<TrianglesDrawable>("triangle provenance");
+        provenance->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0),
+                                          vec3(0, 0, 1), vec3(1, 0, 1), vec3(0, 1, 1)});
+        provenance->update_element_buffer({0, 1, 2, 3, 4, 5});
+        provenance->set_source_faces({17, -1});
+        provenance->set_smooth_shading(true);
+        command = renderer.command(provenance, 8, camera, {});
+        require(command.geometry->primitive_ids() == std::vector<uint32_t>({0, 1}),
+                "triangle command lost per-primitive provenance slots");
+        provenance->set_smooth_shading(false);
+        command = renderer.command(provenance, 8, camera, {});
+        require(command.geometry->primitive_ids() == std::vector<uint32_t>({0, 1}),
+                "flat shading lost per-primitive provenance slots");
+        provenance->update_highlight_mask({.5f, .25f});
+        command = renderer.command(provenance, 8, camera, {});
+        require(command.geometry->primitive_ids() == std::vector<uint32_t>({0, 1}),
+                "highlight expansion lost per-primitive provenance slots");
+
         triangles->set_smooth_shading(true);
         triangles->update_element_buffer({0, 1, 2});
         const auto indexed_geometry = renderer.command(triangles, 6, camera, {}).geometry;
@@ -265,6 +485,11 @@ int main() {
         test_callback_realization_and_detachment();
         test_explicit_attributes_survive_realization();
         test_realized_index_mode_does_not_override_later_updates();
+        test_realization_exception_recovery();
+        test_standalone_virtual_realization();
+        test_explicit_indices_clear_generated_provenance();
+        test_first_use_provenance_and_highlights();
+        test_const_realization_and_revision_exhaustion();
         test_command_styles();
         std::cout << "drawable contract tests passed\n";
         return 0;

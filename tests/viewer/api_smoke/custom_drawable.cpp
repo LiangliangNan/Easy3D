@@ -22,7 +22,8 @@ void smoke_custom_drawable() {
     points->set_uniform_coloring(easy3d::vec4(1, 1, 1, 1));
     points->update_highlight_mask(std::vector<float>{1.0f, 0.0f, 0.0f});
     points->highlight_mask();
-    points->buffer_data();
+    const easy3d::Drawable& drawable = *points;
+    drawable.buffer_data();
     points->num_vertices();
     points->num_indices();
     points->update();

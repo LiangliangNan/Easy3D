@@ -213,8 +213,7 @@ namespace easy3d {
                         if (use_colors && !buffers.colors.empty())
                             vertices[i].color = vec4(buffers.colors[i], 1);
                         if (textured)
-                            vertices[i].texcoord =
-                                vec2(buffers.texcoords[i].x * repeat, 1 - buffers.texcoords[i].y * repeat);
+                            vertices[i].texcoord = vec2(buffers.texcoords[i].x * repeat, buffers.texcoords[i].y * repeat);
                     }
                     const auto topology = d.type() == Drawable::DT_TRIANGLES ? graphics::Topology::triangles
                                           : d.type() == Drawable::DT_LINES   ? graphics::Topology::lines
@@ -258,8 +257,15 @@ namespace easy3d {
                     if (topology == graphics::Topology::triangles && buffers.indices.empty() && n % 3)
                         throw std::invalid_argument("drawable '" + d.name() + "' has " + std::to_string(n) +
                                                     " non-indexed triangle vertices");
+                    const size_t element_count = buffers.indices.empty() ? vertices.size() : buffers.indices.size();
+                    const unsigned primitive_size = topology == graphics::Topology::triangles ? 3
+                                                   : topology == graphics::Topology::lines   ? 2
+                                                                                             : 1;
+                    std::vector<uint32_t> primitive_ids(element_count / primitive_size);
+                    for (size_t i = 0; i < primitive_ids.size(); ++i)
+                        primitive_ids[i] = uint32_t(i);
                     auto geometry = std::make_shared<graphics::Geometry>(vertices, buffers.indices, topology,
-                                                                         std::vector<uint32_t>{}, entry.points);
+                                                                         std::move(primitive_ids), entry.points);
                     if (flat_shading) {
                         // Geometry has already validated the indices and triangle count.
                         // Give every corner its triangle normal while preserving colors
@@ -276,7 +282,8 @@ namespace easy3d {
                                 flat[i + j].normal = normal;
                         }
                         geometry =
-                            std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
+                            std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology,
+                                                                 geometry->primitive_ids());
                     }
                     if (selection_marked || mask_marked) {
                         const auto &source = geometry->vertices();
@@ -303,7 +310,7 @@ namespace easy3d {
                         }
                         geometry =
                             std::make_shared<graphics::Geometry>(std::move(marked), std::vector<uint32_t>{}, topology,
-                                                                 std::vector<uint32_t>{}, entry.points);
+                                                                 geometry->primitive_ids(), entry.points);
                     }
                     entry.selection_marked = selection_marked;
                     entry.mask_marked = mask_marked;

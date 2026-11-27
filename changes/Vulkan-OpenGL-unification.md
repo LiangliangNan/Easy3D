@@ -1,8 +1,8 @@
 # Vulkan/OpenGL Unification: OpenGL Renderer Redundancy Audit
 
-**Date:** 2026-11-26  
-**Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple/Mapple-Qt, tutorials, tests, and Python bindings.  
-**Status:** Read-only architectural and caller audit. No code was changed.
+**Date:** 2026-11-27
+**Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs and validation recorded in section 8.11.
 
 ## Executive summary
 
@@ -54,7 +54,7 @@ The shared backend-neutral pieces are:
 - `graphics::DrawableRenderer`: converts a `Drawable` into shared commands.
 - `graphics::OpenGLDevice`: headless OpenGL realization borrowing the caller's current context.
 
-The OpenGL `Viewer` still renders its live scene through native drawable implementations. The decisive dependency is [easy3d/viewer/viewer.cpp:2485](../easy3d/viewer/viewer.cpp#L2485), which calls:
+The OpenGL `Viewer` still renders its live scene through native drawable implementations. The decisive dependency is [easy3d/viewer/viewer.cpp:2569](../easy3d/viewer/viewer.cpp#L2569), which calls:
 
 - `LinesDrawable::draw()`.
 - `PointsDrawable::draw()`.
@@ -70,8 +70,8 @@ Consequently, the shared device replaces specific offscreen/query functionality;
 
 | Component | Finding | Recommended treatment |
 |---|---|---|
-| `easy3d::opengl::read_pixel` | No callers outside `read_pixel.{h,cpp}`; no tests or active Python bindings. This includes single-pixel and buffer `read_color`/`read_depth`, MSAA variants, and color/depth snapshot functions. See [easy3d/renderer/read_pixel.h:52](../easy3d/renderer/read_pixel.h#L52). | Remove declarations, definitions, and CMake entries if public API breaks are acceptable. Otherwise deprecate first. |
-| `easy3d::OpenGLTimer` | No callers outside its own header/source; no tests or bindings. See [easy3d/renderer/opengl_timer.h:53](../easy3d/renderer/opengl_timer.h#L53). | Same treatment as `read_pixel`. |
+| `easy3d::opengl::read_pixel` | No callers outside `read_pixel.{h,cpp}`; no tests or active Python bindings. This includes single-pixel and buffer `read_color`/`read_depth`, MSAA variants, and color/depth snapshot functions. See [easy3d/renderer/read_pixel.h:55](../easy3d/renderer/read_pixel.h#L55). | Remove declarations, definitions, and CMake entries if public API breaks are acceptable. Otherwise deprecate first. |
+| `easy3d::OpenGLTimer` | No callers outside its own header/source; no tests or bindings. See [easy3d/renderer/opengl_timer.h:55](../easy3d/renderer/opengl_timer.h#L55). | Same treatment as `read_pixel`. |
 
 Both are listed in the OpenGL-only headers and sources at [easy3d/renderer/CMakeLists.txt:92](../easy3d/renderer/CMakeLists.txt#L92). Removing them requires no rendering adaptation.
 
@@ -82,15 +82,15 @@ The following are cleanup candidates. Public API policy still applies.
 | Component | Unused surface | Notes |
 |---|---|---|
 | `ShaderManager` | `create_program_from_codes()`, `all_programs()`, and the individual-file `create_program_from_files()` overload | The base-name creation overload, `get_program()`, `reload()`, and `terminate()` remain used. See [easy3d/renderer/shader_manager.h:82](../easy3d/renderer/shader_manager.h#L82). |
-| `ShaderProgram` | `set_verbose()`, `program_output()`, `is_program_valid()`, `load_binary()`, `save_binary()` | These belong to diagnostics/binary-program support with no external callers. `set_program_output()` remains used by `ShaderManager`. See [easy3d/renderer/shader_program.h:128](../easy3d/renderer/shader_program.h#L128). |
-| `VertexArrayObject` | `is_supported()`, `create_storage_buffer()`, `update_storage_buffer()`, `map_buffer()`, `unmap_buffer()` | Core array/element buffer creation and `get_buffer_data()` remain required. See [easy3d/renderer/vertex_array_object.h:58](../easy3d/renderer/vertex_array_object.h#L58). |
-| `FramebufferObject` | `is_supported()`, `attach_color_texture()`, `copy_color_to_texture()`, `copy_depth_to_texture()`, `is_bound()`, `num_color_attachments()`, `has_color_attachment()`, `has_depth_attachment()`, `depth_bits()`, `has_stencil()`, `texture_target()`, `has_color_texture()`, `has_depth_texture()`, `deactivate_read_buffer()`, and all `blit_framebuffer()` overloads | `attach_depth_texture()` is used by `OpenGLDevice`; draw/read-buffer activation and color readback remain used. See [easy3d/renderer/framebuffer_object.h:128](../easy3d/renderer/framebuffer_object.h#L128). |
+| `ShaderProgram` | `set_verbose()`, `program_output()`, `is_program_valid()`, `load_binary()`, `save_binary()` | These belong to diagnostics/binary-program support with no external callers. `set_program_output()` remains used by `ShaderManager`. See [easy3d/renderer/shader_program.h:130](../easy3d/renderer/shader_program.h#L130). |
+| `VertexArrayObject` | `is_supported()`, `create_storage_buffer()`, `update_storage_buffer()`, `map_buffer()`, `unmap_buffer()` | Core array/element buffer creation and `get_buffer_data()` remain required. See [easy3d/renderer/vertex_array_object.h:59](../easy3d/renderer/vertex_array_object.h#L59). |
+| `FramebufferObject` | `is_supported()`, `attach_color_texture()`, `copy_color_to_texture()`, `copy_depth_to_texture()`, `is_bound()`, `num_color_attachments()`, `has_color_attachment()`, `has_depth_attachment()`, `depth_bits()`, `has_stencil()`, `texture_target()`, `has_color_texture()`, `has_depth_texture()`, `deactivate_read_buffer()`, and all `blit_framebuffer()` overloads | `attach_depth_texture()` is used by `OpenGLDevice`; draw/read-buffer activation and color readback remain used. See [easy3d/renderer/framebuffer_object.h:129](../easy3d/renderer/framebuffer_object.h#L129). |
 | `FramebufferObject` depth helpers | Buffer `read_depth()` overloads and `snapshot_depth()` | The vector `read_depth()` overload is tests-only; the pointer overload has no caller. `snapshot_depth()` appears only in disabled code. Single-pixel `read_depth()` remains production-used. |
 | `FramebufferObject` diagnostics | `print_attachments()`, `print_draw_buffers()`, `print_read_buffer()` | Referenced only from disabled debug code. |
 | `OpenglUtil` | Profile, vendor, renderer, version, extension, GLSL/GLEW, sample, viewport, GPU-memory, output-stream, and `get_*_info` queries | Only `init()`, `is_supported()`, and `has_extension()` have production callers. See [easy3d/renderer/opengl_util.h:47](../easy3d/renderer/opengl_util.h#L47). |
 | OpenGL error helpers | `check_gl_error()`, `check_frame_buffer_error()`, `easy3d_gl_error`, and `easy3d_frame_buffer_error` | The logging variants remain used throughout production code. See [easy3d/renderer/opengl_error.h:38](../easy3d/renderer/opengl_error.h#L38). |
-| Native `shape` functions | Textured `draw_quad_filled()` and textured `draw_full_screen_quad()` | The bound-shader fullscreen-quad overload is heavily used. See [easy3d/renderer/shape.h:84](../easy3d/renderer/shape.h#L84). |
-| `Texture` | `bind()` and `release()` | Tests-only; production rendering uses texture IDs through shader binding. Public API nonetheless. See [easy3d/renderer/texture.h:119](../easy3d/renderer/texture.h#L119). |
+| Native `shape` functions | Textured `draw_quad_filled()` and textured `draw_full_screen_quad()` | The bound-shader fullscreen-quad overload is heavily used. See [easy3d/renderer/shape.h:87](../easy3d/renderer/shape.h#L87). |
+| `Texture` | `bind()` and `release()` | Tests-only; production rendering uses texture IDs through shader binding. Public API nonetheless. See [easy3d/renderer/texture.h:123](../easy3d/renderer/texture.h#L123). |
 
 ### 1.3 No external caller does not always mean dead code
 
@@ -113,9 +113,9 @@ The following have no C++ production caller but are exposed through Python:
 - `Drawable::texcoord_buffer()`.
 - `Drawable::element_buffer()`.
 
-The bindings are at [python/bindings/easy3d/renderer/drawables.cpp:194](../python/bindings/easy3d/renderer/drawables.cpp#L194) and [python/bindings/easy3d/renderer/drawables.cpp:279](../python/bindings/easy3d/renderer/drawables.cpp#L279).
+The bindings are at [python/bindings/easy3d/renderer/drawables.cpp:227](../python/bindings/easy3d/renderer/drawables.cpp#L227) and [python/bindings/easy3d/renderer/drawables.cpp:331](../python/bindings/easy3d/renderer/drawables.cpp#L331).
 
-`Drawable::vertex_buffer()`, `color_buffer()`, and `normal_buffer()` also have production callers in effects, native shape drawing, and Mapple-Qt. They are not deletion candidates today.
+`Drawable::vertex_buffer()`, `color_buffer()`, and `normal_buffer()` also have production callers in effects and native shape drawing. They are not deletion candidates today; the retired Mapple-Qt reference source was updated for API consistency.
 
 Recommended treatment for Python-only methods:
 
@@ -127,16 +127,16 @@ Recommended treatment for Python-only methods:
 
 | Component | Production dependencies | Conclusion |
 |---|---|---|
-| `FramebufferObject` | Viewer capture and fallbacks; `MultiViewer`; GUI pickers; AO, EDL, shadows, transparency; `OverlayRenderer`; `OpenGLDevice` | Required. The adapter itself allocates targets with it at [easy3d/renderer/backends/opengl/render_device.cpp:342](../easy3d/renderer/backends/opengl/render_device.cpp#L342). |
-| `ShaderProgram` / `ShaderManager` | Native drawables, corner axes, picking fallbacks, overlays, and effects | Required. Viewer uses the manager directly at [easy3d/viewer/viewer.cpp:2335](../easy3d/viewer/viewer.cpp#L2335). |
+| `FramebufferObject` | Viewer capture and fallbacks; `MultiViewer`; GUI pickers; AO, EDL, shadows, transparency; `OverlayRenderer`; `OpenGLDevice` | Required. The adapter itself allocates targets with it at [easy3d/renderer/backends/opengl/render_device.cpp:796](../easy3d/renderer/backends/opengl/render_device.cpp#L796). |
+| `ShaderProgram` / `ShaderManager` | Native drawables, corner axes, picking fallbacks, overlays, and effects | Required. Viewer uses the manager directly at [easy3d/viewer/viewer.cpp:3044](../easy3d/viewer/viewer.cpp#L3044). |
 | `Texture` / `TextureManager` | Native textured/scalar-field rendering; material handling; shared command extraction; Mapple UI and tutorials | Required. The shared device consumes CPU pixel data but does not replace live texture realization. |
 | `VertexArrayObject` | Native buffer creation, element buffers, `Drawable::buffer_data()` readback, screen-space lines, shape drawing | Required. |
 | Native `Drawable` storage | Live rendering and CPU snapshots used by `DrawableRenderer`/`OpenGLDevice` | Required. |
-| `ClippingPlane` | Viewer controls, native shader setup, clipping visualization, pickers, effects, Mapple, tutorials | Required. See [easy3d/viewer/viewer.cpp:2535](../easy3d/viewer/viewer.cpp#L2535). |
+| `ClippingPlane` | Viewer controls, native shader setup, clipping visualization, pickers, effects, Mapple, tutorials | Required. See [easy3d/viewer/viewer.cpp:2628](../easy3d/viewer/viewer.cpp#L2628). |
 | Shadow/AO/EDL/transparency | Viewer integration, Mapple, and rendering tutorials | Required as application/library functionality, even where base Viewer does not call every effect directly. |
-| `opengl::OverlayRenderer` | HUD text and client overlays, including depth-tested overlays | Required today. See [easy3d/viewer/viewer.cpp:2423](../easy3d/viewer/viewer.cpp#L2423). |
+| `opengl::OverlayRenderer` | HUD text and client overlays, including depth-tested overlays | Required today. See [easy3d/viewer/viewer.cpp:2507](../easy3d/viewer/viewer.cpp#L2507). |
 | `LinesDrawable2D` | Pivot marks, screen-space guides, `MultiViewer`, portable command extraction, tutorials | Required. |
-| Native `shape_draw` | Corner axes, fullscreen effect passes, manipulator visualization, Mapple-Qt tools | Required. |
+| Native `shape_draw` | Corner axes, fullscreen effect passes, manipulator visualization, and supported Mapple tools; retired Mapple-Qt reference code was updated for API consistency | Required for active rendering and compatibility fallbacks. |
 | GLEW, `OpenglUtil::init()`, capability checks, error logging | Context initialization and native backend support checks | Required. |
 
 ### Why `FramebufferObject` cannot be removed merely by changing capture
@@ -170,7 +170,7 @@ Required compatibility work:
 - Text/image command upload and lifetime.
 - Exact interaction with corner axes and native scene rendering.
 
-This is currently blocked by the headless contract: `OpenGLDevice::present()` throws at [easy3d/renderer/backends/opengl/render_device.cpp:950](../easy3d/renderer/backends/opengl/render_device.cpp#L950).
+The earlier headless blocker is resolved: `OpenGLDevice::present()` now renders and blits to the current destination at [easy3d/renderer/backends/opengl/render_device.cpp:1417](../easy3d/renderer/backends/opengl/render_device.cpp#L1417). It still depends on the destination context being current.
 
 **Assessment:** coherent future migration, but not a simple caller replacement.
 
@@ -185,7 +185,7 @@ The old FBO/shader fallback blocks and `Picker::fbo_` can be removed incremental
 - Non-native line widths.
 - `MultiViewer`.
 
-The capability gate is visible at [easy3d/viewer/viewer.cpp:2567](../easy3d/viewer/viewer.cpp#L2567).
+The capability gate is visible at [easy3d/viewer/viewer.cpp:2659](../easy3d/viewer/viewer.cpp#L2659).
 
 **Assessment:** retire individual fallback branches as parity is added. Do not remove the fallback system as one change.
 
@@ -221,7 +221,7 @@ Additional constraints:
 - Python exposes `Drawable` GL buffer getters, `gl_draw()`, and `vao()`.
 - Python exposes `LinesDrawable2D`.
 - Python exposes texture loading through `TextureManager` and AO controls through `State`.
-- No active Python bindings were found for `FramebufferObject`, `read_pixel`, `ShaderManager`/`ShaderProgram`, VAO methods, `OpenGLTimer`, `OpenglUtil`, native shape functions, `ClippingPlane`, or `OverlayRenderer`.
+- No active Python bindings were found for `FramebufferObject`, `read_pixel`, `ShaderManager`/`ShaderProgram`, VAO management methods, `OpenGLTimer`, `OpenglUtil`, native shape functions, `ClippingPlane`, or `OverlayRenderer`. `VertexArrayObject` is exposed only through a minimal compatibility class returned by deprecated `Drawable::vao()`, with `id()` as its sole bound method.
 
 A safe cleanup policy is:
 
@@ -322,7 +322,7 @@ Private backend implementations
 
 ### 7.2 High-level API
 
-The existing foundation is already portable: see [WindowOptions and Viewer](../easy3d/viewer/viewer.h#L73), [ViewerBase](../easy3d/viewer/viewer_base.h#L77), and [OffScreen](../easy3d/viewer/offscreen.h#L50).
+The existing foundation is already portable: see [WindowOptions and Viewer](../easy3d/viewer/viewer.h#L74), [ViewerBase](../easy3d/viewer/viewer_base.h#L79), and [OffScreen](../easy3d/viewer/offscreen.h#L49).
 
 #### `WindowOptions`
 
@@ -426,7 +426,7 @@ protected:
 };
 ```
 
-The final change is that `device()`, `set_clipping_planes()`, and command assembly stop being Vulkan-only. Their current transitional forms are visible in [Viewer overlays and clipping](../easy3d/viewer/viewer.h#L836), [capture and device access](../easy3d/viewer/viewer.h#L904), and [draw_commands()](../easy3d/viewer/viewer.h#L1220).
+The final change is that `device()`, `set_clipping_planes()`, and command assembly stop being Vulkan-only. Their current transitional forms are visible in [Viewer overlays and clipping](../easy3d/viewer/viewer.h#L854), [capture and device access](../easy3d/viewer/viewer.h#L918), and [draw_commands()](../easy3d/viewer/viewer.h#L1187).
 
 A subclass customizes rendering by returning `DrawCommand` objects or adding backend-neutral commands, not by issuing GL calls.
 
@@ -525,7 +525,7 @@ public:
 };
 ```
 
-The backend-specific members currently declared in [Drawable buffer access and rendering](../easy3d/renderer/drawable.h#L220) would be removed:
+The backend-specific APIs and members currently declared in [Drawable native storage and rendering](../easy3d/renderer/drawable.h#L505) would be removed:
 
 ```cpp
 // Removed from the final public API
@@ -653,7 +653,7 @@ The algorithms remain; only their framebuffer, shader, and command-assembly plum
 
 ### 7.5 Backend-neutral graphics API
 
-The existing [RenderDevice interface](../easy3d/renderer/render_device.h#L465) and its [command/value types](../easy3d/renderer/render_device.h#L39) are already close to the desired final form.
+The existing [RenderDevice interface](../easy3d/renderer/render_device.h#L522) and its [command/value types](../easy3d/renderer/render_device.h#L40) are already close to the desired final form.
 
 #### Public value types
 
@@ -993,9 +993,9 @@ Status vocabulary:
 
 | Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
 |---|---|---|---|
-| `WindowOptions::{width, height, samples, full_screen, visible, resizable}` | [viewer.h](../easy3d/viewer/viewer.h#L73) already defines all six fields with the proposed defaults. | Retain | Keep the struct and its current sample-count validation/fallback contract. |
+| `WindowOptions::{width, height, samples, full_screen, visible, resizable}` | [viewer.h](../easy3d/viewer/viewer.h#L74) already defines all six fields with the proposed defaults. | Retain | Keep the struct and its current sample-count validation/fallback contract. |
 | `DeviceOptions::{validation, sync_validation, profiling, device_name}` | Vulkan has these controls in `VulkanOptions`; OpenGL instead has `OpenGLOptions` for context requests. | Add | Introduce one common struct. OpenGL context negotiation becomes private implementation detail. Preserve the existing Vulkan large-point comparison control in an advanced/common option rather than silently dropping it. |
-| `Viewer(title, window, options)` | Constructor selects `VulkanOptions` or `OpenGLOptions` through `EASY3D_HAS_VULKAN` in [viewer.h](../easy3d/viewer/viewer.h#L155). | Adapt | Replace the client-visible conditional type with `DeviceOptions`; retain temporary backend-option overloads during migration. |
+| `Viewer(title, window, options)` | Constructor selects `VulkanOptions` or `OpenGLOptions` through `EASY3D_HAS_VULKAN` in [viewer.h](../easy3d/viewer/viewer.h#L144). | Adapt | Replace the client-visible conditional type with `DeviceOptions`; retain temporary backend-option overloads during migration. |
 | `run`, `run_frames`, `draw_frame`, `show`, `hide`, `resize`, `update`, `camera` | All are available on both backends through `Viewer`/`ViewerBase`; Python omits `draw_frame`, `show`, and `hide`. | Retain C++; add Python parity later | No signature redesign is needed. |
 | `add_model(file, create_drawables, fit_scene)` | Available on both backends; Python's file overload omits `fit_scene`. | Retain C++; adapt Python | Add `fit_scene` to Python without changing existing calls. |
 | `add_model(shared_ptr<Model>, create_drawables, fit_scene)` | Shared ownership is already supported; raw-pointer overloads transfer ownership. | Adapt | Retain the `shared_ptr` overload. Deprecate raw-pointer ownership transfer and coordinate return-type modernization with the separate raw-pointer TODO. |
@@ -1021,7 +1021,7 @@ Status vocabulary:
 
 | Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
 |---|---|---|---|
-| `Drawable::BufferData` fields | [drawable.h](../easy3d/renderer/drawable.h#L70) already has vertices, normals, colors, texcoords, indices, source faces, and revision. | Retain | Keep the existing fields and revision meaning. |
+| `Drawable::BufferData` fields | [drawable.h](../easy3d/renderer/drawable.h#L67) already has vertices, normals, colors, texcoords, indices, source faces, and revision. | Retain | Keep the existing fields and revision meaning. |
 | `name`, `set_name`, `bounding_box`, `num_vertices`, `num_indices` | All exist in C++. `num_indices` is missing from Python. | Retain C++; add Python | Bind the portable query surface, not native resource IDs. |
 | `buffer_data() const` | Exists but is non-const because it may refresh/read the backend snapshot. | Adapt | Provide a const query without exposing backend handles. Cache refresh may remain mutable internally; callers receive a stable snapshot for the current revision. |
 | Vertex/color/normal/texcoord/element updates and element disabling | Portable C++ implementations exist; Python broadly exposes them. | Retain | Keep current defaults and dynamic-update behavior. |
@@ -1043,7 +1043,7 @@ Status vocabulary:
 | Proposed surface | Current implementation evidence | Classification | Milestone 0 conclusion |
 |---|---|---|---|
 | `Backend` | Absent; `name()` embeds backend/device information. | Add | Add an explicit enum and `RenderDevice::backend()` while retaining `name()` for human-readable identity. |
-| `Topology`, `PointStyle`, `LineStyle`, `TransparencyMethod`, `FrameReadback` | Already defined in [render_device.h](../easy3d/renderer/render_device.h#L39). | Retain | Reuse these enums. |
+| `Topology`, `PointStyle`, `LineStyle`, `TransparencyMethod`, `FrameReadback` | Already defined in [render_device.h](../easy3d/renderer/render_device.h#L40). | Retain | Reuse these enums. |
 | `TextureWrap`, `TextureFilter` | Already defined but omitted from the abbreviated proposal. | Retain | Add them to the final public listing. |
 | `PointData` | Already defined and used by selection/geometry. | Retain | Add it to the final public listing. |
 | `Vertex`, `Geometry`, `Sampler`, `Image` | Already backend-neutral; geometry snapshots own copied data and images use top-row-first RGBA8. | Retain | Keep current value/resource semantics. |
@@ -1144,9 +1144,8 @@ The existing tree already contains most of the desired application and geometry 
 
 #### Image conventions
 
-- `graphics::Image` and `FrameImage` are canonical top-row-first CPU images. Both adapters preserve that row order on upload; screen-space `(0,0)` is the top-left corner. No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
+- `graphics::Image` and `FrameImage` are canonical top-row-first CPU images. Both adapters map those canonical rows into their backend texture-coordinate convention without changing the portable image data; screen-space `(0,0)` is the top-left corner. Scene vertex texture coordinates retain the conventional bottom-left V origin, while screen-space overlay UVs use the top-left origin. No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
 - Legacy `Texture::PixelData` remains bottom-row-first during compatibility; `DrawableRenderer` performs the explicit row conversion at that boundary.
-- No global image-loader flip state is introduced, and native texture IDs never become part of the portable image contract.
 
 ### 8.7 Migration and deprecation policy
 
@@ -1166,13 +1165,13 @@ Because Easy3D requires C++11, deprecations use one project macro rather than C+
 | `Viewer(title, WindowOptions, VulkanOptions/OpenGLOptions)` | Final `Viewer(title, WindowOptions, DeviceOptions)`; 2.8 adds an exact-`DeviceOptions` constrained-template constructor without trailing defaults, leaving existing calls and symbols unchanged. | 2.8.0 | Legacy constructor and transitional template in 3.0.0; ordinary target constructor then remains. |
 | `OffScreen(width, height, VulkanOptions/OpenGLOptions)` | Same transition to `OffScreen(width, height, DeviceOptions)`. | 2.8.0 | 3.0.0 |
 | `MultiViewer(rows, cols, title, WindowOptions, VulkanOptions/OpenGLOptions)` | Same transition to the final `DeviceOptions` constructor. | 2.8.0 | 3.0.0 |
-| `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload is an exact-type constrained template with no default argument and forwards directly to the existing positional virtual, preserving legacy `{}` calls. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
+| `RenderDevice::render(width, height, commands, background, samples, transparency, peel_layers, readback)` | `render(width, height, commands, RenderOptions)`; the 2.8 non-virtual options overload is an exact-type constrained template with no default argument and forwards through a private out-of-line bridge to the existing positional virtual, preserving legacy `{}` calls. In 3.0 the options overload becomes primary virtual and the positional overload is removed. | 2.8.0 | Positional overload in 3.0.0 |
 | `RenderDevice::present(...)` | No normal public replacement. Windowed hosts present through their private adapter; headless callers use `render()`. | 2.8.0 | 3.0.0 |
 | `create_opengl_device()` / `create_vulkan_device(...)` | `create_device(DeviceOptions)`; old factories forward and retain their exact parameter order. | 2.8.0 | 3.0.0 |
 | `graphics::VulkanSurface` / `graphics::create_vulkan_window_device(...)` | Advanced native interop moves to `graphics::backends::vulkan`; the original surface remains an ABI-preserving compatibility base and the old factory forwards to the interop factory. | 2.8.0 | 3.0.0 |
 | Public `OpenGLDevice` | Use `RenderDevice` returned by `create_device()`. | 2.8.0 | Public class/header removed in 3.0.0 |
 | `Drawable::draw(const Camera*)`, `gl_draw()` | `DrawableRenderer::command(...)` or host `draw_commands()`. | 2.8.0 | 3.0.0 |
-| `Drawable::vao()`, `vertex_buffer()`, `color_buffer()`, `normal_buffer()`, `texcoord_buffer()`, `element_buffer()` | `Drawable::buffer_data()` and `DrawableRenderer`; no native-handle replacement. | 2.8.0 | 3.0.0 |
+| `Drawable::vao()`, `vertex_buffer()`, `color_buffer()`, `normal_buffer()`, `texcoord_buffer()`, `element_buffer()` | `Drawable::buffer_data() const` and `DrawableRenderer`; no native-handle replacement. | 2.8.0 | 3.0.0 |
 | `const BufferData& Drawable::buffer_data()` non-const member | Add `const BufferData& buffer_data() const`; deprecate the non-const overload and remove it in 3.0. | 2.8.0 | 3.0.0 |
 | `Texture::id()`, `bind()`, `release()` | `Texture::pixels()` / `graphics::Image` plus `DrawCommand::texture`. | 2.8.0 | 3.0.0 |
 | `State::set_ao_texture(unsigned int)` | `RenderSettings::ambient_occlusion` through `set_render_settings()`. | 2.8.0 | 3.0.0 |
@@ -1254,11 +1253,11 @@ const auto frame = device->render(64, 64, {triangle}, render_options);
 
 #### Compatibility and implementation boundaries
 
-- The existing positional `RenderDevice::render()` virtual remains unchanged and deprecated. The exact-type `RenderOptions` template is non-virtual, has no default argument, and calls the positional virtual directly. Legacy three-argument and empty-braces calls retain their overload resolution and behavior.
+- The existing positional `RenderDevice::render()` virtual remains unchanged and deprecated. The exact-type `RenderOptions` template is non-virtual, has no default argument, and routes through a private out-of-line compatibility bridge so inline grouped calls do not reference the deprecated virtual. Legacy three-argument and empty-braces calls retain their overload resolution and behavior.
 - `create_device(const DeviceOptions&)` is the normal factory. The OpenGL and Vulkan factories retain their exact signatures as deprecated forwarding wrappers. OpenGL rejects explicitly requested validation, profiling, and physical-device selection instead of silently ignoring them.
 - Device name, driver version, sample-count queries, validation diagnostics, dropped-fragment counts, and point-upload counts are available through the existing non-virtual interface. The `DeviceCapabilities` value type lands here; virtual `backend()`, `capabilities()`, and `cleanup()` remain deferred to the coordinated 3.0 vtable change.
 - Native Vulkan window integration uses `graphics::backends::vulkan::VulkanSurface`. Its data-free derivation from the original compatibility base preserves the old factory's mangled symbol while giving new interop callers the explicit namespace.
-- `graphics::Image` stays top-row-first. Both adapters upload rows without flipping, and screen-space overlay UV `(0,0)` is the top-left. The RealCamera tutorial now uses the shared textured-quad factory rather than duplicating geometry and projection assembly.
+- `graphics::Image` stays top-row-first. Each adapter explicitly maps those rows into its texture-coordinate convention, and screen-space overlay UV `(0,0)` remains the top-left. The Vulkan image-overlay shader compensates for its texture-coordinate origin, while scene-depth/effect targets retain their existing top-left sampling. The RealCamera tutorial now uses the shared textured-quad factory rather than duplicating geometry and projection assembly.
 - General `Viewer` rendering is intentionally not routed through the new device contract yet; that integration follows after this contract is stable.
 
 #### Validation coverage
@@ -1269,9 +1268,11 @@ const auto frame = device->render(64, 64, {triangle}, render_options);
 - `opengl.renderdevice` executes the OpenGL factory and checks option rejection, frame readback, picking, textures, overlays, transparency, and resize behavior.
 - `vulkan.picking`, `vulkan.render`, `vulkan.depthoverlay`, and `vulkan.depthtexture` execute the Vulkan adapter, including validation-enabled picking and overlay paths.
 - `opengl.realcamera` and `vulkan.realcamera` compare rendered inset pixels against the source image, covering orientation, filtering, resizing, and capture behavior on each backend.
-- Vulkan: all eight targeted tests passed. OpenGL: all four targeted tests passed. The portable CPU regression suites passed 5/5 in each build, grouped-options calls passed strict deprecation-warning checks in C++11 and C++14 through both base and concrete OpenGL device types, and `git diff --check` passed.
+- Vulkan: all eight targeted tests passed. OpenGL: all four targeted tests passed. The portable CPU regression suites passed 5/5 in each build, grouped-options calls passed strict deprecation-warning checks in C++11 and C++14 through `RenderDevice&`, and `git diff --check` passed. The intentionally deprecated concrete `OpenGLDevice` API produces the expected diagnostics.
 
 ### 8.11 Milestone 2 implementation and validation
+
+Validation date: 2026-11-27.
 
 Status: complete. The final all-target OpenGL and Vulkan builds succeeded, both complete CTest suites passed serially, and corner-axis/EDL behavior plus MultiViewer live/capture divisions were verified on the macOS HiDPI validation host.
 
@@ -1305,9 +1306,9 @@ auto frame = device->render(256, 256, {command});
 - Vertex, normal, color, texture-coordinate, and index uploads, resizing, empty uploads, element-buffer disabling, detachment, clearing, callbacks, and repeated updates share the same CPU realization path. OpenGL uploads remain deferred until native compatibility drawing.
 - Point and line commands carry plain/sphere/surfel and plain/cylinder/cone styles, dimensions, color, normals, texture coordinates, primitive IDs, highlight masks, and transforms. Smooth triangle commands preserve portable indices; flat triangle realization expands primitives and derives face normals. Screen-space lines are cached portable ribbon geometry.
 - Plain point/line dimensions are logical drawable sizes. Hosts scale them to framebuffer pixels when their camera uses logical screen coordinates; world/view-space impostor radii are not pixel-scaled. `FrameImage` and command viewports use top-left origins, while OpenGL conversion stays inside the adapter.
-- `DrawCommand::depth_range` maps normalized scene depth into a window-space interval. Both adapters validate and apply the same ordered interval in `[0,1]`; a cross-backend test checks actual remapping as well as rejection of reversed, out-of-range, and non-finite values.
-- Legacy `TrianglesDrawable::opacity()` remains effective only in a separate transparency pass, preserving 2.8 behavior. Ordinary opaque commands retain the drawable's normal alpha rather than implicitly enabling transparency.
-- Native image orientation is converted once into top-row-first portable images. OpenGL and Vulkan upload that portable representation without a second flip.
+- `DrawCommand::set_depth_range()`/`depth_range()` map normalized scene depth into a window-space interval. Both adapters validate and apply the same ordered interval in `[0,1]`; a cross-backend test checks actual remapping as well as rejection of reversed, out-of-range, and non-finite values. Endpoints use 15-bit normalized precision stored in existing command padding.
+- Legacy `TrianglesDrawable::opacity()` remains effective only in a separate transparency pass, preserving legacy behavior. Ordinary opaque commands retain the drawable's normal alpha rather than implicitly enabling transparency.
+- `DrawableRenderer` converts legacy `Texture::PixelData` exactly once from bottom-row-first to top-row-first `graphics::Image`. OpenGL and Vulkan then map portable rows into their respective texture-coordinate conventions; the Vulkan shader compensates only for ordinary image overlays, so portable overlay UVs retain their top-left origin while scene-depth, EDL, AO, and shadow textures continue sampling their native top-left targets without inversion.
 
 #### Application integration and compatibility boundary
 
@@ -1315,19 +1316,22 @@ auto frame = device->render(256, 256, {command});
 - Viewer corner axes use camera-space material lighting and occupy a DPI-scaled, 100-logical-pixel square in the bottom-left corner. This widget placement does not change the top-left origin used by logical coordinates and portable command viewports.
 - The supported Mapple renders its ordinary drawables and Viewer overlays through shared command assembly and presents them through `RenderDevice`. Its corner axes use the same camera-space orientation, normal transform, and lighting as Viewer axes. The retired Mapple-Qt is no longer part of the build or current validation.
 - Mapple's custom drawables, AO textures, shadows, transparency, EDL, clipping, and command-translation failures retain centralized native fallback until their corresponding milestones. Flag-only AO drawables without a texture remain portable. `WalkThrough` exposes separate portable and native paths for compatibility hosts.
-- Native `Drawable::draw()`, `gl_draw()`, `vao()`, raw buffer handle getters, drawable-taking sphere/box helpers, and immediate keyframe camera/path drawing are deprecated in 2.8. Python retains the existing native rendering/handle bindings as deprecation-warning compatibility wrappers and also exposes `BufferData`/`buffer_data()`. Existing C++ declarations, virtual signatures, and bindings needed for source compatibility remain until the coordinated 3.0 removal.
+- Native `Drawable::draw()`, `gl_draw()`, `vao()`, raw buffer handle getters, drawable-taking sphere/box helpers, immediate keyframe camera/path drawing, and the concrete public `OpenGLDevice` class are deprecated in 2.8. Python retains the existing native rendering/handle bindings as deprecation-warning compatibility wrappers and also exposes `BufferData`/`buffer_data()`. Existing C++ declarations, virtual signatures, and bindings needed for source compatibility remain until the coordinated 3.0 removal.
 - Remaining native immediate drawing is confined to compatibility/effect/picking fallbacks and native shape helpers. It is not a second public rendering path for new portable clients. Public removal remains gated by the release and removal policy in section 8.8.
 
 #### Validation coverage
 
-- `drawablecontract` runs unchanged in both builds and covers CPU realization, stable snapshot identity, revision invalidation (including highlight-only changes), provenance, dynamic resizing, element-buffer disabling, clearing, detachment, callback ordering, explicit-upload precedence, cache reuse, and point/line/triangle/screen-line command state.
-- `render`, `renderdevice`, device contracts, multiview, snapshot effects, plain-line parity, picking/query paths, selection, screen lines, independent-depth HUDs, and offscreen queries exercise both adapters. MultiViewer scene-command assembly is virtual on both backends so inherited picking and depth queries cannot silently use whole-canvas commands.
-- `opengl.render` and `vulkan.render` check color/depth/ID readback, depth ordering, depth-range remapping and validation, image orientation, MSAA IDs, transparency, textures, overlays, and point/line styles available to the shared suite. OpenGL analytic point/line shaders explicitly remap their written fragment depth through `DrawCommand::depth_range`. Backend-specific suites cover camera guides/path, corner axes, and OpenGL effect fallback.
+- `drawablecontract` runs unchanged in both builds and covers CPU realization, stable snapshot identity, standalone client-geometry preservation across `update()`, revision invalidation (including highlight-only changes), provenance, first-use provenance/highlight realization, dynamic resizing, element-buffer disabling, clearing, detachment, callback ordering, explicit-upload precedence, cache reuse, transactional callback rollback, non-mutating public-updater rejection at revision exhaustion, and point/line/triangle/screen-line command state. Primitive IDs remain ordinal through smooth, flat-shaded, and highlighted triangle expansion, including transparent OpenGL triangle splitting.
+- `render`, `renderdevice`, device contracts, multiview, snapshot effects, plain-line parity, picking/query paths, selection, screen lines, independent-depth HUDs, and offscreen queries exercise both adapters. `opengl.renderdevice` supplies additional adapter-specific readback, query, presentation, and sorting checks. MultiViewer scene-command assembly remains virtual in Vulkan, where the hook existed in 2.8; the OpenGL build keeps its baseline vtable and uses centralized native fallback for unsupported query state.
+- `opengl.render` and `vulkan.render` check color/depth/ID readback, depth ordering, depth-range remapping and validation, image orientation, MSAA IDs, transparency, textures, overlays, and point/line styles available to the shared suite. OpenGL analytic point/line shaders explicitly remap their written fragment depth through `DrawCommand::depth_range()`. Vulkan depth-texture, EDL, AO, and shadow regressions verify that image-overlay compensation does not invert native scene-depth/effect sampling. Backend-specific suites cover camera guides/path, corner axes, and OpenGL effect fallback.
+- Deterministic offscreen comparisons against the actual pre-unification baseline `727e163c` covered 20 OpenGL and 24 Vulkan scenes, including native drawable updates/refresh, textured native drawables, MSAA, overlays, transparency, and picking. Depth and object/primitive IDs matched exactly in every scene. RGBA matched exactly in 19/20 OpenGL scenes and 21/24 Vulkan scenes. The sole OpenGL difference was 115 overlay-MSAA pixels with a maximum channel delta of one and no delta greater than one. The three Vulkan differences were direct portable `graphics::Image` scenes intentionally corrected to honor the frozen top-row-first image contract; legacy native textured drawables remained byte-identical on both backends. The comparison also drove restoration of OpenGL's baseline ordinary draw order, polygon-offset factors, and native thin-line rasterization.
 - `opengl.corneraxes` and `vulkan.corneraxes` check bright front faces, bottom-left bounds, resize/DPI behavior, MSAA coverage, overlays, visibility, orientation-only transforms, and preserved scene depth/picking IDs. A nearer full-view occluder verifies that the axes retain independent HUD depth instead of being overwritten by the shared 3D-overlay defaults.
-- MultiViewer divisions are generated from integer framebuffer boundaries, not rescaled logical-window boundaries. OpenGL resets the internal target viewport and scissor before full-target overlays so a final cell viewport cannot clip portable divisions. The multiview regression checks the exact placement and coverage of every divider in portable and forced-native OpenGL snapshots and in Vulkan; the RenderDevice regression checks that a full-width overlay covers adjacent scene viewports.
+- MultiViewer divisions are generated from integer framebuffer boundaries, not rescaled logical-window boundaries. OpenGL resets the internal target viewport and scissor before full-target overlays so a final cell viewport cannot clip portable divisions. File snapshots call the virtual `draw()` hook, preserving subclass custom drawing on both the portable and native paths; a counting subclass guards this behavior. The multiview regression checks every divider centerline pixel in portable and forced-native OpenGL snapshots and in Vulkan, and requires identical portable/native OpenGL divider masks. The forced-native fixture uploads and assigns a custom point drawable to an otherwise empty cell, then verifies its visible color, depth query, and picking source; representative native color probes ensure scene content survives as well as the black dividers. The RenderDevice regression checks that a full-width overlay covers adjacent scene viewports.
 - Native OpenGL EDL uses a `GL_DEPTH_COMPONENT32F` projection target compatible with RenderDevice scene depth. Its regression rejects black compositing output as well as checking darkening, preventing an empty depth texture from producing a false pass.
-- `PyEasy3D` compiled successfully. Python rendering smoke coverage passes with the restored deprecated `draw`, `gl_draw`, `vao`, and raw buffer getter wrappers alongside `BufferData`/`buffer_data()`.
+- `PyEasy3D` compiled successfully, and the packaged rendering smoke test passed in both Vulkan-enabled and OpenGL-only builds. Coverage includes the deprecated `draw`, `gl_draw`, `vao`, raw buffer getters, and AO texture wrappers alongside `BufferData`/`buffer_data()` and highlight masks. The borrowed VAO binding uses a non-owning holder, preserving its historical pointer return without requiring the Vulkan-excluded native destructor. OpenGL checks positive vertex/element handles and the returned VAO ID; Vulkan checks zero native handles and the documented unavailability errors. The OpenGL `gl_draw()` wrapper is verified callable but not executed because the packaged Python API does not expose shader binding.
 - The supported Mapple built successfully in both backend configurations. Separate visual smoke runs launched `resources/data/sphere.obj` and confirmed intact menus, toolbars, rendering panels, canvas, Models panel, and visible geometry in each window, titled `Mapple - OpenGL - Debug Version` and `Mapple - Vulkan - Debug Version`, respectively. Both runs reported the same 42 vertices and 80 faces. These captures validate application startup and scene presentation, not identical per-pixel styling; snapshot, effects, picking, and high-DPI interaction still require dedicated UI coverage.
-- Final macOS validation built every target in the OpenGL and Vulkan configurations. Complete serial CTest runs passed OpenGL 125/125 in 135.27 seconds and Vulkan 153/153 in 206.30 seconds. One earlier Vulkan run had only the intermittent `vulkan.crosssection` fixture miss; five immediate isolated repetitions passed, followed by the clean complete run. The cause of that intermittent pick miss is not established here.
-- At the explicit DPI-2 fixture extent of 602x446 framebuffer pixels, portable OpenGL, forced-native OpenGL, and Vulkan divider snapshots each contained the same 2,980 dark divider pixels, with zero differing pixels between their divider masks. The focused OpenGL RenderDevice and both MultiViewer regressions passed after the final test tightening.
+- Final post-audit complete serial macOS runs passed OpenGL 125/125 in 111.69 seconds and Vulkan 154/154 in 238.82 seconds. The OpenGL rerun followed correction of a test fixture that had incorrectly applied top-left overlay UVs to a conventional scene texture; the renderer and baseline rendering were unchanged. Focused Vulkan depth-texture, EDL, AO, shadow, depth-overlay, and ordinary image-overlay regressions passed after separating image-overlay UV compensation from native scene-depth/effect sampling. An earlier Vulkan run had only the intermittent `vulkan.crosssection` fixture miss; five immediate isolated repetitions passed, followed by clean complete runs. The cause of that intermittent pick miss is not established here.
+- The DPI-2 fixture uses a 602x446 framebuffer. Divider coverage is now checked along every vertical and horizontal centerline, with portable and forced-native OpenGL masks compared pixel by pixel instead of relying on sparse probes or a hard-coded dark-pixel count.
+- Strict C++11 and C++14 probes passed with `-Werror=deprecated-declarations`: grouped `RenderOptions` calls through `RenderDevice&` are warning-free in both builds, while intentional calls to deprecated positional/concrete APIs and the deprecated `OpenGLDevice` class produce the expected diagnostics. No warning-suppression pragmas were added.
+- ABI/source probes passed in both builds. Complete Clang record-layout comparisons found no removed or moved pre-existing member and no size change in `Drawable`, `Viewer`, `MultiViewer`, or `DrawCommand`. The const and non-const `Drawable::buffer_data()` symbols remain exported, C++14 aggregate initialization and protected mutable compatibility members still compile, and packed depth-range probes preserve the 616-byte command layout.
 - `git diff --check` passed.

@@ -59,6 +59,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_quad_wire() and RenderDevice")
         void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth);
 
         /**
@@ -70,6 +71,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_quad_filled() and RenderDevice")
         void draw_quad_filled(const Rect &rect, const vec4 &color, int width, int height, float depth);
 
         /**
@@ -81,6 +83,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_quad_textured() and RenderDevice")
         void draw_quad_filled(const Rect &rect, unsigned int texture, int width, int height, float depth);
 
         /**
@@ -89,6 +92,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_quad_textured() and RenderDevice")
         void draw_full_screen_quad(unsigned int texture, float depth);
 
         /**
@@ -103,6 +107,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_depth_texture() and RenderDevice")
         void draw_depth_texture(const Rect &rect, unsigned int texture, int width, int height, float depth);
 
         /**
@@ -119,6 +124,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use portable graphics::shape command factories and RenderDevice")
         void draw_quad(unsigned int position_attrib, unsigned int texcoord_attrib, int x, int y, int w, int h, int vpw,
                        int vph, float depth);
 
@@ -130,6 +136,7 @@ namespace easy3d {
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use portable graphics::shape command factories and RenderDevice")
         void draw_full_screen_quad(unsigned int position_attrib, unsigned int texcoord_attrib, float depth);
 
         /**
@@ -141,6 +148,7 @@ namespace easy3d {
          * \param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_lines_2d() and RenderDevice")
         void draw_polygon_wire(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth);
 
         /**
@@ -160,6 +168,7 @@ namespace easy3d {
          *      glDisable(GL_BLEND);
          *  \endcode
          */
+        EASY3D_DEPRECATED("use graphics::shape::draw_triangles() and RenderDevice")
         void draw_polygon_filled(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth);
 
         /**

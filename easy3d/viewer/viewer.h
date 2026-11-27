@@ -225,6 +225,7 @@ namespace easy3d {
          *      A non-null handle does not by itself guarantee that its graphics
          *      context is current.
          */
+        EASY3D_DEPRECATED("native window handles are protected interop; use portable window methods")
         GLFWwindow *window() const override {
             return window_;
         }
@@ -506,6 +507,7 @@ namespace easy3d {
          *        new code.
          * \sa add_model(std::shared_ptr<Model>, bool, bool) for the shared-ownership form.
          */
+        EASY3D_DEPRECATED("use add_model(std::shared_ptr<Model>, bool, bool)")
         Model *add_model(Model *model, bool create_drawables = true, bool fit_scene = true) override;
 
         /**
@@ -577,6 +579,7 @@ namespace easy3d {
          *        for new code.
          * \sa add_drawable(std::shared_ptr<Drawable>) for the shared-ownership form.
          */
+        EASY3D_DEPRECATED("use add_drawable(std::shared_ptr<Drawable>)")
         Drawable *add_drawable(Drawable *drawable) override;
 
         /**
@@ -1172,14 +1175,20 @@ namespace easy3d {
         /// \name Backend-neutral command assembly
         //@{
 
+        friend class MultiViewer;
+
         // Scene commands for one camera and output size, recording in sources which
         // model or standalone drawable produced each command. Point/line sizes are
         // logical and scale by target width / camera width; impostor radii are world-space.
-        virtual std::vector<graphics::DrawCommand> draw_commands(const Camera &camera,
-                                                                 int width,
-                                                                 int height,
-                                                                 std::vector<DrawSource> *sources = nullptr,
-                                                                 bool include_hidden_models = false) const;
+        // Virtual only in the Vulkan build, where this hook already existed in 2.8.
+#ifdef EASY3D_HAS_VULKAN
+        virtual
+#endif
+        std::vector<graphics::DrawCommand> draw_commands(const Camera &camera,
+                                                         int width,
+                                                         int height,
+                                                         std::vector<DrawSource> *sources = nullptr,
+                                                         bool include_hidden_models = false) const;
         //@}
 
 #ifdef EASY3D_HAS_VULKAN
@@ -1355,15 +1364,6 @@ namespace easy3d {
         // Viewport tile (x, y, w, h) currently rendered; nonzero only while a tiled
         // snapshot is in flight, and used to keep overlays aligned inside the tile.
         mutable ivec4 overlay_tile_ = ivec4(0);
-        // File snapshots render through virtual draw(), so portable presentation must
-        // use the requested output size and background rather than the window's.
-        bool snapshot_active_ = false;
-        int snapshot_width_ = 0, snapshot_height_ = 0;
-        unsigned snapshot_samples_ = 1;
-        vec4 snapshot_background_ = vec4(0);
-        mutable std::vector<graphics::DrawCommand> corner_axes_commands_;
-        vec2 pivot_pixel_ = vec2(0);
-        std::chrono::steady_clock::time_point pivot_expires_;
 #endif
     };
 }

@@ -80,6 +80,13 @@ int main(int argc,char**) {
             require(ordered.rgba==reversed.rgba,"transparent draws were not sorted far to near");
             same_ids(ordered,reversed,"transparent draw order changed picking IDs");
 
+            auto ranged_green=green; ranged_green.set_depth_range(vec2(.6f,.8f));
+            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(0,.2f));
+            const auto range_sorted=device->render(65,65,{ranged_blue,ranged_green},vec4(0),count);
+            probe(range_sorted,32,32,expected,"mapped depth ranges");
+            require(range_sorted.ids[32*65+32].object==31,
+                    "transparent sorting ignored mapped depth ranges");
+
             const auto occluded=device->render(65,65,{green,red,blue},vec4(0),count);
             const int only_red[]={255,0,0};
             probe(occluded,32,32,only_red);

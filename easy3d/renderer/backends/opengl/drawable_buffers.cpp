@@ -167,12 +167,8 @@ namespace easy3d {
 
 
     void Drawable::opengl_realize_buffers() {
-        if (update_needed_ || (!buffers_ready_ && (model_ || update_func_))) {
-            update_buffers_internal();
-            update_needed_ = false;
-        }
+        const auto &data = cpu_buffers();
         if (opengl_upload_needed_) {
-            const auto &data = *cpu_buffers_;
             opengl_update_vertex_buffer(data.vertices, dynamic_vertices_);
             opengl_update_color_buffer(data.colors, dynamic_colors_);
             opengl_update_normal_buffer(data.normals, dynamic_normals_);

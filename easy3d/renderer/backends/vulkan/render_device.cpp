@@ -2408,7 +2408,14 @@ namespace easy3d {
                     }
                     const auto staging_write_start = c_.profile_enabled ? std::chrono::steady_clock::now()
                                                                         : std::chrono::steady_clock::time_point{};
-                    staging.transfer(const_cast<unsigned char *>(data->rgba().data()), data->rgba().size(), true);
+                    const auto &rgba = data->rgba();
+                    // Image rows are top-first; texture coordinate zero addresses the bottom row.
+                    std::vector<unsigned char> flipped(rgba.size());
+                    const size_t row_bytes = size_t(data->width()) * 4;
+                    for (uint32_t y = 0; y < data->height(); ++y)
+                        std::copy_n(rgba.data() + size_t(data->height() - 1 - y) * row_bytes, row_bytes,
+                                    flipped.data() + size_t(y) * row_bytes);
+                    staging.transfer(flipped.data(), flipped.size(), true);
                     if (c_.profile_enabled)
                         c_.profile_staging_write_time += std::chrono::steady_clock::now() - staging_write_start;
                     c_.execute([&](VkCommandBuffer cmd) {
@@ -2468,8 +2475,9 @@ namespace easy3d {
                 float mvp[16], color[4];
                 uint32_t object, lighting;
                 float normal[9];
+                uint32_t image_uv_flip;
             };
-            static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
+            static_assert(sizeof(Push) == 128, "shader push-constant layout changed");
 
             // Order-independent transparency targets. Both effects are single sampled and
             // ignore opaque depth, matching the legacy OpenGL transparency classes.
@@ -3551,7 +3559,7 @@ namespace easy3d {
                     const auto set_view = [&](const DrawCommand &d) {
                         const auto &r = d.viewport;
                         VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height),
-                                     d.depth_range.x, d.depth_range.y};
+                                     d.depth_range().x, d.depth_range().y};
                         VkRect2D s{{r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
                         if (pixel) {
                             if (pixel->x < s.offset.x || pixel->y < s.offset.y ||
@@ -3693,10 +3701,9 @@ namespace easy3d {
                                 c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
                                 VkDeviceSize offset = 0;
                                 c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-                                const auto texture_set =
-                                    (d.scene_depth_texture || d.eye_dome_lighting || d.ambient_occlusion || d.shadow)
-                                        ? target.depth_set
-                                        : draw.texture->set;
+                                const bool depth_effect = d.scene_depth_texture || d.eye_dome_lighting ||
+                                                         d.ambient_occlusion || d.shadow;
+                                const auto texture_set = depth_effect ? target.depth_set : draw.texture->set;
                                 c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1,
                                                            &texture_set, 0, nullptr);
                                 c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1,
@@ -3708,6 +3715,7 @@ namespace easy3d {
                                 for (unsigned i = 0; i < 4; ++i)
                                     push.color[i] = d.color[i];
                                 push.lighting = d.lighting ? 1 : 0;
+                                push.image_uv_flip = depth_effect ? 0 : 1;
                                 for (unsigned col = 0; col < 3; ++col)
                                     for (unsigned row = 0; row < 3; ++row)
                                         push.normal[col * 3 + row] = d.normal_matrix(row, col);
@@ -3923,9 +3931,9 @@ namespace easy3d {
                                                         ", viewport " + std::to_string(vp.x) + "," +
                                                         std::to_string(vp.y) + "," + std::to_string(vp.z) + "," +
                                                         std::to_string(vp.w));
-                        if (!std::isfinite(command.depth_range.x) || !std::isfinite(command.depth_range.y) ||
-                            command.depth_range.x < 0 || command.depth_range.x > command.depth_range.y ||
-                            command.depth_range.y > 1)
+                        if (!std::isfinite(command.depth_range().x) || !std::isfinite(command.depth_range().y) ||
+                            command.depth_range().x < 0 || command.depth_range().x > command.depth_range().y ||
+                            command.depth_range().y > 1)
                             throw std::invalid_argument("draw depth range must be an ordered interval in [0,1]");
                         if (!command.geometry ||
                             (!command.overlay && command.object_id == UINT32_MAX && !command.shadow_background))
@@ -4088,7 +4096,13 @@ namespace easy3d {
                             centroid += vertices[vertex].position;
                         }
                         const auto clip = command.model_view_projection * vec4(centroid / 3.0f, 1);
-                        order[t] = {0.5f * (clip.z + clip.w), uint32_t(t)};
+                        if (clip.w <= 0)
+                            order[t] = {std::numeric_limits<float>::infinity(), uint32_t(t)};
+                        else {
+                            const float window_depth = 0.5f * (clip.z / clip.w + 1.0f);
+                            order[t] = {command.depth_range().x +
+                                        (command.depth_range().y - command.depth_range().x) * window_depth, uint32_t(t)};
+                        }
                     }
                     std::stable_sort(order.begin(), order.end(),
                                      [](const std::pair<float, uint32_t> &a,
@@ -4750,7 +4764,13 @@ namespace easy3d {
                         uint32_t index_offset = 0, index_count = 0;
                         if (command.transparent) {
                             const auto center = command.model_view_projection * vec4(g.center, 1);
-                            sort_depth = 0.5f * (center.z + center.w);
+                            if (center.w <= 0)
+                                sort_depth = std::numeric_limits<float>::infinity();
+                            else {
+                                const float window_depth = 0.5f * (center.z / center.w + 1.0f);
+                                sort_depth = command.depth_range().x +
+                                             (command.depth_range().y - command.depth_range().x) * window_depth;
+                            }
                             // Straight-alpha blending needs every triangle of a drawable in
                             // far-to-near order, not only the drawables themselves.
                             if (!pixel_query) {

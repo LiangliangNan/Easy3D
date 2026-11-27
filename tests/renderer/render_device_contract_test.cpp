@@ -6,10 +6,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 using namespace easy3d;
 using namespace easy3d::graphics;
+
+static_assert(std::is_standard_layout<DrawCommand>::value,
+              "DrawCommand must retain its 2.8 layout compatibility");
 
 namespace {
 
@@ -109,19 +113,7 @@ namespace {
                 device.transparency == options.transparency && device.peel_layers == options.peel_layers &&
                 device.readback == options.readback,
                 "options overload did not forward every field");
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
         const FrameImage legacy_empty_braces = api.render(31, 17, {}, {});
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
         require(legacy_empty_braces.width == 31 && device.background == vec4(0),
                 "legacy empty-braces render call changed overload resolution");
     }
@@ -136,6 +128,8 @@ namespace {
                 capabilities.transparency_methods.empty() && !capabilities.native_large_points,
                 "capability defaults differ from the frozen contract");
         require(Backend::opengl != Backend::vulkan, "backend vocabulary is not distinct");
+        const DrawCommand command;
+        require(command.depth_range() == vec2(0, 1), "draw command default depth range is not [0,1]");
     }
 
     void test_scene_factory() {

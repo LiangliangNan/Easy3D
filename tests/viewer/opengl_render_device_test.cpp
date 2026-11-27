@@ -8,6 +8,7 @@
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/opengl.h>
@@ -46,10 +47,10 @@ namespace {
         vertices[1].position = vec3(x1, y0, z);
         vertices[2].position = vec3(x1, y1, z);
         vertices[3].position = vec3(x0, y1, z);
-        vertices[0].texcoord = vec2(0, 1);
-        vertices[1].texcoord = vec2(1, 1);
-        vertices[2].texcoord = vec2(1, 0);
-        vertices[3].texcoord = vec2(0, 0);
+        vertices[0].texcoord = vec2(0, 0);
+        vertices[1].texcoord = vec2(1, 0);
+        vertices[2].texcoord = vec2(1, 1);
+        vertices[3].texcoord = vec2(0, 1);
         DrawCommand command;
         command.geometry = std::make_shared<Geometry>(std::move(vertices),
                                                      std::vector<uint32_t>{0, 1, 2, 0, 2, 3},
@@ -62,6 +63,14 @@ namespace {
 
     size_t pixel(unsigned width, unsigned x, unsigned y) {
         return size_t(y) * width + x;
+    }
+
+    bool same_ids(const std::vector<FrameImage::Id> &a, const std::vector<FrameImage::Id> &b) {
+        require(a.size() == b.size(), "picking buffer sizes differ");
+        for (size_t i = 0; i < a.size(); ++i)
+            require(a[i].object == b[i].object && a[i].primitive == b[i].primitive,
+                    "overlay changed scene picking IDs");
+        return true;
     }
 
     bool same_ids(const FrameImage &a, const FrameImage &b) {
@@ -207,6 +216,15 @@ namespace {
         probe(sorted, 32, 32, 128, 0, 128);
         require(sorted.ids[pixel(65, 32, 32)].object == 22, "nearest transparent surface was not pickable");
 
+        auto ranged_farther = farther;
+        ranged_farther.set_depth_range(vec2(.6f, .8f));
+        auto ranged_nearer = nearer;
+        ranged_nearer.set_depth_range(vec2(0, .2f));
+        const FrameImage range_sorted = device.render(65, 65, {ranged_nearer, ranged_farther}, vec4(0));
+        probe(range_sorted, 32, 32, 128, 0, 128);
+        require(range_sorted.ids[pixel(65, 32, 32)].object == 22,
+                "transparent sorting ignored mapped depth ranges");
+
         Vertex point;
         point.position = vec3(0);
         DrawCommand points;
@@ -229,12 +247,19 @@ namespace {
         ranged_point.point_style = PointStyle::sphere;
         ranged_point.sphere_radius = .5f;
         const FrameImage unscaled_impostor = device.render(64, 48, {ranged_point}, vec4(0));
-        ranged_point.depth_range = vec2(.4f, .6f);
+        ranged_point.set_depth_range(vec2(.4f, .6f));
         const FrameImage impostor_depth = device.render(64, 48, {ranged_point}, vec4(0));
         probe(impostor_depth, 32, 24, 255, 0, 0);
         const float expected_depth = .4f + .2f * unscaled_impostor.depth[pixel(64, 32, 24)];
-        require(std::abs(impostor_depth.depth[pixel(64, 32, 24)] - expected_depth) < 1e-6f,
-                "analytic impostor ignored the command depth range");
+        // Portable depth endpoints are quantized to 15 bits.
+        const float depth_tolerance = 2.0f / 32767.0f;
+        if (std::abs(impostor_depth.depth[pixel(64, 32, 24)] - expected_depth) >= depth_tolerance) {
+            std::ostringstream message;
+            message << "analytic impostor ignored the command depth range: got "
+                    << impostor_depth.depth[pixel(64, 32, 24)] << ", expected " << expected_depth
+                    << " from unscaled depth " << unscaled_impostor.depth[pixel(64, 32, 24)];
+            require(false, message.str().c_str());
+        }
 
         if (device.supported_sample_counts() & 4) {
             auto msaa_scene = rectangle(-.8f, -.8f, .8f, .8f, 0, vec4(0, 0, 1, 1));
@@ -270,6 +295,13 @@ namespace {
         const ScenePixel center = device.sample_pixel(16, 16, {tile}, 3, 4);
         require(center.id.object == 44 && center.id.primitive == 72 && std::abs(center.depth - .5f) < 1e-6f,
                 "single-pixel scene query mismatch");
+        DrawCommand excluded_overlay;
+        excluded_overlay.overlay = true;
+        const ScenePixel scene_query = device.sample_pixel(16, 16, {tile, excluded_overlay}, 3, 4);
+        require(scene_query.id.object == 44 && std::abs(scene_query.depth - .5f) < 1e-6f,
+                "pixel query validated or rendered an excluded overlay");
+        const auto scene_region = device.sample_ids(16, 16, {tile, excluded_overlay}, 2, 3, 4, 5);
+        same_ids(scene_region, region);
 
         PointSelectionRequest selection;
         selection.width = selection.height = 100;
@@ -440,6 +472,24 @@ namespace {
         require(glGetError() == GL_NO_ERROR, "OpenGL device leaked a GL error");
     }
 
+    void exercise_screen_line_refresh() {
+        LinesDrawable2D lines("refreshing screen lines");
+        int calls = 0;
+        lines.set_update_func([&calls](Model *, Drawable *target) {
+            ++calls;
+            auto *screen_lines = static_cast<LinesDrawable2D *>(target);
+            screen_lines->update_vertex_buffer({vec2(0, 0), vec2(20, float(calls))}, 64, 48);
+        });
+        Camera camera;
+        lines.draw(&camera);
+        require(calls == 1 && lines.buffer_data().vertices.size() == 2,
+                "native screen lines skipped lazy callback realization");
+        lines.update();
+        lines.draw(&camera);
+        require(calls == 2 && std::abs(lines.buffer_data().vertices[0].y - 1.0f) < 1e-6f,
+                "native screen lines ignored a pending callback refresh");
+    }
+
     void exercise_default_depth(RenderDevice &device) {
         std::vector<Vertex> vertices(4);
         vertices[0].position = vec3(-1, -1, 0);
@@ -483,6 +533,7 @@ int main() {
         OffScreen host(64, 48);
         auto device = create_device();
         exercise(*device);
+        exercise_screen_line_refresh();
         if (device->supported_sample_counts() & 4) {
             Viewer window("OpenGL depth presentation", window_options(64, 48, 4, false, false), OpenGLOptions());
             auto window_device = create_device();

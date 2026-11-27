@@ -58,7 +58,7 @@ namespace easy3d {
     ///              draw(); // your rendering code here
     ///              shadow_->end();
     ///          \endcode
-    class Shadow
+    class EASY3D_DEPRECATED("use RenderSettings shadow controls and graphics::shape::draw_shadow() with RenderDevice") Shadow
     {
     public:
         /// \brief Create a shadow mapper for a camera.
@@ -196,7 +196,7 @@ namespace easy3d {
 
     /// \brief Shadow implements the standard shadow map (hard shadow) algorithm.
     /// \class Shadow easy3d/renderer/shadow.h
-    class Shadow
+    class EASY3D_DEPRECATED("use RenderSettings shadow controls and graphics::shape::draw_shadow() with RenderDevice") Shadow
     {
     public:
         /// \brief Create a shadow mapper for a camera.

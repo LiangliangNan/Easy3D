@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_OPENGL_TIMER_H
 #define EASY3D_RENDERER_OPENGL_TIMER_H
 
+#include <easy3d/core/types.h>
+
 namespace easy3d {
 
     /**
@@ -50,7 +52,7 @@ namespace easy3d {
      *          fprintf(stdout, "\rTime: %2.4f ms    ", t.time());
      *      \endcode
      */
-    class OpenGLTimer
+    class EASY3D_DEPRECATED("use portable RenderDevice diagnostics and capture APIs") OpenGLTimer
     {
     public:
         /**

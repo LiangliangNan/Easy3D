@@ -236,6 +236,7 @@ namespace easy3d {
          *         native window/context.
          * \details The host retains ownership. Do not destroy the returned handle.
          */
+        EASY3D_DEPRECATED("native window handles are protected interop; use portable window methods")
         virtual GLFWwindow *window() const = 0; // borrowed; may have no OpenGL context
 
         /// Request a repaint; this does not guarantee that a frame is drawn immediately.
@@ -315,6 +316,7 @@ namespace easy3d {
          *      shared_ptr overload for new code.
          * \sa add_model(std::shared_ptr<Model>, bool, bool) for the shared-ownership form.
          */
+        EASY3D_DEPRECATED("use add_model(std::shared_ptr<Model>, bool, bool)")
         virtual Model *add_model(Model *model, bool create_drawables = true, bool fit_scene = true) = 0;
 
         /**
@@ -361,6 +363,7 @@ namespace easy3d {
          *      for new code.
          * \sa add_drawable(std::shared_ptr<Drawable>) for the shared-ownership form.
          */
+        EASY3D_DEPRECATED("use add_drawable(std::shared_ptr<Drawable>)")
         virtual Drawable *add_drawable(Drawable *drawable) = 0;
 
         /**

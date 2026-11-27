@@ -48,8 +48,8 @@ namespace easy3d {
     }
 
     void LinesDrawable2D::draw(const Camera*) const {
+        const auto &data = buffer_data();
         if (opengl_upload_needed_) {
-            const auto &data = buffer_data();
             const_cast<LinesDrawable2D*>(this)->opengl_update_vertex_buffer(
                 std::vector<vec2>(data.vertices.begin(), data.vertices.end()), dynamic_vertices_);
             if (data.indices.empty())

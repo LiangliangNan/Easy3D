@@ -70,7 +70,7 @@ namespace easy3d {
 
 #ifdef EASY3D_HAS_VULKAN
 
-    class SoftShadow : public Shadow
+    class EASY3D_DEPRECATED("use RenderSettings shadow controls and graphics::shape::draw_shadow() with RenderDevice") SoftShadow : public Shadow
     {
     public:
         /// \brief The sample pattern used for blocker search and PCF filtering
@@ -132,7 +132,7 @@ namespace easy3d {
 
 #else
 
-    class SoftShadow : public Shadow
+    class EASY3D_DEPRECATED("use RenderSettings shadow controls and graphics::shape::draw_shadow() with RenderDevice") SoftShadow : public Shadow
     {
     public:
         /// \brief The sample pattern used for blocker search and PCF filtering

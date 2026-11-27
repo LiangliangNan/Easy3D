@@ -11,6 +11,7 @@
 #include <easy3d/renderer/vertex_array_object.h>
 
 #include <functional>
+#include <memory>
 #include <pybind11/pybind11.h>
 #include <string>
 #include <pybind11/stl.h>
@@ -26,6 +27,13 @@
 
 
 namespace {
+
+// Drawable owns the VAO; the Python wrapper must not delete it.
+struct VertexArrayObjectDeleter {
+    void operator()(easy3d::VertexArrayObject *) const {}
+};
+
+using VertexArrayObjectHolder = std::unique_ptr<easy3d::VertexArrayObject, VertexArrayObjectDeleter>;
 
 void warn_deprecated(const char *message) {
     if (PyErr_WarnEx(PyExc_DeprecationWarning, message, 1) != 0)
@@ -180,6 +188,9 @@ struct PyCallBack_easy3d_TrianglesDrawable : public easy3d::TrianglesDrawable {
 
 void bind_easy3d_renderer_drawables(pybind11::module_& m)
 {
+    pybind11::class_<easy3d::VertexArrayObject, VertexArrayObjectHolder>(m, "VertexArrayObject")
+            .def("id", &easy3d::VertexArrayObject::id);
+
     { // easy3d::Drawable file:easy3d/renderer/drawable.h line:56
         pybind11::class_<easy3d::Drawable, std::shared_ptr<easy3d::Drawable>, PyCallBack_easy3d_Drawable, easy3d::State> cl(m, "Drawable", "The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.\n \n\n\n \n A Drawable is an abstraction for \"something that can be drawn\", e.g., a point cloud, the surface\n          of a mesh, the wireframe of a surface mesh, the vertices of a graph, the border of a polyhedral mesh.\n          A drawable manages its rendering status and controls the upload of the data to the GPU.\n          A drawable can live independently or be associated with a Model.\n          The rendering states of a drawable can be accessed/modified through the functions provided in its\n          parent class State.\n \n\n State, Renderer");
         cl.def( pybind11::init( [](){ return new PyCallBack_easy3d_Drawable(); } ), "doc");
@@ -302,7 +313,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def("update_texcoord_buffer", (void (easy3d::Drawable::*)(const class std::vector<class easy3d::Vec<2, float> > &, bool)) &easy3d::Drawable::update_texcoord_buffer, "C++: easy3d::Drawable::update_texcoord_buffer(const class std::vector<class easy3d::Vec<2, float> > &, bool) --> void", pybind11::arg("texcoords"), pybind11::arg("dynamic"));
         cl.def("update_element_buffer", (void (easy3d::Drawable::*)(const class std::vector<unsigned int> &)) &easy3d::Drawable::update_element_buffer, "C++: easy3d::Drawable::update_element_buffer(const class std::vector<unsigned int> &) --> void", pybind11::arg("elements"));
         cl.def("update_element_buffer", (void (easy3d::Drawable::*)(const class std::vector<class std::vector<unsigned int> > &)) &easy3d::Drawable::update_element_buffer, "Updates the element buffer.\n \n\n This is an overload of the above update_element_buffer() method.\n \n\n Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).\n\nC++: easy3d::Drawable::update_element_buffer(const class std::vector<class std::vector<unsigned int> > &) --> void", pybind11::arg("elements"));
-        cl.def("disable_element_buffer", (void (easy3d::Drawable::*)()) &easy3d::Drawable::disable_element_buffer, "Disables the use of the element buffer.\n \n\n This method should be used if existing vertex data is sufficient for rendering (may require\n         duplicating vertex data).\n \n\n This method also releases the element buffer.\n\nC++: easy3d::Drawable::disable_element_buffer() --> void");
+        cl.def("disable_element_buffer", (void (easy3d::Drawable::*)()) &easy3d::Drawable::disable_element_buffer, "Disables the use of the element buffer.\n \n\n This method should be used if existing vertex data is sufficient for rendering (may require\n         duplicating vertex data). The portable indices are cleared and cached native element storage is invalidated.\n\nC++: easy3d::Drawable::disable_element_buffer() --> void");
         cl.def("update_highlight_mask", (void (easy3d::Drawable::*)(const class std::vector<float> &)) &easy3d::Drawable::update_highlight_mask, "Uploads the highlight mask: one strength in [0, 1] per rendered primitive, or an empty list to clear.\n\nC++: easy3d::Drawable::update_highlight_mask(const std::vector<float> &) --> void", pybind11::arg("strengths"));
         cl.def("highlight_mask", (const class std::vector<float> & (easy3d::Drawable::*)() const) &easy3d::Drawable::highlight_mask, "Returns the per-primitive highlight mask currently in use (empty when nothing is highlighted).\n\nC++: easy3d::Drawable::highlight_mask() const --> const std::vector<float> &", pybind11::return_value_policy::automatic);
         cl.def("num_vertices", (std::size_t (easy3d::Drawable::*)() const) &easy3d::Drawable::num_vertices, "@}\n\nC++: easy3d::Drawable::num_vertices() const --> std::size_t");
@@ -319,7 +330,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
             return self.vao();
         }, pybind11::return_value_policy::reference_internal);
 
-        cl.def("update", (void (easy3d::Drawable::*)()) &easy3d::Drawable::update, "Requests an update of the OpenGL buffers.\n \n\n This function sets the status to trigger an update of the OpenGL buffers. The actual update does\n      not occur immediately but is deferred to the rendering phase.\n \n\n This method works for both standard drawables (no update function required) and non-standard\n      drawable (update function required). Standard drawables include:\n            - SurfaceMesh: \"faces\", \"edges\", \"vertices\", \"borders\", and \"locks\";\n            - PointCloud: \"vertices\";\n            - Graph: \"edges\", and \"vertices\",\n            - PolyMesh: \"faces:border\" and \"faces:interior\".\n \n\n set_update_func(), Renderer::update()\n\nC++: easy3d::Drawable::update() --> void");
+        cl.def("update", (void (easy3d::Drawable::*)()) &easy3d::Drawable::update, "Requests realization of the rendering geometry on the next buffer access or draw.\n \n\n This works for both standard drawables (no update function required) and drawables with an update function.\n\nC++: easy3d::Drawable::update() --> void");
         cl.def("set_update_func", (void (easy3d::Drawable::*)(const class std::function<void (class easy3d::Model *, class easy3d::Drawable *)> &)) &easy3d::Drawable::set_update_func, "Setups how a drawable updates its rendering buffers.\n \n\n This function is required by only non-standard drawables for a special visualization purpose.\n      Rendering buffers of standard drawables attached to a model can be automatically updated and do not\n      require this function.\n      The drawable is considered standalone if  is \n \n\n update(), Renderer::update().\n \n\n For a subclassed drawable, you can also reimplement update_buffers_internal() for the same purpose.\n\nC++: easy3d::Drawable::set_update_func(const class std::function<void (class easy3d::Model *, class easy3d::Drawable *)> &) --> void", pybind11::arg("func"));
         cl.def("manipulator", (class easy3d::Manipulator * (easy3d::Drawable::*)()) &easy3d::Drawable::manipulator, "@{\n\n \n Gets the manipulator attached to this drawable.\n \n\n If the drawable is part of a model, it returns the model's manipulator.\n      Returns  if the drawable cannot be manipulated.\n\nC++: easy3d::Drawable::manipulator() --> class easy3d::Manipulator *", pybind11::return_value_policy::automatic);
         cl.def("set_manipulator", (void (easy3d::Drawable::*)(class easy3d::Manipulator *)) &easy3d::Drawable::set_manipulator, "Attaches a manipulator to this model.\n \n\n This is used to manipulate a drawable that is not part of a model.\n\nC++: easy3d::Drawable::set_manipulator(class easy3d::Manipulator *) --> void", pybind11::arg("manip"));

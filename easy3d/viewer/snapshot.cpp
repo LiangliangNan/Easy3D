@@ -105,6 +105,9 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 namespace easy3d {
 
+    void configure_opengl_snapshot(const Viewer *viewer, int width, int height,
+                                   unsigned samples, const vec4 &background);
+    void finish_opengl_snapshot(const Viewer *viewer);
 
 #if 0 // Very basic snapshot: image size is the same as the viewer size
 
@@ -252,14 +255,10 @@ namespace easy3d {
                                                         : vec4(background_color_);
         auto* host = const_cast<Viewer*>(this);
         struct SnapshotState {
-            Viewer* viewer;
-            ~SnapshotState() { viewer->snapshot_active_ = false; }
+            const Viewer* viewer;
+            ~SnapshotState() { finish_opengl_snapshot(viewer); }
         } snapshot_state{host};
-        host->snapshot_active_ = true;
-        host->snapshot_width_ = w;
-        host->snapshot_height_ = h;
-        host->snapshot_samples_ = unsigned(samples);
-        host->snapshot_background_ = snapshot_background;
+        configure_opengl_snapshot(host, w, h, unsigned(samples), snapshot_background);
 
 		for (int i = 0; i < nbX; i++) {
 			for (int j = 0; j < nbY; j++) {

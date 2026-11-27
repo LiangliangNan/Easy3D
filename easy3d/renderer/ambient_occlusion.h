@@ -54,7 +54,7 @@ namespace easy3d {
      *              ao_->end();
      *          \endcode
      */
-    class AmbientOcclusion
+    class EASY3D_DEPRECATED("use RenderSettings::ambient_occlusion and graphics::shape::draw_ambient_occlusion() with RenderDevice") AmbientOcclusion
     {
     public:
         /**
@@ -164,7 +164,7 @@ namespace easy3d {
      *              ao_->end();
      *          \endcode
      */
-    class AmbientOcclusion
+    class EASY3D_DEPRECATED("use RenderSettings::ambient_occlusion and graphics::shape::draw_ambient_occlusion() with RenderDevice") AmbientOcclusion
     {   
     public:
         /**

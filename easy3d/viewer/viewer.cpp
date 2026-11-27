@@ -37,6 +37,7 @@
 #include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 
 
 // Headers shared by both backends.
@@ -90,6 +91,7 @@
 #include <easy3d/renderer/backends/vulkan/clipping_plane.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #else
+#include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/renderer/opengl.h> // for gl functions
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
@@ -105,6 +107,39 @@
 
 
 namespace easy3d {
+#ifndef EASY3D_HAS_VULKAN
+    // 2.8 keeps Viewer's public layout unchanged; this scratch state is owned by
+    // the implementation and erased by cleanup/destruction.
+    struct ViewerOpenGLState {
+        bool snapshot_active = false;
+        int snapshot_width = 0, snapshot_height = 0;
+        unsigned snapshot_samples = 1;
+        vec4 snapshot_background = vec4(0);
+        vec2 pivot_pixel = vec2(0);
+        std::chrono::steady_clock::time_point pivot_expires;
+        std::vector<graphics::DrawCommand> corner_axes_commands;
+    };
+    std::unordered_map<const Viewer *, ViewerOpenGLState> &opengl_viewer_states() {
+        static std::unordered_map<const Viewer *, ViewerOpenGLState> states;
+        return states;
+    }
+    ViewerOpenGLState &opengl_viewer_state(const Viewer *viewer) {
+        return opengl_viewer_states()[viewer];
+    }
+    void configure_opengl_snapshot(const Viewer *viewer, int width, int height,
+                                   unsigned samples, const vec4 &background) {
+        auto &state = opengl_viewer_state(viewer);
+        state.snapshot_active = true;
+        state.snapshot_width = width;
+        state.snapshot_height = height;
+        state.snapshot_samples = samples;
+        state.snapshot_background = background;
+    }
+    void finish_opengl_snapshot(const Viewer *viewer) {
+        opengl_viewer_state(viewer).snapshot_active = false;
+    }
+#endif
+
     void Viewer::ensure_text_layout_engine() const {
         if (fonts_tried_)
             return;
@@ -222,13 +257,19 @@ namespace easy3d {
             frame_size(width, height);
             if (width <= 0 || height <= 0)
                 return false;
-            if (!snapshot.active)
-                return device->present(unsigned(width), unsigned(height), commands, owner.background_color(),
-                                       unsigned(owner.samples()), method, peel_layers);
+            if (!snapshot.active) {
+                const bool presented = device->present(unsigned(width), unsigned(height), commands, owner.background_color(),
+                                                       unsigned(owner.samples()), method, peel_layers);
+                return presented;
+            }
             // File snapshots keep only the color image, so skip the depth/ID readback.
-            snapshot.image = device->render(unsigned(width), unsigned(height), commands, snapshot.background,
-                                            snapshot.samples, method, peel_layers,
-                                            graphics::FrameReadback::color);
+            graphics::RenderOptions options;
+            options.background = snapshot.background;
+            options.samples = snapshot.samples;
+            options.transparency = method;
+            options.peel_layers = peel_layers;
+            options.readback = graphics::FrameReadback::color;
+            snapshot.image = device->render(unsigned(width), unsigned(height), commands, options);
             return true;
         }
 
@@ -251,9 +292,12 @@ namespace easy3d {
                 width = cam.screen_width();
             if (!height)
                 height = cam.screen_height();
+            graphics::RenderOptions options;
+            options.background = bg;
+            options.samples = samples;
+            options.readback = readback;
             return device->render(uint32_t(width), uint32_t(height),
-                                  owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples,
-                                  graphics::TransparencyMethod::sorted, 4, readback);
+                                  owner.frame_commands(cam, width, height, nullptr, include_hud), options);
         }
     };
     namespace {
@@ -1120,8 +1164,14 @@ namespace easy3d {
                 camera()->set_pivot_point(found ? point : camera()->scene_center());
                 show_pivot_point_ = found;
                 if (found) {
+#ifdef EASY3D_HAS_VULKAN
                     pivot_pixel_ = vec2(float(x), float(y));
                     pivot_expires_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+#else
+                    auto &pivot = opengl_viewer_state(this);
+                    pivot.pivot_pixel = vec2(float(x), float(y));
+                    pivot.pivot_expires = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+#endif
                     Timer<>::single_shot(10000, [&]() {
                         show_pivot_point_ = false;
                         update();
@@ -1429,6 +1479,13 @@ namespace easy3d {
 #endif
             command.point_size *= pixel_scale;
             command.line_width *= pixel_scale;
+#ifndef EASY3D_HAS_VULKAN
+            if (command.geometry->topology() == graphics::Topology::lines &&
+                command.line_style == graphics::LineStyle::plain && command.line_width <= 1) {
+                command.line_width = 1;
+                command.line_screen_space_width = true;
+            }
+#endif
             command.depth_bias = depth_bias;
             if (sources) {
                 if (sources->size() >= UINT32_MAX)
@@ -1449,12 +1506,21 @@ namespace easy3d {
             for (const auto &d : renderer->lines_drawables())
                 if (d->is_visible())
                     has_visible_lines = true;
+            #ifdef EASY3D_HAS_VULKAN
             for (const auto &d : renderer->triangles_drawables())
                 append(d, uint32_t(i), models_[i], renderer->is_selected(), has_visible_lines);
             for (const auto &d : renderer->lines_drawables())
                 append(d, uint32_t(i), models_[i], renderer->is_selected());
             for (const auto &d : renderer->points_drawables())
                 append(d, uint32_t(i), models_[i], renderer->is_selected());
+#else
+            for (const auto &d : renderer->lines_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected());
+            for (const auto &d : renderer->points_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected());
+            for (const auto &d : renderer->triangles_drawables())
+                append(d, uint32_t(i), models_[i], renderer->is_selected(), has_visible_lines);
+#endif
         }
         for (size_t i = 0; i < drawables_.size(); ++i)
             append(drawables_[i], uint32_t(models_.size() + i), nullptr, false);
@@ -1508,9 +1574,13 @@ namespace easy3d {
           background_color_(setting::background_color), show_frame_rate_(false),
           show_easy3d_logo_(false), model_idx_(-1), impl_(new Impl(*this)) {
         resize_render_target(width, height);
-        impl_->device =
-            graphics::create_vulkan_device(options.validation, options.sync_validation, options.profiling,
-                                           options.use_native_large_points, options.device_name);
+        graphics::DeviceOptions device_options;
+        device_options.validation = options.validation;
+        device_options.sync_validation = options.sync_validation;
+        device_options.profiling = options.profiling;
+        device_options.use_native_large_points = options.use_native_large_points;
+        device_options.device_name = options.device_name;
+        impl_->device = graphics::create_device(device_options);
         camera()->set_type(Camera::PERSPECTIVE);
         camera()->set_up_vector(vec3(0, 0, 1));
         camera()->set_view_direction(vec3(-1, 0, 0));
@@ -1893,7 +1963,7 @@ namespace easy3d {
         axes.eye = vec3(0);
         axes.light = vec3(setting::light_position);
         axes.object_id = UINT32_MAX;
-        axes.depth_range = vec2(0.0f, 0.01f);
+        axes.set_depth_range(vec2(0.0f, 0.01f));
         axes.overlay = true;
         axes.overlay_depth_test = false;
         axes.overlay_independent_depth = true;
@@ -2288,14 +2358,18 @@ namespace easy3d {
     }
     void Viewer::cleanup() {
         // viewer may have already been destroyed by the user
-        if (!window_)
+        if (!window_) {
+#ifndef EASY3D_HAS_VULKAN
+            opengl_viewer_states().erase(this);
+#endif
             return;
+        }
 
         const auto previous_context = glfwGetCurrentContext();
         glfwMakeContextCurrent(window_);
         glfwSetWindowUserPointer(window_, nullptr);
         camera_.reset();
-        corner_axes_commands_.clear();
+        opengl_viewer_state(this).corner_axes_commands.clear();
         text_layout_.reset();
         hud_overlay_renderer_.reset();
         overlay_renderer_.reset();
@@ -2316,6 +2390,9 @@ namespace easy3d {
         if (previous_context && previous_context != closing)
             glfwMakeContextCurrent(previous_context);
         runtime_.reset();
+#ifndef EASY3D_HAS_VULKAN
+        opengl_viewer_states().erase(this);
+#endif
     }
     void Viewer::init() {
         glfwMakeContextCurrent(window_);
@@ -2345,7 +2422,7 @@ namespace easy3d {
     void Viewer::draw_corner_axes() const {
         if (!show_corner_axes_)
             return;
-        if (corner_axes_commands_.empty()) {
+        if (opengl_viewer_state(this).corner_axes_commands.empty()) {
             float base = 0.5f; // the cylinder length, relative to the allowed region
             float head = 0.2f; // the cone length, relative to the allowed region
             std::vector<vec3> points, normals, colors;
@@ -2375,11 +2452,11 @@ namespace easy3d {
             axes.shininess = setting::material_shininess;
             axes.color = vec4(1);
             axes.object_id = UINT32_MAX;
-            corner_axes_commands_.push_back(std::move(axes));
+            opengl_viewer_state(this).corner_axes_commands.push_back(std::move(axes));
         }
         const mat4 &projection = transform::ortho(-1, 1, -1, 1, -1, 1);
         const mat4 &view = camera_->orientation().inverse().matrix();
-        for (auto &axes : corner_axes_commands_) {
+        for (auto &axes : opengl_viewer_state(this).corner_axes_commands) {
             axes.model_view_projection = projection * view;
             axes.model_view = view;
             axes.model = view;
@@ -2390,7 +2467,7 @@ namespace easy3d {
             const int size = std::max(1, std::min({static_cast<int>(100 * dpi_scaling()),
                                                   framebuffer_width(), framebuffer_height()}));
             axes.viewport = ivec4(0, framebuffer_height() - size, size, size);
-            axes.depth_range = vec2(0.0f, 0.01f);
+            axes.set_depth_range(vec2(0.0f, 0.01f));
             axes.overlay = true;
             axes.overlay_depth_test = false;
             axes.overlay_independent_depth = true;
@@ -2407,13 +2484,21 @@ namespace easy3d {
         update_hud_text(commands);
         draw_corner_axes();
         if (show_corner_axes_)
-            commands.insert(commands.end(), corner_axes_commands_.begin(), corner_axes_commands_.end());
+            commands.insert(commands.end(), opengl_viewer_state(this).corner_axes_commands.begin(), opengl_viewer_state(this).corner_axes_commands.end());
 
         // Shown only when it is not animating. Screen-space coordinates are
         // framebuffer pixels and the cross is centered on the picked pixel.
-        if (show_pivot_point_ && std::chrono::steady_clock::now() < pivot_expires_) {
+#ifdef EASY3D_HAS_VULKAN
+        const vec2 pivot_pixel = pivot_pixel_;
+        const auto pivot_expires = pivot_expires_;
+#else
+        const auto &pivot_state = opengl_viewer_state(this);
+        const vec2 pivot_pixel = pivot_state.pivot_pixel;
+        const auto pivot_expires = pivot_state.pivot_expires;
+#endif
+        if (show_pivot_point_ && std::chrono::steady_clock::now() < pivot_expires) {
             const float dpi = dpi_scaling();
-            const float px = (pivot_pixel_.x + 0.5f) * dpi, py = (pivot_pixel_.y + 0.5f) * dpi, size = 10.0f * dpi;
+            const float px = (pivot_pixel.x + 0.5f) * dpi, py = (pivot_pixel.y + 0.5f) * dpi, size = 10.0f * dpi;
             commands.push_back(graphics::shape::draw_lines_2d(
                 {vec2(px - size, py), vec2(px + size, py), vec2(px, py - size), vec2(px, py + size)},
                 vec4(0, 0, 0, 1), framebuffer_width(), framebuffer_height(), dpi));
@@ -2534,12 +2619,12 @@ namespace easy3d {
             try {
                 GLint viewport[4];
                 glGetIntegerv(GL_VIEWPORT, viewport);
-                const int command_width = snapshot_active_ ? snapshot_width_ : framebuffer_width();
-                const int command_height = snapshot_active_ ? snapshot_height_ : framebuffer_height();
+                const int command_width = opengl_viewer_state(this).snapshot_active ? opengl_viewer_state(this).snapshot_width : framebuffer_width();
+                const int command_height = opengl_viewer_state(this).snapshot_active ? opengl_viewer_state(this).snapshot_height : framebuffer_height();
                 auto commands = draw_commands(*camera(), command_width, command_height);
                 query_device().present(uint32_t(viewport[2]), uint32_t(viewport[3]), commands,
-                                       snapshot_active_ ? snapshot_background_ : background_color(),
-                                       snapshot_active_ ? snapshot_samples_ : samples(),
+                                       opengl_viewer_state(this).snapshot_active ? opengl_viewer_state(this).snapshot_background : background_color(),
+                                       opengl_viewer_state(this).snapshot_active ? opengl_viewer_state(this).snapshot_samples : samples(),
                                        graphics::TransparencyMethod::sorted, 4);
                 drawable_renderer_->prune();
             } catch (const std::logic_error &e) {
@@ -2651,7 +2736,10 @@ namespace easy3d {
                                        std::vector<DrawSource> *sources) const {
         if (!supports_device_query(camera, width, height, guides))
             return false;
-        commands = draw_commands(camera, width, height, sources);
+        if (const auto *multi_viewer = dynamic_cast<const MultiViewer *>(this))
+            commands = multi_viewer->draw_commands(camera, width, height, sources);
+        else
+            commands = draw_commands(camera, width, height, sources);
         if (!guides) {
             std::vector<DrawSource> visible_sources;
             for (auto &command : commands) {
@@ -2811,7 +2899,11 @@ namespace easy3d {
         const bool device_scene = device_query_commands(snapshot, w, h, false, scene_commands);
         auto color_commands = scene_commands;
         if (device_scene) {
-            const auto all_commands = draw_commands(snapshot, w, h);
+            std::vector<graphics::DrawCommand> all_commands;
+            if (const auto *multi_viewer = dynamic_cast<const MultiViewer *>(this))
+                all_commands = multi_viewer->draw_commands(snapshot, w, h, nullptr, false);
+            else
+                all_commands = draw_commands(snapshot, w, h);
             for (const auto &command : all_commands)
                 if (command.overlay)
                     color_commands.push_back(command);

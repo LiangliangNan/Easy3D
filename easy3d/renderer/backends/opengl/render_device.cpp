@@ -620,8 +620,15 @@ void main() {
                         glGetIntegerv(names[i], &saved[i]);
                         glPixelStorei(names[i], i ? 0 : 1);
                     }
+                    const auto &rgba = data->rgba();
+                    // Image rows are top-first; texture coordinate zero addresses the bottom row.
+                    std::vector<unsigned char> flipped(rgba.size());
+                    const size_t row_bytes = size_t(data->width()) * 4;
+                    for (uint32_t y = 0; y < data->height(); ++y)
+                        std::copy_n(rgba.data() + size_t(data->height() - 1 - y) * row_bytes, row_bytes,
+                                    flipped.data() + size_t(y) * row_bytes);
                     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, data->width(), data->height(), 0,
-                                 GL_RGBA, GL_UNSIGNED_BYTE, data->rgba().data());
+                                 GL_RGBA, GL_UNSIGNED_BYTE, flipped.data());
                     const auto sampler = data->sampler();
                     const GLint filter = sampler.filter == TextureFilter::linear ? GL_LINEAR : GL_NEAREST;
                     const GLint wrap = sampler.wrap == TextureWrap::repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
@@ -941,8 +948,8 @@ void main() {
                 if (!d.geometry)
                     reject("draw command has no geometry");
                 viewport_of(d, width, height);
-                if (!std::isfinite(d.depth_range.x) || !std::isfinite(d.depth_range.y) ||
-                    d.depth_range.x < 0 || d.depth_range.x > d.depth_range.y || d.depth_range.y > 1)
+                if (!std::isfinite(d.depth_range().x) || !std::isfinite(d.depth_range().y) ||
+                    d.depth_range().x < 0 || d.depth_range().x > d.depth_range().y || d.depth_range().y > 1)
                     reject("draw depth range must be an ordered interval in [0,1]");
                 if (!finite(d.model_view_projection) || !finite(d.normal_matrix) || !finite(d.model) ||
                     !finite(d.model_view) || !finite(d.projection) ||
@@ -1035,9 +1042,9 @@ void main() {
                     const size_t element = triangle * 3 + i;
                     vertices.push_back(source[indices.empty() ? element : indices[element]]);
                 }
-                std::vector<uint32_t> ids;
+                std::vector<uint32_t> ids{uint32_t(triangle)};
                 if (!d.geometry->primitive_ids().empty())
-                    ids.push_back(d.geometry->primitive_ids()[triangle]);
+                    ids[0] = d.geometry->primitive_ids()[triangle];
                 DrawCommand expanded = d;
                 expanded.geometry = std::make_shared<Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2},
                                                               Topology::triangles, std::move(ids));
@@ -1062,7 +1069,10 @@ void main() {
                     const auto &v = d.geometry->vertices();
                     const vec3 center = (v[0].position + v[1].position + v[2].position) / 3.0f;
                     const vec4 clip = d.model_view_projection * vec4(center, 1);
-                    return clip.w > 0 ? clip.z / clip.w : std::numeric_limits<float>::infinity();
+                    if (clip.w <= 0)
+                        return std::numeric_limits<float>::infinity();
+                    const float window_depth = 0.5f * (clip.z / clip.w + 1.0f);
+                    return d.depth_range().x + (d.depth_range().y - d.depth_range().x) * window_depth;
                 };
                 std::stable_sort(transparent.begin(), transparent.end(), [&](const DrawCommand &a, const DrawCommand &b) {
                     return depth(a) > depth(b);
@@ -1131,15 +1141,22 @@ void main() {
                 glUniform1i(location("single_sample"), !color_pass || samples <= 1);
                 glUniform3fv(location("sphere_light"), 1, d.sphere_light.data());
                 glUniform1i(location("screen_space"), d.line_screen_space_width);
-                glUniform2fv(location("depth_range"), 1, d.depth_range.data());
+                const vec2 depth_range = d.depth_range();
+                glUniform2fv(location("depth_range"), 1, depth_range.data());
             }
 
             void draw(const DrawCommand &d, uint32_t width, uint32_t height, bool color_pass,
                       bool transparent, unsigned samples) {
                 const ivec4 viewport = viewport_of(d, width, height);
                 const int x = viewport.x, y = int(height) - viewport.y - viewport.w;
+                const bool points = d.geometry->topology() == Topology::points;
+                const bool lines = d.geometry->topology() == Topology::lines;
+                const bool analytic = points ? d.point_style != PointStyle::plain
+                                             : lines && (d.line_style != LineStyle::plain ||
+                                                         d.line_width != 1 || !d.line_screen_space_width);
                 glViewport(x, y, viewport.z, viewport.w);
-                glDepthRange(d.depth_range.x, d.depth_range.y);
+                // Analytic shaders write final window depth; viewport mapping applies to proxy vertices.
+                glDepthRange(analytic ? 0 : d.depth_range().x, analytic ? 0 : d.depth_range().y);
                 glEnable(GL_SCISSOR_TEST);
                 glScissor(x, y, viewport.z, viewport.w);
                 glDepthMask(GL_TRUE);
@@ -1159,15 +1176,10 @@ void main() {
                 }
                 if (d.depth_bias && d.geometry->topology() == Topology::triangles) {
                     glEnable(GL_POLYGON_OFFSET_FILL);
-                    glPolygonOffset(1, 1);
+                    glPolygonOffset(0.5f, -0.0001f);
                 } else {
                     glDisable(GL_POLYGON_OFFSET_FILL);
                 }
-                const bool points = d.geometry->topology() == Topology::points;
-                const bool lines = d.geometry->topology() == Topology::lines;
-                const bool analytic = points ? d.point_style != PointStyle::plain
-                                             : lines && (d.line_style != LineStyle::plain ||
-                                                         d.line_width != 1 || !d.line_screen_space_width);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, resources.texture(d.texture));
                 if (points)
@@ -1240,12 +1252,14 @@ void main() {
 
             void render(uint32_t width, uint32_t height, const std::vector<DrawCommand> &commands,
                         const vec4 &background, unsigned samples, FrameReadback readback,
-                        bool overlays, bool include_color) {
+                        bool overlays, bool include_color, bool pixel_query) {
                 require_context();
                 resources.prune();
                 validate(width, height, samples, TransparencyMethod::sorted);
-                for (const auto &d : commands)
-                    validate(d, width, height);
+                for (const auto &d : commands) {
+                    if (!pixel_query || !d.overlay)
+                        validate(d, width, height);
+                }
                 if (!program)
                     program = create_program(0);
                 if (!point_program)
@@ -1355,7 +1369,7 @@ void main() {
                 impl_->reject("unknown frame readback mode");
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, background, samples, readback, true, true);
+            impl_->render(width, height, commands, background, samples, readback, true, true, false);
             FrameImage result = impl_->capture(width, height, readback);
             impl_->check_error();
             return result;
@@ -1367,7 +1381,7 @@ void main() {
                 impl_->reject("pixel query is outside the render target");
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false);
+            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true);
             auto &scene = impl_->target.scene();
             scene.bind(GL_READ_FRAMEBUFFER);
             glReadBuffer(GL_COLOR_ATTACHMENT1);
@@ -1392,7 +1406,7 @@ void main() {
             }
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false);
+            impl_->render(width, height, commands, vec4(0), 1, FrameReadback::color_depth_ids, false, false, true);
             auto &scene = impl_->target.scene();
             scene.bind(GL_READ_FRAMEBUFFER);
             glReadBuffer(GL_COLOR_ATTACHMENT1);
@@ -1414,16 +1428,6 @@ void main() {
                 impl_->reject("this OpenGL RenderDevice increment supports sorted transparency only");
             opengl::QueryState state;
             state.prepare(int(width), int(height));
-            const auto check = [&](const char *stage) {
-                const GLenum error = glGetError();
-                if (error != GL_NO_ERROR)
-                    throw std::runtime_error(std::string("OpenGL presentation failed at ") + stage + ": " +
-                                             std::to_string(error));
-            };
-            impl_->render(width, height, commands, background, samples, FrameReadback::color, true, true);
-            check("scene rendering");
-            auto &output = impl_->target.output();
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLenum(state.draw_fbo));
             GLint destination_samples = 0;
             if (state.draw_fbo) {
                 GLint type = 0, buffer = 0;
@@ -1440,10 +1444,25 @@ void main() {
                 }
             } else
                 glGetIntegerv(GL_SAMPLES, &destination_samples);
-            check("destination query");
+            const GLenum destination_error = glGetError();
+            if (destination_error != GL_NO_ERROR)
+                throw std::runtime_error("OpenGL presentation destination query failed: " +
+                                         std::to_string(destination_error));
+            const unsigned target_samples = destination_samples > 1 && samples <= 1
+                                            ? unsigned(destination_samples) : (samples > 1 ? samples : 1u);
+            const auto check = [&](const char *stage) {
+                const GLenum error = glGetError();
+                if (error != GL_NO_ERROR)
+                    throw std::runtime_error(std::string("OpenGL presentation failed at ") + stage + ": " +
+                                             std::to_string(error));
+            };
+            impl_->render(width, height, commands, background, target_samples, FrameReadback::color, true, true, false);
+            check("scene rendering");
+            auto &output = impl_->target.output();
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLenum(state.draw_fbo));
             // Keep sample coverage intact when the caller already has a compatible
             // target; resolving first would decorrelate later MSAA HUD composition.
-            const bool compatible = destination_samples == int(samples > 1 ? samples : 0);
+            const bool compatible = destination_samples == int(target_samples > 1 ? target_samples : 0);
             auto &source = compatible ? impl_->target.color() : output;
             source.bind(GL_READ_FRAMEBUFFER);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLenum(state.draw_fbo));
@@ -1454,7 +1473,7 @@ void main() {
                 glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
                                   GL_COLOR_BUFFER_BIT, GL_NEAREST);
                 check("default color blit");
-                auto &depth = compatible && samples > 1 ? impl_->target.color() : impl_->target.scene();
+                auto &depth = compatible && target_samples > 1 ? impl_->target.color() : impl_->target.scene();
                 depth.bind(GL_READ_FRAMEBUFFER);
                 glReadBuffer(GL_COLOR_ATTACHMENT0);
                 glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
@@ -1500,10 +1519,10 @@ void main() {
                     }
                     return GLenum(format);
                 };
-                const bool multisample_depth = compatible && samples > 1;
+                const bool multisample_depth = compatible && target_samples > 1;
                 auto &depth = multisample_depth ? impl_->target.color() : impl_->target.scene();
                 const GLenum destination_format = depth_format(GLuint(state.draw_fbo), unsigned(destination_samples));
-                const GLenum source_format = depth_format(depth.handle(), multisample_depth ? samples : 0);
+                const GLenum source_format = depth_format(depth.handle(), multisample_depth ? target_samples : 0);
                 check("depth format query");
                 if (destination_format != GL_NONE && destination_format == source_format) {
                     depth.bind(GL_READ_FRAMEBUFFER);

@@ -32,6 +32,8 @@
 #include <vector>
 #include <memory>
 
+#include <easy3d/core/types.h>
+
 
 namespace easy3d {
 
@@ -105,6 +107,7 @@ namespace easy3d {
          * \brief Get the OpenGL texture ID.
          * \return The texture ID, or zero for CPU-only textures.
          */
+        EASY3D_DEPRECATED("use pixels() or graphics::Image with DrawCommand::texture")
         unsigned int id() const { return id_; }
         /**
          * \brief Get the name of the texture.
@@ -116,10 +119,12 @@ namespace easy3d {
          * \param unit Zero-based texture unit to bind to.
          * \details In OpenGL builds, a valid current context is required.
          */
+        EASY3D_DEPRECATED("DrawableRenderer binds CPU texture data through DrawCommand::texture")
         void bind(int unit = 0) const;
         /**
          * \brief Release the texture.
          */
+        EASY3D_DEPRECATED("texture lifetime is managed by DrawableRenderer and the backend device")
         void release() const;
         /**
          * \brief Get the width of the texture.

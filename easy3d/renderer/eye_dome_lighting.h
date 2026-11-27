@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 #define EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 
+#include <easy3d/core/types.h>
+
 #ifdef EASY3D_HAS_VULKAN
 
 
@@ -51,7 +53,7 @@ namespace easy3d {
      *              edl_->end();
      *          \endcode
      */
-    class EyeDomeLighting
+    class EASY3D_DEPRECATED("use graphics::shape::draw_eye_dome_lighting() with RenderDevice") EyeDomeLighting
     {
     public:
         /**
@@ -124,7 +126,7 @@ namespace easy3d {
      *              edl_->end();
      *          \endcode
      */
-    class EyeDomeLighting
+    class EASY3D_DEPRECATED("use graphics::shape::draw_eye_dome_lighting() with RenderDevice") EyeDomeLighting
     {
     public:
         /**

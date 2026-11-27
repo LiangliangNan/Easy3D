@@ -42,7 +42,7 @@ namespace easy3d {
 	 * \class ShaderManager easy3d/renderer/shader_manager.h
 	 * \note Make sure to call terminate() to destroy existing programs before the OpenGL context is deleted.
 	 */
-    class ShaderManager
+    class EASY3D_DEPRECATED("use portable DrawCommand and RenderDevice APIs; shader management is a backend implementation detail") ShaderManager
     {
     public:
     	/**

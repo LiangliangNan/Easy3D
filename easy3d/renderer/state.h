@@ -328,11 +328,12 @@ namespace easy3d {
          *      by set_ao_texture(); publish it again after enabling. A drawable
          *      whose term has not been published yet renders unoccluded.
          */
-        void enable_ao(bool b) { ao_enabled_ = b; set_ao_texture(0); }
+        void enable_ao(bool b) { ao_enabled_ = b; ao_texture_ = 0; }
         /**
          * \brief Sets the AO texture.
          * \param tex The AO texture.
          */
+        EASY3D_DEPRECATED("use RenderSettings::ambient_occlusion through set_render_settings()")
         void set_ao_texture(unsigned int tex) { ao_texture_ = tex; }
 
         /**

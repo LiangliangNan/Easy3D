@@ -18,6 +18,11 @@
 
 void bind_easy3d_renderer_state(pybind11::module_& m)
 {
+    namespace py = pybind11;
+    const auto warn_deprecated = [](const char *message) {
+        if (PyErr_WarnEx(PyExc_DeprecationWarning, message, 1) != 0)
+            throw py::error_already_set();
+    };
 	{ // easy3d::State file:easy3d/renderer/state.h line:45
 		pybind11::class_<easy3d::State, std::shared_ptr<easy3d::State>> cl(m, "State", "Class representing the rendering state of a drawable\n\n \n\n     ");
 		cl.def( pybind11::init( [](){ return new easy3d::State(); } ) );
@@ -82,7 +87,10 @@ void bind_easy3d_renderer_state(pybind11::module_& m)
 		cl.def("set_texture_fractional_repeat", (void (easy3d::State::*)(float)) &easy3d::State::set_texture_fractional_repeat, "C++: easy3d::State::set_texture_fractional_repeat(float) --> void", pybind11::arg("fr"));
 		cl.def("is_ao_enabled", (bool (easy3d::State::*)() const) &easy3d::State::is_ao_enabled, "C++: easy3d::State::is_ao_enabled() const --> bool");
 		cl.def("enable_ao", (void (easy3d::State::*)(bool)) &easy3d::State::enable_ao, "C++: easy3d::State::enable_ao(bool) --> void", pybind11::arg("b"));
-		cl.def("set_ao_texture", (void (easy3d::State::*)(unsigned int)) &easy3d::State::set_ao_texture, "C++: easy3d::State::set_ao_texture(unsigned int) --> void", pybind11::arg("tex"));
+		cl.def("set_ao_texture", [warn_deprecated](easy3d::State &self, unsigned int tex) {
+            warn_deprecated("set_ao_texture() is deprecated; use RenderSettings::ambient_occlusion through set_render_settings()");
+            self.set_ao_texture(tex);
+        }, "C++: easy3d::State::set_ao_texture(unsigned int) --> void", pybind11::arg("tex"));
 		cl.def("clamp_range", (bool (easy3d::State::*)() const) &easy3d::State::clamp_range, "Clamp the value range of a scalar field. \n\nC++: easy3d::State::clamp_range() const --> bool");
 		cl.def("set_clamp_range", (void (easy3d::State::*)(bool)) &easy3d::State::set_clamp_range, "C++: easy3d::State::set_clamp_range(bool) --> void", pybind11::arg("b"));
 		cl.def("clamp_lower", (float (easy3d::State::*)() const) &easy3d::State::clamp_lower, "Clamp the lower side of the value range of a scalar field. Value is in [0, 1] (i.e., 0% to 100%).\n\nC++: easy3d::State::clamp_lower() const --> float");

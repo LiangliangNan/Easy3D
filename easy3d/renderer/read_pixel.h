@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <easy3d/core/types.h>
+
 
 namespace easy3d {
 
@@ -49,6 +51,7 @@ namespace easy3d {
 		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
 		 * \see read_color_ms.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::rgba")
 		void read_color(unsigned char rgba[4], int x, int y);
 		/**
 		 * \brief Read color value at pixel (x, y) from the current multisample framebuffer.
@@ -56,6 +59,7 @@ namespace easy3d {
 		 * \param x The x-coordinate of the pixel, represented in the OpenGL coordinate system.
 		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::rgba")
 		void read_color_ms(unsigned char rgba[4], int x, int y);
 
 		/**
@@ -65,6 +69,7 @@ namespace easy3d {
 		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
 		 * \see read_depth_ms.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::depth")
 		void read_depth(float& depth, int x, int y);
 		/**
 		 * \brief Read depth value at pixel (x, y) from the current multisample framebuffer.
@@ -73,6 +78,7 @@ namespace easy3d {
 		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
 		 * \see read_depth.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::depth")
 		void read_depth_ms(float& depth, int x, int y);
 
 		/**
@@ -84,6 +90,7 @@ namespace easy3d {
 		*		of the image.
 		* \see read_color_ms.
 		*/
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::rgba")
 		void read_color(std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true);
 		/**
 		* \brief Read color data of the current multisample framebuffer into a specified buffer.
@@ -94,6 +101,7 @@ namespace easy3d {
 		*		of the image.
 		* \see read_color.
 		*/
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::rgba")
 		void read_color_ms(std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true);
 
 		/**
@@ -104,6 +112,7 @@ namespace easy3d {
 		 *		of the image.
 		 * \see read_depth_ms.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::depth")
 		void read_depth(std::vector<float>& buffer, bool flip_vertically = true);
 		/**
 		 * \brief Read the depth data of the current multisample framebuffer into a specified buffer.
@@ -113,6 +122,7 @@ namespace easy3d {
 		 *		of the image.
 		 * \see read_depth.
 		 */
+		EASY3D_DEPRECATED("use RenderDevice::sample_pixel() or FrameImage::depth")
 		void read_depth_ms(std::vector<float>& buffer, bool flip_vertically = true);
 
 		/**
@@ -122,6 +132,7 @@ namespace easy3d {
 		 *		is determined by the extension of the file name.
 		 * \see snapshot_color_ms.
 		 */
+        EASY3D_DEPRECATED("use RenderDevice capture and FrameImage::rgba")
         void snapshot_color(const std::string& file_name);
 		/**
 		 * \brief Snapshot the color render buffer of the current multisample framebuffer into an image file. This
@@ -130,6 +141,7 @@ namespace easy3d {
 		 *		is determined by the extension of the file name.
 		 * \see snapshot_color.
 		 */
+        EASY3D_DEPRECATED("use RenderDevice capture and FrameImage::rgba")
         void snapshot_color_ms(const std::string& file_name);
 
 		/**
@@ -139,6 +151,7 @@ namespace easy3d {
 		 *		is determined by the extension of the file name.
 		 * \see snapshot_depth_ms.
 		 */
+        EASY3D_DEPRECATED("use RenderDevice capture and FrameImage::depth")
         void snapshot_depth(const std::string& file_name);
 		/**
 		 * \brief Snapshot the depth render buffer of the current multisample framebuffer into an image file. This
@@ -147,6 +160,7 @@ namespace easy3d {
 		 *		is determined by the extension of the file name.
 		 * \see snapshot_depth.
 		 */
+        EASY3D_DEPRECATED("use RenderDevice capture and FrameImage::depth")
         void snapshot_depth_ms(const std::string& file_name);
 
 	}

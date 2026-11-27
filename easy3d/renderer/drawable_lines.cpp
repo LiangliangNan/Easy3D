@@ -106,7 +106,7 @@ namespace easy3d {
             program->bind();
             program->set_uniform("MANIP", MANIP)
                     ->set_uniform("MVP_MANIP", MVP_MANIP)
-                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && !buffer_data().colors.empty())
                     ->set_uniform("default_color", color());
 
             program->set_uniform("selected", is_selected())
@@ -140,7 +140,7 @@ namespace easy3d {
 
             program->set_uniform("radius", impostor_radius(*camera, line_width()))
                     ->set_uniform("default_color", color())
-                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
+                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && !buffer_data().colors.empty());
 
             // Screen-space expansion (setting::lines_drawable_screen_space_width) keeps the
             // stroke width constant in framebuffer pixels, so it needs the viewport size and
@@ -186,7 +186,7 @@ namespace easy3d {
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("default_color", color())
-                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && !buffer_data().colors.empty())
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting());
 
@@ -228,7 +228,7 @@ namespace easy3d {
 
         program->set_uniform("radius", impostor_radius(*camera, line_width()))
                 ->set_uniform("default_color", color())
-                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && !buffer_data().colors.empty())
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting())
                 ->set_block_uniform("Material", "ambient", material().ambient)

@@ -354,8 +354,17 @@ namespace easy3d {
             // does with glPolygonOffset, so coplanar line drawables stay visible.
             // Ignored for other topologies and overlays.
             bool depth_bias = false; ///< Offset filled triangles to expose coplanar lines.
-            // Appended for 2.8 source/ABI stability; existing command fields keep their offsets.
-            vec2 depth_range = vec2(0, 1); ///< Window-space depth interval mapped to [0, 1].
+            /// Set the window-space depth interval mapped to [0, 1].
+            /// Invalid values are retained for backend validation at render time.
+            /// \details Endpoints use 15-bit normalized precision to preserve the 2.8 layout.
+            void set_depth_range(const vec2 &range);
+            /// Return the window-space depth interval mapped to [0, 1].
+            vec2 depth_range() const;
+
+            // Packed into the 2.8 tail padding; 0x8000 marks an invalid endpoint.
+            // Public storage preserves aggregate initialization and standard-layout compatibility.
+            std::uint16_t depth_range_min = 0;
+            std::uint16_t depth_range_max = 0x7fff;
         };
 
         // Validates and normalizes finite plane equations with nonzero normals.
@@ -574,21 +583,8 @@ namespace easy3d {
                    std::uint32_t height,
                    const std::vector<DrawCommand> &commands,
                    const Options &options) {
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4996)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-                // Deprecated for callers, but still required by this compatibility forwarder.
-                return render(width, height, commands, options.background, options.samples, options.transparency,
-                              options.peel_layers, options.readback);
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+                return render_positional(width, height, commands, options.background, options.samples,
+                                         options.transparency, options.peel_layers, options.readback);
             }
             // Render scene IDs and depth at one top-left framebuffer pixel center.
             // The full viewport and draw order are preserved. Overlays are excluded.
@@ -678,6 +674,17 @@ namespace easy3d {
             /// per-pixel fragment capacity (peel_layers) to reduce dropping.
             /// \return Number of fragments dropped by linked-list OIT overflow last frame.
             virtual std::uint32_t oit_dropped_fragments() const = 0;
+
+        private:
+            // Keep the grouped API from referencing the deprecated positional virtual.
+            FrameImage render_positional(std::uint32_t width,
+                                         std::uint32_t height,
+                                         const std::vector<DrawCommand> &commands,
+                                         const vec4 &background,
+                                         unsigned samples,
+                                         TransparencyMethod transparency,
+                                         unsigned peel_layers,
+                                         FrameReadback readback);
         };
 
         /// Create the build-selected headless backend; unsupported requested options throw.
