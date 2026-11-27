@@ -31,7 +31,7 @@ if (Easy3D_HAS_CGAL)
 endif ()
 
 if (Easy3D_HAS_FFMPEG)
-    add_subdirectory(video)  # experimental
+    add_subdirectory(video)
     list(APPEND CONF_Easy3D_COMPONENTS video)
     list(APPEND EXPORT_TARGET_SET easy3d_video)
 endif ()

@@ -34,11 +34,6 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/transform.h>
-#ifndef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/backends/opengl/query_state.h>
-#include <easy3d/renderer/framebuffer_object.h>
-#endif
 #include <easy3d/util/logging.h>
 #include <cstdint>
 #include <limits>
@@ -121,54 +116,6 @@ namespace {
         const auto drawable = vertices_drawable(renderer);
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
-#ifndef EASY3D_HAS_VULKAN
-        // The OpenGL adapter rejects analytic impostor draws that also carry clipping
-        // planes (a documented adapter limitation), so clipped impostor picks keep the
-        // exact native selection pass until the adapter supports analytic clipping.
-        const bool analytic = drawable->impostor_type() != PointsDrawable::PLAIN;
-        const bool clipped = ClippingPlane::instance()->is_enabled();
-        if (analytic && clipped) {
-            const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
-            auto* program = ShaderManager::get_program(name);
-            if (!program)
-                program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
-            if (!program)
-                throw std::runtime_error("point picking requires the selection shader '" + name + "'");
-            GLint viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            const int w = viewport[2], h = viewport[3];
-            if (w <= 0 || h <= 0)
-                return PointCloud::Vertex();
-            opengl::QueryState state;
-            state.prepare(w, h);
-            FramebufferObject target(w, h, 0);
-            if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) ||
-                !target.is_valid() || !target.bind())
-                return PointCloud::Vertex();
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glClearColor(1, 1, 1, 1);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glEnable(GL_PROGRAM_POINT_SIZE);
-            program->bind();
-            program->set_uniform("sphere", drawable->impostor_type() != PointsDrawable::PLAIN)
-                   ->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE)
-                   ->set_uniform("MV", camera()->model_view_matrix())
-                   ->set_uniform("PROJ", camera()->projection_matrix())
-                   ->set_uniform("MANIP", drawable->manipulated_matrix())
-                   ->set_uniform("point_size", drawable->point_size())
-                   ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivot_point()) * 0.5f)
-                   ->set_uniform("screen_width", w);
-            ClippingPlane::instance()->set_program(program);
-            drawable->gl_draw();
-            int gl_x, gl_y;
-            screen_to_opengl(x, y, gl_x, gl_y, w, h);
-            unsigned char rgba[4];
-            if (!target.read_color(rgba, gl_x, gl_y))
-                return PointCloud::Vertex();
-            const PointCloud::Vertex picked(color::encode(rgba[0], rgba[1], rgba[2], rgba[3]));
-            return model->is_valid(picked) && !model->is_deleted(picked) ? picked : PointCloud::Vertex();
-        }
-#endif
         // A single pick is a rendered pixel query: rasterize the point drawable
         // with a source-vertex ID in the color target and sample that pixel.
         const auto command = draw_command(drawable, 0);

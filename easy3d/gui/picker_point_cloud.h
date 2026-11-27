@@ -45,9 +45,8 @@ namespace easy3d {
      *      A single pick rasterizes the visible point drawable into an offscreen
      *      target whose ID/depth pass encodes the source vertex, then reads back
      *      only the queried pixel. Both backends run this through the shared
-     *      RenderDevice: OpenGL samples an ID framebuffer and Vulkan samples its
-     *      headless device. Analytic impostor picks under clipping keep the OpenGL
-     *      exact native selection pass.
+     *      RenderDevice, including clipped analytic impostors; no backend-specific
+     *      native selection pass remains.
      *
      *      A region pick tests every point in parallel. OpenGL projects and tests
      *      the point snapshot on the CPU, Vulkan evaluates the equivalent selection

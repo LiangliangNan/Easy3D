@@ -130,6 +130,8 @@ uniform uint object_id;
 uniform bool lighting, material_lighting, single_sample;
 uniform vec3 eye, light, sphere_light;
 uniform vec2 depth_range;
+uniform vec4 clip_planes[2];
+uniform int clip_count;
 uniform vec4 ambient, specular;
 uniform float shininess;
 in vec4 vertex_color, selection_tint;
@@ -167,6 +169,17 @@ void main() {
         hit=origin+t*direction;
         surface_normal=normalize(hit-center);
     }
+    // Section 8.15: clip the actual analytic surface hit, not the proxy quad.
+    for (int i = 0; i < 2; ++i) {
+        if (i >= int(clip_count)) break;
+        float distance = dot(clip_planes[i], vec4(hit,1));
+        if (single_sample) {
+            if (distance < 0) discard;
+        } else {
+            coverage *= edge_coverage(distance);
+        }
+    }
+    if (!single_sample && coverage <= 0) discard;
     vec4 clip=projection*vec4(hit,1);
     float depth=0.5*(clip.z/clip.w+1);
     if(clip.w<=0 || depth<0 || depth>1) discard;
@@ -283,6 +296,8 @@ uniform uint object_id;
 uniform bool lighting, material_lighting, single_sample;
 uniform vec3 eye, light;
 uniform vec2 depth_range;
+uniform vec4 clip_planes[2];
+uniform int clip_count;
 uniform vec4 ambient, specular;
 uniform float shininess;
 flat in vec3 base, finish;
@@ -347,6 +362,13 @@ void main() {
     if(surface<0||nearest<0) discard;
     if(!single_sample) {coverage=surface==0?side_coverage:max(surface==1?base_coverage:end_coverage,side_visible?side_coverage:0);if(coverage<=0) discard;}
     vec3 hit=origin+nearest*direction;
+    // Section 8.15: clip the actual analytic surface hit, not the proxy quad.
+    for (int i = 0; i < 2; ++i) {
+        if (i >= int(clip_count)) break;
+        float distance = dot(clip_planes[i], vec4(hit,1));
+        if (single_sample) { if (distance < 0) discard; }
+        else coverage *= edge_coverage(distance);
+    }
     vec4 clip=projection*vec4(hit,1);float depth=0.5*(clip.z/clip.w+1);
     if(clip.w<=0||depth<0||depth>1) discard;
     gl_FragDepth=mix(depth_range.x,depth_range.y,depth);
@@ -972,11 +994,9 @@ void main() {
                     reject("full-screen depth/effect overlays are not supported by this OpenGL RenderDevice increment");
                 if (d.shadow_caster || d.shadow_background)
                     reject("shadow commands are not supported by this OpenGL RenderDevice increment");
-                const bool analytic =
-                    (d.geometry->topology() == Topology::points && d.point_style != PointStyle::plain) ||
-                    (d.geometry->topology() == Topology::lines && d.line_style != LineStyle::plain);
-                if (analytic && (!d.clipping_planes.empty() || !d.object_clipping_planes.empty() || d.discard_clipped_primitives))
-                    reject("analytic point/line clipping is not supported by this OpenGL RenderDevice increment");
+                // Analytic point/line draws carry clipping through their fragment shaders
+                // (see the point/line impostor programs below); plain points and lines clip
+                // geometrically through the shared CPU path in prepare().
                 if (d.overlay && d.geometry->topology() != Topology::triangles)
                     reject("overlays require triangle geometry");
                 if (d.transparent && (!d.overlay && d.geometry->topology() != Topology::triangles))
@@ -1058,6 +1078,8 @@ void main() {
             std::vector<DrawCommand> prepare(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height) {
                 std::vector<DrawCommand> opaque, transparent;
                 for (auto d : commands) {
+                    if (!d.clipping_planes.empty() || !d.object_clipping_planes.empty())
+                        d.clipping_planes = graphics::normalize_clipping_planes(d.clipping_planes);
                     if (d.overlay)
                         continue;
                     if (!d.clipping_planes.empty() || !d.object_clipping_planes.empty())
@@ -1149,6 +1171,15 @@ void main() {
                 glUniform1i(location("screen_space"), d.line_screen_space_width);
                 const vec2 depth_range = d.depth_range();
                 glUniform2fv(location("depth_range"), 1, depth_range.data());
+                std::vector<float> clip_data(8, 0.0f);
+                for (unsigned i = 0; i < d.clipping_planes.size() && i < 2; ++i) {
+                    clip_data[4 * i + 0] = d.clipping_planes[i].x;
+                    clip_data[4 * i + 1] = d.clipping_planes[i].y;
+                    clip_data[4 * i + 2] = d.clipping_planes[i].z;
+                    clip_data[4 * i + 3] = d.clipping_planes[i].w;
+                }
+                glUniform4fv(location("clip_planes"), 2, clip_data.data());
+                glUniform1i(location("clip_count"), int(d.clipping_planes.size()));
             }
 
             void draw(const DrawCommand &d, uint32_t width, uint32_t height, bool color_pass,

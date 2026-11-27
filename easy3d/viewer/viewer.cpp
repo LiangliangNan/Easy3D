@@ -3098,7 +3098,7 @@ namespace easy3d {
     } // namespace
 
     bool Viewer::supports_device_query(const Camera &camera, int width, int height, bool guides) const {
-        if (width <= 0 || height <= 0 || ClippingPlane::instance()->is_enabled())
+        if (width <= 0 || height <= 0)
             return false;
         const auto supported = [&](const std::shared_ptr<Drawable> &drawable) {
             if (!drawable || !drawable->is_visible())
@@ -3461,7 +3461,7 @@ namespace easy3d {
             result.primitive = pixel.id.primitive;
             result.depth = pixel.depth;
         } else {
-            // Impostors, clipping, and unsupported effects still use the exact native
+            // Unsupported drawable and effect states still use the exact native
             // drawable shaders. Draw each candidate separately and retain the nearest.
             QueryState state;
             state.prepare(fw, fh);

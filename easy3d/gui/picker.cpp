@@ -26,12 +26,9 @@
 
 
 #include <easy3d/gui/picker.h>
-#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
 
-#include <cmath>
-#include <limits>
 #include <stdexcept>
 
 
@@ -71,16 +68,4 @@ namespace easy3d {
         }
         return drawable_renderer_->command(drawable, id, *camera(), planes);
     }
-
-    void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        gl_x = transform::pixel_index(x, camera()->screen_width(), width);
-        const auto top_y = transform::pixel_index(y, camera()->screen_height(), height);
-        // Flip a discrete row index (top row 0 <-> bottom row height-1), not a continuous
-        // coordinate: for centers, height - (i + 0.5) == (height - 1 - i) + 0.5.
-        const int64_t bottom_y = int64_t(height) - 1 - top_y;
-        if (bottom_y < std::numeric_limits<int>::min() || bottom_y > std::numeric_limits<int>::max())
-            throw std::out_of_range("picker coordinate exceeds integer range");
-        gl_y = static_cast<int>(bottom_y);
-    }
-
 }

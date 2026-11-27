@@ -27,9 +27,6 @@ void math_tests() {
     camera.set_type(Camera::ORTHOGRAPHIC);camera.set_scene_bounding_box(vec3(-2),vec3(2));camera.show_entire_scene();
     static_assert(!std::is_copy_constructible<Picker>::value,"pickers own resources and must not be copied");
     SurfaceMeshPicker picker(&camera);
-    int px=0,py=0;picker.screen_to_opengl(0,0,px,py,800,600);require(px==0 && py==599,"DPI top-left conversion differs");
-    picker.screen_to_opengl(399,299,px,py,800,600);require(px==798 && py==1,"DPI bottom-right conversion differs");
-    picker.screen_to_opengl(-1,-1,px,py,800,600);require(px==-2 && py==601,"outside conversion clamped into the viewport");
     bool invalid=false;try{Picker bad(nullptr);}catch(const std::invalid_argument&){invalid=true;}require(invalid,"null camera was accepted");
 
     SurfaceMesh mesh;

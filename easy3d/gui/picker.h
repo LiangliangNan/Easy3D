@@ -71,9 +71,9 @@ namespace easy3d {
      *      - Vulkan uses its own headless device to sample the ID/depth target and
      *        evaluate point-region selection in a compute shader.
      *
-     *      Native fallbacks remain for OpenGL operations outside the shared adapter's
-     *      current scope, such as analytic point impostor picking under clipping; the
-     *      shared adapter already serves plain points and lines, including clipped ones.
+     *      Picker single queries use the shared RenderDevice on both backends,
+     *      including clipped analytic impostors. Native fallbacks remain only in
+     *      Viewer for scene states outside the shared command contract.
      *
      *      Pickers are scene-independent tools: they take a borrowed Camera and a
      *      caller-supplied model or drawable, and own their offscreen resources.
@@ -141,26 +141,6 @@ namespace easy3d {
             const vec3 p_far = camera()->unprojected_coordinates_of(vec3(float(x), float(y), 1));
             return Line3::from_two_points(p_near, p_far);
         }
-
-        /**
-         * \brief Convert a point expressed in the screen coordinate system (with an origin in the upper left corner)
-         *      into the OpenGL coordinate system (with an origin in the lower left corner). The high DPI scaling is
-         *      also taken into consideration, so the result always corresponds to its image pixel.
-         * \param x The x-coordinate in logical window units (top-left origin, x right).
-         * \param y The y-coordinate in logical window units (top-left origin, y down).
-         * \param gl_x Returns the x component of the point in OpenGL framebuffer coordinates (bottom-left origin).
-         * \param gl_y Returns the y component of the point in OpenGL framebuffer coordinates (bottom-left origin).
-         * \param width The width of the OpenGL viewport in framebuffer pixels.
-         * \param height The height of the OpenGL viewport in framebuffer pixels.
-         * \note The logical coordinate and framebuffer dimensions must describe the same viewport. This method is
-         *       primarily used internally by native OpenGL fallbacks to convert logical
-         *       window coordinates to bottom-left framebuffer pixels before glReadPixels().
-         *       Shared RenderDevice queries accept top-left framebuffer indices directly.
-         * \throws std::invalid_argument if viewport or camera screen dimensions are not positive.
-         * \throws std::out_of_range if the converted coordinate exceeds the integer range.
-         * TODO: this function name is strange after API unification (change it to window_to_device(...)?)
-         */
-        void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
         /**
