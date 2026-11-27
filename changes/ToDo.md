@@ -39,8 +39,8 @@
     - [x] Make `device()`, `draw_commands()`, overlays, clipping, render settings, and in-memory capture available consistently across `Viewer`, `OffScreen`, and `MultiViewer`.
     - [x] Preserve Viewer lifecycle/customization hooks and move custom drawing to backend-neutral commands; keep window-only operations out of the public `OffScreen` surface.
     - [x] Unify overlay submission through `DrawCommand` lists with explicit foreground/background ordering; migrate HUD and application overlays while preserving depth testing, depth writing, transparency, and capture inclusion.
-    - [x] Implement presented-scene capture behind the shared host/device contract so it includes effects, overlays, HUD, and custom drawing with the same readback options as offscreen rendering.
-    - [x] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping.
+    - [x] Implement presented frames and file snapshots behind the shared host/device contract with effects, overlays, HUD, and custom drawing; raw in-memory `capture()` intentionally remains a scene-command readback, with effect-bearing presented-capture parity tracked in section 8.16.
+    - [x] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping in their documented raw/presented modes.
     - [x] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
 
   - [x] Milestone 5 — Unify picking and remaining exact fallbacks
@@ -54,6 +54,17 @@
     - [x] Remove the OpenGL analytic-impostor clipping fallback from `PointCloudPicker` so clipped single picks use the shared `RenderDevice` query.
     - [x] Stop rejecting clipping in `Viewer::supports_device_query` now that the adapter supports analytic clipping, so `Viewer::pick`, `Viewer::read_scene_depth`, and capture use the shared query for clipped supported scenes; keep the exact pass only for unsupported drawable/effect states.
     - [x] Extend the clipping regression to both backends, add clipped-impostor shared-pick and invalid-plane coverage, and rerun the complete OpenGL and Vulkan suites. Final results: OpenGL 128/128 in 140.14 seconds and Vulkan 156/156 in 210.86 seconds; recorded in section 8.15 and linked from section 8.14.
+
+  - [ ] Milestone 5 follow-up #2 — Unified effect presentation and clipping
+    - [ ] Consolidate effective clipping resolution into one backend-neutral helper: an enabled process-wide `ClippingPlane` overrides `RenderSettings::clipping_planes`; otherwise the normalized settings planes are used. Keep `object_clipping_planes` and the clipping-plane guide separate. See section 8.16.
+    - [ ] Reuse the existing capability overload of `validate_render_settings()` by sourcing real device capabilities in host validation and one-time warnings, without adding virtual methods or changing public class layouts, so unsupported effect/transparency combinations are rejected or diagnosed before a native fallback is selected.
+    - [ ] Implement OpenGL `RenderDevice` shadow commands: clipped triangle shadow casters, unclipped virtual background receivers, cached depth maps, hard/soft filtering, virtual backgrounds, and the fullscreen overlay using the frame's resolved depth.
+    - [ ] Implement OpenGL `RenderDevice` AO and EDL commands from the clipped scene depth, preserving setting units and supporting simultaneous AO and EDL in the Vulkan reference order.
+    - [ ] Compose sorted transparency with all effects in the OpenGL device; add capability-gated average-color, depth-peeling, and linked-list paths with explicit fallbacks and diagnostics where OpenGL cannot support a method.
+    - [ ] Move OpenGL settings-driven frames onto the shared host submit path and remove the settings-effect sidecar and `warn_native_clipping()` branch for states the device supports; retain legacy facades and the exact pass for genuine custom-drawable/`draw()` cases.
+    - [ ] Verify MSAA resolve, depth/ID readback, viewport/scissor restoration, effect resource lifetime, and per-cell `MultiViewer` targets; keep picking and depth queries sampling scene depth rather than effect overlays.
+    - [ ] Extend clipping and render-settings regressions with an effect-composition matrix, clipped shadow casters, cut-pixel AO/EDL checks, guide visibility, transparency combinations, supported and fallback drawables, and live/snapshot/raw-capture/OffScreen/MultiViewer cases on both backends.
+    - [ ] Update Milestone 3 deviations 2–4 and the section 8.15 scope boundary from "limitation" to the measured result; rerun focused tests and complete serial suites in both approved build trees.
 
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
     - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.
@@ -72,6 +83,7 @@
     - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
 
 
+  - After API unification, how will the tutorials' code look like, e.g., Tutorial_504_Transparency, Tutorial_505_EyeDomeLighting?
   - [ ] Functions (like Viewer::draw_corner_axes()) have almost identical implementation code in the two backends. One should be removed at the end of the API unification.
 
 
