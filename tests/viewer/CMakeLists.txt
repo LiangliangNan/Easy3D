@@ -43,6 +43,18 @@ endforeach()
         set_tests_properties(viewer.offscreen PROPERTIES LABELS desktop)
     endif()
 
+    add_executable(easy3d_render_settings_viewer_test render_settings_test.cpp)
+    target_link_libraries(easy3d_render_settings_viewer_test PRIVATE easy3d::viewer)
+    if(Easy3D_ENABLE_VULKAN)
+        add_test(NAME vulkan.rendersettingseffects COMMAND easy3d_render_settings_viewer_test
+                --validation --output-dir "${CMAKE_BINARY_DIR}")
+        set_tests_properties(vulkan.rendersettingseffects PROPERTIES TIMEOUT 180 LABELS desktop)
+    else()
+        add_test(NAME opengl.rendersettingseffects COMMAND easy3d_render_settings_viewer_test
+                --output-dir "${CMAKE_BINARY_DIR}")
+        set_tests_properties(opengl.rendersettingseffects PROPERTIES TIMEOUT 180 LABELS desktop)
+    endif()
+
     add_executable(easy3d_backend_image_diff_test snapshot_effects_test.cpp)
     target_link_libraries(easy3d_backend_image_diff_test PRIVATE easy3d::viewer)
     if(Easy3D_ENABLE_VULKAN)

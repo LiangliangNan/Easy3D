@@ -5,6 +5,7 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
+#include <easy3d/renderer/backends/clipping.h>
 
 #include <algorithm>
 #include <cmath>
@@ -971,8 +972,11 @@ void main() {
                     reject("full-screen depth/effect overlays are not supported by this OpenGL RenderDevice increment");
                 if (d.shadow_caster || d.shadow_background)
                     reject("shadow commands are not supported by this OpenGL RenderDevice increment");
-                if (!d.clipping_planes.empty() || !d.object_clipping_planes.empty() || d.discard_clipped_primitives)
-                    reject("clipping is not supported by this OpenGL RenderDevice increment");
+                const bool analytic =
+                    (d.geometry->topology() == Topology::points && d.point_style != PointStyle::plain) ||
+                    (d.geometry->topology() == Topology::lines && d.line_style != LineStyle::plain);
+                if (analytic && (!d.clipping_planes.empty() || !d.object_clipping_planes.empty() || d.discard_clipped_primitives))
+                    reject("analytic point/line clipping is not supported by this OpenGL RenderDevice increment");
                 if (d.overlay && d.geometry->topology() != Topology::triangles)
                     reject("overlays require triangle geometry");
                 if (d.transparent && (!d.overlay && d.geometry->topology() != Topology::triangles))
@@ -1053,9 +1057,11 @@ void main() {
 
             std::vector<DrawCommand> prepare(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height) {
                 std::vector<DrawCommand> opaque, transparent;
-                for (const auto &d : commands) {
+                for (auto d : commands) {
                     if (d.overlay)
                         continue;
+                    if (!d.clipping_planes.empty() || !d.object_clipping_planes.empty())
+                        d = internal::clip_draw(d);
                     if (d.transparent) {
                         const size_t count = d.geometry->indices().empty() ? d.geometry->vertices().size()
                                                                             : d.geometry->indices().size();

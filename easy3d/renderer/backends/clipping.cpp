@@ -73,7 +73,7 @@ namespace easy3d {
 
             DrawCommand clip_draw(const DrawCommand &source) {
                 DrawCommand result = source;
-                if (source.overlay || source.clipping_planes.empty())
+                if (source.overlay || (source.clipping_planes.empty() && source.object_clipping_planes.empty()))
                     return result;
                 const auto &geometry = *source.geometry;
                 const auto topology = geometry.topology();

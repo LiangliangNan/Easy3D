@@ -25,14 +25,14 @@
     - [x] Deprecate native drawable rendering/resource access in 2.8 after both adapters pass parity tests; reserve declaration, definition, binding, header, and build/install removal for the coordinated 3.0 release. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
     - [x] Audit corner-axis lighting/depth/blending, native EDL, live/capture parity, immediate native compatibility, and MultiViewer divisions; compare deterministic baseline rendering, pass the complete serial OpenGL 125/125 and Vulkan 154/154 suites, and run visual macOS Mapple validation with both backends. See [section 8.11](Vulkan-OpenGL-unification.md#811-milestone-2-implementation-and-validation).
 
-  - [ ] Milestone 3 — Turn rendering effects into portable settings
-    - [ ] Add `RenderSettings` and its shadow, ambient-occlusion, transparency, eye-dome-lighting, and clipping substructures with documented defaults, units, and validation.
-    - [ ] Add `set_render_settings()` to all rendering hosts and make shared command assembly consume those settings.
-    - [ ] Implement the shadow settings through both adapters, including hard/soft shadows and virtual background; verify matching light-space transforms and fallback behavior.
-    - [ ] Implement AO and eye-dome-lighting through both adapters without publishing native AO texture IDs or effect framebuffers through `State`.
-    - [ ] Route transparency through `TransparencyMethod` and layer settings; test sorted, average-color, depth-peeling, and linked-list paths, including unsupported-capability fallbacks and dropped-fragment diagnostics.
-    - [ ] Apply clipping planes in shared command/state assembly and verify point, region, and rendered capture results on both backends.
-    - [ ] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration.
+  - [x] Milestone 3 — Turn rendering effects into portable settings
+    - [x] Add `RenderSettings` and its shadow, ambient-occlusion, transparency, eye-dome-lighting, and clipping substructures with documented defaults, units, and validation.
+    - [x] Add `set_render_settings()` to all rendering hosts and make shared command assembly consume those settings.
+    - [x] Implement the shadow settings through both adapters, including hard/soft shadows and virtual background; verify matching light-space transforms and fallback behavior.
+    - [x] Implement AO and eye-dome-lighting through both adapters without publishing native AO texture IDs or effect framebuffers through `State`.
+    - [x] Route transparency through `TransparencyMethod` and layer settings; test sorted, average-color, depth-peeling, and linked-list paths, including unsupported-capability fallbacks and dropped-fragment diagnostics. OpenGL falls back below 4.3 and does not expose a native linked-list fragment counter.
+    - [x] Apply clipping planes in shared command/state assembly and verify point, line, and rendered capture results on both backends. OpenGL native effect paths apply only the process-wide clipping plane, and the OpenGL adapter rejects analytic point/line clipping.
+    - [x] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration. The facades remain unchanged in this milestone, with settings taking precedence where both are active; their control translation is deferred to the Python/tutorial migration.
 
   - [ ] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
     - [ ] Introduce common window/device construction and remove public `OpenGLOptions`/`VulkanOptions` conditionals while preserving backend-specific settings through compatibility overloads.

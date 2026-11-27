@@ -9,6 +9,17 @@ else()
     set_tests_properties(opengl.devicecontract PROPERTIES TIMEOUT 30)
 endif()
 
+# Declarative effect values and their validation are CPU-only.
+add_executable(easy3d_render_settings_test render_settings_test.cpp)
+target_link_libraries(easy3d_render_settings_test PRIVATE easy3d::renderer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.rendersettings COMMAND easy3d_render_settings_test)
+    set_tests_properties(vulkan.rendersettings PROPERTIES TIMEOUT 30)
+else()
+    add_test(NAME opengl.rendersettings COMMAND easy3d_render_settings_test)
+    set_tests_properties(opengl.rendersettings PROPERTIES TIMEOUT 30)
+endif()
+
 # Drawable realization and command styling are CPU-only and run unchanged in both builds.
 add_executable(easy3d_drawable_contract_test drawable_contract_test.cpp)
 target_link_libraries(easy3d_drawable_contract_test PRIVATE easy3d::renderer)

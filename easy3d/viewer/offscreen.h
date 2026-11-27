@@ -192,9 +192,12 @@ namespace easy3d {
         using Viewer::point_resource;
         using Viewer::point_under_pixel;
         using Viewer::pixel_to_world;
+        using Viewer::render_settings;
         using Viewer::select_points;
         using Viewer::set_background_color;
+        using Viewer::set_clipping_planes;
         using Viewer::set_overlays;
+        using Viewer::set_render_settings;
         using Viewer::window_to_world;
         using Viewer::width;
         using Viewer::world_to_pixel;
@@ -203,7 +206,6 @@ namespace easy3d {
         // Transitional native scene operations, retained until the picker migration.
         using Viewer::device;
         using Viewer::scan_visible_points;
-        using Viewer::set_clipping_planes;
 #endif
         //@}
     private:

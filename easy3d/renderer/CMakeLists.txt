@@ -48,6 +48,7 @@ list(APPEND renderer_headers
         manipulated_frame.h
         shape.h
         render_device.h
+        render_settings.h
         text_layout.h
         buffer.h
         renderer.h
@@ -76,6 +77,7 @@ list(APPEND renderer_sources
         manipulated_frame.cpp
         shape.cpp
         render_device.cpp
+        render_settings.cpp
         text_layout.cpp
         buffer.cpp
         renderer.cpp

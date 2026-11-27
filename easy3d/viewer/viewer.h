@@ -61,6 +61,7 @@ namespace easy3d {
     class Drawable;
     class LinesDrawable2D;
     class TrianglesDrawable;
+    struct RenderSettings;
 
     /**
      * \brief Window settings of a Viewer - the part both backends agree on.
@@ -855,26 +856,47 @@ namespace easy3d {
 
         /**
          * \brief Return the effective world-space clipping planes.
-         * \details A shared ClippingPlane takes precedence. Vulkan builds may
-         *      also support explicitly configured per-viewer planes; see
-         *      set_clipping_planes().
+         * \details An enabled shared ClippingPlane takes precedence over the
+         *      explicitly configured planes from set_clipping_planes() or
+         *      RenderSettings::clipping_planes.
          * \return Reference to the effective world-space plane equations.
          */
         const std::vector<vec4> &clipping_planes() const;
 
-#ifdef EASY3D_HAS_VULKAN
         /**
-         * \brief Set Vulkan-only world-space clipping halfspaces for this viewer.
+         * \brief Set world-space clipping halfspaces for this viewer.
          * \param planes Plane equations; a point is retained when
          *        dot(plane, vec4(world, 1)) is nonnegative.
          * \details Pass an empty vector to disable explicit planes. At most two
          *      finite planes with nonzero normals are accepted. An enabled shared
          *      ClippingPlane takes precedence. Overlays are not clipped, and
-         *      clear_scene() does not reset this configuration.
-         * \throws std::invalid_argument for unsupported or invalid planes.
+         *      clear_scene() does not reset this configuration. This updates the
+         *      clipping_planes field of render_settings().
+         * \throws std::invalid_argument for invalid planes.
          */
         void set_clipping_planes(const std::vector<vec4> &planes);
-#endif
+        //@}
+
+        /// \name Rendering effects
+        //@{
+
+        /**
+         * \brief Return this host's declarative effect settings.
+         * \return Rendering settings, including clipping planes.
+         */
+        const RenderSettings &render_settings() const;
+
+        /**
+         * \brief Replace this host's declarative effect settings.
+         * \param settings Settings to validate and retain.
+         * \details Defaults disable optional effects and use sorted transparency.
+         *      Live frames and file snapshots apply these settings. In-memory
+         *      capture remains a scene-command frame and does not add the
+         *      presentation effects that draw() composes.
+         * \throws std::invalid_argument if a value is invalid or an explicitly
+         *      enabled effect is unavailable.
+         */
+        void set_render_settings(const RenderSettings &settings);
         //@}
 
         /// \name Point selection

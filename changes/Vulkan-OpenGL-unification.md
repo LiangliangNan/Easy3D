@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
-**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs and validation recorded in section 8.11.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11 and the Milestone 3 declarative effect settings in section 8.12.
 
 ## Executive summary
 
@@ -1335,3 +1335,46 @@ auto frame = device->render(256, 256, {command});
 - Strict C++11 and C++14 probes passed with `-Werror=deprecated-declarations`: grouped `RenderOptions` calls through `RenderDevice&` are warning-free in both builds, while intentional calls to deprecated positional/concrete APIs and the deprecated `OpenGLDevice` class produce the expected diagnostics. No warning-suppression pragmas were added.
 - ABI/source probes passed in both builds. Complete Clang record-layout comparisons found no removed or moved pre-existing member and no size change in `Drawable`, `Viewer`, `MultiViewer`, or `DrawCommand`. The const and non-const `Drawable::buffer_data()` symbols remain exported, C++14 aggregate initialization and protected mutable compatibility members still compile, and packed depth-range probes preserve the 616-byte command layout.
 - `git diff --check` passed.
+
+### 8.12 Milestone 3 implementation and validation
+
+Validation date: 2026-11-27.
+
+Status: complete with the documented backend limitations below. The final all-target builds succeeded, the new CPU and interactive regressions passed, and both complete serial CTest suites passed on the final tree.
+
+#### Declarative effect settings
+
+`easy3d/renderer/render_settings.h` adds the plain value types `ShadowSettings`, `AmbientOcclusionSettings`, `TransparencySettings`, and `RenderSettings`. Defaults match the existing native effects: a 1024 shadow map at 50 scene radii, darkness 0.6, hard shadows, AO radius ratio 0.045 with bias 0.005 and intensity 1, sorted transparency with four layers, disabled optional effects, and no explicit clipping planes.
+
+`validate_render_settings(settings)` rejects non-finite values, a shadow map size that is not a positive power of two or exceeds the host effect integer range, light distances below 1.1, values outside `[0,1]`, non-positive AO radius or negative bias, unknown transparency methods or zero layers, and invalid clipping halfspaces. The capability overload additionally rejects effects and transparency methods that a device does not advertise. Clipping planes are limited to two finite halfspaces with nonzero normals and are normalized by the host setters, so `clipping_planes()` exposes the same plane equations that command assembly uses.
+
+`Viewer` now provides `render_settings()` and `set_render_settings()` in both builds without adding data members or virtual functions. `set_clipping_planes()` updates the `clipping_planes` field instead of a separate backend-only configuration. `MultiViewer` inherits the API, and `OffScreen` re-exposes it through its protected compatibility surface. The default settings reproduce the pre-M3 ordinary frame; live frames and file snapshots apply presentation effects, while in-memory `capture()` remains the raw scene-command readback described in Milestone 4.
+
+#### Backend integration
+
+- Vulkan injects declarative shadows, AO, and EDL as command overlays through the existing shape factories. `Shadow`/`SoftShadow` are used only to compute light-space frame data; legacy `begin()`/`end()` registrations still supply the older compatibility overlay. Transparency method and layer count flow through `RenderDevice::render`/`present`, and one-time warnings report linked-list fragment drops.
+- OpenGL reuses the native shadow, AO, EDL, average-color, depth-peeling, and linked-list algorithms from a per-viewer sidecar cache. The sidecar stores only settings and effect objects, preserving the 2.8 `Viewer` layout. Plain sorted transparency uses the OpenGL `RenderDevice`; unsupported drawables fall back to native depth peeling with a warning. Per-pixel linked lists fall back to peeling below OpenGL 4.3.
+- Shared command assembly marks scene triangles transparent and applies their opacity when the settings transparency pass is enabled. The OpenGL adapter now applies the shared CPU polygon/line/point clip for non-analytic commands; analytic point/line styles remain explicitly rejected because their proxy shaders cannot use the CPU clip.
+- `Shadow` and `SoftShadow` now guard the optional virtual background drawable, so enabling the background without a rendered background plane no longer dereferences a null drawable.
+
+#### Deviations and limitations
+
+1. `TransparencySettings` adds an explicit `enabled` switch. Without it, configuring any unrelated effect would activate a transparency pass over every triangle drawable because `TrianglesDrawable::opacity()` defaults to 0.6 while ordinary opaque rendering has always ignored that value. The switch preserves the default frame and keeps the method/layers fields portable.
+2. OpenGL cannot compose its native effect framebuffers with the declarative transparency pass. When any shadow/AO/EDL setting is enabled, transparency settings are ignored with a warning; Vulkan composes all four transparency methods.
+3. OpenGL cannot compose AO with EDL. EDL takes precedence and the conflict is reported once; Vulkan retains the existing overlay order.
+4. OpenGL native effect, non-sorted transparency, and sorted-fallback paths apply only the process-wide `ClippingPlane`, not `RenderSettings::clipping_planes`, and warn when explicit settings planes are present. The portable OpenGL sorted/default paths and Vulkan apply the settings planes.
+5. OpenGL analytic sphere/surfel and cylinder/cone clipping is not implemented in the adapter. Plain points and lines, including clipped segment endpoints, are supported.
+6. Below OpenGL 4.3, linked-list transparency falls back to depth peeling. Sorted transparency falls back to native peeling for custom drawables, native AO textures, or adapter rejection. Both fallbacks are reported.
+7. In-memory `capture()` remains a raw scene-command frame in both builds. Settings shadows, AO, EDL, and selected native transparency methods are applied only to live frames and file snapshots; command-level transparent styling and clipping remain visible in capture. Presented capture parity is a Milestone 4 item.
+8. Legacy `Shadow`, `SoftShadow`, `AmbientOcclusion`, `EyeDomeLighting`, and transparency facades remain application-owned compatibility paths and emit precedence warnings where they conflict with settings. Their control-to-settings translation is deferred with the Python and tutorial migration.
+9. Vulkan reports dropped linked-list fragments through the device counter and a one-time warning. The native OpenGL linked-list facade does not expose an equivalent counter, so no OpenGL dropped-fragment diagnostic is claimed.
+
+#### Validation coverage
+
+- `render_settings_test` (`opengl.rendersettings` and `vulkan.rendersettings`) is a CPU-only contract test for defaults, copy independence, boundary values, every invalid range and representation, clipping normalization, and capability rejection.
+- `render_settings_test` under `tests/viewer` (`opengl.rendersettingseffects` and `vulkan.rendersettingseffects`) renders a neutral room scene and compares snapshots for default, hard shadow, soft shadow, scene shadow, AO, EDL, and all four transparency methods. Hard and soft shadows differ, virtual backgrounds are exercised, default settings reproduce the plain frame, and raw in-memory capture excludes presentation-only shadow effects. The clipping fixture verifies normalized plane exposure, triangle/plain-point/plain-line capture, and point picking on both backends.
+- The viewer fixture exercises triangle, plain-point, and plain-line clipping through command assembly on both backends; OpenGL analytic point/line clipping remains rejected as documented. Vulkan's existing `vulkan.clipping` test covers halfspaces, slabs, interpolation, source IDs, whole-primitive policy, analytic surfaces, MSAA, world transforms, and face picking.
+- The existing default-rendering, drawable, effect, picking, snapshot, and MultiViewer suites were rerun unchanged; default settings take the legacy/portable path and do not alter ordinary scene output.
+- The default, settings-clipping, and sorted-transparency snapshots are byte-identical between the OpenGL and Vulkan runs. Native hard/soft shadow, AO, EDL, average-color, peeling, and linked-list imagery use each backend's established algorithm and are validated by their difference from the plain frame, not by cross-backend pixel equality.
+- Final serial macOS results on the rebuilt tree: Vulkan 156/156 in 242.22 seconds and OpenGL 127/127 in 136.70 seconds, both with zero failures. The new settings tests passed on both backends, and targeted reruns preceded each complete suite.
+- No public class layout or virtual-table entry changed. The new API consists of value types, free validation functions, and non-virtual `Viewer` methods; the OpenGL host stores settings and effect caches privately. `git diff --check` passed.
