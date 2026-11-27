@@ -35,7 +35,6 @@
 
 namespace easy3d {
 
-    class FramebufferObject;
     class Drawable;
     namespace graphics { class RenderDevice; class DrawableRenderer; struct DrawCommand; }
 
@@ -73,7 +72,8 @@ namespace easy3d {
      *        evaluate point-region selection in a compute shader.
      *
      *      Native fallbacks remain for OpenGL operations outside the shared adapter's
-     *      current scope, such as analytic point impostors and clipped picking.
+     *      current scope, such as analytic point impostor picking under clipping; the
+     *      shared adapter already serves plain points and lines, including clipped ones.
      *
      *      Pickers are scene-independent tools: they take a borrowed Camera and a
      *      caller-supplied model or drawable, and own their offscreen resources.
@@ -158,6 +158,7 @@ namespace easy3d {
          *       Shared RenderDevice queries accept top-left framebuffer indices directly.
          * \throws std::invalid_argument if viewport or camera screen dimensions are not positive.
          * \throws std::out_of_range if the converted coordinate exceeds the integer range.
+         * TODO: this function name is strange after API unification (change it to window_to_device(...)?)
          */
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
@@ -171,19 +172,9 @@ namespace easy3d {
          * \brief Build a backend-neutral pick command for a drawable.
          */
         graphics::DrawCommand draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id);
-#ifndef EASY3D_HAS_VULKAN
-        /**
-         * \brief Prepare a frame buffer for legacy OpenGL picking fallbacks.
-         */
-        void setup_framebuffer(int width, int height);
-#endif
 
         // Borrowed camera; must outlive the picker (see constructor).
         const Camera *camera_;
-#ifndef EASY3D_HAS_VULKAN
-        // A picker owns its fallback framebuffer; GL framebuffer names are context-local.
-        std::unique_ptr<FramebufferObject> fbo_;
-#endif
 
     private:
         // Headless device used only for query passes; it owns no window or swapchain.

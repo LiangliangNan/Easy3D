@@ -43,17 +43,17 @@ namespace easy3d {
      *      the CPU.
      *
      *      A single pick rasterizes the visible point drawable into an offscreen
-     *      buffer whose color encodes the source vertex, then reads back only the
-     *      queried pixel. OpenGL draws point sprites with a dedicated selection
-     *      shader and uses glReadPixels; Vulkan samples the same drawable through
-     *      the backend RenderDevice.
+     *      target whose ID/depth pass encodes the source vertex, then reads back
+     *      only the queried pixel. Both backends run this through the shared
+     *      RenderDevice: OpenGL samples an ID framebuffer and Vulkan samples its
+     *      headless device. Analytic impostor picks under clipping keep the OpenGL
+     *      exact native selection pass.
      *
-     *      A region pick tests every point in parallel on the GPU. OpenGL uses a
-     *      vertex shader with transform feedback: each shader invocation owns one
-     *      32-bit word of the packed selection mask, so no atomics are needed.
-     *      Vulkan dispatches an equivalent compute shader. Positions are read
-     *      from rendering buffers when available; otherwise a source-slot snapshot
-     *      is used. Only the packed selection mask travels back to the CPU.
+     *      A region pick tests every point in parallel. OpenGL projects and tests
+     *      the point snapshot on the CPU, Vulkan evaluates the equivalent selection
+     *      in a compute shader. Positions are read from rendering buffers when
+     *      available; otherwise a source-slot snapshot is used. Only the packed
+     *      selection mask travels back to the CPU.
      *
      *      Both paths respect the camera frustum, the model/drawable transform,
      *      clipping planes, indexed drawables, and point impostors, and they report

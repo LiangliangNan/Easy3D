@@ -30,11 +30,6 @@
 #include <easy3d/renderer/drawable_renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
 
-#ifdef EASY3D_HAS_VULKAN
-#else
-#include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/opengl_error.h>
-#endif
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -54,11 +49,7 @@ namespace easy3d {
 
     graphics::RenderDevice& Picker::render_device() {
         if (!device_) {
-#ifdef EASY3D_HAS_VULKAN
-            device_ = graphics::create_vulkan_device();
-#else
-            device_ = graphics::create_opengl_device();
-#endif
+            device_ = graphics::create_device();
         }
         if (drawable_renderer_)
             drawable_renderer_->prune();
@@ -80,30 +71,6 @@ namespace easy3d {
         }
         return drawable_renderer_->command(drawable, id, *camera(), planes);
     }
-
-#ifndef EASY3D_HAS_VULKAN
-    void Picker::setup_framebuffer(int width, int height) {
-        // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
-        if (!fbo_) {
-            fbo_.reset(new FramebufferObject(width, height, 0));
-            fbo_->add_color_buffer();
-            fbo_->add_depth_buffer();
-            easy3d_debug_log_gl_error
-            easy3d_debug_log_frame_buffer_error
-
-#if 0 // for debugging only
-            fbo_->print_attachments();
-            fbo_->print_draw_buffers();
-            fbo_->print_read_buffer();
-#endif
-        }
-        fbo_->ensure_size(width, height);
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-    }
-
-
-#endif
 
     void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
         gl_x = transform::pixel_index(x, camera()->screen_width(), width);

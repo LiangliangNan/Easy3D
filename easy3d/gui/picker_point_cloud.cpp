@@ -118,12 +118,59 @@ namespace {
         const auto* renderer = model->renderer();
         if (!renderer || !renderer->is_visible())
             return PointCloud::Vertex();
-#ifdef EASY3D_HAS_VULKAN
-        // A single pick is a rendered pixel query: rasterize the point drawable
-        // with a source-vertex ID in the color target and sample that pixel.
         const auto drawable = vertices_drawable(renderer);
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
+#ifndef EASY3D_HAS_VULKAN
+        // The OpenGL adapter rejects analytic impostor draws that also carry clipping
+        // planes (a documented adapter limitation), so clipped impostor picks keep the
+        // exact native selection pass until the adapter supports analytic clipping.
+        const bool analytic = drawable->impostor_type() != PointsDrawable::PLAIN;
+        const bool clipped = ClippingPlane::instance()->is_enabled();
+        if (analytic && clipped) {
+            const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
+            auto* program = ShaderManager::get_program(name);
+            if (!program)
+                program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
+            if (!program)
+                throw std::runtime_error("point picking requires the selection shader '" + name + "'");
+            GLint viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            const int w = viewport[2], h = viewport[3];
+            if (w <= 0 || h <= 0)
+                return PointCloud::Vertex();
+            opengl::QueryState state;
+            state.prepare(w, h);
+            FramebufferObject target(w, h, 0);
+            if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) ||
+                !target.is_valid() || !target.bind())
+                return PointCloud::Vertex();
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glClearColor(1, 1, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glEnable(GL_PROGRAM_POINT_SIZE);
+            program->bind();
+            program->set_uniform("sphere", drawable->impostor_type() != PointsDrawable::PLAIN)
+                   ->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE)
+                   ->set_uniform("MV", camera()->model_view_matrix())
+                   ->set_uniform("PROJ", camera()->projection_matrix())
+                   ->set_uniform("MANIP", drawable->manipulated_matrix())
+                   ->set_uniform("point_size", drawable->point_size())
+                   ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivot_point()) * 0.5f)
+                   ->set_uniform("screen_width", w);
+            ClippingPlane::instance()->set_program(program);
+            drawable->gl_draw();
+            int gl_x, gl_y;
+            screen_to_opengl(x, y, gl_x, gl_y, w, h);
+            unsigned char rgba[4];
+            if (!target.read_color(rgba, gl_x, gl_y))
+                return PointCloud::Vertex();
+            const PointCloud::Vertex picked(color::encode(rgba[0], rgba[1], rgba[2], rgba[3]));
+            return model->is_valid(picked) && !model->is_deleted(picked) ? picked : PointCloud::Vertex();
+        }
+#endif
+        // A single pick is a rendered pixel query: rasterize the point drawable
+        // with a source-vertex ID in the color target and sample that pixel.
         const auto command = draw_command(drawable, 0);
         const auto hit = render_device().sample_pixel(width, height, {command}, x, y).id;
         const auto& ids = command.geometry->point_data()->source_ids();
@@ -131,74 +178,6 @@ namespace {
             return PointCloud::Vertex();
         const PointCloud::Vertex vertex(ids[hit.primitive]);
         return model->is_deleted(vertex) ? PointCloud::Vertex() : vertex;
-#else
-        const auto drawable = vertices_drawable(renderer);
-        if (!drawable || !drawable->is_visible())
-            return PointCloud::Vertex();
-        if (drawable->impostor_type() == PointsDrawable::PLAIN && supports_point_data_command(*drawable) &&
-            !ClippingPlane::instance()->is_enabled()) {
-            GLint viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            if (viewport[2] <= 0 || viewport[3] <= 0)
-                return PointCloud::Vertex();
-            auto command = draw_command(drawable, 0);
-            command.point_size *= float(viewport[2]) / float(camera()->screen_width());
-            const auto px = transform::pixel_index(x, camera()->screen_width(), viewport[2]);
-            const auto py = transform::pixel_index(y, camera()->screen_height(), viewport[3]);
-            const auto hit = render_device().sample_pixel(uint32_t(viewport[2]), uint32_t(viewport[3]),
-                                                          {command}, uint32_t(px), uint32_t(py)).id;
-            const auto &ids = command.geometry->point_data()->source_ids();
-            if (hit.object != 0 || hit.primitive >= ids.size() || ids[hit.primitive] >= model->points().size())
-                return PointCloud::Vertex();
-            const PointCloud::Vertex vertex(ids[hit.primitive]);
-            return model->is_deleted(vertex) ? PointCloud::Vertex() : vertex;
-        }
-
-        // The selection shader draws every point as a small sphere (or a plain
-        // square) whose color is the encoded source vertex ID. The depth buffer
-        // makes the nearest point win, exactly like the visible rendering.
-        const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
-        auto* program = ShaderManager::get_program(name);
-        if (!program)
-            program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
-        if (!program)
-            throw std::runtime_error("point picking requires the selection shader '" + name + "'");
-
-        GLint viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        const int w = viewport[2], h = viewport[3];
-        if (w <= 0 || h <= 0)
-            return PointCloud::Vertex();
-        opengl::QueryState state;
-        state.prepare(w, h);
-        setup_framebuffer(w, h);
-        if (!fbo_->bind())
-            return PointCloud::Vertex();
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glClearColor(1, 1, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_PROGRAM_POINT_SIZE);
-
-        program->bind();
-        program->set_uniform("sphere", drawable->impostor_type() != PointsDrawable::PLAIN)
-               ->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE)
-               ->set_uniform("MV", camera()->model_view_matrix())
-               ->set_uniform("PROJ", camera()->projection_matrix())
-               ->set_uniform("MANIP", drawable->manipulated_matrix())
-               ->set_uniform("point_size", drawable->point_size())
-               ->set_uniform("sphere_radius", drawable->point_size() * camera()->world_pixel_ratio(camera()->pivot_point()) * 0.5f)
-               ->set_uniform("screen_width", w);
-        ClippingPlane::instance()->set_program(program);
-        drawable->gl_draw();
-
-        int gl_x, gl_y;
-        screen_to_opengl(x, y, gl_x, gl_y, w, h);
-        unsigned char rgba[4];
-        if (!fbo_->read_color(rgba, gl_x, gl_y))
-            return PointCloud::Vertex();
-        const PointCloud::Vertex vertex(color::encode(rgba[0], rgba[1], rgba[2], rgba[3]));
-        return model->is_valid(vertex) && !model->is_deleted(vertex) ? vertex : PointCloud::Vertex();
-#endif
     }
 
     void PointCloudPicker::pick_vertices(PointCloud* model, const Rect& rect, bool deselect) {
@@ -262,99 +241,4 @@ namespace {
         }
         LOG(INFO) << "current selection: " << count << " points";
     }
-
-#if 0 // Do NOT delete!!!
-    // Archived CPU implementations of the region-selection overloads above. They
-    // projected every point on the CPU and are kept here only for reference. The
-    // shared RenderDevice selection path produces the same through-selection on both
-    // backends (GPU on Vulkan, CPU-backed point snapshots on OpenGL).
-    void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
-        const int win_width = camera()->screen_width(), win_height = camera()->screen_height();
-        if (!model || win_width < 2 || win_height < 2)
-            return;
-
-        float xmin = rect.left() / static_cast<float>(win_width - 1);
-        float ymin = 1.0f - rect.top() / static_cast<float>(win_height - 1);
-        float xmax = rect.right() / static_cast<float>(win_width - 1);
-        float ymax = 1.0f - rect.bottom() / static_cast<float>(win_height - 1);
-        if (xmin > xmax) std::swap(xmin, xmax);
-        if (ymin > ymax) std::swap(ymin, ymax);
-
-        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->model_view_projection_matrix() * MANIP;
-
-        auto &select = model->vertex_property<bool>("v:select").vector();
-
-        for (auto vertex : model->vertices()) {
-            const auto i = vertex.idx();
-            const vec3 &p = points[i];
-            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
-            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
-            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
-            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
-            x /= w;
-            y /= w;
-            x = 0.5f * x + 0.5f;
-            y = 0.5f * y + 0.5f;
-
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax)
-                select[i] = !deselect;
-        }
-
-        auto count = std::count(select.begin(), select.end(), true);
-        LOG(INFO) << "current selection: " << count << " points";
-    }
-
-
-    void PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        const int win_width = camera()->screen_width(), win_height = camera()->screen_height();
-        if (!model || plg.size() < 3 || win_width < 2 || win_height < 2)
-            return;
-
-        std::vector<vec2> region; // the transformed selection region
-        for (std::size_t i = 0; i < plg.size(); ++i) {
-            const vec2 &p = plg[i];
-            const float x = p.x / static_cast<float>(win_width - 1);
-            const float y = 1.0f - p.y / static_cast<float>(win_height - 1);
-            region.emplace_back(vec2(x, y));
-        }
-
-        const Box2& box = plg.bbox();
-        float xmin = box.min_point().x / static_cast<float>(win_width - 1);
-        float ymin = 1.0f - box.min_point().y / static_cast<float>(win_height - 1);
-        float xmax = box.max_point().x / static_cast<float>(win_width - 1);
-        float ymax = 1.0f - box.max_point().y / static_cast<float>(win_height - 1);
-        if (xmin > xmax) std::swap(xmin, xmax);
-        if (ymin > ymax) std::swap(ymin, ymax);
-
-        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->model_view_projection_matrix() * MANIP;
-
-        auto& select = model->vertex_property<bool>("v:select").vector();
-
-        for (auto vertex : model->vertices()) {
-            const auto i = vertex.idx();
-            const vec3 &p = points[i];
-            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
-            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
-            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
-            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
-            x /= w;
-            y /= w;
-            x = 0.5f * x + 0.5f;
-            y = 0.5f * y + 0.5f;
-
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
-                if (geom::point_in_polygon(vec2(x, y), region))
-                    select[i] = !deselect;
-            }
-        }
-
-        auto count = std::count(select.begin(), select.end(), true);
-        LOG(INFO) << "current selection: " << count << " points";
-    }
-#endif
-
 }

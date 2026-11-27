@@ -232,10 +232,10 @@ namespace easy3d {
         std::vector<SurfaceMesh::Face> pick_visible_faces(SurfaceMesh *model, const Polygon2 &polygon);
 
     private:
-        unsigned int hit_resolution_;     // in pixels
-        SurfaceMesh::Face picked_face_;
+        unsigned int hit_resolution_;         // in logical screen units
+        SurfaceMesh::Face picked_face_;       // stores the face-picking result
         SurfaceMesh* picked_model_ = nullptr; // borrowed, same lifetime contract as method arguments
-        vec3 picked_point_ = vec3(0);         // visible surface point of the last pick
+        vec3 picked_point_ = vec3(0);       // visible surface point of the last pick
         int picked_x_ = -1, picked_y_ = -1;   // screen position of the last pick
     };
 

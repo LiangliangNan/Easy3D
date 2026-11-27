@@ -29,23 +29,14 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/util/logging.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <stdexcept>
 #include <utility>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/render_device.h>
-#else
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/backends/opengl/query_state.h>
-#endif
 
 namespace easy3d {
 namespace {
@@ -143,9 +134,7 @@ SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh* model,int x,int y) {
     if(!model || x<0 || y<0 || x>=camera()->screen_width() || y>=camera()->screen_height()) return picked_face_;
     const auto drawable=face_drawable(model);
     if(!drawable || !drawable->is_visible()) return picked_face_;
-#ifdef EASY3D_HAS_VULKAN
     if(!drawable->has_cpu_buffers()) return picked_face_;
-#endif
     picked_face_=pick_face_impl(model,drawable,x,y);
     if(picked_face_.is_valid()) {
         picked_model_=model;
@@ -239,11 +228,11 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces_CPU(SurfaceMesh* mo
     }
     return result;
 }
-#ifdef EASY3D_HAS_VULKAN
+
 std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh* model,const Polygon2& polygon) {
     std::vector<SurfaceMesh::Face> result;
     const auto drawable=face_drawable(model);
-    if(!drawable || !drawable->is_visible() || !drawable->has_cpu_buffers()) return result;
+    if(!drawable || !drawable->is_visible()) return result;
     const int width=camera()->screen_width(),height=camera()->screen_height();
     if(width<=0 || height<=0) return result;
     // Only the region's bounding rectangle is read back; pixels outside the polygon
@@ -277,124 +266,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
     }
     return faces_from_primitives(model,std::move(primitives));
 }
-#else
-std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh* model,const Polygon2& polygon) {
-    std::vector<SurfaceMesh::Face> result;
-    const auto drawable=face_drawable(model);
-    if(!drawable || !drawable->is_visible()) return result;
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT,viewport);
-    const int width=viewport[2],height=viewport[3];
-    if(width<=0 || height<=0) return result;
-    // The region lives in logical screen units; the bounding rectangle maps to
-    // framebuffer rows, where the bottom-left row is what glReadPixels starts at.
-    const auto bounds=polygon.bbox();
-    const vec2 bmin=bounds.min_point(),bmax=bounds.max_point();
-    int gx0,gy0,gx1,gy1;
-    screen_to_opengl(int(std::floor(bmin.x)),int(std::floor(bmin.y)),gx0,gy0,width,height);
-    screen_to_opengl(int(std::ceil(bmax.x)),int(std::ceil(bmax.y)),gx1,gy1,width,height);
-    const int left=std::max(0,std::min(width-1,std::min(gx0,gx1)));
-    const int right=std::max(0,std::min(width-1,std::max(gx0,gx1)));
-    // Larger top-left y values are lower framebuffer rows.
-    const int bottom=std::max(0,std::min(height-1,std::min(gy0,gy1)));
-    const int top=std::max(0,std::min(height-1,std::max(gy0,gy1)));
-    const int region_width=right-left+1,region_height=top-bottom+1;
-    const std::string name="selection/selection_single_primitive";
-    auto* program=ShaderManager::get_program(name);
-    if(!program)
-        program=ShaderManager::create_program_from_files(name,{{ShaderProgram::POSITION,"vtx_position"}});
-    if(!program)
-        throw std::runtime_error("surface picking requires the selection shader '"+name+"'");
-    opengl::QueryState state;
-    state.prepare(width,height);
-    setup_framebuffer(width,height);
-    if(!fbo_->bind()) return result;
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-    glClearColor(1,1,1,1);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    program->bind();
-    const mat4 MANIP=drawable->manipulated_matrix();
-    program->set_uniform("MANIP",MANIP)
-           ->set_uniform("MVP_MANIP",camera()->model_view_projection_matrix()*MANIP);
-    ClippingPlane::instance()->set_program(program);
-    ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
-    drawable->gl_draw();
-    program->release();
-    fbo_->activate_read_buffer(0);
-    std::vector<unsigned char> pixels(std::size_t(region_width)*region_height*4);
-    glReadPixels(left,bottom,region_width,region_height,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
-    fbo_->release();
-    std::vector<std::uint32_t> primitives;
-    primitives.reserve(pixels.size()/4);
-    std::vector<float> crossings;
-    std::vector<std::pair<float,float>> spans;
-    for(int row=0;row<region_height;++row) {
-        const float y=transform::scale_coordinate(float(height-(bottom+row))-.5f,height,camera()->screen_height());
-        row_spans(polygon,y,crossings,spans);
-        for(int col=0;col<region_width;++col) {
-            const unsigned char* c=&pixels[(std::size_t(row)*region_width+col)*4];
-            // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
-            const int id=color::encode(c[0],c[1],c[2],c[3]);
-            if(id<0) continue;
-            const float x=transform::scale_coordinate(float(left+col)+.5f,width,camera()->screen_width());
-            if(!in_spans(spans,x)) continue;
-            primitives.push_back(std::uint32_t(id));
-        }
-    }
-    return faces_from_primitives(model,std::move(primitives));
-}
-#endif
-#ifndef EASY3D_HAS_VULKAN
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
-            const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
-        if(!drawable || !drawable->is_visible()) return SurfaceMesh::Face();
-        GLint viewport[4];
-        glGetIntegerv(GL_VIEWPORT,viewport);
-        const int width=viewport[2],height=viewport[3];
-        if(width<=0 || height<=0) return SurfaceMesh::Face();
-        // Outside-in rendering test: draw only the faces, but write triangle IDs
-        // instead of colors. The depth test keeps the nearest triangle per pixel;
-        // reading one pixel tells us which face the cursor sees. Clipping is applied
-        // by the same shader, so invisible faces can never win the depth test.
-        const std::string name="selection/selection_single_primitive";
-        auto* program=ShaderManager::get_program(name);
-        if(!program)
-            program=ShaderManager::create_program_from_files(name,{{ShaderProgram::POSITION,"vtx_position"}});
-        if(!program)
-            throw std::runtime_error("surface picking requires the selection shader '"+name+"'");
-        opengl::QueryState state;
-        state.prepare(width,height);
-        setup_framebuffer(width,height);
-        if(!fbo_->bind()) return SurfaceMesh::Face();
-        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-        glClearColor(1,1,1,1);
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        program->bind();
-        const mat4 MANIP=drawable->manipulated_matrix();
-        program->set_uniform("MANIP",MANIP)
-               ->set_uniform("MVP_MANIP",camera()->model_view_projection_matrix()*MANIP);
-        ClippingPlane::instance()->set_program(program);
-        ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
-        drawable->gl_draw();
-        program->release();
-        int gl_x,gl_y;
-        screen_to_opengl(x,y,gl_x,gl_y,width,height);
-        unsigned char c[4]={255,255,255,255};
-        float depth=1;
-        const bool color_ok=fbo_->read_color(c,gl_x,gl_y);
-        const bool depth_ok=fbo_->read_depth(depth,gl_x,gl_y);
-        fbo_->release();
-        if(!color_ok || !depth_ok || depth<0 || depth>=1) return SurfaceMesh::Face();
-        // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
-        const int id=color::encode(c[0],c[1],c[2],c[3]);
-        if(id<0) return SurfaceMesh::Face();
-        const SurfaceMesh::Face face=face_from_primitive(model,std::uint32_t(id));
-        if(face.is_valid()) picked_point_=camera()->unprojected_coordinates_of(vec3(
-            float(transform::scale_coordinate(gl_x+.5, width, camera()->screen_width())),
-            float(transform::scale_coordinate(height-gl_y-.5, height, camera()->screen_height())), depth));
-        return face;
-    }
-#else
+
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
             const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
         if(!drawable || !drawable->has_cpu_buffers()) return SurfaceMesh::Face();
@@ -405,7 +277,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
         const graphics::DrawCommand command=draw_command(drawable,0);
         const auto sample=render_device().sample_pixel(std::uint32_t(width),std::uint32_t(height),
                                                        {command},std::uint32_t(x),std::uint32_t(y));
-        // Word 0 is this drawable; a background pixel keeps the cleared object ID.
+        // Object ID 0 selects this drawable; a background pixel keeps the cleared object ID.
         if(sample.id.object!=0 || sample.depth>=1) return SurfaceMesh::Face();
         const std::uint32_t primitive=sample.id.primitive;
         SurfaceMesh::Face face;
@@ -420,5 +292,4 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_visible_faces(SurfaceMesh
         if(face.is_valid()) picked_point_=camera()->unprojected_coordinates_of(vec3(x+.5f,y+.5f,sample.depth));
         return face;
     }
-#endif
 } // namespace easy3d

@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
-**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, and the Milestone 4 host unification in section 8.13.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, the Milestone 4 host unification in section 8.13, and the Milestone 5 picking unification in section 8.14.
 
 ## Executive summary
 
@@ -1417,3 +1417,32 @@ The existing `tests/viewer/multi_viewer_test.cpp` (`opengl.multiview` / `vulkan.
 - `opengl.multiview` and `vulkan.multiview` run the grid-aware parity test on both backends; both pass.
 - Final post-audit complete serial macOS runs passed OpenGL 127/127 in 136.70 seconds and Vulkan 156/156 in 242.22 seconds, both with zero failures.
 - No public class layout or virtual-table entry changed beyond the new virtual `cleanup()` and virtual `draw_commands()`. `git diff --check` passed.
+
+### 8.14 Milestone 5 implementation and validation
+
+Validation date: 2026-11-27.
+
+Status: complete with the documented backend limitation below. The final all-target builds succeeded, and both complete serial CTest suites passed on the final tree.
+
+#### User-facing API
+
+Picking now routes through the shared `RenderDevice` contract on both backends, with the remaining exact fallbacks confined to documented adapter limits.
+
+- `Picker` creates its headless query device through the backend-neutral `graphics::create_device()`; no backend factory remains in picker code.
+- `Picker::draw_command` assembles backend-neutral draw commands, including the clipping planes reported by `ClippingPlane`, for the sampled drawable.
+- `ModelPicker::pick` assembles one command per visible candidate drawable and samples the nearest object ID through the shared pass; the private color-coded native `draw` fallback is removed.
+- `SurfaceMeshPicker` face and region picks sample the shared ID/depth pass; vertex picks resolve the closest source vertex of the picked face through the same sampled depth. The private framebuffer-based fallback is removed.
+- `PointCloudPicker` single picks sample the shared point-data command for drawable states it covers (plain points and impostor picks without clipping); region selection uses the shared selection request with clipping planes and model transforms folded into it. The private framebuffer-based fallback is removed; the only retained exact pass is the OpenGL analytic-impostor clipping fallback described below.
+
+Picker-owned framebuffers (`Picker::fbo_` and `Picker::setup_framebuffer`) are retired; any retained fallback creates its context-local framebuffer on demand.
+
+#### Exact fallbacks retained
+
+1. OpenGL analytic impostor (sphere/surfel) picking with an active clipping plane retains the exact native selection pass (`selection/selection_pointcloud_single_point_as_sphere_sprite` with `ClippingPlane` uniforms and depth-tested readback). The OpenGL adapter rejects analytic draws that also carry clipping planes, which is the documented Milestone 3 deviation; the retained fallback keeps clipped impostor picks correct until the adapter grows analytic clipping support. Plain points and lines under clipping already use the shared clip path and no longer need a fallback.
+2. `Viewer::pick` and `Viewer::read_scene_depth` retain the exact native drawable pass for scenes the shared query cannot serve (analytic impostors with clipping and unsupported effects).
+
+#### Validation coverage
+
+- `gui.scenepicker` passes on both backends and covers model, pixel, point, and region picks; hidden models and drawables; out-of-bounds picks; translucent, plain, and AO point picks; indexed point picks; manipulator transforms; and clipping for plain points and analytic impostors.
+- Final post-edit complete serial runs passed OpenGL 127/127 in 108.83 seconds and Vulkan 156/156 in 224.96 seconds, both with zero failures, after the final picker unification edits; the focused `gui.scenepicker` regression passed before the complete suites.
+- No public class layout or virtual-table entry changed in this milestone beyond the already documented Milestone 4 entries. `git diff --check` passed.

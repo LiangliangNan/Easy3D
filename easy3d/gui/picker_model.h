@@ -74,21 +74,6 @@ namespace easy3d {
          */
         Model *pick(const std::vector< std::shared_ptr<Model> >& models, int x, int y);
 
-#ifndef EASY3D_HAS_VULKAN
-    private:
-        /**
-         * \brief Render each model of the scene with a unique color.
-         * \param models The models to render.
-         */
-        void draw(const std::vector< std::shared_ptr<Model> >& models);
-        /**
-         * \brief Render the drawable with color.
-         * \param drawable The drawable to render.
-         * \param color The color to use for rendering.
-         */
-        void draw(Drawable *drawable, const vec4 &color);
-
-#endif
     };
 
 

@@ -43,11 +43,11 @@
     - [x] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping.
     - [x] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
 
-  - [ ] Milestone 5 — Unify picking and remaining exact fallbacks
-    - [ ] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms.
-    - [ ] Preserve CPU/geometric selection helpers where deliberately backend-independent, but remove rendered native fallbacks once shared query behavior is equivalent.
-    - [ ] Retire picker-owned framebuffers and native picking shaders after visible-surface, occlusion, boundary, hidden-object, and empty-region tests pass on both backends.
-    - [ ] Search for `EASY3D_HAS_VULKAN` branches in public headers and migrate client-visible branches to capabilities or common options; retain only private adapter/build implementation branches.
+  - [x] Milestone 5 — Unify picking and remaining exact fallbacks
+    - [x] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms.
+    - [x] Preserve CPU/geometric selection helpers where deliberately backend-independent, but remove rendered native fallbacks once shared query behavior is equivalent.
+    - [x] Retire picker-owned framebuffers and native picking shaders after visible-surface, occlusion, boundary, hidden-object, and empty-region tests pass on both backends.
+    - [x] Search for `EASY3D_HAS_VULKAN` branches in public headers and migrate client-visible branches to capabilities or common options; retain only private adapter/build implementation branches.
 
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
     - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.

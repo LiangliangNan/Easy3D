@@ -27,12 +27,7 @@
 
 #include <easy3d/gui/picker_model.h>
 
-#ifdef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/render_device.h>
-#else
-#include <easy3d/renderer/backends/opengl/query_state.h>
-#include <easy3d/renderer/framebuffer_object.h>
-#endif
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -50,7 +45,6 @@ namespace easy3d {
         const int width = camera()->screen_width(), height = camera()->screen_height();
         if (models.empty() || x < 0 || y < 0 || x >= width || y >= height)
             return nullptr;
-#ifdef EASY3D_HAS_VULKAN
         if (models.size() >= UINT32_MAX)
             throw std::length_error("too many models for picking");
         std::vector<graphics::DrawCommand> commands;
@@ -70,81 +64,6 @@ namespace easy3d {
             return nullptr;
         const auto id = render_device().sample_pixel(width, height, commands, x, y).id.object;
         return id < models.size() ? models[id].get() : nullptr;
-#else
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        const int framebuffer_width = viewport[2];
-        const int framebuffer_height = viewport[3];
-        if (framebuffer_width <= 0 || framebuffer_height <= 0)
-            return nullptr;
-        opengl::QueryState state;
-        state.prepare(framebuffer_width, framebuffer_height);
-        setup_framebuffer(framebuffer_width, framebuffer_height);
-        if (!fbo_->bind())
-            return nullptr;
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glClearColor(1, 1, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        draw(models);
-
-        int gl_x, gl_y;
-        screen_to_opengl(x, y, gl_x, gl_y, framebuffer_width, framebuffer_height);
-        unsigned char rgba[4];
-        if (!fbo_->read_color(rgba, gl_x, gl_y))
-            return nullptr;
-        const int id = color::encode(rgba[0], rgba[1], rgba[2], rgba[3]);
-        return id >= 0 && size_t(id) < models.size() ? models[id].get() : nullptr;
-#endif
     }
-
-#ifndef EASY3D_HAS_VULKAN
-    // draw the scene
-    void ModelPicker::draw(const std::vector< std::shared_ptr<Model> > &models) {
-        for (std::size_t i = 0; i < models.size(); ++i) {
-            const auto* renderer = models[i] ? models[i]->renderer() : nullptr;
-            if (!renderer || !renderer->is_visible())
-                continue;
-
-            // the color used to render this model
-            int r, g, b, a;
-            color::decode(static_cast<int>(i), r, g, b, a);
-            const vec4 color(static_cast<float>(r) / 255.0f, static_cast<float>(g) / 255.0f, static_cast<float>(b) / 255.0f, static_cast<float>(a) / 255.0f);
-
-            for (auto d : renderer->triangles_drawables()) {
-                if (d->is_visible())    draw(d.get(), color);
-            }
-            for (auto d : renderer->lines_drawables()) {
-                if (d->is_visible())    draw(d.get(), color);
-            }
-            for (auto d : renderer->points_drawables()) {
-                if (d->is_visible())    draw(d.get(), color);
-            }
-        }
-    }
-
-
-    // draw a drawable
-    void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
-        if (dynamic_cast<const LinesDrawable2D*>(drawable))
-            return;
-        const State original = drawable->state();
-        const std::vector<float> original_mask = drawable->highlight_mask();
-        drawable->set_lighting(false);
-        drawable->set_selected(false);
-        drawable->update_highlight_mask({});
-        drawable->set_uniform_coloring(color);
-
-        try {
-            drawable->draw(camera());
-        } catch (...) {
-            drawable->update_highlight_mask(original_mask);
-            drawable->set_state(original);
-            throw;
-        }
-        drawable->update_highlight_mask(original_mask);
-        drawable->set_state(original);
-    }
-
-#endif
 
 }
