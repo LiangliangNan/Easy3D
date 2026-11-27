@@ -34,6 +34,7 @@
 #       Easy3D_INCLUDE_DIRS         - Easy3D include directories
 #       Easy3D_LIBRARY_DIRS         - Link directories for Easy3D libraries.
 #       Easy3D_AVAILABLE_COMPONENTS - All available (but may not be requested) Easy3D components.
+#       Easy3D_BACKEND_COMPONENTS   - Backend components accepted by find_package: ``OpenGL`` or ``Vulkan``.
 #       Easy3D_<component>_FOUND    - True if ``<component>`` was found (``<component>`` name is lower-case).
 #       Easy3D_VERSION_STRING       - Easy3D version number in ``X.Y.Z`` format.
 #       Easy3D_VERSION              - Easy3D version number in ``X.Y.Z`` format (same as ``Easy3D_VERSION_STRING``)
@@ -65,6 +66,8 @@ if (Easy3D_ENABLE_VULKAN)
 else ()
     set(Easy3D_BACKEND "OpenGL")
 endif ()
+set(Easy3D_BACKEND_COMPONENTS opengl vulkan)
+string(TOLOWER "${Easy3D_BACKEND}" Easy3D_BACKEND_COMPONENT)
 if (Easy3D_REQUIRE_BACKEND AND NOT "${Easy3D_REQUIRE_BACKEND}" STREQUAL "${Easy3D_BACKEND}")
     message(FATAL_ERROR "Easy3D was built with the ${Easy3D_BACKEND} backend, but this project requires "
                         "${Easy3D_REQUIRE_BACKEND}. Use an Easy3D built with your required backend.")
@@ -84,7 +87,15 @@ foreach(component ${Easy3D_FIND_COMPONENTS})
         string(REPLACE "easy3d_" "" component ${component})
     endif ()
 
-    if (component IN_LIST Easy3D_AVAILABLE_COMPONENTS)
+    if (component IN_LIST Easy3D_BACKEND_COMPONENTS)
+        if (component STREQUAL Easy3D_BACKEND_COMPONENT)
+            list(APPEND found_components ${component})
+            set(Easy3D_${component}_FOUND TRUE)
+        else ()
+            list(APPEND missing_components ${component})
+            set(Easy3D_${component}_FOUND FALSE)
+        endif ()
+    elseif (component IN_LIST Easy3D_AVAILABLE_COMPONENTS)
         list(APPEND found_components ${component})
         set(Easy3D_${component}_FOUND TRUE)
     else ()
@@ -97,12 +108,14 @@ set(LIB_TYPE @Easy3D_LIB_TYPE@)
 string(TOLOWER "${LIB_TYPE} libraries" lib_type)
 if (Easy3D_FIND_COMPONENTS) # user tries to find components
     set(components_to_link ${found_components})
+    list(REMOVE_ITEM components_to_link ${Easy3D_BACKEND_COMPONENTS})
     if (missing_components)
-        message(WARNING "Not all requested Easy3D components have been found.\n"
-                        "Found components (${lib_type}): ${found_components}\n"
-                        "Missing components: ${missing_components}\n"
-                        "Make sure all components have been built and their names are correctly specified. "
-                        "The available Easy3D components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}\n")
+        set(_easy3d_missing_message "Not all requested Easy3D components have been found.\nFound components: ${found_components}\nMissing components: ${missing_components}\nEasy3D_BACKEND: ${Easy3D_BACKEND}\nThe available Easy3D components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}\nThe available Easy3D backend components: ${Easy3D_BACKEND_COMPONENTS}\n")
+        if (Easy3D_FIND_REQUIRED)
+            message(FATAL_ERROR "${_easy3d_missing_message}")
+        else ()
+            message(WARNING "${_easy3d_missing_message}")
+        endif ()
     elseif (found_components)
         set(Easy3D_FOUND TRUE)
         message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Found components (${lib_type}): ${found_components}")
