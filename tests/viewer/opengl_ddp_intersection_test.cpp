@@ -8,11 +8,12 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <cmath>
 using namespace easy3d;
 namespace {
 void require(bool ok, const char* text) { if (!ok) throw std::runtime_error(text); }
@@ -23,6 +24,7 @@ struct PeelViewer : Viewer {
     void enable() { peeling_ = new DualDepthPeeling(camera()); }
     mutable int draws = 0;
     bool peel = false;
+    bool reverse = false;
     void draw() const override {
         ++draws;
         if (peel && peeling_) {
@@ -30,6 +32,8 @@ struct PeelViewer : Viewer {
             for (auto& m : models_)
                 for (auto& d : m->renderer()->triangles_drawables())
                     surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d.get()));
+            if (reverse)
+                std::reverse(surfaces.begin(), surfaces.end());
             peeling_->draw(surfaces);
             return;
         }
@@ -78,7 +82,7 @@ int main() {
         PeelViewer v("DDP intersection seam", window_options(640, 480, 1, false, false, true));
         v.enable();
         
-        // Two intersecting boxes: one axis-aligned, one rotated 45 degrees
+        // Two intersecting boxes with different extents and centers.
         auto mesh1 = std::make_shared<SurfaceMesh>();
         add_cube(*mesh1, vec3(0, 0, 0), 1.0f);
         require(v.add_model(mesh1), "scene missing");
@@ -113,15 +117,40 @@ int main() {
         int fw = 0, fh = 0; v.framebuffer_size(fw, fh);
         require(fw > 0 && fh > 0, "test window has no framebuffer");
         
-        // Snapshot with DDP
+        // Snapshot with DDP and require a lit, seam-free result.
         v.peel = true;
         require(v.snapshot("opengl-ddp-intersection.png", 1, 1, 1), "DDP snapshot failed");
         const auto img = read("opengl-ddp-intersection.png", fw, fh);
-        
-        std::cout << "Image size: " << fw << "x" << fh << "\n";
-        std::cout << "Black pixels: " << black_pixels(img) << "\n";
-        std::cout << "Snapshot saved to opengl-ddp-intersection.png\n";
-        
+        const size_t frame = size_t(fw) * size_t(fh);
+        size_t colored = 0;
+        for (size_t i = 0; i + 3 < img.size(); i += 4)
+            if (std::max({img[i], img[i+1], img[i+2]}) -
+                std::min({img[i], img[i+1], img[i+2]}) > 16)
+                ++colored;
+        require(colored > frame / 20, "DDP rendered no colored transparent surfaces");
+        require(black_pixels(img) < frame / 200, "DDP produced black intersection seams");
+
+        // Geometry submission order must not affect the peeled result.
+        v.reverse = true;
+        require(v.snapshot("opengl-ddp-intersection-reversed.png", 1, 1, 1), "reversed DDP snapshot failed");
+        const auto reversed = read("opengl-ddp-intersection-reversed.png", fw, fh);
+        require(reversed == img, "DDP changed when transparent draw order was reversed");
+
+        // The layer bound must retain the nearest fragments, and the historical
+        // zero value must resolve all tested layers rather than render nothing.
+        v.peeling_->set_max_peels(1);
+        require(v.snapshot("opengl-ddp-intersection-one.png", 1, 1, 1), "one-layer DDP snapshot failed");
+        const auto one = read("opengl-ddp-intersection-one.png", fw, fh);
+        v.peeling_->set_max_peels(2);
+        require(v.snapshot("opengl-ddp-intersection-two.png", 1, 1, 1), "two-layer DDP snapshot failed");
+        const auto two = read("opengl-ddp-intersection-two.png", fw, fh);
+        v.peeling_->set_max_peels(0);
+        require(v.snapshot("opengl-ddp-intersection-all.png", 1, 1, 1), "unbounded DDP snapshot failed");
+        const auto all = read("opengl-ddp-intersection-all.png", fw, fh);
+        require(one != two, "DDP ignored the peeling layer limit");
+        require(two != all, "zero-layer DDP did not peel the remaining fragments");
+
+        std::cout << "PASS: front-to-back DDP is seam-free, order independent, and honors layer bounds\n";
         v.peel = false;
         return 0;
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

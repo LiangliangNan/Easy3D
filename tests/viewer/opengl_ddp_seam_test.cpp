@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include <algorithm>
 #include <easy3d/viewer/viewer.h>
 #include <tests/viewer/test_window.h>   // window_options()
 #include <easy3d/renderer/dual_depth_peeling.h>
@@ -7,7 +8,9 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/image_io.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/resource.h>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -79,6 +82,15 @@ size_t black_pixels(const std::vector<unsigned char>& p) {
         if (p[i] < 8 && p[i+1] < 8 && p[i+2] < 8) ++n;
     return n;
 }
+size_t antialiased_silhouette_pixels(const std::vector<unsigned char>& p) {
+    size_t n = 0;
+    for (size_t i = 0; i + 3 < p.size(); i += 4) {
+        const int lo = std::min(p[i], std::min(p[i + 1], p[i + 2]));
+        const int hi = std::max(p[i], std::max(p[i + 1], p[i + 2]));
+        if (lo >= 245 && hi < 255 && hi - lo <= 1) ++n;
+    }
+    return n;
+}
 }
 
 int main() {
@@ -131,7 +143,39 @@ int main() {
         require(coverage > smooth_coverage / 2, "flat shading collapsed relative to smooth shading");
         v.peel = false;
 
-        std::cout << "PASS: flat-shaded dual depth peeling lights intersecting transparent cubes without black derivative-normal seams (#219)\n";
+        PeelViewer knot("DDP torus-knot silhouette", window_options(640, 480, 1, false, false, true));
+        knot.set_background_color(vec4(1.0f));
+        knot.enable();
+        auto torus = std::shared_ptr<SurfaceMesh>(SurfaceMeshIO::load(resource::directory() + "/data/torusknot.obj"));
+        require(torus != nullptr, "torus knot missing");
+        require(knot.add_model(torus), "torus knot scene missing");
+        auto* knot_faces = torus->renderer()->get_triangles_drawable("faces");
+        require(knot_faces, "torus knot has no faces drawable");
+        knot_faces->set_coloring_method(State::UNIFORM_COLOR);
+        knot_faces->set_color(vec4(0.7f, 0.7f, 0.7f, 1.0f));
+        knot_faces->set_opacity(0.5f);
+        knot_faces->set_lighting(true);
+        knot_faces->set_lighting_two_sides(true);
+        knot_faces->set_distinct_back_color(false);
+        knot_faces->set_smooth_shading(false);
+        knot.fit_screen();
+        Viewer::poll_events(); knot.draw_frame();
+        int kw = 0, kh = 0; knot.framebuffer_size(kw, kh);
+        require(kw > 0 && kh > 0, "torus knot window has no framebuffer");
+        knot.peel = true;
+        require(knot.snapshot("opengl-ddp-torus-flat.png", 1, 1, 1), "flat-shaded torus knot snapshot failed");
+        const auto torus_flat = read("opengl-ddp-torus-flat.png", kw, kh);
+        std::cout << "Torus flat black pixels: " << black_pixels(torus_flat) << '\n';
+
+        knot_faces->set_smooth_shading(true);
+        require(knot.snapshot("opengl-ddp-torus-smooth.png", 1, 1, 1), "smooth-shaded torus knot snapshot failed");
+        const auto torus_smooth = read("opengl-ddp-torus-smooth.png", kw, kh);
+        require(black_pixels(torus_smooth) < size_t(kw) * size_t(kh) / 200,
+                "torus knot peeling produced black silhouette pixels");
+        require(antialiased_silhouette_pixels(torus_smooth) > 32,
+                "torus knot peeling retained a single-sample silhouette");
+
+        std::cout << "PASS: flat-shaded dual depth peeling lights intersecting transparent cubes and antialiases silhouettes (#219)\n";
         return 0;
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

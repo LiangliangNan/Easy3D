@@ -35,7 +35,12 @@ out vec4 fragOutput;
 
 void main(void)
 {	
-	fragOutput = texture(TempTex, texCoord, 0);
+    // Resolve the 2x peel target before under-blending at output resolution.
+    ivec2 pixel = ivec2(gl_FragCoord.xy) * 2;
+    fragOutput = 0.25 * (texelFetch(TempTex, pixel, 0) +
+                        texelFetch(TempTex, pixel + ivec2(1, 0), 0) +
+                        texelFetch(TempTex, pixel + ivec2(0, 1), 0) +
+                        texelFetch(TempTex, pixel + ivec2(1, 1), 0));
 
 	// for occlusion query
 	if (fragOutput.a == 0) 

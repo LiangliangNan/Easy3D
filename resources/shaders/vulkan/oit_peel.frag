@@ -14,38 +14,29 @@ layout(location=3) flat in vec4 selection_tint;
 layout(location=4) in vec3 world_position;
 layout(location=5) in vec4 world_normal_out;
 layout(location=0) out vec4 out_color;
+layout(push_constant) uniform PushConstants {
+    mat4 mvp; vec4 color; uint object_id; uint lighting; float normal_matrix[9];
+    uint image_uv_flip; vec2 depth_range;
+} push;
 void main() {
     // Normalized lookup so the 1x1 sentinel image of the first layer clamps to
     // its single cleared texel (0.0) instead of reading out of bounds.
     vec2 previous_uv = gl_FragCoord.xy / vec2(textureSize(previous_depth, 0));
     float previous = texture(previous_depth, previous_uv).r;
-    // The same epsilon as the OpenGL peel shaders absorbs rasterization
-    // differences between passes of one surface.
-    // Liangliang: The dual depth peeling algorithm classifies fragments based on depth ranges with an epsilon
-    //      tolerance. At surface intersections, two transparent surfaces cross at similar depths. When both
-    //      surfaces fall within epsilon of the current peel layer, they're both classified as "front peel" and
-    //      both write to the front buffer. The GL_MAX blend state takes the maximum value, which produces incorrect
-    //      blending at the intersection boundary, creating the visible dark seam. This appears to be a fundamental
-    //      limitation of dual depth peeling at surface intersections. The algorithm assumes well-separated depth
-    //      layers, but intersections violate this assumption. To obtain perfect visual quality, use a different
-    //      transparency algorithm for intersections (e.g., per-pixel linked lists OIT), but that require significant
-    //      amount of effort.
-    //      In this implementation, I choose to use a smaller epsilon (e.g., 0.000001 instead of 0.00001). This reduces
-    //      false grouping but doesn't eliminate seams. Works well for surfaces that are slightly separated but less
-    //      effective for true intersections.
-    if (gl_FragCoord.z <= previous + 0.000001) discard;
-    // The written value is a no-op (gl_FragCoord.z is the depth the rasterizer
-    // produced), but the write itself is deliberate: it keeps the late depth test,
-    // so the rejection above happens before the depth write. The rejected
-    // fragments are nearer than the fragments that belong to this layer, so with
-    // early depth testing one of them could write its depth first and then hide
-    // the layer's own fragment, which would make the peeled layer depend on the
-    // fragment order. The OpenGL peel shader writes the same value.
-    gl_FragDepth = gl_FragCoord.z;
+    float depth = push.depth_range.y > push.depth_range.x
+                      ? push.depth_range.x + gl_FragCoord.z * (push.depth_range.y - push.depth_range.x)
+                      : push.depth_range.x;
+    if (depth <= previous) discard;
+    // Write the mapped command depth deliberately. Any fragment-shader depth write
+    // keeps late depth testing, so the previous-depth rejection and zero-alpha discard
+    // happen before a fragment can win the layer. Otherwise a rejected nearer fragment
+    // could hide this layer's own fragment and make the result depend on draw order.
     vec4 color = vertex_color * texture(image_texture, uv);
     if (material.shading.x != 0 && world_normal_out.w != 0)
         color = shade_material(color, world_normal_out.xyz, world_position, !gl_FrontFacing);
     color.rgb = mix(color.rgb, selection_tint.rgb, selection_tint.a);
     float alpha = clamp(color.a, 0.0, 1.0);
+    if (alpha == 0.0) discard;
+    gl_FragDepth = depth;
     out_color = vec4(color.rgb * alpha, alpha);
 }

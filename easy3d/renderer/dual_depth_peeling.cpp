@@ -27,10 +27,12 @@
 #include <easy3d/renderer/dual_depth_peeling.h>
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+// The Vulkan implementation routes through the portable frame renderer in the header.
 #else
 
 #include <algorithm>
+#include <memory>
+#include <utility>
 
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -44,10 +46,12 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/setting.h>
 
-//#define SAVE_INTERMEDIATE_FBO
-//#define SHOW_DEBUG_INFO
-
 namespace easy3d {
+
+    struct DualDepthPeeling::Resources {
+        std::unique_ptr<FramebufferObject> layers[2];
+        std::unique_ptr<FramebufferObject> accumulation;
+    };
 
     DualDepthPeeling::DualDepthPeeling(Camera* cam)
         : camera_(cam)
@@ -55,7 +59,7 @@ namespace easy3d {
         , height_(768)
         , max_peels_(4)
         , stage_(DDP_Inactive)
-        , fbo_(nullptr)
+        , resources_(nullptr)
         , front_source_(FrontA)
         , front_destination_(FrontB)
         , depth_source_(DepthA)
@@ -78,86 +82,65 @@ namespace easy3d {
 
 
     void DualDepthPeeling::clear() {
-        delete fbo_;
-        fbo_ = nullptr;
+        delete_occlusion_query_id();
+        delete resources_;
+        resources_ = nullptr;
     }
 
 
     void DualDepthPeeling::init(int w, int h)
-    {   
-        if (!fbo_) {
-            // Liangliang: multisampling causes artifacts on sharp edges.
-            //             So it is suggested to disable multisampling with DDP.
-            const int samples = 0;
-            fbo_ = new FramebufferObject(w, h, samples);
-            // Liangliang: must have the same order as in TextureName.
-            // The depth has to be treated like a color attachment, since it's a 2 component min-max texture.
-            fbo_->add_color_texture(GL_RG32F, GL_RG, GL_FLOAT);				// DepthA
-            fbo_->add_color_texture(GL_RG32F, GL_RG, GL_FLOAT);				// DepthB
-
-            fbo_->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);	// BackTemp
-            fbo_->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);	// Back
-            fbo_->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);	// FrontA
-            fbo_->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);	// FrontB
+    {
+        if (!resources_) {
+            resources_ = new Resources;
+            // Supersample only the peel layers; resolve into normal-resolution accumulation.
+            for (auto &layer : resources_->layers) {
+                layer.reset(new FramebufferObject(w * 2, h * 2, 0));
+                layer->add_color_texture(GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT, GL_NEAREST);
+                layer->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_NEAREST);
+            }
+            resources_->accumulation.reset(new FramebufferObject(w, h, 0));
+            resources_->accumulation->add_color_texture(GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT, GL_NEAREST);
         }
-        fbo_->ensure_size(w, h);
+        for (auto &layer : resources_->layers)
+            layer->ensure_size(w * 2, h * 2);
+        resources_->accumulation->ensure_size(w, h);
 
-        //////////////////////////////////////////////////////////////////////////
-
-        // store the background color that will be restored later
         glGetFloatv(GL_COLOR_CLEAR_VALUE, bkg_color_);
-
         init_occlusion_query();
 
+        front_source_ = FrontA;
+        front_destination_ = FrontB;
+        depth_source_ = DepthA;
+        depth_destination_ = DepthB;
         num_geom_passes_ = 0;
         current_peel_ = 0;
-
-    #ifdef SAVE_INTERMEDIATE_FBO
-        if (file_system::is_directory("snapshotBuffers")) {
-            std::vector<std::string> files;
-            file_system::get_files("snapshotBuffers", files, false);
-            for (std::size_t i = 0; i < files.size(); ++i)
-                file_system::delete_file(files[i]);
-        }
-        else
-            file_system::create_directory("snapshotBuffers");
-    #endif
     }
 
 
     void DualDepthPeeling::init_occlusion_query()
     {
+        delete_occlusion_query_id();
         glGenQueries(1, &occlusion_query_Id_);
-
-    #if 0// if you want to specify the occlusion ratio
-        int num_pixels = fbo_->width() * fbo_->height();
-        float occlusion_ratio = 0.05f;
-        occlusion_threshold_ = static_cast<unsigned int>(num_pixels * occlusion_ratio);
-    #else
         occlusion_threshold_ = 0;
-    #endif
-
         num_written_pixels_ = occlusion_threshold_ + 1;
     }
 
 
     bool DualDepthPeeling::peeling_done() const
     {
-        return current_peel_ >= max_peels_ ||
-            num_written_pixels_ <= occlusion_threshold_;
+        const int limit = max_peels_ == 0 ? 16 : max_peels_;
+        return current_peel_ >= limit ||
+               (use_occlusion_query_ && num_written_pixels_ <= occlusion_threshold_);
     }
 
 
     void DualDepthPeeling::start_occlusion_query() const
     {
-        // ES 3.0 only supports checking if *any* samples passed. We'll just use
-        // that query to stop peeling once all frags are processed, and ignore the
-        // requested occlusion ratio.
     #ifdef GL_ES_VERSION_3_0
         glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusion_query_Id_);
-    #else  // GL_ES_VERSION_3_0
+    #else
         glBeginQuery(GL_SAMPLES_PASSED, occlusion_query_Id_);
-    #endif // GL_ES_VERSION_3_0
+    #endif
     }
 
 
@@ -165,154 +148,118 @@ namespace easy3d {
     {
     #ifdef GL_ES_VERSION_3_0
         glEndQuery(GL_ANY_SAMPLES_PASSED);
-        GLuint anySamplesPassed;
-        glGetQueryObjectuiv(occlusion_query_Id_, GL_QUERY_RESULT, &anySamplesPassed);
-        num_written_pixels_ = anySamplesPassed ? occlusion_threshold_ + 1 : 0;
-    #else  // GL_ES_VERSION_3_0
+        GLuint any_samples_passed;
+        glGetQueryObjectuiv(occlusion_query_Id_, GL_QUERY_RESULT, &any_samples_passed);
+        num_written_pixels_ = any_samples_passed ? occlusion_threshold_ + 1 : 0;
+    #else
         glEndQuery(GL_SAMPLES_PASSED);
         glGetQueryObjectuiv(occlusion_query_Id_, GL_QUERY_RESULT, &num_written_pixels_);
-    #endif // GL_ES_VERSION_3_0
+    #endif
     }
 
 
     void DualDepthPeeling::delete_occlusion_query_id()
     {
-        glDeleteQueries(1, &occlusion_query_Id_);
+        if (occlusion_query_Id_) {
+            glDeleteQueries(1, &occlusion_query_Id_);
+            occlusion_query_Id_ = 0;
+        }
     }
 
 
     void DualDepthPeeling::geometry_pass(const std::vector<TrianglesDrawable*>& surfaces) {
-        if (stage_ == DDP_InitDepth) {
-            static const std::string name = "transparency/dual_depth_peeling_init";
-            ShaderProgram* program = ShaderManager::get_program(name);
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes = {
-                    ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position")
-                };
-                program = ShaderManager::create_program_from_files(name, attributes);
-            }
-            if (!program)
-                return;
+        if (stage_ != DDP_Peel)
+            return;
 
-            program->bind();
-            const mat4& MVP = camera_->model_view_projection_matrix();
-            for (auto d : surfaces) {
-                if (d->is_visible()) {
-                    const mat4 MANIP = d->manipulated_matrix();
-                    program->set_uniform("MANIP", MANIP)
-                            ->set_uniform("MVP_MANIP", MVP * MANIP);
-                    ClippingPlane::instance()->set_program(program);
-                    ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                    d->gl_draw();
-                }
-            }
-            program->release();
+        static const std::string name = "transparency/dual_depth_peeling_peel_rendering";
+        ShaderProgram* program = ShaderManager::get_program(name);
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes = {
+                ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
+                ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
+                ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
+            };
+            program = ShaderManager::create_program_from_files(name, attributes);
         }
-        else if (stage_ == DDP_Peel) {
-            static const std::string name = "transparency/dual_depth_peeling_peel_rendering";
-            ShaderProgram* program = ShaderManager::get_program(name);
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                        ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
-                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
-                        ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
-                };
-                std::vector<std::string> outputs;
-                outputs.emplace_back("fragOutput0");
-                outputs.emplace_back("fragOutput1");
-                outputs.emplace_back("fragOutput2");
-                program = ShaderManager::create_program_from_files(name, attributes, outputs);
-            }
-            if (!program)
-                return;
+        if (!program)
+            return;
 
-            const mat4& MVP = camera_->model_view_projection_matrix();
-            // camera position is defined in world coordinate system.
-            const vec3& wCamPos = camera_->position();
-            // it can also be computed as follows:
-            //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-            const mat4& MV = camera_->model_view_matrix();
-            const vec4& wLightPos = inverse(MV) * setting::light_position;
+        const unsigned previous = static_cast<unsigned>(front_source_ - FrontA);
+        const mat4& MVP = camera_->model_view_projection_matrix();
+        const vec3& wCamPos = camera_->position();
+        const mat4& MV = camera_->model_view_matrix();
+        const vec4& wLightPos = inverse(MV) * setting::light_position;
 
-            program->bind();
-            program->set_uniform("wLightPos", wLightPos);
-            program->set_uniform("wCamPos", wCamPos);
-            program->bind_texture("DepthBlenderTex", fbo_->color_texture(depth_source_), 0);
-            program->bind_texture("FrontBlenderTex", fbo_->color_texture(front_source_), 1);
-            for (auto d : surfaces) {
-                if (d->is_visible()) {
-                    // transformation introduced by manipulation
-                    const mat4 MANIP = d->manipulated_matrix();
-                    // needs be padded when using uniform blocks
-                    const mat3 NORMAL = transform::normal_matrix(MANIP);
-                    program->set_uniform("MANIP", MANIP)
-                            ->set_uniform("MVP_MANIP", MVP * MANIP)
-                            ->set_uniform( "NORMAL", NORMAL)
-                            ->set_uniform("lighting", d->lighting())
-                            ->set_uniform("smooth_shading", d->smooth_shading())
-                            ->set_uniform("two_sides_lighting", d->lighting_two_sides())
-                            ->set_uniform("distinct_back_color", d->distinct_back_color())
-                            ->set_uniform("backside_color", d->back_color())
-                            ->set_block_uniform("Material", "ambient", d->material().ambient)
-                            ->set_block_uniform("Material", "specular", d->material().specular)
-                            ->set_block_uniform("Material", "shininess", &d->material().shininess)
-                            ->set_uniform("Alpha", d->opacity())
-                            ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && !d->buffer_data().colors.empty())
-                            ->set_uniform("default_color", d->color())
-                            ->set_uniform("selected", d->is_selected())
-                            ->set_uniform("highlight_color", setting::highlight_color);
+        program->bind();
+        program->set_uniform("wLightPos", wLightPos);
+        program->set_uniform("wCamPos", wCamPos);
+        program->bind_texture("PreviousDepthTex", resources_->layers[previous]->depth_texture(), 0);
+        for (auto d : surfaces) {
+            if (!d->is_visible())
+                continue;
 
-                    ClippingPlane::instance()->set_program(program);
-                    ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
+            const mat4 MANIP = d->manipulated_matrix();
+            const mat3 NORMAL = transform::normal_matrix(MANIP);
+            program->set_uniform("MANIP", MANIP)
+                    ->set_uniform("MVP_MANIP", MVP * MANIP)
+                    ->set_uniform("NORMAL", NORMAL)
+                    ->set_uniform("lighting", d->lighting())
+                    ->set_uniform("smooth_shading", d->smooth_shading())
+                    ->set_uniform("two_sides_lighting", d->lighting_two_sides())
+                    ->set_uniform("distinct_back_color", d->distinct_back_color())
+                    ->set_uniform("backside_color", d->back_color())
+                    ->set_block_uniform("Material", "ambient", d->material().ambient)
+                    ->set_block_uniform("Material", "specular", d->material().specular)
+                    ->set_block_uniform("Material", "shininess", &d->material().shininess)
+                    ->set_uniform("Alpha", d->opacity())
+                    ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && !d->buffer_data().colors.empty())
+                    ->set_uniform("default_color", d->color())
+                    ->set_uniform("selected", d->is_selected())
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
-                    bool use_texture = (d->texture() && (d->coloring_method() == State::SCALAR_FIELD || d->coloring_method() == State::TEXTURED));
-                    program->set_uniform("use_texture", use_texture);
-                    if (use_texture)
-                        program->bind_texture("textureID", d->texture()->id(), 2)
-                                ->set_uniform("texture_repeat", d->texture_repeat())
-                                ->set_uniform("fractional_repeat", d->texture_fractional_repeat());
-                    d->gl_draw();
-                    if (use_texture)
-                        program->release_texture();
-                }
-            }
-            program->release_texture();
-            program->release();   easy3d_debug_log_gl_error
+            ClippingPlane::instance()->set_program(program);
+            ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
+
+            const bool use_texture = d->texture() &&
+                (d->coloring_method() == State::SCALAR_FIELD || d->coloring_method() == State::TEXTURED);
+            program->set_uniform("use_texture", use_texture);
+            if (use_texture)
+                program->bind_texture("textureID", d->texture()->id(), 2)
+                        ->set_uniform("texture_repeat", d->texture_repeat())
+                        ->set_uniform("fractional_repeat", d->texture_fractional_repeat());
+            d->gl_draw();
+            if (use_texture)
+                program->release_texture();
         }
-
+        program->release_texture();
+        program->release();
         ++num_geom_passes_;
     }
 
 
-    void DualDepthPeeling::init_depth_buffers(const std::vector<TrianglesDrawable*>& surfaces) {
-        fbo_->bind();
+    void DualDepthPeeling::init_depth_buffers(const std::vector<TrianglesDrawable*>&) {
+        glViewport(0, 0, width_ * 2, height_ * 2);
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_SCISSOR_TEST);
+        // OpenGL depth clears are masked by GL_DEPTH_WRITEMASK.
+        glDepthMask(GL_TRUE);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-        // This two render targets store the front and back colors
-        // Clear to 0.0 and use MAX blending to filter written color
-        // At most one front color and one back color can be written every pass
-        // The source front buffer must be initialized, since it simply uses additive blending.
-        // The back-blending may discard fragments, so the back peel accumulator needs
-        // initialization as well.
-        unsigned int targets[2] = {
-            static_cast<unsigned int>(Back),
-            static_cast<unsigned int>(front_source_)
-        };
-        fbo_->activate_draw_buffers(2, targets);	easy3d_debug_log_gl_error
+        for (auto &layer : resources_->layers) {
+            layer->bind();
+            layer->activate_draw_buffer(0);
+            glClearColor(0, 0, 0, 0);
+            glClearDepth(0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        glDepthMask(GL_FALSE);
+
+        resources_->accumulation->bind();
+        resources_->accumulation->activate_draw_buffer(0);
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        // Render target depth_source_ stores (-minDepth, maxDepth, alphaMultiplier)
-        fbo_->activate_draw_buffer(depth_source_);	easy3d_debug_log_gl_error
-        glClearColor(-1, -1, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glBlendEquation(GL_MAX);
-
-        geometry_pass(surfaces);
-
-    #ifdef SAVE_INTERMEDIATE_FBO
-        fbo_->snapshot_color_ppm(depth_source_, "snapshotBuffers/01.ppm");
-    #endif
     }
 
 
@@ -320,106 +267,108 @@ namespace easy3d {
         if (surfaces.empty())
             return;
 
-        int viewport[4];
+        GLint viewport[4];
+        GLint previous_draw_fbo;
+        GLint previous_read_fbo;
+        GLboolean depth_test;
+        GLboolean blend;
+        GLboolean scissor_test;
+        GLboolean depth_mask;
+        GLboolean color_mask[4];
+        GLenum depth_func;
+        GLint blend_src_rgb, blend_dst_rgb, blend_src_alpha, blend_dst_alpha;
+        GLenum blend_equation_rgb, blend_equation_alpha;
+        GLfloat clear_color[4];
+        GLdouble clear_depth;
         glGetIntegerv(GL_VIEWPORT, viewport);
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &previous_draw_fbo);
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previous_read_fbo);
+        depth_test = glIsEnabled(GL_DEPTH_TEST);
+        blend = glIsEnabled(GL_BLEND);
+        scissor_test = glIsEnabled(GL_SCISSOR_TEST);
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
+        glGetBooleanv(GL_COLOR_WRITEMASK, color_mask);
+        glGetIntegerv(GL_DEPTH_FUNC, reinterpret_cast<GLint*>(&depth_func));
+        glGetIntegerv(GL_BLEND_SRC_RGB, &blend_src_rgb);
+        glGetIntegerv(GL_BLEND_DST_RGB, &blend_dst_rgb);
+        glGetIntegerv(GL_BLEND_SRC_ALPHA, &blend_src_alpha);
+        glGetIntegerv(GL_BLEND_DST_ALPHA, &blend_dst_alpha);
+        glGetIntegerv(GL_BLEND_EQUATION_RGB, reinterpret_cast<GLint*>(&blend_equation_rgb));
+        glGetIntegerv(GL_BLEND_EQUATION_ALPHA, reinterpret_cast<GLint*>(&blend_equation_alpha));
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, clear_color);
+        glGetDoublev(GL_DEPTH_CLEAR_VALUE, &clear_depth);
+
         width_ = viewport[2];
         height_ = viewport[3];
         init(width_, height_);
 
-        //////////////////////////////////////////////////////////////////////////
-
-        BACKUP_OPENGL_STATES;
-
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-
-        // ---------------------------------------------------------------------
-        // 1. Initialize Min-Max Depth Buffer
-        // ---------------------------------------------------------------------
-
         stage_ = DDP_InitDepth;
         init_depth_buffers(surfaces);
 
-        // ---------------------------------------------------------------------
-        // 2. Dual Depth Peeling + Blending
-        // ---------------------------------------------------------------------
-
         stage_ = DDP_Peel;
-
-        // Since we cannot blend the back colors in the geometry passes,
-        // we use another render target to do the alpha blending
-        fbo_->activate_draw_buffer(Back);	easy3d_debug_log_gl_error
-        glClearColor(bkg_color_[0], bkg_color_[1], bkg_color_[2], 0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
         while (!peeling_done()) {
             peel(surfaces);
             swap_targets();
         }
 
-        fbo_->release();
-
-        // ---------------------------------------------------------------------
-        // 3. Final Pass
-        // ---------------------------------------------------------------------
-
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(previous_draw_fbo));
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(previous_read_fbo));
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        if (scissor_test) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
         stage_ = DDP_Blend;
         blend_final_image();
 
-        //////////////////////////////////////////////////////////////////////////
-
-        RESTORE_OPENGL_STATES;
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(previous_draw_fbo));
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(previous_read_fbo));
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        if (blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+        if (depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+        if (scissor_test) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+        glDepthMask(depth_mask);
+        glColorMask(color_mask[0], color_mask[1], color_mask[2], color_mask[3]);
+        glDepthFunc(depth_func);
+        glBlendEquationSeparate(blend_equation_rgb, blend_equation_alpha);
+        glBlendFuncSeparate(static_cast<GLenum>(blend_src_rgb), static_cast<GLenum>(blend_dst_rgb),
+                            static_cast<GLenum>(blend_src_alpha), static_cast<GLenum>(blend_dst_alpha));
+        glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+        glClearDepth(clear_depth);
 
         delete_occlusion_query_id();
         stage_ = DDP_Inactive;
-
-    #ifdef SHOW_DEBUG_INFO
-        int w = fbo_->width();
-        int h = fbo_->height();
-        LOG(INFO) << "Depth peel done:"
-            << "  - Number of peels: " << current_peel_
-            << "  - Number of geometry passes: " << num_geom_passes_
-            << "  - Occlusion Ratio: " << static_cast<float>(num_written_pixels_) / static_cast<float>(w * h);;
-    #endif
     }
 
 
     void DualDepthPeeling::peel(const std::vector<TrianglesDrawable*>& surfaces) {
-        // Initialize destination buffers to their minima, since we're MAX blending,
-        // this ensures that valid outputs are captured.
-        unsigned int destColorBuffers[2] = {
-            static_cast<unsigned int>(front_destination_),
-            static_cast<unsigned int>(BackTemp)
-        };
-        fbo_->activate_draw_buffers(2, destColorBuffers);
+        stage_ = DDP_Peel;
+        ++current_peel_;
+
+        const unsigned target = static_cast<unsigned>(front_destination_ - FrontA);
+        auto &layer = resources_->layers[target];
+        layer->bind();
+        layer->activate_draw_buffer(0);
+        glViewport(0, 0, width_ * 2, height_ * 2);
+        glDisable(GL_SCISSOR_TEST);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
         glClearColor(0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        fbo_->activate_draw_buffer(depth_destination_);
-        glClearColor(-1, -1, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        unsigned int targets[3] = {
-            static_cast<unsigned int>(depth_destination_),	//  RG32F MAX blending
-            static_cast<unsigned int>(front_destination_),	//	RGBA MAX blending
-            static_cast<unsigned int>(BackTemp)				//	RGBA MAX blending
-        };
-        fbo_->activate_draw_buffers(3, targets);
-        glBlendEquation(GL_MAX);
+        glClearDepth(1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
         geometry_pass(surfaces);
 
-    #ifdef SAVE_INTERMEDIATE_FBO
-        fbo_->snapshot_color_ppm(depth_destination_, "snapshotBuffers/02.ppm");
-        fbo_->snapshot_color_ppm(front_destination_, "snapshotBuffers/03.ppm");
-        fbo_->snapshot_color_ppm(BackTemp, "snapshotBuffers/04.ppm");
-    #endif
-
-        // Full screen pass to alpha-blend the back color
-        fbo_->activate_draw_buffer(Back);
-
+        resources_->accumulation->bind();
+        resources_->accumulation->activate_draw_buffer(0);
+        glViewport(0, 0, width_, height_);
+        // New layers are farther away, so place them under the existing premultiplied result.
+        glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFuncSeparate(GL_ONE_MINUS_DST_ALPHA, GL_ONE,
+                            GL_ONE_MINUS_DST_ALPHA, GL_ONE);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
 
         if (use_occlusion_query_)
             start_occlusion_query();
@@ -427,31 +376,22 @@ namespace easy3d {
         static const std::string name = "transparency/dual_depth_peeling_blend";
         ShaderProgram* program = ShaderManager::get_program(name);
         if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes =  {
+            std::vector<ShaderProgram::Attribute> attributes = {
                 ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
                 ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord")
             };
             program = ShaderManager::create_program_from_files(name, attributes);
         }
-        if (!program)
-            return;
-
-        program->bind();
-        program->bind_texture("TempTex", fbo_->color_texture(BackTemp), 0);
-        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
-        program->release_texture();
-        program->release();
-
-    #ifdef SAVE_INTERMEDIATE_FBO
-        fbo_->snapshot_color_ppm(Back, "snapshotBuffers/05.ppm");
-    #endif
-
-        if (use_occlusion_query_) {
-            end_occlusion_query();
-            //LOG(INFO) << "samples written: " << num_written_pixels_;
+        if (program) {
+            program->bind();
+            program->bind_texture("TempTex", layer->color_texture(0), 0);
+            shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+            program->release_texture();
+            program->release();
         }
 
-        ++current_peel_;
+        if (use_occlusion_query_)
+            end_occlusion_query();
     }
 
 
@@ -474,12 +414,14 @@ namespace easy3d {
         if (!program)
             return;
 
-        // restore the default background color
-        glClearColor(bkg_color_[0], bkg_color_[1], bkg_color_[2], bkg_color_[3]);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
         program->bind();
-        program->bind_texture("FrontBlenderTex", fbo_->color_texture(front_source_), 0);
-        program->bind_texture("BackBlenderTex", fbo_->color_texture(Back), 1);
+        program->bind_texture("AccumulatedTex", resources_->accumulation->color_texture(0), 0);
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture();
         program->release();

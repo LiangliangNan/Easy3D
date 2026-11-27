@@ -42,11 +42,11 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * \brief Transparency effect using dual depth peeling.
-     * \details Vulkan peels the requested number of front layers order
-     *      independently and composites their premultiplied color over the
-     *      opaque scene. The OpenGL min-max (front and back) pairing is not used;
-     *      each layer is peeled front to back.
+     * \brief Transparency effect using front-to-back depth peeling.
+     * \details Both backends keep the nearest surviving transparent fragment per
+     *      peel-target sample and layer, then under-blend the premultiplied layers
+     *      over the opaque scene. The legacy name is retained for source compatibility;
+     *      neither backend uses the historical min-max front/back pairing.
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
      * \sa Transparency, AverageColorBlending, PerPixelLinkedListsOIT
      */
@@ -67,7 +67,7 @@ namespace easy3d {
 
         /**
          * \brief Sets the maximum number of peeling layers.
-         * \details It has to be a positive value. Default to 4, and a special value of 0 means no maximum limit.
+         * \details Defaults to 4; 0 requests all layers, capped at 16 by the portable backends.
          *      Given a complex object and a particular view, the theoretical ideal number equals to its actual depth
          *      layers in that view.
          * \param n The maximum number of peeling layers.
@@ -95,7 +95,7 @@ namespace easy3d {
     private:
         // The camera whose scene is rendered.
         Camera* camera_;
-        // Maximum number of peeling layers (0 means no maximum limit).
+        // Maximum number of peeling layers (zero uses the portable backend cap).
         int max_peels_ = 4;
     };
 
@@ -111,48 +111,14 @@ namespace easy3d {
 
     class Camera;
     class TrianglesDrawable;
-    class FramebufferObject;
 
     /**
-     * \brief Transparency effect using dual depth peeling.
-     *
+     * \brief Transparency effect using front-to-back depth peeling.
+     * \details Keeps the nearest surviving transparent fragment per peel-target
+     *      sample and layer, then under-blends the premultiplied layers over the
+     *      opaque scene, matching the portable Vulkan and OpenGL RenderDevice paths.
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
      * \sa Transparency, AverageColorBlending, PerPixelLinkedListsOIT
-     *
-     * \details DualDepthPeeling implements the dual depth peeling algorithm described in
-     *      [Order independent transparency with dual depth peeling]
-     *      (http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
-     *      by L. Bavoil, K. Myers. February 2008.
-     *
-     *      Depth peeling is traditionally used to perform order independent transparency (OIT) with N geometry passes
-     *      for N transparency layers. Dual depth peeling enables peeling N transparency layers in N/2+1 passes, by
-     *      peeling from the front and the back simultaneously using a min-max depth buffer. It performs peeling and
-     *      blends on the fly. The pass occurs in several stages:
-     *          1. Copy the current (opaque geometry) depth buffer into a texture.
-     *          2. Initialize the min-max depth buffer from the opaque depth texture and the translucent geometry.
-     *          3. Peel the nearest and farthest fragments:
-     *      		3a. Blend fragments that match the nearest depth of the min-max depth buffer into the front buffer.
-     *      		3b. Write the far depth fragments into a temporary buffer.
-     *      		3c. Extract the next set of min/max depth values for the next peel.
-     *      		3d. Blend the temporary far fragment texture (3b) into an accumulation texture.
-     *      		3e. Go back to 3a and repeat until the maximum number of peels is met, or the desired occlusion
-     *      		    ratio is satisfied.
-     *          4. If the occlusion ratio != 0 (i.e. we hit the maximum number of peels before finishing), alpha blend
-     *             the remaining fragments in-between the near and far accumulation textures.
-     *          5. Blend all accumulation buffers over the opaque color buffer to produce the final image.
-     *
-     *          Related articles or methods:
-     *           - [VTK Technical Highlight: Dual Depth Peeling](https://blog.kitware.com/vtk-technical-highlight-dual-depth-peeling/)
-     *           - [OpenGL 4.0+ ABuffer V2.0: Linked lists of fragment pages](https://blog.icare3d.org/2010/07/opengl-40-abuffer-v20-linked-lists-of.html)
-     *
-     *          About antialiasing:
-     *              Dual depth peeling won't work with a multisample FBO, so for better rendering quality, it is
-     *              possible to add a "Fast Approximate Anti-Aliasing" (FXAA) step for post antialiasing.
-     *
-     *          Optimization tips: rendering with multi-effects (e.g., shadowing, AO) can benefit from sharing the
-     *          same geometry pass.
-     *
-     * \sa AverageColorBlending
      */
     class EASY3D_DEPRECATED("use RenderSettings transparency controls and portable graphics::shape commands with RenderDevice") DualDepthPeeling : public Transparency
     {
@@ -169,7 +135,7 @@ namespace easy3d {
 
         /**
          * \brief Sets the maximum number of peeling layers.
-         * \details It has to be a positive value. Default to 4, and a special value of 0 means no maximum limit.
+         * \details Defaults to 4; 0 requests all layers, capped at 16 by the portable backends.
          *      Given a complex object and a particular view, the theoretical ideal number equals to its actual depth
          *      layers in that view.
          * \param n The maximum number of peeling layers.
@@ -193,49 +159,37 @@ namespace easy3d {
 
     protected:
 
-        // Allocate and configure FBOs, initialize variables, query, etc.:
-        // creates/resizes the multi-target peeling FBO, saves the background color,
-        // and resets the occlusion query and peel counters.
+        // Allocate or resize the layer and accumulation targets.
         void init(int w, int h);
 
-        // Initialize Min - Max Depth Buffer: clears the accumulation targets and runs
-        // the depth-init geometry pass with MAX blending.
+        // Clear the previous-depth sentinels and accumulation target.
         void init_depth_buffers(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Render the pass geometry: draws the surfaces with the stage-specific shader
-        // (depth initialization or peel rendering).
+        // Draw the nearest surviving fragments into the current layer.
         void geometry_pass(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Render the scene to produce the next set of peels: MAX-blends the nearest and
-        // farthest fragments, then alpha-blends the back temp texture under an occlusion query.
+        // Resolve one layer and under-blend it into the accumulation target.
         void peel(const std::vector<TrianglesDrawable*>& surfaces);
 
-        // Blends the final image: composites the front and back accumulation textures
-        // over the opaque color buffer with a full-screen pass.
+        // Composite premultiplied accumulation over the current framebuffer.
         void blend_final_image();
 
-        // Swap the src/dest render targets: exchanges the front and depth texture
-        // indices (std::swap) for the next peel.
+        // Exchange the current and previous layer targets.
         void swap_targets();
 
-        // Checks if the peeling is done: max_peels_ reached or the occlusion query
-        // reports no more fragments than the threshold.
+        // Check the layer bound and whether the last layer was empty.
         bool peeling_done() const;
 
-        // Initializes the occlusion query: generates the GL query object and resets
-        // the threshold / written-pixel counters.
+        // Create the query used to detect an empty layer.
         void init_occlusion_query();
-        // Deletes the occlusion query ID (glDeleteQueries).
+        // Destroy the layer query.
         void delete_occlusion_query_id();
-
-        // Starts the occlusion query: begins a samples-passed query (any-samples on ES 3.0)
-        // counting fragments written during back blending.
+        // Begin counting fragments in the layer composite.
         void start_occlusion_query() const;
-        // Ends the occlusion query and reads the result into num_written_pixels_.
+        // Finish the query and store the fragment count.
         void end_occlusion_query();
 
-        // Release all FBOs, shader programs: deletes the peeling FBO (shaders are owned
-        // by ShaderManager).
+        // Release the framebuffer targets.
         void clear();
 
     private:
@@ -260,41 +214,38 @@ namespace easy3d {
         int height_;
 
         // Defines the maximum number of peeling layers. Initial value is 4.
-        // A special value of 0 means no maximum limit. It has to be a positive value.
+        // Zero requests all layers, capped at 16 by the portable backends.
         int max_peels_;
 
-        // The stages of this multi-pass DualDepthPeeling pass
+        // Retain the historical stage and target layout for binary compatibility.
         enum DualDepthPeelingStage {
             DDP_InitDepth,
             DDP_Peel,
             DDP_Blend,
             DDP_Inactive = -1,
         };
-        // Current stage of the peel loop. draw() advances InitDepth -> Peel -> Blend
-        // within one call and leaves DDP_Inactive; the per-pass helpers below read it
-        // to choose the shader bindings and framebuffer attachments of the stage.
         DualDepthPeelingStage stage_;
 
-        // The multi-target peeling framebuffer; its attachments follow TextureName below.
-        FramebufferObject* fbo_;
+        // Opaque implementation storage keeps the legacy class layout stable.
+        struct Resources;
+        Resources* resources_;
 
-        // Name the textures used by this render pass. These are indexes into this->Textures
         enum TextureName {
-            DepthA = 0,		// RG32F min-max depth buffer
-            DepthB,			// RG32F min-max depth buffer
-            BackTemp,		// RGBA8 back-to-front peeling buffer
-            Back,			// RGBA8 back-to-front accumulation buffer
-            FrontA,			// RGBA8 front-to-back peeling buffer
-            FrontB			// RGBA8 front-to-back accumulation buffer
+            DepthA = 0,
+            DepthB,
+            BackTemp,
+            Back,
+            FrontA,
+            FrontB
         };
-        TextureName front_source_;		// The current front source buffer
-        TextureName front_destination_; // The current front destination buffer
-        TextureName depth_source_;		// The current depth source buffer
-        TextureName depth_destination_; // The current depth destination buffer
+        TextureName front_source_;
+        TextureName front_destination_;
+        TextureName depth_source_;
+        TextureName depth_destination_;
 
         // Peel progress and debug pass counter.
         int current_peel_;
-        int num_geom_passes_; // Debug info, counts number of geometry passes.
+        int num_geom_passes_;
 
         // Occlusion-query state used for early termination of the peeling loop.
         bool use_occlusion_query_;
@@ -302,7 +253,7 @@ namespace easy3d {
         unsigned int num_written_pixels_;
         unsigned int occlusion_threshold_;
 
-        // Saved background (clear) color, restored after the final blend.
+        // Saved clear color, restored after the final blend.
         float bkg_color_[4];
     };
 

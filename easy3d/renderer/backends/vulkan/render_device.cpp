@@ -76,6 +76,7 @@ namespace easy3d {
 #include "oit_peel_frag.inc"
 #include "oit_average_composite_frag.inc"
 #include "oit_peel_composite_frag.inc"
+#include "oit_peel_accumulate_frag.inc"
 #include "oit_linked_lists_build_frag.inc"
 #include "oit_linked_lists_resolve_frag.inc"
 
@@ -2476,8 +2477,9 @@ namespace easy3d {
                 uint32_t object, lighting;
                 float normal[9];
                 uint32_t image_uv_flip;
+                float depth_range[2];
             };
-            static_assert(sizeof(Push) == 128, "shader push-constant layout changed");
+            static_assert(sizeof(Push) == 136, "shader push-constant layout changed");
 
             // Order-independent transparency targets. Both effects are single sampled and
             // ignore opaque depth, matching the legacy OpenGL transparency classes.
@@ -2488,6 +2490,7 @@ namespace easy3d {
             struct Oit {
                 Context &c;
                 uint32_t width = 0, height = 0;
+                bool peel_supersampled = false;
                 VkFormat color_format = VK_FORMAT_R16G16B16A16_SFLOAT;
                 VkFormat count_format = VK_FORMAT_R16_SFLOAT;
                 GpuImage color, count, layer, start_depth;
@@ -2725,8 +2728,9 @@ namespace easy3d {
                       oit_peel_layout_(peel_layout), oit_composite_layout_(composite_layout),
                       oit_composite_descriptors_(composite_descriptors), sampler_(sampler) {}
 
-                void ensure(uint32_t width, uint32_t height) {
-                    if (oit_ && oit_->width == width && oit_->height == height)
+                void ensure(uint32_t width, uint32_t height, bool supersample_peel) {
+                    if (oit_ && oit_->width == width && oit_->height == height &&
+                        oit_->peel_supersampled == supersample_peel)
                         return;
                     const auto supports = [&](VkFormat format, VkFormatFeatureFlags flags) {
                         VkFormatProperties properties;
@@ -2757,6 +2761,12 @@ namespace easy3d {
                     oit_.reset(new Oit(c_));
                     oit_->width = width;
                     oit_->height = height;
+                    oit_->peel_supersampled = supersample_peel;
+                    const unsigned peel_scale = supersample_peel ? 2 : 1;
+                    if (width > c_.properties.limits.maxImageDimension2D / peel_scale ||
+                        height > c_.properties.limits.maxImageDimension2D / peel_scale)
+                        throw std::runtime_error("depth peeling supersampling exceeds device image limits");
+                    const uint32_t peel_width = width * peel_scale, peel_height = height * peel_scale;
                     oit_->color_format = color_format;
                     oit_->count_format = count_format;
                     oit_->pool = descriptor_pool_;
@@ -2766,11 +2776,11 @@ namespace easy3d {
                     oit_->count.init(width, height, count_format,
                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                      VK_IMAGE_ASPECT_COLOR_BIT);
-                    oit_->layer.init(width, height, color_format,
+                    oit_->layer.init(peel_width, peel_height, color_format,
                                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                      VK_IMAGE_ASPECT_COLOR_BIT);
                     for (unsigned i = 0; i < 2; ++i)
-                        oit_->depth(i).init(width, height, VK_FORMAT_D32_SFLOAT,
+                        oit_->depth(i).init(peel_width, peel_height, VK_FORMAT_D32_SFLOAT,
                                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                             VK_IMAGE_ASPECT_DEPTH_BIT);
                     oit_->start_depth.init(1, 1, VK_FORMAT_D32_SFLOAT,
@@ -2888,7 +2898,7 @@ namespace easy3d {
                         make_pass(oit_->layer_pass, layer_attachments, 2, subpass, layer_dependencies, 2);
                         for (unsigned i = 0; i < 2; ++i) {
                             VkImageView views[] = {oit_->layer.view, oit_->depth(i).view};
-                            make_framebuffer(oit_->layer_pass, views, 2, width, height, oit_->layer_framebuffers[i]);
+                            make_framebuffer(oit_->layer_pass, views, 2, peel_width, peel_height, oit_->layer_framebuffers[i]);
                         }
                     }
                     {
@@ -2967,7 +2977,7 @@ namespace easy3d {
                         make_framebuffer(oit_->start_pass, views, 1, 1, 1, oit_->start_framebuffer);
                     }
 
-                    VkShaderModule modules[5] = {};
+                    VkShaderModule modules[6] = {};
                     try {
                         VkShaderModuleCreateInfo mi{};
                         mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -2991,6 +3001,10 @@ namespace easy3d {
                         mi.pCode = oit_peel_composite_frag;
                         check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]),
                               "create transparency layer blend shader");
+                        mi.codeSize = sizeof(oit_peel_accumulate_frag);
+                        mi.pCode = oit_peel_accumulate_frag;
+                        check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]),
+                              "create supersampled peeling accumulation shader");
                         VkPipelineShaderStageCreateInfo stages[2] = {};
                         for (unsigned i = 0; i < 2; ++i) {
                             stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -3087,14 +3101,12 @@ namespace easy3d {
                                                            &oit_->layer_pipeline),
                               "create depth-peel pipeline");
 
-                        // Blend the resolved layer into the premultiplied accumulation. Layers
-                        // are peeled front to back, so each new one lies *behind* everything
-                        // already accumulated and must go under it, exactly like the
-                        // under-blending of the OpenGL dual_depth_peeling_peel_rendering
-                        // shader: dst = src * (1 - dst.a) + dst. Over-blending here would
-                        // invert the depth order and let the farthest peeled layer win.
+                        // Under-blend each resolved layer into the premultiplied accumulation.
+                        // Front-to-back peeling means every new layer lies behind the layers
+                        // already accumulated: dst = src * (1 - dst.a) + dst. Over-blending
+                        // would invert that order and let the farthest peeled layer win.
                         stages[0].module = modules[3];
-                        stages[1].module = modules[4];
+                        stages[1].module = modules[5];
                         vertex.vertexBindingDescriptionCount = 0;
                         vertex.pVertexBindingDescriptions = nullptr;
                         vertex.vertexAttributeDescriptionCount = 0;
@@ -3606,7 +3618,7 @@ namespace easy3d {
                         for (unsigned col = 0; col < 3; ++col)
                             for (unsigned row = 0; row < 3; ++row)
                                 push.normal[col * 3 + row] = d.normal_matrix(row, col);
-                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
                         return true;
                     };
                     const auto draw_scene = [&](const Prepared &draw, VkPipeline pipeline, bool expanded) {
@@ -3719,7 +3731,7 @@ namespace easy3d {
                                 for (unsigned col = 0; col < 3; ++col)
                                     for (unsigned row = 0; row < 3; ++row)
                                         push.normal[col * 3 + row] = d.normal_matrix(row, col);
-                                c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                                c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
                                 c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
                             }
                         }
@@ -3767,7 +3779,7 @@ namespace easy3d {
                         for (unsigned col = 0; col < 4; ++col)
                             for (unsigned row = 0; row < 4; ++row)
                                 push.mvp[col * 4 + row] = mvp(row, col);
-                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+                        c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
                         c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
                     }
                     c_.vkCmdEndRenderPass(cmd);
@@ -4642,7 +4654,8 @@ namespace easy3d {
                         }
                 }
                 void create_layout() {
-                    VkPushConstantRange push = {VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(Push)};
+                    VkPushConstantRange push = {VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                                                sizeof(Push)};
                     VkPipelineLayoutCreateInfo li{};
                     li.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
                     const VkDescriptorSetLayout sets[] = {descriptors_, impostor_descriptors_};
@@ -4868,10 +4881,10 @@ namespace easy3d {
                     }
                 };
 
-                void ensure_oit(uint32_t width, uint32_t height) {
+                void ensure_oit(uint32_t width, uint32_t height, bool supersample_peel) {
                     OitResourcesBuilder(c_, oit_, descriptor_pool_, layout_, oit_peel_layout_,
                                         oit_composite_layout_, oit_composite_descriptors_, samplers_[0])
-                        .ensure(width, height);
+                        .ensure(width, height, supersample_peel);
                 }
                 // Linked lists OIT resources are created on first use and recreated when the
                 // viewport or the per-pixel fragment capacity changes. The resolve pipeline
@@ -4922,20 +4935,24 @@ namespace easy3d {
                                 transparent.push_back(&draw);
                         if (transparent.empty())
                             return;
-                        device_.ensure_oit(target_->width, target_->height);
+                        device_.ensure_oit(target_->width, target_->height,
+                                           oit_method_ == TransparencyMethod::peeling);
                         const uint32_t width = target_->width, height = target_->height;
-                        const auto full_view = [&] {
-                            VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-                            const VkRect2D scissor = {{0, 0}, {width, height}};
+                        const auto full_view = [&](uint32_t view_width, uint32_t view_height) {
+                            VkViewport viewport = {0, 0, float(view_width), float(view_height), 0, 1};
+                            const VkRect2D scissor = {{0, 0}, {view_width, view_height}};
                             c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
                             c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
                         };
                         const auto set_view = [&](const DrawCommand &d) {
                             const auto &r = d.viewport;
+                            const unsigned scale = oit_method_ == TransparencyMethod::peeling ? 2 : 1;
                             VkViewport viewport = {
-                                float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+                                float(r.x) * scale, float(r.y) * scale,
+                                float(r.z ? r.z : width) * scale, float(r.w ? r.w : height) * scale, 0, 1};
                             VkRect2D scissor = {
-                                {r.x, r.y}, {uint32_t(r.z ? r.z : width), uint32_t(r.w ? r.w : height)}};
+                                {int32_t(uint32_t(r.x) * scale), int32_t(uint32_t(r.y) * scale)},
+                                {uint32_t(r.z ? r.z : width) * scale, uint32_t(r.w ? r.w : height) * scale}};
                             c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
                             c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
                         };
@@ -4960,11 +4977,14 @@ namespace easy3d {
                                 push.color[i] = draw.command.color[i];
                             push.object = draw.command.object_id;
                             push.lighting = draw.command.lighting ? 1 : 0;
+                            push.depth_range[0] = draw.command.depth_range().x;
+                            push.depth_range[1] = draw.command.depth_range().y;
                             for (unsigned col = 0; col < 3; ++col)
                                 for (unsigned row = 0; row < 3; ++row)
                                     push.normal[col * 3 + row] = draw.command.normal_matrix(row, col);
-                            c_.vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push),
-                                                  &push);
+                            c_.vkCmdPushConstants(cmd, pipeline_layout,
+                                                  VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                                                  0, sizeof(push), &push);
                         };
                         if (oit_method_ == TransparencyMethod::average) {
                             for (auto *image : {&oit_->color, &oit_->count}) {
@@ -4988,7 +5008,7 @@ namespace easy3d {
                             begin.clearValueCount = 2;
                             begin.pClearValues = clears;
                             c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                            full_view();
+                            full_view(width, height);
                             for (const Prepared *draw : transparent) {
                                 bind_draw(*draw, oit_->average_pipeline, layout_, draw->texture->set);
                                 c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
@@ -5032,7 +5052,7 @@ namespace easy3d {
                             build.framebuffer = lists_->build_framebuffer;
                             build.renderArea = {{0, 0}, {width, height}};
                             c_.vkCmdBeginRenderPass(cmd, &build, VK_SUBPASS_CONTENTS_INLINE);
-                            full_view();
+                            full_view(width, height);
                             for (const Prepared *draw : transparent) {
                                 bind_draw(*draw, lists_->build_pipeline, oit_lists_layout_, draw->texture->set);
                                 c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_lists_layout_, 2,
@@ -5081,7 +5101,7 @@ namespace easy3d {
                             resolve.clearValueCount = 1;
                             resolve.pClearValues = &clear;
                             c_.vkCmdBeginRenderPass(cmd, &resolve, VK_SUBPASS_CONTENTS_INLINE);
-                            full_view();
+                            full_view(width, height);
                             c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
                             c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, lists_->resolve_pipeline);
                             c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_resolve_layout_, 0, 1,
@@ -5170,11 +5190,11 @@ namespace easy3d {
                                 begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                                 begin.renderPass = oit_->layer_pass;
                                 begin.framebuffer = oit_->layer_framebuffers[target_index];
-                                begin.renderArea = {{0, 0}, {width, height}};
+                                begin.renderArea = {{0, 0}, {width * 2, height * 2}};
                                 begin.clearValueCount = 2;
                                 begin.pClearValues = clears;
                                 c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
-                                full_view();
+                                full_view(width * 2, height * 2);
                                 for (const Prepared *draw : transparent) {
                                     bind_draw(*draw, oit_->layer_pipeline, oit_peel_layout_,
                                               device_.oit_peel_set(*draw, previous));
@@ -5205,7 +5225,7 @@ namespace easy3d {
                                 blend.framebuffer = oit_->accumulate_framebuffer;
                                 blend.renderArea = {{0, 0}, {width, height}};
                                 c_.vkCmdBeginRenderPass(cmd, &blend, VK_SUBPASS_CONTENTS_INLINE);
-                                full_view();
+                                full_view(width, height);
                                 c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
                                 c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_->accumulate_pipeline);
                                 c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_,

@@ -1434,9 +1434,9 @@ cause.
 | `OffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | Coplanar mesh edges | Filled triangles are pushed away with the OpenGL polygon offset (`glPolygonOffset(0.5, -0.0001)`) whenever the same model draws visible lines, including MSAA color passes. Picking keeps unbiased surfaces, matching the OpenGL picker. |
-| `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable, then per triangle within each drawable; order-independent accumulation and depth peeling are implemented (Vulkan `TransparencyMethod::average`/`peeling`, batch 27) and validated on both backends at 1x/4x MSAA (2026-11-06). |
+| `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable, then per triangle within each drawable. Both backends implement `RenderSettings` transparency (`sorted`/`average`/`peeling`/`linked_lists`, with capability fallback); peeling keeps one nearest surviving fragment per peel-target sample and layer, resolves premultiplied color and under-blends front to back. The deprecated legacy `DualDepthPeeling` OpenGL path follows the same semantics (2026-11-27). |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, ambient occlusion, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle; on Vulkan both classes use their own order-independent composites (`TransparencyMethod::average` for average color blending, `TransparencyMethod::peeling` for depth peeling, batch 27), and on OpenGL the legacy renderers run their own average-color accumulation and depth peeling. Eye-dome lighting, horizon-based ambient occlusion (GTAO) and hard/soft shadows are full-screen effects; EDL and the AO composite sample this frame's scene depth, GTAO marches horizon slices in a depth prepass, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable AO flag; ambient occlusion is a viewer/effect overlay. |
+| Transparency, ambient occlusion, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the deprecated legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle. Portable `RenderSettings` selects sorted, average-color, peeling or linked-list transparency on both backends; the legacy classes map to the corresponding frame renderer where supported. Both backends now peel front to back with exact previous-depth rejection, premultiplied under-blending and 2x supersampled layer generation resolved at output resolution; OpenGL no longer uses its historical min-max front/back pairing (2026-11-27). Eye-dome lighting, horizon-based ambient occlusion (GTAO) and hard/soft shadows are full-screen effects; EDL and the AO composite sample this frame's scene depth, GTAO marches horizon slices in a depth prepass, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable AO flag; ambient occlusion is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, current/white/transparent background (default 0 = current viewer color, batch 29) and image saving work. A file snapshot runs the virtual `draw()` through one offscreen frame funnel in `Viewer::Impl` (a single private `snapshot_frame()` hook), so effects bracketed inside it (ambient occlusion, shadows, eye-dome lighting, a transparency method) are included, as in OpenGL (batch 28); the Viewer HUD is excluded from files on both backends (batch 29); `capture()` stays a raw scene frame and keeps the HUD per `snapshot_hud_`. No tiled oversized captures. OpenGL now matches the single-pass behavior: an in-limit snapshot renders into one whole-image offscreen FBO (with an explicit viewport), and window-sized tiling remains only as the fallback for images beyond the GL texture/renderbuffer limits, so ambient occlusion, eye-dome lighting and shadows stay continuous instead of seaming at tile borders (batch 30). |
@@ -12055,3 +12055,85 @@ offscreen queries, capture and GUI scene picking. Interactive Mapple checks veri
 picking, the Snapshot dialog, and a 2500×1834 transparent PNG with its companion view-state file.
 After renaming Windows-hostile `near`/`far` test locals, the focused OpenGL device, capture, and
 scene-picking tests passed **3/3** (1.22 s).
+
+### 2026-11-27 — OpenGL depth peeling matches Vulkan and antialiases silhouettes
+
+**Problem.** Tutorial 504 showed dark artifacts where transparent torus-knot surfaces crossed on
+OpenGL, while Vulkan did not. The two backends had diverged in the layer-generation rule: OpenGL's
+legacy peel compared depth through an epsilon band and merged crossing fragments with `GL_MAX`,
+so a pixel could combine fragments that Vulkan deliberately rejected. Its blend also did not use
+Vulkan's premultiplied front-to-back composition. This was an implementation mismatch, not the
+previously suspected fundamental limitation of depth peeling at intersections.
+
+Replacing that rule removed the mesh-edge artifacts but left a one-sample rim at the outer
+silhouette. The same rasterization existed in Vulkan's peel target; it was simply less conspicuous
+there. The fix therefore shares the nearest-layer algorithm and a 2x peel resolve across both
+backends rather than adding an OpenGL-only workaround.
+
+**Change.** Commit `40f3298a` updates both public entry points: portable
+`RenderSettings::transparency == graphics::TransparencyMethod::peeling` through the OpenGL
+`RenderDevice`, and the deprecated `easy3d::DualDepthPeeling` used by Tutorial 504. Vulkan retains
+the same portable semantics and gains the shared silhouette resolve.
+
+- Each peel pass disables blending, enables depth writes and uses a strict less-than depth test.
+  Fragments at or behind the previous layer's exact depth are discarded before shading; there is
+  no epsilon band and no `GL_MAX` merge. A fragment-shader depth write deliberately retains late
+  depth testing so a rejected nearer fragment cannot hide the nearest surviving fragment. This
+  makes the layer independent of triangle and drawable submission order.
+- Zero-alpha fragments are discarded before writing depth, so an invisible surface cannot consume
+  a layer and occlude a farther visible one. Layer color is premultiplied
+  (`rgb * alpha, alpha`), and every resolved layer is under-blended into accumulation with
+  `dst = src * (1 - dst.a) + dst`. The final accumulation is composited over the opaque scene with
+  `glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)` / the matching Vulkan factors.
+- Peel color and depth targets are 2x the output extent on both backends. A full-screen box resolve
+  averages the four premultiplied texels into one normal-resolution accumulation pixel, preserving
+  straight-alpha final composition while antialiasing the peel silhouette. Peel and accumulation
+  color use RGBA16F; OpenGL `FramebufferObject` now accepts `GL_HALF_FLOAT` attachments.
+- OpenGL enables `GL_DEPTH_WRITEMASK` before clearing depth. This matters because OpenGL masks
+  depth clears by the current write mask; the previous disabled mask could leave the peel depth
+  uncleared and produce a blank frame with smooth shading.
+- The legacy OpenGL implementation keeps its lighting, smooth/flat normals, two-sided and distinct
+  back-color behavior, material, texture repeat, clipping, selection and highlight state. It saves
+  and restores the caller's framebuffer, viewport, depth/blend/scissor/mask and clear state, and
+  disables scissor testing only while using its private targets.
+- Portable peeling honors each command's mapped `depth_range()` and scales explicit command
+  viewports into the 2x target, including `MultiViewer` cells. Capability fallback happens before
+  viewport-limit validation, so a linked-list request that falls back to peeling receives the
+  correct check.
+- Vulkan maps rasterized depth into the command range before previous-depth rejection and writes
+  that mapped value to `gl_FragDepth`. Push constants using the shared layout are visible to both
+  vertex and fragment stages. The OIT resource cache includes the peel-supersampling mode so a
+  method switch cannot reuse targets at the wrong extent.
+
+**Compatibility.** Public method names, `RenderSettings` controls, `set_max_peels()` and the legacy
+`DualDepthPeeling` API are unchanged. The class remains deprecated with
+`EASY3D_DEPRECATED(message)` from `easy3d/core/types.h`, without warning-suppression conditionals.
+Its former private `FramebufferObject*` storage is replaced by an equally sized opaque
+`Resources*`; the historical stage/target/counter/query members remain in their original order so
+the 2.8 class layout is preserved while the implementation owns the new targets.
+
+**Validation.** Tutorial 504 was the visual fixture for the edge and silhouette reports. Focused
+regressions passed on both backends:
+
+- `opengl.transparency`, `opengl.effectpresentation`, `opengl.ddpseam` and
+  `opengl.ddpintersection`;
+- `vulkan.transparency` and `vulkan.effectpresentation`.
+
+The tests now pin zero-alpha depth behavior, distinct layers separated by only `0.000002`, mapped
+depth ranges, reversed transparent submission order, diagonal silhouette coverage, one/two/all-layer
+bounds, and explicit cell viewports. The legacy torus-knot fixture rejects black silhouette pixels
+and requires partially covered antialiased pixels; the intersection fixture requires identical output
+when drawable submission order is reversed.
+
+Complete serial CTest after the implementation passed **OpenGL 130/130 in 142.44 s** and
+**Vulkan 157/157 in 216.48 s**. An earlier complete Vulkan run passed 156/157 with only
+`vulkan.realcamera` reporting `test window/framebuffer/camera resize did not settle`; it passed
+immediately in isolation and in the clean full rerun. `git diff --check` was clean. This is local
+macOS/MoltenVK evidence; Linux, Windows and hosted CI remain separate platform gates.
+
+**Limits.** Peeling is still bounded (four layers by default; zero requests all layers capped at
+16) and can omit farther layers in high-depth-complexity scenes. Per-pixel linked lists remain the
+unbounded-depth alternative where supported. The 2x color/depth targets require four times the
+peel-layer storage and additional rasterization/resolve work; OpenGL rejects peeling when twice the
+output extent exceeds its viewport limits, and Vulkan checks the device image limits. No performance
+parity claim is made for this quality fix.

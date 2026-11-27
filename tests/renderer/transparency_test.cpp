@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/renderer/render_device.h>
+#ifdef EASY3D_TEST_OPENGL
+#include <easy3d/viewer/offscreen.h>
+#include <easy3d/util/initializer.h>
+#endif
 #include <cmath>
 #include <sstream>
 #include <iostream>
@@ -61,7 +65,13 @@ void close_rgba(const FrameImage& a,const FrameImage& b,const char* message) {
 int main(int argc,char**) {
     try {
         const bool validation = argc > 1;
+#ifdef EASY3D_TEST_OPENGL
+        initialize(false, false, false);
+        OffScreen host(64, 48);
+        auto device = create_device();
+#else
         auto device=create_vulkan_device(validation, validation);
+#endif
         // Identity MVP: clip depth is 0.5*(z+1), so larger z is farther.
         auto green=rectangle(-1,-1,1,1,.5f,vec4(0,1,0,.5f),true); green.object_id=21;
         auto blue=rectangle(-1,-1,1,1,-.5f,vec4(0,0,1,.5f),true); blue.object_id=31;
@@ -141,6 +151,7 @@ int main(int argc,char**) {
             const auto sorted=device->render(65,65,{green,blue},vec4(0),count);
             probe(sorted,32,32,expected,"oit sorted");
 
+#ifndef EASY3D_TEST_OPENGL
             const auto averaged=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::average,4);
             // Mean color (0,.5,.5), mean alpha .5, n=2: T=.25, so (0,.375,.375).
             const int average_expected[]={0,96,96};
@@ -148,6 +159,7 @@ int main(int argc,char**) {
             require(averaged.rgba!=sorted.rgba,"average transparency matched the sorted pass");
             const auto averaged_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::average,4);
             require(averaged.rgba==averaged_reversed.rgba,"average transparency was not order independent");
+#endif
 
             // One layer keeps only the nearest surface; two layers put the far
             // one under it, which is exactly the depth-sorted blend. Blending the
@@ -159,9 +171,42 @@ int main(int argc,char**) {
             const int peeled_expected[]={0,64,128};
             probe(peeled,32,32,peeled_expected,"peel two");
             close_rgba(peeled,sorted,"depth peeling did not composite its layers front to back");
+#ifndef EASY3D_TEST_OPENGL
             require(peeled.rgba!=averaged.rgba,"depth peeling matched average transparency");
+#endif
             const auto peeled_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::peeling,2);
             require(peeled.rgba==peeled_reversed.rgba,"depth peeling was not order independent");
+
+            auto invisible=green; invisible.color.w=0;
+            const auto through_invisible=device->render(65,65,{invisible,blue},vec4(0),count,
+                                                       TransparencyMethod::peeling,1);
+            probe(through_invisible,32,32,near_expected,"zero-alpha peel depth");
+            auto close_green=green;
+            auto close_blue=rectangle(-1,-1,1,1,.500002f,vec4(0,0,1,.5f),true);
+            const auto close_sorted=device->render(65,65,{close_green,close_blue},vec4(0),count);
+            const auto close_peeled=device->render(65,65,{close_green,close_blue},vec4(0),count,
+                                                  TransparencyMethod::peeling,2);
+            close_rgba(close_peeled,close_sorted,"depth peeling merged distinct close layers");
+
+            auto ranged_green=green; ranged_green.set_depth_range(vec2(.6f,.8f));
+            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(0,.2f));
+            const auto ranged_peeled=device->render(65,65,{ranged_green,ranged_blue},vec4(0),count,
+                                                   TransparencyMethod::peeling,2);
+            probe(ranged_peeled,32,32,expected,"peel mapped depth ranges");
+
+            std::vector<Vertex> triangle_vertices(3);
+            triangle_vertices[0].position=vec3(-.9f,-.9f,.5f);
+            triangle_vertices[1].position=vec3(.9f,-.9f,.5f);
+            triangle_vertices[2].position=vec3(-.9f,.9f,.5f);
+            DrawCommand triangle;
+            triangle.geometry=std::make_shared<Geometry>(triangle_vertices,std::vector<uint32_t>{0,1,2});
+            triangle.color=vec4(0,1,0,.5f); triangle.transparent=true;
+            const auto antialiased=device->render(65,65,{triangle},vec4(1),1,TransparencyMethod::peeling,1);
+            size_t partial=0;
+            for (size_t i=0;i<antialiased.rgba.size();i+=4)
+                if (antialiased.rgba[i]>160 && antialiased.rgba[i]<255 &&
+                    antialiased.rgba[i+1]>0 && antialiased.rgba[i+2]>160 && antialiased.rgba[i+2]<255) ++partial;
+            require(partial>4,"depth peeling retained a single-sample silhouette");
 
             // Stopping after two layers drops the farthest surface; asking for
             // every layer (0) reproduces the sorted blend of all three.
@@ -177,14 +222,20 @@ int main(int argc,char**) {
             close_rgba(peeled_all,sorted_three,"unlimited depth peeling did not reproduce the sorted blend");
             require(peeled_capped.rgba!=peeled_all.rgba,"peel layer limit was ignored");
 
+#ifndef EASY3D_TEST_OPENGL
             const auto averaged_three=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
                                                      TransparencyMethod::average,0);
             // Mean color (.5,.75,.25), mean alpha 2/3, n=3.
             const int average_three_expected[]={123,184,61};
             probe(averaged_three,32,32,average_three_expected,"average three");
+#endif
 
             // Picking keeps the nearest transparent surface for both methods.
-            for (const FrameImage* image:{&averaged,&peeled}) {
+            std::vector<const FrameImage*> oit_images{&peeled};
+#ifndef EASY3D_TEST_OPENGL
+            oit_images.push_back(&averaged);
+#endif
+            for (const FrameImage* image : oit_images) {
                 require(image->ids[32*65+32].object==31,
                         "order-independent transparency changed picking IDs");
                 probe_id(*image,first_triangle_x,first_triangle_y,31,0,
@@ -216,6 +267,7 @@ int main(int argc,char**) {
             close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::peeling,0),
                        stacked_peeled,"eight-layer peeling was not order independent");
 
+#ifndef EASY3D_TEST_OPENGL
             // Per-pixel linked lists store every fragment, so the resolve must
             // reproduce the depth-sorted blend exactly and stay order independent.
             const auto linked=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::linked_lists,8);
@@ -235,7 +287,9 @@ int main(int argc,char**) {
             close_rgba(linked_stack,stacked_sorted,"eight-layer linked lists did not reproduce the sorted blend");
             close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::linked_lists,8),
                        linked_stack,"eight-layer linked lists was not order independent");
+#endif
         }
+#ifndef EASY3D_TEST_OPENGL
         // Linked-list pool overflow is reported rather than silent. A tiny pool
         // exhausted by stacked full-screen surfaces drops the excess fragments and
         // counts them; a sufficient pool and non-linked-list frames report zero.
@@ -256,6 +310,7 @@ int main(int argc,char**) {
             device->render(16,16,many,vec4(0),1,TransparencyMethod::sorted);
             require(device->oit_dropped_fragments()==0,"a sorted frame did not clear the overflow diagnostic");
         }
+#endif
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);
         line.geometry=std::make_shared<Geometry>(std::vector<Vertex>(2),std::vector<uint32_t>{0,1},Topology::lines);
@@ -268,6 +323,6 @@ int main(int argc,char**) {
         try { device->render(65,65,{bad_alpha}); } catch (const std::invalid_argument&) { rejected=true; }
         require(rejected,"out-of-range transparent alpha was accepted");
         require(device->validation_errors()==0,"transparency validation errors");
-        std::cout << "PASS: depth-sorted straight-alpha scene triangles, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color, depth-peel and per-pixel linked lists OIT with overflow diagnostics\n";
+        std::cout << "PASS: straight-alpha sorting, opaque occlusion, nearest IDs/depth, order independence, pixel queries, MSAA, average-color and front-to-back depth peeling\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

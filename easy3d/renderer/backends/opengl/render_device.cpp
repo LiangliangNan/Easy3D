@@ -791,22 +791,34 @@ vec4 shade_fragment() {
 }
 void main() {
     vec2 previous_uv = gl_FragCoord.xy / vec2(textureSize(previous_depth, 0));
-    if (gl_FragCoord.z <= texture(previous_depth, previous_uv).r + 0.000001)
+    if (gl_FragCoord.z <= texture(previous_depth, previous_uv).r)
         discard;
-    gl_FragDepth = gl_FragCoord.z;
     vec4 c = shade_fragment();
     float alpha = clamp(c.a, 0.0, 1.0);
+    if (alpha == 0.0)
+        discard;
+    gl_FragDepth = gl_FragCoord.z;
     out_color = vec4(c.rgb * alpha, alpha);
 })";
 
             const char *oit_composite_fragment_shader = R"(#version 150
 uniform sampler2D accumulated, fragment_count;
-uniform bool use_count;
+uniform bool use_count, supersample;
 in vec2 uv_coord;
 out vec4 out_color;
 void main() {
     vec2 uv = vec2(uv_coord.x, 1.0 - uv_coord.y);
-    vec4 result = texture(accumulated, uv);
+    vec4 result = vec4(0.0);
+    if (supersample) {
+        // Box-resolve premultiplied samples before placing this layer underneath accumulation.
+        ivec2 pixel = ivec2(gl_FragCoord.xy) * 2;
+        result = 0.25 * (texelFetch(accumulated, pixel, 0) +
+                         texelFetch(accumulated, pixel + ivec2(1, 0), 0) +
+                         texelFetch(accumulated, pixel + ivec2(0, 1), 0) +
+                         texelFetch(accumulated, pixel + ivec2(1, 1), 0));
+    } else {
+        result = texture(accumulated, uv);
+    }
     if (use_count) {
         float n = texture(fragment_count, uv).r;
         if (n <= 0.0) { out_color = vec4(0.0); return; }
@@ -1496,12 +1508,13 @@ void main() {
                 }
 
                 void reset_peel(uint32_t w, uint32_t h) {
-                    if (peel[0] && peel[0]->width() == int(w) && peel[0]->height() == int(h) &&
-                        peel[1] && peel[1]->height() == int(h))
+                    // Peel at 2x for silhouette coverage; accumulation stays at output resolution.
+                    if (peel[0] && peel[0]->width() == int(w) * 2 && peel[0]->height() == int(h) * 2 &&
+                        peel[1] && peel[1]->height() == int(h) * 2)
                         return;
                     for (int i = 0; i < 2; ++i) {
-                        peel[i].reset(new FramebufferObject(int(w), int(h), 0));
-                        if (!peel[i]->add_color_texture(GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST) ||
+                        peel[i].reset(new FramebufferObject(int(w) * 2, int(h) * 2, 0));
+                        if (!peel[i]->add_color_texture(GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT, GL_NEAREST) ||
                             !peel[i]->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_NEAREST) || !peel[i]->is_valid())
                             throw std::runtime_error("cannot allocate OpenGL RenderDevice depth-peeling targets");
                     }
@@ -1511,7 +1524,7 @@ void main() {
                     if (accumulate && accumulate->width() == int(w) && accumulate->height() == int(h))
                         return;
                     accumulate.reset(new FramebufferObject(int(w), int(h), 0));
-                    if (!accumulate->add_color_texture(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_NEAREST) ||
+                    if (!accumulate->add_color_texture(GL_RGBA16F, GL_RGBA, GL_HALF_FLOAT, GL_NEAREST) ||
                         !accumulate->is_valid())
                         throw std::runtime_error("cannot allocate OpenGL RenderDevice transparency target");
                 }
@@ -1698,6 +1711,9 @@ void main() {
                 glGetIntegerv(GL_MAX_VIEWPORT_DIMS, viewport);
                 if (int(width) > viewport[0] || int(height) > viewport[1])
                     reject("render target exceeds OpenGL viewport limits");
+                if (transparency == TransparencyMethod::peeling &&
+                    (width > uint32_t(viewport[0]) / 2 || height > uint32_t(viewport[1]) / 2))
+                    reject("depth peeling requires twice the render target resolution within OpenGL viewport limits");
                 switch (transparency) {
                     case TransparencyMethod::sorted:
                     case TransparencyMethod::average:
@@ -2132,7 +2148,8 @@ void main() {
                     glDrawElements(GL_TRIANGLES, GLsizei(indices.size()), GL_UNSIGNED_INT, nullptr);
             }
 
-            void draw_geometry(const DrawCommand &d, GLuint p, uint32_t width, uint32_t height) {
+            void draw_geometry(const DrawCommand &d, GLuint p, uint32_t width, uint32_t height,
+                               unsigned viewport_scale = 1) {
                 glUseProgram(p);
                 set_uniforms(p, d);
                 bind_2d(GL_TEXTURE0, resources.texture(d.texture));
@@ -2143,10 +2160,13 @@ void main() {
                 // and scissor as the ordinary scene pass; fullscreen composite quads
                 // are drawn separately by draw_fullscreen().
                 const ivec4 viewport = viewport_of(d, width, height);
-                const int x = viewport.x, y = int(height) - viewport.y - viewport.w;
-                glViewport(x, y, viewport.z, viewport.w);
+                const int x = viewport.x * int(viewport_scale);
+                const int y = int(height) * int(viewport_scale) - viewport.y * int(viewport_scale) -
+                              viewport.w * int(viewport_scale);
+                const int w = viewport.z * int(viewport_scale), h = viewport.w * int(viewport_scale);
+                glViewport(x, y, w, h);
                 glEnable(GL_SCISSOR_TEST);
-                glScissor(x, y, viewport.z, viewport.w);
+                glScissor(x, y, w, h);
                 const auto &indices = d.geometry->indices();
                 if (indices.empty())
                     glDrawArrays(topology(d.geometry->topology()), 0,
@@ -2314,6 +2334,7 @@ void main() {
                 glUniform1i(glGetUniformLocation(oit_composite_program, "accumulated"), 0);
                 glUniform1i(glGetUniformLocation(oit_composite_program, "fragment_count"), 1);
                 glUniform1i(glGetUniformLocation(oit_composite_program, "use_count"), use_count ? 1 : 0);
+                glUniform1i(glGetUniformLocation(oit_composite_program, "supersample"), 0);
                 draw_fullscreen(oit_composite_program, fullscreen_quad(width, height), width, height);
             }
 
@@ -2402,51 +2423,66 @@ void main() {
                     glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, GLuint(previous_generic_atomic));
                     result.texture = effects.accumulate->color_texture(0);
                 } else if (method == TransparencyMethod::peeling) {
+                    const uint32_t peel_width = width * 2, peel_height = height * 2;
                     effects.reset_peel(width, height);
                     effects.reset_accumulate(width, height);
                     for (auto &layer : effects.peel) {
                         layer->bind();
                         layer->activate_draw_buffer(0);
+                        glViewport(0, 0, int(peel_width), int(peel_height));
+                        glDisable(GL_SCISSOR_TEST);
                         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                        // Enable writes so the zero-depth sentinel clear takes effect.
+                        glDepthMask(GL_TRUE);
                         glClearDepth(0);
                         glClear(GL_DEPTH_BUFFER_BIT);
                         glClearDepth(1);
                     }
+                    glDepthMask(GL_FALSE);
                     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
                     effects.accumulate->bind();
                     effects.accumulate->activate_draw_buffer(0);
                     glViewport(0, 0, int(width), int(height));
+                    glDisable(GL_SCISSOR_TEST);
                     float zero_color[4] = {0, 0, 0, 0};
                     glClearBufferfv(GL_COLOR, 0, zero_color);
                     for (unsigned i = 0; i < layers; ++i) {
                         const unsigned target = i & 1u, previous = 1u - target;
                         effects.peel[target]->bind();
                         effects.peel[target]->activate_draw_buffer(0);
-                        glViewport(0, 0, int(width), int(height));
+                        glViewport(0, 0, int(peel_width), int(peel_height));
+                        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                        glDepthMask(GL_TRUE);
                         glClearColor(0, 0, 0, 0);
                         glClearDepth(1);
                         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                        glDisable(GL_BLEND);
                         glEnable(GL_DEPTH_TEST);
-                        glDepthFunc(GL_ALWAYS);
-                        glDepthMask(GL_TRUE);
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_ONE, GL_ONE);
+                        glDepthFunc(GL_LESS);
+                        // Each iteration keeps one nearest surviving fragment per sample.
                         glUseProgram(oit_peel_program);
                         bind_2d(GL_TEXTURE1, effects.peel[previous]->depth_texture());
                         glUniform1i(glGetUniformLocation(oit_peel_program, "previous_depth"), 1);
-                        for (const DrawCommand *d : transparent)
-                            draw_geometry(*d, oit_peel_program, width, height);
+                        for (const DrawCommand *d : transparent) {
+                            glDepthRange(d->depth_range().x, d->depth_range().y);
+                            draw_geometry(*d, oit_peel_program, width, height, 2);
+                        }
+                        glDepthRange(0, 1);
                         effects.accumulate->bind();
                         effects.accumulate->activate_draw_buffer(0);
                         glViewport(0, 0, int(width), int(height));
+                        glDisable(GL_SCISSOR_TEST);
                         glEnable(GL_BLEND);
-                        glBlendFunc(GL_ONE, GL_ONE);
+                        glBlendEquation(GL_FUNC_ADD);
+                        glBlendFuncSeparate(GL_ONE_MINUS_DST_ALPHA, GL_ONE,
+                                            GL_ONE_MINUS_DST_ALPHA, GL_ONE);
                         glDisable(GL_DEPTH_TEST);
                         glDepthMask(GL_FALSE);
                         glUseProgram(oit_composite_program);
                         bind_2d(GL_TEXTURE0, effects.peel[target]->color_texture(0));
                         glUniform1i(glGetUniformLocation(oit_composite_program, "accumulated"), 0);
                         glUniform1i(glGetUniformLocation(oit_composite_program, "use_count"), 0);
+                        glUniform1i(glGetUniformLocation(oit_composite_program, "supersample"), 1);
                         draw_fullscreen(oit_composite_program, fullscreen_quad(width, height), width, height);
                     }
                     result.texture = effects.accumulate->color_texture(0);
@@ -2465,11 +2501,6 @@ void main() {
                 drain_errors();
                 resources.prune();
                 dropped_fragments = 0;
-                validate(width, height, samples, method);
-                for (const auto &d : commands) {
-                    if (!pixel_query || !d.overlay)
-                        validate(d, width, height);
-                }
                 // The viewer validates settings values; this device is the authority on
                 // backend support. Capability checks precede every native/fallback
                 // choice so unsupported methods degrade with an explicit one-time
@@ -2481,6 +2512,11 @@ void main() {
                 } else if (method == TransparencyMethod::average && !float_blending_supported()) {
                     LOG_N_TIMES(1, WARNING) << "OpenGL average-color blending requires floating-point color blending; falling back to sorted transparency";
                     transparency = TransparencyMethod::sorted;
+                }
+                validate(width, height, samples, transparency);
+                for (const auto &d : commands) {
+                    if (!pixel_query || !d.overlay)
+                        validate(d, width, height);
                 }
                 peel_layers = layers ? layers : 16;
                 if (!program)
