@@ -31,7 +31,7 @@
     - [x] Implement the shadow settings through both adapters, including hard/soft shadows and virtual background; verify matching light-space transforms and fallback behavior.
     - [x] Implement AO and eye-dome-lighting through both adapters without publishing native AO texture IDs or effect framebuffers through `State`.
     - [x] Route transparency through `TransparencyMethod` and layer settings; test sorted, average-color, depth-peeling, and linked-list paths, including unsupported-capability fallbacks and dropped-fragment diagnostics. OpenGL falls back below 4.3 and does not expose a native linked-list fragment counter.
-    - [x] Apply clipping planes in shared command/state assembly and verify point, line, and rendered capture results on both backends. OpenGL native effect paths apply only the process-wide clipping plane, and the OpenGL adapter rejects analytic point/line clipping.
+    - [x] Apply clipping planes in shared command/state assembly and verify point, line, and rendered capture results on both backends. OpenGL native effect paths apply only the process-wide clipping plane, and the OpenGL adapter rejects analytic point/line clipping in the current tree; the planned follow-up in [section 8.15](Vulkan-OpenGL-unification.md#815-milestone-5-follow-up-plan) removes that rejection.
     - [x] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration. The facades remain unchanged in this milestone, with settings taking precedence where both are active; their control translation is deferred to the Python/tutorial migration.
 
   - [x] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
@@ -44,10 +44,16 @@
     - [x] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
 
   - [x] Milestone 5 — Unify picking and remaining exact fallbacks
-    - [x] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms.
-    - [x] Preserve CPU/geometric selection helpers where deliberately backend-independent, but remove rendered native fallbacks once shared query behavior is equivalent.
+    - [x] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms, for the drawable states the shared command assembly supports.
+    - [x] Preserve CPU/geometric selection helpers where deliberately backend-independent, but remove rendered native fallbacks once shared query behavior is equivalent, except the OpenGL analytic-clipping fallback planned below.
     - [x] Retire picker-owned framebuffers and native picking shaders after visible-surface, occlusion, boundary, hidden-object, and empty-region tests pass on both backends.
     - [x] Search for `EASY3D_HAS_VULKAN` branches in public headers and migrate client-visible branches to capabilities or common options; retain only private adapter/build implementation branches.
+
+  - [ ] Milestone 5 follow-up — OpenGL analytic clipping and exact-query fallback removal
+    - [ ] Add normalized view-space clip-plane uniforms and actual-surface fragment tests to the OpenGL analytic point and line impostor shaders; remove the adapter rejection while keeping the existing CPU control cull for the whole-primitive policy. See [section 8.15](Vulkan-OpenGL-unification.md#815-milestone-5-follow-up-plan).
+    - [ ] Remove the OpenGL analytic-impostor clipping fallback from `PointCloudPicker` so clipped single picks use the shared `RenderDevice` query.
+    - [ ] Stop rejecting clipping in `Viewer::supports_device_query` once the adapter supports analytic clipping, so `Viewer::pick`, `Viewer::read_scene_depth`, and capture use the shared query for clipped supported scenes; keep the exact pass only for unsupported drawable/effect states.
+    - [ ] Extend the clipping regression to both backends, add clipped-impostor shared-pick and invalid-plane coverage, and rerun the complete OpenGL and Vulkan suites. Record the results in section 8.15 and section 8.14.
 
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
     - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.

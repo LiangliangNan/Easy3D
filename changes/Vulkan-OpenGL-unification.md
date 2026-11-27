@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
-**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, the Milestone 4 host unification in section 8.13, and the Milestone 5 picking unification in section 8.14.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, the Milestone 4 host unification in section 8.13, and the Milestone 5 picking unification in section 8.14. Section 8.15 records the planned follow-up that removes the remaining OpenGL analytic-impostor clipping limitation and the associated picking/query fallbacks; it is not implemented in the current tree.
 
 ## Executive summary
 
@@ -28,7 +28,7 @@ The confirmed findings are:
 
 4. **The best future class-removal candidate is `OverlayRenderer`**, after `RenderDevice` gains a presentation/compositing path that preserves overlay ordering, depth testing, HiDPI behavior, capture behavior, and GL-state isolation.
 
-5. **Native picking/depth fallbacks can be retired incrementally**, as shared-device support expands to clipping, AO, transparency, impostors, non-native line widths, and `MultiViewer`. They cannot be removed today without changing behavior.
+5. **Most native picking/depth fallbacks were retired in Milestone 5.** The remaining OpenGL analytic-impostor clipping fallback is removed by the planned follow-up in section 8.15. After that follow-up, the `Viewer` exact pass remains only for drawable/effect states the shared query cannot serve (for example AO textures, non-opaque drawables, unsupported coloring, or custom draw calls), not for clipping or standard impostors.
 
 6. **`FramebufferObject`, shaders, textures, and VAO-backed drawables are not small-deletion candidates.** They are used by the live renderer, effects, overlays, and the new OpenGL adapter itself.
 
@@ -189,6 +189,8 @@ The capability gate is visible at [easy3d/viewer/viewer.cpp:2659](../easy3d/view
 
 **Assessment:** retire individual fallback branches as parity is added. Do not remove the fallback system as one change.
 
+**Status update:** Milestone 5 retired the picker-owned fallback blocks and routed model, pixel, point, and region picks through the shared query. The shared OpenGL adapter already handles clipping for triangles, plain points/lines, and wide plain lines; the remaining analytic point/line case and the associated `Viewer`/`PointCloudPicker` fallbacks are the planned follow-up in section 8.15. The `Viewer` exact pass remains necessary for unsupported drawable/effect states and custom draw calls.
+
 ### 4.3 Viewer capture's local FBO usage
 
 The local `FramebufferObject` in `Viewer::capture()` could eventually disappear if complete presented-scene capture moves behind `RenderDevice`.
@@ -254,6 +256,8 @@ A safe cleanup policy is:
 - Add clipping, AO, transparency, impostor, line-width, and `MultiViewer` support as appropriate.
 - Remove each native fallback branch once its shared path is proven equivalent.
 - Retire picker-owned FBOs and native picker shaders when no unsupported cases remain.
+
+Milestone 5 completed the picker-owned FBO and native-picker retirement and most of this phase. The remaining OpenGL analytic point/line clipping gap and its two query fallbacks are specified in section 8.15; the exact `Viewer` pass stays for genuinely unsupported drawable/effect states.
 
 ### Phase 4: Unify presented-scene capture
 
@@ -1354,7 +1358,7 @@ Status: complete with the documented backend limitations below. The final all-ta
 
 - Vulkan injects declarative shadows, AO, and EDL as command overlays through the existing shape factories. `Shadow`/`SoftShadow` are used only to compute light-space frame data; legacy `begin()`/`end()` registrations still supply the older compatibility overlay. Transparency method and layer count flow through `RenderDevice::render`/`present`, and one-time warnings report linked-list fragment drops.
 - OpenGL reuses the native shadow, AO, EDL, average-color, depth-peeling, and linked-list algorithms from a per-viewer sidecar cache. The sidecar stores only settings and effect objects, preserving the 2.8 `Viewer` layout. Plain sorted transparency uses the OpenGL `RenderDevice`; unsupported drawables fall back to native depth peeling with a warning. Per-pixel linked lists fall back to peeling below OpenGL 4.3.
-- Shared command assembly marks scene triangles transparent and applies their opacity when the settings transparency pass is enabled. The OpenGL adapter now applies the shared CPU polygon/line/point clip for non-analytic commands; analytic point/line styles remain explicitly rejected because their proxy shaders cannot use the CPU clip.
+- Shared command assembly marks scene triangles transparent and applies their opacity when the settings transparency pass is enabled. The OpenGL adapter now applies the shared CPU polygon/line/point clip for non-analytic commands; analytic point/line styles remain explicitly rejected in the current tree because their proxy shaders cannot use the CPU clip. The planned follow-up in section 8.15 replaces that rejection with shader-side actual-surface clipping.
 - `Shadow` and `SoftShadow` now guard the optional virtual background drawable, so enabling the background without a rendered background plane no longer dereferences a null drawable.
 
 #### Deviations and limitations
@@ -1363,7 +1367,7 @@ Status: complete with the documented backend limitations below. The final all-ta
 2. OpenGL cannot compose its native effect framebuffers with the declarative transparency pass. When any shadow/AO/EDL setting is enabled, transparency settings are ignored with a warning; Vulkan composes all four transparency methods.
 3. OpenGL cannot compose AO with EDL. EDL takes precedence and the conflict is reported once; Vulkan retains the existing overlay order.
 4. OpenGL native effect, non-sorted transparency, and sorted-fallback paths apply only the process-wide `ClippingPlane`, not `RenderSettings::clipping_planes`, and warn when explicit settings planes are present. The portable OpenGL sorted/default paths and Vulkan apply the settings planes.
-5. OpenGL analytic sphere/surfel and cylinder/cone clipping is not implemented in the adapter. Plain points and lines, including clipped segment endpoints, are supported.
+5. OpenGL analytic sphere/surfel and cylinder/cone clipping is not implemented in the adapter in the current tree. Plain points and lines, including clipped segment endpoints, are supported. Section 8.15 specifies the follow-up that removes this limitation and the picking fallback that depends on it.
 6. Below OpenGL 4.3, linked-list transparency falls back to depth peeling. Sorted transparency falls back to native peeling for custom drawables, native AO textures, or adapter rejection. Both fallbacks are reported.
 7. In-memory `capture()` remains a raw scene-command frame in both builds. Settings shadows, AO, EDL, and selected native transparency methods are applied only to live frames and file snapshots; command-level transparent styling and clipping remain visible in capture. Presented capture parity is a Milestone 4 item.
 8. Legacy `Shadow`, `SoftShadow`, `AmbientOcclusion`, `EyeDomeLighting`, and transparency facades remain application-owned compatibility paths and emit precedence warnings where they conflict with settings. Their control-to-settings translation is deferred with the Python and tutorial migration.
@@ -1373,7 +1377,7 @@ Status: complete with the documented backend limitations below. The final all-ta
 
 - `render_settings_test` (`opengl.rendersettings` and `vulkan.rendersettings`) is a CPU-only contract test for defaults, copy independence, boundary values, every invalid range and representation, clipping normalization, and capability rejection.
 - `render_settings_test` under `tests/viewer` (`opengl.rendersettingseffects` and `vulkan.rendersettingseffects`) renders a neutral room scene and compares snapshots for default, hard shadow, soft shadow, scene shadow, AO, EDL, and all four transparency methods. Hard and soft shadows differ, virtual backgrounds are exercised, default settings reproduce the plain frame, and raw in-memory capture excludes presentation-only shadow effects. The clipping fixture verifies normalized plane exposure, triangle/plain-point/plain-line capture, and point picking on both backends.
-- The viewer fixture exercises triangle, plain-point, and plain-line clipping through command assembly on both backends; OpenGL analytic point/line clipping remains rejected as documented. Vulkan's existing `vulkan.clipping` test covers halfspaces, slabs, interpolation, source IDs, whole-primitive policy, analytic surfaces, MSAA, world transforms, and face picking.
+- The viewer fixture exercises triangle, plain-point, and plain-line clipping through command assembly on both backends; OpenGL analytic point/line clipping remains rejected in the current tree as documented. Vulkan's existing `vulkan.clipping` test covers halfspaces, slabs, interpolation, source IDs, whole-primitive policy, analytic surfaces, MSAA, world transforms, and face picking. The section 8.15 follow-up extends this coverage to OpenGL.
 - The existing default-rendering, drawable, effect, picking, snapshot, and MultiViewer suites were rerun unchanged; default settings take the legacy/portable path and do not alter ordinary scene output.
 - The default, settings-clipping, and sorted-transparency snapshots are byte-identical between the OpenGL and Vulkan runs. Native hard/soft shadow, AO, EDL, average-color, peeling, and linked-list imagery use each backend's established algorithm and are validated by their difference from the plain frame, not by cross-backend pixel equality.
 - Final serial macOS results on the rebuilt tree: Vulkan 156/156 in 242.22 seconds and OpenGL 127/127 in 136.70 seconds, both with zero failures. The new settings tests passed on both backends, and targeted reruns preceded each complete suite.
@@ -1422,7 +1426,7 @@ The existing `tests/viewer/multi_viewer_test.cpp` (`opengl.multiview` / `vulkan.
 
 Validation date: 2026-11-27.
 
-Status: complete with the documented backend limitation below. The final all-target builds succeeded, and both complete serial CTest suites passed on the final tree.
+Status: complete with the documented OpenGL analytic-clipping limitation below. The final all-target builds succeeded, and both complete serial CTest suites passed on the final tree. Section 8.15 records the planned follow-up that removes the limitation and the two exact fallbacks that depend on it.
 
 #### User-facing API
 
@@ -1432,17 +1436,81 @@ Picking now routes through the shared `RenderDevice` contract on both backends, 
 - `Picker::draw_command` assembles backend-neutral draw commands, including the clipping planes reported by `ClippingPlane`, for the sampled drawable.
 - `ModelPicker::pick` assembles one command per visible candidate drawable and samples the nearest object ID through the shared pass; the private color-coded native `draw` fallback is removed.
 - `SurfaceMeshPicker` face and region picks sample the shared ID/depth pass; vertex picks resolve the closest source vertex of the picked face through the same sampled depth. The private framebuffer-based fallback is removed.
-- `PointCloudPicker` single picks sample the shared point-data command for drawable states it covers (plain points and impostor picks without clipping); region selection uses the shared selection request with clipping planes and model transforms folded into it. The private framebuffer-based fallback is removed; the only retained exact pass is the OpenGL analytic-impostor clipping fallback described below.
+- `PointCloudPicker` single picks sample the shared point-data command for drawable states it covers (plain points and impostor picks without clipping); region selection uses the shared selection request with clipping planes and model transforms folded into it. The private framebuffer-based fallback is removed; the only retained exact pass is the OpenGL analytic-impostor clipping fallback described below. Section 8.15 removes that last pass.
 
 Picker-owned framebuffers (`Picker::fbo_` and `Picker::setup_framebuffer`) are retired; any retained fallback creates its context-local framebuffer on demand.
 
 #### Exact fallbacks retained
 
-1. OpenGL analytic impostor (sphere/surfel) picking with an active clipping plane retains the exact native selection pass (`selection/selection_pointcloud_single_point_as_sphere_sprite` with `ClippingPlane` uniforms and depth-tested readback). The OpenGL adapter rejects analytic draws that also carry clipping planes, which is the documented Milestone 3 deviation; the retained fallback keeps clipped impostor picks correct until the adapter grows analytic clipping support. Plain points and lines under clipping already use the shared clip path and no longer need a fallback.
-2. `Viewer::pick` and `Viewer::read_scene_depth` retain the exact native drawable pass for scenes the shared query cannot serve (analytic impostors with clipping and unsupported effects).
+1. OpenGL analytic impostor (sphere/surfel) picking with an active clipping plane retains the exact native selection pass (`selection/selection_pointcloud_single_point_as_sphere_sprite` with `ClippingPlane` uniforms and depth-tested readback). The OpenGL adapter rejects analytic draws that also carry clipping planes, which is the documented Milestone 3 deviation; the retained fallback keeps clipped impostor picks correct until the adapter grows analytic clipping support. Plain points and lines under clipping already use the shared clip path and no longer need a fallback. Section 8.15 specifies the adapter and picker edits that remove this pass.
+2. `Viewer::pick` and `Viewer::read_scene_depth` retain the exact native drawable pass for scenes the shared query cannot serve. Today that includes analytic impostors with clipping and unsupported drawable/effect states. Section 8.15 removes the clipping and analytic-impostor trigger; the exact pass then remains only for genuinely unsupported drawables and effects.
 
 #### Validation coverage
 
-- `gui.scenepicker` passes on both backends and covers model, pixel, point, and region picks; hidden models and drawables; out-of-bounds picks; translucent, plain, and AO point picks; indexed point picks; manipulator transforms; and clipping for plain points and analytic impostors.
-- Final post-edit complete serial runs passed OpenGL 127/127 in 108.83 seconds and Vulkan 156/156 in 224.96 seconds, both with zero failures, after the final picker unification edits; the focused `gui.scenepicker` regression passed before the complete suites.
+- `gui.scenepicker` passes on both backends and covers model, pixel, point, and region picks; hidden models and drawables; out-of-bounds picks; translucent, plain, and AO point picks; indexed point picks; manipulator transforms; and clipping for plain points and analytic impostors. The clipped analytic-impostor cases currently exercise the exact fallback on OpenGL; section 8.15 adds the shared-path assertion.
+- Final post-edit complete serial runs passed OpenGL 127/127 in 108.83 seconds and Vulkan 156/156 in 224.96 seconds, both with zero failures, after the final picker unification edits; the focused `gui.scenepicker` regression passed before the complete suites. These numbers predate the section 8.15 follow-up.
 - No public class layout or virtual-table entry changed in this milestone beyond the already documented Milestone 4 entries. `git diff --check` passed.
+
+### 8.15 Milestone 5 follow-up plan
+
+Status: planned, not implemented. This section is the implementation plan for removing the limitation recorded as Milestone 3 deviation 5 and the two exact fallbacks recorded in section 8.14. The current tree still rejects OpenGL analytic clipping and still contains the OpenGL analytic-impostor picking fallback.
+
+#### Goal and required semantics
+
+Serve clipping for analytic point/line impostors from the shared `RenderDevice` on OpenGL, exactly as Vulkan does, so clipped impostor picks no longer need a backend-specific native pass. The shared behavior must remain:
+
+- `DrawCommand::clipping_planes` are view-space halfspaces. Analytic sphere/surfel and cylinder/cone fragments test the actual front-surface hit; a fragment is discarded when the hit is outside a halfspace.
+- Plain points test their centers; plain lines and wide plain lines clip their centerlines geometrically. These paths already use `graphics::internal::clip_draw` and must not regress.
+- `discard_clipped_primitives` rejects a primitive when any control point is outside. For analytic draws this control test is a whole-primitive policy; it does not replace the per-fragment surface test.
+- Surviving pixels keep their source object ID, primitive ID, and surface depth. Clipping discards fragments; it must not renumber primitives or shift depth.
+- Multisampled color uses `edge_coverage(distance)` so the analytic cut receives the same coverage ramp as silhouette edges; single-sample depth/ID passes discard hard. This mirrors [points.frag:79-86](../resources/shaders/vulkan/points.frag#L79-L86) and [lines.frag:149-155](../resources/shaders/vulkan/lines.frag#L149-L155).
+- `object_clipping_planes` remains the camera-independent form used by the geometric CPU clip and its cache. Analytic shaders consume the normalized view-space `clipping_planes`; hosts set both forms. `object_clipping_planes` alone can drive a geometric clip but cannot replace the view-space planes for surface tests.
+
+Scope boundary: this follow-up does not change the native OpenGL effect paths' process-wide `ClippingPlane` behavior from Milestone 3 deviation 4. It makes the portable command, capture, and query paths support analytic clipping; live native shadow/AO/EDL composition with `RenderSettings::clipping_planes` remains the separately documented limitation.
+
+#### OpenGL adapter changes
+
+All adapter edits are in [easy3d/renderer/backends/opengl/render_device.cpp](../easy3d/renderer/backends/opengl/render_device.cpp).
+
+1. Remove the rejection of analytic commands that carry `clipping_planes`, `object_clipping_planes`, or `discard_clipped_primitives` in `validate(const DrawCommand &, ...)` (currently around lines 975-979). Keep the rest of the validation, including the affine `model_view` requirement.
+2. In `prepare()` (around lines 1058-1089), normalize `d.clipping_planes` with `graphics::normalize_clipping_planes` before the `internal::clip_draw` decision. This gives OpenGL the same contract as Vulkan's `ClipCache::apply`: at most two finite halfspaces with nonzero normals, and tiny finite normals are normalized rather than rejected. Normalize before the overlay skip, so invalid planes are rejected consistently even when overlays ignore them.
+3. Add `uniform vec4 clip_planes[2]; uniform int clip_count;` to the embedded point fragment shader and line fragment shader. After the shader computes the view-space `hit` and before it writes depth/IDs, apply the Vulkan rule:
+   - `single_sample`: `discard` when `dot(clip_planes[i], vec4(hit, 1)) < 0`;
+   - multisampled color: multiply `coverage` by `edge_coverage(distance)`;
+   - add the point shader's final `if (!single_sample && coverage <= 0) discard;` check to match Vulkan's point shader; the current OpenGL shader relies on writing zero alpha instead. The line shader already discards zero coverage before the clip loop and can simply multiply afterward, matching Vulkan's line shader.
+   The point and line vertex shaders do not need their own clip loop on OpenGL. `prepare()` already calls `internal::clip_draw` for commands with clipping; with the discard policy it culls control points for every topology, including point centers and line endpoints, with source IDs preserved. That is equivalent to Vulkan's vertex-stage center cull and avoids maintaining two cull paths in one backend. Analytic draws without the discard policy keep their proxy geometry, so only the fragment hit test clips them.
+4. Upload the planes from `set_impostor_uniforms()` (around lines 1133-1152), mirroring the Vulkan upload at [vulkan/render_device.cpp:4178-4184](../easy3d/renderer/backends/vulkan/render_device.cpp#L4178-L4184): flatten up to two planes into a `float[8]`, set `clip_count` from `d.clipping_planes.size()`, and zero unused entries. For programs that do not consume these uniforms, `glGetUniformLocation` returns `-1` and the existing upload pattern ignores it.
+5. Keep `internal::clip_draw` semantics unchanged. Analytic plus `discard_clipped_primitives` returns control-culled proxy geometry; analytic without discard returns the original proxy. Wide plain lines (including `line_width != 1` and screen-space expansion) are non-analytic for the CPU clip and need no fragment-side plane test.
+6. Update the stale comments that describe the rejection (the validation message and the nearby Milestone 3 wording) rather than leaving an OpenGL-only exception after the code is gone.
+
+The OpenGL adapter uses embedded `#version 150` strings and cannot share the Vulkan GLSL files, so the two fragment loops will remain separate copies. Keep them textually and semantically aligned and cite this section in both places.
+
+#### Query and fallback changes
+
+- [easy3d/viewer/viewer.cpp:3100-3148](../easy3d/viewer/viewer.cpp#L3100-L3148), `Viewer::supports_device_query`: remove only the `ClippingPlane::instance()->is_enabled()` rejection. Keep the drawable-state gates (coloring method, texture availability, opaque alpha, AO textures, and 2D guide constraints); those states still require the exact native pass.
+- [easy3d/viewer/viewer.cpp:3439-3529](../easy3d/viewer/viewer.cpp#L3439-L3529), `Viewer::pick`, and [easy3d/viewer/viewer.cpp:3549-3570](../easy3d/viewer/viewer.cpp#L3549-L3570), `Viewer::read_scene_depth`: keep the exact fallback for the remaining unsupported drawable/effect states, but update the comment that currently says "Impostors, clipping, and unsupported effects" so it no longer claims clipping or standard impostors require it.
+- [easy3d/gui/picker_point_cloud.cpp:124-171](../easy3d/gui/picker_point_cloud.cpp#L124-L171), `PointCloudPicker::pick`: delete the `#ifndef EASY3D_HAS_VULKAN` analytic-and-clipped native selection block and now-unused native includes. Every single pick then uses `draw_command()` plus `render_device().sample_pixel()`. Keep `world_clipping_planes()` for region selection.
+- `Viewer::capture()` inherits the same improvement: relaxed gating means clipped scenes with supported drawables use the shared capture path instead of `draw_scene()`, so picking and capture exercise the same command assembly and clip implementation.
+
+Do not delete the `Viewer` exact query fallback entirely. Custom drawables, AO textures, non-opaque alpha, unsupported coloring, custom `Viewer::draw()` overrides, and similar states still need it; the follow-up removes the clipping and analytic-impostor triggers only.
+
+#### Validation plan
+
+1. Port [tests/viewer/clipping_test.cpp](../tests/viewer/clipping_test.cpp) to both backends. Replace the Vulkan-only `VulkanOptions`/`create_vulkan_device` setup with `graphics::DeviceOptions` and `graphics::create_device()` under an `OffScreen`-owned context (or keep the conditional options pattern used by other viewer tests). Register `opengl.clipping` in the non-Vulkan branch of [tests/viewer/CMakeLists.txt:117-120](../tests/viewer/CMakeLists.txt#L117-L120) and keep `vulkan.clipping`.
+2. Preserve the existing oracle coverage: halfspace/slab cuts, clipped fan interpolation and colors, original source IDs, whole-primitive policy, plain point/line policy, analytic sphere/surfel/cylinder/cone surface clipping, MSAA coverage and ID/depth invariance, world transforms, and scene picking. Add:
+   - invalid plane forms to the OpenGL path: more than two planes, zero normal, non-finite components, and tiny finite normals that must normalize;
+   - a clipped sphere/surfel single pick through `PointCloudPicker` compared with a direct `RenderDevice::sample_pixel()` of the same command, proving the native fallback is gone rather than merely unused;
+   - `Viewer::pick` and `Viewer::read_scene_depth` with a process-wide `ClippingPlane` enabled and only supported drawables, exercising the shared query path; keep one unsupported-drawable case that still takes the exact fallback.
+3. Rebuild both trees and run targeted `opengl.clipping`, `vulkan.clipping`, `gui.scenepicker`, capture, and render-settings tests before the complete serial OpenGL and Vulkan CTest suites. Record the measured counts and times in this section, and update the pre-follow-up numbers in section 8.14 and `changes/ToDo.md`.
+4. No public class layout or virtual-table change is expected. The work is private shader/uniform code, adapter validation/preparation, and deletion of fallback code.
+
+#### Acceptance checklist
+
+- [ ] OpenGL analytic sphere/surfel and cylinder/cone draws accept clipping planes and clip their actual surface, with source IDs and depth unchanged.
+- [ ] Plain points, plain lines, and wide plain lines retain their existing CPU-clip behavior.
+- [ ] `discard_clipped_primitives` keeps whole-primitive control culling on both backends.
+- [ ] MSAA cuts show analytic coverage; single-sample depth/ID passes stay hard-edged and consistent with one-sample rendering.
+- [ ] `PointCloudPicker` has no backend-conditional native selection path.
+- [ ] `Viewer::supports_device_query` no longer rejects scenes only because clipping is enabled; `Viewer::pick` and `read_scene_depth` use the shared query for clipped supported scenes.
+- [ ] `opengl.clipping` and `vulkan.clipping` pass, along with the complete suites on both backends.
+- [ ] The Milestone 3 deviation, the section 8.14 fallback list, the code comments, and the ToDo entries are updated from "planned" to the measured result.
