@@ -364,14 +364,12 @@ void MappleViewer::draw_animation_window() {
     if (count < 2)
         ImGui::TextDisabled("Recording needs at least two keyframes.");
     else
-        // The frames the recording will render: the path's own duration (travel plus
-        // dwell, as the timeline strip lays it out) at the interpolation speed.
+        // Report the samples the recorder will actually consume. The interpolation
+        // period is integer milliseconds, so duration * fps can overestimate the count.
+        const int count = static_cast<int>(kfi->interpolate().size());
         ImGui::TextDisabled("%.1f s at speed %.1f; %d frames at %d fps",
                             camera_path_duration() / kfi->interpolation_speed(),
-                            kfi->interpolation_speed(),
-                            static_cast<int>(camera_path_duration() / kfi->interpolation_speed() *
-                                             static_cast<float>(kfi->frame_rate())) + 1,
-                            kfi->frame_rate());
+                            kfi->interpolation_speed(), count, kfi->frame_rate());
 
     // The recording's own multisample count, on the ladder the Snapshot dialog uses:
     // supported_sample_mask() holds the counts this viewer can render, so an

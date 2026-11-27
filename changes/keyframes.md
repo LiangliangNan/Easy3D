@@ -117,10 +117,10 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
 ## Files changed
 
 - `easy3d/renderer/keyframe_interpolator.h` — `dwell_time_`, `set_keyframe_dwell()` /
-  `keyframe_dwell()`, `segment_fraction()`, `length_fraction()`
+  `keyframe_dwell()`, `segment_fraction()`, `length_fraction()`, and atomic `replace_keyframes()`
 - `easy3d/renderer/keyframe_interpolator.cpp` — `interpolate()` rewritten with the
-  cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell read/write
-  in `save_keyframes()` / `read_keyframes()`
+  cinematic motion rule; `segment_fraction()` helper; `total_duration()`; dwell/time/periodicity
+  stream I/O in `save_keyframes()` / `load_keyframes()`
 - `applications/Mapple/keyframe_timeline.h/.cpp` — `KeyframeTimeline` ImGui control,
   `cache_is_current()`
 - `applications/Mapple/ui/animation.cpp` — "Dwell (s)" field, timeline strip in the Camera
@@ -129,8 +129,8 @@ while the window is open, and inside it `Alt` belongs to the keyframes and never
   `edit_camera_path_timing()`, `camera_path_duration()`, `camera_path_editing_mode()`,
   `alt_held_`/`set_alt_held()` and the `Alt` handling of `mouse_press_event()` and
   `append_manipulator_frame()`
-- `easy3d/renderer/keyframe_editor.{h,cpp}` — `rebuild()` carries each kept keyframe's dwell, so
-  insert and delete no longer reset the path's pauses
+- `applications/Mapple/keyframe_editor.{h,cpp}` — `rebuild()` atomically replaces the path and
+  carries each kept keyframe's dwell, so insert and delete no longer reset the path's pauses
 - `tests/renderer/keyframe_interpolator_test.cpp` — regression test for dwell and the
   cinematic motion rule
 - `tests/renderer/keyframe_editor_test.cpp` — regression test for the dwell surviving an
@@ -866,3 +866,15 @@ provide a roll reference.
   behavior are unchanged.
 - The generation and I/O tests are `camera_path_test.cpp` and `camera_path_io_test.cpp`,
   registered as `camerapathgeneration` and `camerapathio` for both backends.
+
+### 2026-11-27 — Atomic editing of loaded-style paths
+
+- `KeyframeInterpolator::replace_keyframes()` atomically installs poses, times and optional
+  dwells. Unlike repeated `add_keyframe()` calls, it preserves coincident positions and
+  nonmonotone timestamps accepted by stream loading; invalid sizes leave the old path unchanged.
+- Mapple's `KeyframeEditor::rebuild()` and whole-path generation/undo operations use this
+  replacement instead of partially rebuilding a path through the stricter incremental API.
+  Undo snapshots also preserve periodicity explicitly rather than inferring it from generation
+  mode. Successful provenance validation continues to restore periodic interpolation only for a
+  whole-path generated Orbit; Walk and Flight remain open.
+- Focused camera-path, interpolator, editor and I/O regressions pass in both backend builds.

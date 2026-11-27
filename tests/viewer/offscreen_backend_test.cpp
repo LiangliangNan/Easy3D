@@ -84,6 +84,7 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.drawables().size()==1 && renderer.render(prefix+"-overlay.png",1,1,0),"common drawable attachment failed");
     require(renderer.delete_drawable(lines.get()) && renderer.delete_model(mesh.get()),"common scene deletion failed");
     renderer.clear_scene();require(renderer.models().empty() && renderer.drawables().empty(),"common scene clearing failed");
+    require(renderer.device().supported_sample_counts() & 1,"common renderer did not expose a usable device");
 #ifdef EASY3D_HAS_VULKAN
     require(renderer.device().validation_errors()==0,"common renderer validation errors");
 #endif
@@ -127,14 +128,27 @@ int main() {
     static_assert(!std::is_convertible<OffScreen*,Viewer*>::value, "OffScreen inheritance must be protected");
     try {
         initialize(false,false,false);
+#ifndef EASY3D_HAS_VULKAN
+        for (int option = 0; option < 4; ++option) {
+            graphics::DeviceOptions invalid;
+            if (option == 0) invalid.validation = true;
+            if (option == 1) invalid.sync_validation = true;
+            if (option == 2) invalid.profiling = true;
+            if (option == 3) invalid.device_name = "requested-device";
+            bool rejected = false;
+            try { OffScreen unsupported(1, 1, invalid); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "OpenGL silently ignored an unsupported DeviceOptions request");
+        }
+#endif
         for (const auto& size : {ivec2(0,1), ivec2(-1,1), ivec2(1,-1),
                                  ivec2(std::numeric_limits<int>::min(),1)}) {
             bool rejected = false;
-            try { OffScreen invalid(size.x,size.y); }
+            try { OffScreen invalid(size.x,size.y,graphics::DeviceOptions{}); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid signed OffScreen dimensions were accepted");
         }
-        OffScreen renderer(161,127);
+        OffScreen renderer(161,127,graphics::DeviceOptions{});
 #ifdef EASY3D_HAS_VULKAN
         // Offscreen output is scene-only; a window's default logo/axes must not leak in.
         renderer.set_background_color(vec4(1));
@@ -142,7 +156,7 @@ int main() {
         require(std::all_of(blank.rgba.begin(),blank.rgba.end(),[](unsigned char c) { return c == 255; }),
                 "empty OffScreen captured viewer HUD content");
         renderer.set_background_color(setting::background_color);
-        { OffScreen other(79,63); require(other.capture().width==79, "second OffScreen failed"); }
+        { OffScreen other(79,63,graphics::DeviceOptions{}); require(other.capture().width==79, "second OffScreen failed"); }
 #endif
         exercise(renderer,"configured-offscreen");
 #ifndef EASY3D_HAS_VULKAN

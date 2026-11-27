@@ -34,8 +34,147 @@
 #include <algorithm>
 #include <stdexcept>
 
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
+#if defined(__APPLE__)
+#include <OpenGL/OpenGL.h>
+#elif defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#if defined(EASY3D_OPENGL_X11)
+#include <GL/glx.h>
+#endif
+#if defined(EASY3D_OPENGL_WAYLAND)
+#include <EGL/egl.h>
+#endif
+#endif
+#endif
+
 namespace easy3d {
-    namespace detail {
+namespace detail {
+
+#ifndef EASY3D_HAS_VULKAN
+struct OpenGLContextScope::State {
+    GLFWwindow *previous = nullptr;
+    bool unchanged = false;
+#if defined(__APPLE__)
+    CGLContextObj context = nullptr;
+#elif defined(_WIN32)
+    HGLRC context = nullptr;
+    HDC dc = nullptr;
+#else
+#if defined(EASY3D_OPENGL_X11)
+    Display *display = nullptr;
+    GLXDrawable drawable = 0;
+    GLXContext context = nullptr;
+#endif
+#if defined(EASY3D_OPENGL_WAYLAND)
+    EGLDisplay egl_display = EGL_NO_DISPLAY;
+    EGLSurface egl_draw_surface = EGL_NO_SURFACE;
+    EGLSurface egl_read_surface = EGL_NO_SURFACE;
+    EGLContext egl_context = EGL_NO_CONTEXT;
+#endif
+#endif
+};
+
+OpenGLContextScope::OpenGLContextScope(GLFWwindow *window) : state_(new State) {
+#if defined(__APPLE__)
+    state_->context = CGLGetCurrentContext();
+#elif defined(_WIN32)
+    state_->context = wglGetCurrentContext();
+    state_->dc = wglGetCurrentDC();
+#else
+#if defined(EASY3D_OPENGL_X11)
+    state_->display = glXGetCurrentDisplay();
+    state_->drawable = glXGetCurrentDrawable();
+    state_->context = glXGetCurrentContext();
+#endif
+#if defined(EASY3D_OPENGL_WAYLAND)
+#if defined(EASY3D_OPENGL_X11)
+    if (!state_->context)
+#endif
+    {
+        state_->egl_display = eglGetCurrentDisplay();
+        state_->egl_draw_surface = eglGetCurrentSurface(EGL_DRAW);
+        state_->egl_read_surface = eglGetCurrentSurface(EGL_READ);
+        state_->egl_context = eglGetCurrentContext();
+    }
+#endif
+#if !defined(EASY3D_OPENGL_X11) && !defined(EASY3D_OPENGL_WAYLAND)
+    state_->previous = glfwGetCurrentContext();
+#endif
+#endif
+    glfwMakeContextCurrent(window);
+#if defined(__APPLE__)
+    state_->unchanged = CGLGetCurrentContext() == state_->context;
+#elif defined(_WIN32)
+    state_->unchanged = wglGetCurrentContext() == state_->context &&
+                        wglGetCurrentDC() == state_->dc;
+#else
+#if defined(EASY3D_OPENGL_X11)
+    if (state_->context)
+        state_->unchanged = glXGetCurrentContext() == state_->context &&
+                            glXGetCurrentDrawable() == state_->drawable &&
+                            glXGetCurrentDisplay() == state_->display;
+#endif
+#if defined(EASY3D_OPENGL_WAYLAND)
+    if (!state_->unchanged && state_->egl_context != EGL_NO_CONTEXT)
+        state_->unchanged = eglGetCurrentContext() == state_->egl_context &&
+                            eglGetCurrentDisplay() == state_->egl_display &&
+                            eglGetCurrentSurface(EGL_DRAW) == state_->egl_draw_surface &&
+                            eglGetCurrentSurface(EGL_READ) == state_->egl_read_surface;
+#endif
+#if !defined(EASY3D_OPENGL_X11) && !defined(EASY3D_OPENGL_WAYLAND)
+    state_->unchanged = state_->previous == window;
+#endif
+#endif
+}
+
+OpenGLContextScope::~OpenGLContextScope() {
+    restore();
+}
+
+void OpenGLContextScope::restore() {
+    if (!state_)
+        return;
+    if (state_->unchanged) {
+        delete state_;
+        state_ = nullptr;
+        return;
+    }
+    // Clear this GLFW copy's TLS before restoring natively; otherwise a later
+    // activation could clear the caller's context while believing ours is current.
+    glfwMakeContextCurrent(nullptr);
+#if defined(__APPLE__)
+    CGLSetCurrentContext(state_->context);
+#elif defined(_WIN32)
+    if (state_->context)
+        wglMakeCurrent(state_->dc, state_->context);
+#else
+#if defined(EASY3D_OPENGL_X11)
+    if (state_->context)
+        glXMakeCurrent(state_->display, state_->drawable, state_->context);
+#endif
+#if defined(EASY3D_OPENGL_WAYLAND)
+    if (state_->egl_context)
+        eglMakeCurrent(state_->egl_display, state_->egl_draw_surface, state_->egl_read_surface,
+                       state_->egl_context);
+#endif
+#if !defined(EASY3D_OPENGL_X11) && !defined(EASY3D_OPENGL_WAYLAND)
+    glfwMakeContextCurrent(state_->previous);
+#endif
+#endif
+    delete state_;
+    state_ = nullptr;
+}
+#endif
+
         GlfwRuntime::GlfwRuntime(bool require_vulkan) {
 #ifdef EASY3D_HAS_VULKAN
             // GLFW snapshots this loader hint at initialization. Prepare it even when

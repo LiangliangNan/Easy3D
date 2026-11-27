@@ -3,6 +3,7 @@
 #include <easy3d/renderer/shape.h>
 
 #include <cmath>
+#include <cstddef>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -14,6 +15,14 @@ using namespace easy3d::graphics;
 
 static_assert(std::is_standard_layout<DrawCommand>::value,
               "DrawCommand must retain its 2.8 layout compatibility");
+static_assert(sizeof(DrawCommand) == 616,
+              "DrawCommand must retain its frozen 616-byte 2.8 layout");
+static_assert(offsetof(DrawCommand, model_view_projection) == 32 &&
+              offsetof(DrawCommand, model) == 172 &&
+              offsetof(DrawCommand, clipping_planes) == 392 &&
+              offsetof(DrawCommand, depth_range_min) == 610 &&
+              offsetof(DrawCommand, depth_range_max) == 612,
+              "DrawCommand members moved within the frozen 2.8 layout");
 
 namespace {
 

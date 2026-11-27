@@ -142,6 +142,20 @@ namespace easy3d {
         void delete_last_keyframe();
 
         /**
+         * \brief Atomically replaces the path with \p frames, \p times and optional \p dwells.
+         * \details Unlike repeated add_keyframe() calls, this preserves loaded-style paths
+         *      with coincident poses or nonmonotone times. A size mismatch leaves the path
+         *      unchanged and returns false. Periodic endpoint policy is preserved.
+         * \param frames The replacement poses.
+         * \param times One timestamp per pose, in seconds.
+         * \param dwells Optional dwell seconds per pose; omitted entries default to zero.
+         * \return \c true when the path was replaced.
+         */
+        bool replace_keyframes(const std::vector<Frame>& frames,
+                               const std::vector<float>& times,
+                               const std::vector<float>& dwells);
+
+        /**
          * \brief Sets the time corresponding to the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
          * \param index The index of the keyframe.

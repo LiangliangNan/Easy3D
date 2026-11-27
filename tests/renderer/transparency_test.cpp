@@ -90,12 +90,16 @@ int main(int argc,char**) {
             require(ordered.rgba==reversed.rgba,"transparent draws were not sorted far to near");
             same_ids(ordered,reversed,"transparent draw order changed picking IDs");
 
-            auto ranged_green=green; ranged_green.set_depth_range(vec2(.6f,.8f));
-            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(0,.2f));
+            // Reverse geometric and mapped order so ignoring the ranges changes color and ID.
+            auto ranged_green=green; ranged_green.set_depth_range(vec2(0,.2f));
+            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(.6f,.8f));
             const auto range_sorted=device->render(65,65,{ranged_blue,ranged_green},vec4(0),count);
-            probe(range_sorted,32,32,expected,"mapped depth ranges");
-            require(range_sorted.ids[32*65+32].object==31,
+            const int range_expected[]={0,128,64};
+            probe(range_sorted,32,32,range_expected,"mapped depth ranges");
+            require(range_sorted.ids[32*65+32].object==21,
                     "transparent sorting ignored mapped depth ranges");
+            require(std::abs(range_sorted.depth[32*65+32]-.15f)<1e-5f,
+                    "transparent sorting lost mapped depth");
 
             const auto occluded=device->render(65,65,{green,red,blue},vec4(0),count);
             const int only_red[]={255,0,0};
@@ -177,10 +181,12 @@ int main(int argc,char**) {
             const auto peeled_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::peeling,2);
             require(peeled.rgba==peeled_reversed.rgba,"depth peeling was not order independent");
 
-            auto invisible=green; invisible.color.w=0;
-            const auto through_invisible=device->render(65,65,{invisible,blue},vec4(0),count,
+            // The invisible quad must be nearest, otherwise the visible near quad wins anyway.
+            auto invisible=blue; invisible.color.w=0;
+            const auto through_invisible=device->render(65,65,{invisible,green},vec4(0),count,
                                                        TransparencyMethod::peeling,1);
-            probe(through_invisible,32,32,near_expected,"zero-alpha peel depth");
+            const int through_invisible_expected[]={0,128,0};
+            probe(through_invisible,32,32,through_invisible_expected,"zero-alpha peel depth");
             auto close_green=green;
             auto close_blue=rectangle(-1,-1,1,1,.500002f,vec4(0,0,1,.5f),true);
             const auto close_sorted=device->render(65,65,{close_green,close_blue},vec4(0),count);
@@ -188,11 +194,16 @@ int main(int argc,char**) {
                                                   TransparencyMethod::peeling,2);
             close_rgba(close_peeled,close_sorted,"depth peeling merged distinct close layers");
 
-            auto ranged_green=green; ranged_green.set_depth_range(vec2(.6f,.8f));
-            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(0,.2f));
+            auto ranged_green=green; ranged_green.set_depth_range(vec2(0,.2f));
+            auto ranged_blue=blue; ranged_blue.set_depth_range(vec2(.6f,.8f));
             const auto ranged_peeled=device->render(65,65,{ranged_green,ranged_blue},vec4(0),count,
                                                    TransparencyMethod::peeling,2);
-            probe(ranged_peeled,32,32,expected,"peel mapped depth ranges");
+            const int ranged_peeled_expected[]={0,128,64};
+            probe(ranged_peeled,32,32,ranged_peeled_expected,"peel mapped depth ranges");
+            require(ranged_peeled.ids[32*65+32].object==21,
+                    "depth peeling ignored mapped depth ranges");
+            require(std::abs(ranged_peeled.depth[32*65+32]-.15f)<1e-5f,
+                    "depth peeling lost mapped depth");
 
             std::vector<Vertex> triangle_vertices(3);
             triangle_vertices[0].position=vec3(-.9f,-.9f,.5f);

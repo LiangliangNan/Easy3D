@@ -537,6 +537,7 @@ private:
         std::vector<easy3d::Frame> frames;
         std::vector<float> times;
         std::vector<float> dwells;
+        bool periodic = false;
         std::vector<GeneratedPath> generated_paths;
         int keyframe_index = -1;
         bool valid = false;
@@ -549,8 +550,9 @@ private:
     // Restores the snapshot taken before the last tool or edit; false without one.
     bool undo_camera_path();
 
-    // The one writer for a whole-path replacement. It validates before deleting anything,
-    // so a malformed time/position sequence cannot leave a partially written path.
+    // The one writer for a whole-path replacement. Matching pose/time sizes and dwell
+    // counts are checked before touching the active path; the replacement is atomic.
+    // Like file loading, it accepts coincident poses and nonmonotone timestamps.
     bool write_camera_path(const std::vector<easy3d::Frame> &frames,
                            const std::vector<float> &times,
                            const std::vector<float> &dwells,

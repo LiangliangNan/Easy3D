@@ -34,12 +34,7 @@ int main() {
         void post_draw() override { ++after; }
     };
     try {
-#ifdef EASY3D_HAS_VULKAN
-        VulkanOptions options;
-        options.use_native_large_points = false;
-#else
-        const OpenGLOptions options{};
-#endif
+        easy3d::graphics::DeviceOptions options;
         // Written the way a user sets the struct: default-construct, then assign
         // what differs. samples 1 and a resizable window are already the defaults.
         WindowOptions window;

@@ -43,7 +43,7 @@ namespace easy3d {
          * \details Its definition remains in this namespace so the 2.8 factory keeps
          * its original ABI symbol. New code uses backends::vulkan::VulkanSurface.
          */
-        struct VulkanSurface {
+        struct EASY3D_DEPRECATED("use graphics::backends::vulkan::VulkanSurface") VulkanSurface {
             /// Instance extensions required by the callback to create the native surface.
             /// Every name must be supported by the Vulkan loader.
             std::vector<std::string> instance_extensions;

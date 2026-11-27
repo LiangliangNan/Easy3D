@@ -65,6 +65,7 @@ namespace easy3d {
          * \param options Backend-specific Vulkan or OpenGL creation options.
          * \throws std::invalid_argument if rows or cols is not positive.
          */
+        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable MultiViewer constructor")
         MultiViewer(int rows, int cols, const std::string &title = "Easy3D MultiViewer",
                           const WindowOptions& window = {},
 #ifdef EASY3D_HAS_VULKAN
@@ -78,9 +79,21 @@ namespace easy3d {
         MultiViewer(int rows, int cols, const std::string &title,
                     const WindowOptions &window, const Options &options,
                     typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : MultiViewer(rows, cols, title, window, detail::make_device_options(options))
+            : MultiViewer(rows, cols, title, window, detail::make_device_options(options), detail::DeviceOptionsTag{})
         {
         }
+
+    protected:
+        MultiViewer(int rows, int cols, const std::string &title,
+                    const WindowOptions &window,
+#ifdef EASY3D_HAS_VULKAN
+                    const VulkanOptions &options,
+#else
+                    const OpenGLOptions &options,
+#endif
+                    detail::DeviceOptionsTag);
+
+    public:
         /**
          * \brief Destructor.
          */

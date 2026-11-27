@@ -137,9 +137,11 @@
  *      - Node buffer size = 16,588,800 × 32 bytes = 531 MB
  *
  *      If the node pool overflows (more fragments than allocated nodes), excess fragments
- *      are silently discarded in the build pass. This can cause visual artifacts (missing
- *      transparency) in very complex scenes. To avoid this, increase `max_fragments_` or
- *      reduce the viewport size.
+ *      are discarded in the build pass. This native implementation reads back the atomic
+ *      counter and logs an overflow warning; the portable RenderDevice path also exposes a
+ *      dropped-fragment count. Dropped fragments can cause visual artifacts (missing
+ *      transparency) in very complex scenes. To avoid this, increase the node-pool capacity
+ *      or reduce the viewport size.
  *
  *      **Performance Optimization Notes:**
  *
@@ -158,10 +160,10 @@
  *         shader) would improve performance. For typical scenes (≤ 8 fragments/pixel),
  *         insertion sort is fast enough.
  *
- *      4. **Overflow Handling:** The current implementation silently discards overflow
- *         fragments. A more robust implementation could:
+ *      4. **Overflow Handling:** Overflow fragments are discarded. This native
+ *         implementation logs a warning from the atomic counter; the portable
+ *         RenderDevice path counts dropped fragments. A more robust implementation could:
  *         - Use a secondary overflow buffer
- *         - Render a warning when overflow occurs
  *         - Dynamically resize the node pool (not possible with fixed-size SSBOs)
  *
  *      **OpenGL Version Requirements:**
@@ -255,7 +257,7 @@ void PerPixelLinkedListsOIT::draw(const std::vector<TrianglesDrawable*>& surface
         return;
     }
 
-    if (w != width_ || h != height_)
+    if (w != width_ || h != height_ || node_count_ != w * h * max_fragments_)
         init(w, h);
 
     // Build pass: render transparent fragments into per-pixel linked lists.

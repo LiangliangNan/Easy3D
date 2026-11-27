@@ -213,6 +213,29 @@ namespace easy3d {
     }
 
 
+    bool KeyframeInterpolator::replace_keyframes(const std::vector<Frame> &frames,
+                                                 const std::vector<float> &times,
+                                                 const std::vector<float> &dwells) {
+        if (frames.size() != times.size() || dwells.size() > frames.size())
+            return false;
+        std::vector<Keyframe> replacement;
+        replacement.reserve(frames.size());
+        for (std::size_t i = 0; i < frames.size(); ++i) {
+            replacement.emplace_back(frames[i], times[i]);
+            if (i < dwells.size())
+                replacement.back().set_dwell_time(dwells[i]);
+        }
+        stop_interpolation();
+        keyframes_ = std::move(replacement);
+        interpolated_path_.clear();
+        pathIsValid_ = false;
+        last_stopped_index_ = 0;
+        playback_elapsed_ = 0.0f;
+        drop_immediate_drawables();
+        return true;
+    }
+
+
     void KeyframeInterpolator::set_keyframe_time(std::size_t index, float t) {
         stop_interpolation();
         keyframes_.at(index).set_time(t);

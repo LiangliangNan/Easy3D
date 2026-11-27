@@ -452,6 +452,7 @@ namespace easy3d {
         }
         void DrawableRenderer::clear() {
             impl_->cache.clear();
+            impl_->images.clear();
             impl_->screen_lines.clear();
         }
     } // namespace graphics

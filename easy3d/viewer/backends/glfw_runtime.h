@@ -39,6 +39,31 @@ namespace easy3d {
         }
     } // namespace graphics
     namespace detail {
+
+        /**
+         * \brief Temporarily makes an Easy3D OpenGL window current and restores the caller's context.
+         * \details GLFW tracks the current context in thread-local storage per library copy, which
+         *      does not reveal a context owned by another GLFW copy. This guard therefore captures
+         *      the actual native CGL, WGL, GLX, or EGL state before switching, and restores it on
+         *      destruction or restore(). If the requested context is already current,
+         *      no restoration is needed. This keeps temporary snapshot/query operations
+         *      exception-safe and prevents Easy3D from leaving a different context
+         *      current for its host.
+         */
+        class OpenGLContextScope {
+        public:
+            explicit OpenGLContextScope(GLFWwindow *window);
+            ~OpenGLContextScope();
+            void restore();
+
+            OpenGLContextScope(const OpenGLContextScope &) = delete;
+            OpenGLContextScope &operator=(const OpenGLContextScope &) = delete;
+
+        private:
+            struct State;
+            State *state_;
+        };
+
         // UI-thread ownership shared by all Easy3D GLFW hosts, across both backends.
         // Hosts destroy their GPU resources and windows before releasing this lease.
         class GlfwRuntime {

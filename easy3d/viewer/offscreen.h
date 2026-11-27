@@ -57,6 +57,7 @@ namespace easy3d {
          * \details OpenGL construction creates a hidden context. Vulkan
          *      construction creates no window or surface.
          */
+        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable OffScreen constructor")
         explicit OffScreen(int width = 800,
                            int height = 600,
 #ifdef EASY3D_HAS_VULKAN
@@ -69,10 +70,20 @@ namespace easy3d {
         template <typename Options>
         OffScreen(int width, int height, const Options &options,
                   typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : OffScreen(width, height, detail::make_device_options(options))
+            : OffScreen(width, height, detail::make_device_options(options), detail::DeviceOptionsTag{})
         {
         }
 
+    protected:
+        OffScreen(int width, int height,
+#ifdef EASY3D_HAS_VULKAN
+                  const VulkanOptions &options,
+#else
+                  const OpenGLOptions &options,
+#endif
+                  detail::DeviceOptionsTag);
+
+    public:
         /// Release the offscreen canvas and its graphics resources.
         ~OffScreen() override;
 
@@ -211,9 +222,9 @@ namespace easy3d {
         using Viewer::width;
         using Viewer::world_to_pixel;
         using Viewer::world_to_window;
-#ifdef EASY3D_HAS_VULKAN
-        // Transitional native scene operations, retained until the picker migration.
         using Viewer::device;
+#ifdef EASY3D_HAS_VULKAN
+        // Transitional native scene operation, retained until the picker migration.
         using Viewer::scan_visible_points;
 #endif
         //@}

@@ -295,10 +295,8 @@ namespace easy3d {
         }
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
-        if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
+        if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_ || highlight_texture_)
             opengl_release_buffers();
 #endif
         client_colors_ = client_normals_ = client_texcoords_ = client_indices_ = false;
@@ -351,8 +349,6 @@ namespace easy3d {
         advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
 #endif
         num_indices_ = 0;
@@ -394,8 +390,6 @@ namespace easy3d {
                 bbox_.grow(p);
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
         dynamic_vertices_ = dynamic;
 #endif
@@ -409,8 +403,6 @@ namespace easy3d {
         if (!realizing_) client_colors_ = true;
         advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
         dynamic_colors_ = dynamic;
 #endif
@@ -422,8 +414,6 @@ namespace easy3d {
         if (!realizing_) client_normals_ = true;
         advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
         dynamic_normals_ = dynamic;
 #endif
@@ -435,8 +425,6 @@ namespace easy3d {
         if (!realizing_) client_texcoords_ = true;
         advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
         dynamic_texcoords_ = dynamic;
 #endif
@@ -451,8 +439,6 @@ namespace easy3d {
         advance_revision(*cpu_buffers_);
 #ifndef EASY3D_HAS_VULKAN
         ++point_revision_;
-        ++buffer_revision_;
-        opengl_snapshot_.reset();
         opengl_upload_needed_ = true;
 #endif
         reset_highlight_mask();

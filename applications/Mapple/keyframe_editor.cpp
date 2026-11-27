@@ -403,20 +403,7 @@ bool KeyframeEditor::rebuild(const std::vector<Frame> &frames, const std::vector
                              const std::vector<float> &dwells) {
     if (!kfi_ || frames.size() != times.size())
         return false;
-    if (kfi_->is_interpolation_started())
-        kfi_->stop_interpolation();
-    const bool periodic = kfi_->is_path_periodic();
-    kfi_->delete_path();
-    for (std::size_t i = 0; i < frames.size(); ++i) {
-        if (!kfi_->add_keyframe(frames[i], times[i]))
-            return false;
-        // The dwell belongs to the keyframe, so a path rebuilt from kept keyframes
-        // keeps their pauses; a shorter dwells list simply leaves the rest at 0.
-        if (i < dwells.size())
-            kfi_->set_keyframe_dwell(i, dwells[i]);
-    }
-    kfi_->set_path_periodic(periodic);
-    return true;
+    return kfi_->replace_keyframes(frames, times, dwells);
 }
 
 void KeyframeEditor::append_overlay(std::vector<graphics::DrawCommand> &commands,

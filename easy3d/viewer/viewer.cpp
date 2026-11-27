@@ -120,6 +120,19 @@
 
 
 namespace easy3d {
+#ifndef EASY3D_HAS_VULKAN
+    struct Viewer::GraphicsResources {
+        std::unique_ptr<graphics::DrawableRenderer> drawable_renderer;
+        std::unique_ptr<graphics::RenderDevice> query_device;
+    };
+
+    Viewer::GraphicsResources &Viewer::graphics_resources() const {
+        if (!graphics_resources_)
+            graphics_resources_.reset(new GraphicsResources);
+        return *graphics_resources_;
+    }
+#endif
+
     namespace {
         // Light-space data for a declarative shadow frame. Computing it here keeps
         // the settings path independent of backend-specific legacy effect classes.
@@ -359,7 +372,8 @@ namespace easy3d {
     }
 
     void Viewer::strip_settings_transparency(std::vector<graphics::DrawCommand> &commands,
-                                             const std::vector<DrawSource> *sources) const {
+                                             const std::vector<DrawSource> &sources,
+                                             const std::vector<graphics::DrawCommand> &source_commands) const {
         if (!render_settings().transparency.enabled)
             return;
         for (size_t i = 0; i < commands.size(); ++i) {
@@ -368,10 +382,13 @@ namespace easy3d {
                 command.geometry->topology() != graphics::Topology::triangles)
                 continue;
             command.transparent = false;
-            // draw_commands() replaces the drawable's color alpha with its opacity
-            // for the presentation pass. Raw capture restores the original alpha.
-            if (sources && i < sources->size() && sources->at(i).drawable)
-                command.color.w = sources->at(i).drawable->color().w;
+            // Source-mapped commands use compact IDs, while raw capture keeps
+            // model/standalone IDs. Match by command position, not by those IDs.
+            if (i >= source_commands.size())
+                continue;
+            const auto id = source_commands[i].object_id;
+            if (id < sources.size() && sources[id].drawable)
+                command.color.w = sources[id].drawable->color().w;
         }
     }
 
@@ -604,11 +621,17 @@ namespace easy3d {
             auto commands = owner.frame_commands(cam, width, height, nullptr, include_hud);
             // MultiViewer::draw_commands() remaps IDs when sources are requested;
             // capture() must keep the model/standalone IDs used by pick(). Recover
-            // drawable colors only where the command order matches the source order.
+            // drawable colors from a parallel source-mapped command list without
+            // changing the IDs in the captured command list.
             std::vector<DrawSource> sources;
-            if (owner.render_settings().transparency.enabled && !dynamic_cast<const MultiViewer *>(&owner))
-                owner.draw_commands(cam, width, height, &sources);
-            owner.strip_settings_transparency(commands, &sources);
+            std::vector<graphics::DrawCommand> source_commands;
+            if (owner.render_settings().transparency.enabled) {
+                if (const auto *multi = dynamic_cast<const MultiViewer *>(&owner))
+                    source_commands = multi->draw_commands(cam, width, height, &sources);
+                else
+                    source_commands = owner.draw_commands(cam, width, height, &sources);
+            }
+            owner.strip_settings_transparency(commands, sources, source_commands);
             return device->render(uint32_t(width), uint32_t(height), std::move(commands), options);
         }
     };
@@ -1769,9 +1792,10 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         impl_->drawable_renderer.prune();
 #else
-        if (!drawable_renderer_)
-            drawable_renderer_.reset(new graphics::DrawableRenderer);
-        drawable_renderer_->prune();
+        auto &renderer = graphics_resources().drawable_renderer;
+        if (!renderer)
+            renderer.reset(new graphics::DrawableRenderer);
+        renderer->prune();
 #endif
         std::vector<graphics::DrawCommand> commands;
         const auto &planes = clipping_planes();
@@ -1792,7 +1816,7 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
             auto command = impl_->drawable_renderer.command(d, id, cam, planes, selected);
 #else
-            auto command = drawable_renderer_->command(d, id, cam, planes, selected);
+            auto command = graphics_resources().drawable_renderer->command(d, id, cam, planes, selected);
 #endif
             command.point_size *= pixel_scale;
             command.line_width *= pixel_scale;
@@ -2146,6 +2170,12 @@ namespace easy3d {
     Viewer::Viewer(const std::string &title,
                    const WindowOptions &window,
                    const VulkanOptions &vk_options)
+        : Viewer(title, window, vk_options, detail::DeviceOptionsTag{}) {
+    }
+    Viewer::Viewer(const std::string &title,
+                   const WindowOptions &window,
+                   const VulkanOptions &vk_options,
+                   detail::DeviceOptionsTag)
         : Viewer(std::make_shared<Window>(title, window.width, window.height, window.samples, window.full_screen,
                                           window.visible, window.resizable), vk_options) {
     }
@@ -2341,10 +2371,15 @@ namespace easy3d {
     float Viewer::dpi_scaling() const {
         return dpi_scaling_;
     }
-    Viewer::Viewer(const std::string &title /* = "Easy3D Viewer" */,
-                   const WindowOptions &window /* = {} */,
-                   const OpenGLOptions &gl_options /* = {} */
-                   )
+    Viewer::Viewer(const std::string &title,
+                   const WindowOptions &window,
+                   const OpenGLOptions &gl_options)
+        : Viewer(title, window, gl_options, detail::DeviceOptionsTag{}) {
+    }
+    Viewer::Viewer(const std::string &title,
+                   const WindowOptions &window,
+                   const OpenGLOptions &gl_options,
+                   detail::DeviceOptionsTag)
         : window_(nullptr), dpi_scaling_(1.0), title_(title), samples_(0), // Liangliang: actual samples received known only after window creation
           visible_(window.visible), background_color_(setting::background_color),
           show_easy3d_logo_(true), show_pivot_point_(false), show_frame_rate_(false),
@@ -2666,16 +2701,19 @@ namespace easy3d {
             return;
         }
 
+#ifndef EASY3D_HAS_VULKAN
+        detail::OpenGLContextScope context_guard(window_);
+#else
         const auto previous_context = glfwGetCurrentContext();
         glfwMakeContextCurrent(window_);
+#endif
         glfwSetWindowUserPointer(window_, nullptr);
         camera_.reset();
         opengl_viewer_state(this).corner_axes_commands.clear();
         text_layout_.reset();
         hud_overlay_renderer_.reset();
         overlay_renderer_.reset();
-        query_device_.reset();
-        drawable_renderer_.reset();
+        graphics_resources_.reset();
 
         clear_scene();
         clear_opengl_effect_cache(opengl_viewer_state(this));
@@ -2689,8 +2727,12 @@ namespace easy3d {
         runtime_->detach_opengl_window(window_);
         glfwDestroyWindow(window_);
         window_ = nullptr;
+#ifndef EASY3D_HAS_VULKAN
+        context_guard.restore();
+#else
         if (previous_context && previous_context != closing)
             glfwMakeContextCurrent(previous_context);
+#endif
         runtime_.reset();
 #ifndef EASY3D_HAS_VULKAN
         opengl_viewer_states().erase(this);
@@ -2834,6 +2876,16 @@ namespace easy3d {
             glGetIntegerv(GL_MAJOR_VERSION, &major);
             glGetIntegerv(GL_MINOR_VERSION, &minor);
             return major > 4 || (major == 4 && minor >= 3);
+        }
+
+        bool opengl_float_blending_available() {
+            GLint major = 0, minor = 0;
+            glGetIntegerv(GL_MAJOR_VERSION, &major);
+            glGetIntegerv(GL_MINOR_VERSION, &minor);
+            return major > 4 || (major == 4 && minor >= 4) ||
+                   glewIsSupported("GL_ARB_color_buffer_float") ||
+                   glewIsSupported("GL_EXT_color_buffer_float") ||
+                   glewIsSupported("GL_EXT_float_blend");
         }
 
         Shadow *prepare_settings_shadow(ViewerOpenGLState &state, Camera *camera, const ShadowSettings &settings) {
@@ -3034,7 +3086,7 @@ namespace easy3d {
                     submit(std::move(commands), settings.transparency.method, settings.transparency.layers);
                 else
                     submit(std::move(commands), graphics::TransparencyMethod::sorted, 4);
-                drawable_renderer_->prune();
+                graphics_resources().drawable_renderer->prune();
             } catch (const std::exception &e) {
                 LOG_N_TIMES(1, WARNING) << "native drawable fallback: " << e.what();
                 portable = false;
@@ -3095,6 +3147,10 @@ namespace easy3d {
                     LOG_N_TIMES(1, WARNING) << "OpenGL per-pixel linked lists require OpenGL 4.3; "
                                                "falling back to depth peeling";
                     method = graphics::TransparencyMethod::peeling;
+                } else if (method == graphics::TransparencyMethod::average && !opengl_float_blending_available()) {
+                    LOG_N_TIMES(1, WARNING) << "OpenGL average-color blending requires floating-point color blending; "
+                                               "falling back to depth peeling";
+                    method = graphics::TransparencyMethod::peeling;
                 }
                 // Every native transparency method bypasses the legacy shadow because
                 // native_scene() excludes it, so diagnose that once regardless of method.
@@ -3136,29 +3192,15 @@ namespace easy3d {
     }
 
     namespace {
-        struct QueryContext {
-            GLFWwindow *previous;
-            explicit QueryContext(GLFWwindow *window) : previous(glfwGetCurrentContext()) {
-                glfwMakeContextCurrent(window);
-            }
-            ~QueryContext() {
-                glfwMakeContextCurrent(previous);
-            }
-        };
+        using QueryContext = detail::OpenGLContextScope;
         using opengl::QueryState;
         void query_draw(const Drawable *drawable, const Camera &camera) {
             if (!drawable || !drawable->is_visible() || dynamic_cast<const LinesDrawable2D *>(drawable))
                 return;
-            // Standard drawable rendering only, matching the native scene encoder.
-            // Custom Viewer::draw() and application frame hooks do not run here.
-            if (auto *d = dynamic_cast<const TrianglesDrawable *>(drawable))
-                d->TrianglesDrawable::draw(&camera);
-            else if (auto *d = dynamic_cast<const LinesDrawable *>(drawable))
-                d->LinesDrawable::draw(&camera);
-            else if (auto *d = dynamic_cast<const PointsDrawable *>(drawable))
-                d->PointsDrawable::draw(&camera);
-            else
-                throw std::invalid_argument("unsupported drawable in scene depth query");
+            // Unsupported states use the exact native drawable implementation,
+            // including application overrides. Custom Viewer::draw() and frame
+            // hooks do not run in a scene query.
+            drawable->draw(&camera);
         }
     } // namespace
 
@@ -3187,11 +3229,10 @@ namespace easy3d {
                                   drawable->coloring_method() == State::SCALAR_FIELD;
             if (textured && (!drawable->texture() || !drawable->texture()->pixels()))
                 return false;
-            if (auto *points = dynamic_cast<PointsDrawable *>(drawable.get()))
-                return true;
-            if (auto *lines = dynamic_cast<LinesDrawable *>(drawable.get()))
-                return true;
-            return dynamic_cast<TrianglesDrawable *>(drawable.get()) != nullptr;
+            const Drawable &value = *drawable;
+            return typeid(value) == typeid(PointsDrawable) ||
+                   typeid(value) == typeid(LinesDrawable) ||
+                   typeid(value) == typeid(TrianglesDrawable);
         };
         for (const auto &model : models_) {
             if (!model->renderer() || !model->renderer()->is_visible())
@@ -3212,14 +3253,21 @@ namespace easy3d {
         return true;
     }
 
+    void Viewer::prune_drawable_cache() const {
+        auto &renderer = graphics_resources().drawable_renderer;
+        if (renderer)
+            renderer->prune();
+    }
+
     graphics::RenderDevice &Viewer::query_device() const {
-        if (!query_device_)
-            query_device_ = graphics::create_device();
-        return *query_device_;
+        auto &device = graphics_resources().query_device;
+        if (!device)
+            device = graphics::create_device();
+        return *device;
     }
 
     const graphics::RenderDevice &Viewer::device() const {
-        return *query_device_;
+        return query_device();
     }
 
     bool Viewer::device_query_commands(const Camera &camera,
@@ -3253,7 +3301,7 @@ namespace easy3d {
                 return command.overlay;
             }), commands.end());
         }
-        drawable_renderer_->prune();
+        graphics_resources().drawable_renderer->prune();
         return true;
     }
 
@@ -3292,9 +3340,10 @@ namespace easy3d {
         if (!owner)
             throw std::invalid_argument("point drawable does not belong to this viewer");
         QueryContext context(window_);
-        if (!drawable_renderer_)
-            drawable_renderer_.reset(new graphics::DrawableRenderer);
-        return drawable_renderer_->command(owner, 0, *camera(), clipping_planes()).geometry->point_data();
+        auto &renderer = graphics_resources().drawable_renderer;
+        if (!renderer)
+            renderer.reset(new graphics::DrawableRenderer);
+        return renderer->command(owner, 0, *camera(), clipping_planes()).geometry->point_data();
     }
     std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest &request) const {
         QueryContext context(window_);
@@ -3341,23 +3390,11 @@ namespace easy3d {
     }
     unsigned Viewer::supported_sample_mask() const {
         // Offscreen multisample storage is capped by GL_MAX_SAMPLES, and reading it
-        // needs a current context: borrow this viewer's window when the caller has
-        // none and hand the context back afterwards. Without either, only the
-        // single-sample count can be promised.
-        GLFWwindow *restore = glfwGetCurrentContext();
-        if (!restore) {
-            if (!window_)
-                return 1;
-            glfwMakeContextCurrent(window_);
-        }
-        GLint maximum = 0;
-        glGetIntegerv(GL_MAX_SAMPLES, &maximum);
-        if (!restore)
-            glfwMakeContextCurrent(restore);
-        unsigned mask = 1;
-        for (unsigned count = 2; count <= 64 && count <= unsigned(std::max(0, maximum)); count <<= 1)
-            mask |= count;
-        return mask;
+        // needs a current context. Without a window only single-sample is promised.
+        if (!window_)
+            return 1;
+        QueryContext context(window_);
+        return query_device().supported_sample_counts(graphics::PointStyle::plain);
     }
     graphics::FrameImage Viewer::capture() const {
         return capture(samples());
@@ -3399,14 +3436,19 @@ namespace easy3d {
         std::vector<graphics::DrawCommand> scene_commands;
         const bool device_scene = device_query_commands(snapshot, w, h, false, scene_commands);
         // capture() keeps the stable model/standalone IDs used by pick(). Querying
-        // sources would renumber them, so recover the drawable colors only when the
-        // command order is known to match the source order (non-MultiViewer hosts).
+        // sources would renumber them, so build a parallel source-mapped command
+        // list to recover drawable colors, including for MultiViewer hosts.
         std::vector<DrawSource> scene_sources;
-        if (render_settings().transparency.enabled && !dynamic_cast<const MultiViewer *>(this))
-            draw_commands(snapshot, w, h, &scene_sources);
+        std::vector<graphics::DrawCommand> source_commands;
+        if (render_settings().transparency.enabled) {
+            if (const auto *multi_viewer = dynamic_cast<const MultiViewer *>(this))
+                source_commands = multi_viewer->draw_commands(snapshot, w, h, &scene_sources);
+            else
+                source_commands = draw_commands(snapshot, w, h, &scene_sources);
+        }
         // Presentation transparency is a RenderSettings effect, so it must not
         // alter the raw in-memory capture.
-        strip_settings_transparency(scene_commands, &scene_sources);
+        strip_settings_transparency(scene_commands, scene_sources, source_commands);
         auto color_commands = scene_commands;
         if (device_scene) {
             std::vector<graphics::DrawCommand> all_commands;
@@ -3620,7 +3662,7 @@ namespace easy3d {
             const auto pixel = query_device().sample_pixel(
                 uint32_t(fw), uint32_t(fh), commands, uint32_t(x), uint32_t(y));
             depth = pixel.depth;
-            return true;
+            return pixel.id.object != UINT32_MAX;
         }
         QueryState state;
         state.prepare(fw, fh);
@@ -3632,7 +3674,7 @@ namespace easy3d {
         glClear(GL_DEPTH_BUFFER_BIT);
         draw_scene(snapshot);
         glReadPixels(x, fh - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        return true;
+        return depth < 1.0f;
     }
     void Viewer::draw_scene(const Camera &snapshot, const DrawSource *source, bool guides) const {
         if (source) {

@@ -243,8 +243,7 @@ namespace {
 
     bool valid_manual_gaps(const GeneratedPath &path) {
         if (static_cast<int>(path.manual_before.size()) >= path.span() ||
-            !std::is_sorted(path.manual_before.begin(), path.manual_before.end()) ||
-            std::adjacent_find(path.manual_before.begin(), path.manual_before.end()) != path.manual_before.end())
+            !std::is_sorted(path.manual_before.begin(), path.manual_before.end()))
             return false;
         for (std::size_t i = 0; i < path.manual_before.size(); ++i) {
             if (path.manual_before[i] < 0 || path.manual_before[i] > path.size() ||
@@ -358,12 +357,12 @@ namespace {
                 return false;
         }
 
-        const bool periodic = paths.size() == 1 && paths.front().source.kind == CameraPath::Source::Kind::Orbit &&
-                              paths.front().first == 0 &&
-                              paths.front().last == static_cast<int>(interpolator->number_of_keyframes()) - 1;
         if (provenance.find("playback") != provenance.end() &&
             !read_playback(provenance.at("playback"), *interpolator))
             return false;
+        const bool periodic = paths.size() == 1 && paths.front().source.kind == CameraPath::Source::Kind::Orbit &&
+                              paths.front().first == 0 &&
+                              paths.front().last == static_cast<int>(interpolator->number_of_keyframes()) - 1;
         interpolator->set_path_periodic(periodic);
         loaded.generated_paths = std::move(paths);
         loaded.settings = loaded.generated_paths.back().built_settings;

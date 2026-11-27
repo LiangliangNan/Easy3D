@@ -37,12 +37,14 @@ Few visualization libraries ship a native Vulkan renderer. Easy3D does, and keep
   and macOS (via MoltenVK).
 * **One option picks the backend**: `Easy3D_ENABLE_VULKAN` (`ON` by default, `OFF` for OpenGL).
 * **One code base for both**: `Viewer`, `MultiViewer`, `OffScreen`, drawables, picking, effects, and snapshots
-  have the same API. The tutorials, the Python bindings, and Mapple build unchanged against either backend.
-* **Full rendering feature parity**: point/line impostors, ambient occlusion (GTAO), shadow maps, soft shadows (PCSS),
-  eye-dome lighting, and order-independent transparency (sorted alpha blending, average color blending, dual depth
-  peeling, per-pixel linked lists). Client code never touches the Vulkan or OpenGL API.
-* **Headless rendering and tests**: offscreen rendering and the test suite run without a display
-  (e.g., on Linux with a software Vulkan driver).
+  share one C++ application API. The tutorials, Python bindings, and Mapple build against either backend;
+  Python exposure of the new unified rendering types remains future work.
+* **Rendering feature parity**: point/line impostors, ambient occlusion (GTAO), shadow maps, soft shadows (PCSS),
+  eye-dome lighting, and four transparency methods (sorted alpha blending, average color blending, depth peeling,
+  and per-pixel linked lists). Availability and documented fallbacks depend on the backend and driver; ordinary
+  client code does not select a backend or call native graphics APIs.
+* **Headless rendering and tests**: offscreen rendering works without a display (for example, on Linux with a
+  software Vulkan driver). Interactive viewer tests still require a desktop session.
 
 ### Key features
 * **Data structures** for point clouds, surface meshes, polyhedral meshes, and graphs, with arbitrary per-element
@@ -122,9 +124,10 @@ and `CGAL_DIR` can point to a specific version).
 
 **Migrating from the OpenGL-only Easy3D (i.e., v2.6.1 or earlier).** Core class names, headers, and the
 `virtual void draw() const` hook are unchanged, but there are a few breaking API changes:
-- The viewer constructor is now `Viewer(title, window, options)`, where `window` is a `WindowOptions` struct (`width`,
-  `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is `VulkanOptions` or `OpenGLOptions`. Old
-  positional calls such as `Viewer(title, 4, 3, 2, false, false)` must be updated.
+- The viewer constructor is `Viewer(title, window, options)`, where `window` is a `WindowOptions` struct (`width`,
+  `height`, `samples`, `full_screen`, `visible`, `resizable`) and `options` is normally a `DeviceOptions` value.
+  Backend-specific `VulkanOptions`/`OpenGLOptions` overloads remain for compatibility. Old positional calls such as
+  `Viewer(title, 4, 3, 2, false, false)` must be updated.
 - `Camera`, `Frame` and related classes now use snake_case method names (e.g., `viewDirection()` became
   `view_direction()`, `showEntireScene()` became `show_entire_scene()`).
 - Qt and wxWidgets are no longer supported.

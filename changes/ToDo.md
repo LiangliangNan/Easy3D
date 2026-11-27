@@ -47,7 +47,7 @@
     - [x] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms, for the drawable states the shared command assembly supports.
     - [x] Preserve CPU/geometric selection helpers where deliberately backend-independent, and remove rendered native fallbacks once shared query behavior is equivalent. The last OpenGL analytic-clipping fallback was removed by the follow-up below.
     - [x] Retire picker-owned framebuffers and native picking shaders after visible-surface, occlusion, boundary, hidden-object, and empty-region tests pass on both backends.
-    - [x] Search for `EASY3D_HAS_VULKAN` branches in public headers and migrate client-visible branches to capabilities or common options; retain only private adapter/build implementation branches.
+    - [ ] Search for `EASY3D_HAS_VULKAN` branches in public headers and remove client-visible backend selection from the unified host/device surface. The Vulkan-only `scan_visible_points()` compatibility helper remains a documented exception until its OpenGL equivalent is implemented.
 
   - [x] Milestone 5 follow-up — OpenGL analytic clipping and exact-query fallback removal
     - [x] Add normalized view-space clip-plane uniforms and actual-surface fragment tests to the OpenGL analytic point and line impostor shaders; remove the adapter rejection while keeping the existing CPU control cull for the whole-primitive policy. See [section 8.15](Vulkan-OpenGL-unification.md#815-milestone-5-follow-up-implementation-and-validation).
@@ -81,6 +81,7 @@
     - [ ] Maintain a backend-parity test matrix for scene rendering, drawable updates, effects, overlays, picking, capture, resize, and MultiViewer; document intentional implementation tolerances and unsupported features.
     - [ ] Run both complete backend test suites plus public-header/install and Python smoke tests before deprecations and again before removals.
     - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
+    - [ ] Enable CI `.github/workflows/tests.yml`
 
   - After API unification, the OpenGL shader files should disappear?
   - After API unification, how will the tutorials' code look like, e.g., Tutorial_504_Transparency, Tutorial_505_EyeDomeLighting?
@@ -91,4 +92,4 @@
 
   - [ ] Regarding raw pointers (vs shared_ptr), shared_ptr is preferred and it is modern C++. I want to discard the old raw pointer functions for add_model and add_drawable. Should they also return a shared_ptr (instead of raw pointer)? Relevant classes (not a complete list): SurfaceMeshIO, PolyMeshIO, GraphIO, PointCloudIO, ImageIO. and many other places.
   - [ ] Implement an application called "CloudExpert" that adapts potree for huge point cloud visualization (https://github.com/potree/potree) and editing (e.g., lasso selection, property management).
-  - [ ] Use a coding agent to *proofread* the code, documentation, and comments.
+  - [x] Use a coding agent to *proofread* the code, documentation, and comments. Completed for the full API-unification branch on 2026-11-27; see [section 8.17](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading).

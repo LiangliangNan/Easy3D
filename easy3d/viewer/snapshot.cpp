@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
@@ -101,6 +102,7 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
 #else
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl.h>
+#include <easy3d/viewer/backends/glfw_runtime.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 namespace easy3d {
@@ -152,7 +154,21 @@ namespace easy3d {
 			LOG(WARNING) << "sample count must be a power of two from 1 to 64 (1 means no multisampling)";
 			return false;
 		}
-        glfwMakeContextCurrent(window_);
+        int w, h;
+        framebuffer_size(w, h);
+        if (!std::isfinite(scaling) || scaling <= 0 ||
+            double(w) * scaling > std::numeric_limits<int>::max() ||
+            double(h) * scaling > std::numeric_limits<int>::max() || back_ground < 0 || back_ground > 2) {
+            LOG(WARNING) << "invalid snapshot scaling/background";
+            return false;
+        }
+        w = static_cast<int>(std::ceil(double(w) * scaling));
+        h = static_cast<int>(std::ceil(double(h) * scaling));
+        if (w <= 0 || h <= 0) {
+            LOG(WARNING) << "scaled snapshot dimensions are zero";
+            return false;
+        }
+        detail::OpenGLContextScope context_guard(window_);
         if (!initialized_) {
             auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
         }
@@ -160,11 +176,6 @@ namespace easy3d {
 		// failing the snapshot, as it does on Vulkan. Malformed counts were rejected
 		// above, where a context is not needed.
 		samples = supported_sample_count(samples);
-
-		int w, h;
-		framebuffer_size(w, h);
-		w = static_cast<int>(std::ceil(static_cast<float>(w) * scaling));
-		h = static_cast<int>(std::ceil(static_cast<float>(h) * scaling));
 
 		int sub_w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
 		int sub_h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
@@ -218,11 +229,10 @@ namespace easy3d {
 		// the driver refuses it: binding, drawing and reading an incomplete framebuffer
 		// each keep reporting success, so continuing here hands out untouched memory as
 		// the image (and reaches the resolve path of issue #215).
-		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
+		std::unique_ptr<FramebufferObject> fbo(new FramebufferObject(sub_w, sub_h, samples));
 		const bool color_ok = fbo->add_color_buffer();
 		const bool depth_ok = fbo->add_depth_buffer(GL_DEPTH_COMPONENT32F);
 		if (!color_ok || !depth_ok) {
-			delete fbo;
 			LOG(ERROR) << "failed to create the " << sub_w << " x " << sub_h << " snapshot framebuffer";
 			return false;
 		}
@@ -238,17 +248,32 @@ namespace easy3d {
 		if (nbY * sub_h < h) ++nbY;
 
 		// remember the current projection matrix
-		// const mat4& proj_matrix = camera_->projection_matrix(); // Liangliang: This will definitely NOT work !!!
 		const mat4 proj_matrix = camera_->projection_matrix();
+		struct ProjectionState {
+			Camera *camera;
+			Viewer *viewer;
+			mat4 projection;
+			ProjectionState(Camera *c, Viewer *v, const mat4 &p) : camera(c), viewer(v), projection(p) {
+				easy3d::disconnect_all(&camera->frame_modified);
+			}
+			~ProjectionState() {
+				camera->set_projection_matrix(projection);
+				easy3d::connect(&camera->frame_modified, viewer, &Viewer::update);
+			}
+		} projection_state{camera_.get(), const_cast<Viewer *>(this), proj_matrix};
 
-		// temporarily don't allow updating rendering when the camera parameters are changing.
-		easy3d::disconnect_all(&camera_->frame_modified);
-
-		// The offscreen target may differ from the window size, and neither
-		// FramebufferObject::bind() nor draw() sets the viewport, so match it to
-		// the tile explicitly and restore the window viewport afterwards.
 		GLint viewport[4];
+		GLfloat clear_color[4];
 		glGetIntegerv(GL_VIEWPORT, viewport);
+		glGetFloatv(GL_COLOR_CLEAR_VALUE, clear_color);
+		struct ViewportState {
+			GLint *viewport;
+			GLfloat *clear_color;
+			~ViewportState() {
+				glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+				glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
+			}
+		} viewport_state{viewport, clear_color};
 
         const vec4 snapshot_background = back_ground == 1 ? vec4(1, 1, 1, 1)
                                      : back_ground == 2 ? vec4(0, 0, 0, 0)
@@ -327,19 +352,6 @@ namespace easy3d {
 				}
 			}
 		}
-
-		// clean
-		delete fbo;
-		// restore the viewport
-		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-		// restore the clear color
-		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-
-		// restore the projection matrix
-		camera_->set_projection_matrix(proj_matrix);
-
-		// enable updating the rendering
-		easy3d::connect(&camera_->frame_modified, const_cast<Viewer*>(this), &Viewer::update);
 
 		Pixel* pixels = image.data();
 		std::vector<unsigned char> data(reinterpret_cast<unsigned char*>(pixels), reinterpret_cast<unsigned char*>(pixels) + image.rows()* image.cols() * sizeof(Pixel));

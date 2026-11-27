@@ -475,6 +475,10 @@ namespace {
         triangles->update_vertex_buffer({vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0)});
         require(renderer.command(triangles, 6, camera, {}).geometry != unindexed_geometry,
                 "a repeated vertex upload did not invalidate the geometry cache");
+        const auto geometry_before_clear = renderer.command(triangles, 6, camera, {}).geometry;
+        renderer.clear();
+        require(renderer.command(triangles, 6, camera, {}).geometry != geometry_before_clear,
+                "clear retained cached drawable geometry");
     }
 
 } // namespace

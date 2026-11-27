@@ -101,7 +101,6 @@ list(APPEND renderer_headers
         shader_manager.h
         shader_program.h
         vertex_array_object.h
-        backends/opengl/render_device.h
 )
 
 list(APPEND renderer_sources
@@ -270,4 +269,6 @@ else ()
     # Install glew.h to the installation directory
     install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
             DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")
+    install(FILES backends/opengl/render_device.h
+            DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/opengl")
 endif()

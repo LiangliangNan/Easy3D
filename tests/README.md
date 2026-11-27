@@ -42,8 +42,8 @@ The removed `visualization_*` copies map to the original tutorial scenes:
 by the shared offscreen regression and Tutorial 204; the old timer-driven threading
 demo is covered by Tutorial 312 and the joined-worker viewer regression. Dedicated
 viewer/renderer tests additionally assert pixels, depth, IDs and resource sharing.
-The five effect scenes (501–505) run on OpenGL; their Vulkan implementations remain
-migration work. Optional CGAL algorithm cases are registered only when algo_ext is
+The six effect scenes (501–506) run on both OpenGL and Vulkan. Optional CGAL
+algorithm cases are registered only when algo_ext is
 built. No interactive aggregate `Tests` executable or intentional logging crash
 is retained. The former Python tutorial-loop runner is replaced by CTest and the
 packaged Python regression.

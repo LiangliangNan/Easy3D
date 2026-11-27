@@ -13,7 +13,8 @@ int main() {
     easy3d::initialize(false, false, false);
     if (easy3d::resource::directory() != easy3d::file_system::convert_to_native_style(Easy3D_RESOURCE_DIR))
         throw std::runtime_error("installed resources were rejected or resolved to the source tree");
-    easy3d::OffScreen renderer(101, 77);
+    easy3d::graphics::DeviceOptions device_options;
+    easy3d::OffScreen renderer(101, 77, device_options);
     auto mesh = std::make_shared<easy3d::SurfaceMesh>();
     auto a = mesh->add_vertex(easy3d::vec3(0, -1, -1));
     auto b = mesh->add_vertex(easy3d::vec3(0, 1, -1));
@@ -27,7 +28,7 @@ int main() {
     text.add_font(easy3d::resource::directory()+"/fonts/en_Vera.ttf");
     easy3d::graphics::TextOptions options;
     options.x=2; options.y=2; options.size=14;
-    renderer.set_overlays(text.layout("Vulkan",renderer.width(),renderer.height(),options).commands);
+    renderer.set_overlays(text.layout("Easy3D",renderer.width(),renderer.height(),options).commands);
     const auto labeled=renderer.capture(samples);
     if (labeled.rgba==frame.rgba || labeled.depth!=frame.depth)
         throw std::runtime_error("installed text overlay failed");

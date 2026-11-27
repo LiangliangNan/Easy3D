@@ -287,6 +287,60 @@ namespace {
                 "the restored provenance did not drive regeneration");
     }
 
+    void test_duplicate_manual_anchors_and_provenance_periodicity() {
+        TestFile file("mapple-duplicate-anchor-provenance.kf");
+        Camera camera;
+        camera.set_scene_radius(12.0f);
+        KeyframeInterpolator source(camera.frame());
+        CameraPath builder(&camera, &source);
+        builder.set_scene_box(Box3(vec3(-5.0f, -1.0f, -5.0f), vec3(5.0f, 1.0f, 5.0f)));
+        CameraPath::Settings settings;
+        settings.ground_up_axis = CameraPath::GroundUpAxis::Y;
+        builder.set_settings(settings);
+        const CameraPath::Source input = CameraPath::Source::walk({
+                {vec3(-2.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(2.0f, 0.0f, 0.0f)}
+        });
+        const std::vector<Frame> generated = builder.frames_of(input);
+        require(generated.size() >= 4, "the duplicate-anchor fixture produced too few poses");
+
+        mapple::GeneratedPath path;
+        path.pending = false;
+        path.source = input;
+        path.built_settings = settings;
+        path.first = 0;
+        path.last = static_cast<int>(generated.size()) - 1;
+        capture_context(path, builder, camera);
+        path.keyframe_inserted(2);
+        path.keyframe_inserted(2);
+        require(path.manual_before == std::vector<int>{2, 2} && path.size() == generated.size(),
+                "two insertions at one generated boundary lost their anchors");
+
+        float time = 1.0f;
+        for (std::size_t i = 0; i < generated.size(); ++i) {
+            if (i == 2) {
+                for (float fraction : {0.25f, 0.75f}) {
+                    const Frame manual(generated[1].position() * (1.0f - fraction) +
+                                       generated[2].position() * fraction,
+                                       generated[1].orientation());
+                    require(source.add_keyframe(manual, time), "a duplicate-anchor manual pose was rejected");
+                    time += 1.75f;
+                }
+            }
+            require(source.add_keyframe(generated[i], time), "a duplicate-anchor generated pose was rejected");
+            time += 1.75f;
+        }
+        require(mapple::save_camera_path(file.name, source, {path}), "saving duplicate-anchor provenance failed");
+
+        KeyframeInterpolator loaded(camera.frame());
+        mapple::LoadedCameraPath result;
+        require(mapple::read_camera_path(file.name, &loaded, result), "loading duplicate-anchor provenance failed");
+        require(result.generated_paths.size() == 1 &&
+                        result.generated_paths.front().manual_before == std::vector<int>{2, 2},
+                "duplicate manual anchors were not restored");
+        require(!loaded.is_path_periodic(), "provenance enabled periodic interpolation for a Walk path");
+        require_same_path(source, loaded);
+    }
+
     void test_view_up_without_scene_box() {
         TestFile file("mapple-view-up-provenance.kf");
         Camera camera;
@@ -671,6 +725,7 @@ int main() {
         test_orientation_edits_preserve_provenance();
         test_edited_keyframe_round_trip();
         test_walk_and_manual_gap();
+        test_duplicate_manual_anchors_and_provenance_periodicity();
         test_view_up_without_scene_box();
         test_flight();
         test_multiple_blocks();

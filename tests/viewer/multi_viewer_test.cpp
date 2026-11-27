@@ -2,6 +2,7 @@
 #include <easy3d/viewer/viewer.h>
 #include <tests/viewer/test_window.h>   // window_options()
 #include <applications/FigureMaker/viewer.h>
+#include <easy3d/renderer/render_settings.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/renderer.h>
@@ -231,6 +232,23 @@ int main(int argc,char**) {
         auto before=grid.capture(1);
         const auto captured_id=[&](int r,int c) {const auto vp=grid.bounds(r,c);return before.ids[size_t(vp.y+vp.w/2)*before.width+vp.x+vp.z/2].object;};
         require(captured_id(0,0)==0 && captured_id(0,1)==1 && captured_id(1,0)==0 && captured_id(1,1)==2 && captured_id(1,2)==3,"capture IDs do not match model/standalone ownership");
+        auto *red_faces=red->renderer()->get_triangles_drawable("faces");
+        const auto red_color=red_faces->color();const float red_opacity=red_faces->opacity();
+        red_faces->set_uniform_coloring(vec4(1,0,0,.25f));red_faces->set_opacity(.6f);
+        const auto raw_opaque=grid.capture(1);
+        const auto original_settings=grid.render_settings();auto transparent_settings=original_settings;
+        transparent_settings.transparency.enabled=true;
+        transparent_settings.transparency.method=graphics::TransparencyMethod::sorted;transparent_settings.transparency.layers=4;
+        grid.set_render_settings(transparent_settings);
+        const auto raw_transparent=grid.capture(1);
+        require(raw_transparent.rgba==raw_opaque.rgba && raw_transparent.depth==raw_opaque.depth &&
+                raw_transparent.ids.size()==raw_opaque.ids.size() &&
+                std::equal(raw_transparent.ids.begin(),raw_transparent.ids.end(),raw_opaque.ids.begin(),
+                           [](const graphics::FrameImage::Id& a,const graphics::FrameImage::Id& b) {
+                               return a.object==b.object && a.primitive==b.primitive;
+                           }),"raw multi-view capture retained presentation opacity");
+        grid.set_render_settings(original_settings);
+        red_faces->set_uniform_coloring(red_color);red_faces->set_opacity(red_opacity);
         {
             auto msaa=grid.capture(4);require(before.depth==msaa.depth && before.ids.size()==msaa.ids.size(),"MSAA changed per-cell scene depth");
             for(size_t i=0;i<before.ids.size();++i) require(before.ids[i].object==msaa.ids[i].object && before.ids[i].primitive==msaa.ids[i].primitive,"MSAA changed cell source IDs");

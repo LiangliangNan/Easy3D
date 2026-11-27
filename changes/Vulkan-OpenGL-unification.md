@@ -54,15 +54,15 @@ The shared backend-neutral pieces are:
 - `graphics::DrawableRenderer`: converts a `Drawable` into shared commands.
 - `graphics::OpenGLDevice`: headless OpenGL realization borrowing the caller's current context.
 
-The OpenGL `Viewer` still renders its live scene through native drawable implementations. The decisive dependency is [easy3d/viewer/viewer.cpp:2569](../easy3d/viewer/viewer.cpp#L2569), which calls:
+The OpenGL `Viewer` now uses `RenderDevice::present()` for ordinary live presentation, including portable overlays, effects, and transparency. Native drawable implementations remain the exact fallback for unsupported custom drawables, application-owned legacy shadows, and other scenes that cannot be encoded as portable draw commands; that fallback begins at [easy3d/viewer/viewer.cpp:2953](../easy3d/viewer/viewer.cpp#L2953) and calls:
 
 - `LinesDrawable::draw()`.
 - `PointsDrawable::draw()`.
 - `TrianglesDrawable::draw()`.
 - Native shadow and clipping rendering.
-- Native overlay rendering.
+- Native overlay and effect rendering.
 
-Consequently, the shared device replaces specific offscreen/query functionality; it does not yet replace the complete OpenGL presentation path.
+Consequently, the shared device provides the complete presentation path for portable scenes; native rendering remains available for compatibility cases the shared command model cannot represent.
 
 ## 1. Confirmed unused in-tree
 
@@ -1107,7 +1107,7 @@ The existing tree already contains most of the desired application and geometry 
 
 - Requested validation, synchronization validation, a named device, or a usable graphics context/device are hard requirements: failure to satisfy them throws. They are not silently ignored.
 - MSAA is a quality request: `0`/`1` means single-sample; supported power-of-two requests are honored; unsupported valid power-of-two requests step down to the largest supported count with a warning; invalid counts throw. `supported_sample_counts()` remains the authoritative query.
-- `DeviceCapabilities` reports shadow, AO, EDL, supported transparency methods, and native large-point availability. Low-level `RenderDevice` calls reject unsupported commands/methods explicitly. High-level `set_render_settings()` also rejects an explicitly enabled unsupported effect instead of silently producing different imagery. Applications can inspect capabilities and choose a supported configuration.
+- `DeviceCapabilities` describes shadow, AO, EDL, supported transparency methods, and native large-point availability for backend capability checks. Low-level `RenderDevice` calls reject unsupported commands/methods explicitly. High-level `set_render_settings()` validates setting values; backend support and fallback selection are resolved by `RenderDevice` at render time with diagnostics. Applications can query supported MSAA counts through the existing non-virtual API; virtual `capabilities()` remains deferred to 3.0.
 - Default settings use only the common baseline (`sorted` transparency; optional effects disabled). There is no implicit effect downgrade hidden inside a frame.
 
 #### Presentation and native interop
@@ -1130,7 +1130,7 @@ The existing tree already contains most of the desired application and geometry 
 - `capture()` uses the host's effective sample count and full readback. `capture(1)` explicitly requests single-sample color with full readback. `capture(samples, FrameReadback::color)` leaves `depth` and `ids` empty.
 - `RenderOptions::readback` defaults to `FrameReadback::color_depth_ids`.
 - Successful capture always sets positive `width`/`height` and exactly `width * height * 4` RGBA bytes. Full readback also sets exactly `width * height` depth values and IDs. Color and IDs are top-row-first; depth is in `[0,1]` with clear depth `1`; background IDs are `{UINT32_MAX, UINT32_MAX}`.
-- Captured color includes the composited presentation result, including supported overlays/HUD. Depth and picking IDs describe scene geometry and exclude overlays. OpenGL may report `UINT32_MAX` for unavailable primitive provenance, as documented today.
+- Captured color includes submitted scene and overlay commands. Presented frames and file snapshots additionally include supported presentation effects; raw in-memory `capture()` intentionally remains a scene-command readback without those effects. Depth and picking IDs describe scene geometry and exclude overlays. OpenGL may report `UINT32_MAX` for unavailable primitive provenance, as documented today.
 - A default-constructed `FrameImage` is an empty value. A successful capture never returns that empty sentinel; invalid sizes/readback requests throw.
 
 #### Host visibility
@@ -1141,10 +1141,10 @@ The existing tree already contains most of the desired application and geometry 
 | `render(file, ...)` | n/a | Public | n/a |
 | Grid assignment/layout/divisions | n/a | n/a | Public |
 | `run`, window show/hide/resize/position/title | Public | Protected | Public |
-| Native `window()` handle | Protected | Protected | Protected |
+| Native `window()` handle | Public but deprecated in 2.8; protected/private in 3.0 | n/a | n/a |
 | `init`, `cleanup`, `pre_draw`, `post_draw`, `draw`, `draw_commands` | Protected customization hooks | Protected customization hooks | Protected customization hooks |
 
-`cleanup()` becomes protected virtual. `ViewerBase::window()` and `Viewer::window()` become protected, with a deprecation period for external native-window callers.
+`cleanup()` remains protected and non-virtual in 2.8; adding a virtual cleanup hook is deferred to 3.0. `ViewerBase::window()` and `Viewer::window()` remain public but deprecated in 2.8 and become protected/private in 3.0, giving external native-window callers a deprecation period.
 
 #### Image conventions
 
@@ -1155,6 +1155,7 @@ The existing tree already contains most of the desired application and geometry 
 
 #### Release policy
 
+- The 2.8 compatibility baseline is pre-unification `main`, including the intentional 2.7 API renames and ownership moves already present there. APIs removed or renamed by those documented 2.7 changes are not restored as compatibility aliases.
 - **2.8.0 — compatibility release:** add portable replacements and deprecate old APIs. Preserve existing symbols, public class layouts, and virtual tables. New convenience overloads may be non-virtual forwarding wrappers.
 - **3.0.0 — removal release:** remove deprecated declarations, definitions, Python bindings, forwarding headers, and install/export entries; make native handles protected/private; land virtual-interface changes that cannot preserve the 2.x vtable.
 - A deprecated API must survive at least one complete 2.8.x release series. Removal is allowed in 3.0.0 only after every gate in section 8.8 passes.
@@ -1185,7 +1186,7 @@ Because Easy3D requires C++11, deprecations use one project macro rather than C+
 | Public `FramebufferObject`, `ShaderProgram`, `ShaderManager`, `VertexArrayObject`, `opengl::read_color`/`read_depth` (including `_ms` and snapshot variants), `OpenGLTimer`, and `opengl::shape` helpers | `RenderDevice`, `DrawCommand`, shape command builders, and capture/diagnostics. Forwarding headers may remain deprecated in 2.8. | 2.8.0 | 3.0.0 |
 | `opengl::OverlayRenderer` | `DrawCommand` overlay lists through `set_overlays()`. | 2.8.0 | 3.0.0 |
 
-`Viewer::cleanup()` changes from non-virtual protected to virtual protected in 3.0.0. `RenderDevice::backend()` and `capabilities()` are likewise introduced as virtual methods in 3.0.0, not added to the 2.8 public vtable. Existing source-level deprecation warnings in 2.8 must not be accompanied by ABI-breaking class changes.
+`Viewer::cleanup()` remains non-virtual in 2.8. In 3.0, a separately named virtual `on_cleanup()` may provide the symmetric subclass hook: `Viewer::~Viewer()` can call non-virtual `cleanup()`, which invokes `on_cleanup()` while the complete derived object is still alive. Simply making `cleanup()` virtual would not help destructor-time dispatch because the dynamic type has already changed. `RenderDevice::backend()` and `capabilities()` may likewise become virtual in 3.0, not in the 2.8 public vtable. Existing source-level deprecation warnings in 2.8 must not be accompanied by ABI-breaking class changes.
 
 #### Exact Python migrations
 
@@ -1318,15 +1319,15 @@ auto frame = device->render(256, 256, {command});
 
 - `Viewer`, `MultiViewer`, offscreen hosts, tutorials, and tests assemble portable commands for their ordinary rendering paths. Capture, overlays, point/line sizing, and corner axes use the shared device contract.
 - Viewer corner axes use camera-space material lighting and occupy a DPI-scaled, 100-logical-pixel square in the bottom-left corner. This widget placement does not change the top-left origin used by logical coordinates and portable command viewports.
-- The supported Mapple renders its ordinary drawables and Viewer overlays through shared command assembly and presents them through `RenderDevice`. Its corner axes use the same camera-space orientation, normal transform, and lighting as Viewer axes. The retired Mapple-Qt is no longer part of the build or current validation.
-- Mapple's custom drawables, AO textures, shadows, transparency, EDL, clipping, and command-translation failures retain centralized native fallback until their corresponding milestones. Flag-only AO drawables without a texture remain portable. `WalkThrough` exposes separate portable and native paths for compatibility hosts.
+- The supported Mapple renders its ordinary drawables and Viewer overlays through shared command assembly and presents them through `RenderDevice`. Its corner axes use the same camera-space orientation, normal transform, and lighting as Viewer axes. The retired Mapple-Qt is OpenGL-only, is not built or validated, and retains native calls only as a reference compatibility host.
+- Mapple's custom drawables, custom `draw()` implementations, AO-texture handoff, and command-translation failures retain centralized native fallback where the shared contract cannot represent them. Flag-only AO drawables without a texture remain portable. `WalkThrough` exposes separate portable and native paths for compatibility hosts. Legacy effect facades remain application-owned compatibility paths after the settings-driven effect migration.
 - Native `Drawable::draw()`, `gl_draw()`, `vao()`, raw buffer handle getters, drawable-taking sphere/box helpers, immediate keyframe camera/path drawing, and the concrete public `OpenGLDevice` class are deprecated in 2.8. Python retains the existing native rendering/handle bindings as deprecation-warning compatibility wrappers and also exposes `BufferData`/`buffer_data()`. Existing C++ declarations, virtual signatures, and bindings needed for source compatibility remain until the coordinated 3.0 removal.
 - Remaining native immediate drawing is confined to compatibility/effect/picking fallbacks and native shape helpers. It is not a second public rendering path for new portable clients. Public removal remains gated by the release and removal policy in section 8.8.
 
 #### Validation coverage
 
 - `drawablecontract` runs unchanged in both builds and covers CPU realization, stable snapshot identity, standalone client-geometry preservation across `update()`, revision invalidation (including highlight-only changes), provenance, first-use provenance/highlight realization, dynamic resizing, element-buffer disabling, clearing, detachment, callback ordering, explicit-upload precedence, cache reuse, transactional callback rollback, non-mutating public-updater rejection at revision exhaustion, and point/line/triangle/screen-line command state. Primitive IDs remain ordinal through smooth, flat-shaded, and highlighted triangle expansion, including transparent OpenGL triangle splitting.
-- `render`, `renderdevice`, device contracts, multiview, snapshot effects, plain-line parity, picking/query paths, selection, screen lines, independent-depth HUDs, and offscreen queries exercise both adapters. `opengl.renderdevice` supplies additional adapter-specific readback, query, presentation, and sorting checks. MultiViewer scene-command assembly remains virtual in Vulkan, where the hook existed in 2.8; the OpenGL build keeps its baseline vtable and uses centralized native fallback for unsupported query state.
+- `render`, `renderdevice`, device contracts, multiview, snapshot effects, plain-line parity, picking/query paths, selection, screen lines, independent-depth HUDs, and offscreen queries exercise both adapters. `opengl.renderdevice` supplies additional adapter-specific readback, query, presentation, and sorting checks. `draw_commands()` retains its pre-existing virtual extension point on both backends; exact native fallback is limited to unsupported query states and custom draw calls.
 - `opengl.render` and `vulkan.render` check color/depth/ID readback, depth ordering, depth-range remapping and validation, image orientation, MSAA IDs, transparency, textures, overlays, and point/line styles available to the shared suite. OpenGL analytic point/line shaders explicitly remap their written fragment depth through `DrawCommand::depth_range()`. Vulkan depth-texture, EDL, AO, and shadow regressions verify that image-overlay compensation does not invert native scene-depth/effect sampling. Backend-specific suites cover camera guides/path, corner axes, and OpenGL effect fallback.
 - Deterministic offscreen comparisons against the actual pre-unification baseline `727e163c` covered 20 OpenGL and 24 Vulkan scenes, including native drawable updates/refresh, textured native drawables, MSAA, overlays, transparency, and picking. Depth and object/primitive IDs matched exactly in every scene. RGBA matched exactly in 19/20 OpenGL scenes and 21/24 Vulkan scenes. The sole OpenGL difference was 115 overlay-MSAA pixels with a maximum channel delta of one and no delta greater than one. The three Vulkan differences were direct portable `graphics::Image` scenes intentionally corrected to honor the frozen top-row-first image contract; legacy native textured drawables remained byte-identical on both backends. The comparison also drove restoration of OpenGL's baseline ordinary draw order, polygon-offset factors, and native thin-line rasterization.
 - `opengl.corneraxes` and `vulkan.corneraxes` check bright front faces, bottom-left bounds, resize/DPI behavior, MSAA coverage, overlays, visibility, orientation-only transforms, and preserved scene depth/picking IDs. A nearer full-view occluder verifies that the axes retain independent HUD depth instead of being overwritten by the shared 3D-overlay defaults.
@@ -1393,9 +1394,9 @@ Status: complete with the documented backend limitations below. The final all-ta
 
 **`device()` available on both backends.** `Viewer::device()` returns the backend-neutral `graphics::RenderDevice&` on both OpenGL and Vulkan builds (previously Vulkan-only). The OpenGL implementation returns the headless query device created lazily by `query_device()`. OffScreen inherits it through its `using Viewer::device;` declaration, and MultiViewer inherits it from Viewer.
 
-**`cleanup()` is now virtual.** Both Viewer and MultiViewer can subclass and override `cleanup()` with the documented symmetric cleanup-hook contract.
+**`cleanup()` remains non-virtual in 2.8.** The symmetric subclass cleanup hook is deferred to 3.0 as required by the frozen vtable policy. Subclasses release their resources from their destructors while the backend is valid and then call `Viewer::cleanup()`.
 
-**`draw_commands()` is virtual on both backends.** Previously virtual only in the Vulkan build; now subclasses on both OpenGL and Vulkan can override command assembly without backend conditionals.
+**`draw_commands()` remains virtual on both backends.** It was already virtual on `main`; Milestone 4 preserves that existing extension point rather than adding a vtable entry.
 
 **`DeviceOptions` constructors for all three hosts.** Viewer, OffScreen, and MultiViewer each gained a C++11 constrained-template constructor taking `graphics::DeviceOptions` alongside the existing backend-specific `VulkanOptions`/`OpenGLOptions` constructors. Existing calls such as `Viewer("title", {}, {})` keep resolving to the backend-specific constructor; new callers pass a `DeviceOptions` value. The `detail::make_device_options()` helper maps `DeviceOptions` to backend-specific options field by field (C++11 cannot brace-init structs with default member initializers).
 
@@ -1420,7 +1421,7 @@ The existing `tests/viewer/multi_viewer_test.cpp` (`opengl.multiview` / `vulkan.
 - `viewer.apismoke` compiles and links the backend-neutral low-level API for interactive Viewer, OffScreen, MultiViewer, custom drawables, and a mock headless RenderDevice in both builds (section 8.9).
 - `opengl.multiview` and `vulkan.multiview` run the grid-aware parity test on both backends; both pass.
 - Final post-audit complete serial macOS runs passed OpenGL 127/127 in 136.70 seconds and Vulkan 156/156 in 242.22 seconds, both with zero failures.
-- No public class layout or virtual-table entry changed beyond the new virtual `cleanup()` and virtual `draw_commands()`. `git diff --check` passed.
+- No public class layout or virtual-table entry changed. `cleanup()` remains non-virtual in 2.8, and `draw_commands()` retains its pre-existing virtual declaration. `git diff --check` passed.
 
 ### 8.14 Milestone 5 implementation and validation
 
@@ -1571,8 +1572,8 @@ Out of scope:
 - `graphics::effective_clipping_planes()` resolves one plane set before command assembly. A process-wide `ClippingPlane` overrides `RenderSettings::clipping_planes`; otherwise normalized settings planes are used. Scene geometry, transparent commands, triangle shadow casters, and the depth consumed by AO/EDL share that set. Effect quads, the virtual shadow receiver, HUD, annotations, and the clipping-plane guide remain overlays.
 - Validation has one clear boundary: `Viewer`, `MultiViewer`, and the OpenGL viewer state validate settings *values* before any fallback choice; `graphics::RenderDevice` validates backend *support* and resolves fallbacks at render entry. No virtual method or public class layout changed. `Viewer::append_settings_effects()` and the validation helper are protected and nonvirtual. The unused host capability descriptor was removed rather than being made artificially “accurate”.
 - `OpenGLDevice::Impl` owns all new effect shaders, framebuffers, textures, and pass state. The device applies Vulkan precedence (`shadow > ambient_occlusion > eye_dome_lighting > scene_depth_texture`) and frame order: shadow map, OIT prepass, optional ID/depth prepass, AO compute, color scene with composite/overlays, optional capture ID pass. Clipping of analytic impostors and shadow casters uses the existing shared uniforms; effect overlays are unclipped.
-- OpenGL linked lists below 4.3 fall back to depth peeling and average-color blending without floating-point color blending falls back to sorted transparency. The exact one-time diagnostics for those paths, settings/legacy shadow precedence, native transparency conflicts, native `MultiViewer` fallback, AO textures, custom types, and sorted fallback are preserved.
-- `capture()` remains a raw scene-command readback: effects are excluded from in-memory captures but included in live frames and file snapshots. Raw capture also restores the drawable alpha that presentation transparency replaces with `TrianglesDrawable::opacity()`. `MultiViewer` keeps the stable model/standalone capture IDs used by `pick()`; source recovery for raw alpha restoration is limited to hosts whose command order matches the source order.
+- OpenGL linked lists below 4.3 fall back to depth peeling. The portable device falls back from average-color blending without floating-point color blending to sorted transparency; the legacy native viewer uses its existing final peeling fallback. The exact one-time diagnostics for those paths, settings/legacy shadow precedence, native transparency conflicts, native `MultiViewer` fallback, AO textures, custom types, and sorted fallback are preserved.
+- `capture()` remains a raw scene-command readback: effects are excluded from in-memory captures but included in live frames and file snapshots. Raw capture also restores the drawable alpha that presentation transparency replaces with `TrianglesDrawable::opacity()`. `MultiViewer` keeps the stable model/standalone capture IDs used by `pick()` and builds a parallel source-mapped command list so alpha restoration does not depend on source-query renumbering or command order.
 
 #### Validation
 
@@ -1599,3 +1600,89 @@ Out of scope:
 - `MultiViewer` cells are covered by the default, clipping, and snapshot regressions; they are not measured with a full numeric effect matrix in every cell.
 - There is no host-side low-capability simulation: by design the viewer accepts all known settings methods and the device resolves actual support. Backend fallbacks are exercised at the device level.
 - Cross-backend effect images are compared by difference-from-plain plus ID/depth invariants, not by exact or tolerance-bounded pixel equality, because the two backends intentionally keep their established shadow/AO/EDL/OIT algorithms.
+
+### 8.17 Independent API-unification audit and proofreading
+
+Audit date: 2026-11-27. The complete branch was reviewed against the pre-unification
+`main` commit `2924ec3fa9b736785e26a23fafc751571c614981`, the unification plan, the
+active and historical change records, and the final C++/CMake/tests/documentation
+diff. The intentional 2.7 renames and Mapple ownership changes recorded in
+`ae919b42`, `e5c99b29`, and `f02c0083` were treated as fixed inputs, not reverted.
+`Viewer::draw_commands()` was already virtual in the compatibility baseline; no
+new vtable slot was introduced for it.
+
+The review corrected genuine deficiencies while preserving documented behavior:
+
+- Restored the `Drawable` storage arrangement and used existing padding for its
+  cache flags. `DrawCommand` remains standard-layout and 616 bytes on the validated
+  64-bit host; normalized depth-range endpoints occupy tail padding as two
+  `std::uint16_t` values with an invalid sentinel. `Viewer::GraphicsResources`
+  reuses the former point-selector pointer slot for the renderer/query device.
+- Kept legacy backend-options constructors and default arguments source-compatible,
+  marked them with `EASY3D_DEPRECATED(message)`, and delegated through non-deprecated
+  tagged constructors where applicable. OpenGL accepts and ignores only the native
+  large-point preference; it rejects requested validation, synchronization
+  validation, profiling, or device-name selection instead of silently dropping a
+  hard requirement. No compiler-conditional warning suppression was added.
+- Preserved a caller's native CGL/WGL/GLX/EGL current-context state across temporary
+  query and snapshot operations, including another current context owned by a
+  separate GLFW static copy. The Windows unchanged check compares both HGLRC and
+  HDC; EGL restoration retains separate read and draw surfaces. Framebuffer,
+  viewport, projection, clear-color, and camera-signal state are restored on all
+  tested paths.
+- Fixed raw MultiViewer capture to retain stable model/standalone IDs while a
+  parallel source-mapped command list recovers original drawable alpha. Raw capture
+  continues to exclude presentation effects; presented frames and file snapshots
+  include them. Overlay/effect stream order is shared by both adapters.
+- Matched native OpenGL transparency capability fallback to the portable device:
+  linked lists require OpenGL 4.3, and average-color blending requires
+  floating-point color blending. Same-viewport linked-list capacity changes now
+  invalidate and recreate the native node pool. Portable average-color fallback is
+  sorted transparency; the legacy native viewer retains its peeling fallback.
+- Fixed highlight-texture deletion when a mask is cleared, background depth-query
+  miss reporting, native custom-drawable query dispatch, and complete geometry,
+  image, and screen-line cache clearing.
+- Made `KeyframeInterpolator::replace_keyframes()` and Mapple generation/undo
+  replacement atomic, preserved loaded-style coincident/nonmonotone paths, and
+  made periodic interpolation explicit in provenance snapshots. `add_keyframe()`
+  still rejects coincident positions and nonmonotone times.
+- Corrected installed consumers, test registrations, stale comments, and
+  MultiViewer/fallback/capture documentation. Fresh OpenGL installation exposed a
+  header-name collision: the flattened public-header install replaced the shared
+  `renderer/render_device.h` with `renderer/backends/opengl/render_device.h`. The
+  deprecated OpenGL adapter now installs in its backend subdirectory, preserving
+  the shared contract header. Added cross-context, layout, keyframe-replacement,
+  transparency, and cache regressions. The legacy manipulated shadow-caster
+  omission was confirmed in the compatibility baseline and left unchanged rather
+  than misclassified as a unification regression.
+
+Validation on the final source state:
+
+- Both approved all-target builds succeeded.
+- Focused query/capture/transparency/effects/offscreen/MultiViewer regressions passed
+  **9/9 Vulkan** and **9/9 OpenGL**.
+- Complete serial CTest passed **Vulkan 157/157 in 251.98 seconds** and
+  **OpenGL 130/130 in 114.57 seconds**, with `CTEST_PARALLEL_LEVEL=1` and zero
+  failures. One intermediate OpenGL run aborted in `opengl.input` after the test
+  printed its PASS line; it passed immediately in isolation and in the clean
+  complete rerun, matching the documented focus/load flake. No source change was
+  made for that non-reproducing teardown crash. `git diff --check` passed.
+- Fresh isolated Vulkan and OpenGL Release packages were built and installed, and
+  the installed offscreen, unified, and public-viewer consumers were compiled and
+  run against those packages.
+
+The public-header search still finds `EASY3D_HAS_VULKAN` in 15 headers. Many
+occurrences are private storage or native compatibility fallbacks retained by the
+2.8 policy; client-visible differences also remain in the legacy effect facades,
+`VulkanOptions` overloads, `Viewer::set_samples()`, and the documented
+`scan_visible_points()` exception. The Milestone 5 header-audit item therefore
+remains open rather than being closed by the runtime tests.
+
+Remaining gates are explicit: this is local macOS/MoltenVK evidence, not a Linux,
+Windows, or hosted-CI result. `.github/workflows/tests.txt` is not an active workflow,
+so the current branch has no automated test-workflow validation; CI was left
+untouched as requested. The Milestone 5 public-header `EASY3D_HAS_VULKAN` audit
+item and Milestones 6 and 7 remain open, and the root package version is still
+`2.7.0` although the compatibility policy targets 2.8; release bookkeeping
+is not changed by this audit. No new interactive Mapple visual comparison is
+claimed by this pass.

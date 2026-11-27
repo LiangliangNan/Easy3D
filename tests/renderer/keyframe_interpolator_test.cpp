@@ -85,6 +85,23 @@ int main() {
         // 100 fps: the samples land on the tenths of a second these checks use.
         kfi.set_frame_rate(100);
 
+        // --- atomic editing -------------------------------------------------
+        Frame first;
+        first.set_position(vec3(0, 0, 0));
+        Frame second;
+        second.set_position(vec3(1, 0, 0));
+        kfi.set_path_periodic(true);
+        require(kfi.replace_keyframes({first, second, first}, {0, 2, 1}, {1, 0.5f}),
+                "atomic replacement rejected an editable loaded-style path");
+        require(kfi.number_of_keyframes() == 3 && kfi.keyframe_time(2) == 1 &&
+                        close_to(kfi.keyframe_dwell(0), 1) && kfi.is_path_periodic(),
+                "atomic replacement did not preserve times, dwells and periodicity");
+        require(!kfi.replace_keyframes({first}, {0, 1}, {}),
+                "atomic replacement accepted mismatched pose/time counts");
+        require(kfi.number_of_keyframes() == 3,
+                "a rejected atomic replacement changed the existing path");
+        kfi.delete_path();
+
         // --- dwell time ---------------------------------------------------
         make_path(kfi, 3, 1.0f);
         float interval = 0.0f;

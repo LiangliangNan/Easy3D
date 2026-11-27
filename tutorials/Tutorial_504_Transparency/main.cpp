@@ -57,11 +57,13 @@
  *   transparent fragments per pixel in a single geometry pass, then blend their weighted
  *   average over the opaque scene. Fast and order independent, but it loses depth ordering,
  *   so overlapping layers look "averaged" rather than stacked.
- * - Depth peeling (Everitt 2001; dual depth peeling by Bavoil & Myers, NVIDIA 2008): extract
- *   the transparency layers one (or, with the dual min-max trick, two) at a time using the
- *   previous layer's depth as a clip boundary, and composite them in correct order. The
- *   result converges to exact transparency as the number of peels approaches the actual
- *   number of depth layers; Easy3D defaults to a small fixed number of peels for speed.
+ * - Depth peeling (Everitt 2001; historically also called dual depth peeling after Bavoil & Myers,
+ *   NVIDIA 2008): extract transparency layers one at a time using the previous layer's depth as a
+ *   clip boundary, and composite them in correct order. Easy3D's current OpenGL and Vulkan paths
+ *   keep one nearest surviving fragment per peel-target sample and layer; they do not use the
+ *   historical dual min-max front/back pairing. The result converges to exact transparency as the
+ *   number of peels approaches the actual number of depth layers; Easy3D defaults to a small fixed
+ *   number of peels for speed.
  * - Per-pixel linked lists (Yang et al. 2010): a build pass appends every transparent
  *   fragment to a per-pixel linked list in GPU memory using atomic operations; a resolve
  *   pass sorts each pixel's fragments by depth and composites them exactly. Perfect quality

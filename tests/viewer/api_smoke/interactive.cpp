@@ -12,7 +12,8 @@ void smoke_interactive_viewer() {
     window.width = 320;
     window.height = 240;
     window.visible = false;
-    easy3d::Viewer viewer("API smoke", window);
+    easy3d::graphics::DeviceOptions options;
+    easy3d::Viewer viewer("API smoke", window, options);
     viewer.resize(window.width, window.height);
     viewer.show();
     viewer.hide();

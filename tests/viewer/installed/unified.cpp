@@ -20,11 +20,7 @@
 #endif
 int main() {
     easy3d::initialize(false,false,false);
-#if EASY3D_EXPECT_VULKAN
-    const easy3d::VulkanOptions options{};
-#else
-    const easy3d::OpenGLOptions options{};
-#endif
+    easy3d::graphics::DeviceOptions options;
     easy3d::OffScreen renderer(101,77,options);
     auto mesh=std::make_shared<easy3d::SurfaceMesh>();
     auto a=mesh->add_vertex(easy3d::vec3(0,-1,-1)),b=mesh->add_vertex(easy3d::vec3(0,1,-1)),c=mesh->add_vertex(easy3d::vec3(0,0,1));

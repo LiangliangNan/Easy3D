@@ -107,6 +107,9 @@ namespace easy3d {
 
     void Drawable::opengl_update_highlight_mask(const std::vector<float> &strengths) {
         if (strengths.empty()) {
+            if (highlight_texture_)
+                glDeleteTextures(1, &highlight_texture_);
+            highlight_texture_ = 0;
             highlight_primitives_ = 0;
             return;
         }

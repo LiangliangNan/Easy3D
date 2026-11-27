@@ -377,7 +377,7 @@ namespace easy3d {
 
 
     namespace geom {
-        
+
         /**
          * \brief Compute the union of two boxes.
          * \tparam DIM The dimension.

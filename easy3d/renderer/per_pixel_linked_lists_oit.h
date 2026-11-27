@@ -91,8 +91,10 @@ namespace easy3d {
      *      - Total: ~539 MB
      *
      *      The `max_fragments_per_pixel` parameter controls the node pool size. If the pool
-     *      overflows (more fragments than allocated nodes), excess fragments are silently
-     *      discarded. For typical scenes, 8-16 fragments per pixel is sufficient.
+     *      overflows (more fragments than allocated nodes), excess fragments are discarded.
+     *      The portable RenderDevice path counts the dropped fragments so the host can
+     *      report the overflow; the legacy native OpenGL implementation logs a warning.
+     *      For typical scenes, 8-16 fragments per pixel is sufficient.
      *
      *      **Performance Characteristics:**
      *
@@ -243,8 +245,10 @@ namespace easy3d {
      *      - Total: ~539 MB
      *
      *      The `max_fragments_per_pixel` parameter controls the node pool size. If the pool
-     *      overflows (more fragments than allocated nodes), excess fragments are silently
-     *      discarded. For typical scenes, 8-16 fragments per pixel is sufficient.
+     *      overflows (more fragments than allocated nodes), excess fragments are discarded.
+     *      The portable RenderDevice path counts the dropped fragments so the host can
+     *      report the overflow; the legacy native OpenGL implementation logs a warning.
+     *      For typical scenes, 8-16 fragments per pixel is sufficient.
      *
      *      **Performance Characteristics:**
      *

@@ -10,10 +10,31 @@
 #include <easy3d/util/initializer.h>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
+#if defined(__APPLE__)
+#include <OpenGL/OpenGL.h>
+#elif defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#if __has_include(<GL/glx.h>)
+#include <GL/glx.h>
+#define EASY3D_TEST_HAS_GLX 1
+#endif
+#if __has_include(<EGL/egl.h>)
+#include <EGL/egl.h>
+#define EASY3D_TEST_HAS_EGL 1
+#endif
+#endif
 #endif
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -26,8 +47,36 @@ void require(bool value, const char *message) {
         throw std::runtime_error(message);
 }
 bool near_enough(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
+#ifndef EASY3D_HAS_VULKAN
+std::uintptr_t current_native_context() {
+#if defined(__APPLE__)
+    return reinterpret_cast<std::uintptr_t>(CGLGetCurrentContext());
+#elif defined(_WIN32)
+    return reinterpret_cast<std::uintptr_t>(wglGetCurrentContext());
+#else
+    std::uintptr_t context = 0;
+#if defined(EASY3D_TEST_HAS_GLX)
+    context |= reinterpret_cast<std::uintptr_t>(glXGetCurrentContext());
+#endif
+#if defined(EASY3D_TEST_HAS_EGL)
+    context |= reinterpret_cast<std::uintptr_t>(eglGetCurrentContext());
+#endif
+    return context;
+#endif
+}
+class NativeQueryPoints final : public PointsDrawable {
+public:
+    using PointsDrawable::PointsDrawable;
+    mutable unsigned draw_calls = 0;
+    void draw(const Camera *camera) const override {
+        ++draw_calls;
+        PointsDrawable::draw(camera);
+    }
+};
+#endif
 struct QueryViewer : Viewer {
     using Viewer::Viewer;
+    using Viewer::read_scene_depth;
     unsigned frames = 0;
     void pre_draw() override { ++frames; }
     void post_draw() override { ++frames; }
@@ -199,6 +248,19 @@ void check(unsigned samples, bool validation) {
         hud->update_vertex_buffer({vec2(0, 0), vec2(float(v->width()), float(v->height()))}, v->width(), v->height());
         require(near_enough(v->point_under_pixel(x, y, found), hit) && found, "HUD obscured scene query");
         v->delete_drawable(hud.get());
+#ifndef EASY3D_HAS_VULKAN
+        auto native = std::make_shared<NativeQueryPoints>("native query override");
+        v->add_drawable(native);
+        native->update_vertex_buffer({vec3(0, 0, .2f)});
+        native->set_point_size(23);
+        native->set_impostor_type(PointsDrawable::PLAIN);
+        native->set_lighting(false);
+        native->set_uniform_coloring(vec4(0, 1, 0, .5f));
+        const auto native_hit = v->point_under_pixel(x, y, found);
+        require(found && native->draw_calls > 0 && std::abs(native_hit.z - .2f) < 2e-4f,
+                "native query fallback bypassed the drawable override");
+        v->delete_drawable(native.get());
+#endif
     }
     // Custom matrices must survive the temporary framebuffer-sized Camera copy.
     const auto projection = v->camera()->projection_matrix();
@@ -231,24 +293,25 @@ void check(unsigned samples, bool validation) {
         auto other = std::make_shared<Viewer>("Portable camera queries other", window_options(181, 151, 4));
         other->hide();
         glfwMakeContextCurrent(other->window());
-        // Mark this context with context-local state: the binding below can only still be
-        // found if the query returned to this context. glfwGetCurrentContext() cannot tell
-        // the test anything here, because it reports the record kept by the GLFW copy it is
-        // linked into, and a test executable links its own copy of the static library.
-        GLuint marker = 0;
-        glGenBuffers(1, &marker);
-        glBindBuffer(GL_PIXEL_PACK_BUFFER, marker);
+        const auto caller_context = current_native_context();
+        require(caller_context != 0, "could not identify the caller's native context");
         bool restored = false;
         v->point_under_pixel(v->width() / 2, v->height() / 2, restored);
-        GLint current = 0;
-        glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &current);
-        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-        glDeleteBuffers(1, &marker);
-        require(restored && GLuint(current) == marker,
+        require(restored && current_native_context() == caller_context,
                 "query failed to restore another current context");
+        require(v->snapshot("portable-query-other-context.png", 1, 1, 0),
+                "snapshot failed from another current context");
+        require(current_native_context() == caller_context,
+                "snapshot failed to restore another current context");
         require(other->draw_frame(), "query broke another shared viewer");
     }
 #endif
+    for (float scaling : {0.0f, -1.0f, std::numeric_limits<float>::quiet_NaN(),
+                          std::numeric_limits<float>::infinity(), std::numeric_limits<float>::max()})
+        require(!v->snapshot("invalid-query-snapshot.png", scaling, 1, 0),
+                "snapshot accepted invalid or overflowing scaling");
+    require(!v->snapshot("invalid-query-snapshot.png", 1, 1, 3),
+            "snapshot accepted an invalid background mode");
     require(v->snapshot("portable-query.png", 1, 4, 0), "snapshot after query failed");
     int w, h, c;
     std::vector<unsigned char> rgba;
@@ -268,6 +331,10 @@ void check(unsigned samples, bool validation) {
     bool found = true;
     v->point_under_pixel(v->width() / 2, v->height() / 2, found);
     require(!found, "cleared scene returned stale depth");
+    float depth = 0;
+    require(!v->read_scene_depth(v->framebuffer_width() / 2, v->framebuffer_height() / 2,
+                                 *v->camera(), depth) && depth == 1.0f,
+            "scene depth query reported a background hit");
     auto *plane = ClippingPlane::instance();
     const bool enabled = plane->is_enabled(), visible = plane->is_visible();
     plane->fit_scene(vec3(0), 1);

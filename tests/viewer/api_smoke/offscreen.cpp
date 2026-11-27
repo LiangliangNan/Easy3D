@@ -9,7 +9,8 @@
 #include <memory>
 
 void smoke_offscreen_viewer() {
-    easy3d::OffScreen canvas(101, 77);
+    easy3d::graphics::DeviceOptions options;
+    easy3d::OffScreen canvas(101, 77, options);
     auto model = std::make_shared<easy3d::SurfaceMesh>();
     const auto a = model->add_vertex(easy3d::vec3(0, -1, -1));
     const auto b = model->add_vertex(easy3d::vec3(0, 1, -1));

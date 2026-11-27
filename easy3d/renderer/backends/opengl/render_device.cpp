@@ -1830,6 +1830,10 @@ void main() {
                 if (sample_mask_ready)
                     return sample_mask;
                 opengl::QueryState state;
+                GLint previous_draw = 0, previous_read = 0, previous_renderbuffer = 0;
+                glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &previous_draw);
+                glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &previous_read);
+                glGetIntegerv(GL_RENDERBUFFER_BINDING, &previous_renderbuffer);
                 sample_mask = 1;
                 GLint maximum = 0;
                 glGetIntegerv(GL_MAX_SAMPLES, &maximum);
@@ -1851,6 +1855,9 @@ void main() {
                     glDeleteRenderbuffers(1, &color);
                     glDeleteRenderbuffers(1, &depth);
                 }
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, GLuint(previous_draw));
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, GLuint(previous_read));
+                glBindRenderbuffer(GL_RENDERBUFFER, GLuint(previous_renderbuffer));
                 sample_mask_ready = true;
                 return sample_mask;
             }
@@ -2075,22 +2082,59 @@ void main() {
                 glDisable(GL_SCISSOR_TEST);
             }
 
-            void draw_overlays(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height) {
-                std::vector<DrawCommand> overlays;
-                for (const auto &d : commands) {
-                    if (!d.overlay)
-                        continue;
-                    // Depth effects are composed by the device into the resolved color
-                    // target; they must not be drawn again by the legacy overlay encoder.
-                    if (d.shadow || d.ambient_occlusion || d.eye_dome_lighting || d.scene_depth_texture)
-                        continue;
-                    overlays.push_back(d);
-                }
+            void draw_overlay_batch(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height) {
+                if (commands.empty())
+                    return;
                 auto &output = target.color();
                 output.bind();
                 output.activate_draw_buffer(0);
-                this->overlays.set(std::move(overlays), false);
-                this->overlays.draw(false, int(width), int(height), ivec4(0), {});
+                overlays.set(commands, false);
+                overlays.draw(false, int(width), int(height), ivec4(0), {});
+            }
+
+            void composite_effect(const DrawCommand &d, uint32_t width, uint32_t height) {
+                if (d.shadow && effects.shadow)
+                    composite_shadow(d, width, height);
+                else if (d.ambient_occlusion)
+                    composite_ao(d, width, height);
+                else if (d.eye_dome_lighting)
+                    composite_edl(d, width, height);
+                else if (d.scene_depth_texture)
+                    composite_scene_depth(d, width, height);
+            }
+
+            void draw_overlays(const std::vector<DrawCommand> &commands, uint32_t width, uint32_t height,
+                               bool include_effects) {
+                std::vector<DrawCommand> depth_tested, independent;
+                for (const auto &d : commands) {
+                    if (!d.overlay)
+                        continue;
+                    if (d.overlay_depth_test)
+                        depth_tested.push_back(d);
+                    else if (d.overlay_independent_depth)
+                        independent.push_back(d);
+                }
+                // Vulkan renders scene-depth annotations, then independent-depth HUD,
+                // then flat overlays and full-screen effects in submitted order.
+                draw_overlay_batch(depth_tested, width, height);
+                draw_overlay_batch(independent, width, height);
+                std::vector<DrawCommand> flat;
+                const auto flush = [&]() {
+                    draw_overlay_batch(flat, width, height);
+                    flat.clear();
+                };
+                for (const auto &d : commands) {
+                    if (!d.overlay || d.overlay_depth_test || d.overlay_independent_depth)
+                        continue;
+                    const bool effect = d.shadow || d.ambient_occlusion || d.eye_dome_lighting || d.scene_depth_texture;
+                    if (effect && include_effects) {
+                        flush();
+                        composite_effect(d, width, height);
+                    } else if (!effect) {
+                        flat.push_back(d);
+                    }
+                }
+                flush();
             }
 
             DrawCommand fullscreen_quad(uint32_t width, uint32_t height) {
@@ -2174,18 +2218,6 @@ void main() {
                 else
                     glDrawElements(topology(d.geometry->topology()), GLsizei(indices.size()),
                                    GL_UNSIGNED_INT, nullptr);
-            }
-
-            // Vulkan composes depth effects while walking overlays in submitted
-            // command order. Keep the same order here; the flags on a single command
-            // still use Vulkan's shadow > AO > EDL > depth-preview precedence.
-            std::vector<const DrawCommand *> find_effects(const std::vector<DrawCommand> &commands) const {
-                std::vector<const DrawCommand *> result;
-                for (const auto &d : commands) {
-                    if (d.shadow || d.ambient_occlusion || d.eye_dome_lighting || d.scene_depth_texture)
-                        result.push_back(&d);
-                }
-                return result;
             }
 
             void render_shadow_map(const std::vector<DrawCommand> &scene, unsigned map_size,
@@ -2568,23 +2600,11 @@ void main() {
                     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
                     if (oit.texture)
                         composite_oit(oit.texture, width, height, oit.use_count);
-                    if (present_effects) {
-                        for (const auto *effect : find_effects(commands)) {
-                            if (effect->shadow && effects.shadow)
-                                composite_shadow(*effect, width, height);
-                            else if (effect->ambient_occlusion)
-                                composite_ao(*effect, width, height);
-                            else if (effect->eye_dome_lighting)
-                                composite_edl(*effect, width, height);
-                            else if (effect->scene_depth_texture)
-                                composite_scene_depth(*effect, width, height);
-                        }
-                        check_error();
-                    }
                     glViewport(0, 0, int(width), int(height));
                     glScissor(0, 0, int(width), int(height));
                     if (overlays)
-                        draw_overlays(commands, width, height);
+                        draw_overlays(commands, width, height, present_effects);
+                    check_error();
                     glDisable(GL_SCISSOR_TEST);
                     auto &color = target.color();
                     auto &output = target.output();

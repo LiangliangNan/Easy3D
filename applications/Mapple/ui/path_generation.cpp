@@ -116,24 +116,8 @@ bool MappleViewer::write_camera_path(const std::vector<Frame> &frames,
     if (!kfi_ || frames.size() != times.size() || (!dwells.empty() && dwells.size() != frames.size()))
         return false;
 
-    // add_keyframe() refuses both cases. Check the whole sequence before delete_path(), so
-    // a malformed replacement cannot destroy the path that is still on screen.
-    for (std::size_t i = 0; i < frames.size(); ++i) {
-        if (i > 0 && times[i] <= times[i - 1])
-            return false;
-        if (i > 0 && distance2(frames[i - 1].position(), frames[i].position()) < epsilon_sqr<float>())
-            return false;
-    }
-
-    if (kfi_->is_interpolation_started())
-        kfi_->stop_interpolation();
-    kfi_->delete_path();
-    for (std::size_t i = 0; i < frames.size(); ++i) {
-        if (!kfi_->add_keyframe(frames[i], times[i]))
-            return false;
-        if (i < dwells.size())
-            kfi_->set_keyframe_dwell(i, dwells[i]);
-    }
+    if (!kfi_->replace_keyframes(frames, times, dwells))
+        return false;
     kfi_->set_path_periodic(periodic);
     return true;
 }
@@ -540,6 +524,7 @@ void MappleViewer::snapshot_camera_path() {
     camera_path_snapshot_.frames.clear();
     camera_path_snapshot_.times.clear();
     camera_path_snapshot_.dwells.clear();
+    camera_path_snapshot_.periodic = kfi_ && kfi_->is_path_periodic();
     camera_path_snapshot_.generated_paths.clear();
     for (std::size_t i = 0; kfi_ && i < kfi_->number_of_keyframes(); ++i) {
         camera_path_snapshot_.frames.push_back(kfi_->keyframe(i));
@@ -555,13 +540,8 @@ void MappleViewer::snapshot_camera_path() {
 bool MappleViewer::undo_camera_path() {
     if (!camera_path_snapshot_.valid || !kfi_)
         return false;
-    const std::vector<GeneratedPath> &paths = camera_path_snapshot_.generated_paths;
-    const bool periodic = paths.size() == 1 &&
-                          paths.front().source.kind == mapple::CameraPath::Source::Kind::Orbit &&
-                          paths.front().first == 0 &&
-                          paths.front().last == static_cast<int>(camera_path_snapshot_.frames.size()) - 1;
     if (!write_camera_path(camera_path_snapshot_.frames, camera_path_snapshot_.times,
-                           camera_path_snapshot_.dwells, periodic)) {
+                           camera_path_snapshot_.dwells, camera_path_snapshot_.periodic)) {
         LOG(ERROR) << "the camera path snapshot could not be restored";
         return false;
     }

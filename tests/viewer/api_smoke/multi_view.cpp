@@ -9,7 +9,9 @@
 #include <memory>
 
 void smoke_multi_viewer() {
-    easy3d::MultiViewer viewer(2, 2);
+    easy3d::WindowOptions window;
+    easy3d::graphics::DeviceOptions options;
+    easy3d::MultiViewer viewer(2, 2, "API smoke", window, options);
     auto model = std::make_shared<easy3d::SurfaceMesh>();
     model->add_vertex(easy3d::vec3(0, 0, 0));
     viewer.add_model(model, true, false);

@@ -1,7 +1,7 @@
 # Native Vulkan migration
 
-The `Easy3D-Vulkan` branch provides a native Vulkan renderer and viewer alongside
-the OpenGL backend. A build contains **exactly one backend**, chosen at configure
+Easy3D provides native Vulkan and OpenGL renderers and viewers. A build contains
+**exactly one backend**, chosen at configure
 time with `Easy3D_ENABLE_VULKAN` (default `ON`; `OFF` builds OpenGL). The shared
 viewer, renderer, picking, effects, GUI, and supported tutorial workflows are
 implemented for both configured backends. The Qt-based Mapple was OpenGL-only and has
@@ -9,26 +9,30 @@ been retired (the ImGui `applications/Mapple` now runs on both backends); the Qt
 viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
-**Current status (2026-11-12):** core feature implementation for the agreed shared
-surface is substantially complete. The latest local macOS full-suite results
-are recorded in `ToDo.md`. All six jobs in the 2026-11-12 `tests.yml` run
-[#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551)
-succeeded on commit `fcb7a23`: OpenGL and Vulkan jobs passed on macOS, Windows,
-and Ubuntu. The Windows Vulkan job covers build, SPIR-V, and non-graphics tests,
-not graphics/hardware execution. This run predates the current OIT modularization
-commits, so CI still needs to validate the current branch.
-See [Migration completion status](#migration-completion-status) and the
-checkable work list in `ToDo.md`. Historical implementation notes below are not
-the current status.
+**Current status (2026-11-27):** API-unification core work through Milestone 5 and
+its follow-ups is implemented and locally validated; one Milestone 5 public-header
+audit item and Milestones 6 and 7 remain open. The final
+macOS serial suites passed Vulkan **157/157** and OpenGL **130/130**, and fresh
+isolated packages passed the installed offscreen, unified, and public-viewer
+consumer checks on both backends. See
+[section 8.17 of the unification report](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading)
+for the independent branch audit and remaining gaps.
+
+This is local macOS/MoltenVK evidence, not Linux, Windows, or hosted-CI validation.
+The former `tests.yml` is currently stored as `.github/workflows/tests.txt`, so no
+active test workflow validates this branch. The successful 2026-11-12 workflow run
+[#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551) on
+`fcb7a23` is historical and predates the current branch. CI was left untouched
+during the audit. See [Migration completion status](#migration-completion-status)
+and the checkable work list in `ToDo.md`; historical implementation notes below
+are not the current status.
 
 **Build trees.** The IDE (CLion) owns `cmake-build-debug` and `cmake-build-release`
 and reconfigures them, which can flip `Easy3D_ENABLE_VULKAN` to `OFF` and leave a
-tree without the Vulkan backend (the Vulkan tests then abort at startup with
-`dyld: Symbol not found: EyeDomeLighting::frame_params`). The migration work uses
-its own trees next to them: `build-vulkan-debug`, `build-vulkan-release`,
-`build-opengl-debug` and `build-opengl` (all configured with
-`-DEasy3D_ENABLE_VULKAN=ON` or `OFF` explicitly). Do not build in, or reconfigure,
-the IDE-owned trees.
+tree without the Vulkan backend. The current audit uses separate `build` (Vulkan)
+and `build-opengl` (OpenGL) trees, each configured explicitly with
+`-DEasy3D_ENABLE_VULKAN=ON` or `OFF`, plus isolated `/tmp` package builds. Do not
+build in, or reconfigure, the IDE-owned trees.
 
 ## Migration principles (highest priority)
 
@@ -519,50 +523,37 @@ flat/smooth shading, background and canvas behavior.
 
 ## Migration completion status
 
-**Status update: local Z-click transition fix.** The agreed shared viewer and tutorial
-implementation is broadly present: `Viewer`, `MultiViewer`, and `OffScreen`,
-supported tutorials, FigureMaker, shared GUI pickers, selection, effects,
-transparency, and effect-aware snapshots have Vulkan counterparts. U1–U6 and
-the W10 scope decision are complete according to `ToDo.md`. Mapple is retired: the Qt
-app had been kept OpenGL-only by design and was retired on 2026-11-23 (the ImGui app
-`applications/Mapple` now carries the Mapple name and runs on both backends, and no
-Easy3D tree is configured with Qt any more); the Qt/wx viewer tutorials were removed by
-decision; Python remains scoped to the backend-neutral API. These are decisions,
-not outstanding migration ports.
+**Status update: 2026-11-27 API-unification audit.** `Viewer`, `MultiViewer`, and
+`OffScreen`, supported tutorials, FigureMaker, shared GUI pickers, selection,
+effects, transparency, and effect-aware snapshots are implemented for both
+configured backends. The Qt/wx viewer tutorials and Qt Mapple were retired by
+decision; the ImGui `applications/Mapple` runs on both backends. Python remains
+scoped to the backend-neutral API. These are recorded scope decisions, not
+outstanding migration ports.
 
-The migration is **not yet validated complete**:
+The API-unification work is **not yet validated complete**:
 
-* The latest local macOS full-suite results are recorded in the batch-76
-  tracker entry (2026-11-12): Vulkan Debug and Release each passed 141/141;
-  OpenGL Debug and Release each passed 107/107. The Vulkan trees were configured
-  without optional Qt/CGAL/FFmpeg/Python extras, so their test count differs from
-  the IDE-owned tree. These local runs do not establish Linux/Mesa or Windows
+* Final local macOS serial CTest passed Vulkan **157/157 in 251.98 seconds** and
+  OpenGL **130/130 in 114.57 seconds**, with zero failures. Fresh isolated Release
+  packages also passed installed offscreen, unified, and public-viewer consumer
+  checks on both backends. These runs do not establish Linux/Mesa or Windows
   behavior.
-* The shared `viewer.offscreen` regression checks unlit triangle color
-  agreement, depth/object ID, ID preservation after resize, and the known
-  OpenGL/Vulkan primitive-ID capability difference. Shared checks also cover
-  picking, interaction, and DPI behavior. The systematic cross-backend
-  image-diff harness for effect-heavy and snapshot workloads is now implemented;
-  its explicit limits, current measured differences, and CI pairing are recorded
-  below.
-* Run [#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551)
-  succeeded on commit `fcb7a23`. Ubuntu passed configured-window Vulkan tests,
-  lavapipe, cross-backend image comparison, and installed-package consumers.
-  Windows passed both backend builds; Vulkan also passed SPIR-V and non-graphics
-  tests. macOS passed both backend jobs, with the Vulkan job excluding the
-  unsupported transparency path. On Windows hardware the local suite now covers
-  both backends in both configurations, with `viewer.pointbenchmark` the only
-  failure and only because its 1600x917 window does not fit the current 1600x900
-  desktop (2026-11-14, see the Windows full-suite validation section below).
-  Windows installed-package consumers are still unverified.
-* The successful workflow commit is an ancestor of the current branch but
-  predates the recent OIT modularization commits; the current branch still needs
-  a workflow run before those refactors are considered cross-platform validated.
-* The supported tutorial-facing API is intended to be shared but is not
-  symbol-identical: some `Viewer` members are Vulkan-only. Constructor order
-  and defaults also changed, so old positional calls can compile with different
-  meanings. Compatibility policy and consumer coverage remain tracked in
-  `ToDo.md`.
+* Shared `viewer.offscreen`, picking, interaction, DPI, effect, transparency,
+  capture, and MultiViewer regressions pass. The systematic cross-backend
+  image-diff harness retains the explicit limits and measured differences recorded
+  below; it is not an exact pixel-equality claim.
+* The historical workflow run
+  [#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551)
+  passed on `fcb7a23`, but that commit predates this branch. The current
+  `.github/workflows/tests.txt` is inactive, so the current branch still requires
+  a hosted workflow run and platform validation. Windows installed-package
+  consumers remain unverified.
+* The Milestone 5 public-header `EASY3D_HAS_VULKAN` audit remains open in `ToDo.md`.
+  The documented Vulkan-only `scan_visible_points()` compatibility helper is an
+  explicit exception pending its OpenGL equivalent. Milestone 6 API removals and
+  Milestone 7 binding, tutorial, migration-guide, and release work also remain
+  open. Compatibility wrappers and consumer coverage remain governed by the 2.8
+  policy in the unification report.
 
 The tracked Mac measurement of approximately 80 FPS for the native
 `largePoints` RealCamera path at 3200×1834, 4× MSAA, and zero validation errors
@@ -583,7 +574,7 @@ below as current.
 only threw exceptions are removed, and the dependent manipulator frame-drawing
 API is explicitly OpenGL-only. Corner-axis visibility is shared Viewer state.
 The built-in HUD on both backends now uses `graphics::TextLayoutEngine`; OpenGL
-realizes its commands with `opengl::OverlayRenderer`. The immediate
+realizes its commands with `opengl::OverlayRenderer`.
 The legacy `easy3d::TextRenderer` (fontstash-based `sth_*` code) has been removed; the retired Qt app
 (`applications/Mapple-Qt`) now draws text through `TextLayoutEngine` with its own small OpenGL helper.
 Focused input/HUD checks pass on OpenGL and Vulkan, with the Vulkan text-viewer
@@ -12070,7 +12061,7 @@ silhouette. The same rasterization existed in Vulkan's peel target; it was simpl
 there. The fix therefore shares the nearest-layer algorithm and a 2x peel resolve across both
 backends rather than adding an OpenGL-only workaround.
 
-**Change.** Commit `40f3298a` updates both public entry points: portable
+**Change.** Commit `ad29f656` updates both public entry points: portable
 `RenderSettings::transparency == graphics::TransparencyMethod::peeling` through the OpenGL
 `RenderDevice`, and the deprecated `easy3d::DualDepthPeeling` used by Tutorial 504. Vulkan retains
 the same portable semantics and gains the shared silhouette resolve.
@@ -12137,3 +12128,47 @@ unbounded-depth alternative where supported. The 2x color/depth targets require 
 peel-layer storage and additional rasterization/resolve work; OpenGL rejects peeling when twice the
 output extent exceeds its viewport limits, and Vulkan checks the device image limits. No performance
 parity claim is made for this quality fix.
+
+### 2026-11-27 — Independent API-unification audit and installed-package repair
+
+**Scope.** The full `api-unification` branch was checked against pre-unification
+`main` (`2924ec3fa9b736785e26a23fafc751571c614981`), the unification plan, and the
+change history. The documented `KeyframeInterpolator` naming and Mapple ownership of
+`CameraPath`, `KeyframeEditor`, and `KeyframeGizmo` were preserved. The detailed
+findings and compatibility rationale are in
+[section 8.17 of the unification report](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading).
+
+**Corrections.** The audit restored the `Drawable` and `Viewer` layout guarantees,
+kept `DrawCommand` at 616 bytes with depth endpoints in tail padding, and retained
+legacy option constructors through `EASY3D_DEPRECATED(message)` and non-deprecated
+delegation. OpenGL now rejects unsupported hard device requirements. Temporary
+queries and snapshots restore native CGL/WGL/GLX/EGL context state, including
+separate GLFW copies, read/draw EGL surfaces, and Windows HDC changes. MultiViewer
+raw capture retains stable IDs and original drawable alpha. Native transparency
+fallback now matches portable capability checks, linked-list capacity changes
+reallocate the node pool, highlight/cache/query edge cases are fixed, and keyframe
+replacement plus Mapple generation/undo are atomic with explicit periodicity.
+
+Fresh package installation exposed a header collision hidden by in-tree includes:
+`renderer/backends/opengl/render_device.h` was flattened over the shared
+`renderer/render_device.h`. The OpenGL compatibility adapter now installs in its
+backend subdirectory. The installed consumers were also corrected to use only the
+frozen public API.
+
+**Validation.** Both all-target builds succeeded. Focused regressions passed 9/9 on
+each backend. Complete serial CTest passed **Vulkan 157/157 in 251.98 s** and
+**OpenGL 130/130 in 114.57 s**. Fresh isolated Vulkan and OpenGL Release packages
+were built and installed; all five installed consumer executables (three Vulkan,
+two OpenGL) compiled and passed their offscreen rendering, text/picking, public
+viewer, snapshot, coordinate-query, animation, and MultiViewer checks.
+`git diff --check` passed. One intermediate OpenGL run aborted in `opengl.input`
+after its PASS line; the test passed in isolation and in the clean complete rerun,
+matching the documented focus/load teardown flake. No source change was made for
+that non-reproducing crash.
+
+**Limits.** This is local macOS/MoltenVK evidence. The test workflow remains
+inactive as `.github/workflows/tests.txt`; Linux, Windows, and hosted CI remain
+separate gates. The Milestone 5 public-header audit item and Milestones 6 and 7
+remain open. The package version remains 2.7.0
+although the compatibility policy targets 2.8; no release version was changed and
+no commit was created by this audit.

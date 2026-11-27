@@ -110,6 +110,28 @@ void effect_order_and_clipping(RenderDevice &device) {
     require(preview_then_effects.rgba != preview.rgba,
             "OpenGL did not preserve Vulkan's stream-ordered effect composition");
 
+    auto flat = far;
+    flat.overlay = true;
+    flat.object_id = UINT32_MAX;
+    flat.color = vec4(0, 1, 0, 1);
+    auto depth_tested = flat;
+    depth_tested.overlay_depth_test = true;
+    const auto preview_scene = device.render(width, height, {depth, scene[0], scene[1]}, options);
+    const auto flat_then_preview = device.render(width, height, {flat, depth, scene[0], scene[1]}, options);
+    const auto preview_then_flat = device.render(width, height, {depth, flat, scene[0], scene[1]}, options);
+    const size_t overlay_pixel = pixel(width, 5, height / 2) * 4;
+    require(flat_then_preview.rgba == preview_scene.rgba,
+            "flat overlay ordering did not preserve the following depth preview");
+    require(preview_then_flat.rgba[overlay_pixel + 1] > 200 &&
+                    preview_then_flat.rgba[overlay_pixel] < 10,
+            "flat overlay did not replace the preceding depth preview");
+    const auto depth_tested_then_preview = device.render(
+        width, height, {depth_tested, depth, scene[0], scene[1]}, options);
+    require(depth_tested_then_preview.rgba == preview_scene.rgba,
+            "depth effects ran before Vulkan's depth-tested overlay phase");
+    require(same_ids_and_depth(preview_scene, depth_tested_then_preview),
+            "overlay phase ordering changed scene picking or depth");
+
     // Effective planes clip the depth source. A cut pixel far from the surviving
     // geometry must keep the clear color and clear depth with AO and EDL enabled.
     const auto clipped = [&](const std::vector<DrawCommand> &commands) {
@@ -240,12 +262,16 @@ void oit_cell_viewports(RenderDevice &device) {
         try {
             require_dominant(frame, 8, height / 2, 0);
             require_dominant(frame, 40, height / 2, 1);
+            require_dominant(frame, 31, height / 2, 0);
+            require_dominant(frame, 32, height / 2, 1);
         } catch (...) {
             std::cerr << "transparency method: " << method_name(method) << '\n';
             throw;
         }
         require(frame.ids[pixel(width, 8, height / 2)].object == 10 &&
-                        frame.ids[pixel(width, 40, height / 2)].object == 11,
+                        frame.ids[pixel(width, 40, height / 2)].object == 11 &&
+                        frame.ids[pixel(width, 31, height / 2)].object == 10 &&
+                        frame.ids[pixel(width, 32, height / 2)].object == 11,
                 "OIT composition changed per-cell scene IDs");
         if (device.validation_errors())
             throw std::runtime_error("OIT composition reported backend validation errors");

@@ -51,6 +51,7 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
+#include <easy3d/viewer/backends/glfw_runtime.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #endif
@@ -98,7 +99,17 @@ MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
 #else
                          const OpenGLOptions& options)
 #endif
-    : Viewer(title,window,options) {
+    : MultiViewer(rows,cols,title,window,options,detail::DeviceOptionsTag{}) {
+}
+MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
+                         const WindowOptions& window,
+#ifdef EASY3D_HAS_VULKAN
+                         const VulkanOptions& options,
+#else
+                         const OpenGLOptions& options,
+#endif
+                         detail::DeviceOptionsTag)
+    : Viewer(title,window,options,detail::DeviceOptionsTag{}) {
     snapshot_hud_=false;
     set_layout(rows,cols);
 }
@@ -223,12 +234,7 @@ bool MultiViewer::read_scene_depth(int x, int y, const Camera& snapshot, float& 
         return pixel.id.object != UINT32_MAX;
 #ifndef EASY3D_HAS_VULKAN
     }
-    GLFWwindow *previous = glfwGetCurrentContext();
-    glfwMakeContextCurrent(window_);
-    struct ContextGuard {
-        GLFWwindow *previous;
-        ~ContextGuard() { glfwMakeContextCurrent(previous); }
-    } context_guard{previous};
+    detail::OpenGLContextScope context_guard(window_);
     opengl::QueryState state;
     state.prepare(width, height);
     FramebufferObject target(width, height, 0);
@@ -407,7 +413,7 @@ void MultiViewer::draw() const {
             const unsigned layers = settings.transparency.enabled ? settings.transparency.layers : 4u;
             query_device().present(uint32_t(fw), uint32_t(fh), commands, background_color(), samples(),
                                    method, layers);
-            drawable_renderer_->prune();
+            prune_drawable_cache();
             for (int r = 0; r < num_rows_; ++r) {
                 for (int c = 0; c < num_cols_; ++c) {
                     const auto physical = cell_bounds(r, c, num_rows_, num_cols_, fw, fh);
@@ -472,9 +478,7 @@ void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,boo
     Camera cell(snapshot);cell.frame()->set_pivot_point(snapshot.pivot_point());
     auto draw=[&](const Drawable* d) {
         if(!d || (source && source->drawable.get()!=d) || !d->is_visible() || dynamic_cast<const LinesDrawable2D*>(d)) return;
-        if(auto p=dynamic_cast<const TrianglesDrawable*>(d)) p->TrianglesDrawable::draw(&cell);
-        else if(auto p=dynamic_cast<const PointsDrawable*>(d)) p->PointsDrawable::draw(&cell);
-        else if(auto p=dynamic_cast<const LinesDrawable*>(d)) p->LinesDrawable::draw(&cell);
+        d->draw(&cell);
     };
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         const auto& view=views_[r][c];
@@ -553,7 +557,7 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     try {result=Viewer::snapshot(file,scale,count,bg,expand);}
     catch(...) {self->camera()->set_projection_matrix(original);snapshot_active_=active;throw;}
 #else
-    GLFWwindow* previous=glfwGetCurrentContext();glfwMakeContextCurrent(window_);
+    detail::OpenGLContextScope context_guard(window_);
     GLint viewport[4],draw_fbo,read_fbo,scissor[4];GLfloat clear[4];glGetIntegerv(GL_VIEWPORT,viewport);glGetFloatv(GL_COLOR_CLEAR_VALUE,clear);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&draw_fbo);glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&read_fbo);
     glGetIntegerv(GL_SCISSOR_BOX,scissor);const GLboolean scissor_enabled=glIsEnabled(GL_SCISSOR_TEST);
@@ -596,7 +600,7 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     }
     self->views_=saved;self->samples_=original_samples;self->background_color_=original_background;
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);glClearColor(clear[0],clear[1],clear[2],clear[3]);
-    glScissor(scissor[0],scissor[1],scissor[2],scissor[3]);if(scissor_enabled) glEnable(GL_SCISSOR_TEST);else glDisable(GL_SCISSOR_TEST);glfwMakeContextCurrent(previous);
+    glScissor(scissor[0],scissor[1],scissor[2],scissor[3]);if(scissor_enabled) glEnable(GL_SCISSOR_TEST);else glDisable(GL_SCISSOR_TEST);
 #endif
     self->camera()->set_projection_matrix(original);snapshot_active_=active;return result;
 }

@@ -455,11 +455,9 @@ namespace easy3d {
         // Uploads the per-primitive highlight mask and rebuilds the lookup texture.
         void opengl_update_highlight_mask(const std::vector<float>&);
 
-        // Retain the 2.8 private storage layout for binary-compatible subclasses.
-        mutable unsigned long long point_revision_ = 0;
-        mutable std::size_t buffer_revision_ = 0;
-        mutable std::unique_ptr<BufferData> opengl_snapshot_;
-        mutable std::size_t opengl_snapshot_revision_ = 0;
+        // Version of the position storage, bumped on every buffer change so that
+        // point selection can tell that its cached snapshot is stale.
+        unsigned long long point_revision_ = 0;
 #endif
 
     protected:
@@ -514,6 +512,8 @@ namespace easy3d {
         mutable bool buffers_ready_;        //!< Whether model extraction or a client upload has realized the CPU buffers.
 
     private:
+        // These flags occupy the alignment padding that precedes update_func_ in
+        // the 2.8 layout; adding storage here would shift every derived class.
         mutable unsigned int client_colors_ : 1;
         mutable unsigned int client_normals_ : 1;
         mutable unsigned int client_texcoords_ : 1;

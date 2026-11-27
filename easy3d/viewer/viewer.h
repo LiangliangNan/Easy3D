@@ -132,6 +132,8 @@ namespace easy3d {
 #endif
 
     namespace detail {
+        struct DeviceOptionsTag {};
+
         /// Convert backend-neutral DeviceOptions to backend-specific options.
         /// C++11 does not allow brace-init of structs with default member
         /// initializers, so we build them field by field here.
@@ -146,15 +148,21 @@ namespace easy3d {
             return v;
         }
 #else
-        inline OpenGLOptions make_device_options(const graphics::DeviceOptions & /*o*/) {
-            // OpenGL has no validation/sync/profiling/large-point options;
-            // DeviceOptions maps to the default OpenGL context request.
-            OpenGLOptions o;
-            o.major = 3;
-            o.minor = 2;
-            o.depth_bits = 24;
-            o.stencil_bits = 8;
-            return o;
+        inline OpenGLOptions make_device_options(const graphics::DeviceOptions &o) {
+            if (o.validation || o.sync_validation)
+                throw std::invalid_argument("OpenGL does not support requested validation diagnostics");
+            if (o.profiling)
+                throw std::invalid_argument("OpenGL does not support requested profiling");
+            if (!o.device_name.empty())
+                throw std::invalid_argument("OpenGL does not support device-name selection");
+            // use_native_large_points is accepted for source compatibility; OpenGL
+            // always uses its native point rendering.
+            OpenGLOptions gl;
+            gl.major = 3;
+            gl.minor = 2;
+            gl.depth_bits = 24;
+            gl.stencil_bits = 8;
+            return gl;
         }
 #endif
     } // namespace detail
@@ -183,6 +191,7 @@ namespace easy3d {
          * \details The final options parameter is backend-specific: Vulkan
          * builds accept VulkanOptions and OpenGL builds accept OpenGLOptions.
          */
+        EASY3D_DEPRECATED("pass graphics::DeviceOptions to the portable Viewer constructor")
         explicit Viewer(
             const std::string &title = "Easy3D Viewer",
             const WindowOptions &window = {},
@@ -202,10 +211,21 @@ namespace easy3d {
             const WindowOptions &window,
             const Options &options,
             typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
-            : Viewer(title, window, detail::make_device_options(options))
+            : Viewer(title, window, detail::make_device_options(options), detail::DeviceOptionsTag{})
         {
         }
 
+    protected:
+        Viewer(const std::string &title,
+               const WindowOptions &window,
+#ifdef EASY3D_HAS_VULKAN
+               const VulkanOptions &options,
+#else
+               const OpenGLOptions &options,
+#endif
+               detail::DeviceOptionsTag);
+
+    public:
         /// Destroy the viewer and release its window and graphics resources.
         ~Viewer() override;
 
@@ -935,8 +955,8 @@ namespace easy3d {
          *      Live frames and file snapshots apply these settings. In-memory
          *      capture remains a scene-command frame and does not add the
          *      presentation effects that draw() composes.
-         * \throws std::invalid_argument if a value is invalid or an explicitly
-         *      enabled effect is unavailable.
+         * \throws std::invalid_argument if a value is invalid. Backend support
+         *      and fallback selection are handled by RenderDevice at render time.
          */
         void set_render_settings(const RenderSettings &settings);
         //@}
@@ -1071,11 +1091,11 @@ namespace easy3d {
 
         /**
          * \brief Release viewer rendering resources while the backend is valid.
-         * \details Overrides should release subclass resources and call
-         *      Viewer::cleanup() as part of the cleanup sequence. Do not assume a
-         *      graphics context is current in a destructor.
+         * \details Subclasses release their own resources from their destructors
+         *      while the graphics context is valid, then call Viewer::cleanup().
+         *      Do not assume a graphics context is current in a destructor.
          */
-        virtual void cleanup();
+        void cleanup();
 
         /**
          * \brief Hook called before scene drawing on each rendered frame.
@@ -1264,7 +1284,8 @@ namespace easy3d {
         // Remove only the transparency flag introduced by RenderSettings from raw
         // capture commands; legacy transparency state remains untouched.
         void strip_settings_transparency(std::vector<graphics::DrawCommand> &commands,
-                                         const std::vector<DrawSource> *sources = nullptr) const;
+                                         const std::vector<DrawSource> &sources,
+                                         const std::vector<graphics::DrawCommand> &source_commands) const;
         //@}
 
 #ifdef EASY3D_HAS_VULKAN
@@ -1380,6 +1401,7 @@ namespace easy3d {
                                    std::vector<graphics::DrawCommand> &commands,
                                    std::vector<DrawSource> *sources = nullptr) const;
         graphics::RenderDevice &query_device() const;
+        void prune_drawable_cache() const;
         // Creates the GLFW window and its context: sets the window hints from the two
         // option structs (MSAA samples, full-screen or resizable from WindowOptions;
         // depth/stencil bits and a forward-compatible core profile at
@@ -1404,6 +1426,9 @@ namespace easy3d {
         // Viewer, invokes the handler and swallows any escaping exception, since
         // GLFW must never see a C++ exception cross its callback boundary.
         template<class Callback> static void dispatch_callback(GLFWwindow*, const Callback&) noexcept;
+
+        struct GraphicsResources;
+        GraphicsResources &graphics_resources() const;
 
         // Keeps GLFW initialized while any viewer window lives, and supplies the
         // hidden window used as the share context for new GL windows.
@@ -1430,10 +1455,9 @@ namespace easy3d {
         std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
         // Keeps built-in HUD text separate from application overlays and their draw order.
         mutable std::unique_ptr<opengl::OverlayRenderer> hud_overlay_renderer_;
-        // Backend-neutral command extraction and offscreen queries. The device borrows
-        // this viewer's context and is destroyed before the window in cleanup().
-        mutable std::unique_ptr<graphics::DrawableRenderer> drawable_renderer_;
-        mutable std::unique_ptr<graphics::RenderDevice> query_device_;
+        // Reuses the former point-selector storage slot to preserve the 2.8
+        // class layout while holding backend-neutral command/query resources.
+        mutable std::unique_ptr<GraphicsResources> graphics_resources_;
         // Scratch buffer that clipping_planes() fills with the active ClippingPlane
         // instance's planes, normalized, so the const getter can return them by reference.
         mutable std::vector<vec4> selection_planes_;

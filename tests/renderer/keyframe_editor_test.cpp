@@ -98,5 +98,19 @@ int main() {
         editor.set_selected(1);
         require(editor.insert_after_selected() == 2, "the periodic-path insert failed");
         require(kfi.is_path_periodic(), "the editor rebuild lost periodic interpolation");
+
+        // Loaded-style paths may contain coincident poses and nonmonotone times. An
+        // edit must preserve those states rather than partially deleting the path.
+        Frame stationary;
+        stationary.set_position(vec3(0, 0, 0));
+        Frame moved;
+        moved.set_position(vec3(2, 0, 0));
+        require(kfi.replace_keyframes({stationary, stationary, moved}, {0, 1, 0}, {0.25f, 0.5f, 0}),
+                "the editor fixture could not be installed");
+        editor.set_selected(1);
+        require(editor.delete_selected() == 1, "the editor rejected a coincident loaded-style path");
+        require(kfi.number_of_keyframes() == 2 && kfi.keyframe_time(1) == 0 &&
+                        close_to(kfi.keyframe_dwell(0), 0.25f) && kfi.is_path_periodic(),
+                "editing a loaded-style path changed its accepted timing or closure policy");
     });
 }
