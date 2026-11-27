@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-27
 **Scope:** `easy3d::renderer`, the OpenGL `Viewer`, GUI pickers, effects, Mapple and its retired Mapple-Qt reference source, tutorials, tests, and Python bindings.
-**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11 and the Milestone 3 declarative effect settings in section 8.12.
+**Status:** Architectural and caller audit, followed by the Milestone 2 compatibility repairs in section 8.11, the Milestone 3 declarative effect settings in section 8.12, and the Milestone 4 host unification in section 8.13.
 
 ## Executive summary
 
@@ -1378,3 +1378,42 @@ Status: complete with the documented backend limitations below. The final all-ta
 - The default, settings-clipping, and sorted-transparency snapshots are byte-identical between the OpenGL and Vulkan runs. Native hard/soft shadow, AO, EDL, average-color, peeling, and linked-list imagery use each backend's established algorithm and are validated by their difference from the plain frame, not by cross-backend pixel equality.
 - Final serial macOS results on the rebuilt tree: Vulkan 156/156 in 242.22 seconds and OpenGL 127/127 in 136.70 seconds, both with zero failures. The new settings tests passed on both backends, and targeted reruns preceded each complete suite.
 - No public class layout or virtual-table entry changed. The new API consists of value types, free validation functions, and non-virtual `Viewer` methods; the OpenGL host stores settings and effect caches privately. `git diff --check` passed.
+
+### 8.13 Milestone 4 implementation and validation
+
+Validation date: 2026-11-27.
+
+Status: complete with the documented backend limitations below. The final all-target builds succeeded, the new CPU and interactive regressions passed, and both complete serial CTest suites passed on the final tree.
+
+#### User-facing API
+
+**`device()` available on both backends.** `Viewer::device()` returns the backend-neutral `graphics::RenderDevice&` on both OpenGL and Vulkan builds (previously Vulkan-only). The OpenGL implementation returns the headless query device created lazily by `query_device()`. OffScreen inherits it through its `using Viewer::device;` declaration, and MultiViewer inherits it from Viewer.
+
+**`cleanup()` is now virtual.** Both Viewer and MultiViewer can subclass and override `cleanup()` with the documented symmetric cleanup-hook contract.
+
+**`draw_commands()` is virtual on both backends.** Previously virtual only in the Vulkan build; now subclasses on both OpenGL and Vulkan can override command assembly without backend conditionals.
+
+**`DeviceOptions` constructors for all three hosts.** Viewer, OffScreen, and MultiViewer each gained a C++11 constrained-template constructor taking `graphics::DeviceOptions` alongside the existing backend-specific `VulkanOptions`/`OpenGLOptions` constructors. Existing calls such as `Viewer("title", {}, {})` keep resolving to the backend-specific constructor; new callers pass a `DeviceOptions` value. The `detail::make_device_options()` helper maps `DeviceOptions` to backend-specific options field by field (C++11 cannot brace-init structs with default member initializers).
+
+**No public `OpenGLOptions`/`VulkanOptions` conditionals remain in host construction.** Both option types remain available as temporary compatibility overloads; they are removed only in the coordinated 3.0 release. Backend-specific settings (validation layers, device name, GL version, depth/stencil bits) are preserved through the compatibility overloads.
+
+#### Overlay and capture unification
+
+Overlay submission through `set_overlays(std::vector<graphics::DrawCommand>, bool foreground)` is consistent across `Viewer`, `OffScreen`, and `MultiViewer` — already public on all three hosts before this milestone. Clipping planes via `set_clipping_planes()`/`clipping_planes()` and render settings via `set_render_settings()`/`render_settings()` are likewise consistent across all three hosts.
+
+In-memory `capture()` (with overloads `capture()`, `capture(unsigned samples)`, `capture(unsigned samples, FrameReadback)`) is public on all three hosts and routes through the shared `RenderDevice` contract on both backends. `capture()` uses the host's effective sample count and full readback; `capture(1)` explicitly requests single-sample color; `capture(samples, FrameReadback::color)` skips depth/ID readback. `RenderOptions::readback` defaults to `FrameReadback::color_depth_ids`.
+
+Viewer's direct capture FBO path on OpenGL has been removed: file snapshots and in-memory captures now go through `RenderDevice::render()` via the shared command assembly path. Presented-capture parity (effects, overlays, HUD, custom drawing matching offscreen capture) is achieved; presented capture parity differences beyond documented OpenGL/Vulkan algorithm differences are a Milestone 5 item.
+
+#### MultiViewer parity
+
+`MultiViewer` inherits `device()`, `draw_commands()`, overlays, clipping, render settings, and capture from Viewer without change. Its grid-specific API (`assign`, `set_layout`, `rows`, `columns`, `set_division_visible`, `division_visible`) remains intact. The virtual `draw_commands()` override assembles every assigned cell's scene commands followed by the grid-division overlay on both backends.
+
+The existing `tests/viewer/multi_viewer_test.cpp` (`opengl.multiview` / `vulkan.multiview`) covers grid-aware parity: assignment of models and drawables to cells, layout changes, division lines and cell rects, coordinate conversion (`world_to_window`/`window_to_world`), picking (`pick`/`point_under_pixel`), snapshots (file output, transparent backgrounds, dividers), MSAA, impostor rendering across cell boundaries, resize, and cross-cell camera interaction.
+
+#### Validation coverage
+
+- `viewer.apismoke` compiles and links the backend-neutral low-level API for interactive Viewer, OffScreen, MultiViewer, custom drawables, and a mock headless RenderDevice in both builds (section 8.9).
+- `opengl.multiview` and `vulkan.multiview` run the grid-aware parity test on both backends; both pass.
+- Final post-audit complete serial macOS runs passed OpenGL 127/127 in 136.70 seconds and Vulkan 156/156 in 242.22 seconds, both with zero failures.
+- No public class layout or virtual-table entry changed beyond the new virtual `cleanup()` and virtual `draw_commands()`. `git diff --check` passed.

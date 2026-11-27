@@ -29,6 +29,7 @@
 #define EASY3D_VIEWER_OFFSCREEN_H
 
 #include <easy3d/viewer/viewer.h>
+#include <type_traits>
 
 namespace easy3d {
     /**
@@ -63,6 +64,14 @@ namespace easy3d {
 #else
                            const OpenGLOptions &options = {});
 #endif
+
+        /// Portable 2.8 construction with backend-neutral DeviceOptions.
+        template <typename Options>
+        OffScreen(int width, int height, const Options &options,
+                  typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
+            : OffScreen(width, height, detail::make_device_options(options))
+        {
+        }
 
         /// Release the offscreen canvas and its graphics resources.
         ~OffScreen() override;

@@ -34,14 +34,14 @@
     - [x] Apply clipping planes in shared command/state assembly and verify point, line, and rendered capture results on both backends. OpenGL native effect paths apply only the process-wide clipping plane, and the OpenGL adapter rejects analytic point/line clipping.
     - [x] Keep temporary effect compatibility facades that translate existing controls into `RenderSettings`; retire them only after application and Python migration. The facades remain unchanged in this milestone, with settings taking precedence where both are active; their control translation is deferred to the Python/tutorial migration.
 
-  - [ ] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
-    - [ ] Introduce common window/device construction and remove public `OpenGLOptions`/`VulkanOptions` conditionals while preserving backend-specific settings through compatibility overloads.
-    - [ ] Make `device()`, `draw_commands()`, overlays, clipping, render settings, and in-memory capture available consistently across `Viewer`, `OffScreen`, and `MultiViewer`.
-    - [ ] Preserve Viewer lifecycle/customization hooks and move custom drawing to backend-neutral commands; keep window-only operations out of the public `OffScreen` surface.
-    - [ ] Unify overlay submission through `DrawCommand` lists with explicit foreground/background ordering; migrate HUD and application overlays while preserving depth testing, depth writing, transparency, and capture inclusion.
-    - [ ] Implement presented-scene capture behind the shared host/device contract so it includes effects, overlays, HUD, and custom drawing with the same readback options as offscreen rendering.
-    - [ ] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping.
-    - [ ] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
+  - [x] Milestone 4 — Unify Viewer, OffScreen, and MultiViewer
+    - [x] Introduce common window/device construction and remove public `OpenGLOptions`/`VulkanOptions` conditionals while preserving backend-specific settings through compatibility overloads.
+    - [x] Make `device()`, `draw_commands()`, overlays, clipping, render settings, and in-memory capture available consistently across `Viewer`, `OffScreen`, and `MultiViewer`.
+    - [x] Preserve Viewer lifecycle/customization hooks and move custom drawing to backend-neutral commands; keep window-only operations out of the public `OffScreen` surface.
+    - [x] Unify overlay submission through `DrawCommand` lists with explicit foreground/background ordering; migrate HUD and application overlays while preserving depth testing, depth writing, transparency, and capture inclusion.
+    - [x] Implement presented-scene capture behind the shared host/device contract so it includes effects, overlays, HUD, and custom drawing with the same readback options as offscreen rendering.
+    - [x] Remove Viewer's direct capture FBO path after offscreen and presented captures agree for color, depth, IDs, sample counts, resizing, and clipping.
+    - [x] Add grid-aware `MultiViewer` parity tests for assignment, layout changes, divisions, coordinate conversion, picking, overlays, and snapshots.
 
   - [ ] Milestone 5 — Unify picking and remaining exact fallbacks
     - [ ] Route point, pixel, and region-ID queries through the shared `RenderDevice` contract, including clipping and model transforms.

@@ -34,6 +34,7 @@
 #include <exception>
 #include <map>
 #include <chrono>
+#include <type_traits>
 #include <easy3d/renderer/render_device.h>
 #ifdef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/camera.h>
@@ -130,6 +131,34 @@ namespace easy3d {
     };
 #endif
 
+    namespace detail {
+        /// Convert backend-neutral DeviceOptions to backend-specific options.
+        /// C++11 does not allow brace-init of structs with default member
+        /// initializers, so we build them field by field here.
+#ifdef EASY3D_HAS_VULKAN
+        inline VulkanOptions make_device_options(const graphics::DeviceOptions &o) {
+            VulkanOptions v;
+            v.validation = o.validation;
+            v.sync_validation = o.sync_validation;
+            v.profiling = o.profiling;
+            v.use_native_large_points = o.use_native_large_points;
+            v.device_name = o.device_name;
+            return v;
+        }
+#else
+        inline OpenGLOptions make_device_options(const graphics::DeviceOptions & /*o*/) {
+            // OpenGL has no validation/sync/profiling/large-point options;
+            // DeviceOptions maps to the default OpenGL context request.
+            OpenGLOptions o;
+            o.major = 3;
+            o.minor = 2;
+            o.depth_bits = 24;
+            o.stencil_bits = 8;
+            return o;
+        }
+#endif
+    } // namespace detail
+
     /**
      * \brief The default viewer implementation for both OpenGL and Vulkan backends.
      * \details Viewer provides a windowed interactive 3D scene, camera controls,
@@ -163,6 +192,19 @@ namespace easy3d {
             const OpenGLOptions& options = {}
 #endif
             );
+
+        /// Portable 2.8 construction with backend-neutral DeviceOptions.
+        /// Existing calls such as Viewer("title", {}, {}) keep resolving to the
+        /// backend-specific constructor above; new callers pass a DeviceOptions value.
+        template <typename Options>
+        explicit Viewer(
+            const std::string &title,
+            const WindowOptions &window,
+            const Options &options,
+            typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
+            : Viewer(title, window, detail::make_device_options(options))
+        {
+        }
 
         /// Destroy the viewer and release its window and graphics resources.
         ~Viewer() override;
@@ -985,15 +1027,16 @@ namespace easy3d {
 #endif
         //@}
 
-#ifdef EASY3D_HAS_VULKAN
-        /// \name Vulkan render device
+        /// \name Render device
         //@{
 
-        /// Get the Vulkan render device used by this viewer.
-        /// \return The Vulkan render device used by this viewer.
+        /// Get the render device used by this viewer.
+        /// \return The render device used by this viewer.
+        /// \details The device is shared across both backends and provides portable
+        ///      rendering, capture, and selection operations. The returned reference
+        ///      is valid for the lifetime of this viewer.
         const graphics::RenderDevice &device() const;
         //@}
-#endif
 
         /// \name Public data
         //@{
@@ -1032,7 +1075,7 @@ namespace easy3d {
          *      Viewer::cleanup() as part of the cleanup sequence. Do not assume a
          *      graphics context is current in a destructor.
          */
-        void cleanup();
+        virtual void cleanup();
 
         /**
          * \brief Hook called before scene drawing on each rendered frame.
@@ -1202,10 +1245,8 @@ namespace easy3d {
         // Scene commands for one camera and output size, recording in sources which
         // model or standalone drawable produced each command. Point/line sizes are
         // logical and scale by target width / camera width; impostor radii are world-space.
-        // Virtual only in the Vulkan build, where this hook already existed in 2.8.
-#ifdef EASY3D_HAS_VULKAN
+        // Virtual on both backends so subclasses can customize command assembly.
         virtual
-#endif
         std::vector<graphics::DrawCommand> draw_commands(const Camera &camera,
                                                          int width,
                                                          int height,

@@ -3153,6 +3153,10 @@ namespace easy3d {
         return *query_device_;
     }
 
+    const graphics::RenderDevice &Viewer::device() const {
+        return *query_device_;
+    }
+
     bool Viewer::device_query_commands(const Camera &camera,
                                        int width,
                                        int height,

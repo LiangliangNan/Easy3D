@@ -30,6 +30,7 @@
 #include <easy3d/viewer/viewer.h>
 
 #include <memory>
+#include <type_traits>
 
 
 namespace easy3d {
@@ -71,6 +72,15 @@ namespace easy3d {
 #else
                           const OpenGLOptions& options = {});
 #endif
+
+        /// Portable 2.8 construction with backend-neutral DeviceOptions.
+        template <typename Options>
+        MultiViewer(int rows, int cols, const std::string &title,
+                    const WindowOptions &window, const Options &options,
+                    typename std::enable_if<std::is_same<Options, graphics::DeviceOptions>::value>::type * = nullptr)
+            : MultiViewer(rows, cols, title, window, detail::make_device_options(options))
+        {
+        }
         /**
          * \brief Destructor.
          */
@@ -224,13 +234,8 @@ namespace easy3d {
 
         // Assembles every assigned cell's scene commands for the requested output
         // size, followed by the grid-division overlay.
-#ifdef EASY3D_HAS_VULKAN
         std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
                                                        std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
-#else
-        std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
-                                                       std::vector<DrawSource>* sources, bool include_hidden_models = false) const;
-#endif
 
         bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
 
