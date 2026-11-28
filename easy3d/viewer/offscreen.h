@@ -202,10 +202,6 @@ namespace easy3d {
         using Viewer::world_to_pixel;
         using Viewer::world_to_window;
         using Viewer::device;
-#ifdef EASY3D_HAS_VULKAN
-        // Transitional native scene operation, retained until the picker migration.
-        using Viewer::scan_visible_points;
-#endif
         //@}
     private:
 #ifndef EASY3D_HAS_VULKAN

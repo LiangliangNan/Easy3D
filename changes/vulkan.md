@@ -13,8 +13,9 @@ supported backend-neutral API rather than backend internals.
 its follow-ups is implemented and locally validated; one Milestone 5 public-header
 audit item and Milestones 6 and 7 remain open. Milestone 6 preparation completed a
 gated retirement audit and moved the remaining native OpenGL implementation sources
-into the private backend source tree without changing the installed API. The latest
-macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
+into the private backend source tree without changing the installed API. CI
+`.github/workflows/tests.yml` was enabled (converted from the inactive `tests.txt`).
+The latest macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
 **130/130 in 160.86 seconds**, and staged installed packages passed the installed
 offscreen, unified, and public-viewer consumer checks on both backends. See
 [section 8.17 of the unification report](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading)
@@ -29,13 +30,11 @@ removed; the old type names and constructor symbols are not retained. Low-level
 render-device creation retains the separate backend-neutral `graphics::DeviceOptions`; see [section 8.18 of the unification report](Vulkan-OpenGL-unification.md#818-simplified-host-constructors).
 
 This is local macOS/MoltenVK evidence, not Linux, Windows, or hosted-CI validation.
-The former `tests.yml` is currently stored as `.github/workflows/tests.txt`, so no
-active test workflow validates this branch. The successful 2026-11-12 workflow run
+`.github/workflows/tests.yml` is now active and validates both backends on Ubuntu,
+Windows, and macOS, including package installation, consumer smoke tests, SPIR-V
+validation, and image-diff parity. The historical 2026-11-12 workflow run
 [#43315089551](https://github.com/LiangliangNan/Easy3D/actions/runs/43315089551) on
-`fcb7a23` is historical and predates the current branch. CI was left untouched
-during the audit. See [Migration completion status](#migration-completion-status)
-and the checkable work list in `ToDo.md`; historical implementation notes below
-are not the current status.
+`fcb7a23` predates the current branch.
 
 **Build trees.** The IDE (CLion) owns `cmake-build-debug` and `cmake-build-release`
 and reconfigures them, which can flip `Easy3D_ENABLE_VULKAN` to `OFF` and leave a
@@ -557,9 +556,8 @@ The API-unification work is **not yet validated complete**:
   a hosted workflow run and platform validation. Windows installed-package
   consumers remain unverified.
 * The Milestone 5 public-header `EASY3D_HAS_VULKAN` audit remains open in `ToDo.md`.
-  The documented Vulkan-only `scan_visible_points()` compatibility helper is an
-  explicit exception pending its OpenGL equivalent. Milestone 6 API removals and
-  Milestone 7 binding, tutorial, migration-guide, and release work also remain
+  `scan_visible_points()` was deleted (Vulkan-only, no production callers). Milestone 6 API
+  removals and Milestone 7 binding, tutorial, migration-guide, and release work also remain
   open. Compatibility wrappers and consumer coverage remain governed by the 2.8
   policy in the unification report.
 
@@ -1524,8 +1522,7 @@ second-guess a caller who sized a window deliberately. `easy3d::DeviceOptions` i
 both builds, with backend-specific fields; `WindowOptions` has identical fields in both.
 
 The following `Viewer` extensions are Vulkan-only, guarded by
-`EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `scan_visible_points()`,
-`device()`, and `set_samples()`.
+`EASY3D_HAS_VULKAN`: `set_clipping_planes()`, `device()`, and `set_samples()`.
 They are native extensions, not part of the cross-backend API; use the shared
 clipping-plane, visible-surface query, and model APIs where portability is
 required. Installed-package consumer sources compile the common surface under
@@ -2577,25 +2574,13 @@ blending warning remains.
 
 ## Visible-surface scanning and Tutorial 405
 
-`VulkanOffScreen::scan_visible_points(samples)` returns a position-only virtual
-scan of the currently visible scene in world coordinates. Each non-background
-framebuffer pixel contributes one point at its exact pixel center, in top-to-bottom
-row order. This samples rendered surfaces rather than returning the original
-mesh vertices or point-cloud centers. Hidden/occluded geometry and transparent
-HUD/plane annotations do not produce points. Clipping and manipulated-model
-transforms follow the rendering path, including actual sphere/surfel/cylinder/cone
-surface depth rather than proxy geometry.
+## Visible-surface scanning and Tutorial 405
 
-One effective camera snapshot drives both capture and reconstruction. Its inverse
-MVP is computed once for the whole scan, and custom/calibrated projection and view
-matrices and the interaction pivot (used for impostor sizing) are preserved
-explicitly. The pixel-center reconstruction helper is
-shared with `unproject_pixel()` and picking. Samples come from the existing
-center-sample depth/ID path, so changing color MSAA does not change scan positions;
-an MSAA edge pixel without a center hit contributes no point. Scans use physical
-framebuffer dimensions on HiDPI displays, with no legacy logical-pixel stride or
-height-minus-one conversion. The API does not change the camera/scene or advance
-animation, and an empty scene returns an empty vector.
+`Viewer::scan_visible_points()` was a Vulkan-only helper that had no production
+callers (tests only). It was deleted as a Milestone 6 preparation step. In 2.8.x,
+a `scan_visible_points()` tutorial demonstration will live in
+`Tutorial_405_VirtualScanner`, implemented using public `Viewer`/`OffScreen`
+capture APIs rather than a `Viewer` member.
 
 Tutorial 405 now builds with the native Vulkan host. **Space** acquires the visible
 scene and adds a new PointCloud; **N** toggles the shared Gaussian-noise algorithm.
@@ -2606,30 +2591,6 @@ without refitting, keeping the complete camera state and custom matrices.
 It synchronizes framebuffer dimensions if a resize
 arrived before the next draw. Empty acquisitions add no model. The retained OpenGL
 tutorial keeps its existing FBO implementation.
-
-```cpp
-auto world_points = viewer.scan_visible_points(); // synchronous, one center hit per pixel
-```
-
-```sh
-./cmake-build-debug/bin/Tutorial_405_VirtualScanner_test --frames 3 --samples 4 --validation
-```
-
-`vulkan.scan` tests pixel-center reprojection, perspective/orthographic/custom
-camera matrices, tilted transformed surfaces, occlusion/background rejection,
-transparent overlays, clipping, resize, MSAA invariance, analytic point/line
-impostor surfaces and invalid sample counts. `vulkan.scanviewer` drives the
-registered scanner shortcuts, checking exact acquired clouds, noise toggling,
-camera preservation, resize/HiDPI, MSAA and empty/cleared scenes. Tutorial 405 joins
-the bounded native tutorial tests.
-
-Verified on Apple M4 Pro / MoltenVK 1.4.2: all 36 native CTests and all
-12 dual-backend CTests pass. The headless scan and native scanner regressions
-pass with Khronos/synchronization validation enabled and zero validation errors,
-including custom matrices and non-default pivots. Tutorial 405 passes bounded
-four-sample execution with validation. Both retained OpenGL tutorial sources
-pass a C++11 compilation check. The existing MoltenVK integer-attachment
-blending warning remains.
 
 
 ## Tutorial source-layout alignment
@@ -11654,7 +11615,7 @@ know to repeat the pattern, and the reason for it was written nowhere.
 - Documentation - `Viewer`'s constructor `\param samples` is the how-to, `Viewer::samples()`
   carries the rule itself (anchor `multisample_counts`) with both dialects and where each
   translation happens, and `set_samples()`, both `capture()` overloads, `snapshot()`,
-  `scan_visible_points()`, `OffScreen::render()`, the `samples_` member and
+  `OffScreen::render()`, the `samples_` member and
   `RenderDevice::supported_sample_counts()` reference it. In this file, D1's "`samples = 0` means
   no MSAA" and the "Multisampling and test diagnostics" claim that unsupported counts are "never
   silently reduced" are corrected (the constructor step-down has always reduced one), and
@@ -11703,7 +11664,7 @@ so it steps down to the largest supported count with one warning naming both num
   walked from 64 down rather than the request tested against the mask: `mask & 3` is nonzero and
   would read as support for 3 samples.
 - Applied wherever a count crosses into a render target: `Viewer::snapshot()` on both backends,
-  both `Viewer::capture(unsigned[, readback])` legs, `scan_visible_points()`, `set_samples()`, the
+  both `Viewer::capture(unsigned[, readback])` legs, `set_samples()`, the
   Vulkan window constructor's default of 4, and `MultiViewer::snapshot()`'s OpenGL grid target
   (resolved before the tiling loop, since the grid renders into one target once). `OffScreen` and
   `MultiViewer` reach it through those. The malformed half of the check stays where it was:

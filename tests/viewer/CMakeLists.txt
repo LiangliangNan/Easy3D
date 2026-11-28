@@ -129,10 +129,6 @@ if(Easy3D_ENABLE_VULKAN)
     target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
     add_test(NAME vulkan.scene COMMAND easy3d_vulkan_scene_test ${validation_args})
     set_tests_properties(vulkan.scene PROPERTIES TIMEOUT 120 PASS_REGULAR_EXPRESSION "Vulkan profile:")
-    add_executable(easy3d_vulkan_scan_test scan_test.cpp)
-    target_link_libraries(easy3d_vulkan_scan_test PRIVATE easy3d::viewer)
-    add_test(NAME vulkan.scan COMMAND easy3d_vulkan_scan_test ${validation_args})
-    set_tests_properties(vulkan.scan PROPERTIES TIMEOUT 120)
     add_executable(easy3d_vulkan_clipping_test clipping_test.cpp)
     target_link_libraries(easy3d_vulkan_clipping_test PRIVATE easy3d::gui easy3d::viewer)
     add_test(NAME vulkan.clipping COMMAND easy3d_vulkan_clipping_test ${validation_args})
@@ -167,14 +163,6 @@ if(Easy3D_ENABLE_VULKAN)
         add_test(NAME vulkan.animation COMMAND easy3d_vulkan_animation_test ${validation_args})
         set_tests_properties(vulkan.animation PROPERTIES TIMEOUT 120 LABELS desktop)
 
-        add_executable(easy3d_vulkan_scan_viewer_test scan_viewer_test.cpp
-                "${Easy3D_ROOT}/tutorials/Tutorial_405_VirtualScanner/viewer.cpp")
-        target_include_directories(easy3d_vulkan_scan_viewer_test PRIVATE
-                "${Easy3D_ROOT}/tutorials/Tutorial_405_VirtualScanner")
-        target_link_libraries(easy3d_vulkan_scan_viewer_test PRIVATE easy3d::viewer)
-
-        add_test(NAME vulkan.scanviewer COMMAND easy3d_vulkan_scan_viewer_test ${validation_args})
-        set_tests_properties(vulkan.scanviewer PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_point_selection_viewer_test point_selection_viewer_test.cpp
                 ../../tutorials/Tutorial_403_PointSelection/viewer.cpp)
         target_link_libraries(easy3d_vulkan_point_selection_viewer_test PRIVATE easy3d::viewer)
@@ -492,7 +480,6 @@ if(Easy3D_ENABLE_VULKAN)
             easy3d_vulkan_picker_viewer_test
             easy3d_vulkan_point_selection_viewer_test
             easy3d_vulkan_real_camera_test
-            easy3d_vulkan_scan_viewer_test
             easy3d_vulkan_text_viewer_test
             easy3d_vulkan_usage_test
             easy3d_vulkan_window_test

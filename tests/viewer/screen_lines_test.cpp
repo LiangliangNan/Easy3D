@@ -41,7 +41,7 @@ int main(int argc,char**) {
             v.camera()->set_orientation(v.camera()->orientation()*quat(vec3(0,1,0),.3f));v.camera()->set_type(Camera::ORTHOGRAPHIC);
             v.set_clipping_planes({vec4(1,0,0,-10000)});
             require(v.capture(count).rgba==image.rgba,"camera/clipping changed screen-space polyline");
-            require(!v.pick(60,15) && v.scan_visible_points(count).empty(),"screen line participated in picking/scanning");
+            require(!v.pick(60,15),"screen line participated in picking/scanning");
             lines->set_visible(false);const auto hidden=v.capture(count);same_picking(image,hidden);
             for (auto c:hidden.rgba) require(c==0,"hidden screen lines left stale pixels");
             lines->set_visible(true);lines->set_uniform_coloring(vec4(0,1,0,.5f));

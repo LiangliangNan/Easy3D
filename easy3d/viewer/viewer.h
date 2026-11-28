@@ -967,21 +967,6 @@ namespace easy3d {
          *      passes cost a full-resolution readback per drawable.
          */
         virtual graphics::FrameImage capture(unsigned samples, graphics::FrameReadback readback) const;
-#ifdef EASY3D_HAS_VULKAN
-
-        /**
-         * \brief Scan visible scene surfaces into one point per covered pixel.
-         * \param samples Requested color sample count for the capture; the default 1
-         *         renders without multisampling (\ref multisample_counts).
-         * \return World-space points in framebuffer row order, top to bottom,
-         *         with one point for each non-background pixel.
-         * \details Uses pixel centers and one camera snapshot. Overlays are
-         *      excluded; color multisampling does not change center-sampled depth
-         *      semantics. The operation does not modify the scene or camera and
-         *      does not advance animation.
-         */
-        std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
-#endif
         //@}
 
         /// \name Render device

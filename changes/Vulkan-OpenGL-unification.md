@@ -1013,7 +1013,7 @@ Status vocabulary:
 | `delete_model`, `delete_drawable`, `clear_scene`, `fit_screen` | Available on all C++ hosts. Python exposes deletion on `OffScreen` but not on `Viewer`/`MultiViewer`. | Retain C++; add Python parity | Raw pointer parameters here are non-owning observers, distinct from the ownership-transfer overloads. |
 | `pick`, `set_overlays` | Portable C++ APIs already exist and are used by both hosts. | Retain | Keep command-list overlay submission and `PickResult`. |
 | `select_points`, `point_resource` | Both exist, but OpenGL currently requires a viewer-created native point snapshot while Vulkan also accepts portable CPU `PointData`. | Adapt | Keep the methods and make portable `PointData` requests behave consistently on both backends. |
-| `scan_visible_points` | Public only in Vulkan builds and omitted from the abbreviated proposal. | Adapt | Retain the useful capture/selection helper and provide equivalent OpenGL behavior before removing the public backend conditional. |
+| `scan_visible_points` | Public only in Vulkan builds; deleted because it had no production callers (tests only). In 2.8.x a tutorial demonstration will live in `Tutorial_405_VirtualScanner`, using public `Viewer`/`OffScreen` capture APIs rather than a `Viewer` member. | Removed | Deleted as a preparation step for Milestone 6; no replacement `Viewer` member. |
 | Other existing host queries/callbacks (`models`, `drawables`, `current_model`, window properties, animation/event hooks) | Already shared through `ViewerBase`/`Viewer` and omitted only for brevity in section 7. | Retain | The proposal is not a deletion list for unrelated portable APIs. |
 | `set_clipping_planes` | Public only in Vulkan builds; OpenGL currently has no equivalent setter. | Adapt | Make the same portable operation available in both builds. |
 | `set_render_settings` | No declarative settings API exists. | Add | Add with the effect settings in section 8.3. |
@@ -1680,9 +1680,8 @@ Validation on the final source state:
 The public-header search still finds `EASY3D_HAS_VULKAN` in 15 headers. Many
 occurrences are private storage or native compatibility fallbacks retained by the
 2.8 policy; client-visible differences also remain in the legacy effect facades,
-the backend-dependent fields of `easy3d::DeviceOptions`, `Viewer::set_samples()`, and the documented
-`scan_visible_points()` exception. The Milestone 5 header-audit item therefore
-remains open rather than being closed by the runtime tests.
+the backend-dependent fields of `easy3d::DeviceOptions`, `Viewer::set_samples()`. The Milestone 5
+header-audit item therefore remains open rather than being closed by the runtime tests.
 
 Remaining gates are explicit: this is local macOS/MoltenVK evidence, not a Linux,
 Windows, or hosted-CI result. `.github/workflows/tests.txt` is not an active workflow,
@@ -1733,7 +1732,8 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
 `safe-to-delete now`**:
 
 - The root package is still `2.7.0`, no complete `2.8.x` deprecation release has shipped, the
-  migration guide and downstream removal notes are Milestone 7 work, and CI remains inactive.
+  migration guide and downstream removal notes are Milestone 7 work. CI is now active via
+  `.github/workflows/tests.yml` (converted from the inactive `tests.txt`).
 - Python bindings/tests still exercise native drawable buffers, `vao()`, `draw()`, `gl_draw()`,
   and `State::set_ao_texture()`. Tutorials 501–505 and Mapple still use the legacy effect
   facades. `EASY3D_HAS_VULKAN` is still exported to installed consumers and remains visible in
@@ -1745,6 +1745,9 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
   device and Viewer still own native overlay resources.
 - The duplicated `Viewer::draw_corner_axes()` implementations preserve distinct shared-command
   and native/fallback presentation paths; unifying them belongs near the end of retirement.
+- `scan_visible_points()` was deleted (Vulkan-only, no production callers). In 2.8.x a
+  `scan_visible_points()` tutorial demonstration will live in `Tutorial_405_VirtualScanner`,
+  using public `Viewer`/`OffScreen` capture APIs rather than a `Viewer` member.
 
 Accordingly, no deprecated declaration, definition, binding, forwarding header, install entry,
 or test was deleted, and no public class layout or vtable was changed. The safe preparatory step
@@ -1767,5 +1770,6 @@ The reconfigured all-target builds succeeded in both approved trees. Serial CTes
 **OpenGL 130/130 in 160.86 seconds** (`build-opengl`) and **Vulkan 157/157 in 256.18 seconds**
 (`build`), including both Python rendering tests. Staged installed-package consumers were also
 built and run: two OpenGL executables and three Vulkan executables passed, including the backend
-component checks. This is local macOS/MoltenVK evidence; it does not establish Linux/Windows or
-hosted-CI behavior. `git diff --check` passed.
+component checks. Vulkan scan tests (`vulkan.scan`, `vulkan.scanviewer`) pass. This is local
+macOS/MoltenVK evidence; it does not establish Linux/Windows or hosted-CI behavior.
+`git diff --check` passed.

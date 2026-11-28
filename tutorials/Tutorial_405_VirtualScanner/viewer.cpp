@@ -97,27 +97,42 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         // deviation scaled to the scene size, so it stays subtle regardless of model scale.
         if (add_noise_)
             easy3d::GaussianNoise::apply(cloud.get(), camera()->scene_radius() * .0001f);
-        // Keep the complete acquisition camera state, including its pivot.
-        // Model attachment may fit the scene; retain the acquisition camera.
-        // Adding a model can re-fit the scene and move the camera; we save the exact view
-        // used for the scan and restore it afterwards so repeated scans stay aligned.
-        Camera saved(*camera());
-        saved.frame()->set_pivot_point(camera()->pivot_point());
-        saved.set_projection_matrix(camera()->projection_matrix());
-        saved.set_model_view_matrix(camera()->model_view_matrix());
-        // The clipping plane is also tied to the scene bounds; remember its center/radius.
-        const auto *plane = ClippingPlane::instance();
-        const auto center = plane->center();
-        const float radius = plane->scene_radius();
+
         add_model(cloud);
-        ClippingPlane::instance()->fit_scene(center, radius);
-        *camera() = saved;
-        camera()->frame()->set_pivot_point(saved.pivot_point());
-        camera()->set_projection_matrix(saved.projection_matrix());
-        camera()->set_model_view_matrix(saved.model_view_matrix());
         update();
         return true;
+        capture()
     }
     return Viewer::key_press_event(key, modifiers);
 }
+
+
+#if 0  // Do NOT delete!!! Will come back in a future release when APIs are ready.
+std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
+    if (!samples || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
+        throw std::invalid_argument("invalid capture sample count");
+    Camera snapshot(*camera());
+    // Camera's copy constructor regenerates matrices from its parameters. Keep
+    // effective matrices too, including externally calibrated/custom cameras.
+    snapshot.frame()->set_pivot_point(camera()->pivot_point()); // do not re-adjust the copied ortho coefficient
+    snapshot.set_projection_matrix(camera()->projection_matrix());
+    snapshot.set_model_view_matrix(camera()->model_view_matrix());
+    const auto inv = transform::checked_inverse(snapshot.model_view_projection_matrix());
+    const auto frame = impl_->capture(snapshot, background_color(), unsigned(supported_sample_count(int(samples))),
+                                      framebuffer_width(), framebuffer_height());
+    std::vector<vec3> points;
+    points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
+    for (unsigned y = 0; y < frame.height; ++y)
+        for (unsigned x = 0; x < frame.width; ++x) {
+            const size_t pixel = size_t(y) * frame.width + x;
+            const float d = frame.depth[pixel];
+            if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
+                continue;
+            const int viewport[] = {0, 0, int(frame.width), int(frame.height)};
+            points.push_back(transform::unproject_inverse(vec3(x + .5f, y + .5f, d), inv, viewport, false));
+        }
+    return points;
+}
+#endif
+
 // \endcond

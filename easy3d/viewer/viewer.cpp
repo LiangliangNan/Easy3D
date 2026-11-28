@@ -2000,31 +2000,6 @@ namespace easy3d {
         impl_->render_settings.clipping_planes = graphics::normalize_clipping_planes(settings.clipping_planes);
         impl_->clipping_planes = impl_->render_settings.clipping_planes;
     }
-    std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
-        if (!samples || samples > 64 || (samples & (samples - 1))) // (samples & (samples - 1)) is a bitwise trick to check whether samples is a power of two
-            throw std::invalid_argument("invalid capture sample count");
-        Camera snapshot(*camera());
-        // Camera's copy constructor regenerates matrices from its parameters. Keep
-        // effective matrices too, including externally calibrated/custom cameras.
-        snapshot.frame()->set_pivot_point(camera()->pivot_point()); // do not re-adjust the copied ortho coefficient
-        snapshot.set_projection_matrix(camera()->projection_matrix());
-        snapshot.set_model_view_matrix(camera()->model_view_matrix());
-        const auto inv = transform::checked_inverse(snapshot.model_view_projection_matrix());
-        const auto frame = impl_->capture(snapshot, background_color(), unsigned(supported_sample_count(int(samples))),
-                                          framebuffer_width(), framebuffer_height());
-        std::vector<vec3> points;
-        points.reserve(std::count_if(frame.depth.begin(), frame.depth.end(), [](float d) { return d >= 0 && d < 1; }));
-        for (unsigned y = 0; y < frame.height; ++y)
-            for (unsigned x = 0; x < frame.width; ++x) {
-                const size_t pixel = size_t(y) * frame.width + x;
-                const float d = frame.depth[pixel];
-                if (frame.ids[pixel].object == UINT32_MAX || !std::isfinite(d) || d < 0 || d >= 1)
-                    continue;
-                const int viewport[] = {0, 0, int(frame.width), int(frame.height)};
-                points.push_back(transform::unproject_inverse(vec3(x + .5f, y + .5f, d), inv, viewport, false));
-            }
-        return points;
-    }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
         int px, py;
