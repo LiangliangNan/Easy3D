@@ -132,7 +132,7 @@ namespace {
         require(!device.validation && !device.sync_validation && !device.profiling &&
                 device.device_name.empty() && device.use_native_large_points,
                 "device option defaults differ from the frozen contract");
-        const DeviceCapabilities capabilities;
+        const graphics::DeviceCapabilities capabilities;
         require(!capabilities.shadow && !capabilities.ambient_occlusion && !capabilities.eye_dome_lighting &&
                 capabilities.transparency_methods.empty() && !capabilities.native_large_points,
                 "capability defaults differ from the frozen contract");

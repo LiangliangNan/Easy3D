@@ -1771,6 +1771,14 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
     `easy3d/viewer/backends/glfw_runtime.cpp`, and the test links EGL only when Wayland is selected.
     The macOS Vulkan device-hang failures did not reproduce on the local macOS/MoltenVK rerun and
     are recorded as hosted-runner flakiness pending a fresh hosted run.
+  - The display-requiring OpenGL renderer tests (`opengl.render`, `opengl.transparency`) were
+    missing the CTest `desktop` label, so the display-less macOS OpenGL job and the Ubuntu no-display
+    run still attempted windowed GL context creation and failed (`NSGL` on macOS, missing `DISPLAY`
+    on Ubuntu). Both tests now carry `LABELS desktop`, matching the other windowed OpenGL tests.
+  - The Windows build then failed in `tests/renderer` with MSVC error C2872: the local
+    `DeviceCapabilities` (via `using namespace easy3d::graphics;`) collided with a WinGDI symbol
+    (`DeviceCapabilitiesA`) from the Windows SDK headers, leaving `capabilities` unresolvable.
+    The tests now qualify the type (`graphics::DeviceCapabilities`).
 
 Accordingly, no deprecated declaration, definition, binding, forwarding header, install entry,
 or test was deleted, and no public class layout or vtable was changed. The safe preparatory step

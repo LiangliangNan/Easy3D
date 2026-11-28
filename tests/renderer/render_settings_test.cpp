@@ -131,7 +131,7 @@ namespace {
 
     void test_capabilities() {
         RenderSettings settings;
-        DeviceCapabilities capabilities;
+        graphics::DeviceCapabilities capabilities;
         capabilities.transparency_methods = {TransparencyMethod::sorted};
         validate_render_settings(settings, capabilities);
 

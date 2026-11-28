@@ -26,7 +26,14 @@ to `far_overlay`/`near_overlay`), and the Ubuntu build failed to link
 `easy3d_viewer_query_test` because the native-context probe referenced EGL while the
 OpenGL backend selected GLX (the probe now selects through the
 `EASY3D_OPENGL_X11`/`EASY3D_OPENGL_WAYLAND` macros that `OpenGLContextScope` uses, and
-links EGL only when Wayland is selected).
+links EGL only when Wayland is selected). A third display-class fix came from the same run:
+the OpenGL renderer tests `opengl.render` and `opengl.transparency` were missing the CTest
+`desktop` label, so display-less macOS/Ubuntu selections still attempted windowed GL context
+creation and failed (`NSGL` on macOS, missing `DISPLAY` on Ubuntu); both now carry `LABELS
+desktop`. The Windows build then failed in `tests/renderer` with MSVC error C2872: the local
+`DeviceCapabilities` (via `using namespace easy3d::graphics;`) collided with a WinGDI symbol
+(`DeviceCapabilitiesA`) from the Windows SDK headers, leaving `capabilities` unresolvable; the
+tests now qualify the type (`graphics::DeviceCapabilities`).
 The latest macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
 **130/130 in 160.86 seconds**, and staged installed packages passed the installed
 offscreen, unified, and public-viewer consumer checks on both backends. See
