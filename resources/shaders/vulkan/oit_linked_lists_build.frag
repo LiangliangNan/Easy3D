@@ -4,8 +4,8 @@
 // Per-pixel linked lists OIT, build pass (Yang et al., NVIDIA 2010). Every
 // transparent fragment is shaded exactly like the average/peel passes, then
 // appended to a per-pixel singly linked list stored in storage buffers. An
-// atomic counter hands out a unique node slot; an atomic compare-and-swap on
-// the pixel's head pointer pushes the node onto the list. No depth test or
+// atomic counter hands out a unique node slot; an atomic exchange on the
+// pixel's head pointer pushes the node onto the list. No depth test or
 // blending runs here, so all fragments survive regardless of order.
 layout(set=0,binding=0) uniform sampler2D image_texture;
 layout(std430,set=2,binding=0) buffer HeadBuffer { int head[]; };
@@ -36,16 +36,12 @@ void main() {
     // std430 stride is 32 bytes: vec4(16) + float(4) + int(4) + padding(8).
     nodes[node_index].color = vec4(color.rgb * alpha, alpha);
     nodes[node_index].depth = gl_FragCoord.z;
-    // Push onto the pixel list. The loop retries until this invocation wins the
-    // head slot, so concurrent fragments on one pixel form a correct chain. The
-    // retry uses the value returned by the compare-and-swap instead of reloading
-    // head[]: a non-atomic load inside the loop may be hoisted by the compiler,
-    // which turns a lost race into an infinite loop on some drivers.
-    int old_head = head[pixel_index];
-    for (;;) {
-        nodes[node_index].next = old_head;
-        int previous = atomicCompSwap(head[pixel_index], old_head, int(node_index));
-        if (previous == old_head) break;
-        old_head = previous;
-    }
+    // Push onto the pixel list. atomicExchange publishes this node and returns
+    // the previous head in one operation, so concurrent fragments on one pixel
+    // still form a valid chain. A compare-and-swap retry loop is intentionally
+    // avoided: some drivers can keep an invocation spinning indefinitely under
+    // contention, which surfaces as a GPU hang / device lost. The resolve pass
+    // reads next[] only after this pass has completed.
+    int old_head = atomicExchange(head[pixel_index], int(node_index));
+    nodes[node_index].next = old_head;
 }

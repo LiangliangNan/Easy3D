@@ -1769,8 +1769,9 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
     The native-context probe now selects the backend through the same `EASY3D_OPENGL_X11` /
     `EASY3D_OPENGL_WAYLAND` macros that `OpenGLContextScope` uses in
     `easy3d/viewer/backends/glfw_runtime.cpp`, and the test links EGL only when Wayland is selected.
-    The macOS Vulkan device-hang failures did not reproduce on the local macOS/MoltenVK rerun and
-    are recorded as hosted-runner flakiness pending a fresh hosted run.
+    The macOS Vulkan device-hang failures did not reproduce on the local macOS/MoltenVK rerun;
+    section 8.20 subsequently identified concrete implementation defects and replaces the earlier
+    provisional flakiness classification.
   - The display-requiring OpenGL renderer tests (`opengl.render`, `opengl.transparency`) were
     missing the CTest `desktop` label, so the display-less macOS OpenGL job and the Ubuntu no-display
     run still attempted windowed GL context creation and failed (`NSGL` on macOS, missing `DISPLAY`
@@ -1804,3 +1805,43 @@ built and run: two OpenGL executables and three Vulkan executables passed, inclu
 component checks. Vulkan scan tests (`vulkan.scan`, `vulkan.scanviewer`) pass. This is local
 macOS/MoltenVK evidence; it does not establish Linux/Windows or hosted-CI behavior.
 `git diff --check` passed.
+
+### 8.20 Hosted CI follow-up: cross-backend rendering defects
+
+The next hosted run exposed five rendering failures. They were treated as implementation defects,
+not as platform-only noise:
+
+- `opengl.multiview` failed at image coordinate `100,0` because a one-pixel grid divider was
+  centered exactly on an integer pixel boundary. Its coverage was split between two pixels, so
+  backend rasterization edge rules decided which one turned black. The divider geometry is now
+  offset by `+0.5f`, putting the line center inside one pixel.
+- `opengl.renderdevice` expected a multisample default-framebuffer depth blit into an offscreen
+  depth image. `glBlitFramebuffer` depth blits require compatible depth formats, but the default
+  framebuffer depth format is driver-dependent. The adapter now rasterizes scene depth with a
+  `gl_FragDepth` write, and the test reads the default depth directly instead of asserting an
+  invalid cross-format blit.
+- `opengl.ddpintersection` failed only when two cube top faces were exactly coplanar at `z = 1.0`.
+  That is a tie in the fixture, not general DDP order dependence. The second cube is now at
+  `(0.5, 0.3, 0.25)`, preserving the transparency-order assertion without asking the library to
+  invent a deterministic tie-break for geometrically identical depth.
+- `vulkan.effectpresentation` failed on Mesa/lavapipe because the full-target OIT composite was
+  recorded in the scene subpass that also owns the integer picking attachment. It relied on a zero
+  color-write mask to preserve IDs, which is not portable when the fragment shader has no output
+  for that attachment. The composite now runs in the existing color-only annotation subpass with
+  one blend attachment, matching OpenGL's composition model. The picking attachment is no longer
+  part of the composite pipeline.
+- macOS `vulkan.rendersettingseffects` and `vulkan.effectpresentation` reported
+  `VkResult -4`. That value is `VK_ERROR_DEVICE_LOST`, not `VK_TIMEOUT`; the unbounded
+  compare-and-swap retry loop in the Vulkan linked-list build shader is a plausible permanent-GPU-
+  loop source on the affected SDK MoltenVK. The build now uses one `atomicExchange` to publish the
+  node and return the previous head. The resolve pass reads `next[]` only after the pass barrier,
+  so this preserves linked-list semantics while removing the retry class entirely. Vulkan result
+  errors now include names such as `device lost (probable GPU hang)` instead of only a numeric code.
+
+No test was weakened or excluded to hide these failures. All targets were rebuilt in both approved
+trees. Focused reruns passed `opengl.multiview`, `opengl.renderdevice`, `opengl.ddpintersection`,
+`opengl.effectpresentation`, `vulkan.multiview`, `vulkan.effectpresentation`,
+`vulkan.rendersettingseffects`, and `vulkan.transparency`. Final serial CTest on the finished source
+state passed **OpenGL 130/130 in 146.73 seconds** (`build-opengl`) and **Vulkan 155/155 in 248.72
+seconds** (`build`), and `git diff --check` passed. These are local macOS results; hosted CI must
+be rerun after these fixes land.

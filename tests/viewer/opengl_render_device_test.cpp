@@ -506,15 +506,13 @@ namespace {
         scene.geometry = std::make_shared<Geometry>(std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
         scene.color = vec4(1, 0, 0, 1);
         require(device.present(32, 32, {scene}, vec4(0), 4), "window device rejected MSAA depth presentation");
-        FramebufferObject resolved(32, 32, 0);
-        require(resolved.add_depth_buffer(GL_DEPTH_COMPONENT32F), "cannot allocate default-depth resolve target");
+        // Read the default depth directly. A blit into an FBO would require an
+        // identical depth format, but the default framebuffer's format is
+        // driver-defined; that mismatch is not a presentation failure.
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-        resolved.bind(GL_DRAW_FRAMEBUFFER);
-        glBlitFramebuffer(0, 0, 32, 32, 0, 0, 32, 32, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-        require(glGetError() == GL_NO_ERROR, "default framebuffer did not receive multisample scene depth");
         GLfloat depth = 1;
-        resolved.bind(GL_READ_FRAMEBUFFER);
         glReadPixels(16, 16, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        require(glGetError() == GL_NO_ERROR, "default framebuffer did not receive multisample scene depth");
         require(std::abs(depth - .5f) < 1e-6f, "default framebuffer received incorrect scene depth");
     }
 

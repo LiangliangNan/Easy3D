@@ -433,6 +433,19 @@ void main() {
     out_color = texture(image, vec2(uv_coord.x, 1.0 - uv_coord.y));
 })";
 
+            // The default framebuffer's depth format is chosen by the driver and
+            // need not match an FBO attachment. glBlitFramebuffer would generate
+            // GL_INVALID_OPERATION on a format mismatch, so present scene depth by
+            // rasterizing a fullscreen quad and writing gl_FragDepth instead.
+            const char *depth_copy_fragment_shader = R"(#version 150
+uniform sampler2D scene_depth;
+uniform vec2 resolution;
+out vec4 out_color;
+void main() {
+    gl_FragDepth = texture(scene_depth, gl_FragCoord.xy / resolution).r;
+    out_color = vec4(0.0);
+})";
+
             const char *shadow_depth_vertex_shader = R"(#version 150
 in vec3 position;
 uniform mat4 mvp;
@@ -1637,7 +1650,7 @@ void main() {
             mutable unsigned sample_mask = 0;
             mutable bool sample_mask_ready = false;
             GLuint program = 0, point_program = 0, line_program = 0, wide_line_program = 0;
-            GLuint texture_program = 0, shadow_depth_program = 0, shadow_program = 0;
+            GLuint texture_program = 0, depth_copy_program = 0, shadow_depth_program = 0, shadow_program = 0;
             GLuint ao_program = 0, ao_blur_program = 0, darkness_program = 0, edl_program = 0;
             GLuint oit_program = 0, oit_peel_program = 0, oit_composite_program = 0;
             GLuint linked_program = 0, linked_resolve_program = 0;
@@ -1652,7 +1665,7 @@ void main() {
 
             ~Impl() {
                 const GLuint programs[] = {point_program, line_program, wide_line_program, program,
-                                           texture_program, shadow_depth_program, shadow_program, ao_program,
+                                           texture_program, depth_copy_program, shadow_depth_program, shadow_program, ao_program,
                                            ao_blur_program, darkness_program, edl_program, oit_program,
                                            oit_peel_program, oit_composite_program, linked_program,
                                            linked_resolve_program};
@@ -1669,6 +1682,9 @@ void main() {
                 if (!texture_program)
                     texture_program = create_effect_program(effect_vertex_shader, texture_composite_fragment_shader,
                                                             false);
+                if (!depth_copy_program)
+                    depth_copy_program = create_effect_program(effect_vertex_shader, depth_copy_fragment_shader,
+                                                               false);
                 if (!shadow_depth_program)
                     shadow_depth_program = create_effect_program(shadow_depth_vertex_shader, empty_fragment_shader,
                                                                  false);
@@ -2198,6 +2214,46 @@ void main() {
                     glDrawArrays(GL_TRIANGLES, 0, GLsizei(d.geometry->vertices().size()));
                 else
                     glDrawElements(GL_TRIANGLES, GLsizei(indices.size()), GL_UNSIGNED_INT, nullptr);
+            }
+
+            // Write the scene depth texture into the currently bound draw
+            // framebuffer without a depth blit: the default framebuffer's depth
+            // format is driver-defined and need not be blit-compatible.
+            void copy_depth(uint32_t width, uint32_t height, GLuint depth_texture) {
+                ensure_effect_programs();
+                const auto quad = fullscreen_quad(width, height);
+                GLint previous_program = 0, previous_vao = 0, previous_depth_func = 0;
+                GLboolean previous_depth_mask = GL_FALSE;
+                GLboolean previous_color_mask[4] = {GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE};
+                glGetIntegerv(GL_CURRENT_PROGRAM, &previous_program);
+                glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previous_vao);
+                glGetIntegerv(GL_DEPTH_FUNC, &previous_depth_func);
+                glGetBooleanv(GL_DEPTH_WRITEMASK, &previous_depth_mask);
+                glGetBooleanv(GL_COLOR_WRITEMASK, previous_color_mask);
+
+                glUseProgram(depth_copy_program);
+                set_resolution(depth_copy_program, width, height);
+                glUniformMatrix4fv(glGetUniformLocation(depth_copy_program, "mvp"), 1, GL_FALSE,
+                                   static_cast<const float *>(quad.model_view_projection));
+                glUniform1i(glGetUniformLocation(depth_copy_program, "scene_depth"), 0);
+                auto &resource = resources.geometry(quad.geometry);
+                glBindVertexArray(resource.vao);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, depth_texture);
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_ALWAYS);
+                glDepthMask(GL_TRUE);
+                glDisable(GL_SCISSOR_TEST);
+                glViewport(0, 0, int(width), int(height));
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindVertexArray(previous_vao);
+                glUseProgram(previous_program);
+                glDepthFunc(previous_depth_func);
+                glDepthMask(previous_depth_mask);
+                glColorMask(previous_color_mask[0], previous_color_mask[1], previous_color_mask[2],
+                            previous_color_mask[3]);
             }
 
             void draw_geometry(const DrawCommand &d, GLuint p, uint32_t width, uint32_t height,
@@ -2819,17 +2875,12 @@ void main() {
                 glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
                                   GL_COLOR_BUFFER_BIT, GL_NEAREST);
                 check("default color blit");
-                auto &depth = compatible && target_samples > 1 ? impl_->target.color() : impl_->target.scene();
-                depth.bind(GL_READ_FRAMEBUFFER);
-                glReadBuffer(GL_COLOR_ATTACHMENT0);
-                glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
-                                  GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-                // Core-profile drivers need not expose default-framebuffer
-                // attachment queries; a window may also have no depth buffer.
-                const GLenum depth_error = glGetError();
-                if (depth_error != GL_NO_ERROR && depth_error != GL_INVALID_OPERATION)
-                    throw std::runtime_error(std::string("OpenGL presentation failed at default depth blit: ") +
-                                             std::to_string(depth_error));
+                // Depth cannot be blit portably: the default framebuffer's depth
+                // format is driver-defined and need not match our FBO. Rasterize
+                // the scene depth into it instead, preserving depth for native
+                // overlays and queries regardless of sample count or format.
+                impl_->copy_depth(width, height, impl_->target.scene().depth_texture());
+                check("default depth write");
             } else {
                 glBlitFramebuffer(0, 0, int(width), int(height), 0, 0, int(width), int(height),
                                   GL_COLOR_BUFFER_BIT, GL_NEAREST);

@@ -71,11 +71,15 @@ ivec4 cell_bounds(int row,int col,int rows,int cols,int width,int height) {
     return ivec4(x,y,(col+1)*width/cols-x,(row+1)*height/rows-y);
 }
 // Endpoints of the internal grid boundaries of a width x height target, one pair
-// per boundary, in the target's own pixels.
+// per boundary, in the target's own pixels. A cell boundary is an integer pixel
+// edge; the one-pixel divider must be centered on the first pixel of the next
+// cell (edge + 0.5), not on the edge itself. Centering on the edge makes the
+// ribbon span two half-covered pixels and its coverage depends on the backend's
+// rasterization rule, which showed up as missing dividers on hosted runners.
 std::vector<vec2> division_lines(int rows,int cols,int width,int height) {
     std::vector<vec2> points;
-    for(int r=1;r<rows;++r) {const float y=static_cast<float>(r*height/rows);points.push_back(vec2(0,y));points.push_back(vec2(static_cast<float>(width),y));}
-    for(int c=1;c<cols;++c) {const float x=static_cast<float>(c*width/cols);points.push_back(vec2(x,0));points.push_back(vec2(x,static_cast<float>(height)));}
+    for(int r=1;r<rows;++r) {const float y=static_cast<float>(r*height/rows)+0.5f;points.push_back(vec2(0,y));points.push_back(vec2(static_cast<float>(width),y));}
+    for(int c=1;c<cols;++c) {const float x=static_cast<float>(c*width/cols)+0.5f;points.push_back(vec2(x,0));points.push_back(vec2(x,static_cast<float>(height)));}
     return points;
 }
 // Grid lines are one logical pixel wide. Both a LinesDrawable2D width and a

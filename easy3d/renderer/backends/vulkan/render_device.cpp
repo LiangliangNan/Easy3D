@@ -80,18 +80,49 @@ namespace easy3d {
 #include "oit_linked_lists_build_frag.inc"
 #include "oit_linked_lists_resolve_frag.inc"
 
+            const char *result_name(VkResult result) {
+                switch (result) {
+                    case VK_SUCCESS:
+                        return "success";
+                    case VK_TIMEOUT:
+                        return "timeout";
+                    case VK_ERROR_DEVICE_LOST:
+                        return "device lost (probable GPU hang)";
+                    case VK_ERROR_OUT_OF_HOST_MEMORY:
+                        return "out of host memory";
+                    case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+                        return "out of device memory";
+                    case VK_ERROR_INITIALIZATION_FAILED:
+                        return "initialization failed";
+                    case VK_ERROR_INCOMPATIBLE_DRIVER:
+                        return "incompatible driver";
+                    case VK_ERROR_EXTENSION_NOT_PRESENT:
+                        return "extension not present";
+                    case VK_ERROR_LAYER_NOT_PRESENT:
+                        return "layer not present";
+                    case VK_ERROR_FEATURE_NOT_PRESENT:
+                        return "feature not present";
+                    default:
+                        return nullptr;
+                }
+            }
+
+            std::string result_error(const char *operation, VkResult result) {
+                const char *name = result_name(result);
+                return std::string(operation) + " failed (VkResult " + std::to_string(result) +
+                       (name ? std::string(": ") + name : std::string()) + ")";
+            }
+
             void check(VkResult result, const char *operation) {
                 if (result != VK_SUCCESS)
-                    throw std::runtime_error(std::string(operation) + " failed (VkResult " + std::to_string(result) +
-                                             ")");
+                    throw std::runtime_error(result_error(operation, result));
             }
 
             void check_initialization(VkResult result, const char *operation) {
                 if (result == VK_ERROR_INCOMPATIBLE_DRIVER || result == VK_ERROR_EXTENSION_NOT_PRESENT ||
                     result == VK_ERROR_LAYER_NOT_PRESENT || result == VK_ERROR_FEATURE_NOT_PRESENT ||
                     result == VK_ERROR_INITIALIZATION_FAILED)
-                    throw std::runtime_error(std::string(operation) + " failed (VkResult " + std::to_string(result) +
-                                             ")");
+                    throw std::runtime_error(result_error(operation, result));
                 check(result, operation);
             }
 
@@ -2108,8 +2139,11 @@ namespace easy3d {
                                                                    &pass.shadow_pipeline),
                                       "create shadow overlay pipeline");
                             }
-                            // Order-independent transparency composites cover the scene and
-                            // leave the integer picking attachment untouched.
+                            // Order-independent transparency composites cover the scene. Draw
+                            // them in the color-only annotation subpass so the integer picking
+                            // attachment is not part of the pipeline at all; relying on a zero
+                            // color-write mask in the ID-bearing scene subpass is not portable
+                            // (notably on Mesa/lavapipe).
                             stages[0].module = modules[15];
                             stages[1].module = modules[16];
                             stages[0].pSpecializationInfo = nullptr;
@@ -2121,7 +2155,7 @@ namespace easy3d {
                             ms.sampleShadingEnable = VK_FALSE;
                             ms.minSampleShading = 0;
                             depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
-                            VkPipelineColorBlendAttachmentState oit[2] = {};
+                            VkPipelineColorBlendAttachmentState oit[1] = {};
                             oit[0].blendEnable = VK_TRUE;
                             oit[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
                             oit[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -2130,10 +2164,9 @@ namespace easy3d {
                             oit[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
                             oit[0].alphaBlendOp = VK_BLEND_OP_ADD;
                             oit[0].colorWriteMask = 0xf;
-                            oit[1].colorWriteMask = 0;
-                            blending.attachmentCount = 2;
+                            blending.attachmentCount = 1;
                             blending.pAttachments = oit;
-                            pi.subpass = 0;
+                            pi.subpass = 1;
                             pi.layout = oit_composite_layout_;
                             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
                                                                &pass.oit_average_pipeline),
@@ -3671,26 +3704,30 @@ namespace easy3d {
                                 c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
                         }
                     }
-                    // Composite the accumulated transparency over the opaque scene. Both
-                    // methods store premultiplied color and over-blend it here, so the
-                    // picking attachment keeps the nearest surface.
-                    if (oit_active_ && pass.kind != PassKind::ids && pass.oit_average_pipeline) {
-                        VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-                        const VkRect2D scissor = {{0, 0}, {width, height}};
-                        c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
-                        c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
-                        c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
-                        c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                             oit_method_ == TransparencyMethod::average ? pass.oit_average_pipeline
-                                                                                        : pass.oit_peel_pipeline);
-                        c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, oit_composite_layout_, 0, 1,
-                                                   &oit_->composite_set, 0, nullptr);
-                        c_.vkCmdDraw(cmd, 3, 1, 0, 0);
-                    }
                     if (pass.kind != PassKind::ids) {
                         const unsigned phases = pass.independent_depth ? 3 : 2;
                         for (unsigned phase = 0; phase < phases; ++phase) {
                             c_.vkCmdNextSubpass(cmd, VK_SUBPASS_CONTENTS_INLINE);
+                            // Composite the accumulated transparency over the opaque scene in
+                            // the color-only annotation subpass. Both methods store premultiplied
+                            // color and over-blend it here. Keeping this draw out of the ID-bearing
+                            // scene subpass avoids depending on a zero color-write mask to
+                            // preserve picking IDs (which Mesa/lavapipe does not honor reliably).
+                            if (phase == 0 && oit_active_ && pass.oit_average_pipeline) {
+                                VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
+                                const VkRect2D scissor = {{0, 0}, {width, height}};
+                                c_.vkCmdSetViewport(cmd, 0, 1, &viewport);
+                                c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+                                c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
+                                c_.vkCmdBindPipeline(
+                                    cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    oit_method_ == TransparencyMethod::average ? pass.oit_average_pipeline
+                                                                               : pass.oit_peel_pipeline);
+                                c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                                           oit_composite_layout_, 0, 1, &oit_->composite_set, 0,
+                                                           nullptr);
+                                c_.vkCmdDraw(cmd, 3, 1, 0, 0);
+                            }
                             for (const auto &draw : draws) {
                                 const auto &d = draw.command;
                                 if (!d.overlay)

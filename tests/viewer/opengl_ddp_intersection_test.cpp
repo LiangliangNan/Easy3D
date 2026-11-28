@@ -88,7 +88,10 @@ int main() {
         require(v.add_model(mesh1), "scene missing");
         
         auto mesh2 = std::make_shared<SurfaceMesh>();
-        add_cube(*mesh2, vec3(0.5f, 0.3f, 0.2f), 0.8f);
+        // Do not put the top faces at the same z: exact depth ties in a
+        // rasterized peel are resolved by submission order (z-fighting), which
+        // is not the order independence this test is meant to verify.
+        add_cube(*mesh2, vec3(0.5f, 0.3f, 0.25f), 0.8f);
         require(v.add_model(mesh2), "scene missing");
         
         // Configure both boxes: transparent, flat shading, lit, high contrast colors
