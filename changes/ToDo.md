@@ -82,7 +82,7 @@
     - [ ] Maintain a backend-parity test matrix for scene rendering, drawable updates, effects, overlays, picking, capture, resize, and MultiViewer; document intentional implementation tolerances and unsupported features.
     - [ ] Run both complete backend test suites plus public-header/install and Python smoke tests before deprecations and again before removals.
     - [ ] Remove the final compatibility wrappers only in the approved release, after the migration guide and downstream-facing release notes are published.
-    - [x] Enabled CI `.github/workflows/tests.yml` (converted from the inactive `tests.txt`). The workflow matrix covers Ubuntu, Windows, and macOS with both Vulkan and OpenGL backends, including package installation, consumer smoke tests, SPIR-V validation, and image-diff parity.
+    - [x] Enabled CI `.github/workflows/tests.yml` (converted from the inactive `tests.txt`). The workflow matrix covers Ubuntu, Windows, and macOS with both Vulkan and OpenGL backends, including package installation, consumer smoke tests, SPIR-V validation, and image-diff parity. First hosted run (2026-11-28) failed on Windows (MSVC reserves the `far`/`near` overlay locals used by `tests/viewer/effects_presentation_test.cpp`; renamed) and on Ubuntu (the OpenGL native-context probe linked EGL while the backend selected GLX; fixed via backend-selected GLX/EGL context probe).
 
   - After API unification, the OpenGL shader files should disappear?
   - After API unification, how will the tutorials' code look like, e.g., Tutorial_504_Transparency, Tutorial_505_EyeDomeLighting?

@@ -86,9 +86,9 @@ void effect_order_and_clipping(RenderDevice &device) {
     RenderOptions options;
     options.background = background;
 
-    const auto far = quad(-1, 1, -1, 1, .6f, vec4(.5f, .5f, .5f, 1), 7);
-    const auto near = quad(-.3f, .3f, -.3f, .3f, -.4f, vec4(.8f, .8f, .8f, 1), 8);
-    const std::vector<DrawCommand> scene{far, near};
+    const auto far_overlay = quad(-1, 1, -1, 1, .6f, vec4(.5f, .5f, .5f, 1), 7);
+    const auto near_overlay = quad(-.3f, .3f, -.3f, .3f, -.4f, vec4(.8f, .8f, .8f, 1), 8);
+    const std::vector<DrawCommand> scene{far_overlay, near_overlay};
 
     Camera camera;
     camera.set_type(Camera::PERSPECTIVE);
@@ -110,7 +110,7 @@ void effect_order_and_clipping(RenderDevice &device) {
     require(preview_then_effects.rgba != preview.rgba,
             "OpenGL did not preserve Vulkan's stream-ordered effect composition");
 
-    auto flat = far;
+    auto flat = far_overlay;
     flat.overlay = true;
     flat.object_id = UINT32_MAX;
     flat.color = vec4(0, 1, 0, 1);

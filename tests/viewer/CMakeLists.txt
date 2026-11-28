@@ -93,6 +93,20 @@ endforeach()
 
     add_executable(easy3d_viewer_query_test viewer_query_test.cpp)
     target_link_libraries(easy3d_viewer_query_test PRIVATE easy3d::viewer 3rd_glfw)
+    if(NOT Easy3D_ENABLE_VULKAN AND UNIX AND NOT APPLE)
+        # The native-context probe mirrors OpenGLContextScope (backends/glfw_runtime.cpp),
+        # which selects the GLX or EGL context from EASY3D_OPENGL_X11/EASY3D_OPENGL_WAYLAND.
+        # The test must see the same backend selection and link EGL only when the backend uses it.
+        if(GLFW_BUILD_WAYLAND)
+            find_package(EGL REQUIRED)
+            target_include_directories(easy3d_viewer_query_test PRIVATE ${EGL_INCLUDE_DIRS})
+            target_link_libraries(easy3d_viewer_query_test PRIVATE ${EGL_LIBRARIES})
+            target_compile_definitions(easy3d_viewer_query_test PRIVATE EASY3D_OPENGL_WAYLAND)
+        endif()
+        if(GLFW_BUILD_X11)
+            target_compile_definitions(easy3d_viewer_query_test PRIVATE EASY3D_OPENGL_X11)
+        endif()
+    endif()
     add_executable(easy3d_viewer_events_test viewer_events_test.cpp)
     target_link_libraries(easy3d_viewer_events_test PRIVATE easy3d::viewer 3rd_glfw)
     if(NOT Easy3D_ENABLE_VULKAN)

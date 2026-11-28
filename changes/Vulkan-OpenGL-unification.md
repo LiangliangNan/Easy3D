@@ -1758,6 +1758,20 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
   private state holders (`Viewer::Impl` for Vulkan, the per-viewer OpenGL state for OpenGL).
   No public API, class layout, or vtable changed.
 
+- The first hosted run of the newly enabled `.github/workflows/tests.yml` (2026-11-28) then failed,
+  and the fixes below came out of it:
+
+  - Windows: `tests/viewer/effects_presentation_test.cpp` built overlay locals named `far` and
+    `near`, which MSVC reserves as FAR/NEAR pointer keywords, so the Windows OpenGL/Vulkan test
+    compile failed. The locals are now `far_overlay` and `near_overlay`.
+  - Ubuntu: `easy3d_viewer_query_test` (OpenGL builds) referenced the EGL entry points while the
+    OpenGL backend selected GLX, so linking failed with `undefined reference to eglGetCurrentContext`.
+    The native-context probe now selects the backend through the same `EASY3D_OPENGL_X11` /
+    `EASY3D_OPENGL_WAYLAND` macros that `OpenGLContextScope` uses in
+    `easy3d/viewer/backends/glfw_runtime.cpp`, and the test links EGL only when Wayland is selected.
+    The macOS Vulkan device-hang failures did not reproduce on the local macOS/MoltenVK rerun and
+    are recorded as hosted-runner flakiness pending a fresh hosted run.
+
 Accordingly, no deprecated declaration, definition, binding, forwarding header, install entry,
 or test was deleted, and no public class layout or vtable was changed. The safe preparatory step
 was to make the remaining native OpenGL implementation files private to the backend source tree:

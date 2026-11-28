@@ -21,13 +21,10 @@
 #endif
 #include <windows.h>
 #else
-#if __has_include(<GL/glx.h>)
+#if defined(EASY3D_OPENGL_X11)
 #include <GL/glx.h>
-#define EASY3D_TEST_HAS_GLX 1
-#endif
-#if __has_include(<EGL/egl.h>)
+#elif defined(EASY3D_OPENGL_WAYLAND)
 #include <EGL/egl.h>
-#define EASY3D_TEST_HAS_EGL 1
 #endif
 #endif
 #endif
@@ -55,10 +52,10 @@ std::uintptr_t current_native_context() {
     return reinterpret_cast<std::uintptr_t>(wglGetCurrentContext());
 #else
     std::uintptr_t context = 0;
-#if defined(EASY3D_TEST_HAS_GLX)
+#if defined(EASY3D_OPENGL_X11)
     context |= reinterpret_cast<std::uintptr_t>(glXGetCurrentContext());
 #endif
-#if defined(EASY3D_TEST_HAS_EGL)
+#if defined(EASY3D_OPENGL_WAYLAND)
     context |= reinterpret_cast<std::uintptr_t>(eglGetCurrentContext());
 #endif
     return context;

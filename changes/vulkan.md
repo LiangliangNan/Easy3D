@@ -18,7 +18,15 @@ Vulkan-only `scan_visible_points()` helper, enabled CI `.github/workflows/tests.
 (converted from the inactive `tests.txt`), and consolidated the render-settings and
 clipping-plane accessors into backend-neutral implementations. The consolidation
 keeps one validation/normalization/store sequence behind private backend state
-accessors; no public API, class layout, or vtable changed.
+accessors; no public API, class layout, or vtable changed. The first hosted CI run
+after enabling `.github/workflows/tests.yml` (2026-11-28) then failed, and both
+failures were fixed before the next run: the Windows build rejected the MSVC-reserved
+`far`/`near` overlay locals in `tests/viewer/effects_presentation_test.cpp` (renamed
+to `far_overlay`/`near_overlay`), and the Ubuntu build failed to link
+`easy3d_viewer_query_test` because the native-context probe referenced EGL while the
+OpenGL backend selected GLX (the probe now selects through the
+`EASY3D_OPENGL_X11`/`EASY3D_OPENGL_WAYLAND` macros that `OpenGLContextScope` uses, and
+links EGL only when Wayland is selected).
 The latest macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
 **130/130 in 160.86 seconds**, and staged installed packages passed the installed
 offscreen, unified, and public-viewer consumer checks on both backends. See
