@@ -845,6 +845,59 @@ namespace easy3d {
 // picking, capture and window creation live in the backend sections that follow.
 //============================================================================
 namespace easy3d {
+    const RenderSettings &Viewer::backend_render_settings() const {
+        #ifdef EASY3D_HAS_VULKAN
+        return impl_->render_settings;
+        #else
+        return opengl_viewer_state(this).render_settings;
+        #endif
+    }
+
+    const std::vector<vec4> &Viewer::backend_clipping_planes() const {
+        #ifdef EASY3D_HAS_VULKAN
+        return impl_->active_clipping_planes();
+        #else
+        selection_planes_ = graphics::effective_clipping_planes(backend_render_settings().clipping_planes,
+                                                               *ClippingPlane::instance());
+        return selection_planes_;
+        #endif
+    }
+
+    void Viewer::backend_set_render_settings(const RenderSettings &settings) {
+        RenderSettings normalized = settings;
+        normalized.clipping_planes = graphics::normalize_clipping_planes(settings.clipping_planes);
+        #ifdef EASY3D_HAS_VULKAN
+        impl_->render_settings = normalized;
+        impl_->clipping_planes = normalized.clipping_planes;
+        #else
+        opengl_viewer_state(this).render_settings = std::move(normalized);
+        #endif
+    }
+
+    void Viewer::backend_set_clipping_planes(const std::vector<vec4> &planes) {
+        RenderSettings settings = backend_render_settings();
+        settings.clipping_planes = graphics::normalize_clipping_planes(planes);
+        validate_render_settings(settings);
+        backend_set_render_settings(settings);
+    }
+
+    const std::vector<vec4> &Viewer::clipping_planes() const {
+        return backend_clipping_planes();
+    }
+
+    void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
+        backend_set_clipping_planes(planes);
+    }
+
+    const RenderSettings &Viewer::render_settings() const {
+        return backend_render_settings();
+    }
+
+    void Viewer::set_render_settings(const RenderSettings &settings) {
+        validate_render_settings(settings);
+        backend_set_render_settings(settings);
+    }
+
     unsigned Viewer::validation_errors() const {
 #ifdef EASY3D_HAS_VULKAN
         return device().validation_errors();
@@ -1980,25 +2033,6 @@ namespace easy3d {
             command.overlay_independent_depth = false;
         }
         impl_->viewer_annotations = std::move(commands);
-    }
-    void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
-        RenderSettings settings = impl_->render_settings;
-        settings.clipping_planes = graphics::normalize_clipping_planes(planes);
-        validate_render_settings(settings);
-        impl_->clipping_planes = settings.clipping_planes;
-        impl_->render_settings.clipping_planes = std::move(settings.clipping_planes);
-    }
-    const std::vector<vec4> &Viewer::clipping_planes() const {
-        return impl_->active_clipping_planes();
-    }
-    const RenderSettings &Viewer::render_settings() const {
-        return impl_->render_settings;
-    }
-    void Viewer::set_render_settings(const RenderSettings &settings) {
-        validate_render_settings(settings);
-        impl_->render_settings = settings;
-        impl_->render_settings.clipping_planes = graphics::normalize_clipping_planes(settings.clipping_planes);
-        impl_->clipping_planes = impl_->render_settings.clipping_planes;
     }
     Viewer::PickResult Viewer::pick(int x, int y) const {
         PickResult result;
@@ -3268,26 +3302,6 @@ namespace easy3d {
         return true;
     }
 
-    const std::vector<vec4> &Viewer::clipping_planes() const {
-        selection_planes_ = graphics::effective_clipping_planes(render_settings().clipping_planes,
-                                                               *ClippingPlane::instance());
-        return selection_planes_;
-    }
-    void Viewer::set_clipping_planes(const std::vector<vec4> &planes) {
-        RenderSettings settings = render_settings();
-        settings.clipping_planes = graphics::normalize_clipping_planes(planes);
-        validate_render_settings(settings);
-        opengl_viewer_state(this).render_settings = std::move(settings);
-    }
-    const RenderSettings &Viewer::render_settings() const {
-        return opengl_viewer_state(this).render_settings;
-    }
-    void Viewer::set_render_settings(const RenderSettings &settings) {
-        validate_render_settings(settings);
-        auto normalized = settings;
-        normalized.clipping_planes = graphics::normalize_clipping_planes(settings.clipping_planes);
-        opengl_viewer_state(this).render_settings = std::move(normalized);
-    }
     std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable *drawable) const {
         if (!drawable || drawable->type() != Drawable::DT_POINTS)
             throw std::invalid_argument("selection requires a point drawable");

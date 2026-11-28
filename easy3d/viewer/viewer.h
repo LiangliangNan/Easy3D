@@ -1208,6 +1208,15 @@ namespace easy3d {
         void strip_settings_transparency(std::vector<graphics::DrawCommand> &commands,
                                          const std::vector<DrawSource> &sources,
                                          const std::vector<graphics::DrawCommand> &source_commands) const;
+        // Backend-neutral render-settings state access. The Vulkan branch keeps the
+        // declarative effect settings in Viewer::Impl; the OpenGL branch keeps them in
+        // the per-viewer OpenGL state; implementations dispatch through those holders so
+        // the public accessors stay backend-independent and are written exactly once.
+        // Non-virtual so subclasses and MultiViewer cells use the same accessors.
+        const RenderSettings &backend_render_settings() const;
+        const std::vector<vec4> &backend_clipping_planes() const;
+        void backend_set_render_settings(const RenderSettings &settings);
+        void backend_set_clipping_planes(const std::vector<vec4> &planes);
         //@}
 
 #ifdef EASY3D_HAS_VULKAN

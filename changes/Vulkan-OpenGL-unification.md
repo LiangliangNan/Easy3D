@@ -1748,6 +1748,15 @@ overlay/capture parity boundary. The result is that **no OpenGL-facing API is
 - `scan_visible_points()` was deleted (Vulkan-only, no production callers). In 2.8.x a
   `scan_visible_points()` tutorial demonstration will live in `Tutorial_405_VirtualScanner`,
   using public `Viewer`/`OffScreen` capture APIs rather than a `Viewer` member.
+- During the preparation pass, the duplicated render-settings accessors were consolidated. The
+  previously duplicated `Viewer::set_clipping_planes()`, `Viewer::clipping_planes()`,
+  `Viewer::render_settings()`, and `Viewer::set_render_settings()` implementations in the Vulkan
+  and OpenGL backend branches were replaced by backend-neutral implementations backed by private
+  state accessors (`backend_render_settings()`, `backend_clipping_planes()`,
+  `backend_set_render_settings()`, `backend_set_clipping_planes()`). Validation, clipping-plane
+  normalization, and the store sequence now live in one place; the backends retain only their
+  private state holders (`Viewer::Impl` for Vulkan, the per-viewer OpenGL state for OpenGL).
+  No public API, class layout, or vtable changed.
 
 Accordingly, no deprecated declaration, definition, binding, forwarding header, install entry,
 or test was deleted, and no public class layout or vtable was changed. The safe preparatory step

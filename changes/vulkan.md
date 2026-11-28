@@ -12,9 +12,13 @@ supported backend-neutral API rather than backend internals.
 **Current status (2026-11-28):** API-unification core work through Milestone 5 and
 its follow-ups is implemented and locally validated; one Milestone 5 public-header
 audit item and Milestones 6 and 7 remain open. Milestone 6 preparation completed a
-gated retirement audit and moved the remaining native OpenGL implementation sources
-into the private backend source tree without changing the installed API. CI
-`.github/workflows/tests.yml` was enabled (converted from the inactive `tests.txt`).
+gated retirement audit, moved the remaining native OpenGL implementation sources
+into the private backend source tree without changing the installed API, deleted the
+Vulkan-only `scan_visible_points()` helper, enabled CI `.github/workflows/tests.yml`
+(converted from the inactive `tests.txt`), and consolidated the render-settings and
+clipping-plane accessors into backend-neutral implementations. The consolidation
+keeps one validation/normalization/store sequence behind private backend state
+accessors; no public API, class layout, or vtable changed.
 The latest macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
 **130/130 in 160.86 seconds**, and staged installed packages passed the installed
 offscreen, unified, and public-viewer consumer checks on both backends. See

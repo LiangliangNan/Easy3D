@@ -69,6 +69,7 @@
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
     - [x] Audited installed headers, Python bindings, tutorials, examples, tests, live OpenGL paths, and removal gates. No candidate is `safe-to-delete now`; re-audit again immediately before each future removal. See section 8.19.
     - [x] Moved the remaining native framebuffer, shader, VAO, timer, readback, and utility implementation sources into the private OpenGL backend source tree; texture realization and immediate-mode shape were already private. Installed forwarding declarations remain until the coordinated 3.0 removal. See section 8.19.
+    - [x] Consolidated the duplicated render-settings/clipping-plane accessors into backend-neutral implementations backed by private state accessors; validation, clipping-plane normalization, and the store sequence now live in one place. No public API, class layout, or vtable changed. See section 8.19.
     - [ ] Remove `OverlayRenderer` only after shared overlay presentation and capture parity are verified.
     - [ ] Replace live OpenGL presentation, effect, texture, and drawable resource plumbing incrementally; do not delete `FramebufferObject`, shaders, or VAOs merely because offscreen `RenderDevice` no longer needs them.
     - [ ] Delete each deprecated declaration, definition, binding, install/export entry, and test dependency together in a coordinated release.
