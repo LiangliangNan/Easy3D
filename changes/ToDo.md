@@ -67,8 +67,8 @@
     - [x] Update Milestone 3 deviations 2–4 and the section 8.15 scope boundary from "limitation" to the measured result; rerun focused tests and complete serial suites in both approved build trees. Final results: OpenGL 129/129 in 154.35 seconds and Vulkan 157/157 in 256.90 seconds; recorded in section 8.16.
 
   - [ ] Milestone 6 — Retire redundant OpenGL-facing APIs
-    - [ ] Re-audit installed headers, Python bindings, tutorials, examples, and tests immediately before each removal; zero in-tree callers alone is not sufficient for public API deletion.
-    - [ ] Move native framebuffer, shader, VAO, timer, utility, texture-realization, and immediate-mode shape implementations out of the installed public API once their replacements are complete.
+    - [x] Audited installed headers, Python bindings, tutorials, examples, tests, live OpenGL paths, and removal gates. No candidate is `safe-to-delete now`; re-audit again immediately before each future removal. See section 8.19.
+    - [x] Moved the remaining native framebuffer, shader, VAO, timer, readback, and utility implementation sources into the private OpenGL backend source tree; texture realization and immediate-mode shape were already private. Installed forwarding declarations remain until the coordinated 3.0 removal. See section 8.19.
     - [ ] Remove `OverlayRenderer` only after shared overlay presentation and capture parity are verified.
     - [ ] Replace live OpenGL presentation, effect, texture, and drawable resource plumbing incrementally; do not delete `FramebufferObject`, shaders, or VAOs merely because offscreen `RenderDevice` no longer needs them.
     - [ ] Delete each deprecated declaration, definition, binding, install/export entry, and test dependency together in a coordinated release.

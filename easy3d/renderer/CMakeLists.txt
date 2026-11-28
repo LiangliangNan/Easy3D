@@ -111,16 +111,16 @@ list(APPEND renderer_sources
         backends/opengl/render_device.cpp
         backends/opengl/shape_draw.cpp
         backends/opengl/drawable_lines_2D.cpp
-        framebuffer_object.cpp
-        opengl.cpp
-        opengl_error.cpp
-        opengl_util.cpp
-        opengl_timer.cpp
-        read_pixel.cpp
-        shader_manager.cpp
-        shader_program.cpp
+        backends/opengl/framebuffer_object.cpp
+        backends/opengl/opengl.cpp
+        backends/opengl/opengl_error.cpp
+        backends/opengl/opengl_util.cpp
+        backends/opengl/opengl_timer.cpp
+        backends/opengl/read_pixel.cpp
+        backends/opengl/shader_manager.cpp
+        backends/opengl/shader_program.cpp
         backends/opengl/texture.cpp
-        vertex_array_object.cpp
+        backends/opengl/vertex_array_object.cpp
 )
 
 

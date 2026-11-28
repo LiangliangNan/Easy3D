@@ -9,14 +9,18 @@ been retired (the ImGui `applications/Mapple` now runs on both backends); the Qt
 viewer tutorials were retired; Python bindings deliberately cover the
 supported backend-neutral API rather than backend internals.
 
-**Current status (2026-11-27):** API-unification core work through Milestone 5 and
+**Current status (2026-11-28):** API-unification core work through Milestone 5 and
 its follow-ups is implemented and locally validated; one Milestone 5 public-header
-audit item and Milestones 6 and 7 remain open. The final
-macOS serial suites passed Vulkan **157/157** and OpenGL **130/130**, and fresh
-isolated packages passed the installed offscreen, unified, and public-viewer
-consumer checks on both backends. See
+audit item and Milestones 6 and 7 remain open. Milestone 6 preparation completed a
+gated retirement audit and moved the remaining native OpenGL implementation sources
+into the private backend source tree without changing the installed API. The latest
+macOS serial suites passed Vulkan **157/157 in 256.18 seconds** and OpenGL
+**130/130 in 160.86 seconds**, and staged installed packages passed the installed
+offscreen, unified, and public-viewer consumer checks on both backends. See
 [section 8.17 of the unification report](Vulkan-OpenGL-unification.md#817-independent-api-unification-audit-and-proofreading)
-for the independent branch audit and remaining gaps.
+for the independent branch audit and
+[section 8.19](Vulkan-OpenGL-unification.md#819-milestone-6-preparation-gated-retirement-audit-and-private-opengl-sources)
+for the Milestone 6 gate state and remaining gaps.
 
 **Constructor simplification (2026-11-27):** all three rendering hosts now take
 `easy3d::DeviceOptions` directly, with backend-specific fields selected by the build. The
@@ -11961,7 +11965,7 @@ rather than a guess.
   after `set_layout(3, 2)`, both points where the tiling is synchronous rather than awaiting a
   framebuffer callback.
 - `tests/viewer/offscreen_backend_test.cpp` - `exercise_framebuffer_object()` (OpenGL builds, since
-  `framebuffer_object.cpp` is compiled only when `Easy3D_ENABLE_VULKAN` is OFF) asserts the refusal
+  `backends/opengl/framebuffer_object.cpp` is compiled only when `Easy3D_ENABLE_VULKAN` is OFF) asserts the refusal
   contract on an attachment-less framebuffer: `read_color()` of a pixel and of a buffer,
   `read_depth()` of a pixel and of a buffer, and `snapshot_color()` all return false and leave the
   caller's bytes and `float` untouched. Then the multisample case asserts the bounded rebuild from
@@ -11982,15 +11986,16 @@ byte-identical to HEAD afterwards.
   a scene-query symptom does not.
 - Cutting the resolve bound from two attempts to one fails `viewer.offscreen` with
   `FAIL: resolving after the attachment set grew failed`, preceded by
-  `E ... framebuffer_object.cpp:1040] cannot build a resolve framebuffer for the 4-sample
+  `E ... backends/opengl/framebuffer_object.cpp:1040] cannot build a resolve framebuffer for the 4-sample
   framebuffer`. The bound is exactly wide enough for the legitimate rebuild and no wider.
 - Both trees fully rebuilt (0 errors) and their serial suites run: OpenGL 119/119 in
   `cmake-build-relwithdebinfo` (60.2 s) and 118/118 in `build-opengl-check` (58.5 s; the difference
   is that the second tree configures `Easy3D_BUILD_PYTHON_BINDINGS=OFF`), Vulkan Debug 151/151
   (239.7 s) in `cmake-build-debug`, where `vulkan.multiview` and `viewer.offscreen` cover the new
-  assertions on the Vulkan leg. The later resolve-leg propagation edits only `framebuffer_object.cpp`
-  and that file is compiled only when `Easy3D_ENABLE_VULKAN` is OFF
-  (`easy3d/renderer/CMakeLists.txt:118`), so the Vulkan tree's binaries and its 151/151 are
+  assertions on the Vulkan leg. The later resolve-leg propagation edits only
+  `backends/opengl/framebuffer_object.cpp` and that file is compiled only when
+  `Easy3D_ENABLE_VULKAN` is OFF (the OpenGL source list in `easy3d/renderer/CMakeLists.txt`),
+  so the Vulkan tree's binaries and its 151/151 are
   unchanged by them; both OpenGL trees were rebuilt and re-run after the edits. `vulkan.crosssection`,
   the known intermittent, passed in this run.
 

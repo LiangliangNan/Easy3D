@@ -1723,3 +1723,49 @@ Both all-target backend builds succeeded. Complete serial CTest passed **Vulkan 
 247.69 seconds** and **OpenGL 130/130 in 153.36 seconds**, with zero failures. Fresh isolated
 Release packages were rebuilt and installed, and all five installed consumer executables
 (three Vulkan, two OpenGL) passed. `git diff --check` passed.
+
+### 8.19 Milestone 6 preparation: gated retirement audit and private OpenGL sources
+
+Before applying any Milestone 6 removal, the current tree was audited against the section 8.7
+release policy and section 8.8 removal gates. The audit covered installed headers, Python
+bindings and tests, tutorials, applications, tests, live OpenGL plumbing, and the documented
+overlay/capture parity boundary. The result is that **no OpenGL-facing API is
+`safe-to-delete now`**:
+
+- The root package is still `2.7.0`, no complete `2.8.x` deprecation release has shipped, the
+  migration guide and downstream removal notes are Milestone 7 work, and CI remains inactive.
+- Python bindings/tests still exercise native drawable buffers, `vao()`, `draw()`, `gl_draw()`,
+  and `State::set_ao_texture()`. Tutorials 501–505 and Mapple still use the legacy effect
+  facades. `EASY3D_HAS_VULKAN` is still exported to installed consumers and remains visible in
+  installed and test headers. These are mandated consumer-migration gates, not incidental
+  leftovers.
+- `FramebufferObject`, shader plumbing, VAO storage, texture realization, native shape drawing,
+  and `OverlayRenderer` still support live OpenGL presentation, effects, overlays, and exact
+  fallbacks. Backend parity tests cover public overlay and capture behavior, but the OpenGL
+  device and Viewer still own native overlay resources.
+- The duplicated `Viewer::draw_corner_axes()` implementations preserve distinct shared-command
+  and native/fallback presentation paths; unifying them belongs near the end of retirement.
+
+Accordingly, no deprecated declaration, definition, binding, forwarding header, install entry,
+or test was deleted, and no public class layout or vtable was changed. The safe preparatory step
+was to make the remaining native OpenGL implementation files private to the backend source tree:
+
+- `framebuffer_object.cpp`, `opengl.cpp`, `opengl_error.cpp`, `opengl_util.cpp`,
+  `opengl_timer.cpp`, `read_pixel.cpp`, `shader_manager.cpp`, `shader_program.cpp`, and
+  `vertex_array_object.cpp` moved from `easy3d/renderer/` to
+  `easy3d/renderer/backends/opengl/`.
+- The OpenGL source list in `easy3d/renderer/CMakeLists.txt` was updated to the new paths.
+- The installed forwarding headers and exported symbols remain unchanged, so existing clients
+  keep the same 2.8 compatibility surface. Texture realization and immediate-mode shape
+  implementation were already private.
+- Historical path references in `changes/vulkan.md` were updated to the new source location.
+
+Milestone 6 therefore remains open with removal gated on the full section 8.8 checklist. Each
+future removal must repeat the consumer audit immediately before deletion.
+
+The reconfigured all-target builds succeeded in both approved trees. Serial CTest passed
+**OpenGL 130/130 in 160.86 seconds** (`build-opengl`) and **Vulkan 157/157 in 256.18 seconds**
+(`build`), including both Python rendering tests. Staged installed-package consumers were also
+built and run: two OpenGL executables and three Vulkan executables passed, including the backend
+component checks. This is local macOS/MoltenVK evidence; it does not establish Linux/Windows or
+hosted-CI behavior. `git diff --check` passed.

@@ -238,19 +238,6 @@ namespace easy3d {
 			if (flip_vertically) {
 				unsigned int row_size = w * bytes_per_pixel;
 				unsigned int half_height = h / 2;
-#if 0
-				for (int j = 0; j < half_height; ++j) {
-					// get a pointer to the two lines we will swap
-					unsigned char* row1 = &(buffer[0]) + j * row_size;
-					unsigned char* row2 = &(buffer[0]) + (h - 1 - j) * row_size;
-					// for each point on line, swap all the channels
-					for (int i = 0; i < w; ++i) {
-						for (int k = 0; k < bytes_per_pixel; k++) {
-							std::swap(row1[bytes_per_pixel*i + k], row2[bytes_per_pixel*i + k]);
-						}
-					}
-				}
-#else
 				auto line = new unsigned char[row_size];
 				for (unsigned int i = 0, j = h - 1; i < half_height; ++i) {
 					memcpy(line, &(buffer[0]) + i * row_size, row_size);
@@ -259,7 +246,6 @@ namespace easy3d {
 					j--;
 				}
 				delete[] line;
-#endif
 			}
 		}
 
