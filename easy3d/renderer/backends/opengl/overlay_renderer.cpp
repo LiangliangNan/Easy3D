@@ -88,7 +88,7 @@ void main() {
 })") || !shader.load_shader_from_code(ShaderProgram::FRAGMENT,
                                       R"(#version 150
 in vec4 tint; in vec2 texcoord; in vec3 world_normal, world_position;
-uniform bool lighting, material_lighting, two_sides, distinct_back;
+uniform bool lighting, material_lighting, two_sides, distinct_back_color;
 uniform vec3 eye, light; uniform vec4 ambient, specular, back_color; uniform float shininess;
 uniform vec4 color; uniform sampler2D image; uniform bool depth_image;
 out vec4 fragment;
@@ -97,7 +97,7 @@ void main() {
         vec4(vec3(texture(image,vec2(texcoord.x,1-texcoord.y)).r),1):tint*color*texture(image,texcoord);
     if (lighting && material_lighting && dot(world_normal, world_normal) > 0.0) {
         vec3 n=normalize(world_normal), view_dir=normalize(eye-world_position), l=normalize(light);
-        if (distinct_back && !gl_FrontFacing) fragment.rgb=back_color.rgb;
+        if (distinct_back_color && !gl_FrontFacing) fragment.rgb=back_color.rgb;
         float df=dot(l,n); df=two_sides?abs(df):max(df,0);
         float sf=0;
         if (df>0) {sf=dot(normalize(l+view_dir),n);sf=two_sides?abs(sf):max(sf,0);sf=pow(sf,shininess);}
@@ -291,7 +291,7 @@ void main() {
                     glUniformMatrix3fv(glGetUniformLocation(program_, "normal_matrix"), 1, GL_FALSE, c.normal_matrix);
                     glUniform1i(glGetUniformLocation(program_, "material_lighting"), c.material_lighting);
                     glUniform1i(glGetUniformLocation(program_, "two_sides"), c.lighting_two_sides);
-                    glUniform1i(glGetUniformLocation(program_, "distinct_back"), c.distinct_back_color);
+                    glUniform1i(glGetUniformLocation(program_, "distinct_back_color"), c.distinct_back_color);
                     glUniformMatrix4fv(glGetUniformLocation(program_, "model"), 1, GL_FALSE, c.model);
                     glUniform3fv(glGetUniformLocation(program_, "eye"), 1, c.eye);
                     glUniform3fv(glGetUniformLocation(program_, "light"), 1, c.light);

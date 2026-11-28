@@ -46,7 +46,7 @@ in vec4 tint;
 in vec2 texcoord;
 in vec3 world_normal, world_position;
 in vec4 highlight_tint;
-uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform bool lighting, material_lighting, two_sides, distinct_back_color, ignore_highlight;
 uniform vec3 eye, light;
 uniform vec4 ambient, specular, back_color, color;
 uniform float shininess;
@@ -60,11 +60,12 @@ void main() {
     out_color=tint*color*texture(image,texcoord);
     if (lighting && dot(world_normal,world_normal)>0.0) {
         vec3 n=normalize(world_normal);
+        vec3 view_dir=normalize(eye-world_position);
+        if (distinct_back_color && (!gl_FrontFacing || dot(n, view_dir) < 0)) out_color.rgb=back_color.rgb;
         if (!material_lighting) {
             out_color.rgb*=0.2+0.8*abs(dot(n,normalize(vec3(0.3,0.5,1))));
         } else {
-            vec3 view_dir=normalize(eye-world_position), l=normalize(light);
-            if (distinct_back && !gl_FrontFacing) out_color.rgb=back_color.rgb;
+            vec3 l=normalize(light);
             float df=dot(l,n);
             df=two_sides?abs(df):max(df,0.0);
             float sf=0.0;
@@ -129,11 +130,12 @@ uniform vec4 dimensions, viewport_origin;
 uniform int style;
 uniform uint object_id;
 uniform bool lighting, material_lighting, single_sample;
+uniform bool distinct_back_color;
 uniform vec3 eye, light, sphere_light;
 uniform vec2 depth_range;
 uniform vec4 clip_planes[2];
 uniform int clip_count;
-uniform vec4 ambient, specular;
+uniform vec4 ambient, specular, back_color;
 uniform float shininess;
 in vec4 vertex_color, selection_tint;
 in vec2 texcoord;
@@ -196,6 +198,7 @@ void main() {
             out_color.rgb=out_color.rgb*df+specular.rgb*sf+ambient.rgb;
         } else out_color.rgb*=0.2+0.8*abs(dot(surface_normal,normalize(sphere_light)));
     }
+    if (distinct_back_color && !gl_FrontFacing) out_color.rgb=back_color.rgb;
     out_color.rgb=mix(out_color.rgb,selection_tint.rgb,selection_tint.a);
     out_color.a*=coverage;
     out_id=uvec2(object_id,primitive);
@@ -716,7 +719,7 @@ in vec4 tint;
 in vec2 texcoord;
 in vec3 world_normal, world_position;
 in vec4 highlight_tint;
-uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform bool lighting, material_lighting, two_sides, distinct_back_color, ignore_highlight;
 uniform vec3 eye, light;
 uniform vec4 ambient, specular, back_color, color;
 uniform float shininess;
@@ -727,11 +730,12 @@ vec4 shade_fragment() {
     vec4 result = tint * color * texture(image, texcoord);
     if (lighting && dot(world_normal, world_normal) > 0.0) {
         vec3 n = normalize(world_normal);
+        vec3 view_dir = normalize(eye - world_position);
+        if (distinct_back_color && (!gl_FrontFacing || dot(n, view_dir) < 0)) result.rgb = back_color.rgb;
         if (!material_lighting)
             result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
         else {
-            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
-            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            vec3 l = normalize(light);
             float df = dot(l, n);
             df = two_sides ? abs(df) : max(df, 0.0);
             float sf = 0.0;
@@ -759,7 +763,7 @@ in vec4 tint;
 in vec2 texcoord;
 in vec3 world_normal, world_position;
 in vec4 highlight_tint;
-uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform bool lighting, material_lighting, two_sides, distinct_back_color, ignore_highlight;
 uniform vec3 eye, light;
 uniform vec4 ambient, specular, back_color, color;
 uniform float shininess;
@@ -769,11 +773,12 @@ vec4 shade_fragment() {
     vec4 result = tint * color * texture(image, texcoord);
     if (lighting && dot(world_normal, world_normal) > 0.0) {
         vec3 n = normalize(world_normal);
+        vec3 view_dir = normalize(eye - world_position);
+        if (distinct_back_color && (!gl_FrontFacing || dot(n, view_dir) < 0)) result.rgb = back_color.rgb;
         if (!material_lighting)
             result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
         else {
-            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
-            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            vec3 l = normalize(light);
             float df = dot(l, n);
             df = two_sides ? abs(df) : max(df, 0.0);
             float sf = 0.0;
@@ -871,7 +876,7 @@ in vec4 tint;
 in vec2 texcoord;
 in vec3 world_normal, world_position;
 in vec4 highlight_tint;
-uniform bool lighting, material_lighting, two_sides, distinct_back, ignore_highlight;
+uniform bool lighting, material_lighting, two_sides, distinct_back_color, ignore_highlight;
 uniform vec3 eye, light;
 uniform vec4 ambient, specular, back_color, color;
 uniform float shininess;
@@ -881,11 +886,12 @@ vec4 shade_fragment() {
     vec4 result = tint * color * texture(image, texcoord);
     if (lighting && dot(world_normal, world_normal) > 0.0) {
         vec3 n = normalize(world_normal);
+        vec3 view_dir = normalize(eye - world_position);
+        if (distinct_back_color && (!gl_FrontFacing || dot(n, view_dir) < 0)) result.rgb = back_color.rgb;
         if (!material_lighting)
             result.rgb *= 0.2 + 0.8 * abs(dot(n, normalize(vec3(0.3, 0.5, 1))));
         else {
-            vec3 view_dir = normalize(eye - world_position), l = normalize(light);
-            if (distinct_back && !gl_FrontFacing) result.rgb = back_color.rgb;
+            vec3 l = normalize(light);
             float df = dot(l, n);
             df = two_sides ? abs(df) : max(df, 0.0);
             float sf = 0.0;
@@ -1951,7 +1957,7 @@ void main() {
                 glUniform1i(location("lighting"), d.lighting);
                 glUniform1i(location("material_lighting"), d.material_lighting);
                 glUniform1i(location("two_sides"), d.lighting_two_sides);
-                glUniform1i(location("distinct_back"), d.distinct_back_color);
+                glUniform1i(location("distinct_back_color"), d.distinct_back_color);
                 glUniform1i(location("ignore_highlight"), ignore_highlight);
                 glUniform1ui(location("object_id"), d.object_id);
                 const bool has_ids = !d.geometry->primitive_ids().empty();
@@ -1977,6 +1983,8 @@ void main() {
                 glUniform1i(location("single_sample"), !color_pass || samples <= 1);
                 glUniform3fv(location("sphere_light"), 1, d.sphere_light.data());
                 glUniform1i(location("screen_space"), d.line_screen_space_width);
+                glUniform1i(location("distinct_back_color"), d.distinct_back_color);
+                glUniform4fv(location("back_color"), 1, d.back_color.data());
                 const vec2 depth_range = d.depth_range();
                 glUniform2fv(location("depth_range"), 1, depth_range.data());
                 std::vector<float> clip_data(8, 0.0f);

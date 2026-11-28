@@ -98,10 +98,8 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         if (add_noise_)
             easy3d::GaussianNoise::apply(cloud.get(), camera()->scene_radius() * .0001f);
 
-        add_model(cloud);
-        update();
+        add_model(cloud, true, false);
         return true;
-        capture()
     }
     return Viewer::key_press_event(key, modifiers);
 }
